@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
-import FileUploader from '@/components/file-uploader';
+import ChatImageUploader from '@/components/chat-image-uploader';
 import { PortfolioCarousel } from '@/components/portfolio-carousel';
 
 export interface ProfessionalMediaItem {
@@ -71,6 +71,9 @@ export function ProfessionalPortfolioManager({
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [savingMediaId, setSavingMediaId] = useState<string | null>(null);
   const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
+  const [standalonePendingFiles, setStandalonePendingFiles] = useState<File[]>([]);
+  const [standaloneUploading, setStandaloneUploading] = useState(false);
+  const [standaloneUploaderClearKey, setStandaloneUploaderClearKey] = useState(0);
   const [refProjects, setRefProjects] = useState<ReferenceProject[]>(initialReferenceProjects);
   const [refDraft, setRefDraft] = useState<{ id?: string; title: string; description: string; imageUrls: string[] }>(
     { id: undefined, title: '', description: '', imageUrls: [] },
@@ -78,6 +81,7 @@ export function ProfessionalPortfolioManager({
   const [refSaving, setRefSaving] = useState(false);
   const [refError, setRefError] = useState<string | null>(null);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
+  const [refUploaderClearKey, setRefUploaderClearKey] = useState(0);
 
   useEffect(() => {
     setMediaItems(sortMediaItems(initialMedia));
@@ -131,6 +135,25 @@ export function ProfessionalPortfolioManager({
     const created = await res.json();
     setMediaItems((prev) => sortMediaItems([...(Array.isArray(created) ? created : []), ...prev]));
     return keys;
+  };
+
+  const handleStandaloneUpload = async () => {
+    if (standalonePendingFiles.length === 0) {
+      setMediaError('Select one or more images to upload.');
+      return;
+    }
+
+    setStandaloneUploading(true);
+    setMediaError(null);
+    try {
+      await uploadStandaloneImages(standalonePendingFiles);
+      setStandalonePendingFiles([]);
+      setStandaloneUploaderClearKey((current) => current + 1);
+    } catch (err) {
+      setMediaError(err instanceof Error ? err.message : 'Failed to upload images');
+    } finally {
+      setStandaloneUploading(false);
+    }
   };
 
   const uploadRefImages = async (files: File[]) => {
@@ -216,9 +239,14 @@ export function ProfessionalPortfolioManager({
   const removeRefImage = (url: string) => {
     setRefDraft((draft) => ({ ...draft, imageUrls: (draft.imageUrls || []).filter((imageUrl) => imageUrl !== url) }));
     setRefPendingFiles([]);
+    setRefUploaderClearKey((current) => current + 1);
   };
 
-  const resetRefDraft = () => setRefDraft({ id: undefined, title: '', description: '', imageUrls: [] });
+  const resetRefDraft = () => {
+    setRefDraft({ id: undefined, title: '', description: '', imageUrls: [] });
+    setRefPendingFiles([]);
+    setRefUploaderClearKey((current) => current + 1);
+  };
 
   const handleRefSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -406,13 +434,29 @@ export function ProfessionalPortfolioManager({
         <div className="mt-5">
           <p className="mb-2 text-sm font-semibold text-slate-900">Upload new images</p>
           <div className="rounded-[22px] border border-[rgba(120,53,15,0.14)] bg-[var(--mimo-project-paper)] p-4 shadow-sm">
-            <FileUploader
-              maxFiles={10}
-              maxFileSize={10 * 1024 * 1024}
-              onUpload={uploadStandaloneImages}
-              onFilesChange={() => {}}
-              showUploadAction
-            />
+            <div className="space-y-3">
+              <ChatImageUploader
+                onFilesSelected={setStandalonePendingFiles}
+                maxImages={10}
+                disabled={standaloneUploading}
+                clearKey={standaloneUploaderClearKey}
+              />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-slate-500">
+                  {standalonePendingFiles.length > 0
+                    ? `${standalonePendingFiles.length} image${standalonePendingFiles.length > 1 ? 's' : ''} ready to upload to your portfolio.`
+                    : 'Choose images to add them as standalone portfolio media.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleStandaloneUpload()}
+                  disabled={standaloneUploading || standalonePendingFiles.length === 0}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {standaloneUploading ? 'Uploading...' : `Upload image${standalonePendingFiles.length === 1 ? '' : 's'}`}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -446,13 +490,19 @@ export function ProfessionalPortfolioManager({
             <div>
               <label className="block text-sm font-medium text-slate-700">Project photos</label>
               <div className="mt-1 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[var(--mimo-paper)] p-3">
-                <FileUploader
-                  maxFiles={5}
-                  maxFileSize={10 * 1024 * 1024}
-                  onUpload={uploadRefImages}
-                  onFilesChange={(files) => setRefPendingFiles(files)}
-                  showUploadAction
-                />
+                <div className="space-y-2">
+                  <ChatImageUploader
+                    onFilesSelected={setRefPendingFiles}
+                    maxImages={5}
+                    disabled={refSaving}
+                    clearKey={refUploaderClearKey}
+                  />
+                  <p className="text-xs text-slate-500">
+                    {refPendingFiles.length > 0
+                      ? `${refPendingFiles.length} new image${refPendingFiles.length > 1 ? 's' : ''} will upload when you save this project.`
+                      : 'Select project images to preview them before saving.'}
+                  </p>
+                </div>
               </div>
               {refDraft.imageUrls.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -492,7 +542,6 @@ export function ProfessionalPortfolioManager({
                   type="button"
                   onClick={() => {
                     resetRefDraft();
-                    setRefPendingFiles([]);
                   }}
                   className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-white"
                 >
