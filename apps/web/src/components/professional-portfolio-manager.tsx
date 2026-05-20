@@ -474,51 +474,15 @@ export function ProfessionalPortfolioManager({
         )}
 
         <form onSubmit={handleRefSave} className="mb-5 space-y-3 rounded-[22px] border border-[rgba(120,53,15,0.14)] bg-[var(--mimo-project-paper)] p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Title *</label>
-              <input
-                type="text"
-                value={refDraft.title}
-                onChange={(e) => setRefDraft((draft) => ({ ...draft, title: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Project photos</label>
-              <div className="mt-1 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[var(--mimo-paper)] p-3">
-                <div className="space-y-2">
-                  <ChatImageUploader
-                    onFilesSelected={setRefPendingFiles}
-                    maxImages={5}
-                    disabled={refSaving}
-                    clearKey={refUploaderClearKey}
-                  />
-                  <p className="text-xs text-slate-500">
-                    {refPendingFiles.length > 0
-                      ? `${refPendingFiles.length} new image${refPendingFiles.length > 1 ? 's' : ''} will upload when you save this project.`
-                      : 'Select project images to preview them before saving.'}
-                  </p>
-                </div>
-              </div>
-              {refDraft.imageUrls.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {refDraft.imageUrls.map((url) => (
-                    <div key={url} className="group relative overflow-hidden rounded-xl border border-[rgba(120,53,15,0.14)] bg-[var(--mimo-paper)]">
-                      <img src={resolveMediaAssetUrl(url)} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeRefImage(url)}
-                        className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-rose-700 shadow opacity-0 group-hover:opacity-100"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Title *</label>
+            <input
+              type="text"
+              value={refDraft.title}
+              onChange={(e) => setRefDraft((draft) => ({ ...draft, title: e.target.value }))}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Description</label>
@@ -529,6 +493,40 @@ export function ProfessionalPortfolioManager({
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               placeholder="What was delivered, client challenge, scope, standout finish, timeline, and materials used."
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Project photos</label>
+            <div className="mt-1 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[var(--mimo-paper)] p-3">
+              <div className="space-y-2">
+                <ChatImageUploader
+                  onFilesSelected={setRefPendingFiles}
+                  maxImages={5}
+                  disabled={refSaving}
+                  clearKey={refUploaderClearKey}
+                />
+                <p className="text-xs text-slate-500">
+                  {refPendingFiles.length > 0
+                    ? `${refPendingFiles.length} new image${refPendingFiles.length > 1 ? 's' : ''} will upload when you save this project.`
+                    : 'Select project images to preview them before saving.'}
+                </p>
+              </div>
+            </div>
+            {refDraft.imageUrls.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {refDraft.imageUrls.map((url) => (
+                  <div key={url} className="group relative overflow-hidden rounded-xl border border-[rgba(120,53,15,0.14)] bg-[var(--mimo-paper)]">
+                    <img src={resolveMediaAssetUrl(url)} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeRefImage(url)}
+                      className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-rose-700 shadow opacity-0 group-hover:opacity-100"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs text-slate-500">

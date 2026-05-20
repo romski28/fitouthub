@@ -81,7 +81,7 @@ export default function ProfessionalPortfolioPage() {
       <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(185,78,45,0.92)]">Professional Workspace</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Portfolio</h1>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900">Portfolio - Images &amp; Projects</h1>
         </div>
       </div>
 

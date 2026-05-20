@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-20-48587bd9",
+    "date": "2026-05-20T20:52:28+08:00",
+    "title": "style(web): refine portfolio projects panel",
+    "summary": "style(web): refine portfolio projects panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "48587bd9",
+    "files": [
+      "apps/web/src/app/professional/portfolio/page.tsx",
+      "apps/web/src/components/professional-portfolio-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-16a12126",
     "date": "2026-05-20T17:53:57+08:00",
     "title": "style(web): polish portfolio library actions",
