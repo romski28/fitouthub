@@ -17,9 +17,7 @@ export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
   const router = useRouter();
   const t = useTranslations('profile.client');
-  const commonT = useTranslations('common');
   const [locationDraft, setLocationDraft] = useState<CanonicalLocation>(userLocation || ({} as CanonicalLocation));
-  const [locationSaved, setLocationSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const selectedLocationAreaCode = useMemo(
@@ -112,6 +110,14 @@ export default function ProfilePage() {
         
         const data = await res.json();
         setMobile(data.mobile || '');
+        const nextLocation: CanonicalLocation = {
+          primary: data.locationPrimary || undefined,
+          secondary: data.locationSecondary || undefined,
+          tertiary: data.locationTertiary || undefined,
+        };
+        if (nextLocation.primary || nextLocation.secondary || nextLocation.tertiary) {
+          setUserLocation(nextLocation);
+        }
         if (data.notificationPreference) {
           setAllowPartnerOffers(data.notificationPreference.allowPartnerOffers ?? false);
           setAllowPlatformUpdates(data.notificationPreference.allowPlatformUpdates ?? true);
@@ -148,7 +154,15 @@ export default function ProfilePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, firstName, surname, mobile: mobile || undefined }),
+        body: JSON.stringify({
+          email,
+          firstName,
+          surname,
+          mobile: mobile || undefined,
+          locationPrimary: locationDraft.primary || null,
+          locationSecondary: locationDraft.secondary || null,
+          locationTertiary: locationDraft.tertiary || null,
+        }),
       });
 
       if (res.status === 404) {
@@ -198,6 +212,8 @@ export default function ProfilePage() {
 
       if (!prefRes.ok) throw new Error(await prefRes.text());
 
+      setUserLocation(locationDraft);
+
       toast.success('Profile updated successfully');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update profile');
@@ -224,7 +240,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Edit Form */}
-        <form onSubmit={handleSaveProfile} className="space-y-4 pt-6 border-t border-slate-200">
+        <form id="client-profile-form" onSubmit={handleSaveProfile} className="space-y-4 pt-6 border-t border-slate-200 pb-24">
           <h2 className="text-xl font-semibold text-slate-900">{t('accountInfo')}</h2>
           
           <div>
@@ -354,15 +370,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
-            >
-              {saving ? t('saving') : t('saveChanges')}
-            </button>
-          </div>
         </form>
 
         {/* Default location for browsing trades/professionals */}
@@ -402,22 +409,8 @@ export default function ProfilePage() {
               <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
             </div>
           </details>
-          <button
-            type="button"
-            className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
-            onClick={() => {
-              setUserLocation(locationDraft);
-              setLocationSaved(true);
-              setTimeout(() => setLocationSaved(false), 1500);
-            }}
-          >
-            {t('saveDefaultLocation')}
-          </button>
-          {locationSaved ? (
-            <p className="text-sm text-green-700">{t('locationSaved')}</p>
-          ) : null}
           <p className="text-xs text-slate-500">
-            Saved locally in this browser for search defaults.
+            Your default location is saved when you use Save Changes.
           </p>
         </div>
 
@@ -444,6 +437,17 @@ export default function ProfilePage() {
             className="rounded-md bg-red-600 px-4 py-2 text-white font-medium hover:bg-red-700"
           >
             {t('logout')}
+          </button>
+        </div>
+
+        <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
+          <button
+            type="submit"
+            form="client-profile-form"
+            disabled={saving}
+            className="pointer-events-auto rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {saving ? t('saving') : t('saveChanges')}
           </button>
         </div>
       </div>

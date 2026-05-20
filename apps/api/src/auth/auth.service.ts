@@ -30,6 +30,34 @@ export class AuthService {
     private notificationService: NotificationService,
   ) {}
 
+  private buildAuthUserPayload(
+    user: {
+      id: string;
+      nickname: string;
+      email: string;
+      firstName: string;
+      surname: string;
+      role: string;
+      locationPrimary?: string | null;
+      locationSecondary?: string | null;
+      locationTertiary?: string | null;
+    },
+    preferredLanguage: string,
+  ) {
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      email: user.email,
+      firstName: user.firstName,
+      surname: user.surname,
+      role: user.role,
+      preferredLanguage,
+      locationPrimary: user.locationPrimary ?? null,
+      locationSecondary: user.locationSecondary ?? null,
+      locationTertiary: user.locationTertiary ?? null,
+    };
+  }
+
   private async markProspectiveConversion(userId: string, source: string) {
     try {
       await this.prisma.$executeRaw`
@@ -154,15 +182,7 @@ export class AuthService {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        nickname: user.nickname,
-        email: user.email,
-        firstName: user.firstName,
-        surname: user.surname,
-        role: user.role,
-        preferredLanguage: dto.preferredLanguage ?? 'en',
-      },
+      user: this.buildAuthUserPayload(user, dto.preferredLanguage ?? 'en'),
     };
   }
 
@@ -206,16 +226,10 @@ export class AuthService {
         existingUser: true,
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
-        user: {
-          id: existingUser.id,
-          nickname: existingUser.nickname,
-          email: existingUser.email,
-          firstName: existingUser.firstName,
-          surname: existingUser.surname,
-          role: existingUser.role,
-          preferredLanguage:
-            existingUser.notificationPreference?.preferredLanguage ?? 'en',
-        },
+        user: this.buildAuthUserPayload(
+          existingUser,
+          existingUser.notificationPreference?.preferredLanguage ?? 'en',
+        ),
       };
     }
 
@@ -349,15 +363,7 @@ export class AuthService {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        nickname: user.nickname,
-        email: user.email,
-        firstName: user.firstName,
-        surname: user.surname,
-        role: user.role,
-        preferredLanguage: dto.preferredLanguage ?? 'en',
-      },
+      user: this.buildAuthUserPayload(user, dto.preferredLanguage ?? 'en'),
     };
   }
 
@@ -408,15 +414,10 @@ export class AuthService {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: {
-        id: updatedUser.id,
-        nickname: updatedUser.nickname,
-        email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        surname: updatedUser.surname,
-        role: updatedUser.role,
-        preferredLanguage: user.notificationPreference?.preferredLanguage ?? 'en',
-      },
+      user: this.buildAuthUserPayload(
+        updatedUser,
+        user.notificationPreference?.preferredLanguage ?? 'en',
+      ),
     };
   }
 
@@ -488,15 +489,10 @@ export class AuthService {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        nickname: user.nickname,
-        email: user.email,
-        firstName: user.firstName,
-        surname: user.surname,
-        role: user.role,
-        preferredLanguage: user.notificationPreference?.preferredLanguage ?? 'en',
-      },
+      user: this.buildAuthUserPayload(
+        user,
+        user.notificationPreference?.preferredLanguage ?? 'en',
+      ),
     };
   }
 

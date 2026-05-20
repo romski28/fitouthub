@@ -81,6 +81,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return {} as CanonicalLocation;
   };
 
+  const locationStorageKeyForUser = (userId?: string | null) =>
+    userId ? `userLocation:${userId}` : null;
+
+  const readStoredLocationForUser = (u: Partial<User> | null): CanonicalLocation => {
+    if (typeof window === 'undefined' || !u?.id) {
+      return {} as CanonicalLocation;
+    }
+
+    try {
+      const storageKey = locationStorageKeyForUser(u.id);
+      if (!storageKey) return {} as CanonicalLocation;
+      const stored = localStorage.getItem(storageKey);
+      return stored ? (JSON.parse(stored) as CanonicalLocation) : ({} as CanonicalLocation);
+    } catch (err) {
+      console.warn('Failed to restore stored user location:', err);
+      return {} as CanonicalLocation;
+    }
+  };
+
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -99,9 +118,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const storedUserRaw = localStorage.getItem('user');
       const storedLocRaw = localStorage.getItem('userLocation');
       const restoredUser = storedUserRaw ? (JSON.parse(storedUserRaw) as User) : null;
-      const restoredLocation = storedLocRaw
-        ? (JSON.parse(storedLocRaw) as CanonicalLocation)
-        : extractLocationFromUser(restoredUser);
+      const rememberedLocation = readStoredLocationForUser(restoredUser);
+      const userDerivedLocation = extractLocationFromUser(restoredUser);
+      const restoredLocation = userDerivedLocation.primary || userDerivedLocation.secondary || userDerivedLocation.tertiary
+        ? userDerivedLocation
+        : rememberedLocation.primary || rememberedLocation.secondary || rememberedLocation.tertiary
+          ? rememberedLocation
+          : storedLocRaw
+            ? (JSON.parse(storedLocRaw) as CanonicalLocation)
+            : ({} as CanonicalLocation);
 
       setAccessToken(token);
       setUser(restoredUser);
@@ -123,6 +148,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUserLocationState(loc);
     try {
       localStorage.setItem('userLocation', JSON.stringify(loc));
+      const storageKey = locationStorageKeyForUser(user?.id);
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(loc));
+      }
     } catch (err) {
       console.error('Failed to persist user location:', err);
     }
@@ -187,6 +216,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const derivedLoc = extractLocationFromUser(result.user);
     if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
       persistLocation(derivedLoc);
+    } else {
+      const rememberedLoc = readStoredLocationForUser(result.user);
+      if (rememberedLoc.primary || rememberedLoc.secondary || rememberedLoc.tertiary) {
+        persistLocation(rememberedLoc);
+      }
     }
     setIsLoggedIn(true);
 
@@ -224,6 +258,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const derivedLoc = extractLocationFromUser(result.user);
     if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
       persistLocation(derivedLoc);
+    } else {
+      const rememberedLoc = readStoredLocationForUser(result.user);
+      if (rememberedLoc.primary || rememberedLoc.secondary || rememberedLoc.tertiary) {
+        persistLocation(rememberedLoc);
+      }
     }
     setIsLoggedIn(true);
 
@@ -262,6 +301,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const derivedLoc = extractLocationFromUser(result.user);
     if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
       persistLocation(derivedLoc);
+    } else {
+      const rememberedLoc = readStoredLocationForUser(result.user);
+      if (rememberedLoc.primary || rememberedLoc.secondary || rememberedLoc.tertiary) {
+        persistLocation(rememberedLoc);
+      }
     }
     setIsLoggedIn(true);
 

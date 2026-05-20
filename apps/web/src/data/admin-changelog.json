@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-05-20-18de82b",
+    "date": "2026-05-20T13:08:30+08:00",
+    "title": "feat(profile): persist client default location",
+    "summary": "feat(profile): persist client default location",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "18de82b",
+    "files": [
+      "apps/api/prisma/migrations/20260520173000_add_user_default_location/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/api/src/users/users.service.ts",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/emergency-modal.tsx",
+      "apps/web/src/context/auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-189f8af",
     "date": "2026-05-20T11:48:47+08:00",
     "title": "fix(emergency): simplify summary panel copy",

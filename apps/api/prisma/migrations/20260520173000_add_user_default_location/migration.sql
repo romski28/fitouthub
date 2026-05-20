@@ -1,0 +1,4 @@
+ALTER TABLE "User"
+ADD COLUMN IF NOT EXISTS "locationPrimary" TEXT,
+ADD COLUMN IF NOT EXISTS "locationSecondary" TEXT,
+ADD COLUMN IF NOT EXISTS "locationTertiary" TEXT;

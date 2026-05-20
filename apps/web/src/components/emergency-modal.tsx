@@ -44,7 +44,7 @@ interface Props {
 }
 export function EmergencyModal({ isOpen, onClose }: Props) {
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, userLocation } = useAuth();
   const [selectedTrade, setSelectedTrade] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<CanonicalLocation>({});
   const [description, setDescription] = useState('');
@@ -99,6 +99,19 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
       .catch(() => {})
       .finally(() => setTradesLoading(false));
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (selectedLocation.primary) return;
+    if (!userLocation?.primary && !userLocation?.secondary && !userLocation?.tertiary) return;
+
+    setSelectedLocation({
+      primary: userLocation.primary,
+      secondary: userLocation.secondary,
+      tertiary: userLocation.tertiary,
+    });
+  }, [isOpen, selectedLocation.primary, userLocation]);
+
   useEffect(() => {
     if (!isOpen) {
       setSelectedTrade('');

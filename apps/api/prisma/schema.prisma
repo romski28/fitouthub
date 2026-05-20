@@ -159,6 +159,9 @@ model User {
   chineseName                     String?
   email                           String                   @unique
   mobile                          String?
+  locationPrimary                 String?
+  locationSecondary               String?
+  locationTertiary                String?
   passwordHash                    String
   passwordResetToken              String?
   passwordResetExpiry             DateTime?
