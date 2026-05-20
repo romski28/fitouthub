@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
@@ -25,6 +25,7 @@ export default function ProfessionalPortfolioPage() {
     media: [],
     referenceProjects: [],
   });
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -35,7 +36,9 @@ export default function ProfessionalPortfolioPage() {
 
     const fetchPortfolio = async () => {
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         const res = await fetchWithRetry(`${API_BASE_URL}/professional/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -49,6 +52,7 @@ export default function ProfessionalPortfolioPage() {
           media: payload.media || [],
           referenceProjects: payload.referenceProjects || [],
         });
+        hasLoadedRef.current = true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load portfolio');
       } finally {

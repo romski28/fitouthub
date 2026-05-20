@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-fc87c019",
+    "date": "2026-05-20T17:38:32+08:00",
+    "title": "fix(web): preserve portfolio state on auth refresh",
+    "summary": "fix(web): preserve portfolio state on auth refresh",
+    "areas": [
+      "web"
+    ],
+    "commit": "fc87c019",
+    "files": [
+      "apps/web/src/app/professional/portfolio/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-bb2c94d1",
     "date": "2026-05-20T17:12:01+08:00",
     "title": "feat(media): unify professional image storage",
