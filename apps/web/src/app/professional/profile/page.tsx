@@ -148,7 +148,6 @@ export default function ProfessionalProfilePage() {
   const [refError, setRefError] = useState<string | null>(null);
   const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
   const [pendingProfileFiles, setPendingProfileFiles] = useState<File[]>([]);
-  const [password, setPassword] = useState('');
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
@@ -166,7 +165,6 @@ export default function ProfessionalProfilePage() {
   );
   const incompleteItems = profileChecklist.filter((item) => !item.done).slice(0, 4);
   const clientFacingHighlights = buildClientFacingHighlights(profile, refProjects, emergencyCalloutAvailable);
-  const selectedCoverageNames = useMemo(() => areaCodesToNames(selectedCoverageAreaCodes), [selectedCoverageAreaCodes]);
   const selectedCoverageZoneCodes = useMemo(
     () => areaCodesToZoneCodes(selectedCoverageAreaCodes),
     [selectedCoverageAreaCodes],
@@ -329,6 +327,7 @@ export default function ProfessionalProfilePage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
+          email: profile.email || undefined,
           fullName: profile.fullName || undefined,
           businessName: profile.businessName || undefined,
           phone: profile.phone || undefined,
@@ -346,20 +345,6 @@ export default function ProfessionalProfilePage() {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-
-      // Optional password update if provided
-      if (password && password.length >= 6) {
-        const pwRes = await fetch(`${API_BASE_URL}/professional/me/password`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ password }),
-        });
-        if (!pwRes.ok) throw new Error(await pwRes.text());
-        setPassword('');
-      }
 
       const prefRes = await fetch(`${API_BASE_URL}/professional/me/notification-preferences`, {
         method: 'PATCH',
@@ -490,10 +475,12 @@ export default function ProfessionalProfilePage() {
             <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
             <p className="text-sm text-slate-600">Manage your professional details and reference projects.</p>
           </div>
-          <div className="text-right text-sm text-slate-500">
-            <div>{professional?.email || profile.email}</div>
-            <div className="text-xs text-slate-400">ID: {professional?.id || profile.id}</div>
-          </div>
+          <button
+            type="button"
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            Change Password
+          </button>
         </div>
 
         {error && (
@@ -585,6 +572,15 @@ export default function ProfessionalProfilePage() {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                value={profile.email || ''}
+                onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-slate-700">Profession Type</label>
               <select
                 value={normalizedProfessionType}
@@ -613,95 +609,23 @@ export default function ProfessionalProfilePage() {
               </select>
               <p className="mt-1 text-xs text-slate-500">Choose the listing type clients should see first.</p>
             </div>
-            {showPrimaryTrade && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
-              <input
-                type="text"
-                value={profile.primaryTrade || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, primaryTrade: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                placeholder="e.g. Carpentry"
-              />
-              <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
-            </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Coverage</label>
-              <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Interactive coverage editor</p>
-                    <p className="text-xs text-slate-500">Select service regions (5 zones). District-level coverage is mapped automatically for matching.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleCoverageZoneCodesChange(HK_ZONE_CODES)}
-                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Whole HK
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCoverageAreaCodesChange([])}
-                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                <MapOrList
-                  storageKey="fh-map-or-list-preference"
-                  label="Coverage input mode"
-                  helperText="Switch between the interactive map and a text list. Your preference is saved locally."
-                  mapLabel="Map"
-                  listLabel="Words"
-                  map={
-                    <HkZoneMap
-                      highlightedCodes={selectedCoverageZoneCodes}
-                      onToggleCode={handleCoverageZoneToggle}
-                    />
-                  }
-                  list={
-                    <HkZoneList
-                      selectedZoneCodes={selectedCoverageZoneCodes}
-                      onChange={handleCoverageZoneCodesChange}
-                    />
-                  }
-                />
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Service Area</p>
-                    <p className="mt-1 text-sm text-slate-700">{profile.serviceArea || 'No districts selected yet'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Primary Region</p>
-                    <p className="mt-1 text-sm text-slate-700">{profile.locationPrimary || '—'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Region Count</p>
-                    <p className="mt-1 text-sm text-slate-700">{selectedCoverageZoneCodes.length || 0}</p>
-                  </div>
-                </div>
-
-                {selectedCoverageNames.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCoverageNames.map((name) => (
-                      <span key={name} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {(showProductsOffered || showTradesOffered) && (
+          {(showPrimaryTrade || showProductsOffered || showTradesOffered || showEmergencyAvailability) && (
             <div className="grid gap-4 md:grid-cols-2">
+              {showPrimaryTrade && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
+                  <input
+                    type="text"
+                    value={profile.primaryTrade || ''}
+                    onChange={(e) => setProfile((p) => ({ ...p, primaryTrade: e.target.value }))}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="e.g. Carpentry"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
+                </div>
+              )}
               {showProductsOffered && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Products Offered</label>
@@ -735,109 +659,141 @@ export default function ProfessionalProfilePage() {
                   <p className="mt-1 text-xs text-slate-500">Use Ctrl/Cmd-click to select multiple trades.</p>
                 </div>
               )}
+              {showEmergencyAvailability && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 md:self-end">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-slate-800">Emergency callout available 24/7</p>
+                    <div className="inline-flex rounded-full border border-blue-200 bg-white p-1 shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setEmergencyCalloutAvailable(true)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${emergencyCalloutAvailable ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-blue-50'}`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEmergencyCalloutAvailable(false)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!emergencyCalloutAvailable ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">New Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="Minimum 6 characters"
-            />
-            <p className="mt-1 text-xs text-slate-500">Leave blank to keep your current password</p>
-          </div>
-
-          {showEmergencyAvailability && (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-900">Availability</h2>
-              <div className="space-y-2">
-                <p className="text-sm text-slate-700">Emergency call out available 24/7</p>
-                <div className="inline-flex rounded-full border border-blue-200 bg-white p-1 shadow-sm">
+            <label className="block text-sm font-medium text-slate-700">Coverage</label>
+            <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Zone coverage</p>
+                  <p className="text-xs text-slate-500">Select service zones only. We are not using district-level coverage here for now.</p>
+                </div>
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setEmergencyCalloutAvailable(true)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${emergencyCalloutAvailable ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-blue-50'}`}
+                    onClick={() => handleCoverageZoneCodesChange(HK_ZONE_CODES)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    Yes
+                    Whole HK
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEmergencyCalloutAvailable(false)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!emergencyCalloutAvailable ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                    onClick={() => handleCoverageAreaCodesChange([])}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    No
+                    Clear
                   </button>
                 </div>
               </div>
+
+              <MapOrList
+                storageKey="fh-map-or-list-preference"
+                label="Coverage input mode"
+                helperText="Switch between the interactive map and a text list. Your preference is saved locally."
+                mapLabel="Map"
+                listLabel="Words"
+                map={
+                  <HkZoneMap
+                    highlightedCodes={selectedCoverageZoneCodes}
+                    onToggleCode={handleCoverageZoneToggle}
+                  />
+                }
+                list={
+                  <HkZoneList
+                    selectedZoneCodes={selectedCoverageZoneCodes}
+                    onChange={handleCoverageZoneCodesChange}
+                  />
+                }
+              />
             </div>
-          )}
+          </div>
 
           <div className="pt-6 border-t border-slate-200 space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="professionalAllowPartnerOffers"
-                checked={allowPartnerOffers}
-                onChange={(e) => setAllowPartnerOffers(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <label htmlFor="professionalAllowPartnerOffers" className="text-sm text-slate-700">
-                I agree to receive partner offers and promotions
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  id="professionalAllowPartnerOffers"
+                  checked={allowPartnerOffers}
+                  onChange={(e) => setAllowPartnerOffers(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span>I agree to receive partner offers and promotions</span>
               </label>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="professionalAllowPlatformUpdates"
-                checked={allowPlatformUpdates}
-                onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <label htmlFor="professionalAllowPlatformUpdates" className="text-sm text-slate-700">
-                I agree to receive platform updates and service notifications
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  id="professionalAllowPlatformUpdates"
+                  checked={allowPlatformUpdates}
+                  onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span>I agree to receive platform updates and service notifications</span>
               </label>
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="professionalPreferredLanguage" className="block text-sm text-slate-700">
-                Preferred language
-              </label>
-              <select
-                id="professionalPreferredLanguage"
-                value={preferredLanguage}
-                onChange={(e) => setPreferredLanguage(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="en">English</option>
-                <option value="zh-HK">Cantonese (Traditional Chinese)</option>
-              </select>
-            </div>
+              <div className="space-y-2">
+                <label htmlFor="professionalPreferredLanguage" className="block text-sm text-slate-700">
+                  Preferred language
+                </label>
+                <select
+                  id="professionalPreferredLanguage"
+                  value={preferredLanguage}
+                  onChange={(e) => setPreferredLanguage(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="en">English</option>
+                  <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+                </select>
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="professionalPreferredContactMethod" className="block text-sm text-slate-700">
-                Preferred contact method
-              </label>
-              <select
-                id="professionalPreferredContactMethod"
-                value={preferredContactMethod}
-                onChange={(e) =>
-                  setPreferredContactMethod(
-                    e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
-                  )
-                }
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="EMAIL">Email</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="SMS">SMS</option>
-                <option value="WECHAT">WeChat</option>
-              </select>
+              <div className="space-y-2">
+                <label htmlFor="professionalPreferredContactMethod" className="block text-sm text-slate-700">
+                  Preferred contact method
+                </label>
+                <select
+                  id="professionalPreferredContactMethod"
+                  value={preferredContactMethod}
+                  onChange={(e) =>
+                    setPreferredContactMethod(
+                      e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                    )
+                  }
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="EMAIL">Email</option>
+                  <option value="WHATSAPP">WhatsApp</option>
+                  <option value="SMS">SMS</option>
+                  <option value="WECHAT">WeChat</option>
+                </select>
+              </div>
             </div>
           </div>
 

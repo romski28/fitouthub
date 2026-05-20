@@ -323,6 +323,7 @@ export class ProfessionalController {
     @Request() req: any,
     @Body()
     body: {
+      email?: string;
       fullName?: string;
       businessName?: string;
       phone?: string;
@@ -364,6 +365,7 @@ export class ProfessionalController {
       : undefined;
 
     const data: any = {
+      email: this.normalizeTextInput(body.email),
       fullName: this.normalizeTextInput(body.fullName),
       businessName: this.normalizeTextInput(body.businessName),
       phone: this.normalizeTextInput(body.phone),

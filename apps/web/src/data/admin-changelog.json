@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-20-2a155a5",
+    "date": "2026-05-20T14:49:09+08:00",
+    "title": "feat(web): refine professional profile phase 2 layout",
+    "summary": "feat(web): refine professional profile phase 2 layout",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2a155a5",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-3848b68",
     "date": "2026-05-20T13:43:17+08:00",
     "title": "refactor(profile): streamline professional profile fields",
