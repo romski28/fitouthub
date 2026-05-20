@@ -3,7 +3,7 @@ services:
     name: fitouthub-api
     runtime: node
     buildCommand: cd apps/api && pnpm install --frozen-lockfile && pnpm run build
-    startCommand: cd apps/api && node dist/src/main.js
+    startCommand: cd apps/api && pnpm exec prisma migrate deploy && node dist/src/main.js
     envVars:
       - key: DATABASE_URL
         sync: false

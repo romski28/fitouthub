@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-20-cf0a8458",
+    "date": "2026-05-20T22:16:58+08:00",
+    "title": "fix(deploy): run prisma migrations on render start",
+    "summary": "fix(deploy): run prisma migrations on render start",
+    "areas": [
+      "infra"
+    ],
+    "commit": "cf0a8458",
+    "files": [
+      "render.yaml"
+    ]
+  },
+  {
     "id": "2026-05-20-aa1cb8c6",
     "date": "2026-05-20T22:01:32+08:00",
     "title": "feat(compliance): add certification review workflow",
