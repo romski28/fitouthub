@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-20-bb2c94d1",
+    "date": "2026-05-20T17:12:01+08:00",
+    "title": "feat(media): unify professional image storage",
+    "summary": "feat(media): unify professional image storage",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bb2c94d1",
+    "files": [
+      "apps/api/prisma/migrations/20260520223000_add_professional_media/migration.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional/portfolio/page.tsx",
+      "apps/web/src/components/professional-portfolio-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-801c55f",
     "date": "2026-05-20T15:34:38+08:00",
     "title": "feat(web): split professional portfolio from profile",

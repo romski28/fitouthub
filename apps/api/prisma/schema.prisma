@@ -99,6 +99,11 @@ enum PaymentMilestoneStatus {
   cancelled
 }
 
+enum ProfessionalMediaKind {
+  STANDALONE
+  REFERENCE_PROJECT
+}
+
 enum AdminActionType {
   VERIFY_ESCROW_RECEIPT
   APPROVE_PAYMENT_RELEASE
@@ -293,6 +298,7 @@ model Professional {
   emailTokens             EmailToken[]
   user                    User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals    ProjectProfessional[]
+  media                   ProfessionalMedia[]
   reports                 ProfessionalReport[]
   referenceProjects       ProfessionalReferenceProject[]
   privateChatThreads      PrivateChatThread[]
@@ -742,8 +748,34 @@ model ProfessionalReferenceProject {
   updatedAt      DateTime @updatedAt
 
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  media        ProfessionalMedia[]
 
   @@index([professionalId])
+}
+
+model ProfessionalMedia {
+  id                      String                @id @default(cuid())
+  professionalId          String
+  storageKey              String
+  kind                    ProfessionalMediaKind @default(STANDALONE)
+  description             String?
+  isProfileFeature        Boolean               @default(false)
+  profileFeatureSortOrder Int?
+  referenceProjectId      String?               @db.Uuid
+  projectSortOrder        Int?
+  credit                  String?
+  copyrightNotice         String?
+  sourceType              String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  professional     Professional                  @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  referenceProject ProfessionalReferenceProject? @relation(fields: [referenceProjectId], references: [id], onDelete: SetNull)
+
+  @@unique([professionalId, storageKey])
+  @@index([professionalId, kind, projectSortOrder])
+  @@index([professionalId, isProfileFeature, profileFeatureSortOrder])
+  @@index([referenceProjectId, projectSortOrder])
 }
 
 model ProjectMilestone {

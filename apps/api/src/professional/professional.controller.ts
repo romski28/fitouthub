@@ -63,24 +63,316 @@ export class ProfessionalController {
     return this.activeProfessionalStatuses.includes(String(status || '').toLowerCase());
   }
 
+  private getProfessionalProfileInclude() {
+    return {
+      media: {
+        orderBy: [
+          { isProfileFeature: 'desc' },
+          { profileFeatureSortOrder: 'asc' },
+          { projectSortOrder: 'asc' },
+          { createdAt: 'desc' },
+        ],
+      },
+      referenceProjects: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          media: {
+            orderBy: [
+              { projectSortOrder: 'asc' },
+              { createdAt: 'asc' },
+            ],
+          },
+        },
+      },
+      notificationPreferences: true,
+      regionCoverage: {
+        include: {
+          zone: {
+            select: {
+              id: true,
+              code: true,
+              label: true,
+              labelZh: true,
+              mapSvgId: true,
+            },
+          },
+          area: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+      },
+    };
+  }
+
+  private mapProfessionalMediaItem(media: any) {
+    if (!media) return media;
+    return {
+      ...media,
+      imageUrl: buildPublicAssetUrl(media.storageKey),
+    };
+  }
+
   private resolveProfileMediaUrls(professional: any) {
     if (!professional) return professional;
+
+    const mediaRows = Array.isArray(professional.media) ? [...professional.media] : [];
+    const featuredMedia = mediaRows
+      .filter((media) => media.isProfileFeature)
+      .sort((left, right) => {
+        const leftOrder = left.profileFeatureSortOrder ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = right.profileFeatureSortOrder ?? Number.MAX_SAFE_INTEGER;
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+        return new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime();
+      });
+
     return {
       ...professional,
-      profileImages: (professional.profileImages || []).map((v: string) => buildPublicAssetUrl(v)),
+      media: mediaRows.map((media) => this.mapProfessionalMediaItem(media)),
+      profileImages:
+        featuredMedia.length > 0
+          ? featuredMedia.map((media) => buildPublicAssetUrl(media.storageKey))
+          : (professional.profileImages || []).map((v: string) => buildPublicAssetUrl(v)),
       referenceProjects: (professional.referenceProjects || []).map((rp: any) => ({
-        ...rp,
-        imageUrls: (rp.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
+        ...this.resolveReferenceProjectMediaUrls(rp),
       })),
     };
   }
 
   private resolveReferenceProjectMediaUrls(referenceProject: any) {
     if (!referenceProject) return referenceProject;
+
+    const mediaRows = Array.isArray(referenceProject.media)
+      ? [...referenceProject.media].sort((left, right) => {
+          const leftOrder = left.projectSortOrder ?? Number.MAX_SAFE_INTEGER;
+          const rightOrder = right.projectSortOrder ?? Number.MAX_SAFE_INTEGER;
+          if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+          return new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime();
+        })
+      : [];
+
     return {
       ...referenceProject,
-      imageUrls: (referenceProject.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
+      media: mediaRows.map((media) => this.mapProfessionalMediaItem(media)),
+      imageUrls:
+        mediaRows.length > 0
+          ? mediaRows.map((media) => buildPublicAssetUrl(media.storageKey))
+          : (referenceProject.imageUrls || []).map((v: string) => buildPublicAssetUrl(v)),
     };
+  }
+
+  private normalizeStorageKeys(values: Array<string | null | undefined>) {
+    return this.normalizeUniqueStrings(
+      values.map((value) => extractObjectKeyFromValue(value)),
+    );
+  }
+
+  private async syncLegacyProfileImagesMirror(tx: any, professionalId: string) {
+    const featuredMedia = await (tx as any).professionalMedia.findMany({
+      where: { professionalId, isProfileFeature: true },
+      orderBy: [
+        { profileFeatureSortOrder: 'asc' },
+        { createdAt: 'asc' },
+      ],
+      select: { storageKey: true },
+    });
+
+    await (tx as any).professional.update({
+      where: { id: professionalId },
+      data: {
+        profileImages: featuredMedia.map((media: { storageKey: string }) => media.storageKey),
+      },
+    });
+  }
+
+  private async syncLegacyReferenceProjectImagesMirror(tx: any, referenceProjectId: string) {
+    const projectMedia = await (tx as any).professionalMedia.findMany({
+      where: { referenceProjectId },
+      orderBy: [
+        { projectSortOrder: 'asc' },
+        { createdAt: 'asc' },
+      ],
+      select: { storageKey: true },
+    });
+
+    await (tx as any).professionalReferenceProject.update({
+      where: { id: referenceProjectId },
+      data: {
+        imageUrls: projectMedia.map((media: { storageKey: string }) => media.storageKey),
+      },
+    });
+  }
+
+  private async syncProfileFeatureMedia(tx: any, professionalId: string, storageKeys: string[]) {
+    if (storageKeys.length > 5) {
+      throw new BadRequestException('You can select up to 5 profile feature images');
+    }
+
+    const relevantMedia: any[] = await (tx as any).professionalMedia.findMany({
+      where: {
+        professionalId,
+        OR: [
+          { isProfileFeature: true },
+          { storageKey: { in: storageKeys } },
+        ],
+      },
+      select: {
+        id: true,
+        storageKey: true,
+        kind: true,
+        isProfileFeature: true,
+      },
+    });
+
+    const mediaByKey = new Map(relevantMedia.map((media: any) => [media.storageKey, media]));
+    const selectedSet = new Set(storageKeys);
+
+    for (const media of relevantMedia) {
+      if (media.isProfileFeature && !selectedSet.has(media.storageKey)) {
+        await (tx as any).professionalMedia.update({
+          where: { id: media.id },
+          data: {
+            isProfileFeature: false,
+            profileFeatureSortOrder: null,
+          },
+        });
+      }
+    }
+
+    for (const [index, storageKey] of storageKeys.entries()) {
+      const existing: any = mediaByKey.get(storageKey);
+      if (existing) {
+        await (tx as any).professionalMedia.update({
+          where: { id: existing.id },
+          data: {
+            isProfileFeature: true,
+            profileFeatureSortOrder: index + 1,
+          },
+        });
+        continue;
+      }
+
+      await (tx as any).professionalMedia.create({
+        data: {
+          professionalId,
+          storageKey,
+          kind: 'STANDALONE',
+          isProfileFeature: true,
+          profileFeatureSortOrder: index + 1,
+        },
+      });
+    }
+
+    await this.syncLegacyProfileImagesMirror(tx, professionalId);
+  }
+
+  private async syncReferenceProjectMedia(
+    tx: any,
+    professionalId: string,
+    referenceProjectId: string,
+    storageKeys: string[],
+  ) {
+    const relevantMedia: any[] = await (tx as any).professionalMedia.findMany({
+      where: {
+        professionalId,
+        OR: [
+          { referenceProjectId },
+          { storageKey: { in: storageKeys } },
+        ],
+      },
+      select: {
+        id: true,
+        storageKey: true,
+        isProfileFeature: true,
+        referenceProjectId: true,
+      },
+    });
+
+    const mediaByKey = new Map(relevantMedia.map((media: any) => [media.storageKey, media]));
+    const selectedSet = new Set(storageKeys);
+
+    for (const media of relevantMedia) {
+      if (media.referenceProjectId !== referenceProjectId) continue;
+      if (selectedSet.has(media.storageKey)) continue;
+
+      if (media.isProfileFeature) {
+        await (tx as any).professionalMedia.update({
+          where: { id: media.id },
+          data: {
+            kind: 'STANDALONE',
+            referenceProjectId: null,
+            projectSortOrder: null,
+          },
+        });
+      } else {
+        await (tx as any).professionalMedia.delete({
+          where: { id: media.id },
+        });
+      }
+    }
+
+    for (const [index, storageKey] of storageKeys.entries()) {
+      const existing: any = mediaByKey.get(storageKey);
+      if (existing) {
+        await (tx as any).professionalMedia.update({
+          where: { id: existing.id },
+          data: {
+            kind: 'REFERENCE_PROJECT',
+            referenceProjectId,
+            projectSortOrder: index + 1,
+          },
+        });
+        continue;
+      }
+
+      await (tx as any).professionalMedia.create({
+        data: {
+          professionalId,
+          storageKey,
+          kind: 'REFERENCE_PROJECT',
+          referenceProjectId,
+          projectSortOrder: index + 1,
+        },
+      });
+    }
+
+    await this.syncLegacyReferenceProjectImagesMirror(tx, referenceProjectId);
+  }
+
+  private async detachOrDeleteReferenceProjectMedia(tx: any, referenceProjectId: string) {
+    const mediaRows = await (tx as any).professionalMedia.findMany({
+      where: { referenceProjectId },
+      select: { id: true, isProfileFeature: true },
+    });
+
+    for (const media of mediaRows) {
+      if (media.isProfileFeature) {
+        await (tx as any).professionalMedia.update({
+          where: { id: media.id },
+          data: {
+            kind: 'STANDALONE',
+            referenceProjectId: null,
+            projectSortOrder: null,
+          },
+        });
+      } else {
+        await (tx as any).professionalMedia.delete({
+          where: { id: media.id },
+        });
+      }
+    }
+  }
+
+  private async loadResolvedProfessionalProfile(professionalId: string) {
+    const professional = await (this.prisma as any).professional.findUnique({
+      where: { id: professionalId },
+      include: this.getProfessionalProfileInclude(),
+    });
+    if (!professional) throw new BadRequestException('Professional not found');
+    return this.resolveProfileMediaUrls(professional);
   }
 
   private normalizeQuoteSchedule(input: {
@@ -225,35 +517,7 @@ export class ProfessionalController {
   @UseGuards(AuthGuard('jwt-professional'))
   async getProfile(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
-    const professional = await (this.prisma as any).professional.findUnique({
-      where: { id: professionalId },
-      include: {
-        referenceProjects: { orderBy: { createdAt: 'desc' } },
-        notificationPreferences: true,
-        regionCoverage: {
-          include: {
-            zone: {
-              select: {
-                id: true,
-                code: true,
-                label: true,
-                labelZh: true,
-                mapSvgId: true,
-              },
-            },
-            area: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!professional) throw new BadRequestException('Professional not found');
-    return this.resolveProfileMediaUrls(professional);
+    return this.loadResolvedProfessionalProfile(professionalId);
   }
 
   @Patch('me/notification-preferences')
@@ -342,9 +606,7 @@ export class ProfessionalController {
   ) {
     const professionalId = req.user.id || req.user.sub;
     const normalizedProfileImages = Array.isArray(body.profileImages)
-      ? body.profileImages
-          .map((value) => extractObjectKeyFromValue(value))
-          .filter((value) => value.length > 0)
+      ? this.normalizeStorageKeys(body.profileImages)
       : undefined;
 
     const normalizedServiceArea = this.normalizeCsvInput(body.serviceArea);
@@ -377,34 +639,32 @@ export class ProfessionalController {
       suppliesOffered: normalizedSuppliesOffered,
       tradesOffered: normalizedTradesOffered,
       primaryTrade: this.normalizeTextInput(body.primaryTrade),
-      profileImages: normalizedProfileImages,
       emergencyCalloutAvailable: body.emergencyCalloutAvailable,
     };
     // Remove undefined to avoid overwriting
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
 
-    let updated: any;
+    let cachedAreas: Array<{ id: string; code: string; zoneId: string; name: string; zone?: { label?: string | null } | null }> = [];
 
     if (normalizedCoverageAreaCodes !== undefined) {
-      const areas = normalizedCoverageAreaCodes.length
+      cachedAreas = normalizedCoverageAreaCodes.length
         ? await (this.prisma as any).regionArea.findMany({
             where: { code: { in: normalizedCoverageAreaCodes } },
             select: { id: true, code: true, zoneId: true, name: true, zone: { select: { label: true } } },
           })
         : [];
 
-      const foundCodes = new Set((areas as Array<{ code: string }>).map((area) => area.code));
+      const foundCodes = new Set(cachedAreas.map((area) => area.code));
       const invalidCodes = normalizedCoverageAreaCodes.filter((code) => !foundCodes.has(code));
       if (invalidCodes.length > 0) {
         throw new BadRequestException(`Invalid coverage area codes: ${invalidCodes.join(', ')}`);
       }
+    }
 
-      const mirroredLegacy = this.buildLegacyLocationMirrorFromAreas(
-        areas as Array<{ name: string; zone?: { label?: string | null } | null }>,
-      );
-
-      updated = await this.prisma.$transaction(async (tx) => {
-        const saved = await (tx as any).professional.update({
+    await this.prisma.$transaction(async (tx) => {
+      if (normalizedCoverageAreaCodes !== undefined) {
+        const mirroredLegacy = this.buildLegacyLocationMirrorFromAreas(cachedAreas);
+        await (tx as any).professional.update({
           where: { id: professionalId },
           data: {
             ...data,
@@ -419,26 +679,28 @@ export class ProfessionalController {
           where: { professionalId },
         });
 
-        if (areas.length > 0) {
+        if (cachedAreas.length > 0) {
           await (tx as any).professionalRegionCoverage.createMany({
-            data: (areas as Array<{ id: string; zoneId: string }>).map((area) => ({
+            data: cachedAreas.map((area) => ({
               professionalId,
               zoneId: area.zoneId,
               areaId: area.id,
             })),
           });
         }
+      } else {
+        await (tx as any).professional.update({
+          where: { id: professionalId },
+          data,
+        });
+      }
 
-        return saved;
-      });
-    } else {
-      updated = await (this.prisma as any).professional.update({
-        where: { id: professionalId },
-        data,
-      });
-    }
+      if (normalizedProfileImages !== undefined) {
+        await this.syncProfileFeatureMedia(tx, professionalId, normalizedProfileImages);
+      }
+    });
 
-    return updated;
+    return this.loadResolvedProfessionalProfile(professionalId);
   }
 
   @Put('me/password')
@@ -455,6 +717,237 @@ export class ProfessionalController {
       select: { id: true, email: true, fullName: true, updatedAt: true },
     });
     return updated;
+  }
+
+  @Get('media')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async listMedia(@Request() req: any) {
+    const professionalId = req.user.id || req.user.sub;
+    const media = await (this.prisma as any).professionalMedia.findMany({
+      where: { professionalId },
+      orderBy: [
+        { isProfileFeature: 'desc' },
+        { profileFeatureSortOrder: 'asc' },
+        { projectSortOrder: 'asc' },
+        { createdAt: 'desc' },
+      ],
+      include: {
+        referenceProject: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    return media.map((item: any) => this.mapProfessionalMediaItem(item));
+  }
+
+  @Post('media')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async createMedia(
+    @Request() req: any,
+    @Body()
+    body: {
+      storageKeys?: string[];
+      imageUrls?: string[];
+      description?: string;
+      credit?: string;
+      copyrightNotice?: string;
+      sourceType?: string;
+      isProfileFeature?: boolean;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+    const storageKeys = this.normalizeStorageKeys(body.storageKeys || body.imageUrls || []);
+    if (storageKeys.length === 0) {
+      throw new BadRequestException('At least one media item is required');
+    }
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      let nextFeatureOrder: number | null = null;
+
+      if (body.isProfileFeature) {
+        const featureCount = await (tx as any).professionalMedia.count({
+          where: { professionalId, isProfileFeature: true },
+        });
+        if (featureCount + storageKeys.length > 5) {
+          throw new BadRequestException('You can select up to 5 profile feature images');
+        }
+        nextFeatureOrder = featureCount + 1;
+      }
+
+      const rows: any[] = [];
+      for (const storageKey of storageKeys) {
+        const existing = await (tx as any).professionalMedia.findUnique({
+          where: {
+            professionalId_storageKey: {
+              professionalId,
+              storageKey,
+            },
+          },
+        });
+
+        if (existing) {
+          const updated = await (tx as any).professionalMedia.update({
+            where: { id: existing.id },
+            data: {
+              description: body.description !== undefined ? this.normalizeTextInput(body.description) : existing.description,
+              credit: body.credit !== undefined ? this.normalizeTextInput(body.credit) : existing.credit,
+              copyrightNotice:
+                body.copyrightNotice !== undefined
+                  ? this.normalizeTextInput(body.copyrightNotice)
+                  : existing.copyrightNotice,
+              sourceType: body.sourceType !== undefined ? this.normalizeTextInput(body.sourceType) : existing.sourceType,
+              ...(body.isProfileFeature
+                ? {
+                    isProfileFeature: true,
+                    profileFeatureSortOrder: nextFeatureOrder,
+                  }
+                : {}),
+            },
+          });
+          if (body.isProfileFeature && nextFeatureOrder !== null) nextFeatureOrder += 1;
+          rows.push(updated);
+          continue;
+        }
+
+        const createdRow = await (tx as any).professionalMedia.create({
+          data: {
+            professionalId,
+            storageKey,
+            kind: 'STANDALONE',
+            description: this.normalizeTextInput(body.description),
+            credit: this.normalizeTextInput(body.credit),
+            copyrightNotice: this.normalizeTextInput(body.copyrightNotice),
+            sourceType: this.normalizeTextInput(body.sourceType),
+            isProfileFeature: Boolean(body.isProfileFeature),
+            profileFeatureSortOrder: body.isProfileFeature ? nextFeatureOrder : null,
+          },
+        });
+        if (body.isProfileFeature && nextFeatureOrder !== null) nextFeatureOrder += 1;
+        rows.push(createdRow);
+      }
+
+      if (body.isProfileFeature) {
+        await this.syncLegacyProfileImagesMirror(tx, professionalId);
+      }
+
+      return rows;
+    });
+
+    return created.map((item: any) => this.mapProfessionalMediaItem(item));
+  }
+
+  @Put('media/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async updateMedia(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      description?: string | null;
+      credit?: string | null;
+      copyrightNotice?: string | null;
+      sourceType?: string | null;
+      isProfileFeature?: boolean;
+    },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const existing = await (tx as any).professionalMedia.findFirst({
+        where: { id, professionalId },
+      });
+      if (!existing) {
+        throw new BadRequestException('Media item not found');
+      }
+
+      let profileFeatureSortOrder = existing.profileFeatureSortOrder;
+      if (body.isProfileFeature === true && !existing.isProfileFeature) {
+        const featureCount = await (tx as any).professionalMedia.count({
+          where: { professionalId, isProfileFeature: true },
+        });
+        if (featureCount >= 5) {
+          throw new BadRequestException('You can select up to 5 profile feature images');
+        }
+        profileFeatureSortOrder = featureCount + 1;
+      }
+      if (body.isProfileFeature === false) {
+        profileFeatureSortOrder = null;
+      }
+
+      const row = await (tx as any).professionalMedia.update({
+        where: { id: existing.id },
+        data: {
+          description:
+            body.description === undefined ? existing.description : this.normalizeTextInput(body.description ?? undefined) || null,
+          credit: body.credit === undefined ? existing.credit : this.normalizeTextInput(body.credit ?? undefined) || null,
+          copyrightNotice:
+            body.copyrightNotice === undefined
+              ? existing.copyrightNotice
+              : this.normalizeTextInput(body.copyrightNotice ?? undefined) || null,
+          sourceType:
+            body.sourceType === undefined ? existing.sourceType : this.normalizeTextInput(body.sourceType ?? undefined) || null,
+          ...(body.isProfileFeature === undefined
+            ? {}
+            : {
+                isProfileFeature: body.isProfileFeature,
+                profileFeatureSortOrder,
+              }),
+        },
+        include: {
+          referenceProject: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      });
+
+      if (body.isProfileFeature !== undefined) {
+        await this.syncLegacyProfileImagesMirror(tx, professionalId);
+      }
+
+      return row;
+    });
+
+    return this.mapProfessionalMediaItem(updated);
+  }
+
+  @Delete('media/:id')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async deleteMedia(@Request() req: any, @Param('id') id: string) {
+    const professionalId = req.user.id || req.user.sub;
+
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await (tx as any).professionalMedia.findFirst({
+        where: { id, professionalId },
+        select: {
+          id: true,
+          isProfileFeature: true,
+          referenceProjectId: true,
+        },
+      });
+      if (!existing) {
+        throw new BadRequestException('Media item not found');
+      }
+
+      await (tx as any).professionalMedia.delete({
+        where: { id: existing.id },
+      });
+
+      if (existing.isProfileFeature) {
+        await this.syncLegacyProfileImagesMirror(tx, professionalId);
+      }
+      if (existing.referenceProjectId) {
+        await this.syncLegacyReferenceProjectImagesMirror(tx, existing.referenceProjectId);
+      }
+    });
+
+    return { success: true };
   }
 
   @Get('projects')
@@ -524,6 +1017,14 @@ export class ProfessionalController {
     const professionalId = req.user.id || req.user.sub;
     const projects = await (this.prisma as any).professionalReferenceProject.findMany({
       where: { professionalId },
+      include: {
+        media: {
+          orderBy: [
+            { projectSortOrder: 'asc' },
+            { createdAt: 'asc' },
+          ],
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
     return projects.map((project: any) => this.resolveReferenceProjectMediaUrls(project));
@@ -537,9 +1038,7 @@ export class ProfessionalController {
   ) {
     try {
       const professionalId = req.user.id || req.user.sub;
-      const normalizedImageUrls = (body.imageUrls || [])
-        .map((value) => extractObjectKeyFromValue(value))
-        .filter((value) => value.length > 0);
+      const normalizedImageUrls = this.normalizeStorageKeys(body.imageUrls || []);
       console.log('[createReferenceProject] req.user:', req.user);
       console.log('[createReferenceProject] professionalId:', professionalId);
       if (!professionalId) {
@@ -548,13 +1047,29 @@ export class ProfessionalController {
       if (!body.title || !body.title.trim()) {
         throw new BadRequestException('Title is required');
       }
-      const created = await (this.prisma as any).professionalReferenceProject.create({
-        data: {
-          professionalId,
-          title: body.title.trim(),
-          description: body.description?.trim() || null,
-          imageUrls: normalizedImageUrls,
-        },
+      const created = await this.prisma.$transaction(async (tx) => {
+        const project = await (tx as any).professionalReferenceProject.create({
+          data: {
+            professionalId,
+            title: body.title.trim(),
+            description: body.description?.trim() || null,
+            imageUrls: normalizedImageUrls,
+          },
+        });
+
+        await this.syncReferenceProjectMedia(tx, professionalId, project.id, normalizedImageUrls);
+
+        return (tx as any).professionalReferenceProject.findUnique({
+          where: { id: project.id },
+          include: {
+            media: {
+              orderBy: [
+                { projectSortOrder: 'asc' },
+                { createdAt: 'asc' },
+              ],
+            },
+          },
+        });
       });
       return this.resolveReferenceProjectMediaUrls(created);
     } catch (error) {
@@ -574,9 +1089,7 @@ export class ProfessionalController {
     try {
       const professionalId = req.user.id || req.user.sub;
       const normalizedImageUrls = body.imageUrls
-        ? body.imageUrls
-            .map((value) => extractObjectKeyFromValue(value))
-            .filter((value) => value.length > 0)
+        ? this.normalizeStorageKeys(body.imageUrls)
         : undefined;
       if (!professionalId) {
         throw new BadRequestException('Professional ID not found in auth token');
@@ -585,16 +1098,35 @@ export class ProfessionalController {
         where: { id, professionalId },
       });
       if (!existing) throw new BadRequestException('Reference project not found');
-      const updated = await (this.prisma as any).professionalReferenceProject.update({
-        where: { id },
-        data: {
-          title: body.title?.trim() || existing.title,
-          description:
-            body.description === undefined
-              ? existing.description
-              : body.description?.trim() || null,
-          imageUrls: normalizedImageUrls ?? existing.imageUrls,
-        },
+
+      const updated = await this.prisma.$transaction(async (tx) => {
+        await (tx as any).professionalReferenceProject.update({
+          where: { id },
+          data: {
+            title: body.title?.trim() || existing.title,
+            description:
+              body.description === undefined
+                ? existing.description
+                : body.description?.trim() || null,
+            imageUrls: normalizedImageUrls ?? existing.imageUrls,
+          },
+        });
+
+        if (normalizedImageUrls !== undefined) {
+          await this.syncReferenceProjectMedia(tx, professionalId, id, normalizedImageUrls);
+        }
+
+        return (tx as any).professionalReferenceProject.findUnique({
+          where: { id },
+          include: {
+            media: {
+              orderBy: [
+                { projectSortOrder: 'asc' },
+                { createdAt: 'asc' },
+              ],
+            },
+          },
+        });
       });
       return this.resolveReferenceProjectMediaUrls(updated);
     } catch (error) {
@@ -616,7 +1148,10 @@ export class ProfessionalController {
         where: { id, professionalId },
       });
       if (!existing) throw new BadRequestException('Reference project not found');
-      await (this.prisma as any).professionalReferenceProject.delete({ where: { id } });
+      await this.prisma.$transaction(async (tx) => {
+        await this.detachOrDeleteReferenceProjectMedia(tx, id);
+        await (tx as any).professionalReferenceProject.delete({ where: { id } });
+      });
       return { success: true };
     } catch (error) {
       console.error('[deleteReferenceProject] Error:', error instanceof Error ? error.message : error);
