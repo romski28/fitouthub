@@ -1,17 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
-import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { HkZoneList } from '@/components/hk-zone-list';
 import { MapOrList } from '@/components/map-or-list';
 import {
   HK_ZONE_CODES,
-  areaCodesToNames,
   areaCodesToZoneCodes,
   deriveAreaCodesFromCoveragePayload,
   deriveCoverageDraftFromAreaCodes,
@@ -20,8 +19,6 @@ import {
 } from '@/lib/hk-districts';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 
-import FileUploader from '@/components/file-uploader';
-import { PortfolioCarousel } from '@/components/portfolio-carousel';
 interface ReferenceProject {
   id: string;
   title: string;
@@ -141,13 +138,6 @@ export default function ProfessionalProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refProjects, setRefProjects] = useState<ReferenceProject[]>([]);
-  const [refDraft, setRefDraft] = useState<{ id?: string; title: string; description: string; imageUrls: string[] }>(
-    { id: undefined, title: '', description: '', imageUrls: [] },
-  );
-  const [refSaving, setRefSaving] = useState(false);
-  const [refError, setRefError] = useState<string | null>(null);
-  const [refPendingFiles, setRefPendingFiles] = useState<File[]>([]);
-  const [pendingProfileFiles, setPendingProfileFiles] = useState<File[]>([]);
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
@@ -196,42 +186,6 @@ export default function ProfessionalProfilePage() {
     if (next.has(zoneCode)) next.delete(zoneCode);
     else next.add(zoneCode);
     handleCoverageZoneCodesChange(HK_ZONE_CODES.filter((code) => next.has(code)));
-  };
-
-  const uploadFiles = async (files: File[]) => {
-    const formData = new FormData();
-    files.forEach((f) => formData.append('files', f));
-    const res = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
-      method: 'POST',
-      body: formData,
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    return getUploadResponseKeys(data);
-  };
-
-  const uploadProfileImages = async (files: File[]) => {
-    const keys = await uploadFiles(files);
-    setProfile((p) => ({ ...p, profileImages: [...(p.profileImages || []), ...keys] }));
-    setPendingProfileFiles([]);
-    return keys;
-  };
-
-  const uploadRefImages = async (files: File[]) => {
-    const urls = await uploadFiles(files);
-    setRefDraft((d) => ({ ...d, imageUrls: [...(d.imageUrls || []), ...urls] }));
-    setRefPendingFiles([]);
-    return urls;
-  };
-
-  const removeProfileImage = (url: string) => {
-    setProfile((p) => ({ ...p, profileImages: (p.profileImages || []).filter((u) => u !== url) }));
-  };
-
-  const removeRefImage = (url: string) => {
-    setRefDraft((d) => ({ ...d, imageUrls: (d.imageUrls || []).filter((u) => u !== url) }));
-    // Clear pending files when removing images to allow re-adding
-    setRefPendingFiles([]);
   };
 
   useEffect(() => {
@@ -311,15 +265,6 @@ export default function ProfessionalProfilePage() {
     setSaving(true);
     setError(null);
     try {
-      // Upload any files the user staged but didn't explicitly click Upload for
-      let finalProfileImages = [...(profile.profileImages || [])];
-      if (pendingProfileFiles.length > 0) {
-        const uploadedKeys = await uploadFiles(pendingProfileFiles);
-        finalProfileImages = [...finalProfileImages, ...uploadedKeys];
-        setProfile((p) => ({ ...p, profileImages: finalProfileImages }));
-        setPendingProfileFiles([]);
-      }
-
       const res = await fetch(`${API_BASE_URL}/professional/me`, {
         method: 'PUT',
         headers: {
@@ -340,7 +285,6 @@ export default function ProfessionalProfilePage() {
           suppliesOffered: showProductsOffered ? profile.suppliesOffered || [] : [],
           tradesOffered: showTradesOffered ? profile.tradesOffered || [] : [],
           primaryTrade: showPrimaryTrade ? profile.primaryTrade || undefined : undefined,
-          profileImages: finalProfileImages,
           emergencyCalloutAvailable: showEmergencyAvailability ? emergencyCalloutAvailable : false,
         }),
       });
@@ -364,92 +308,6 @@ export default function ProfessionalProfilePage() {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const resetRefDraft = () => setRefDraft({ id: undefined, title: '', description: '', imageUrls: [] });
-
-  const handleRefSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessToken) return;
-    if (!refDraft.title.trim()) {
-      setRefError('Title is required');
-      return;
-    }
-    setRefSaving(true);
-    setRefError(null);
-    try {
-      // Upload any pending files and get URLs
-      let finalImageUrls = [...(refDraft.imageUrls || [])];
-      if (refPendingFiles.length > 0) {
-        const uploadedUrls = await uploadFiles(refPendingFiles);
-        finalImageUrls = [...finalImageUrls, ...uploadedUrls];
-        setRefPendingFiles([]);
-      }
-      
-      // Then save the project with the final image URLs
-      if (refDraft.id) {
-        const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${refDraft.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({
-            title: refDraft.title.trim(),
-            description: refDraft.description?.trim() || undefined,
-            imageUrls: finalImageUrls,
-          }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const updated = await res.json();
-        setRefProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      } else {
-        const res = await fetch(`${API_BASE_URL}/professional/reference-projects`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({
-            title: refDraft.title.trim(),
-            description: refDraft.description?.trim() || undefined,
-            imageUrls: finalImageUrls,
-          }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const created = await res.json();
-        setRefProjects((prev) => [created, ...prev]);
-      }
-      resetRefDraft();
-    } catch (err) {
-      setRefError(err instanceof Error ? err.message : 'Failed to save reference project');
-    } finally {
-      setRefSaving(false);
-    }
-  };
-
-  const handleRefEdit = (proj: ReferenceProject) => {
-    setRefDraft({
-      id: proj.id,
-      title: proj.title,
-      description: proj.description || '',
-      imageUrls: proj.imageUrls || [],
-    });
-    setRefPendingFiles([]);
-    setRefError(null);
-  };
-
-  const handleRefDelete = async (id: string) => {
-    if (!accessToken) return;
-    setRefSaving(true);
-    setRefError(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/professional/reference-projects/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setRefProjects((prev) => prev.filter((p) => p.id !== id));
-      if (refDraft.id === id) resetRefDraft();
-    } catch (err) {
-      setRefError(err instanceof Error ? err.message : 'Failed to delete reference project');
-    } finally {
-      setRefSaving(false);
     }
   };
 
@@ -477,7 +335,7 @@ export default function ProfessionalProfilePage() {
           </div>
           <button
             type="button"
-            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
             Change Password
           </button>
@@ -542,7 +400,7 @@ export default function ProfessionalProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleProfileSave} className="space-y-4">
+        <form id="professional-profile-form" onSubmit={handleProfileSave} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-slate-700">Primary Contact</label>
@@ -609,20 +467,44 @@ export default function ProfessionalProfilePage() {
               </select>
               <p className="mt-1 text-xs text-slate-500">Choose the listing type clients should see first.</p>
             </div>
+            {showEmergencyAvailability && (
+              <div className="md:self-end">
+                <label className="block text-sm font-medium text-slate-700">Emergency callout available 24/7</label>
+                <div className="mt-1 inline-flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEmergencyCalloutAvailable(true)}
+                    className={`rounded-md px-4 py-2 text-sm font-semibold text-white transition ${emergencyCalloutAvailable ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-400 hover:bg-slate-500'}`}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmergencyCalloutAvailable(false)}
+                    className={`rounded-md px-4 py-2 text-sm font-semibold text-white transition ${!emergencyCalloutAvailable ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-400 hover:bg-slate-500'}`}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {(showPrimaryTrade || showProductsOffered || showTradesOffered || showEmergencyAvailability) && (
+          {(showPrimaryTrade || showProductsOffered || showTradesOffered) && (
             <div className="grid gap-4 md:grid-cols-2">
               {showPrimaryTrade && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
-                  <input
-                    type="text"
+                  <select
                     value={profile.primaryTrade || ''}
                     onChange={(e) => setProfile((p) => ({ ...p, primaryTrade: e.target.value }))}
-                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    placeholder="e.g. Carpentry"
-                  />
+                    className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="">Select primary trade</option>
+                    {tradeOptions.map((trade) => (
+                      <option key={trade} value={trade}>{trade}</option>
+                    ))}
+                  </select>
                   <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
                 </div>
               )}
@@ -650,36 +532,13 @@ export default function ProfessionalProfilePage() {
                         tradesOffered: Array.from(e.target.selectedOptions, (option) => option.value),
                       }))
                     }
-                    className="mt-1 min-h-36 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                    className="mt-1 min-h-44 w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6"
                   >
                     {tradeOptions.map((trade) => (
                       <option key={trade} value={trade}>{trade}</option>
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-slate-500">Use Ctrl/Cmd-click to select multiple trades.</p>
-                </div>
-              )}
-              {showEmergencyAvailability && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 md:self-end">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-800">Emergency callout available 24/7</p>
-                    <div className="inline-flex rounded-full border border-blue-200 bg-white p-1 shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => setEmergencyCalloutAvailable(true)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${emergencyCalloutAvailable ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-blue-50'}`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEmergencyCalloutAvailable(false)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!emergencyCalloutAvailable ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -697,14 +556,14 @@ export default function ProfessionalProfilePage() {
                   <button
                     type="button"
                     onClick={() => handleCoverageZoneCodesChange(HK_ZONE_CODES)}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
                   >
                     Whole HK
                   </button>
                   <button
                     type="button"
                     onClick={() => handleCoverageAreaCodesChange([])}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-800"
                   >
                     Clear
                   </button>
@@ -717,10 +576,15 @@ export default function ProfessionalProfilePage() {
                 helperText="Switch between the interactive map and a text list. Your preference is saved locally."
                 mapLabel="Map"
                 listLabel="Words"
+                toggleGroupClassName="inline-flex w-auto gap-2"
+                toggleButtonClassName="rounded-md px-4 py-2 text-sm font-semibold text-white transition"
+                activeToggleButtonClassName="bg-emerald-600 hover:bg-emerald-700"
+                inactiveToggleButtonClassName="bg-slate-400 hover:bg-slate-500"
                 map={
                   <HkZoneMap
                     highlightedCodes={selectedCoverageZoneCodes}
                     onToggleCode={handleCoverageZoneToggle}
+                    svgClassName="h-[66vh] min-h-[32rem] w-full"
                   />
                 }
                 list={
@@ -797,187 +661,38 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-700">Profile images</p>
-                <p className="text-xs text-slate-500">Upload your strongest before/after or finished-work photos first. Clients usually decide fast.</p>
+                <h2 className="text-lg font-semibold text-slate-900">Portfolio</h2>
+                <p className="text-sm text-slate-600">
+                  Manage your proof of work separately from your business profile.
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {refProjects.length} reference project{refProjects.length === 1 ? '' : 's'} and {(profile.profileImages?.length || 0)} profile image{(profile.profileImages?.length || 0) === 1 ? '' : 's'}
+                </p>
               </div>
-              <span className="text-xs text-slate-500">Cloudflare storage</span>
-            </div>
-
-            <FileUploader
-              maxFiles={5}
-              maxFileSize={10 * 1024 * 1024}
-              onUpload={uploadProfileImages}
-              onFilesChange={(files) => setPendingProfileFiles(files)}
-              showUploadAction
-            />
-
-            {(profile.profileImages && profile.profileImages.length > 0) && (
-              <div className="grid gap-2 sm:grid-cols-3">
-                {profile.profileImages.map((url) => (
-                  <div key={url} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                    <img src={resolveMediaAssetUrl(url)} alt="Profile" className="h-28 w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeProfileImage(url)}
-                      className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-rose-700 shadow"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
-            >
-              {saving ? 'Saving...' : 'Save profile'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Reference projects */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600">Portfolio</p>
-            <h2 className="text-xl font-bold text-slate-900">Reference projects</h2>
-            <p className="text-sm text-slate-600">Add projects that showcase your work (title, description, and photos).</p>
-          </div>
-        </div>
-
-        {refError && (
-          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
-            {refError}
-          </div>
-        )}
-
-        <form onSubmit={handleRefSave} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 mb-5">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Title *</label>
-              <input
-                type="text"
-                value={refDraft.title}
-                onChange={(e) => setRefDraft((d) => ({ ...d, title: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Project photos</label>
-              <FileUploader
-                maxFiles={5}
-                maxFileSize={10 * 1024 * 1024}
-                onUpload={uploadRefImages}
-                onFilesChange={(files) => setRefPendingFiles(files)}
-                showUploadAction
-              />
-              {refDraft.imageUrls.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {refDraft.imageUrls.map((url) => (
-                    <div key={url} className="group relative overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-                      <img src={resolveMediaAssetUrl(url)} alt={refDraft.title || 'Reference image'} className="h-20 w-32 object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeRefImage(url)}
-                        className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-rose-700 shadow opacity-0 group-hover:opacity-100"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">Description</label>
-            <textarea
-              value={refDraft.description}
-              onChange={(e) => setRefDraft((d) => ({ ...d, description: e.target.value }))}
-              rows={3}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="What was delivered, client challenge, scope, standout finish, timeline, and materials used."
-            />
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-slate-500">
-              {refDraft.id ? 'Editing existing reference project' : 'Add a new reference project'}
-            </div>
-            <div className="flex gap-2">
-              {refDraft.id && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetRefDraft();
-                    setRefPendingFiles([]);
-                  }}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-white"
-                >
-                  Cancel edit
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={refSaving || !refDraft.title.trim()}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+              <Link
+                href="/professional/portfolio"
+                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
               >
-                {refSaving ? 'Saving...' : refDraft.id ? 'Update project' : 'Add project'}
-              </button>
+                Manage portfolio
+              </Link>
             </div>
           </div>
+
         </form>
 
-        {refProjects.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-            No project entered, please add more for better client experience.
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
-            {refProjects.map((proj) => (
-              <div key={proj.id} className="flex-shrink-0 w-full sm:w-96 rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900">{proj.title}</h3>
-                    <p className="text-xs text-slate-500">Added {new Date(proj.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleRefEdit(proj)}
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleRefDelete(proj.id)}
-                      className="rounded-md border border-rose-200 px-2 py-1 text-xs text-rose-700 hover:bg-rose-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                {proj.description ? (
-                  <p className="mt-2 text-sm text-slate-700 whitespace-pre-line">{proj.description}</p>
-                ) : null}
-                <div className="mt-3">
-                  <PortfolioCarousel 
-                    images={proj.imageUrls || []}
-                    emptyMessage="No photos added to this project yet"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
+          <button
+            type="submit"
+            form="professional-profile-form"
+            disabled={saving}
+            className="pointer-events-auto rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Save profile'}
+          </button>
+        </div>
       </div>
     </div>
   );

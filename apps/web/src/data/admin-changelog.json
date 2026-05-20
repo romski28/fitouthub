@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-20-801c55f",
+    "date": "2026-05-20T15:34:38+08:00",
+    "title": "feat(web): split professional portfolio from profile",
+    "summary": "feat(web): split professional portfolio from profile",
+    "areas": [
+      "web"
+    ],
+    "commit": "801c55f",
+    "files": [
+      "apps/web/src/app/professional/portfolio/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/professional-portfolio-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-20-2a155a5",
     "date": "2026-05-20T14:49:09+08:00",
     "title": "feat(web): refine professional profile phase 2 layout",

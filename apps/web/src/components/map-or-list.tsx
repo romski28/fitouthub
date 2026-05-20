@@ -15,6 +15,10 @@ type Props = {
   panelClassName?: string;
   mapPanelClassName?: string;
   listPanelClassName?: string;
+  toggleGroupClassName?: string;
+  toggleButtonClassName?: string;
+  activeToggleButtonClassName?: string;
+  inactiveToggleButtonClassName?: string;
   map: ReactNode;
   list: ReactNode;
 };
@@ -29,6 +33,10 @@ export function MapOrList({
   panelClassName,
   mapPanelClassName,
   listPanelClassName,
+  toggleGroupClassName,
+  toggleButtonClassName,
+  activeToggleButtonClassName,
+  inactiveToggleButtonClassName,
   map,
   list,
 }: Props) {
@@ -66,13 +74,15 @@ export function MapOrList({
           <p className="text-sm font-semibold text-slate-900">{label}</p>
           {helperText ? <p className="text-xs text-slate-500">{helperText}</p> : null}
         </div>
-        <div className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className={toggleGroupClassName ?? 'grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1'}>
           <button
             type="button"
             onClick={() => handleModeChange('map')}
             aria-pressed={activeMode === 'map'}
-            className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-              activeMode === 'map' ? 'bg-orange-600 text-amber-50 shadow-md' : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
+            className={`${toggleButtonClassName ?? 'w-full rounded-md px-3 py-1.5 text-xs font-semibold transition'} ${
+              activeMode === 'map'
+                ? (activeToggleButtonClassName ?? 'bg-orange-600 text-amber-50 shadow-md')
+                : (inactiveToggleButtonClassName ?? 'bg-slate-400 text-amber-50 hover:bg-slate-500')
             }`}
           >
             {mapLabel}
@@ -81,8 +91,10 @@ export function MapOrList({
             type="button"
             onClick={() => handleModeChange('list')}
             aria-pressed={activeMode === 'list'}
-            className={`w-full rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-              activeMode === 'list' ? 'bg-orange-600 text-amber-50 shadow-md' : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
+            className={`${toggleButtonClassName ?? 'w-full rounded-md px-3 py-1.5 text-xs font-semibold transition'} ${
+              activeMode === 'list'
+                ? (activeToggleButtonClassName ?? 'bg-orange-600 text-amber-50 shadow-md')
+                : (inactiveToggleButtonClassName ?? 'bg-slate-400 text-amber-50 hover:bg-slate-500')
             }`}
           >
             {listLabel}
