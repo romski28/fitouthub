@@ -33,9 +33,9 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
   return (
     <>
       {/* Desktop Tab Navigation */}
-      <div className="hidden sm:block sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-sm">
+      <div className="hidden sm:block sticky top-0 z-40 rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.78)] shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto">
+          <div className="flex overflow-x-auto gap-2 py-3">
             {resolvedTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -43,10 +43,10 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
                   onTabChange(tab.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                className={`rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors border ${
                   activeTab === tab.id
-                    ? 'border-emerald-500 text-emerald-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.92)] text-[rgba(126,58,33,0.92)] shadow-sm'
+                    : 'border-transparent bg-transparent text-slate-600 hover:border-[rgba(120,53,15,0.12)] hover:bg-[rgba(255,250,240,0.62)] hover:text-slate-900'
                 }`}
                 aria-selected={activeTab === tab.id}
               >
@@ -59,17 +59,17 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
       </div>
 
       {/* Mobile Tab Navigation - Dropdown */}
-      <div className="sm:hidden sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-sm">
+      <div className="sm:hidden sticky top-0 z-40 rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.78)] shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
         <div className="px-4 py-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 transition"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.9)] hover:bg-[rgba(255,250,240,0.98)] transition"
           >
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-slate-900">
               {resolvedTabs.find((t) => t.id === activeTab)?.icon} {activeTabLabel}
             </span>
             <svg
-              className={`w-4 h-4 text-slate-400 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-slate-500 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -88,10 +88,10 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
                     onTabChange(tab.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`w-full text-left px-3 py-2 rounded-2xl text-sm font-semibold transition ${
                     activeTab === tab.id
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                      ? 'bg-[rgba(255,250,240,0.94)] text-[rgba(126,58,33,0.92)] border border-[rgba(120,53,15,0.14)]'
+                      : 'bg-[rgba(255,250,240,0.62)] text-slate-700 hover:bg-[rgba(255,250,240,0.82)] border border-[rgba(120,53,15,0.1)]'
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
