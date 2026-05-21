@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ProjectTabDefinition {
   id: string;
@@ -17,6 +17,13 @@ interface ProjectTabsProps {
 
 export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange, tabs, children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const tabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
   
   const defaultTabs: ProjectTabDefinition[] = [
     { id: 'overview', label: 'Overview', icon: '📋' },
@@ -30,16 +37,125 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
 
   const activeTabLabel = resolvedTabs.find((t) => t.id === activeTab)?.label || 'Menu';
 
+  const updateScrollState = useCallback(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < maxScrollLeft - 2);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+  }, [resolvedTabs, updateScrollState]);
+
+  useEffect(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+
+    const handleScroll = () => updateScrollState();
+    const handleResize = () => updateScrollState();
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateScrollState]);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging) return;
+      const el = tabsScrollRef.current;
+      if (!el) return;
+
+      const deltaX = event.clientX - dragStartXRef.current;
+      if (Math.abs(deltaX) > 4) {
+        hasDraggedRef.current = true;
+      }
+      el.scrollLeft = dragStartScrollLeftRef.current - deltaX;
+      updateScrollState();
+    };
+
+    const handleMouseUp = () => {
+      if (!isDragging) return;
+      setIsDragging(false);
+      requestAnimationFrame(() => {
+        hasDraggedRef.current = false;
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, updateScrollState]);
+
+  const scrollTabsBy = (delta: number) => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+
+    el.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+
   return (
     <>
       {/* Desktop Tab Navigation */}
       <div className="hidden sm:block sticky top-0 z-40 rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.78)] shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto gap-2 py-3">
+          <div className="relative py-3">
+            <button
+              type="button"
+              aria-label="Scroll tabs left"
+              onClick={() => scrollTabsBy(-220)}
+              disabled={!canScrollLeft}
+              className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 transition ${
+                canScrollLeft
+                  ? 'border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.92)] text-[rgba(126,58,33,0.92)] hover:bg-[rgba(255,250,240,1)]'
+                  : 'cursor-not-allowed border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.55)] text-slate-400'
+              }`}
+            >
+              <span aria-hidden="true">◀</span>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Scroll tabs right"
+              onClick={() => scrollTabsBy(220)}
+              disabled={!canScrollRight}
+              className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 transition ${
+                canScrollRight
+                  ? 'border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.92)] text-[rgba(126,58,33,0.92)] hover:bg-[rgba(255,250,240,1)]'
+                  : 'cursor-not-allowed border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.55)] text-slate-400'
+              }`}
+            >
+              <span aria-hidden="true">▶</span>
+            </button>
+
+            <div
+              ref={tabsScrollRef}
+              onMouseDown={(event) => {
+                if (event.button !== 0) return;
+                dragStartXRef.current = event.clientX;
+                dragStartScrollLeftRef.current = tabsScrollRef.current?.scrollLeft ?? 0;
+                hasDraggedRef.current = false;
+                setIsDragging(true);
+              }}
+              className={`mx-10 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
+              }`}
+            >
             {resolvedTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
+                  if (hasDraggedRef.current) return;
                   onTabChange(tab.id);
                   setMobileMenuOpen(false);
                 }}
@@ -54,6 +170,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
                 {tab.label}
               </button>
             ))}
+            </div>
           </div>
         </div>
       </div>

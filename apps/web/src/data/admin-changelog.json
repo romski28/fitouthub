@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-b24f220d",
+    "date": "2026-05-21T12:18:16+08:00",
+    "title": "feat(professional): add arrow and drag scrolling to project tab rail",
+    "summary": "feat(professional): add arrow and drag scrolling to project tab rail",
+    "areas": [
+      "web"
+    ],
+    "commit": "b24f220d",
+    "files": [
+      "apps/web/src/components/project-tabs.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-10ca2355",
     "date": "2026-05-21T11:53:07+08:00",
     "title": "feat(professional): repaint project tab menu for workspace style\\n\\n- Updated shared project-tabs.tsx to match new workspace cream/paper style.\\n- No structural changes; only visual repaint for consistency with professional workspace hero.\\n- Validated with typecheck.\\n\\nThis is part of the ongoing professional workspace UI/UX modernization. Next: continue workspace styling tab-by-tab as needed.",
