@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const section = (title: string, items: string[]) => (
-  <section className="space-y-2 rounded-xl border border-slate-700 bg-slate-900/60 p-5">
-    <h2 className="text-xl font-semibold text-white">{title}</h2>
-    <ul className="list-disc pl-5 space-y-1 text-slate-300">
+  <section className="space-y-2 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-5">
+    <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+    <ul className="list-disc pl-5 space-y-1 text-slate-700">
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -13,12 +13,12 @@ const section = (title: string, items: string[]) => (
 
 export default function UserManualPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[rgba(248,244,232,0.6)] text-slate-900">
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
-        <header className="space-y-3 rounded-2xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-6">
-          <p className="text-sm uppercase tracking-wide text-emerald-300">Docs &amp; Tools</p>
+        <header className="space-y-3 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
+          <p className="text-sm uppercase tracking-wide text-emerald-700">Docs &amp; Tools</p>
           <h1 className="text-3xl font-bold">FitoutHub User Manual</h1>
-          <p className="text-slate-300">
+          <p className="text-slate-700">
             Quick reference for admins and team members. For the full markdown
             version, see the repo file in <Link href="https://github.com/romski28/fitouthub/blob/main/docs/user-manual.md" className="underline">docs/user-manual.md</Link>. For a guided walkthrough, see <Link href="/docs/how-to-use" className="underline">How to Use</Link> or return to the <Link href="/docs" className="underline">Docs &amp; Tools hub</Link>.
           </p>

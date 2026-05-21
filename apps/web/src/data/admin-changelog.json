@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-21-97d5bbc7",
+    "date": "2026-05-21T13:54:49+08:00",
+    "title": "style(docs): apply workspace paper theme to docs hub and manual",
+    "summary": "style(docs): apply workspace paper theme to docs hub and manual",
+    "areas": [
+      "web"
+    ],
+    "commit": "97d5bbc7",
+    "files": [
+      "apps/web/src/app/docs/page.tsx",
+      "apps/web/src/app/docs/user-manual/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-a4a08490",
     "date": "2026-05-21T13:24:43+08:00",
     "title": "style(media): update project images card and page wrapper to workspace theme",
