@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-21-a10c9e82",
+    "date": "2026-05-21T09:48:45+08:00",
+    "title": "refine(web): tighten certification form flow",
+    "summary": "refine(web): tighten certification form flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "a10c9e82",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/map-or-list.tsx",
+      "apps/web/src/components/professional-certification-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-0bab6ee9",
     "date": "2026-05-21T09:36:19+08:00",
     "title": "fix(web): preserve certification form state on auth refresh",

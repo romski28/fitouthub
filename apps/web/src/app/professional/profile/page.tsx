@@ -596,6 +596,7 @@ export default function ProfessionalProfilePage() {
                 storageKey="fh-map-or-list-preference"
                 label="Coverage input mode"
                 helperText="Switch between the interactive map and a text list. Your preference is saved locally."
+                headerInline
                 mapLabel="Map"
                 listLabel="Words"
                 toggleGroupClassName="inline-flex w-auto gap-2"
@@ -709,6 +710,7 @@ export default function ProfessionalProfilePage() {
           <ProfessionalCertificationManager
             accessToken={accessToken!}
             selectedTradeTitles={selectedTradeTitles}
+            professionalType={profile.professionType}
           />
         </div>
 

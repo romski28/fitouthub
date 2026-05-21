@@ -48,6 +48,7 @@ type ProfessionalCertification = {
 type ProfessionalCertificationManagerProps = {
   accessToken: string;
   selectedTradeTitles: string[];
+  professionalType?: string | null;
 };
 
 type CertificationFormState = {
@@ -89,6 +90,7 @@ const formatDateInputValue = (value?: string | null) => {
 export function ProfessionalCertificationManager({
   accessToken,
   selectedTradeTitles,
+  professionalType,
 }: ProfessionalCertificationManagerProps) {
   const [certificationTypes, setCertificationTypes] = useState<CertificationType[]>([]);
   const [requirements, setRequirements] = useState<TradeCertificationRequirement[]>([]);
@@ -120,6 +122,24 @@ export function ProfessionalCertificationManager({
     });
     return Array.from(map.values()).sort((left, right) => left.title.localeCompare(right.title));
   }, [relevantRequirements]);
+
+  const defaultHolderType = useMemo<CertificationFormState['holderType']>(() => {
+    return String(professionalType || '').trim().toLowerCase() === 'company' ? 'BUSINESS' : 'INDIVIDUAL';
+  }, [professionalType]);
+
+  const filteredCertificationTypes = useMemo(() => {
+    const allowedIds = new Set(
+      relevantRequirements
+        .filter((requirement) => !form.tradeId || requirement.trade.id === form.tradeId)
+        .map((requirement) => requirement.certificationTypeId),
+    );
+
+    if (allowedIds.size === 0) {
+      return certificationTypes;
+    }
+
+    return certificationTypes.filter((type) => allowedIds.has(type.id));
+  }, [certificationTypes, form.tradeId, relevantRequirements]);
 
   const missingMandatoryRequirements = useMemo(() => {
     const uploadedTypeIds = new Set(
@@ -195,8 +215,28 @@ export function ProfessionalCertificationManager({
     setForm((current) => ({ ...current, tradeId: availableTradeOptions[0].id }));
   }, [availableTradeOptions, form.tradeId]);
 
+  useEffect(() => {
+    setForm((current) => {
+      if (editingId) return current;
+      if (current.holderType === defaultHolderType) return current;
+      return {
+        ...current,
+        holderType: defaultHolderType,
+      };
+    });
+  }, [defaultHolderType, editingId]);
+
+  useEffect(() => {
+    if (!form.certificationTypeId) return;
+    if (filteredCertificationTypes.some((type) => type.id === form.certificationTypeId)) return;
+    setForm((current) => ({ ...current, certificationTypeId: '' }));
+  }, [filteredCertificationTypes, form.certificationTypeId]);
+
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      holderType: defaultHolderType,
+    });
     setEditingId(null);
     setPendingFiles([]);
     setUploaderClearKey((current) => current + 1);
@@ -357,6 +397,25 @@ export function ProfessionalCertificationManager({
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
+              <label className="block text-sm font-medium text-slate-700">Trade to certify</label>
+              <select
+                value={form.tradeId}
+                onChange={(e) =>
+                  setForm((current) => ({
+                    ...current,
+                    tradeId: e.target.value,
+                    certificationTypeId: '',
+                  }))
+                }
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              >
+                <option value="">Select trade</option>
+                {availableTradeOptions.map((trade) => (
+                  <option key={trade.id} value={trade.id}>{trade.title}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-slate-700">Certification</label>
               <select
                 value={form.certificationTypeId}
@@ -365,26 +424,12 @@ export function ProfessionalCertificationManager({
                 required
               >
                 <option value="">Select certification</option>
-                {certificationTypes.map((type) => (
+                {filteredCertificationTypes.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.name}{type.regulator ? ` (${type.regulator})` : ''}
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Related trade</label>
-              <select
-                value={form.tradeId}
-                onChange={(e) => setForm((current) => ({ ...current, tradeId: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">Select trade</option>
-                {availableTradeOptions.map((trade) => (
-                  <option key={trade.id} value={trade.id}>{trade.title}</option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-slate-500">Derived from your selected primary/trades offered where a requirement mapping exists.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700">Holder type</label>
