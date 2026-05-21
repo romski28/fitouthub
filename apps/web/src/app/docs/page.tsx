@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function DocsPage() {
   return (
     <main className="min-h-screen bg-[rgba(248,244,232,0.6)] text-slate-900">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 rounded-3xl">
         <header className="space-y-3 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
           <p className="text-sm uppercase tracking-wide text-emerald-700">Docs &amp; Tools</p>
           <h1 className="text-3xl font-bold">Guides, calculators, and practical helpers</h1>

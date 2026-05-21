@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-19a4aa01",
+    "date": "2026-05-21T16:59:27+08:00",
+    "title": "style(docs): round outermost docs container panel (rounded-3xl)",
+    "summary": "style(docs): round outermost docs container panel (rounded-3xl)",
+    "areas": [
+      "web"
+    ],
+    "commit": "19a4aa01",
+    "files": [
+      "apps/web/src/app/docs/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-97d5bbc7",
     "date": "2026-05-21T13:54:49+08:00",
     "title": "style(docs): apply workspace paper theme to docs hub and manual",
