@@ -1790,13 +1790,11 @@ export default function ProjectDetailPage() {
             />
 
             <TabPanel tab="media">
-              <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
                 <MediaTab
                   photos={project.project.photos || []}
                   onPhotoNoteUpdate={handleSaveImageNote}
                   isLoading={loading}
                 />
-              </div>
             </TabPanel>
 
             <ChatTab

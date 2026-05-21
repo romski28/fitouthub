@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-21-a4a08490",
+    "date": "2026-05-21T13:24:43+08:00",
+    "title": "style(media): update project images card and page wrapper to workspace theme",
+    "summary": "style(media): update project images card and page wrapper to workspace theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "a4a08490",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/project-images-card.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-84ea10ea",
     "date": "2026-05-21T13:14:33+08:00",
     "title": "style(shared): update media tab empty state to workspace paper theme",

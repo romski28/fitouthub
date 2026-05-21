@@ -42,11 +42,11 @@ export function ProjectImagesCard({
 
   return (
     <>
-      <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-6 shadow-sm">
+      <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-sm">
         {/* Header */}
         <div className="mb-4">
-          <h2 className="text-lg font-bold text-white">Project Images ({photos.length})</h2>
-          <p className="text-sm text-slate-300 mt-1">Click on any image to view details and add notes</p>
+          <h2 className="text-lg font-bold text-slate-900">Project Images ({photos.length})</h2>
+          <p className="text-sm text-slate-700 mt-1">Click on any image to view details and add notes</p>
         </div>
 
         {/* Images Grid */}
@@ -56,7 +56,7 @@ export function ProjectImagesCard({
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
               disabled={isLoading}
-              className="group relative aspect-video overflow-hidden rounded-lg border border-slate-700 bg-slate-800 hover:border-emerald-400 transition disabled:opacity-50"
+              className="group relative aspect-video overflow-hidden rounded-lg border border-[rgba(120,53,15,0.15)] bg-slate-100 hover:border-emerald-400 transition disabled:opacity-50"
             >
               <img
                 src={resolveMediaAssetUrl(photo.url)}
