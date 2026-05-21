@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-84ea10ea",
+    "date": "2026-05-21T13:14:33+08:00",
+    "title": "style(shared): update media tab empty state to workspace paper theme",
+    "summary": "style(shared): update media tab empty state to workspace paper theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "84ea10ea",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-32493727",
     "date": "2026-05-21T13:14:08+08:00",
     "title": "style(professional): complete financials tab workspace paper theme repaint",
