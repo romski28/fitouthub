@@ -337,7 +337,7 @@ export function ProfessionalPortfolioManager({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] border border-[rgba(120,53,15,0.16)] bg-[var(--mimo-cream)] shadow-[0_20px_60px_rgba(81,55,32,0.08)] p-6">
+      <div className="rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-slate-900">My images</h2>
@@ -459,7 +459,7 @@ export function ProfessionalPortfolioManager({
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-[rgba(120,53,15,0.16)] bg-[var(--mimo-cream)] shadow-[0_20px_60px_rgba(81,55,32,0.08)] p-6">
+      <div className="rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-slate-900">Reference projects</h2>

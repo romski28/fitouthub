@@ -166,6 +166,10 @@ export default function ProfessionalProfilePage() {
   const showProductsOffered = normalizedProfessionType === 'reseller';
   const showTradesOffered = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
   const showEmergencyAvailability = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
+  const paperInputClassName =
+    'mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm';
+  const paperSelectClassName =
+    'mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm';
   const handleCoverageAreaCodesChange = (codes: string[]) => {
     const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
     setSelectedCoverageAreaCodes(codes);
@@ -336,34 +340,34 @@ export default function ProfessionalProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-3 sm:px-6 lg:px-8 space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+      <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">Professional</p>
-            <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
-            <p className="text-sm text-slate-600">Manage your professional details and reference projects.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(185,78,45,0.92)]">Professional Workspace</p>
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">My Profile</h1>
+            <p className="mt-2 text-sm text-slate-700">Manage your professional details, coverage, and trust signals in one place.</p>
           </div>
           <button
             type="button"
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="rounded-md border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.78)] px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(255,250,240,0.92)]"
           >
             Change Password
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+          <div className="mb-4 rounded-md border border-red-200 bg-[rgba(255,242,242,0.9)] px-4 py-3 text-sm text-red-800">
             {error}
           </div>
         )}
 
-        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+        <div className="mb-6 rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] p-4 shadow-sm backdrop-blur-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex-1 space-y-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Client-facing strength</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Client-facing strength</p>
                 <h2 className="text-lg font-bold text-slate-900">Make your profile easier to shortlist</h2>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-700">
                   Clients are more likely to engage when they can quickly see your trade focus, coverage, proof of work, and response readiness.
                 </p>
               </div>
@@ -371,11 +375,11 @@ export default function ProfessionalProfilePage() {
               <div>
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span className="font-semibold text-slate-800">Profile completeness</span>
-                  <span className="font-bold text-emerald-700">{completionScore}%</span>
+                  <span className="font-bold text-[rgba(185,78,45,0.92)]">{completionScore}%</span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-emerald-100">
+                <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(204,179,152,0.34)]">
                   <div
-                    className="h-full rounded-full bg-emerald-600 transition-all"
+                    className="h-full rounded-full bg-[rgba(185,78,45,0.92)] transition-all"
                     style={{ width: `${Math.max(8, completionScore)}%` }}
                   />
                 </div>
@@ -384,7 +388,7 @@ export default function ProfessionalProfilePage() {
               {clientFacingHighlights.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {clientFacingHighlights.map((item) => (
-                    <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-200">
+                    <span key={item} className="rounded-full bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold text-[rgba(185,78,45,0.92)] shadow-sm ring-1 ring-[rgba(120,53,15,0.12)]">
                       {item}
                     </span>
                   ))}
@@ -392,10 +396,10 @@ export default function ProfessionalProfilePage() {
               )}
             </div>
 
-            <div className="w-full rounded-lg border border-white/80 bg-white p-4 shadow-sm lg:max-w-sm">
+            <div className="w-full rounded-lg border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] p-4 shadow-sm backdrop-blur-sm lg:max-w-sm">
               <p className="text-sm font-semibold text-slate-900">Next improvements</p>
               {incompleteItems.length === 0 ? (
-                <p className="mt-2 text-sm text-emerald-700">Strong profile. You’ve covered the core trust signals clients look for.</p>
+                <p className="mt-2 text-sm text-[rgba(185,78,45,0.92)]">Strong profile. You’ve covered the core trust signals clients look for.</p>
               ) : (
                 <ul className="mt-2 space-y-2 text-sm text-slate-700">
                   {incompleteItems.map((item) => (
@@ -413,43 +417,43 @@ export default function ProfessionalProfilePage() {
         <form id="professional-profile-form" onSubmit={handleProfileSave} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Primary Contact</label>
+              <label className="block text-sm font-semibold text-slate-800">Primary Contact</label>
               <input
                 type="text"
                 value={profile.fullName || ''}
                 onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={paperInputClassName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Business Name</label>
+              <label className="block text-sm font-semibold text-slate-800">Business Name</label>
               <input
                 type="text"
                 value={profile.businessName || ''}
                 onChange={(e) => setProfile((p) => ({ ...p, businessName: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={paperInputClassName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Phone</label>
+              <label className="block text-sm font-semibold text-slate-800">Phone</label>
               <input
                 type="text"
                 value={profile.phone || ''}
                 onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={paperInputClassName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Email</label>
+              <label className="block text-sm font-semibold text-slate-800">Email</label>
               <input
                 type="email"
                 value={profile.email || ''}
                 onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={paperInputClassName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Profession Type</label>
+              <label className="block text-sm font-semibold text-slate-800">Profession Type</label>
               <select
                 value={normalizedProfessionType}
                 onChange={(e) => {
@@ -468,18 +472,18 @@ export default function ProfessionalProfilePage() {
                     setEmergencyCalloutAvailable(false);
                   }
                 }}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                className={paperSelectClassName}
               >
                 <option value="">Select profession type</option>
                 {PROFESSION_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-slate-500">Choose the listing type clients should see first.</p>
+              <p className="mt-1 text-xs text-slate-600">Choose the listing type clients should see first.</p>
             </div>
             {showEmergencyAvailability && (
               <div className="md:self-end">
-                <label className="block text-sm font-medium text-slate-700">Emergency callout available 24/7</label>
+                <label className="block text-sm font-semibold text-slate-800">Emergency callout available 24/7</label>
                 <div className="mt-1 inline-flex gap-2">
                   <button
                     type="button"
@@ -504,35 +508,35 @@ export default function ProfessionalProfilePage() {
             <div className="grid gap-4 md:grid-cols-2">
               {showPrimaryTrade && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Primary Trade</label>
+                  <label className="block text-sm font-semibold text-slate-800">Primary Trade</label>
                   <select
                     value={profile.primaryTrade || ''}
                     onChange={(e) => setProfile((p) => ({ ...p, primaryTrade: e.target.value }))}
-                    className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                    className={paperSelectClassName}
                   >
                     <option value="">Select primary trade</option>
                     {tradeOptions.map((trade) => (
                       <option key={trade} value={trade}>{trade}</option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-slate-500">Lead with your most hireable specialty.</p>
+                  <p className="mt-1 text-xs text-slate-600">Lead with your most hireable specialty.</p>
                 </div>
               )}
               {showProductsOffered && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Products Offered</label>
+                  <label className="block text-sm font-semibold text-slate-800">Products Offered</label>
                   <input
                     type="text"
                     value={(profile.suppliesOffered || []).join(', ')}
                     onChange={(e) => setProfile((p) => ({ ...p, suppliesOffered: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) }))}
-                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className={paperInputClassName}
                   />
-                  <p className="mt-1 text-xs text-slate-500">List materials, systems, or brands clients often ask about.</p>
+                  <p className="mt-1 text-xs text-slate-600">List materials, systems, or brands clients often ask about.</p>
                 </div>
               )}
               {showTradesOffered && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Trades Offered</label>
+                  <label className="block text-sm font-semibold text-slate-800">Trades Offered</label>
                   <select
                     multiple
                     value={profile.tradesOffered || []}
@@ -542,25 +546,25 @@ export default function ProfessionalProfilePage() {
                         tradesOffered: Array.from(e.target.selectedOptions, (option) => option.value),
                       }))
                     }
-                    className="mt-1 min-h-44 w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6"
+                    className="mt-1 min-h-44 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-4 py-3 text-sm leading-6 text-slate-900 backdrop-blur-sm"
                   >
                     {tradeOptions.map((trade) => (
                       <option key={trade} value={trade}>{trade}</option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-slate-500">Use Ctrl/Cmd-click to select multiple trades.</p>
+                  <p className="mt-1 text-xs text-slate-600">Use Ctrl/Cmd-click to select multiple trades.</p>
                 </div>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Coverage</label>
-            <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+            <label className="block text-sm font-semibold text-slate-800">Coverage</label>
+            <div className="mt-1 rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] p-4 space-y-4 shadow-sm backdrop-blur-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Zone coverage</p>
-                  <p className="text-xs text-slate-500">Select service zones only. We are not using district-level coverage here for now.</p>
+                  <p className="text-xs text-slate-600">Select service zones only. We are not using district-level coverage here for now.</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -612,7 +616,7 @@ export default function ProfessionalProfilePage() {
             <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <label className="flex items-center gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.78)] px-4 py-3 text-sm text-slate-700 backdrop-blur-sm">
                 <input
                   type="checkbox"
                   id="professionalAllowPartnerOffers"
@@ -623,7 +627,7 @@ export default function ProfessionalProfilePage() {
                 <span>I agree to receive partner offers and promotions</span>
               </label>
 
-              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <label className="flex items-center gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.78)] px-4 py-3 text-sm text-slate-700 backdrop-blur-sm">
                 <input
                   type="checkbox"
                   id="professionalAllowPlatformUpdates"
@@ -635,14 +639,14 @@ export default function ProfessionalProfilePage() {
               </label>
 
               <div className="space-y-2">
-                <label htmlFor="professionalPreferredLanguage" className="block text-sm text-slate-700">
+                <label htmlFor="professionalPreferredLanguage" className="block text-sm font-semibold text-slate-800">
                   Preferred language
                 </label>
                 <select
                   id="professionalPreferredLanguage"
                   value={preferredLanguage}
                   onChange={(e) => setPreferredLanguage(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
                 >
                   <option value="en">English</option>
                   <option value="zh-HK">Cantonese (Traditional Chinese)</option>
@@ -650,7 +654,7 @@ export default function ProfessionalProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="professionalPreferredContactMethod" className="block text-sm text-slate-700">
+                <label htmlFor="professionalPreferredContactMethod" className="block text-sm font-semibold text-slate-800">
                   Preferred contact method
                 </label>
                 <select
@@ -661,7 +665,7 @@ export default function ProfessionalProfilePage() {
                       e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
                     )
                   }
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
                 >
                   <option value="EMAIL">Email</option>
                   <option value="WHATSAPP">WhatsApp</option>
@@ -672,40 +676,40 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Portfolio</h2>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-700">
                   Manage your proof of work separately from your business profile.
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-600">
                   {refProjects.length} reference project{refProjects.length === 1 ? '' : 's'} and {(profile.profileImages?.length || 0)} profile image{(profile.profileImages?.length || 0) === 1 ? '' : 's'}
                 </p>
               </div>
               <Link
                 href="/professional/portfolio"
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-md border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.88)] px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(255,250,240,0.96)]"
               >
                 Manage portfolio
               </Link>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Certifications</h2>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-700">
                   Manage your regulated trade credentials separately from your general business profile.
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-600">
                   {(profile.certifications?.length || 0)} certification{(profile.certifications?.length || 0) === 1 ? '' : 's'} registered
                 </p>
               </div>
               <Link
                 href="/professional/certifications"
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-md border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.88)] px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(255,250,240,0.96)]"
               >
                 Manage certifications
               </Link>
