@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-21-0bf065f9",
+    "date": "2026-05-21T18:36:51+08:00",
+    "title": "feat(admin): add manual BRC verification checks",
+    "summary": "feat(admin): add manual BRC verification checks",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0bf065f9",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-743154f1",
     "date": "2026-05-21T18:13:20+08:00",
     "title": "feat(certifications): add business trade scope so BRC is visible for company/reseller",

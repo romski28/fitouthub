@@ -56,6 +56,7 @@ type CertificationTrade = {
 
 type CertificationTypeRecord = {
   id: string;
+  code?: string;
   name: string;
   regulator?: string | null;
 };
@@ -85,6 +86,13 @@ const certificationStatusTone: Record<ProfessionalCertificationRecord['verificat
   EXPIRED: 'bg-slate-200 text-slate-700 ring-slate-300',
 };
 
+type BrcCheckResponse = {
+  mode: 'name' | 'brn';
+  requestedValue: string;
+  requestUrl: string;
+  data: unknown;
+};
+
 export default function AdminProfessionalsPage() {
   const { accessToken } = useAuth();
   const searchParams = useSearchParams();
@@ -111,6 +119,9 @@ export default function AdminProfessionalsPage() {
   const [certificationsError, setCertificationsError] = useState<string | null>(null);
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [reviewNotesById, setReviewNotesById] = useState<Record<string, string>>({});
+  const [brcCheckBusyByKey, setBrcCheckBusyByKey] = useState<Record<string, boolean>>({});
+  const [brcCheckResultByKey, setBrcCheckResultByKey] = useState<Record<string, BrcCheckResponse>>({});
+  const [brcCheckVerdictByKey, setBrcCheckVerdictByKey] = useState<Record<string, 'up' | 'down'>>({});
   const [formData, setFormData] = useState<Record<string, string | number | string[]>>({
     professionType: "",
     email: "",
@@ -454,6 +465,54 @@ export default function AdminProfessionalsPage() {
       setCertificationsError(error instanceof Error ? error.message : 'Failed to review certification');
     } finally {
       setReviewBusyId(null);
+    }
+  };
+
+  const handleBrcCheck = async (certificationId: string, mode: 'name' | 'brn') => {
+    if (!editingPro || !accessToken) {
+      alert('Admin session missing. Please sign in again.');
+      return;
+    }
+
+    const key = `${certificationId}:${mode}`;
+
+    try {
+      setBrcCheckBusyByKey((current) => ({
+        ...current,
+        [key]: true,
+      }));
+      setCertificationsError(null);
+
+      const res = await fetch(
+        `${API_BASE_URL}/professionals/${editingPro.id}/certifications/${certificationId}/brc-check?mode=${mode}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const payload = (await res.json()) as BrcCheckResponse;
+      setBrcCheckResultByKey((current) => ({
+        ...current,
+        [key]: payload,
+      }));
+      setBrcCheckVerdictByKey((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+    } catch (error) {
+      setCertificationsError(error instanceof Error ? error.message : 'Failed to run BRC check');
+    } finally {
+      setBrcCheckBusyByKey((current) => ({
+        ...current,
+        [key]: false,
+      }));
     }
   };
 
@@ -1311,6 +1370,11 @@ export default function AdminProfessionalsPage() {
                     <div className="space-y-3">
                       {certifications.map((certification) => {
                         const isTargeted = certification.id === highlightedCertificationId;
+                        const isBrcRecord = certification.certificationType?.code === 'BUSINESS_REGISTRATION_CERTIFICATE';
+                        const byNameKey = `${certification.id}:name`;
+                        const byBrnKey = `${certification.id}:brn`;
+                        const byNameResult = brcCheckResultByKey[byNameKey];
+                        const byBrnResult = brcCheckResultByKey[byBrnKey];
                         return (
                           <div
                             key={certification.id}
@@ -1368,6 +1432,91 @@ export default function AdminProfessionalsPage() {
                             </div>
 
                             <div className="mt-4 space-y-3">
+                              {isBrcRecord && (
+                                <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 space-y-3">
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                                      Manual BRC check
+                                    </p>
+                                    <p className="text-xs text-sky-700 mt-1">
+                                      Run company-name and BRN lookups against CR open data, then mark thumbs up/down based on returned JSON.
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleBrcCheck(certification.id, 'name')}
+                                      disabled={!!brcCheckBusyByKey[byNameKey]}
+                                      className="rounded-md border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-60"
+                                    >
+                                      {brcCheckBusyByKey[byNameKey] ? 'Searching...' : 'Search by company name'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleBrcCheck(certification.id, 'brn')}
+                                      disabled={!!brcCheckBusyByKey[byBrnKey]}
+                                      className="rounded-md border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-60"
+                                    >
+                                      {brcCheckBusyByKey[byBrnKey] ? 'Searching...' : 'Search by BRN'}
+                                    </button>
+                                  </div>
+
+                                  {[byNameKey, byBrnKey].map((resultKey) => {
+                                    const result = brcCheckResultByKey[resultKey];
+                                    if (!result) return null;
+                                    const verdict = brcCheckVerdictByKey[resultKey];
+
+                                    return (
+                                      <div key={resultKey} className="rounded-md border border-sky-200 bg-white px-3 py-3 space-y-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                          <p className="text-xs font-semibold text-sky-900">
+                                            {result.mode === 'name' ? 'Company name' : 'BRN'} query: {result.requestedValue}
+                                          </p>
+                                          <div className="flex items-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setBrcCheckVerdictByKey((current) => ({
+                                                  ...current,
+                                                  [resultKey]: 'up',
+                                                }))
+                                              }
+                                              className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                                                verdict === 'up'
+                                                  ? 'bg-emerald-600 text-white'
+                                                  : 'border border-emerald-300 bg-emerald-50 text-emerald-800'
+                                              }`}
+                                            >
+                                              👍
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setBrcCheckVerdictByKey((current) => ({
+                                                  ...current,
+                                                  [resultKey]: 'down',
+                                                }))
+                                              }
+                                              className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                                                verdict === 'down'
+                                                  ? 'bg-rose-600 text-white'
+                                                  : 'border border-rose-300 bg-rose-50 text-rose-800'
+                                              }`}
+                                            >
+                                              👎
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <p className="text-[11px] text-sky-800 break-all">{result.requestUrl}</p>
+                                        <pre className="max-h-52 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                                          {JSON.stringify(result.data, null, 2)}
+                                        </pre>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
                               <div>
                                 <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
                                   Review notes

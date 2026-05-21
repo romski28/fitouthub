@@ -183,6 +183,22 @@ export class ProfessionalsController {
     );
   }
 
+  @Get(':id/certifications/:certificationId/brc-check')
+  @UseGuards(AuthGuard('jwt'))
+  async runBrcCheck(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Param('certificationId') certificationId: string,
+    @Query('mode') mode?: string,
+  ) {
+    this.requireAdmin(req);
+    return this.professionalsService.runBrcCheck(
+      id,
+      certificationId,
+      mode === 'name' ? 'name' : mode === 'brn' ? 'brn' : ('name' as 'name' | 'brn'),
+    );
+  }
+
   // Place parameterized routes after specific meta/export routes to avoid ambiguity
   @Get(':id')
   async findOne(@Param('id') id: string) {

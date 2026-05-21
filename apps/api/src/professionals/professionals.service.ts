@@ -384,6 +384,80 @@ export class ProfessionalsService {
     return this.buildProfessionalCertificationPayload(updated);
   }
 
+  async runBrcCheck(
+    professionalId: string,
+    certificationId: string,
+    mode: 'name' | 'brn',
+  ) {
+    if (!['name', 'brn'].includes(mode)) {
+      throw new BadRequestException('mode must be name or brn');
+    }
+
+    const certification = await (this.prisma as any).professionalCertification.findFirst({
+      where: {
+        id: certificationId,
+        professionalId,
+      },
+      include: {
+        certificationType: true,
+        professional: {
+          select: {
+            id: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+
+    if (!certification) {
+      throw new BadRequestException('Certification record not found');
+    }
+
+    if (certification.certificationType?.code !== 'BUSINESS_REGISTRATION_CERTIFICATE') {
+      throw new BadRequestException('BRC check is only available for BUSINESS_REGISTRATION_CERTIFICATE records');
+    }
+
+    const value =
+      mode === 'name'
+        ? String(certification.professional?.businessName || '').trim()
+        : String(certification.registrationNumber || '').trim();
+
+    if (!value) {
+      throw new BadRequestException(
+        mode === 'name'
+          ? 'Business name is required for company-name check'
+          : 'Registration number is required for BRN check',
+      );
+    }
+
+    const endpoint = new URL('https://data.cr.gov.hk/cr/api/api/v1/api_builder/json/local/search');
+    endpoint.searchParams.append('query[0][key1]', mode === 'name' ? 'Comp_name' : 'Brn');
+    endpoint.searchParams.append('query[0][key2]', mode === 'name' ? 'begins_with' : 'equal');
+    endpoint.searchParams.append('query[0][key3]', value);
+
+    const response = await fetch(endpoint.toString(), {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    const payload = contentType.includes('json') ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      throw new BadRequestException(
+        `CR API request failed (${response.status}). ${typeof payload === 'string' ? payload.slice(0, 240) : ''}`.trim(),
+      );
+    }
+
+    return {
+      mode,
+      requestedValue: value,
+      requestUrl: endpoint.toString(),
+      data: payload,
+    };
+  }
+
   async update(id: string, updateProfessionalDto: UpdateProfessionalDto) {
     // Filter undefined values to prevent "no fields to update" error
     const data: Record<string, any> = {};
