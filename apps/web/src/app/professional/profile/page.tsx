@@ -149,6 +149,7 @@ export default function ProfessionalProfilePage() {
     fallbackTradesmen.map((trade) => trade.title).filter(Boolean).sort(),
   );
   const hasLoadedRef = useRef(false);
+  const hydratedProfessionalIdRef = useRef<string | null>(null);
 
   const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable);
   const completionScore = Math.round(
@@ -238,8 +239,13 @@ export default function ProfessionalProfilePage() {
     }
     if (!isLoggedIn || !accessToken) return;
 
+    const activeProfessionalId = professional?.id || null;
+
     const fetchProfile = async () => {
       try {
+        const shouldHydrate =
+          !hasLoadedRef.current || hydratedProfessionalIdRef.current !== activeProfessionalId;
+
         if (!hasLoadedRef.current) {
           setLoading(true);
         }
@@ -252,14 +258,18 @@ export default function ProfessionalProfilePage() {
         }
         if (!res.ok) throw new Error('Failed to load profile');
         const data = await res.json();
-        setProfile({ ...emptyProfile, ...data });
-        setSelectedCoverageAreaCodes(deriveAreaCodesFromCoveragePayload(data));
-        setRefProjects(data.referenceProjects || []);
-        setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
-        setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
-        setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
-        setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
-        setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
+        if (shouldHydrate) {
+          setProfile({ ...emptyProfile, ...data });
+          setSelectedCoverageAreaCodes(deriveAreaCodesFromCoveragePayload(data));
+          setRefProjects(data.referenceProjects || []);
+          setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
+          setAllowPlatformUpdates(data.notificationPreferences?.allowPlatformUpdates ?? true);
+          setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
+          setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
+          setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
+          hydratedProfessionalIdRef.current = activeProfessionalId || data.id || null;
+        }
+        setError(null);
         hasLoadedRef.current = true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -268,8 +278,8 @@ export default function ProfessionalProfilePage() {
       }
     };
 
-    fetchProfile();
-  }, [isLoggedIn, accessToken, router]);
+    void fetchProfile();
+  }, [isLoggedIn, accessToken, professional?.id, router]);
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();

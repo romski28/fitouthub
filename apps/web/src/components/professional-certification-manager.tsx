@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import ChatImageUploader from '@/components/chat-image-uploader';
 
@@ -101,6 +101,7 @@ export function ProfessionalCertificationManager({
   const [form, setForm] = useState<CertificationFormState>(emptyForm);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
+  const hasLoadedRef = useRef(false);
 
   const selectedTradeSet = useMemo(
     () => new Set(selectedTradeTitles.map((title) => title.trim().toLowerCase()).filter(Boolean)),
@@ -139,7 +140,9 @@ export function ProfessionalCertificationManager({
 
     const load = async () => {
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         setError(null);
 
         const [typesRes, requirementsRes, certificationsRes] = await Promise.all([
@@ -168,6 +171,7 @@ export function ProfessionalCertificationManager({
         setCertificationTypes(Array.isArray(typesPayload) ? typesPayload : []);
         setRequirements(Array.isArray(requirementsPayload) ? requirementsPayload : []);
         setCertifications(Array.isArray(certificationsPayload) ? certificationsPayload : []);
+        hasLoadedRef.current = true;
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load certifications');
