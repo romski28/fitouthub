@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-a716f5db",
+    "date": "2026-05-21T12:48:56+08:00",
+    "title": "style(professional): standardize contract tab color palette",
+    "summary": "style(professional): standardize contract tab color palette",
+    "areas": [
+      "web"
+    ],
+    "commit": "a716f5db",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-893aa1d9",
     "date": "2026-05-21T12:46:36+08:00",
     "title": "style(professional): repaint chat tab to workspace paper theme",

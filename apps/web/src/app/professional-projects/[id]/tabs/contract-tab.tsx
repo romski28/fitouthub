@@ -182,16 +182,16 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(126,58,33,0.92)]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg bg-rose-500/15 border border-rose-500/40 p-6 text-center">
+      <div className="rounded-2xl bg-rose-50 border border-rose-300 p-6 text-center">
         <svg
-          className="mx-auto h-12 w-12 text-rose-300 mb-3"
+          className="mx-auto h-12 w-12 text-rose-500 mb-3"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -203,7 +203,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <p className="text-rose-200 font-medium">{error}</p>
+        <p className="text-rose-700 font-medium">{error}</p>
       </div>
     );
   }
@@ -216,38 +216,38 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Agreement Header */}
-      <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] p-6 shadow-[0_18px_40px_rgba(87,63,31,0.08)] backdrop-blur-sm">
+      <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="mb-2 text-xl font-semibold text-[#31271d]">
+            <h2 className="mb-2 text-xl font-semibold text-slate-900">
               Renovation Services Agreement
             </h2>
-            <p className="text-sm text-[#5a4b39]">
+            <p className="text-sm text-slate-700">
               {contract.projectName}
             </p>
             {contract.contractGeneratedAt && (
-              <p className="mt-1 text-xs text-[#75624a]">
+              <p className="mt-1 text-xs text-slate-600">
                 Generated: {formatDate(contract.contractGeneratedAt)}
               </p>
             )}
           </div>
           <div>
             {contract.isFullySigned ? (
-              <span className="inline-flex items-center rounded-full border border-emerald-600/30 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 Fully Signed
               </span>
             ) : hasAnySignature ? (
-              <span className="inline-flex items-center rounded-full border border-emerald-600/30 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 <svg className="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 Partially Signed
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+              <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                 <svg className="w-4 h-4 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
@@ -261,8 +261,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       {/* Signature Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Client Signature */}
-        <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] p-4 shadow-[0_14px_30px_rgba(87,63,31,0.06)] backdrop-blur-sm">
-          <h3 className="mb-3 text-sm font-medium text-[#31271d]">Client Signature</h3>
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
+          <h3 className="mb-3 text-sm font-medium text-slate-900">Client Signature</h3>
           {contract.clientSignedAt ? (
             <div className="space-y-2">
               <div className="flex items-center text-emerald-700">
@@ -272,16 +272,16 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                 <span className="font-medium">Signed</span>
               </div>
               {contract.clientSignedBy && (
-                <p className="text-sm text-[#4e4133]">
+                <p className="text-sm text-slate-700">
                   {contract.clientSignedBy.firstName} {contract.clientSignedBy.surname}
                 </p>
               )}
-              <p className="text-xs text-[#75624a]">
+              <p className="text-xs text-slate-600">
                 {formatDate(contract.clientSignedAt)}
               </p>
             </div>
           ) : (
-            <div className="flex items-center text-[#75624a]">
+            <div className="flex items-center text-slate-600">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -291,8 +291,8 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         </div>
 
         {/* Professional Signature */}
-        <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] p-4 shadow-[0_14px_30px_rgba(87,63,31,0.06)] backdrop-blur-sm">
-          <h3 className="mb-3 text-sm font-medium text-[#31271d]">Professional Signature</h3>
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
+          <h3 className="mb-3 text-sm font-medium text-slate-900">Professional Signature</h3>
           {contract.professionalSignedAt ? (
             <div className="space-y-2">
               <div className="flex items-center text-emerald-700">
@@ -302,16 +302,16 @@ export const ContractTab: React.FC<ContractTabProps> = ({
                 <span className="font-medium">Signed</span>
               </div>
               {contract.professionalSignedBy && (
-                <p className="text-sm text-[#4e4133]">
+                <p className="text-sm text-slate-700">
                   {contract.professionalSignedBy.firstName} {contract.professionalSignedBy.surname}
                 </p>
               )}
-              <p className="text-xs text-[#75624a]">
+              <p className="text-xs text-slate-600">
                 {formatDate(contract.professionalSignedAt)}
               </p>
             </div>
           ) : (
-            <div className="flex items-center text-[#75624a]">
+            <div className="flex items-center text-slate-600">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -322,18 +322,18 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       </div>
 
       {/* Agreement Content */}
-      <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] shadow-[0_18px_40px_rgba(87,63,31,0.08)] backdrop-blur-sm">
-        <div className="border-b border-[#d8c3a0]/80 p-4">
-          <h3 className="text-sm font-medium text-[#31271d]">Agreement</h3>
+      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
+        <div className="border-b border-[rgba(120,53,15,0.14)] p-4">
+          <h3 className="text-sm font-medium text-slate-900">Agreement</h3>
         </div>
         <div className="p-6">
-          <div className="max-h-[600px] overflow-y-auto rounded-lg border border-amber-200/60 bg-gradient-to-br from-[#f5ecd7] via-[#ead9b1] to-[#dcc28f] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
-            <div className="rounded-md border border-amber-900/20 bg-[rgba(255,248,230,0.55)] p-5 shadow-[0_10px_30px_rgba(72,44,8,0.12)]">
-              <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-[#342a1f]">
+          <div className="max-h-[600px] overflow-y-auto rounded-2xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] p-6 shadow-[inset_0_1px_0_rgba(0,0,0,0.05)]">
+            <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.4)] p-5 shadow-[0_10px_30px_rgba(72,44,8,0.08)]">
+              <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-slate-900">
                 {contract.contractContent || 'Agreement content is unavailable.'}
               </pre>
             </div>
-            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-[#7a6444]">
+            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-600">
               Digital agreement copy
             </p>
           </div>
@@ -341,25 +341,25 @@ export const ContractTab: React.FC<ContractTabProps> = ({
       </div>
 
       {!contract.canSign && !contract.isFullySigned && (
-        <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] px-4 py-3 text-sm text-[#5a4b39] shadow-[0_14px_30px_rgba(87,63,31,0.06)] backdrop-blur-sm">
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] px-4 py-3 text-sm text-slate-700 shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
           This agreement is waiting on the prior workflow step before you can sign.
         </div>
       )}
 
       {/* Sign Button */}
       {contract.canSign && !contract.isFullySigned && (
-        <div className="rounded-lg border border-[#d8c3a0]/80 bg-[rgba(247,238,221,0.74)] p-4 shadow-[0_14px_30px_rgba(87,63,31,0.06)] backdrop-blur-sm">
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div className="text-center sm:text-left">
-              <p className="text-sm font-semibold text-[#31271d]">Ready to sign</p>
-              <p className="text-xs text-[#5a4b39]">
+              <p className="text-sm font-semibold text-slate-900">Ready to sign</p>
+              <p className="text-xs text-slate-700">
                 Confirm your agreement once you have reviewed the document above.
               </p>
             </div>
             <button
               onClick={handleSignContract}
               disabled={signing}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#f5ecd7] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl bg-[rgba(126,58,33,0.92)] px-6 py-3 font-medium text-white transition-colors hover:bg-[rgba(100,45,26,0.96)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               {signing ? (
                 <>
@@ -384,7 +384,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
 
       {/* Fully Signed Notice */}
       {contract.isFullySigned && (
-        <div className="rounded-lg border border-emerald-600/25 bg-[rgba(247,238,221,0.8)] p-4 text-center shadow-[0_14px_30px_rgba(87,63,31,0.06)] backdrop-blur-sm">
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-center shadow-[0_14px_30px_rgba(81,55,32,0.05)]">
           <svg
             className="mx-auto mb-2 h-10 w-10 text-emerald-700"
             fill="none"
