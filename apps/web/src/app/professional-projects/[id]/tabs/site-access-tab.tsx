@@ -177,7 +177,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm">
+    <div className="space-y-4 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
       <AccordionGroup>
         {/* Site Access Status */}
         <AccordionItem
@@ -187,44 +187,44 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
           onToggle={() => onToggleAccordion('site-access-status')}
         >
           {siteAccessError && (
-            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 mb-4">
+            <div className="rounded-2xl border border-rose-400 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-4">
               {siteAccessError}
             </div>
           )}
 
           {siteAccessLoading ? (
-            <p className="text-sm text-slate-300">Loading site access status...</p>
+            <p className="text-sm text-slate-600">Loading site access status...</p>
           ) : !siteAccessStatus ? (
-            <p className="text-sm text-slate-300">No site access data</p>
+            <p className="text-sm text-slate-600">No site access data</p>
           ) : (
             <div className="space-y-3">
               {offeredInspectionDate && (
-                <div className="rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                <div className="rounded-2xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
                   Site inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
                 </div>
               )}
 
               {showPendingReadOnlyPanel && (
-                <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                   Awaiting client approval
                   {siteAccessStatus.visitScheduledAt && (
-                    <> at <span className="font-semibold text-amber-100">{formatInspectionTime(siteAccessStatus.visitScheduledAt)}</span>.</>
+                    <> at <span className="font-semibold text-amber-900">{formatInspectionTime(siteAccessStatus.visitScheduledAt)}</span>.</>
                   )}
                   {scheduledInspectionSlot && (
-                    <span className="block mt-1 text-amber-100">Requested slot: {scheduledInspectionSlot}</span>
+                    <span className="block mt-1 text-amber-800">Requested slot: {scheduledInspectionSlot}</span>
                   )}
                 </div>
               )}
 
               {showPendingReadOnlyPanel && offeredInspectionDate && (
-                <div className="space-y-2 rounded-md border border-slate-700 bg-slate-900/60 p-4">
-                  <p className="text-sm font-semibold text-white">Selected inspection slot</p>
-                  <p className="text-xs text-slate-300">Slot picker is read-only while the client reviews your request.</p>
+                <div className="space-y-2 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+                  <p className="text-sm font-semibold text-slate-900">Selected inspection slot</p>
+                  <p className="text-xs text-slate-600">Slot picker is read-only while the client reviews your request.</p>
                   <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-slate-200">
+                    <span className="rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-1 text-slate-700">
                       {formatInspectionDate(offeredInspectionDate)}
                     </span>
-                    <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-amber-100">
+                    <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-amber-800">
                       {siteAccessStatus.visitScheduledAt
                         ? new Date(siteAccessStatus.visitScheduledAt).toLocaleTimeString('en-HK', {
                             timeZone: 'Asia/Hong_Kong',
@@ -239,13 +239,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               )}
 
               {backendRescheduleRequired && (
-                <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                   The client requested a reschedule. Please select a new slot.
                 </div>
               )}
 
               {isBooked && (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
+                <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                   Inspection booked
                   {siteAccessStatus.visitScheduledAt
                     ? ` at ${formatInspectionTime(siteAccessStatus.visitScheduledAt)}. Don't be late.`
@@ -253,16 +253,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                     ? ` for ${formatInspectionDate(siteAccessStatus.visitScheduledFor)}`
                     : '.'}
                   {scheduledInspectionSlot && (
-                    <span className="block mt-1 text-emerald-100">Confirmed slot: {scheduledInspectionSlot}</span>
+                    <span className="block mt-1 text-emerald-900">Confirmed slot: {scheduledInspectionSlot}</span>
                   )}
                 </div>
               )}
 
               {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
-                <div className="grid gap-3 rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
+                <div className="grid gap-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm text-slate-700">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">SITE ADDRESS</p>
-                    <p className="mt-2 font-medium text-white">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">SITE ADDRESS</p>
+                    <p className="mt-2 font-medium text-slate-900">
                       {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
                         .filter(Boolean)
                         .join('/')
@@ -273,23 +273,23 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                         )}
                     </p>
                     {siteAccessStatus.siteAccessData.postalCode?.trim() ? (
-                      <p className="text-slate-300 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
+                      <p className="text-slate-600 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
                     ) : null}
                   </div>
                   {siteAccessStatus.siteAccessData.accessDetails && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Access Details</p>
-                      <p className="text-slate-200">{siteAccessStatus.siteAccessData.accessDetails}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Access Details</p>
+                      <p className="text-slate-700">{siteAccessStatus.siteAccessData.accessDetails}</p>
                     </div>
                   )}
-                  <p className="text-xs text-slate-400">Client or their representative will be on site for your visit.</p>
+                  <p className="text-xs text-slate-600">Client or their representative will be on site for your visit.</p>
                 </div>
               )}
 
               {showRequestPanel && (
-                <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
-                  <p className="text-sm font-semibold text-white">Select inspection slot</p>
-                  <p className="text-xs text-slate-300">
+                <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+                  <p className="text-sm font-semibold text-slate-900">Select inspection slot</p>
+                  <p className="text-xs text-slate-600">
                     {offeredInspectionDate
                       ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
                       : 'Client has not offered an inspection date yet.'}
@@ -298,13 +298,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                   {offeredInspectionDate ? (
                     <div className="space-y-3">
                       <div>
-                        <p className="mb-1 text-xs font-semibold text-slate-300">Inspection Date</p>
-                        <div className="rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-white">
+                        <p className="mb-1 text-xs font-semibold text-slate-700">Inspection Date</p>
+                        <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900">
                           {formatInspectionDate(offeredInspectionDate)}
                         </div>
                       </div>
                       <div>
-                        <p className="mb-2 text-xs font-semibold text-slate-300">Choose an hourly time</p>
+                        <p className="mb-2 text-xs font-semibold text-slate-700">Choose an hourly time</p>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                           {INSPECTION_TIME_OPTIONS.map((timeOption) => {
                             const isBooked = bookedInspectionTimes.has(timeOption);
@@ -315,12 +315,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                                 type="button"
                                 onClick={() => onUpdateSiteAccessRequestTime(timeOption)}
                                 disabled={isBooked || siteAccessActionLoading || isPending}
-                                className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
+                                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
                                   isSelected
-                                    ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
                                     : isBooked
-                                    ? 'border-slate-700 bg-slate-900 text-slate-500'
-                                    : 'border-slate-600 bg-slate-900 text-white hover:border-emerald-500 hover:text-emerald-100'
+                                    ? 'border-slate-300 bg-slate-100 text-slate-400'
+                                    : 'border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] text-slate-700 hover:border-[rgba(126,58,33,0.4)] hover:text-slate-900'
                                 }`}
                               >
                                 {timeOption}
@@ -331,7 +331,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+                    <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-700">
                       Waiting for client to offer a site inspection date.
                     </div>
                   )}
@@ -341,7 +341,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                     onClick={onRequestSiteAccess}
                     disabled={siteAccessActionLoading || !canRequestSiteAccess}
                     title={!canRequestSiteAccess ? 'Choose a time to request inspection slot' : ''}
-                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                    className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-50 transition"
                   >
                     {siteAccessActionLoading ? 'Requesting...' : backendRescheduleRequired ? 'Request Reschedule' : 'Request Slot'}
                   </button>
@@ -349,7 +349,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               )}
 
               {!isBooked && isNotAvailable && (
-                <p className="text-xs text-slate-400">Inspection date not available yet.</p>
+                <p className="text-xs text-slate-600">Inspection date not available yet.</p>
               )}
             </div>
           )}
