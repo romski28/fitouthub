@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-7a57937c",
+    "date": "2026-05-21T12:56:03+08:00",
+    "title": "style(professional): repaint schedule tab to workspace paper theme",
+    "summary": "style(professional): repaint schedule tab to workspace paper theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "7a57937c",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-0b3f8b6e",
     "date": "2026-05-21T12:53:31+08:00",
     "title": "style(professional): begin financials tab workspace theme update",
