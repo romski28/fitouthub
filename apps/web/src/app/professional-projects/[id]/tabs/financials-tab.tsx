@@ -230,11 +230,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   const getStatusClasses = (status: string) => {
     const normalized = (status || '').toLowerCase();
-    if (normalized === 'released') return 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40';
-    if (normalized === 'release_requested') return 'bg-amber-500/20 text-amber-200 border border-amber-500/40';
-    if (normalized === 'escrow_funded') return 'bg-blue-500/20 text-blue-200 border border-blue-500/40';
-    if (normalized === 'disputed') return 'bg-rose-500/20 text-rose-200 border border-rose-500/40';
-    return 'bg-slate-700 text-slate-200 border border-slate-600';
+    if (normalized === 'released') return 'bg-emerald-50 text-emerald-900 border border-emerald-200';
+    if (normalized === 'release_requested') return 'bg-amber-50 text-amber-900 border border-amber-200';
+    if (normalized === 'escrow_funded') return 'bg-sky-50 text-sky-900 border border-sky-200';
+    if (normalized === 'disputed') return 'bg-rose-50 text-rose-900 border border-rose-200';
+    return 'bg-slate-100 text-slate-700 border border-slate-300';
   };
 
   const parseMilestoneMetadataFromNotes = (notes?: string | null): { paymentMilestoneId?: string } | null => {
@@ -793,11 +793,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-white">Plan-aligned Payment Milestones</h3>
-              <p className="text-xs text-slate-300 mt-1">
+              <h3 className="font-semibold text-slate-900">Plan-aligned Payment Milestones</h3>
+              <p className="text-xs text-slate-700 mt-1">
                 {paymentPlan.projectScale.replace('_', ' ')} · {paymentPlan.escrowFundingPolicy.replace(/_/g, ' ')}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-slate-600 mt-1">
                 Source of truth: the Schedule timeline. Use edit to jump there and update milestone timing.
               </p>
             </div>
@@ -818,38 +818,38 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
           </div>
 
           {isMaterialsWorkflowProject && (
-            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Escrow Funding Sub-Status</p>
-                  <p className="mt-1 text-sm font-semibold text-white">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Escrow Funding Sub-Status</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
                     Wallet Transfer: {walletTransferStatus === 'completed' ? 'Completed' : 'Pending'}
                   </p>
-                  <p className="mt-1 text-xs text-cyan-100">
+                  <p className="mt-1 text-xs text-sky-700">
                     Escrow Funding remains the stage owner. Materials purchase and transfer updates appear here as a sub-status.
                   </p>
                 </div>
-                <div className="text-right text-xs text-cyan-100">
-                  <p>Milestone: <span className="font-semibold text-white">{firstPaymentMilestone?.title || 'Milestone 1'}</span></p>
-                  <p>Claims submitted: <span className="font-semibold text-white">{materialsEvidence.length}</span></p>
-                  <p>Escrow ready: <span className="font-semibold text-white">{isEscrowReady ? 'Yes' : 'No'}</span></p>
+                <div className="text-right text-xs text-sky-700">
+                  <p>Milestone: <span className="font-semibold text-slate-900">{firstPaymentMilestone?.title || 'Milestone 1'}</span></p>
+                  <p>Claims submitted: <span className="font-semibold text-slate-900">{materialsEvidence.length}</span></p>
+                  <p>Escrow ready: <span className="font-semibold text-slate-900">{isEscrowReady ? 'Yes' : 'No'}</span></p>
                 </div>
               </div>
             </div>
           )}
 
           {orphanPaymentMilestones.length > 0 && (
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               {orphanPaymentMilestones.length} payment milestone{orphanPaymentMilestones.length === 1 ? ' is' : 's are'} not linked to a schedule milestone yet.
               Use the linkage controls below or reset/review the Schedule tab to bring them back into the single milestone timeline.
             </div>
           )}
 
           {(paymentPlan.projectScale === 'SCALE_2' || paymentPlan.projectScale === 'SCALE_3') && (
-            <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)] p-4 space-y-3">
               <div>
-                <h4 className="font-semibold text-white">Link Financial Milestones to Project Schedule</h4>
-                <p className="text-xs text-slate-300 mt-1">
+                <h4 className="font-semibold text-slate-900">Link Financial Milestones to Project Schedule</h4>
+                <p className="text-xs text-slate-700 mt-1">
                   The class defaults create financial schedule milestones automatically. You can keep those aligned here and still add extra non-financial tasks in the Schedule tab.
                 </p>
               </div>
@@ -857,11 +857,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               {paymentPlan.projectScale === 'SCALE_2' && (
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">Linked project milestone (payment #2)</label>
+                    <label className="block text-xs font-semibold text-slate-900 mb-1">Linked project milestone (payment #2)</label>
                     <select
                       value={scale2MilestoneId}
                       onChange={(e) => setScale2MilestoneId(e.target.value)}
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900"
                     >
                       <option value="">Unlinked</option>
                       {scheduleMilestoneOptions.map((milestone) => (
@@ -872,12 +872,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">Payment #2 due date</label>
+                    <label className="block text-xs font-semibold text-slate-900 mb-1">Payment #2 due date</label>
                     <input
                       type="date"
                       value={scale2PlannedDueAt}
                       onChange={(e) => setScale2PlannedDueAt(e.target.value)}
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900"
                     />
                   </div>
                 </div>
@@ -886,7 +886,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               {paymentPlan.projectScale === 'SCALE_3' && (
                 <div className="space-y-3">
                   {scale3Rows.map((row, index) => (
-                    <div key={`${index}-${row.title}`} className="grid gap-2 rounded-md border border-slate-700 bg-slate-900/60 p-3 md:grid-cols-4">
+                    <div key={`${index}-${row.title}`} className="grid gap-2 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.4)] p-3 md:grid-cols-4">
                       <input
                         value={row.title}
                         onChange={(e) => {
@@ -894,7 +894,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           next[index] = { ...next[index], title: e.target.value };
                           setScale3Rows(next);
                         }}
-                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        className="rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-2 py-1 text-sm text-slate-900"
                         placeholder="Milestone title"
                       />
                       <input
@@ -907,7 +907,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           next[index] = { ...next[index], amount: e.target.value };
                           setScale3Rows(next);
                         }}
-                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        className="rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-2 py-1 text-sm text-slate-900"
                         placeholder="Amount"
                       />
                       <input
@@ -918,7 +918,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           next[index] = { ...next[index], plannedDueAt: e.target.value };
                           setScale3Rows(next);
                         }}
-                        className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                        className="rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-2 py-1 text-sm text-slate-900"
                       />
                       <div className="flex gap-2">
                         <select
@@ -928,7 +928,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                             next[index] = { ...next[index], projectMilestoneId: e.target.value };
                             setScale3Rows(next);
                           }}
-                          className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-sm text-white"
+                          className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-2 py-1 text-sm text-slate-900"
                         >
                           <option value="">Link schedule milestone</option>
                           {scheduleMilestoneOptions.map((milestone) => (
@@ -940,7 +940,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => setScale3Rows(scale3Rows.filter((_, i) => i !== index))}
-                          className="rounded-md border border-rose-500/40 bg-rose-500/10 px-2 text-xs text-rose-200"
+                          className="rounded-2xl border border-rose-200 bg-rose-50 px-2 text-xs text-rose-900"
                         >
                           Remove
                         </button>
@@ -955,7 +955,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         { title: '', amount: '', plannedDueAt: '', projectMilestoneId: '' },
                       ])
                     }
-                    className="rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+                    className="rounded-2xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.5)] px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-[rgba(239,231,207,0.4)]"
                   >
                     + Add intermediate financial milestone
                   </button>
@@ -976,23 +976,23 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
           )}
 
           {paymentPlan.projectScale === 'SCALE_3' && paymentPlan.retentionEnabled && (
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               Retention configured: {paymentPlan.retentionPercent}% ({formatHKD(paymentPlan.retentionAmount || 0)})
               {paymentPlan.retentionReleaseAt ? ` · Release date: ${new Date(paymentPlan.retentionReleaseAt).toLocaleDateString('en-HK')}` : ''}.
               {' '}Retention settings are admin-controlled.
             </div>
           )}
 
-          <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
+          <div className="overflow-x-auto rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="px-3 py-2 text-left font-semibold text-white">#</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Milestone</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Due</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Timing</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Amount</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Status</th>
+                <tr className="border-b border-[rgba(120,53,15,0.1)]">
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">#</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Milestone</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Due</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Timing</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Amount</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -1002,35 +1002,35 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   const displayDueAt = getDisplayMilestoneDueAt(row);
                   const timing = getTiming(displayDueAt);
                   return (
-                    <tr key={paymentMilestone.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="px-3 py-2 text-slate-200">{paymentMilestone.sequence}</td>
-                      <td className="px-3 py-2 text-slate-200">
+                    <tr key={paymentMilestone.id} className="border-b border-[rgba(120,53,15,0.08)] hover:bg-[rgba(245,238,219,0.3)]">
+                      <td className="px-3 py-2 text-slate-700">{paymentMilestone.sequence}</td>
+                      <td className="px-3 py-2 text-slate-700">
                         <div className="font-medium">💰 {displayTitle}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-600">
                           {typeof paymentMilestone.percentOfTotal === 'number' ? `${paymentMilestone.percentOfTotal}% of plan` : paymentMilestone.type}
                           {' · '}schedule #{scheduleMilestone.sequence}
                         </div>
                         {paymentMilestone.adminComment && (
-                          <div className="mt-1 text-[11px] text-amber-300">{paymentMilestone.adminComment}</div>
+                          <div className="mt-1 text-[11px] text-amber-700">{paymentMilestone.adminComment}</div>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-slate-300 text-xs">
+                      <td className="px-3 py-2 text-slate-600 text-xs">
                         {displayDueAt ? new Date(displayDueAt).toLocaleDateString('en-HK') : '—'}
                       </td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold border ${
                           timing.tone === 'emerald'
-                            ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
+                            ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
                             : timing.tone === 'rose'
-                              ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+                              ? 'bg-rose-50 text-rose-900 border-rose-200'
                               : timing.tone === 'amber'
-                                ? 'bg-amber-500/20 text-amber-200 border-amber-500/40'
-                                : 'bg-slate-700 text-slate-200 border-slate-600'
+                                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-300'
                         }`}>
                           {timing.label}
                         </span>
                       </td>
-                      <td className="px-3 py-2 font-semibold text-white">{formatHKD(paymentMilestone.amount)}</td>
+                      <td className="px-3 py-2 font-semibold text-slate-900">{formatHKD(paymentMilestone.amount)}</td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(paymentMilestone.status)}`}>
                           {paymentMilestone.status.replace(/_/g, ' ')}
@@ -1045,26 +1045,26 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
           {/* B.2: Rolling policy — request escrow funding for next milestone window */}
           {paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES' && (
-            <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-4 space-y-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-3">
               <div>
-                <h4 className="font-semibold text-white">Request Milestone Escrow Funding</h4>
-                <p className="text-xs text-slate-300 mt-1">
+                <h4 className="font-semibold text-slate-900">Request Milestone Escrow Funding</h4>
+                <p className="text-xs text-slate-700 mt-1">
                   This project uses rolling escrow. Before you can request payment release on a milestone, the client must first fund it into escrow. Use this panel to trigger a funding request.
                 </p>
               </div>
 
               {fundingEligibleMilestones.length === 0 ? (
-                <div className="rounded-md border border-slate-600 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)] px-3 py-2 text-xs text-slate-700">
                   All scheduled milestones have already been funded or are awaiting confirmation. No funding requests needed right now.
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),auto]">
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">Milestone to fund</label>
+                    <label className="block text-xs font-semibold text-slate-900 mb-1">Milestone to fund</label>
                     <select
                       value={activeFundingMilestoneId}
                       onChange={(e) => setFundingMilestoneId(e.target.value)}
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900"
                     >
                       {fundingEligibleMilestones.map((row) => (
                         <option key={row.paymentMilestone.id} value={row.paymentMilestone.id}>
@@ -1075,7 +1075,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                     {activeFundingMilestoneId && (() => {
                       const row = fundingEligibleMilestones.find((x) => x.paymentMilestone.id === activeFundingMilestoneId);
                       return row ? (
-                        <p className="mt-1 text-[11px] text-slate-400">
+                        <p className="mt-1 text-[11px] text-slate-600">
                           Planned due: {getDisplayMilestoneDueAt(row) ? new Date(getDisplayMilestoneDueAt(row) as string).toLocaleDateString('en-HK') : 'Not set'}
                           {' · '}Status: {row.paymentMilestone.status.replace(/_/g, ' ')}
                         </p>
@@ -1106,22 +1106,22 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
           {/* Payment milestone request — hidden for Scale 1/2 which use the materials purchase workflow */}
           {!isMaterialsWorkflowProject && (
-          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-3">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-3">
             <div>
-              <h4 className="font-semibold text-white">Request Payment Against a Milestone</h4>
-              <p className="text-xs text-slate-300 mt-1">
+              <h4 className="font-semibold text-slate-900">Request Payment Against a Milestone</h4>
+              <p className="text-xs text-slate-700 mt-1">
                 Once the plan is active, payment requests should follow the milestone schedule rather than arbitrary fixed or percentage amounts.
               </p>
             </div>
 
             {paymentPlan.escrowFundingPolicy === 'ROLLING_TWO_MILESTONES' && eligibleMilestones.length === 0 && (
-              <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 No milestone is currently escrow-funded for release. Payment requests become available once the next funded milestone window is opened.
               </div>
             )}
 
             {paymentPlan.escrowFundingPolicy !== 'ROLLING_TWO_MILESTONES' && !isEscrowReady && (
-              <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 Escrow funding is not confirmed yet. Payment requests unlock after escrow is funded.
               </div>
             )}
@@ -1129,11 +1129,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             {eligibleMilestones.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),auto]">
                 <div>
-                  <label className="block text-xs font-semibold text-white mb-1">Eligible milestone</label>
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">Eligible milestone</label>
                   <select
                     value={selectedMilestone?.paymentMilestone.id || ''}
                     onChange={(e) => onSelectPaymentMilestone?.(e.target.value)}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                    className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900"
                   >
                     {eligibleMilestones.map((row) => (
                       <option key={row.paymentMilestone.id} value={row.paymentMilestone.id}>
@@ -1163,23 +1163,23 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             )}
 
             {selectedMilestone && (
-              <div className="rounded-md border border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-200">
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)] p-3 text-sm text-slate-700">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="font-semibold text-white">{getDisplayMilestoneTitle(selectedMilestone)}</span>
-                  <span className="text-slate-400">•</span>
+                  <span className="font-semibold text-slate-900">{getDisplayMilestoneTitle(selectedMilestone)}</span>
+                  <span className="text-slate-500">•</span>
                   <span>{formatHKD(selectedMilestone.paymentMilestone.amount)}</span>
                   {typeof selectedMilestone.paymentMilestone.percentOfTotal === 'number' && (
                     <>
-                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-500">•</span>
                       <span>{selectedMilestone.paymentMilestone.percentOfTotal}%</span>
                     </>
                   )}
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   Planned due date: {getDisplayMilestoneDueAt(selectedMilestone) ? new Date(getDisplayMilestoneDueAt(selectedMilestone) as string).toLocaleDateString('en-HK') : 'Not scheduled'}
                 </p>
                 {selectedMilestoneTiming?.isLate && (
-                  <p className="mt-2 text-xs text-rose-300">
+                  <p className="mt-2 text-xs text-rose-700">
                     This request is late against the planned milestone date and should flag a schedule review or possible project timeline extension.
                   </p>
                 )}
@@ -1187,12 +1187,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-white mb-1">Notes (optional)</label>
+              <label className="block text-xs font-semibold text-slate-900 mb-1">Notes (optional)</label>
               <textarea
                 value={paymentRequestNotes}
                 onChange={(e) => onUpdatePaymentRequestNotes(e.target.value)}
                 rows={2}
-                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500"
+                className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400"
                 placeholder="Add context for this milestone request (progress evidence, completion notes, delay explanation, etc.)"
               />
             </div>
@@ -1200,16 +1200,16 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
           )}
 
           {isMaterialsWorkflowProject && (
-            <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-4 space-y-4">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-4">
               <div>
-                <h4 className="font-semibold text-white">Milestone 1 payment – Materials Purchase</h4>
-                <p className="text-xs text-cyan-100 mt-1">
+                <h4 className="font-semibold text-slate-900">Milestone 1 payment – Materials Purchase</h4>
+                <p className="text-xs text-slate-700 mt-1">
                   Upload receipts and photos for materials purchased. Set a value per item, then submit for client review.
                 </p>
               </div>
 
               {!isEscrowReady && (
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   Escrow funding is still pending. Materials claims unlock after the client funds escrow.
                 </div>
               )}
@@ -1217,7 +1217,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               {isEscrowReady && materialsEvidence.filter((e) => e.status !== 'rejected').length === 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Items to claim</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Items to claim</p>
                     <div className="text-right">
                       <input
                         ref={fileInputRef}
@@ -1231,11 +1231,11 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingFiles}
-                        className="rounded-md border border-cyan-500/40 bg-cyan-600/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-600/30 disabled:opacity-50 transition"
+                        className="rounded-2xl border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900 hover:bg-sky-100 disabled:opacity-50 transition"
                       >
                         {uploadingFiles ? 'Uploading…' : '+ Add photos / receipts'}
                       </button>
-                      <p className="text-[10px] text-slate-400 mt-0.5">Images only · max 1 MB each</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5">Images only · max 1 MB each</p>
                     </div>
                   </div>
 
@@ -1256,13 +1256,13 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">General notes (optional)</label>
+                    <label className="block text-xs font-semibold text-slate-900 mb-1">General notes (optional)</label>
                     <textarea
                       value={materialsNotes}
                       onChange={(e) => setMaterialsNotes(e.target.value)}
                       rows={2}
                       placeholder="Optional context for the client about this materials claim"
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400"
                     />
                   </div>
 
@@ -1277,7 +1277,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                           uploadRows.filter((r) => !r.uploading && r.url && r.url !== 'error').length === 0 ||
                           isClaimOverMaximum
                         }
-                        className="w-full rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
+                        className="w-full rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                       >
                         {materialsBusy === 'submit' ? 'Submitting…' : 'Submit for payment'}
                       </button>
@@ -1285,7 +1285,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                         type="button"
                         onClick={handleSkipMaterialsClaim}
                         disabled={!canSubmitMaterialsClaim || skipping}
-                        className="w-full rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
+                        className="w-full rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50 transition"
                       >
                         {skipping ? 'Processing…' : 'Skip until final payment'}
                       </button>
@@ -1294,20 +1294,20 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                 </div>
               )}
 
-              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-3 space-y-2">
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)] p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claim History</p>
-                  {materialsLoading && <p className="text-xs text-slate-400">Loading...</p>}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Claim History</p>
+                  {materialsLoading && <p className="text-xs text-slate-600">Loading...</p>}
                 </div>
 
                 {materialsEvidence.length === 0 ? (
-                  <p className="text-xs text-slate-400">No materials claims submitted yet.</p>
+                  <p className="text-xs text-slate-600">No materials claims submitted yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {materialsEvidence.map((evidence) => (
-                      <div key={evidence.id} className="rounded border border-slate-700 bg-slate-950/40 p-2 space-y-1">
+                      <div key={evidence.id} className="rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.4)] p-2 space-y-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-xs text-white">
+                          <p className="text-xs text-slate-900">
                             Claimed: <span className="font-semibold">{formatHKD(evidence.claimedAmount)}</span>
                             {evidence.approvedAmount ? ` | Approved: ${formatHKD(evidence.approvedAmount)}` : ''}
                           </p>
@@ -1315,7 +1315,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                             {String(evidence.status || '').replace(/_/g, ' ')}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-slate-600">
                           Submitted {new Date(evidence.createdAt).toLocaleDateString('en-HK')}
                           {evidence.deadlineAt ? ` · Deadline ${new Date(evidence.deadlineAt).toLocaleDateString('en-HK')}` : ''}
                         </p>
@@ -1328,7 +1328,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                             Respond to questions
                           </button>
                         )}
-                        {evidence.notes && <p className="text-xs text-slate-300">{evidence.notes}</p>}
+                        {evidence.notes && <p className="text-xs text-slate-700">{evidence.notes}</p>}
                       </div>
                     ))}
                   </div>
@@ -1336,23 +1336,23 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               </div>
 
               {canTransferWallet && (
-                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-3">
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 space-y-3">
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Transfer Approved Materials Funds</h4>
-                    <p className="text-xs text-emerald-100 mt-1">
+                    <h4 className="text-sm font-semibold text-slate-900">Transfer Approved Materials Funds</h4>
+                    <p className="text-xs text-slate-700 mt-1">
                       The client has approved your materials claim. Transfer the approved amount to your drawable wallet.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="flex-1 min-w-[140px]">
-                      <label className="block text-xs font-semibold text-white mb-1">Amount to transfer</label>
+                      <label className="block text-xs font-semibold text-slate-900 mb-1">Amount to transfer</label>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={walletTransferAmount !== '' ? walletTransferAmount : String(totalApprovedAmount)}
                         onChange={(e) => setWalletTransferAmount(e.target.value)}
-                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
+                        className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-xs text-slate-900"
                         data-testid="wallet-transfer-amount"
                       />
                     </div>
@@ -1365,7 +1365,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
                       {walletTransferLoading ? 'Transferring...' : 'Transfer to Drawable Wallet'}
                     </button>
                   </div>
-                  <p className="text-[11px] text-emerald-200">
+                  <p className="text-[11px] text-slate-600">
                     Approved total: {formatHKD(totalApprovedAmount)}. The server will validate your requested amount against the available balance.
                   </p>
                 </div>
@@ -1377,16 +1377,16 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
       {claimModalTarget && activeClaimThreadId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Respond to claim questions">
-          <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-700 px-4 py-3">
+          <div className="w-full max-w-2xl rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(239,231,207,0.95)] shadow-2xl">
+            <div className="flex items-start justify-between border-b border-[rgba(120,53,15,0.12)] px-4 py-3">
               <div>
-                <h3 className="text-lg font-semibold text-white">Respond to Questions</h3>
-                <p className="text-xs text-slate-300">Claim thread: {activeClaimThreadId}</p>
+                <h3 className="text-lg font-semibold text-slate-900">Respond to Questions</h3>
+                <p className="text-xs text-slate-700">Claim thread: {activeClaimThreadId}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveClaimThreadId(null)}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                className="rounded border border-[rgba(120,53,15,0.2)] px-2 py-1 text-xs text-slate-700 hover:bg-[rgba(245,238,219,0.5)]"
               >
                 Close
               </button>
@@ -1409,31 +1409,31 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
       {/* Submit Payment Request */}
       {!hasPaymentPlan && (
-      <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 space-y-3">
-        <h3 className="font-semibold text-white">Submit Payment Request</h3>
+      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-3">
+        <h3 className="font-semibold text-slate-900">Submit Payment Request</h3>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="block text-xs font-semibold text-white mb-1">Amount</label>
+            <label className="block text-xs font-semibold text-slate-900 mb-1">Amount</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">$</span>
               <input
                 type="number"
                 step="0.01"
                 value={paymentRequestAmount}
                 onChange={(e) => onUpdatePaymentRequestAmount(e.target.value)}
-                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 pl-6 text-sm text-white placeholder-slate-500"
+                className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 pl-6 text-sm text-slate-900 placeholder-slate-400"
                 placeholder="0.00"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white mb-1">Type</label>
+            <label className="block text-xs font-semibold text-slate-900 mb-1">Type</label>
             <select
               value={paymentRequestType}
               onChange={(e) => onUpdatePaymentRequestType(e.target.value)}
-              className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900"
             >
               <option value="fixed">Fixed Amount</option>
               <option value="percentage">Percentage</option>
@@ -1459,12 +1459,12 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-white mb-1">Notes (optional)</label>
+          <label className="block text-xs font-semibold text-slate-900 mb-1">Notes (optional)</label>
           <textarea
             value={paymentRequestNotes}
             onChange={(e) => onUpdatePaymentRequestNotes(e.target.value)}
             rows={2}
-            className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500"
+            className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400"
             placeholder="Describe what this payment is for (e.g., deposit, materials, labor, completion)"
           />
         </div>
@@ -1472,57 +1472,57 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       )}
 
       {/* Payment Request History */}
-      <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 space-y-3">
-        <h3 className="font-semibold text-white">Payment Request History</h3>
+      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-3">
+        <h3 className="font-semibold text-slate-900">Payment Request History</h3>
 
         {paymentRequestError && (
-          <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
             {paymentRequestError}
           </div>
         )}
 
         {paymentRequestLoading ? (
-          <p className="text-sm text-slate-300">Loading payment requests...</p>
+          <p className="text-sm text-slate-700">Loading payment requests...</p>
         ) : paymentRequests.length === 0 ? (
-          <p className="text-sm text-slate-300">No payment requests yet.</p>
+          <p className="text-sm text-slate-700">No payment requests yet.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-slate-700 bg-slate-900/60">
+          <div className="overflow-x-auto rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.5)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="px-3 py-2 text-left font-semibold text-white">Amount</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Type</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Status</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Submitted</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white">Notes</th>
+                <tr className="border-b border-[rgba(120,53,15,0.1)]">
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Amount</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Type</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Status</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Submitted</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-900">Notes</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentRequests.map((request) => (
-                  <tr key={request.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                    <td className="px-3 py-2 font-semibold text-white">
+                  <tr key={request.id} className="border-b border-[rgba(120,53,15,0.08)] hover:bg-[rgba(245,238,219,0.3)]">
+                    <td className="px-3 py-2 font-semibold text-slate-900">
                       ${parseFloat(request.amount.toString()).toFixed(2)}
                     </td>
-                    <td className="px-3 py-2 text-slate-300">{request.type}</td>
+                    <td className="px-3 py-2 text-slate-700">{request.type}</td>
                     <td className="px-3 py-2">
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-semibold ${
                           request.status === 'paid'
-                            ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
+                            ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
                             : request.status === 'pending'
-                            ? 'bg-amber-500/20 text-amber-200 border border-amber-500/40'
+                            ? 'bg-amber-50 text-amber-900 border border-amber-200'
                             : request.status === 'rejected'
-                            ? 'bg-rose-500/20 text-rose-200 border border-rose-500/40'
-                            : 'bg-slate-700 text-slate-200 border border-slate-600'
+                            ? 'bg-rose-50 text-rose-900 border border-rose-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-300'
                         }`}
                       >
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-slate-300 text-xs">
+                    <td className="px-3 py-2 text-slate-700 text-xs">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-3 py-2 text-slate-300 text-xs max-w-xs truncate" title={request.notes}>
+                    <td className="px-3 py-2 text-slate-700 text-xs max-w-xs truncate" title={request.notes}>
                       {request.notes?.replace(/\|\s*__FOH_MILESTONE__.*$/, '').trim() || '—'}
                     </td>
                   </tr>
@@ -1535,22 +1535,22 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
       {/* Payment Status */}
       {paymentRequests.length > 0 && (
-        <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 space-y-2 text-sm">
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-300">Pending ({paymentRequests.filter((p) => p.status === 'pending').length})</span>
-            <span className="font-semibold text-white">
+            <span className="text-slate-700">Pending ({paymentRequests.filter((p) => p.status === 'pending').length})</span>
+            <span className="font-semibold text-slate-900">
               ${totalPending.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-300">Paid ({paymentRequests.filter((p) => p.status === 'paid').length})</span>
-            <span className="font-semibold text-white">
+            <span className="text-slate-700">Paid ({paymentRequests.filter((p) => p.status === 'paid').length})</span>
+            <span className="font-semibold text-slate-900">
               ${totalPaid.toFixed(2)}
             </span>
           </div>
-          <div className="border-t border-slate-700 pt-2 flex justify-between font-semibold text-white">
+          <div className="border-t border-[rgba(120,53,15,0.1)] pt-2 flex justify-between font-semibold text-slate-900">
             <span>Total Requested</span>
-            <span className="text-white">
+            <span className="text-slate-900">
               ${(totalPending + totalPaid).toFixed(2)}
             </span>
           </div>
