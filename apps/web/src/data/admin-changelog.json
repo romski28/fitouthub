@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-21-2bb70b3e",
+    "date": "2026-05-21T10:10:08+08:00",
+    "title": "feat(web): split certifications from profile",
+    "summary": "feat(web): split certifications from profile",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2bb70b3e",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional/certifications/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/professional-certification-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-a10c9e82",
     "date": "2026-05-21T09:48:45+08:00",
     "title": "refine(web): tighten certification form flow",

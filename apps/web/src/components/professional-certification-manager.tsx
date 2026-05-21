@@ -350,7 +350,7 @@ export function ProfessionalCertificationManager({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+      <div className="rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-4 py-4 text-sm text-slate-700 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         Loading certifications...
       </div>
     );
@@ -358,7 +358,7 @@ export function ProfessionalCertificationManager({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <div className="rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-5 py-5 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Certifications</h2>
@@ -369,13 +369,13 @@ export function ProfessionalCertificationManager({
               We are storing certification images now. Registry verification can be layered in later.
             </p>
           </div>
-          <div className="rounded-lg border border-white/80 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
+          <div className="rounded-lg border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.78)] px-3 py-2 text-xs text-slate-700 shadow-sm backdrop-blur-sm">
             {certifications.length} certification record{certifications.length === 1 ? '' : 's'} on file
           </div>
         </div>
 
         {missingMandatoryRequirements.length > 0 && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="mt-4 rounded-lg border border-amber-200/80 bg-[rgba(255,247,214,0.82)] px-4 py-3">
             <p className="text-sm font-semibold text-amber-900">Recommended next uploads for your selected trades</p>
             <ul className="mt-2 space-y-1 text-sm text-amber-900">
               {missingMandatoryRequirements.map((requirement) => (
@@ -389,15 +389,15 @@ export function ProfessionalCertificationManager({
         )}
 
         {error && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="mt-4 rounded-md border border-red-200 bg-[rgba(255,242,242,0.9)] px-4 py-3 text-sm text-red-800">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-4 py-4 shadow-sm backdrop-blur-sm">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Trade to certify</label>
+              <label className="block text-sm font-semibold text-slate-800">Trade to certify</label>
               <select
                 value={form.tradeId}
                 onChange={(e) =>
@@ -407,7 +407,7 @@ export function ProfessionalCertificationManager({
                     certificationTypeId: '',
                   }))
                 }
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
               >
                 <option value="">Select trade</option>
                 {availableTradeOptions.map((trade) => (
@@ -416,11 +416,11 @@ export function ProfessionalCertificationManager({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Certification</label>
+              <label className="block text-sm font-semibold text-slate-800">Certification</label>
               <select
                 value={form.certificationTypeId}
                 onChange={(e) => setForm((current) => ({ ...current, certificationTypeId: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
                 required
               >
                 <option value="">Select certification</option>
@@ -432,7 +432,7 @@ export function ProfessionalCertificationManager({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Holder type</label>
+              <label className="block text-sm font-semibold text-slate-800">Holder type</label>
               <select
                 value={form.holderType}
                 onChange={(e) =>
@@ -441,45 +441,45 @@ export function ProfessionalCertificationManager({
                     holderType: e.target.value === 'BUSINESS' ? 'BUSINESS' : 'INDIVIDUAL',
                   }))
                 }
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
               >
                 <option value="INDIVIDUAL">Individual</option>
                 <option value="BUSINESS">Business</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Registration number</label>
+              <label className="block text-sm font-semibold text-slate-800">Registration number</label>
               <input
                 type="text"
                 value={form.registrationNumber}
                 onChange={(e) => setForm((current) => ({ ...current, registrationNumber: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Issue date</label>
+              <label className="block text-sm font-semibold text-slate-800">Issue date</label>
               <input
                 type="date"
                 value={form.issuedAt}
                 onChange={(e) => setForm((current) => ({ ...current, issuedAt: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Expiry date</label>
+              <label className="block text-sm font-semibold text-slate-800">Expiry date</label>
               <input
                 type="date"
                 value={form.expiresAt}
                 onChange={(e) => setForm((current) => ({ ...current, expiresAt: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Certification image</label>
-            <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
+            <label className="block text-sm font-semibold text-slate-800">Certification image</label>
+            <div className="mt-1 rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.74)] p-3 space-y-3">
               <ChatImageUploader
                 onFilesSelected={setPendingFiles}
                 maxImages={1}
@@ -487,7 +487,7 @@ export function ProfessionalCertificationManager({
                 clearKey={uploaderClearKey}
               />
               {form.existingDocumentUrl && pendingFiles.length === 0 ? (
-                <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3">
+                <div className="flex items-center gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.78)] px-3 py-3">
                   <img
                     src={form.existingDocumentUrl}
                     alt="Certification document"
@@ -529,12 +529,12 @@ export function ProfessionalCertificationManager({
 
         <div className="mt-4 space-y-3">
           {certifications.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-5 text-sm text-slate-600">
+            <div className="rounded-lg border border-dashed border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.78)] px-4 py-5 text-sm text-slate-700">
               No certifications added yet.
             </div>
           ) : (
             certifications.map((certification) => (
-              <div key={certification.id} className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div key={certification.id} className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">

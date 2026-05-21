@@ -224,13 +224,6 @@ export const Navbar: React.FC = () => {
                       >
                         Portfolio
                       </Link>
-                      <Link
-                        href="/professional/calendar"
-                        className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                        onClick={() => setProfileMenuOpen(false)}
-                      >
-                        Calendar
-                      </Link>
                       <button
                         onClick={() => {
                           profLogout();
@@ -523,13 +516,6 @@ export const Navbar: React.FC = () => {
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     Portfolio
-                  </Link>
-                  <Link
-                    href="/professional/calendar"
-                    className="block px-3 py-2 rounded hover:bg-slate-50 hover:text-slate-900"
-                    onClick={() => setProfileMenuOpen(false)}
-                  >
-                    Calendar
                   </Link>
                   <button
                     onClick={() => {

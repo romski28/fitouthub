@@ -9,7 +9,6 @@ import { fetchWithRetry } from '@/lib/http';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { HkZoneList } from '@/components/hk-zone-list';
 import { MapOrList } from '@/components/map-or-list';
-import { ProfessionalCertificationManager } from '@/components/professional-certification-manager';
 import {
   HK_ZONE_CODES,
   areaCodesToZoneCodes,
@@ -44,6 +43,7 @@ interface ProfessionalProfile {
   primaryTrade?: string | null;
   referenceProjects?: ReferenceProject[];
   profileImages?: string[];
+  certifications?: Array<{ id: string }>;
   notificationPreferences?: {
     primaryChannel?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     allowPartnerOffers?: boolean;
@@ -166,18 +166,6 @@ export default function ProfessionalProfilePage() {
   const showProductsOffered = normalizedProfessionType === 'reseller';
   const showTradesOffered = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
   const showEmergencyAvailability = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
-  const selectedTradeTitles = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          [profile.primaryTrade, ...(profile.tradesOffered || [])]
-            .map((value) => (value || '').trim())
-            .filter(Boolean),
-        ),
-      ),
-    [profile.primaryTrade, profile.tradesOffered],
-  );
-
   const handleCoverageAreaCodesChange = (codes: string[]) => {
     const nextDraft = deriveCoverageDraftFromAreaCodes(codes);
     setSelectedCoverageAreaCodes(codes);
@@ -704,15 +692,27 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-        </form>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Certifications</h2>
+                <p className="text-sm text-slate-600">
+                  Manage your regulated trade credentials separately from your general business profile.
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {(profile.certifications?.length || 0)} certification{(profile.certifications?.length || 0) === 1 ? '' : 's'} registered
+                </p>
+              </div>
+              <Link
+                href="/professional/certifications"
+                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                Manage certifications
+              </Link>
+            </div>
+          </div>
 
-        <div className="mt-4">
-          <ProfessionalCertificationManager
-            accessToken={accessToken!}
-            selectedTradeTitles={selectedTradeTitles}
-            professionalType={profile.professionType}
-          />
-        </div>
+        </form>
 
         <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
           <button

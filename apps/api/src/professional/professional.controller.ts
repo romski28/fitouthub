@@ -85,6 +85,11 @@ export class ProfessionalController {
         },
       },
       notificationPreferences: true,
+      certifications: {
+        select: {
+          id: true,
+        },
+      },
       regionCoverage: {
         include: {
           zone: {
