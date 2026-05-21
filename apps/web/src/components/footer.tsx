@@ -18,7 +18,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Fitout Hub</h3>
+            <h3 className="text-lg font-semibold text-white">Mimo</h3>
             <p className="text-sm">
               {t('description')}
             </p>

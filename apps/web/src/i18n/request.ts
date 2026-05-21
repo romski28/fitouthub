@@ -487,7 +487,7 @@ const messages = {
       "createProject": "Create Project",
       "login": "Login",
       "join": "Join",
-      "copyright": "© {year} Fitout Hub. All rights reserved.",
+      "copyright": "© {year} Mimo. All rights reserved.",
       "twitter": "Twitter",
       "linkedin": "LinkedIn",
       "instagram": "Instagram"

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-21-acb90cd3",
+    "date": "2026-05-21T17:31:06+08:00",
+    "title": "chore(branding): update footer references from Fitout Hub to Mimo",
+    "summary": "chore(branding): update footer references from Fitout Hub to Mimo",
+    "areas": [
+      "web"
+    ],
+    "commit": "acb90cd3",
+    "files": [
+      "apps/web/src/components/footer.tsx",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-05-21-0ed86db4",
     "date": "2026-05-21T17:16:50+08:00",
     "title": "chore(branding): change FitOut Hub to Mimo in homepage video panel description",
