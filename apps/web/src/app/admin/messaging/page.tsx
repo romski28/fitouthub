@@ -5,6 +5,8 @@ import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { parseChatEvent } from "@/lib/chat-event-parser";
+import ChatEventCard from "@/components/chat-event-card";
 
 type AssistRequest = {
   id: string;
@@ -938,23 +940,26 @@ export default function AdminMessagingPage() {
                   ) : (
                     dedupedMessages.map((msg) => {
                       const isFoh = msg.senderType === 'foh';
+                      const chatEvent = parseChatEvent(msg.content || '');
                       return (
                         <div key={msg.id} className={`flex ${isFoh ? 'justify-end' : 'justify-start'}`}>
                           <div
                             className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                              isFoh ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-900'
+                              chatEvent ? 'bg-transparent p-0' : isFoh ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-900'
                             }`}
                           >
-                            {!isFoh && <div className="text-xs font-semibold mb-1 text-slate-600">User</div>}
-                            <div className="whitespace-pre-wrap">{msg.content}</div>
-                            <div className={`text-xs mt-1 ${isFoh ? 'text-emerald-100' : 'text-slate-500'}`}>
-                              {new Date(msg.createdAt).toLocaleString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                day: '2-digit',
-                                month: 'short',
-                              })}
-                            </div>
+                            {!isFoh && !chatEvent && <div className="text-xs font-semibold mb-1 text-slate-600">User</div>}
+                            {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                            {!chatEvent && (
+                              <div className={`text-xs mt-1 ${isFoh ? 'text-emerald-100' : 'text-slate-500'}`}>
+                                {new Date(msg.createdAt).toLocaleString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  day: '2-digit',
+                                  month: 'short',
+                                })}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1296,6 +1301,7 @@ export default function AdminMessagingPage() {
                   ) : (
                     dedupedMessages.map((msg) => {
                       const isFoh = msg.senderType === 'foh';
+                      const chatEvent = parseChatEvent(msg.content || '');
                       return (
                         <div
                           key={msg.id}
@@ -1303,18 +1309,18 @@ export default function AdminMessagingPage() {
                         >
                           <div
                             className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                              isFoh
+                              chatEvent ? 'bg-transparent p-0' : isFoh
                                 ? 'bg-emerald-600 text-white'
                                 : 'bg-slate-100 text-slate-900'
                             }`}
                           >
-                            {!isFoh && (
+                            {!isFoh && !chatEvent && (
                               <div className="text-xs font-semibold mb-1 text-slate-600">
                                 Client
                               </div>
                             )}
-                            <div className="whitespace-pre-wrap">{msg.content}</div>
-                            {msg.attachments && msg.attachments.length > 0 && (
+                            {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                            {!chatEvent && msg.attachments && msg.attachments.length > 0 && (
                               <div className="mt-2 flex gap-2 overflow-x-auto">
                                 {msg.attachments.map((att, i) => (
                                   <a
@@ -1334,18 +1340,20 @@ export default function AdminMessagingPage() {
                                 ))}
                               </div>
                             )}
-                            <div
-                              className={`text-xs mt-1 ${
-                                isFoh ? 'text-emerald-100' : 'text-slate-500'
-                              }`}
-                            >
-                              {new Date(msg.createdAt).toLocaleString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                day: '2-digit',
-                                month: 'short',
-                              })}
-                            </div>
+                            {!chatEvent && (
+                              <div
+                                className={`text-xs mt-1 ${
+                                  isFoh ? 'text-emerald-100' : 'text-slate-500'
+                                }`}
+                              >
+                                {new Date(msg.createdAt).toLocaleString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  day: '2-digit',
+                                  month: 'short',
+                                })}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1466,6 +1474,7 @@ export default function AdminMessagingPage() {
                 ) : (
                   dedupedMessages.map((msg) => {
                     const isFoh = msg.senderType === 'foh';
+                    const chatEvent = parseChatEvent(msg.content || '');
                     return (
                       <div
                         key={msg.id}
@@ -1473,18 +1482,18 @@ export default function AdminMessagingPage() {
                       >
                         <div
                           className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                            isFoh
+                            chatEvent ? 'bg-transparent p-0' : isFoh
                               ? 'bg-blue-600 text-white'
                               : 'bg-slate-100 text-slate-900'
                           }`}
                         >
-                          {!isFoh && (
+                          {!isFoh && !chatEvent && (
                             <div className="text-xs font-semibold mb-1 text-slate-600">
                               {msg.senderType === 'professional' ? 'Professional' : msg.senderType === 'client' ? 'Client' : 'User'}
                             </div>
                           )}
-                          <div className="whitespace-pre-wrap">{msg.content}</div>
-                          {msg.attachments && msg.attachments.length > 0 && (
+                          {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                          {!chatEvent && msg.attachments && msg.attachments.length > 0 && (
                             <div className="mt-2 flex gap-2 overflow-x-auto">
                               {msg.attachments.map((att, i) => (
                                 <a
@@ -1504,18 +1513,20 @@ export default function AdminMessagingPage() {
                               ))}
                             </div>
                           )}
-                          <div
-                            className={`text-xs mt-1 ${
-                              isFoh ? 'text-blue-100' : 'text-slate-500'
-                            }`}
-                          >
-                            {new Date(msg.createdAt).toLocaleString('en-GB', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              day: '2-digit',
-                              month: 'short',
-                            })}
-                          </div>
+                          {!chatEvent && (
+                            <div
+                              className={`text-xs mt-1 ${
+                                isFoh ? 'text-blue-100' : 'text-slate-500'
+                              }`}
+                            >
+                              {new Date(msg.createdAt).toLocaleString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
