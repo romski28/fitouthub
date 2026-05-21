@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-743154f1",
+    "date": "2026-05-21T18:13:20+08:00",
+    "title": "feat(certifications): add business trade scope so BRC is visible for company/reseller",
+    "summary": "feat(certifications): add business trade scope so BRC is visible for company/reseller",
+    "areas": [
+      "web"
+    ],
+    "commit": "743154f1",
+    "files": [
+      "apps/web/src/components/professional-certification-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-9d3ec5e0",
     "date": "2026-05-21T17:39:59+08:00",
     "title": "feat(certifications): seed business registration certificate as business-scoped type",

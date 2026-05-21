@@ -73,6 +73,8 @@ const emptyForm: CertificationFormState = {
   existingDocumentUrl: '',
 };
 
+const BUSINESS_SCOPE_TRADE_ID = '__BUSINESS__';
+
 const statusToneMap: Record<ProfessionalCertification['verificationStatus'], string> = {
   SUBMITTED: 'bg-amber-100 text-amber-800 ring-amber-200',
   VERIFIED: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
@@ -123,11 +125,20 @@ export function ProfessionalCertificationManager({
     return Array.from(map.values()).sort((left, right) => left.title.localeCompare(right.title));
   }, [relevantRequirements]);
 
-  const defaultHolderType = useMemo<CertificationFormState['holderType']>(() => {
-    return String(professionalType || '').trim().toLowerCase() === 'company' ? 'BUSINESS' : 'INDIVIDUAL';
+  const isBusinessProfile = useMemo(() => {
+    const normalized = String(professionalType || '').trim().toLowerCase();
+    return normalized === 'company' || normalized === 'reseller';
   }, [professionalType]);
 
+  const defaultHolderType = useMemo<CertificationFormState['holderType']>(() => {
+    return isBusinessProfile ? 'BUSINESS' : 'INDIVIDUAL';
+  }, [isBusinessProfile]);
+
   const filteredCertificationTypes = useMemo(() => {
+    if (form.tradeId === BUSINESS_SCOPE_TRADE_ID) {
+      return certificationTypes.filter((type) => type.appliesTo === 'BUSINESS');
+    }
+
     const allowedIds = new Set(
       relevantRequirements
         .filter((requirement) => !form.tradeId || requirement.trade.id === form.tradeId)
@@ -211,9 +222,27 @@ export function ProfessionalCertificationManager({
   }, [accessToken]);
 
   useEffect(() => {
+    if (isBusinessProfile) {
+      setForm((current) => {
+        const nextHolderType = current.holderType === 'BUSINESS' ? current.holderType : 'BUSINESS';
+        const nextTradeId = current.tradeId || BUSINESS_SCOPE_TRADE_ID;
+        if (nextHolderType === current.holderType && nextTradeId === current.tradeId) return current;
+        return {
+          ...current,
+          holderType: nextHolderType,
+          tradeId: nextTradeId,
+          certificationTypeId:
+            current.tradeId === nextTradeId && current.holderType === nextHolderType
+              ? current.certificationTypeId
+              : '',
+        };
+      });
+      return;
+    }
+
     if (form.tradeId || availableTradeOptions.length !== 1) return;
     setForm((current) => ({ ...current, tradeId: availableTradeOptions[0].id }));
-  }, [availableTradeOptions, form.tradeId]);
+  }, [availableTradeOptions, form.tradeId, isBusinessProfile]);
 
   useEffect(() => {
     setForm((current) => {
@@ -236,6 +265,7 @@ export function ProfessionalCertificationManager({
     setForm({
       ...emptyForm,
       holderType: defaultHolderType,
+      tradeId: isBusinessProfile ? BUSINESS_SCOPE_TRADE_ID : '',
     });
     setEditingId(null);
     setPendingFiles([]);
@@ -271,7 +301,7 @@ export function ProfessionalCertificationManager({
 
       const payload = {
         certificationTypeId: form.certificationTypeId,
-        tradeId: form.tradeId || undefined,
+        tradeId: form.tradeId && form.tradeId !== BUSINESS_SCOPE_TRADE_ID ? form.tradeId : undefined,
         holderType: form.holderType,
         registrationNumber: form.registrationNumber,
         issuedAt: form.issuedAt || undefined,
@@ -315,7 +345,10 @@ export function ProfessionalCertificationManager({
     setEditingId(certification.id);
     setForm({
       certificationTypeId: certification.certificationTypeId,
-      tradeId: certification.tradeId || '',
+      tradeId:
+        certification.tradeId || certification.holderType === 'BUSINESS'
+          ? certification.tradeId || BUSINESS_SCOPE_TRADE_ID
+          : '',
       holderType: certification.holderType,
       registrationNumber: certification.registrationNumber || '',
       issuedAt: formatDateInputValue(certification.issuedAt),
@@ -404,12 +437,13 @@ export function ProfessionalCertificationManager({
                   setForm((current) => ({
                     ...current,
                     tradeId: e.target.value,
+                    holderType: e.target.value === BUSINESS_SCOPE_TRADE_ID ? 'BUSINESS' : current.holderType,
                     certificationTypeId: '',
                   }))
                 }
                 className="mt-1 w-full rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-sm text-slate-900 backdrop-blur-sm"
               >
-                <option value="">Select trade</option>
+                {isBusinessProfile ? <option value={BUSINESS_SCOPE_TRADE_ID}>Business (company-wide)</option> : <option value="">Select trade</option>}
                 {availableTradeOptions.map((trade) => (
                   <option key={trade.id} value={trade.id}>{trade.title}</option>
                 ))}
@@ -546,7 +580,7 @@ export function ProfessionalCertificationManager({
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
                       <span>Number: {certification.registrationNumber || 'Not set'}</span>
                       <span>Holder: {certification.holderType === 'BUSINESS' ? 'Business' : 'Individual'}</span>
-                      {certification.trade?.title ? <span>Trade: {certification.trade.title}</span> : null}
+                      {certification.trade?.title ? <span>Trade: {certification.trade.title}</span> : certification.holderType === 'BUSINESS' ? <span>Trade: Business (company-wide)</span> : null}
                       {certification.certificationType.regulator ? <span>Regulator: {certification.certificationType.regulator}</span> : null}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
