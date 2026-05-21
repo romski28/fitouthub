@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-9bfb5f24",
+    "date": "2026-05-21T10:51:55+08:00",
+    "title": "fix(web): restore profile save bar behavior",
+    "summary": "fix(web): restore profile save bar behavior",
+    "areas": [
+      "web"
+    ],
+    "commit": "9bfb5f24",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-3ed65089",
     "date": "2026-05-21T10:44:36+08:00",
     "title": "style(web): refine professional profile workspace",

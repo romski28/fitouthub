@@ -356,7 +356,7 @@ export default function ProfessionalProfilePage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+      <div className="rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
 
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-[rgba(255,242,242,0.9)] px-4 py-3 text-sm text-red-800">
@@ -679,7 +679,7 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-          <div className="sticky bottom-4 z-20 border-t border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.9)] px-1 pt-4 backdrop-blur-sm">
+          <div className="sticky bottom-4 z-20 pt-4">
             <div className="flex justify-end">
               <button
                 type="submit"
@@ -693,6 +693,9 @@ export default function ProfessionalProfilePage() {
 
         </form>
 
+        <div className="my-6 border-t border-[rgba(120,53,15,0.12)]" />
+
+        <div className="space-y-6">
           <div className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -749,6 +752,7 @@ export default function ProfessionalProfilePage() {
               </button>
             </div>
           </div>
+        </div>
       </div>
     </div>
   );
