@@ -17,7 +17,7 @@ export default function UserManualPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
         <header className="space-y-3 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
           <p className="text-sm uppercase tracking-wide text-emerald-700">Docs &amp; Tools</p>
-          <h1 className="text-3xl font-bold">FitoutHub User Manual</h1>
+          <h1 className="text-3xl font-bold">Mimo User Manual</h1>
           <p className="text-slate-700">
             Quick reference for admins and team members. For the full markdown
             version, see the repo file in <Link href="https://github.com/romski28/fitouthub/blob/main/docs/user-manual.md" className="underline">docs/user-manual.md</Link>. For a guided walkthrough, see <Link href="/docs/how-to-use" className="underline">How to Use</Link> or return to the <Link href="/docs" className="underline">Docs &amp; Tools hub</Link>.
