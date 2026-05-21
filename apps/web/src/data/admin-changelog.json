@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-893aa1d9",
+    "date": "2026-05-21T12:46:36+08:00",
+    "title": "style(professional): repaint chat tab to workspace paper theme",
+    "summary": "style(professional): repaint chat tab to workspace paper theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "893aa1d9",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-07d8958e",
     "date": "2026-05-21T12:44:41+08:00",
     "title": "style(professional): repaint site-access tab to workspace paper theme",
