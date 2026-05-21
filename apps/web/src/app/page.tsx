@@ -244,7 +244,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="mt-3 text-sm text-slate-700">
-                  What is FitOut Hub and why you should use it - see Sarah&rsquo;s story.
+                  What is Mimo and why you should use it – see Sarah&rsquo;s story.
                 </div>
               </div>
             </div>
