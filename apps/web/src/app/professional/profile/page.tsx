@@ -340,8 +340,8 @@ export default function ProfessionalProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-3 sm:px-6 lg:px-8 space-y-6">
-      <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-4">
+      <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(185,78,45,0.92)]">Professional Workspace</p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">My Profile</h1>
@@ -354,6 +354,9 @@ export default function ProfessionalProfilePage() {
             Change Password
           </button>
         </div>
+      </div>
+
+      <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
 
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-[rgba(255,242,242,0.9)] px-4 py-3 text-sm text-red-800">
@@ -599,7 +602,7 @@ export default function ProfessionalProfilePage() {
                   <HkZoneMap
                     highlightedCodes={selectedCoverageZoneCodes}
                     onToggleCode={handleCoverageZoneToggle}
-                    svgClassName="h-[66vh] min-h-[32rem] w-full"
+                    svgClassName="mx-auto h-auto w-full max-w-[32rem] sm:max-w-none sm:h-[66vh] sm:min-h-[32rem]"
                   />
                 }
                 list={
@@ -676,6 +679,20 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
+          <div className="sticky bottom-4 z-20 border-t border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.9)] px-1 pt-4 backdrop-blur-sm">
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save profile'}
+              </button>
+            </div>
+          </div>
+
+        </form>
+
           <div className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -716,18 +733,22 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
 
-        </form>
-
-        <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
-          <button
-            type="submit"
-            form="professional-profile-form"
-            disabled={saving}
-            className="pointer-events-auto rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : 'Save profile'}
-          </button>
-        </div>
+          <div className="rounded-[24px] border border-[rgba(127,29,29,0.16)] bg-[rgba(255,241,242,0.76)] px-4 py-4 shadow-sm backdrop-blur-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-2xl">
+                <h2 className="text-lg font-semibold text-slate-900">Delete my account</h2>
+                <p className="mt-1 text-sm text-slate-700">
+                  We would be sorry to see you go, but if you feel that is what you want to do, you know where to click.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-800"
+              >
+                Delete account
+              </button>
+            </div>
+          </div>
       </div>
     </div>
   );
