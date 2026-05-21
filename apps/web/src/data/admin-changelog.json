@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-21-f0bc8e63",
+    "date": "2026-05-21T20:39:37+08:00",
+    "title": "feat(admin): add manual company name + BRN inputs to BRC check panel",
+    "summary": "feat(admin): add manual company name + BRN inputs to BRC check panel",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f0bc8e63",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-8bb69633",
     "date": "2026-05-21T18:53:23+08:00",
     "title": "fix(api): handle CR no-result responses for BRC checks",

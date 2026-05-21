@@ -190,12 +190,14 @@ export class ProfessionalsController {
     @Param('id') id: string,
     @Param('certificationId') certificationId: string,
     @Query('mode') mode?: string,
+    @Query('value') value?: string,
   ) {
     this.requireAdmin(req);
     return this.professionalsService.runBrcCheck(
       id,
       certificationId,
       mode === 'name' ? 'name' : mode === 'brn' ? 'brn' : ('name' as 'name' | 'brn'),
+      value,
     );
   }
 

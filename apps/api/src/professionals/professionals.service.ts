@@ -388,6 +388,7 @@ export class ProfessionalsService {
     professionalId: string,
     certificationId: string,
     mode: 'name' | 'brn',
+    manualValue?: string,
   ) {
     if (!['name', 'brn'].includes(mode)) {
       throw new BadRequestException('mode must be name or brn');
@@ -417,10 +418,12 @@ export class ProfessionalsService {
       throw new BadRequestException('BRC check is only available for BUSINESS_REGISTRATION_CERTIFICATE records');
     }
 
+    const manualOverride = String(manualValue || '').trim();
     const rawValue =
-      mode === 'name'
+      manualOverride ||
+      (mode === 'name'
         ? String(certification.professional?.businessName || '').trim()
-        : String(certification.registrationNumber || '').trim();
+        : String(certification.registrationNumber || '').trim());
 
     if (!rawValue) {
       throw new BadRequestException(

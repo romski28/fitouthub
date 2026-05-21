@@ -91,6 +91,8 @@ type BrcCheckResponse = {
   requestedValue: string;
   requestUrl: string;
   data: unknown;
+  noResult?: boolean;
+  message?: string;
 };
 
 export default function AdminProfessionalsPage() {
@@ -122,6 +124,7 @@ export default function AdminProfessionalsPage() {
   const [brcCheckBusyByKey, setBrcCheckBusyByKey] = useState<Record<string, boolean>>({});
   const [brcCheckResultByKey, setBrcCheckResultByKey] = useState<Record<string, BrcCheckResponse>>({});
   const [brcCheckVerdictByKey, setBrcCheckVerdictByKey] = useState<Record<string, 'up' | 'down'>>({});
+  const [brcManualInputById, setBrcManualInputById] = useState<Record<string, { companyName: string; brn: string }>>({});
   const [formData, setFormData] = useState<Record<string, string | number | string[]>>({
     professionType: "",
     email: "",
@@ -291,6 +294,7 @@ export default function AdminProfessionalsPage() {
     if (!editingPro || !accessToken) {
       setCertifications([]);
       setReviewNotesById({});
+      setBrcManualInputById({});
       setCertificationsError(null);
       return;
     }
@@ -318,6 +322,15 @@ export default function AdminProfessionalsPage() {
             acc[certification.id] = certification.verificationNotes || '';
             return acc;
           }, {} as Record<string, string>),
+        );
+        setBrcManualInputById(
+          nextCertifications.reduce((acc, certification) => {
+            acc[certification.id] = {
+              companyName: String(editingPro.businessName || '').trim(),
+              brn: String(certification.registrationNumber || '').trim(),
+            };
+            return acc;
+          }, {} as Record<string, { companyName: string; brn: string }>),
         );
       } catch (error) {
         if (!cancelled) {
@@ -475,6 +488,14 @@ export default function AdminProfessionalsPage() {
     }
 
     const key = `${certificationId}:${mode}`;
+    const manualValue =
+      mode === 'name'
+        ? String(brcManualInputById[certificationId]?.companyName || '').trim()
+        : String(brcManualInputById[certificationId]?.brn || '').trim();
+    const query = new URLSearchParams({ mode });
+    if (manualValue) {
+      query.set('value', manualValue);
+    }
 
     try {
       setBrcCheckBusyByKey((current) => ({
@@ -484,7 +505,7 @@ export default function AdminProfessionalsPage() {
       setCertificationsError(null);
 
       const res = await fetch(
-        `${API_BASE_URL}/professionals/${editingPro.id}/certifications/${certificationId}/brc-check?mode=${mode}`,
+        `${API_BASE_URL}/professionals/${editingPro.id}/certifications/${certificationId}/brc-check?${query.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -1441,6 +1462,48 @@ export default function AdminProfessionalsPage() {
                                     <p className="text-xs text-sky-700 mt-1">
                                       Run company-name and BRN lookups against CR open data, then mark thumbs up/down based on returned JSON.
                                     </p>
+                                  </div>
+                                  <div className="grid gap-2 md:grid-cols-2">
+                                    <label className="space-y-1">
+                                      <span className="block text-[11px] font-semibold uppercase tracking-wide text-sky-800">
+                                        Company name
+                                      </span>
+                                      <input
+                                        type="text"
+                                        value={brcManualInputById[certification.id]?.companyName || ''}
+                                        onChange={(event) =>
+                                          setBrcManualInputById((current) => ({
+                                            ...current,
+                                            [certification.id]: {
+                                              companyName: event.target.value,
+                                              brn: current[certification.id]?.brn || '',
+                                            },
+                                          }))
+                                        }
+                                        placeholder="e.g. MIMO WORK LIMITED"
+                                        className="w-full rounded-md border border-sky-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400"
+                                      />
+                                    </label>
+                                    <label className="space-y-1">
+                                      <span className="block text-[11px] font-semibold uppercase tracking-wide text-sky-800">
+                                        BRN
+                                      </span>
+                                      <input
+                                        type="text"
+                                        value={brcManualInputById[certification.id]?.brn || ''}
+                                        onChange={(event) =>
+                                          setBrcManualInputById((current) => ({
+                                            ...current,
+                                            [certification.id]: {
+                                              companyName: current[certification.id]?.companyName || '',
+                                              brn: event.target.value,
+                                            },
+                                          }))
+                                        }
+                                        placeholder="e.g. 80121820"
+                                        className="w-full rounded-md border border-sky-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400"
+                                      />
+                                    </label>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     <button
