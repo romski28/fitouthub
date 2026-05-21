@@ -58,24 +58,24 @@ export const AcPlansTab: React.FC<AcPlansTabProps> = ({ projectId, accessToken }
   }, [loadPlans]);
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+    <div className="space-y-4 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Linked Tooling</p>
-          <h2 className="mt-1 text-lg font-bold text-white">AC Plans Linked To This Project</h2>
-          <p className="mt-1 text-sm text-slate-300">Client and professional calculator plans linked at save-time appear here for quick context.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Linked Tooling</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-900">AC Plans Linked To This Project</h2>
+          <p className="mt-1 text-sm text-slate-700">Client and professional calculator plans linked at save-time appear here for quick context.</p>
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={loadPlans}
-            className="rounded-md border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+            className="rounded-2xl border border-[rgba(120,53,15,0.2)] px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-[rgba(120,53,15,0.08)]"
           >
             Refresh
           </button>
           <Link
             href="/docs/tools/ac-calculator"
-            className="rounded-md border border-sky-500/40 px-3 py-2 text-xs font-semibold text-sky-200 hover:bg-sky-500/10"
+            className="rounded-2xl border border-blue-300 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50"
           >
             Open calculator
           </Link>
@@ -83,30 +83,30 @@ export const AcPlansTab: React.FC<AcPlansTabProps> = ({ projectId, accessToken }
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-400">Loading linked AC plans...</p>
+        <p className="text-sm text-slate-600">Loading linked AC plans...</p>
       ) : error ? (
-        <p className="text-sm text-rose-300">{error}</p>
+        <p className="text-sm text-rose-700">{error}</p>
       ) : plans.length === 0 ? (
-        <div className="rounded-md border border-slate-700 bg-slate-950/60 p-3">
-          <p className="text-sm text-slate-300">No AC plans are linked to this project yet.</p>
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+          <p className="text-sm text-slate-700">No AC plans are linked to this project yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {plans.map((plan) => (
-            <div key={plan.id} className="rounded-md border border-slate-700 bg-slate-950/70 p-3">
+            <div key={plan.id} className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-white">{plan.title}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="font-semibold text-slate-900">{plan.title}</p>
+                  <p className="text-xs text-slate-600">
                     {plan.rooms.length} room{plan.rooms.length === 1 ? '' : 's'}
                     {plan.totalBtu ? ` · ${formatBtu(plan.totalBtu)}` : ''}
                   </p>
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-600">
                   {plan.updatedAt ? `Updated ${new Date(plan.updatedAt).toLocaleString()}` : ''}
                 </p>
               </div>
-              {plan.notes ? <p className="mt-2 text-sm text-slate-300">{plan.notes}</p> : null}
+              {plan.notes ? <p className="mt-2 text-sm text-slate-700">{plan.notes}</p> : null}
             </div>
           ))}
         </div>
