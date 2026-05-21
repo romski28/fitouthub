@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-320deeb0",
+    "date": "2026-05-21T20:45:12+08:00",
+    "title": "fix(admin): BRC check always uses text box value, not DB fallback",
+    "summary": "fix(admin): BRC check always uses text box value, not DB fallback",
+    "areas": [
+      "web"
+    ],
+    "commit": "320deeb0",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-f0bc8e63",
     "date": "2026-05-21T20:39:37+08:00",
     "title": "feat(admin): add manual company name + BRN inputs to BRC check panel",

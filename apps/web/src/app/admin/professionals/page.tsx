@@ -492,10 +492,17 @@ export default function AdminProfessionalsPage() {
       mode === 'name'
         ? String(brcManualInputById[certificationId]?.companyName || '').trim()
         : String(brcManualInputById[certificationId]?.brn || '').trim();
-    const query = new URLSearchParams({ mode });
-    if (manualValue) {
-      query.set('value', manualValue);
+
+    if (!manualValue) {
+      alert(
+        mode === 'name'
+          ? 'Enter a company name before searching.'
+          : 'Enter a BRN before searching.',
+      );
+      return;
     }
+
+    const query = new URLSearchParams({ mode, value: manualValue });
 
     try {
       setBrcCheckBusyByKey((current) => ({
