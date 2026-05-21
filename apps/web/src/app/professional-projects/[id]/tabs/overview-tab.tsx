@@ -330,15 +330,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <div className="space-y-6">
       {overviewSummaryLines.length > 0 && (
-        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
-          <h2 className="text-lg font-bold text-white mb-3">Summary</h2>
-          <div className="rounded-md border border-slate-700 bg-slate-900/45 px-3 py-3 space-y-1.5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">Summary</h2>
+          <div className="space-y-1.5 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
             {overviewSummaryLines.map((line, index) => (
-              <p key={`overview-summary-line-${index}`} className="text-sm leading-relaxed text-slate-200">
+              <p key={`overview-summary-line-${index}`} className="text-sm leading-relaxed text-slate-700">
                 {line}
               </p>
             ))}
-            <div className="mt-3 pt-2 border-t border-slate-700 flex gap-4 text-xs text-slate-300">
+            <div className="mt-3 flex gap-4 border-t border-[rgba(120,53,15,0.12)] pt-2 text-xs text-slate-500">
               <span>Invited: {formatDate(project.createdAt)}</span>
               {project.updatedAt && <span>Last updated: {formatDate(project.updatedAt)}</span>}
             </div>
@@ -349,16 +349,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Quote Form/Status */}
       {showQuoteForm && 
        !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-lg font-bold text-slate-900">
               {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
             </h2>
             {countdownBadge}
           </div>
 
           {project.quoteReminderSentAt && (
-            <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2.5 text-sm text-emerald-200">
+            <div className="mb-4 flex items-start gap-2 rounded-2xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700">
               <span className="mt-0.5">⏰</span>
               <span>
                 <strong>Your quote deadline has been extended by 24 hours.</strong>{' '}
@@ -370,24 +370,24 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
 
           {project.status === 'counter_requested' && (
-            <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
+            <div className="mb-4 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-700">
               The client requested a better offer. You can submit a revised quote or keep your current offer.
             </div>
           )}
 
           {project.status === 'quoted' && (
-            <div className="mb-4 rounded-md border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm text-slate-300">
+            <div className="mb-4 rounded-2xl border border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.62)] px-3 py-2 text-sm text-slate-700">
               You can adjust your quote if needed. Submit a revised amount or keep your current offer.
             </div>
           )}
 
           {project.status !== 'awarded' && !isEmergencyProject && (
-            <div className="mb-4 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+            <div className="mb-4 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-800">
               You can request site access before quoting to better appraise the project while tentatively accepting it.
               <button
                 type="button"
                 onClick={() => onOpenAccessSchedule?.()}
-                className="ml-1 font-semibold underline underline-offset-2 hover:text-white"
+                className="ml-1 font-semibold underline underline-offset-2 hover:text-sky-900"
               >
                 Go to Access & Schedule
               </button>
@@ -400,9 +400,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             }}
             className="space-y-4"
           >
-            <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4 space-y-4">
+            <div className="space-y-4 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.6)] p-4">
               {isInitialQuoteLocked && (
-                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                <div className="rounded-2xl border border-rose-500/35 bg-rose-500/10 px-3 py-2 text-sm text-rose-700">
                   Initial quote window closed ({quoteWindowLongLabel}). Please contact the client to reopen bidding.
                 </div>
               )}
@@ -410,7 +410,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className={`grid gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
                 {breakdownFields.map((field) => (
                   <div key={field.code}>
-                    <label htmlFor={`quote-${field.code}`} className="block text-sm font-semibold text-white mb-1">
+                    <label htmlFor={`quote-${field.code}`} className="mb-1 block text-sm font-semibold text-slate-800">
                       {field.label}{field.required ? ' *' : ''}
                     </label>
                     <input
@@ -429,14 +429,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           },
                         })
                       }
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                       placeholder="0.00"
                     />
                   </div>
                 ))}
 
                 <div>
-                  <label htmlFor="quote-platform-fee" className="block text-sm font-semibold text-white mb-1">
+                  <label htmlFor="quote-platform-fee" className="mb-1 block text-sm font-semibold text-slate-800">
                     Mimo fee
                   </label>
                   <input
@@ -444,24 +444,24 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     type="text"
                     value={loadingFeePreview ? '...' : platformFeePercent !== undefined ? `${platformFeePercent.toFixed(1)}%` : '—'}
                     disabled
-                    className="w-full rounded-md border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-slate-300 text-center focus:outline-none"
+                    className="w-full rounded-xl border border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,219,0.92)] px-3 py-2 text-center text-sm text-slate-600 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Quote total before platform fee</p>
-                <p className="text-lg font-bold text-white">HK${quoteBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] px-3 py-2">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total before platform fee</p>
+                <p className="text-lg font-bold text-slate-900">HK${quoteBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
               </div>
 
               {quoteBreakdownTotal > 0 && platformFeePercent !== undefined && grossAmount !== undefined && (
-                <div className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-xs text-slate-300">
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] px-3 py-2 text-xs text-slate-700">
                   <p>Your quote: {formatHKD(quoteBreakdownTotal)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
                 </div>
               )}
 
               <div>
-                <label htmlFor="notes" className="block text-sm font-semibold text-white mb-1">
+                <label htmlFor="notes" className="mb-1 block text-sm font-semibold text-slate-800">
                   Quote Notes (Optional)
                 </label>
                 <textarea
@@ -470,18 +470,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   disabled={submittingQuote}
                   value={quoteForm.notes}
                   onChange={(e) => onUpdateQuoteForm({ notes: e.target.value })}
-                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                   placeholder="Add any additional notes about your quote..."
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <label htmlFor="estimatedStartDate" className="block text-sm font-semibold text-white mb-1">
+                  <label htmlFor="estimatedStartDate" className="mb-1 block text-sm font-semibold text-slate-800">
                     {isEmergencyProject ? 'Be with you... *' : 'Start Date *'}
                   </label>
                   {isEmergencyProject ? (
-                    <div className="grid w-full grid-cols-2 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                    <div className="grid w-full grid-cols-2 overflow-hidden rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)]">
                       {emergencyDateOptions.map((option) => {
                         const active = quoteForm.estimatedStartDate === option.value;
                         return (
@@ -491,7 +491,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             disabled={submittingQuote}
                             onClick={() => onUpdateQuoteForm({ estimatedStartDate: option.value })}
                             className={`px-3 py-2 text-sm font-semibold transition ${
-                              active ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-200 hover:bg-slate-800'
+                              active ? 'bg-[rgba(126,58,33,0.92)] text-white' : 'bg-transparent text-slate-700 hover:bg-[rgba(245,238,219,0.75)]'
                             }`}
                           >
                             {option.label}
@@ -507,13 +507,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       disabled={submittingQuote}
                       value={quoteForm.estimatedStartDate}
                       onChange={(e) => onUpdateQuoteForm({ estimatedStartDate: e.target.value })}
-                      className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                     />
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="estimatedStartHour" className="block text-sm font-semibold text-white mb-1">
+                  <label htmlFor="estimatedStartHour" className="mb-1 block text-sm font-semibold text-slate-800">
                     {isEmergencyProject ? 'at... *' : 'Start Time *'}
                   </label>
                   <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         setSelectedHour(nextHour);
                         updateStartTime(nextHour, selectedMinute);
                       }}
-                      className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      className="quote-dark-select w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                     >
                       <option value="">Hour</option>
                       {TIME_HOUR_OPTIONS.map((hour) => (
@@ -536,7 +536,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         </option>
                       ))}
                     </select>
-                    <span className="text-sm font-semibold text-slate-300">:</span>
+                    <span className="text-sm font-semibold text-slate-500">:</span>
                     <select
                       id="estimatedStartMinute"
                       required
@@ -547,7 +547,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         setSelectedMinute(nextMinute);
                         updateStartTime(selectedHour, nextMinute);
                       }}
-                      className="quote-dark-select w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                      className="quote-dark-select w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                     >
                       <option value="">Mins</option>
                       {TIME_MINUTE_OPTIONS.map((minute) => (
@@ -560,7 +560,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="estimatedDurationValue" className="block text-sm font-semibold text-white mb-1">
+                  <label htmlFor="estimatedDurationValue" className="mb-1 block text-sm font-semibold text-slate-800">
                     Estimated Duration *
                   </label>
                   <div className="flex items-center gap-2">
@@ -573,18 +573,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       disabled={submittingQuote}
                       value={quoteForm.estimatedDurationValue}
                       onChange={(e) => onUpdateQuoteForm({ estimatedDurationValue: e.target.value })}
-                      className="w-24 sm:w-28 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+                      className="w-24 rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none sm:w-28"
                       placeholder="e.g. 8"
                     />
-                    <div className="inline-flex min-w-0 flex-1 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                    <div className="inline-flex min-w-0 flex-1 overflow-hidden rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)]">
                       <button
                         type="button"
                         onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: 'hours' })}
                         disabled={submittingQuote}
                         className={`w-1/2 px-3 py-2 text-sm font-semibold transition ${
                           quoteForm.estimatedDurationUnit === 'hours'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-transparent text-slate-300 hover:bg-slate-800'
+                            ? 'bg-[rgba(126,58,33,0.92)] text-white'
+                            : 'bg-transparent text-slate-700 hover:bg-[rgba(245,238,219,0.75)]'
                         }`}
                       >
                         Hours
@@ -593,10 +593,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         type="button"
                         onClick={() => onUpdateQuoteForm({ estimatedDurationUnit: 'days' })}
                         disabled={submittingQuote}
-                        className={`w-1/2 border-l border-slate-600 px-3 py-2 text-sm font-semibold transition ${
+                        className={`w-1/2 border-l border-[rgba(120,53,15,0.2)] px-3 py-2 text-sm font-semibold transition ${
                           quoteForm.estimatedDurationUnit === 'days'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-transparent text-slate-300 hover:bg-slate-800'
+                            ? 'bg-[rgba(126,58,33,0.92)] text-white'
+                            : 'bg-transparent text-slate-700 hover:bg-[rgba(245,238,219,0.75)]'
                         }`}
                       >
                         Days
@@ -624,7 +624,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       type="submit"
                       disabled={submittingQuote || !isFormValid}
                       title={!isFormValid ? 'Please fill in all required fields to submit' : ''}
-                      className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="min-w-40 flex-1 rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(100,45,26,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {submittingQuote ? 'Submitting...' : project.quotedAt ? 'Update Quote' : 'Submit Quote'}
                     </button>
@@ -634,7 +634,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         type="button"
                         onClick={onKeepCurrentQuote}
                         disabled={submittingQuote}
-                        className="flex-1 min-w-40 rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600 disabled:opacity-50 transition"
+                        className="min-w-40 flex-1 rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.9)] px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(245,238,219,1)] disabled:opacity-50"
                       >
                         {submittingQuote ? 'Processing...' : 'Confirm Quotation'}
                       </button>
@@ -646,7 +646,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           type="button"
                           onClick={onAccept}
                           disabled={submittingQuote}
-                          className="flex-1 min-w-40 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                          className="min-w-40 flex-1 rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-50"
                         >
                           {submittingQuote ? 'Processing...' : 'Tentatively accept'}
                         </button>
@@ -654,7 +654,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           type="button"
                           onClick={onReject}
                           disabled={submittingQuote}
-                          className="flex-1 min-w-40 rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+                          className="min-w-40 flex-1 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
                         >
                           {submittingQuote ? 'Processing...' : 'Decline Project'}
                         </button>
@@ -667,47 +667,47 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </form>
         </div>
       ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
-          <h2 className="text-lg font-bold text-white mb-4">Your Quote</h2>
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+          <h2 className="mb-4 text-lg font-bold text-slate-900">Your Quote</h2>
           <div className="grid gap-4 sm:grid-cols-4">
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Amount</p>
-              <p className="text-2xl font-bold text-white">${project.quoteAmount}</p>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</p>
+              <p className="text-2xl font-bold text-slate-900">${project.quoteAmount}</p>
             </div>
 
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Entered subtotal</p>
-              <p className="text-sm font-semibold text-white">HK${existingBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Entered subtotal</p>
+              <p className="text-sm font-semibold text-slate-900">HK${existingBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
             </div>
             
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Submitted</p>
-              <p className="text-sm font-semibold text-white">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted</p>
+              <p className="text-sm font-semibold text-slate-900">
                 {project.quotedAt ? new Date(project.quotedAt).toLocaleDateString() : '—'}
               </p>
             </div>
             
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Notes</p>
-              <p className="text-sm text-slate-300 line-clamp-2">{project.quoteNotes || '—'}</p>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</p>
+              <p className="line-clamp-2 text-sm text-slate-700">{project.quoteNotes || '—'}</p>
             </div>
 
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">
                 {isEmergencyProject ? 'Be with you...' : 'Estimated Start'}
               </p>
-              <p className="text-sm font-semibold text-white">{formatDateTime(project.quoteEstimatedStartAt)}</p>
+              <p className="text-sm font-semibold text-slate-900">{formatDateTime(project.quoteEstimatedStartAt)}</p>
             </div>
           </div>
 
           {existingBreakdownItems.length > 0 && (
-            <div className="mt-4 rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Breakdown</p>
+            <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Breakdown</p>
               <div className="grid gap-2 sm:grid-cols-3">
                 {existingBreakdownItems.map((item) => (
-                  <div key={item.code} className="rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
-                    <p className="text-sm font-semibold text-white">HK${Number(item.amount || 0).toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
+                  <div key={item.code} className="rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.92)] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
+                    <p className="text-sm font-semibold text-slate-900">HK${Number(item.amount || 0).toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
                   </div>
                 ))}
               </div>
@@ -715,18 +715,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Estimated Duration</p>
-              <p className="text-sm font-semibold text-white">{formatDuration(project.quoteEstimatedDurationMinutes)}</p>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Estimated Duration</p>
+              <p className="text-sm font-semibold text-slate-900">{formatDuration(project.quoteEstimatedDurationMinutes)}</p>
             </div>
             
-            <div className="rounded-md border border-slate-700 bg-slate-900/50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Status</p>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                project.status === 'awarded' ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' :
-                project.status === 'quoted' ? 'bg-blue-500/20 text-blue-200 border border-blue-500/40' :
-                project.status === 'counter_requested' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/40' :
-                'bg-slate-700 text-slate-300 border border-slate-600'
+                project.status === 'awarded' ? 'border border-emerald-300 bg-emerald-50 text-emerald-700' :
+                project.status === 'quoted' ? 'border border-sky-300 bg-sky-50 text-sky-700' :
+                project.status === 'counter_requested' ? 'border border-amber-300 bg-amber-50 text-amber-700' :
+                'border border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.9)] text-slate-700'
               }`}>
                 {project.status.replace('_', ' ')}
               </span>
@@ -736,7 +736,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       ) : null}
 
       {project.project.aiIntake && (
-        <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
         </div>
       )}

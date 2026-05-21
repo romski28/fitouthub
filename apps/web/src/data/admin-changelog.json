@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-5c8ca811",
+    "date": "2026-05-21T12:24:43+08:00",
+    "title": "style(professional): repaint overview tab to workspace paper theme",
+    "summary": "style(professional): repaint overview tab to workspace paper theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "5c8ca811",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-b24f220d",
     "date": "2026-05-21T12:18:16+08:00",
     "title": "feat(professional): add arrow and drag scrolling to project tab rail",
