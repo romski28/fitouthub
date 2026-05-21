@@ -417,17 +417,24 @@ export class ProfessionalsService {
       throw new BadRequestException('BRC check is only available for BUSINESS_REGISTRATION_CERTIFICATE records');
     }
 
-    const value =
+    const rawValue =
       mode === 'name'
         ? String(certification.professional?.businessName || '').trim()
         : String(certification.registrationNumber || '').trim();
 
-    if (!value) {
+    if (!rawValue) {
       throw new BadRequestException(
         mode === 'name'
           ? 'Business name is required for company-name check'
           : 'Registration number is required for BRN check',
       );
+    }
+
+    // CR BRN search is strict; normalize common stored formats like "12-345678" or "1234 5678".
+    const value = mode === 'brn' ? rawValue.replace(/\D/g, '') : rawValue;
+
+    if (mode === 'brn' && !value) {
+      throw new BadRequestException('Registration number must contain at least one digit for BRN check');
     }
 
     const endpoint = new URL('https://data.cr.gov.hk/cr/api/api/v1/api_builder/json/local/search');
@@ -445,8 +452,27 @@ export class ProfessionalsService {
     const payload = contentType.includes('json') ? await response.json() : await response.text();
 
     if (!response.ok) {
+      const payloadMessage =
+        payload && typeof payload === 'object' && 'message' in payload
+          ? String((payload as { message?: unknown }).message ?? '')
+          : typeof payload === 'string'
+            ? payload
+            : '';
+
+      // CR API returns 400 for "No result found."; this should be a valid manual-check outcome.
+      if (response.status === 400 && /no result found/i.test(payloadMessage)) {
+        return {
+          mode,
+          requestedValue: value,
+          requestUrl: endpoint.toString(),
+          data: [],
+          noResult: true,
+          message: 'No result found',
+        };
+      }
+
       throw new BadRequestException(
-        `CR API request failed (${response.status}). ${typeof payload === 'string' ? payload.slice(0, 240) : ''}`.trim(),
+        `CR API request failed (${response.status}). ${payloadMessage.slice(0, 240)}`.trim(),
       );
     }
 

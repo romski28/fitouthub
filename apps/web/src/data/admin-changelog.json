@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-8bb69633",
+    "date": "2026-05-21T18:53:23+08:00",
+    "title": "fix(api): handle CR no-result responses for BRC checks",
+    "summary": "fix(api): handle CR no-result responses for BRC checks",
+    "areas": [
+      "api"
+    ],
+    "commit": "8bb69633",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-21-0bf065f9",
     "date": "2026-05-21T18:36:51+08:00",
     "title": "feat(admin): add manual BRC verification checks",
