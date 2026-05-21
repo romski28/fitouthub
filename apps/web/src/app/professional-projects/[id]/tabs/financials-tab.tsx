@@ -729,38 +729,38 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   if (!isAwarded) {
     return (
-      <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-sm text-white">
+      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] px-4 py-3 text-sm text-slate-900">
         Financials will be available once your quote is awarded.
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-5 shadow-sm space-y-6">
+    <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] space-y-6">
       {/* Financial Summary */}
       {projectFinancials && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Awarded Amount</p>
-            <p className="mt-1 text-2xl font-bold text-white">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Awarded Amount</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
               ${awardedAmount ? parseFloat(awardedAmount.toString()).toFixed(2) : '0.00'}
             </p>
           </div>
-          <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Total Requested</p>
-            <p className="mt-1 text-2xl font-bold text-white">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Total Requested</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
               ${projectFinancials.totalPaymentRequest ? parseFloat(projectFinancials.totalPaymentRequest.toString()).toFixed(2) : '0.00'}
             </p>
           </div>
-          <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Paid</p>
-            <p className="mt-1 text-2xl font-bold text-white">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Paid</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
               ${projectFinancials.totalPaid ? parseFloat(projectFinancials.totalPaid.toString()).toFixed(2) : '0.00'}
             </p>
           </div>
-          <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Outstanding</p>
-            <p className="mt-1 text-2xl font-bold text-white">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Outstanding</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
               ${projectFinancials.balance ? parseFloat(projectFinancials.balance.toString()).toFixed(2) : '0.00'}
             </p>
           </div>
@@ -768,17 +768,17 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       )}
 
       {paymentPlanLoading && (
-        <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm text-slate-700">
           Loading payment plan...
         </div>
       )}
 
       {/* B.2: Timeline risk banner */}
       {hasPaymentPlan && paymentPlan?.timelineRisk && paymentPlan.timelineRisk.risk !== 'none' && (
-        <div className={`rounded-md border px-4 py-3 text-sm ${
+        <div className={`rounded-2xl border px-4 py-3 text-sm ${
           paymentPlan.timelineRisk.risk === 'high'
-            ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
-            : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+            ? 'border-rose-300 bg-rose-50 text-rose-700'
+            : 'border-amber-300 bg-amber-50 text-amber-700'
         }`}>
           <span className="font-semibold">
             {paymentPlan.timelineRisk.risk === 'high' ? '🔴 High timeline risk' : '🟡 Moderate timeline risk'}
@@ -790,7 +790,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
       )}
 
       {hasPaymentPlan && paymentPlan && (
-        <div className="rounded-md border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 p-4 space-y-4">
+        <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold text-white">Plan-aligned Payment Milestones</h3>
@@ -802,8 +802,8 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Plan total</p>
-              <p className="text-lg font-bold text-white">{formatHKD(paymentPlan.totalAmount)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Plan total</p>
+              <p className="text-lg font-bold text-slate-900">{formatHKD(paymentPlan.totalAmount)}</p>
             </div>
           </div>
 
@@ -811,7 +811,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
             <button
               type="button"
               onClick={() => onOpenScheduleTab?.()}
-              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+              className="rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.5)] px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-[rgba(239,231,207,0.4)]"
             >
               Open Schedule for Editing
             </button>

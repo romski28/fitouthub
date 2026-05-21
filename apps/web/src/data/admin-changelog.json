@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-0b3f8b6e",
+    "date": "2026-05-21T12:53:31+08:00",
+    "title": "style(professional): begin financials tab workspace theme update",
+    "summary": "style(professional): begin financials tab workspace theme update",
+    "areas": [
+      "web"
+    ],
+    "commit": "0b3f8b6e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-a716f5db",
     "date": "2026-05-21T12:48:56+08:00",
     "title": "style(professional): standardize contract tab color palette",
