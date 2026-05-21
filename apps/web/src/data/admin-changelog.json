@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-fd0f656d",
+    "date": "2026-05-21T12:41:14+08:00",
+    "title": "style(professional): repaint AI Scope tab to workspace paper theme",
+    "summary": "style(professional): repaint AI Scope tab to workspace paper theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd0f656d",
+    "files": [
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-0f30fb52",
     "date": "2026-05-21T12:33:22+08:00",
     "title": "style(professional): match overview panel backgrounds to hero tone",

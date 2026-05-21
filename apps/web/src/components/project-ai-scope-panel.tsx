@@ -355,7 +355,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
   const auditLog = scope?.scopeAuditLog ?? [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+    <div className="space-y-4 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="space-y-1">
@@ -363,7 +363,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
             <h3 className="text-base font-bold text-slate-900">Programme of Works</h3>
             <StatusBadge status={workflowStatus} />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-600">
             {isAdmin
               ? `AI-generated draft scope and programme. Version count: ${versionCount}`
               : 'AI-generated programme of works prepared by Mimo.'}
@@ -375,7 +375,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
               type="button"
               onClick={generateScope}
               disabled={saving || loading || !accessToken}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="rounded-xl bg-[rgba(126,58,33,0.92)] px-3 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-60 transition"
             >
               {scope ? 'Regenerate Scope' : 'Generate Scope'}
             </button>
@@ -385,7 +385,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
               type="button"
               onClick={() => workflowAction('review')}
               disabled={saving}
-              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 transition"
             >
               Mark as Reviewed
             </button>
@@ -395,7 +395,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
               type="button"
               onClick={() => workflowAction('publish')}
               disabled={saving}
-              className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+              className="rounded-xl bg-[rgba(126,58,33,0.92)] px-3 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-60 transition"
             >
               Publish
             </button>
@@ -414,7 +414,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
             <button
               type="button"
               onClick={() => setShowComparison((v) => !v)}
-              className={`rounded-md border px-3 py-2 text-sm font-semibold ${showComparison ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${showComparison ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.9)] text-slate-700 hover:bg-[rgba(245,238,219,1)]'}`}
             >
               {showComparison ? 'Hide Comparison' : 'Compare Versions'}
             </button>
@@ -429,38 +429,38 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
             value={inputs.siteConstraints}
             onChange={(e) => setInputs((prev) => ({ ...prev, siteConstraints: e.target.value }))}
             placeholder="Site constraints"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
           />
           <input
             value={inputs.longLeadItems}
             onChange={(e) => setInputs((prev) => ({ ...prev, longLeadItems: e.target.value }))}
             placeholder="Long lead items"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
           />
           <input
             value={inputs.workingCalendar}
             onChange={(e) => setInputs((prev) => ({ ...prev, workingCalendar: e.target.value }))}
             placeholder="Working calendar"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
           />
           <input
             value={inputs.deadline}
             onChange={(e) => setInputs((prev) => ({ ...prev, deadline: e.target.value }))}
             placeholder="Deadline"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
           />
           <textarea
             value={inputs.additionalContext}
             onChange={(e) => setInputs((prev) => ({ ...prev, additionalContext: e.target.value }))}
             placeholder="Additional context to refine the programme"
-            className="md:col-span-2 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="md:col-span-2 rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
             rows={2}
           />
         </div>
       )}
 
-      {loading && <p className="text-sm text-slate-500">Loading AI scope...</p>}
-      {error && <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+      {loading && <p className="text-sm text-slate-600">Loading AI scope...</p>}
+      {error && <p className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
 
       {!loading && !scope && (
         <p className="text-sm text-slate-600">
@@ -474,15 +474,15 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
         <>
           {/* Summary cards */}
           <div className="grid gap-3 md:grid-cols-3 text-sm">
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
               <p className="text-xs uppercase tracking-wide text-slate-500">Project Type</p>
               <p className="font-semibold text-slate-800">{scope.projectSummary.projectType || 'Renovation'}</p>
             </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
               <p className="text-xs uppercase tracking-wide text-slate-500">Location</p>
               <p className="font-semibold text-slate-800">{scope.projectSummary.location || 'Hong Kong'}</p>
             </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
               <p className="text-xs uppercase tracking-wide text-slate-500">Programme</p>
               <p className="font-semibold text-slate-800">Day {scope.programme.startDay} to Day {scope.programme.finishDay}</p>
             </div>
@@ -494,9 +494,9 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Baseline (Published v{publishedScope.version}) vs Current Draft (v{scope.version})
               </p>
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <div className="overflow-x-auto rounded-2xl border border-[rgba(120,53,15,0.14)]">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-100 text-slate-700">
+                  <thead className="bg-[rgba(245,238,219,0.85)] text-slate-700">
                     <tr>
                       <th className="px-3 py-2 text-left">#</th>
                       <th className="px-3 py-2 text-left">Work Package</th>
@@ -517,7 +517,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                               ? 'bg-amber-50'
                               : '';
                       return (
-                        <tr key={row.entry.id} className={`border-t border-slate-200 ${rowClass}`}>
+                        <tr key={row.entry.id} className={`border-t border-[rgba(120,53,15,0.12)] ${rowClass}`}>
                           <td className="px-3 py-2">{row.entry.sequence}</td>
                           <td className={`px-3 py-2 ${row.kind === 'removed' ? 'line-through text-slate-400' : ''}`}>
                             {row.entry.workPackage}
@@ -547,9 +547,9 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
             </div>
           ) : (
             /* Normal entry table */
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <div className="overflow-x-auto rounded-2xl border border-[rgba(120,53,15,0.14)]">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-100 text-slate-700">
+                <thead className="bg-[rgba(245,238,219,0.85)] text-slate-700">
                   <tr>
                     {canAdminCrud && <th className="w-6 px-2 py-2" />}
                     <th className="px-3 py-2 text-left">#</th>
@@ -569,7 +569,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                       onDragOver={(e) => { e.preventDefault(); dragOverId.current = entry.id; }}
                       onDrop={() => handleDrop(entry.id)}
                       onDragEnd={() => { setDraggedId(null); dragOverId.current = null; }}
-                      className={`border-t border-slate-200 ${draggedId === entry.id ? 'opacity-40' : ''}`}
+                      className={`border-t border-[rgba(120,53,15,0.12)] ${draggedId === entry.id ? 'opacity-40' : ''}`}
                     >
                       {canAdminCrud && (
                         <td className="px-2 py-2 text-slate-400 cursor-grab select-none text-center">⠿</td>
@@ -580,7 +580,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                           <input
                             value={entry.workPackage}
                             onChange={(e) => updateEntry(entry.id, { workPackage: e.target.value })}
-                            className="w-full rounded border border-slate-300 px-2 py-1"
+                            className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-2 py-1 text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                           />
                         ) : entry.workPackage}
                       </td>
@@ -589,7 +589,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                           <input
                             value={entry.primaryTrade}
                             onChange={(e) => updateEntry(entry.id, { primaryTrade: e.target.value })}
-                            className="w-full rounded border border-slate-300 px-2 py-1"
+                            className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-2 py-1 text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                           />
                         ) : entry.primaryTrade}
                       </td>
@@ -601,7 +601,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                               step="0.5"
                               value={entry.durationMinDays}
                               onChange={(e) => updateEntry(entry.id, { durationMinDays: Number(e.target.value) || 1 })}
-                              className="w-16 rounded border border-slate-300 px-2 py-1"
+                              className="w-16 rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-2 py-1 text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                             />
                             <span className="self-center text-slate-500">to</span>
                             <input
@@ -609,7 +609,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                               step="0.5"
                               value={entry.durationMaxDays}
                               onChange={(e) => updateEntry(entry.id, { durationMaxDays: Number(e.target.value) || entry.durationMinDays })}
-                              className="w-16 rounded border border-slate-300 px-2 py-1"
+                              className="w-16 rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-2 py-1 text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                             />
                           </div>
                         ) : (
@@ -622,7 +622,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                           <button
                             type="button"
                             onClick={() => deleteEntry(entry.id)}
-                            className="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                            className="rounded-lg bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700 transition"
                           >
                             Delete
                           </button>
@@ -641,36 +641,36 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
                 type="button"
                 onClick={addEntry}
                 disabled={saving}
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.9)] px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-[rgba(245,238,219,1)] disabled:opacity-60 transition"
               >
                 Add Entry
               </button>
             </div>
           )}
 
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 text-sm">
             <p className="font-semibold text-slate-800">Confidence: {scope.confidence.level}</p>
             {scope.confidence.notes && <p className="mt-1 text-slate-600">{scope.confidence.notes}</p>}
           </div>
 
           {/* Audit log (admin-only, collapsible) */}
           {isAdmin && auditLog.length > 0 && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 text-sm">
               <button
                 type="button"
                 onClick={() => setShowAuditLog((v) => !v)}
-                className="flex w-full items-center justify-between text-slate-700 font-semibold"
+                className="flex w-full items-center justify-between text-slate-800 font-semibold hover:text-slate-900 transition"
               >
                 <span>Approval Audit Log ({auditLog.length})</span>
-                <span className="text-slate-400">{showAuditLog ? '▲' : '▼'}</span>
+                <span className="text-slate-500">{showAuditLog ? '▲' : '▼'}</span>
               </button>
               {showAuditLog && (
                 <ul className="mt-2 space-y-1">
                   {auditLog.map((entry, i) => (
-                    <li key={i} className="text-xs text-slate-600 flex gap-2">
+                    <li key={i} className="text-xs text-slate-700 flex gap-2">
                       <span className="font-medium">{new Date(entry.at).toLocaleString()}</span>
                       <span>{STATUS_LABELS[entry.fromStatus as ScopeStatus] ?? entry.fromStatus} → {STATUS_LABELS[entry.toStatus as ScopeStatus] ?? entry.toStatus}</span>
-                      {entry.note && <span className="text-slate-400 italic">({entry.note})</span>}
+                      {entry.note && <span className="text-slate-600 italic">({entry.note})</span>}
                     </li>
                   ))}
                 </ul>
