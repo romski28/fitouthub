@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-c43f02f0",
+    "date": "2026-05-21T20:50:23+08:00",
+    "title": "docs: add CR API verification guide for future registry integrations",
+    "summary": "docs: add CR API verification guide for future registry integrations",
+    "areas": [
+      "infra"
+    ],
+    "commit": "c43f02f0",
+    "files": [
+      "CR_API_VERIFICATION_GUIDE.md"
+    ]
+  },
+  {
     "id": "2026-05-21-320deeb0",
     "date": "2026-05-21T20:45:12+08:00",
     "title": "fix(admin): BRC check always uses text box value, not DB fallback",
