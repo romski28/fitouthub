@@ -115,6 +115,7 @@ VALUES
   ('certtype_lp', 'LICENSED_PLUMBER', 'Licensed Plumber (LP)', 'WSD', 'INDIVIDUAL', 'Required for licensed plumbing work in Hong Kong.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
   ('certtype_rgi', 'REGISTERED_GAS_INSTALLER', 'Registered Gas Installer', 'EMSD', 'INDIVIDUAL', 'Required for regulated gas installation work in Hong Kong.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
   ('certtype_rgc', 'REGISTERED_GAS_CONTRACTOR', 'Registered Gas Contractor', 'EMSD', 'BUSINESS', 'Company registration for regulated gas contracting work.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('certtype_brc', 'BUSINESS_REGISTRATION_CERTIFICATE', 'Business Registration Certificate (BRC)', 'IRD', 'BUSINESS', 'Required for companies registered in Hong Kong.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
   ('certtype_cwr', 'CONSTRUCTION_WORKERS_REGISTRATION', 'Construction Workers Registration', 'CIC', 'INDIVIDUAL', 'Construction Industry Council worker registration.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
   ('certtype_cic_trade_test', 'CIC_TRADE_TEST_CERTIFICATE', 'CIC Trade Test Certificate', 'CIC', 'INDIVIDUAL', 'Trade test certification for skilled construction trades.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
   ('certtype_cic_grade_a', 'CIC_GRADE_A_ELECTRICAL_WORK_TEST', 'CIC Grade A Electrical Work Test', 'CIC', 'INDIVIDUAL', 'Electrical work competency certification recognised by CIC.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)

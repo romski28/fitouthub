@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-9d3ec5e0",
+    "date": "2026-05-21T17:39:59+08:00",
+    "title": "feat(certifications): seed business registration certificate as business-scoped type",
+    "summary": "feat(certifications): seed business registration certificate as business-scoped type",
+    "areas": [
+      "api"
+    ],
+    "commit": "9d3ec5e0",
+    "files": [
+      "apps/api/prisma/migrations/20260520233000_add_professional_certifications/migration.sql"
+    ]
+  },
+  {
     "id": "2026-05-21-acb90cd3",
     "date": "2026-05-21T17:31:06+08:00",
     "title": "chore(branding): update footer references from Fitout Hub to Mimo",
