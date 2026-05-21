@@ -949,7 +949,7 @@ export default function AdminMessagingPage() {
                             }`}
                           >
                             {!isFoh && !chatEvent && <div className="text-xs font-semibold mb-1 text-slate-600">User</div>}
-                            {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                            {msg.content && (chatEvent ? <div className="rounded-xl bg-slate-800 p-1"><ChatEventCard event={chatEvent} isCurrentUser={isFoh} /></div> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
                             {!chatEvent && (
                               <div className={`text-xs mt-1 ${isFoh ? 'text-emerald-100' : 'text-slate-500'}`}>
                                 {new Date(msg.createdAt).toLocaleString('en-GB', {
@@ -1319,7 +1319,7 @@ export default function AdminMessagingPage() {
                                 Client
                               </div>
                             )}
-                            {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                            {msg.content && (chatEvent ? <div className="rounded-xl bg-slate-800 p-1"><ChatEventCard event={chatEvent} isCurrentUser={isFoh} /></div> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
                             {!chatEvent && msg.attachments && msg.attachments.length > 0 && (
                               <div className="mt-2 flex gap-2 overflow-x-auto">
                                 {msg.attachments.map((att, i) => (
@@ -1492,7 +1492,7 @@ export default function AdminMessagingPage() {
                               {msg.senderType === 'professional' ? 'Professional' : msg.senderType === 'client' ? 'Client' : 'User'}
                             </div>
                           )}
-                          {msg.content && (chatEvent ? <ChatEventCard event={chatEvent} isCurrentUser={isFoh} /> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
+                          {msg.content && (chatEvent ? <div className="rounded-xl bg-slate-800 p-1"><ChatEventCard event={chatEvent} isCurrentUser={isFoh} /></div> : <div className="whitespace-pre-wrap">{msg.content}</div>)}
                           {!chatEvent && msg.attachments && msg.attachments.length > 0 && (
                             <div className="mt-2 flex gap-2 overflow-x-auto">
                               {msg.attachments.map((att, i) => (

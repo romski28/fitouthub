@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-21-e14e04ae",
+    "date": "2026-05-21T21:14:07+08:00",
+    "title": "fix(admin): wrap chat event cards in dark container; disable strict mode double-fetch",
+    "summary": "fix(admin): wrap chat event cards in dark container; disable strict mode double-fetch",
+    "areas": [
+      "web"
+    ],
+    "commit": "e14e04ae",
+    "files": [
+      "apps/web/next.config.ts",
+      "apps/web/src/app/admin/messaging/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-85574252",
     "date": "2026-05-21T20:55:10+08:00",
     "title": "fix(admin): render chat event cards in admin message drawer",
