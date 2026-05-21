@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-21-0f30fb52",
+    "date": "2026-05-21T12:33:22+08:00",
+    "title": "style(professional): match overview panel backgrounds to hero tone",
+    "summary": "style(professional): match overview panel backgrounds to hero tone",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f30fb52",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-5c8ca811",
     "date": "2026-05-21T12:24:43+08:00",
     "title": "style(professional): repaint overview tab to workspace paper theme",

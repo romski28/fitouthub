@@ -330,7 +330,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <div className="space-y-6">
       {overviewSummaryLines.length > 0 && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Summary</h2>
           <div className="space-y-1.5 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
             {overviewSummaryLines.map((line, index) => (
@@ -349,7 +349,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       {/* Quote Form/Status */}
       {showQuoteForm && 
        !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-900">
               {project.quotedAt ? 'Update Your Quote' : 'Submit Your Quote'}
@@ -667,7 +667,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </form>
         </div>
       ) : project.quoteAmount && !(project.status === 'declined' || project.status === 'rejected') ? (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <h2 className="mb-4 text-lg font-bold text-slate-900">Your Quote</h2>
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
@@ -736,7 +736,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       ) : null}
 
       {project.project.aiIntake && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
         </div>
       )}
