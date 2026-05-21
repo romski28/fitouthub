@@ -1610,13 +1610,13 @@ export default function ProjectDetailPage() {
     <>
       <div className="min-h-screen pb-16">
         <div className="relative z-10 max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <Link href="/professional-projects" className="text-sm text-blue-600 hover:underline">
-              ← Back to my projects
-            </Link>
-          </div>
+          <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <Link href="/professional-projects" className="text-sm font-semibold text-[rgba(126,58,33,0.92)] hover:underline">
+                ← Back to my projects
+              </Link>
+            </div>
 
-          <div className="space-y-0">
             <ProjectInfoCard
               role="professional"
               title={project!.project.projectName}
@@ -1625,11 +1625,11 @@ export default function ProjectDetailPage() {
               projectScale={project!.projectScale || project!.project.projectScale}
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
-              attachTabs
+              visualVariant="workspace"
             />
 
             {(requestedQuoteTrades.length > 0 || projectTradeScope.length > 0) && (
-              <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/80 px-4 py-4 shadow-sm">
+              <div className="rounded-[24px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] px-4 py-4 shadow-sm backdrop-blur-sm">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Quote scope</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {requestedQuoteTrades.length > 0 ? (
@@ -1657,7 +1657,9 @@ export default function ProjectDetailPage() {
               </div>
             )}
 
-            <div className="-mt-px">
+          </div>
+
+            <div>
               <ProjectTabs
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
@@ -1848,7 +1850,6 @@ export default function ProjectDetailPage() {
               messageError={messageError}
             />
               </ProjectTabs>
-            </div>
           </div>
         </div>
       </div>

@@ -22,6 +22,7 @@ export type ProjectInfoProps = {
   withdrawing?: boolean;
   onWithdraw?: () => void;
   attachTabs?: boolean;
+  visualVariant?: 'default' | 'workspace';
 };
 
 const formatDate = (date?: string) => {
@@ -83,9 +84,11 @@ export default function ProjectInfoCard({
   withdrawing,
   onWithdraw,
   attachTabs,
+  visualVariant = 'default',
 }: ProjectInfoProps) {
   const withdrawn = status === 'withdrawn';
   const isProfessional = role === 'professional';
+  const isWorkspaceProfessional = isProfessional && visualVariant === 'workspace';
   const createdLabel = isProfessional ? 'Invited' : 'Created';
   const professionalNoteLines = isProfessional ? normalizeProfessionalNotes(notes) : [];
   const projectClassBadgeLabel = getProjectClassBadgeLabel(projectScale);
@@ -97,16 +100,30 @@ export default function ProjectInfoCard({
   };
 
   return (
-    <div className={`shadow-sm ${isProfessional ? `border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 ${attachTabs ? 'rounded-t-xl rounded-b-none' : 'rounded-xl'}` : 'rounded-xl border border-border bg-surface'}`}>
+    <div
+      className={`shadow-sm ${
+        isWorkspaceProfessional
+          ? `${attachTabs ? 'rounded-[28px]' : 'rounded-[28px]'} border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.56)] backdrop-blur-sm`
+          : isProfessional
+            ? `border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 ${attachTabs ? 'rounded-t-xl rounded-b-none' : 'rounded-xl'}`
+            : 'rounded-xl border border-border bg-surface'
+      }`}
+    >
       <div
-        className={`px-5 py-4 text-white ${
+        className={`px-5 py-4 ${
           isProfessional
             ? attachTabs
               ? 'rounded-t-xl'
               : 'rounded-t-xl'
             : 'rounded-t-xl'
         } ${
-          withdrawn ? 'bg-gradient-to-r from-slate-400 to-slate-300' : isProfessional ? 'bg-transparent' : 'bg-gradient-to-r from-slate-900 to-slate-800'
+          withdrawn
+            ? 'bg-gradient-to-r from-slate-400 to-slate-300 text-slate-700'
+            : isWorkspaceProfessional
+              ? 'bg-transparent text-slate-900'
+              : isProfessional
+                ? 'bg-transparent text-white'
+                : 'bg-gradient-to-r from-slate-900 to-slate-800 text-white'
         }`}
       >
         <div className="flex items-start justify-between gap-4">
@@ -114,7 +131,13 @@ export default function ProjectInfoCard({
             <h1 className={`text-2xl font-bold ${withdrawn ? 'text-slate-700' : ''}`}>{title}</h1>
             <p
               className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
-                withdrawn ? 'text-slate-600' : isProfessional ? 'text-white' : 'text-emerald-300'
+                withdrawn
+                  ? 'text-slate-600'
+                  : isWorkspaceProfessional
+                    ? 'text-[rgba(185,78,45,0.92)]'
+                    : isProfessional
+                      ? 'text-white'
+                      : 'text-emerald-300'
               }`}
             >
               {region}
@@ -123,7 +146,11 @@ export default function ProjectInfoCard({
           <div className="flex flex-col items-end gap-2">
             <div className="flex flex-wrap items-center justify-end gap-2">
               {projectClassBadgeLabel && (
-                <span className="inline-flex items-center justify-center rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-indigo-400/40">
+                <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+                  isWorkspaceProfessional
+                    ? 'bg-[rgba(255,250,240,0.88)] text-[rgba(126,58,33,0.92)] ring-[rgba(120,53,15,0.12)]'
+                    : 'bg-indigo-500/20 text-indigo-200 ring-indigo-400/40'
+                }`}>
                   Class {projectClassBadgeLabel}
                 </span>
               )}
@@ -140,19 +167,19 @@ export default function ProjectInfoCard({
               )}
             </div>
             {status === 'awarded' && awardedDisplayName && (
-              <span className={`text-xs font-medium ${isProfessional ? 'text-slate-100' : 'text-slate-300'}`}>{awardedDisplayName}</span>
+              <span className={`text-xs font-medium ${isWorkspaceProfessional ? 'text-slate-700' : isProfessional ? 'text-slate-100' : 'text-slate-300'}`}>{awardedDisplayName}</span>
             )}
             {quoteAmount && (
-              <span className={`text-sm font-bold ${isProfessional ? 'text-white' : 'text-emerald-300'}`}>{formatHKD(quoteAmount)}</span>
+              <span className={`text-sm font-bold ${isWorkspaceProfessional ? 'text-slate-900' : isProfessional ? 'text-white' : 'text-emerald-300'}`}>{formatHKD(quoteAmount)}</span>
             )}
           </div>
         </div>
       </div>
 
       {(withdrawn || (showWithdrawButton && !withdrawn)) && (
-        <div className={`p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isProfessional ? 'text-white' : ''}`}>
+        <div className={`p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isWorkspaceProfessional ? 'text-slate-900' : isProfessional ? 'text-white' : ''}`}>
           <div className="flex items-center gap-3">
-            {withdrawn && <span className={`text-sm ${isProfessional ? 'text-slate-300' : 'text-muted'}`}>Project withdrawn from bidding.</span>}
+            {withdrawn && <span className={`text-sm ${isWorkspaceProfessional ? 'text-slate-600' : isProfessional ? 'text-slate-300' : 'text-muted'}`}>Project withdrawn from bidding.</span>}
           </div>
           {showWithdrawButton && !withdrawn && (
             <button
@@ -168,25 +195,25 @@ export default function ProjectInfoCard({
 
       {notes && (
         <div className="p-5 space-y-4">
-          <div className={`rounded-md px-3 py-2 text-sm border ${isProfessional ? 'bg-slate-900/35 border-slate-700/80' : 'bg-surface-muted border-border'}`}>
+          <div className={`rounded-md px-3 py-2 text-sm border ${isWorkspaceProfessional ? 'bg-[rgba(255,250,240,0.78)] border-[rgba(120,53,15,0.12)]' : isProfessional ? 'bg-slate-900/35 border-slate-700/80' : 'bg-surface-muted border-border'}`}>
             {!isProfessional && (
               <p className={`font-semibold mb-1 ${isProfessional ? 'text-white' : 'text-strong'}`}>Project description</p>
             )}
             {isProfessional ? (
               <div className="space-y-1.5">
                 {professionalNoteLines.map((line, index) => (
-                  <p key={`professional-note-line-${index}`} className="text-slate-200 leading-relaxed">
+                  <p key={`professional-note-line-${index}`} className={`${isWorkspaceProfessional ? 'text-slate-700' : 'text-slate-200'} leading-relaxed`}>
                     {line}
                   </p>
                 ))}
                 {professionalNoteLines.length === 0 && notes && (
-                  <p className="text-slate-200 leading-relaxed">{notes}</p>
+                  <p className={`${isWorkspaceProfessional ? 'text-slate-700' : 'text-slate-200'} leading-relaxed`}>{notes}</p>
                 )}
               </div>
             ) : (
               <p className="text-muted leading-relaxed whitespace-pre-line">{notes}</p>
             )}
-            <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>
+            <div className={`flex gap-4 mt-3 pt-2 border-t text-xs ${isWorkspaceProfessional ? 'border-[rgba(120,53,15,0.12)] text-slate-600' : isProfessional ? 'border-slate-700 text-slate-300' : 'border-border text-muted'}`}>
               <span>{createdLabel}: {formatDate(createdAt)}</span>
               {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
             </div>
@@ -195,8 +222,8 @@ export default function ProjectInfoCard({
       )}
 
       {(createdAt || updatedAt) && !notes && (
-        <div className={`p-5 border-t ${isProfessional ? 'border-slate-700' : 'border-border'} ${isProfessional && attachTabs ? 'rounded-b-none' : ''}`}>
-          <div className={`flex gap-4 text-xs ${isProfessional ? 'text-slate-300' : 'text-muted'}`}>
+        <div className={`p-5 border-t ${isWorkspaceProfessional ? 'border-[rgba(120,53,15,0.12)]' : isProfessional ? 'border-slate-700' : 'border-border'} ${isProfessional && attachTabs ? 'rounded-b-none' : ''}`}>
+          <div className={`flex gap-4 text-xs ${isWorkspaceProfessional ? 'text-slate-600' : isProfessional ? 'text-slate-300' : 'text-muted'}`}>
             <span>{createdLabel}: {formatDate(createdAt)}</span>
             {updatedAt && <span>Last updated: {formatDate(updatedAt)}</span>}
           </div>

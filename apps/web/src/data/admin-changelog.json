@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-21-f0c85519",
+    "date": "2026-05-21T10:57:58+08:00",
+    "title": "style(web): refresh professional project hero",
+    "summary": "style(web): refresh professional project hero",
+    "areas": [
+      "web"
+    ],
+    "commit": "f0c85519",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/project-info-card.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-9bfb5f24",
     "date": "2026-05-21T10:51:55+08:00",
     "title": "fix(web): restore profile save bar behavior",
