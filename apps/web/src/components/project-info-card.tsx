@@ -126,8 +126,8 @@ export default function ProjectInfoCard({
                 : 'bg-gradient-to-r from-slate-900 to-slate-800 text-white'
         }`}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
+          <div className="w-full flex-1">
             <h1 className={`text-2xl font-bold ${withdrawn ? 'text-slate-700' : ''}`}>{title}</h1>
             <p
               className={`text-sm font-semibold uppercase tracking-wide mt-1 ${
@@ -143,9 +143,9 @@ export default function ProjectInfoCard({
               {region}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {projectClassBadgeLabel && (
+          <div className="flex w-full flex-col items-start gap-2 md:w-auto md:items-end">
+            <div className="flex w-full flex-wrap items-center justify-start gap-2 md:w-auto md:justify-end">
+              {!isProfessional && projectClassBadgeLabel && (
                 <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
                   isWorkspaceProfessional
                     ? 'bg-[rgba(255,250,240,0.88)] text-[rgba(126,58,33,0.92)] ring-[rgba(120,53,15,0.12)]'
@@ -163,6 +163,8 @@ export default function ProjectInfoCard({
                 <ProjectSentimentBadge
                   projectId={projectSentimentKey}
                   storageScope={projectSentimentScope}
+                  iconOnly={isProfessional}
+                  size={isProfessional ? 'md' : 'sm'}
                 />
               )}
             </div>
