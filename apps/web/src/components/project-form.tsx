@@ -378,6 +378,7 @@ export function ProjectForm({
   const isConfirmationView = confirmationMode && hasAiContext && !isOverviewEditing;
 
   const showEditableAiFields = !hasAiContext || isOverviewEditing;
+  const shouldRequirePrimaryFields = !isReadOnly && showEditableAiFields;
 
   // Quick request form (compact)
   if (isQuickRequest) {
@@ -554,7 +555,17 @@ export function ProjectForm({
         {/* Assistance Explanation */}
         {onAssistRequest && !isReadOnly && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need help?</p>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-blue-900">💡 Need help?</p>
+              <button
+                type="button"
+                onClick={handleAssistClick}
+                disabled={isSubmitting}
+                className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
+              >
+                Ask for advice
+              </button>
+            </div>
             <p className="text-xs text-blue-800">
               Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
             </p>
@@ -564,11 +575,7 @@ export function ProjectForm({
         {/* Buttons */}
         <div
           className={`grid gap-3 pt-2 ${
-            onCancel && onAssistRequest && !isReadOnly
-              ? 'grid-cols-3'
-              : onCancel || (onAssistRequest && !isReadOnly)
-                ? 'grid-cols-2'
-                : 'grid-cols-1'
+            onCancel ? 'grid-cols-2' : 'grid-cols-1'
           }`}
         >
           {onCancel && (
@@ -579,16 +586,6 @@ export function ProjectForm({
               className="w-full rounded-lg border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
             >
               Cancel
-            </button>
-          )}
-          {onAssistRequest && !isReadOnly && (
-            <button
-              type="button"
-              onClick={handleAssistClick}
-              disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-              className="w-full rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-center text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50"
-            >
-              Ask for advice
             </button>
           )}
           {!isReadOnly && (
@@ -612,7 +609,7 @@ export function ProjectForm({
       className={mode === 'create' ? 'space-y-6 px-6 py-6 text-white sm:px-8 sm:py-8' : 'space-y-6'}
     >
       {/* Professional List (if applicable) */}
-      {displayNames.length > 0 && (
+      {displayNames.length > 0 && !confirmationMode && (
         <div className={`rounded-md border p-3 ${
           mode === 'create'
             ? 'border-slate-700/40 bg-white/5 text-white'
@@ -760,7 +757,7 @@ export function ProjectForm({
         </label>
         <input
           type="text"
-          required={!isReadOnly}
+          required={shouldRequirePrimaryFields}
           placeholder="e.g., Office Fitout, Restaurant Renovation"
           value={formData.projectName}
           onChange={(e) => handleChange('projectName', e.target.value)}
@@ -885,7 +882,7 @@ export function ProjectForm({
                 onFocus={() => setShowTradeDropdown(true)}
                 placeholder={formData.tradesRequired.length === 0 ? "Select trades..." : "Add another..."}
                 disabled={isReadOnly || isSubmitting}
-                required={!isReadOnly && formData.tradesRequired.length === 0}
+                required={shouldRequirePrimaryFields && formData.tradesRequired.length === 0}
                 className={`w-full border-0 bg-transparent px-2 py-1 text-base outline-none ${
                   mode === 'create'
                     ? 'text-white placeholder-slate-400 disabled:text-slate-500'
@@ -1235,6 +1232,18 @@ export function ProjectForm({
             <p className={`text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
               💡 Need help?
             </p>
+            <button
+              type="button"
+              onClick={handleAssistClick}
+              disabled={isSubmitting}
+              className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
+                mode === 'create'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+              }`}
+            >
+              Ask for advice
+            </button>
           </div>
           <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
             Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
@@ -1245,11 +1254,7 @@ export function ProjectForm({
       {/* Buttons */}
       <div
         className={`grid gap-3 pt-4 ${
-          onCancel && onAssistRequest && !isReadOnly
-            ? 'grid-cols-3'
-            : onCancel || (onAssistRequest && !isReadOnly)
-              ? 'grid-cols-2'
-              : 'grid-cols-1'
+          onCancel ? 'grid-cols-2' : 'grid-cols-1'
         }`}
       >
         {onCancel && (
@@ -1264,20 +1269,6 @@ export function ProjectForm({
             }`}
           >
             Cancel
-          </button>
-        )}
-        {onAssistRequest && !isReadOnly && (
-          <button
-            type="button"
-            onClick={handleAssistClick}
-            disabled={isSubmitting || !(formData.projectName && formData.projectName.trim())}
-            className={`w-full rounded-lg px-6 py-2.5 text-center font-semibold transition disabled:opacity-50 ${
-              mode === 'create'
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-            }`}
-          >
-            Ask for advice
           </button>
         )}
         {!isReadOnly && (

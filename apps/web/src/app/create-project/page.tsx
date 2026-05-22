@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
@@ -20,7 +19,7 @@ import {
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
-import { getUploadResponseKeys } from '@/lib/media-assets';
+import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -486,9 +485,9 @@ export default function CreateProjectPage() {
 
       toast.success(
         assistConfig.contactMethod === 'call'
-          ? 'Project created and call request sent to Fitout Hub.'
+          ? 'Project created and call request sent to Mimo.'
           : assistConfig.contactMethod === 'whatsapp'
-            ? 'Project created and WhatsApp request sent to Fitout Hub.'
+            ? 'Project created and WhatsApp request sent to Mimo.'
             : 'Project created and chat assistance requested.',
       );
 
@@ -513,9 +512,12 @@ export default function CreateProjectPage() {
       ? descriptionData.tradesRequired.join(', ')
       : 'General project';
   const emergencySummary = initialFormData.isEmergency ?? descriptionData?.isEmergency;
+  const existingPhotoUrls = initialFormData.existingPhotos?.map((photo) => photo.url).filter(Boolean)
+    || initialFormData.photoUrls
+    || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f3ede2_100%)]">
       <ProjectDescriptionModal
         isOpen={showDescriptionModal}
         onSubmit={(data) => {
@@ -555,52 +557,42 @@ export default function CreateProjectPage() {
         projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pb-32">
-        <div className="mb-6">
-          <Link
-            href="/projects"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 transition hover:text-white"
-          >
-            <span aria-hidden="true">←</span>
-            {t('create.backLink')}
-          </Link>
-        </div>
-
-        <section className="overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-sm">
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] text-slate-900 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
           <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Project creation</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project creation</p>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
-              <p className="max-w-2xl text-sm text-slate-300 sm:text-base">Please confirm your project's details and add images.</p>
+              <p className="max-w-2xl text-sm text-slate-700 sm:text-base">Review the final brief, confirm your recipients, and make sure your images are ready before you open bidding.</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px] lg:grid-cols-1 xl:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Invited pros</p>
-                <p className="mt-1 text-2xl font-bold text-white">{invitedCount}</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Invited pros</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">{invitedCount}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Trade focus</p>
-                <p className="mt-1 text-sm font-semibold text-white">{tradeSummary}</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Trade focus</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{tradeSummary}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Priority</p>
-                <p className="mt-1 text-sm font-semibold text-white">{emergencySummary ? 'Emergency' : 'Standard'}</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Priority</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{emergencySummary ? 'Emergency' : 'Standard'}</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-5 text-white shadow-lg shadow-emerald-950/20">
+        <section className="mt-6 rounded-[32px] border border-[rgba(185,78,45,0.18)] bg-[rgba(255,244,235,0.82)] px-6 py-5 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.08)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Bidding recipients</p>
-              <h2 className="text-xl font-bold text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Bidding recipients</p>
+              <h2 className="text-xl font-bold text-slate-900">
                 {invitedCount > 0
                   ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
                   : 'No professionals selected yet'}
               </h2>
-              <p className="max-w-2xl text-sm text-slate-200">
+              <p className="max-w-2xl text-sm text-slate-700">
                 {invitedCount > 0
                   ? 'These professionals will be linked to the project immediately and bidding will open as soon as you confirm the final form.'
                   : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
@@ -612,7 +604,7 @@ export default function CreateProjectPage() {
                 {selectedProfessionalNames.map((name, index) => (
                   <span
                     key={`${name}-${index}`}
-                    className="rounded-full border border-emerald-300/40 bg-emerald-400/15 px-3 py-1.5 text-sm font-medium text-emerald-100"
+                    className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
                   >
                     {name}
                   </span>
@@ -622,7 +614,7 @@ export default function CreateProjectPage() {
               <button
                 type="button"
                 onClick={() => router.push('/professionals')}
-                className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
               >
                 Go back to professionals → 
               </button>
@@ -630,12 +622,34 @@ export default function CreateProjectPage() {
           </div>
         </section>
 
+        {existingPhotoUrls.length > 0 && (
+          <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.8)] px-6 py-5 shadow-[0_20px_50px_rgba(81,55,32,0.06)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project images</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">Images from your wizard are ready</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-700">These images will be attached to the project when you save or open bidding.</p>
+              </div>
+              <span className="rounded-full bg-[rgba(239,231,207,0.82)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
+                {existingPhotoUrls.length} image{existingPhotoUrls.length === 1 ? '' : 's'} attached
+              </span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {existingPhotoUrls.map((url, index) => (
+                <div key={`${url}-${index}`} className="h-24 w-32 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.5)] shadow-sm">
+                  <img src={resolveMediaAssetUrl(url)} alt={`Project image ${index + 1}`} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {!showDescriptionModal && (
-          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 shadow-xl shadow-slate-950/30">
-            <div className="border-b border-slate-700/70 px-6 py-4">
-              <h2 className="text-lg font-semibold text-white">Review project brief</h2>
-              <p className="mt-1 text-sm text-slate-300">
-                Confirm the AI brief and invited professionals before opening bidding.
+          <div className="mt-8 overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] shadow-[0_24px_60px_rgba(81,55,32,0.08)] backdrop-blur-sm">
+            <div className="border-b border-[rgba(120,53,15,0.1)] px-6 py-4">
+              <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
+              <p className="mt-1 text-sm text-slate-700">
+                Confirm the brief, attachments, and final bidding setup before you submit.
               </p>
             </div>
 
@@ -646,7 +660,6 @@ export default function CreateProjectPage() {
                 initialFormData,
                 selectedProfessionalIds: selectedProfessionals.map((professional) => professional.id),
               })}
-              professionals={selectedProfessionals}
               initialData={{
                 ...initialFormData,
                 clientName: user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : '',
@@ -657,6 +670,10 @@ export default function CreateProjectPage() {
                   ? initialFormData.tradesRequired
                   : (descriptionData?.tradesRequired || []),
                 location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+                photoUrls: initialFormData.photoUrls || [],
+                existingPhotos:
+                  initialFormData.existingPhotos ||
+                  (initialFormData.photoUrls?.map((url) => ({ url })) ?? []),
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}
