@@ -19,11 +19,36 @@ export default function ProfilePage() {
   const t = useTranslations('profile.client');
   const [locationDraft, setLocationDraft] = useState<CanonicalLocation>(userLocation || ({} as CanonicalLocation));
   const [saving, setSaving] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordDraft, setPasswordDraft] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   const selectedLocationAreaCode = useMemo(
     () => deriveProjectAreaCodeFromLocation(locationDraft),
     [locationDraft],
   );
+
+  const profileCompletion = useMemo(() => {
+    const checks = [
+      email.trim().length > 0,
+      firstName.trim().length > 0,
+      surname.trim().length > 0,
+      mobile.trim().length > 0,
+      Boolean(locationDraft.primary || locationDraft.secondary || locationDraft.tertiary),
+    ];
+    const completed = checks.filter(Boolean).length;
+    return Math.round((completed / checks.length) * 100);
+  }, [email, firstName, surname, mobile, locationDraft]);
+
+  const locationSummary =
+    locationDraft.tertiary || locationDraft.secondary || locationDraft.primary || 'Not set yet';
+
+  const paperCardClassName =
+    'rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-6 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm';
+  const paperInputClassName =
+    'mt-2 w-full rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[rgba(185,78,45,0.5)] focus:ring-2 focus:ring-[rgba(185,78,45,0.14)]';
+  const sectionLabelClassName = 'text-sm font-semibold text-slate-800';
 
   const handleMapLocationSelect = (codes: string[]) => {
     const code = codes[0];
@@ -35,7 +60,6 @@ export default function ProfilePage() {
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
   const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState('');
 
   // Notification preferences
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);
@@ -179,23 +203,6 @@ export default function ProfilePage() {
         throw new Error(errorText);
       }
 
-      // Update password if provided
-      if (password && password.length >= 6) {
-        const pwRes = await fetchUser('/password', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ password }),
-        });
-
-        if (!pwRes.ok) {
-          const errorText = await pwRes.text();
-          throw new Error(errorText);
-        }
-        setPassword('');
-      }
-
       // Update notification preferences
       const prefRes = await fetchUser('/notification-preferences', {
         method: 'PATCH',
@@ -222,234 +229,385 @@ export default function ProfilePage() {
     }
   };
 
+  const closePasswordModal = () => {
+    setPasswordModalOpen(false);
+    setPasswordDraft('');
+    setPasswordConfirm('');
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accessToken || !user) return;
+    if (passwordDraft.trim().length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (passwordDraft !== passwordConfirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const pwRes = await fetchUser('/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: passwordDraft }),
+      });
+
+      if (!pwRes.ok) {
+        const contentType = pwRes.headers.get('content-type');
+        const errorText = contentType?.includes('application/json')
+          ? (await pwRes.json()).message
+          : await pwRes.text();
+        throw new Error(errorText || 'Failed to update password');
+      }
+
+      closePasswordModal();
+      toast.success('Password updated successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   // Show loading state while auth is initializing
   if (isLoggedIn === undefined || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-slate-600">{t('saving')}</p>
+      <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f4efe6_100%)] px-4">
+        <div className="rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.82)] px-6 py-5 text-sm text-slate-700 shadow-[0_18px_50px_rgba(81,55,32,0.08)] backdrop-blur-sm">
+          {t('saving')}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="bg-white rounded-lg border border-slate-200 p-8 space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
-          <p className="text-sm text-slate-600 mt-1">{t('subtitle')}</p>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f4efe6_100%)] px-3 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(185,78,45,0.92)]">Client Workspace</p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-900">{t('title')}</h1>
+              <p className="mt-2 text-sm text-slate-700">{t('subtitle')}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold text-[rgba(185,78,45,0.92)] ring-1 ring-[rgba(120,53,15,0.12)]">
+                  Profile completeness {profileCompletion}%
+                </span>
+                <span className="rounded-full bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
+                  Preferred contact {preferredContactMethod}
+                </span>
+                <span className="rounded-full bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
+                  Area {locationSummary}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPasswordModalOpen(true)}
+              className="rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.82)] px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(255,250,240,0.96)]"
+            >
+              Change password
+            </button>
+          </div>
         </div>
 
-        {/* Profile Edit Form */}
-        <form id="client-profile-form" onSubmit={handleSaveProfile} className="space-y-4 pt-6 border-t border-slate-200 pb-24">
-          <h2 className="text-xl font-semibold text-slate-900">{t('accountInfo')}</h2>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700">{t('email')}</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              required
-            />
+        <form id="client-profile-form" onSubmit={handleSaveProfile} className="space-y-6 pb-24">
+          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <section className={paperCardClassName}>
+              <div className="mb-6 flex flex-col gap-3 border-b border-[rgba(120,53,15,0.1)] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Profile details</p>
+                  <h2 className="mt-1 text-2xl font-bold text-slate-900">{t('accountInfo')}</h2>
+                </div>
+                <div className="min-w-[180px]">
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-slate-800">Ready to use</span>
+                    <span className="font-bold text-[rgba(185,78,45,0.92)]">{profileCompletion}%</span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(204,179,152,0.34)]">
+                    <div
+                      className="h-full rounded-full bg-[rgba(185,78,45,0.92)] transition-all"
+                      style={{ width: `${Math.max(8, profileCompletion)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className={sectionLabelClassName}>{t('email')}</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={paperInputClassName}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={sectionLabelClassName}>{t('firstName')}</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={paperInputClassName}
+                  />
+                </div>
+
+                <div>
+                  <label className={sectionLabelClassName}>{t('surname')}</label>
+                  <input
+                    type="text"
+                    value={surname}
+                    onChange={(e) => setSurname(e.target.value)}
+                    className={paperInputClassName}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className={sectionLabelClassName}>Mobile number</label>
+                  <input
+                    type="text"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    className={paperInputClassName}
+                    placeholder="e.g. +852 9123 4567"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <aside className="space-y-6">
+              <section className={paperCardClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Account snapshot</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">{t('accountDetails')}</h2>
+                <div className="mt-5 space-y-4 text-sm text-slate-700">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('accountType')}</p>
+                    <span className="mt-2 inline-flex rounded-full bg-[rgba(185,78,45,0.92)] px-3 py-1 text-xs font-semibold text-white">
+                      {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : 'Client'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('userId')}</p>
+                    <p className="mt-2 break-all font-mono text-xs text-slate-900">{user.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Password</p>
+                    <p className="mt-2 text-sm text-slate-700">Handled separately for security. Use the hero action to update it.</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className={paperCardClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Session</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">Account controls</h2>
+                <p className="mt-2 text-sm text-slate-700">High-impact actions should sit here. Delete account can be wired later once the correct confirmation flow is ready.</p>
+                <button
+                  type="button"
+                  className="mt-5 rounded-2xl bg-[crimson] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#b01030]"
+                >
+                  Delete account
+                </button>
+                <p className="mt-2 text-xs text-slate-500">No action is connected yet.</p>
+              </section>
+            </aside>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">{t('firstName')}</label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className={paperCardClassName}>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Preferences</p>
+              <h2 className="mt-1 text-xl font-bold text-slate-900">Notification preferences</h2>
+              <div className="mt-5 space-y-5">
+                <label className="flex items-start gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-4 text-sm text-slate-700 shadow-sm">
+                  <input
+                    type="checkbox"
+                    id="allowPartnerOffers"
+                    checked={allowPartnerOffers}
+                    onChange={(e) => setAllowPartnerOffers(e.target.checked)}
+                    disabled={preferencesLoading}
+                    className="mt-0.5 rounded border-[rgba(120,53,15,0.24)]"
+                  />
+                  <span>Receive news and offers from our registered suppliers and partners</span>
+                </label>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700">{t('surname')}</label>
-              <input
-                type="text"
-                value={surname}
-                onChange={(e) => setSurname(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
+                <label className="flex items-start gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-4 text-sm text-slate-700 shadow-sm">
+                  <input
+                    type="checkbox"
+                    id="allowPlatformUpdates"
+                    checked={allowPlatformUpdates}
+                    onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
+                    disabled={preferencesLoading}
+                    className="mt-0.5 rounded border-[rgba(120,53,15,0.24)]"
+                  />
+                  <span>Receive news and updates about the Mimo platform and its associates</span>
+                </label>
+
+                <div>
+                  <label htmlFor="preferredLanguage" className={sectionLabelClassName}>
+                    Preferred language
+                  </label>
+                  <select
+                    id="preferredLanguage"
+                    value={preferredLanguage}
+                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                    disabled={preferencesLoading}
+                    className={paperInputClassName}
+                  >
+                    <option value="en">English</option>
+                    <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="preferredContactMethod" className={sectionLabelClassName}>
+                    Preferred contact method
+                  </label>
+                  <select
+                    id="preferredContactMethod"
+                    value={preferredContactMethod}
+                    onChange={(e) =>
+                      setPreferredContactMethod(
+                        e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
+                      )
+                    }
+                    disabled={preferencesLoading}
+                    className={paperInputClassName}
+                  >
+                    <option value="EMAIL">Email</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="SMS">SMS</option>
+                    <option value="WECHAT">WeChat</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section className={paperCardClassName}>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Default browsing area</p>
+              <h2 className="mt-1 text-xl font-bold text-slate-900">{t('defaultLocation')}</h2>
+              <p className="mt-2 text-sm text-slate-700">{t('defaultLocationHint')}</p>
+              <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.74)] p-4 shadow-sm">
+                <MapOrList
+                  storageKey="fh-map-or-list-preference"
+                  label="Your area"
+                  helperText="Pick your district on the map or use Words mode for a text list."
+                  mapLabel="Map"
+                  listLabel="Words"
+                  listPanelClassName="max-h-[50vh] overflow-y-auto pr-1"
+                  map={
+                    <HkDistrictMap
+                      selectionMode="single"
+                      selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
+                      onChange={handleMapLocationSelect}
+                    />
+                  }
+                  list={
+                    <HkDistrictList
+                      selectionMode="single"
+                      selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
+                      onChange={handleMapLocationSelect}
+                    />
+                  }
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                <span className="rounded-full bg-[rgba(255,250,240,0.88)] px-3 py-1 font-semibold text-[rgba(185,78,45,0.92)] ring-1 ring-[rgba(120,53,15,0.12)]">
+                  Selected: {locationSummary}
+                </span>
+                <span>Your default location is saved when you use Save Changes.</span>
+              </div>
+              <details className="mt-4 text-xs text-slate-500">
+                <summary className="cursor-pointer select-none">Advanced: set by text</summary>
+                <div className="mt-3">
+                  <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
+                </div>
+              </details>
+            </section>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700">Mobile number</label>
-            <input
-              type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="e.g. +852 9123 4567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700">{t('newPassword')}</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder={t('passwordHint')}
-            />
-            <p className="mt-1 text-xs text-slate-500">{t('passwordNote')}</p>
-          </div>
-
-          {/* Notification Preferences */}
-          <div className="pt-6 border-t border-slate-200 space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">Notification Preferences</h2>
-            
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="allowPartnerOffers"
-                checked={allowPartnerOffers}
-                onChange={(e) => setAllowPartnerOffers(e.target.checked)}
-                disabled={preferencesLoading}
-                className="rounded border-slate-300"
-              />
-              <label htmlFor="allowPartnerOffers" className="text-sm text-slate-700">
-                Receive news and offers from our registered suppliers and partners
-              </label>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="allowPlatformUpdates"
-                checked={allowPlatformUpdates}
-                onChange={(e) => setAllowPlatformUpdates(e.target.checked)}
-                disabled={preferencesLoading}
-                className="rounded border-slate-300"
-              />
-              <label htmlFor="allowPlatformUpdates" className="text-sm text-slate-700">
-                Receive news and updates about the Fitout Hub platform and its associates
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="preferredLanguage" className="block text-sm text-slate-700">
-                Preferred language
-              </label>
-              <select
-                id="preferredLanguage"
-                value={preferredLanguage}
-                onChange={(e) => setPreferredLanguage(e.target.value)}
-                disabled={preferencesLoading}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="en">English</option>
-                <option value="zh-HK">Cantonese (Traditional Chinese)</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="preferredContactMethod" className="block text-sm text-slate-700">
-                Preferred contact method
-              </label>
-              <select
-                id="preferredContactMethod"
-                value={preferredContactMethod}
-                onChange={(e) =>
-                  setPreferredContactMethod(
-                    e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
-                  )
-                }
-                disabled={preferencesLoading}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="EMAIL">Email</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="SMS">SMS</option>
-                <option value="WECHAT">WeChat</option>
-              </select>
-            </div>
-          </div>
-
         </form>
-
-        {/* Default location for browsing trades/professionals */}
-        <div className="pt-6 border-t border-slate-200 space-y-3">
-          <h2 className="text-xl font-semibold text-slate-900">{t('defaultLocation')}</h2>
-          <p className="text-sm text-slate-600">
-            {t('defaultLocationHint')}
-          </p>
-          <MapOrList
-            storageKey="fh-map-or-list-preference"
-            label="Your area"
-            helperText="Pick your district on the map or use Words mode for a text list."
-            mapLabel="Map"
-            listLabel="Words"
-            listPanelClassName="max-h-[50vh] overflow-y-auto pr-1"
-            map={
-              <HkDistrictMap
-                selectionMode="single"
-                selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
-                onChange={handleMapLocationSelect}
-              />
-            }
-            list={
-              <HkDistrictList
-                selectionMode="single"
-                selectedAreaCodes={selectedLocationAreaCode ? [selectedLocationAreaCode] : []}
-                onChange={handleMapLocationSelect}
-              />
-            }
-          />
-          {selectedLocationAreaCode && (
-            <p className="text-xs text-slate-500">Selected: {locationDraft?.secondary || locationDraft?.primary || ''}</p>
-          )}
-          <details className="text-xs text-slate-500">
-            <summary className="cursor-pointer select-none">Advanced: set by text</summary>
-            <div className="mt-2">
-              <LocationSelect value={locationDraft} onChange={setLocationDraft} enableSearch={true} />
-            </div>
-          </details>
-          <p className="text-xs text-slate-500">
-            Your default location is saved when you use Save Changes.
-          </p>
-        </div>
-
-        {/* Account Info */}
-        <div className="pt-6 border-t border-slate-200 space-y-2">
-          <h2 className="text-xl font-semibold text-slate-900">{t('accountDetails')}</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <label className="block text-slate-600">{t('accountType')}</label>
-              <span className="inline-block font-medium text-white bg-blue-600 px-3 py-1 rounded mt-1">
-                {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : 'Client'}
-              </span>
-            </div>
-            <div>
-              <label className="block text-slate-600">{t('userId')}</label>
-              <p className="text-slate-900 font-mono mt-1">{user.id}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-6 border-t border-slate-200">
-          <button
-            onClick={logout}
-            className="rounded-md bg-red-600 px-4 py-2 text-white font-medium hover:bg-red-700"
-          >
-            {t('logout')}
-          </button>
-        </div>
 
         <div className="pointer-events-none sticky bottom-4 z-20 flex justify-end">
           <button
             type="submit"
             form="client-profile-form"
             disabled={saving}
-            className="pointer-events-auto rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:opacity-60"
+            className="pointer-events-auto rounded-full bg-[#b94e2d] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(81,55,32,0.18)] transition hover:bg-[#a84426] disabled:opacity-60"
           >
             {saving ? t('saving') : t('saveChanges')}
           </button>
         </div>
+
+        {passwordModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(33,24,16,0.48)] px-4 py-8 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[28px] border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.96)] p-6 shadow-[0_30px_80px_rgba(33,24,16,0.28)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(185,78,45,0.92)]">Security</p>
+                  <h2 className="mt-1 text-2xl font-bold text-slate-900">Change password</h2>
+                  <p className="mt-2 text-sm text-slate-700">Set a new password separately from your profile details so account updates stay focused.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  className="rounded-full border border-[rgba(120,53,15,0.14)] px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-[rgba(239,231,207,0.7)]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
+                <div>
+                  <label className={sectionLabelClassName}>New password</label>
+                  <input
+                    type="password"
+                    value={passwordDraft}
+                    onChange={(e) => setPasswordDraft(e.target.value)}
+                    className={paperInputClassName}
+                    placeholder={t('passwordHint')}
+                    autoFocus
+                  />
+                  <p className="mt-2 text-xs text-slate-500">{t('passwordNote')}</p>
+                </div>
+
+                <div>
+                  <label className={sectionLabelClassName}>Confirm new password</label>
+                  <input
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    className={paperInputClassName}
+                    placeholder="Re-enter your new password"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closePasswordModal}
+                    className="rounded-2xl border border-[rgba(120,53,15,0.14)] px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-[rgba(239,231,207,0.7)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordSaving}
+                    className="rounded-2xl bg-[#b94e2d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#a84426] disabled:opacity-60"
+                  >
+                    {passwordSaving ? t('saving') : 'Update password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

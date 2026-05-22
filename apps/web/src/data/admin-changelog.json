@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-f9cdd992",
+    "date": "2026-05-22T11:51:19+08:00",
+    "title": "feat(profile): refine client account controls",
+    "summary": "feat(profile): refine client account controls",
+    "areas": [
+      "web"
+    ],
+    "commit": "f9cdd992",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-f963d6a1",
     "date": "2026-05-22T11:13:44+08:00",
     "title": "feat(admin): add urgency triage and quote-window signals",
