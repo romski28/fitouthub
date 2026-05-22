@@ -448,6 +448,20 @@ export class ProjectsService {
     );
   }
 
+  private isMissingProjectLastActivityColumnError(error: any): boolean {
+    const message = String(error?.message || '');
+    return (
+      error?.code === 'P2022' &&
+      (message.includes('Project.lastActivityAt') || message.includes('lastActivityAt'))
+    );
+  }
+
+  private async ensureProjectLastActivityColumn(): Promise<void> {
+    await this.prisma.$executeRawUnsafe(
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastActivityAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP',
+    );
+  }
+
   private buildProjectProfessionalTradeScopeWrite(input: {
     status: 'pending' | 'selected';
     requestedTrades: string[];
@@ -2412,39 +2426,68 @@ Please review the project details and respond with your quote or decline the inv
       createData.user = { connect: { id: userId } };
     }
 
+    const enrichCreateData = (data: any) => {
+      const enriched = { ...data };
+
+      if (aiIntakeId) {
+        enriched.aiIntakeId = aiIntakeId;
+      }
+
+      if (normalizedPhotos.length > 0) {
+        enriched.photos = {
+          create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note })),
+        };
+      }
+
+      if (userId) {
+        enriched.user = { connect: { id: userId } };
+      }
+
+      return enriched;
+    };
+
+    const createProjectRecord = async (data: any) => {
+      return this.prisma.project.create({
+        data,
+        include: {
+
+          professionals: {
+            include: {
+              professional: true,
+            },
+          },
+          photos: true,
+        },
+      });
+    };
+
     // Create project with all ProjectProfessional junctions
     let project: any;
     try {
-      project = await this.prisma.project.create({
-        data: createData,
-        include: {
-
-          professionals: {
-            include: {
-              professional: true,
-            },
-          },
-          photos: true,
-        },
-      });
+      project = await createProjectRecord(createData);
     } catch (error) {
-      if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
-        throw error;
+      let retryError: any = error;
+
+      if (this.isMissingProjectLastActivityColumnError(retryError)) {
+        console.warn('[ProjectsService.create] Missing Project.lastActivityAt detected, applying hotfix DDL and retrying');
+        try {
+          await this.ensureProjectLastActivityColumn();
+          project = await createProjectRecord(createData);
+          retryError = null;
+        } catch (ddlRetryError) {
+          retryError = ddlRetryError;
+        }
       }
 
-      console.warn('[ProjectsService.create] Trade-scope columns unavailable, retrying project create without scoped trade fields');
-      project = await this.prisma.project.create({
-        data: buildCreateData(false),
-        include: {
+      if (!project && this.isMissingProjectProfessionalTradeScopeFieldError(retryError)) {
+        console.warn('[ProjectsService.create] Trade-scope columns unavailable, retrying project create without scoped trade fields');
+        const retryCreateData = enrichCreateData(buildCreateData(false));
+        project = await createProjectRecord(retryCreateData);
+      }
 
-          professionals: {
-            include: {
-              professional: true,
-            },
-          },
-          photos: true,
-        },
-      });
+      if (!project) {
+        throw retryError;
+      }
     }
 
     // Create invitation messages for each professional

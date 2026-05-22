@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-23b59d36",
+    "date": "2026-05-22T23:00:12+08:00",
+    "title": "fix(api): recover from missing Project.lastActivityAt column",
+    "summary": "fix(api): recover from missing Project.lastActivityAt column",
+    "areas": [
+      "api"
+    ],
+    "commit": "23b59d36",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-22-880db831",
     "date": "2026-05-22T22:54:56+08:00",
     "title": "fix(create-project): remove redundant confirmation dates panel",
