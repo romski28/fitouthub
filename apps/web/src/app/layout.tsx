@@ -28,7 +28,7 @@ const geistSans = GeistSans;
 const geistMono = GeistMono;
 
 export const metadata: Metadata = {
-  title: "Fitout Hub",
+  title: "Mimo",
   description: "Find tradesmen, professionals, and manage fitout projects",
   icons: {
     icon: [

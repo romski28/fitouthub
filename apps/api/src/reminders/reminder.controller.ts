@@ -55,7 +55,7 @@ export class ReminderController {
       eventType: 'site_visit_reminder_test',
       message:
         body.message ||
-        'Test reminder from Fitout Hub. Day-before reminders are configured and sending successfully.',
+        'Test reminder from Mimo. Day-before reminders are configured and sending successfully.',
     });
 
     return {

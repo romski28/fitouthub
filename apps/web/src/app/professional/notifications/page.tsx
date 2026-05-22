@@ -32,7 +32,7 @@ export default function NotificationPreferencesPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Notification Preferences</h1>
         <p className="mt-2 text-gray-600">
-          Manage how you receive notifications from FitOutHub
+          Manage how you receive notifications from Mimo
         </p>
       </div>
 

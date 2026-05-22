@@ -238,7 +238,7 @@ export function ProjectAiPanel({
 
   const clientContent = (
     <>
-      <p className="text-xs text-white mb-3">Safety information prepared by Fitout Hub with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
+      <p className="text-xs text-white mb-3">Safety information prepared by Mimo with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock}
 

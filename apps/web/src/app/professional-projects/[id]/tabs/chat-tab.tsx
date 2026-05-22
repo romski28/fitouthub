@@ -103,7 +103,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   <h3 className="font-bold text-amber-900 text-sm">
                     Private Chat with {clientName || 'Client'}
                   </h3>
-                  <p className="text-xs text-amber-700">Only visible to you, the client, and Fitout Hub</p>
+                  <p className="text-xs text-amber-700">Only visible to you, the client, and Mimo</p>
                 </div>
               </div>
 

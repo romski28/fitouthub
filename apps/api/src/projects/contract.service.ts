@@ -78,7 +78,7 @@ The Professional agrees to perform the renovation services as described in the p
 2. PAYMENT TERMS
 Total Contract Amount: ${project.paymentCurrency} ${quotedAmount}
 
-Payment is made according to the milestone schedule agreed by both parties through FitOutHub.
+Payment is made according to the milestone schedule agreed by both parties through Mimo.
 
 3. TIMELINE
 Estimated Start Date: ${estimatedStartDate}
@@ -92,12 +92,12 @@ Estimated Completion Date: ${estimatedEndDate}
 All scope and pricing changes must be approved by both parties via the platform.
 
 6. DISPUTES
-Parties first use FitOutHub dispute resolution before legal escalation.
+Parties first use Mimo dispute resolution before legal escalation.
 
 7. GOVERNING LAW
 This Agreement is governed by the laws of Hong Kong.
 
-By digitally signing this agreement in FitOutHub, each party acknowledges acceptance of these terms.
+By digitally signing this agreement in Mimo, each party acknowledges acceptance of these terms.
 `.trim();
   }
 

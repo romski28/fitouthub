@@ -606,7 +606,7 @@ export class FinancialService {
         phoneNumber: user.mobile,
         channel: preferredChannel,
         eventType: 'escrow_checkout_otp',
-        message: `Your Fitout Hub escrow payment OTP is ${code}. It expires in 10 minutes.`,
+        message: `Your Mimo escrow payment OTP is ${code}. It expires in 10 minutes.`,
       });
       channelsSent.push(preferredChannel);
     }

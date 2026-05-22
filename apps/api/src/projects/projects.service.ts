@@ -5339,7 +5339,7 @@ Please review the project details and respond with your quote or decline the inv
         projectId,
         projectProfessionalId: transaction.projectProfessionalId,
         type: 'escrow_deposit_confirmation',
-        description: 'Client confirms deposit payment made to Fitout Hub escrow',
+        description: 'Client confirms deposit payment made to Mimo escrow',
         amount: transaction.amount,
         status: 'pending',
         requestedBy: transaction.requestedBy,

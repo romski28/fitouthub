@@ -591,7 +591,7 @@ export class AuthService {
       },
     });
 
-    const message = `Your Fitout Hub verification code is ${code}. It expires in 10 minutes.`;
+    const message = `Your Mimo verification code is ${code}. It expires in 10 minutes.`;
 
     if (preferredContactMethod === NotificationChannel.WHATSAPP && mobile) {
       await this.notificationService.send({

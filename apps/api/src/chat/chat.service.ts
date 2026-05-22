@@ -135,7 +135,7 @@ export class ChatService {
     });
 
     return [
-      'Fitout Hub marked this support conversation as pending closure.',
+      'Mimo marked this support conversation as pending closure.',
       reason ? `Reason: ${reason}.` : null,
       `It will auto-close after ${formattedDueAt}. Reply here if you still need help.`,
     ]

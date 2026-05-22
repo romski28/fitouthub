@@ -635,7 +635,7 @@ export class ProfessionalAuthService {
     preferredChannel: NotificationChannel,
     otpCode: string,
   ) {
-    const message = `Your Fitout Hub verification code is ${otpCode}. It expires in 15 minutes.`;
+    const message = `Your Mimo verification code is ${otpCode}. It expires in 15 minutes.`;
 
     // Try SMS
     if (preferredChannel === NotificationChannel.SMS && phone) {

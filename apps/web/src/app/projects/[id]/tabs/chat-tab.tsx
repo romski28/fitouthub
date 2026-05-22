@@ -59,7 +59,7 @@ interface ChatTabProps {
   pendingFiles: File[];
   onPendingFilesChange: (files: File[]) => void;
   uploaderClearKey?: number;
-  // Fitout Hub Assistance
+  // Mimo Assistance
   assistMessages: Message[];
   assistFirstUnreadMessageId?: string | null;
   assistNewMessage: string;
@@ -125,7 +125,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
       <div>
         <div className="mb-3">
           <h2 className="text-lg font-bold text-white">Project Chat</h2>
-          <p className="text-sm text-slate-300">Communicate with all awarded professionals and Fitout Hub</p>
+          <p className="text-sm text-slate-300">Communicate with all awarded professionals and Mimo</p>
           {!hasProfessionals && (
             <p className="text-xs text-slate-400 mt-1">No professionals invited yet. FoH General chat is still available.</p>
           )}
@@ -205,7 +205,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
             </div>
           )}
 
-          {/* Fitout Hub Assistance View */}
+          {/* Mimo Assistance View */}
           {isAssistView && (
             <div className="bg-slate-900/40 border-t border-slate-700">
               <div className="p-4 space-y-4">
@@ -223,7 +223,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 {(assistStatus === 'closure_pending' || assistStatus === 'closed') && (
                   <div className="rounded-md border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
                     {assistStatus === 'closure_pending'
-                      ? `Fitout Hub marked this assistance thread as pending closure${assistClosureDueAt ? ` (auto-close after ${new Date(assistClosureDueAt).toLocaleString()})` : ''}. Send a message here if you still need help.`
+                      ? `Mimo marked this assistance thread as pending closure${assistClosureDueAt ? ` (auto-close after ${new Date(assistClosureDueAt).toLocaleString()})` : ''}. Send a message here if you still need help.`
                       : `This assistance thread was closed${assistResolvedAt ? ` on ${new Date(assistResolvedAt).toLocaleString()}` : ''}. Send a message here to reopen it.`}
                   </div>
                 )}
@@ -246,7 +246,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                     <div className="text-center text-sm text-slate-400">Loading messages...</div>
                   ) : assistMessages.length === 0 ? (
                     <div className="text-center text-sm text-slate-400">
-                      No messages yet. Reach out to Fitout Hub for assistance!
+                      No messages yet. Reach out to Mimo for assistance!
                     </div>
                   ) : (
                     assistMessages.map((msg) => (
@@ -293,7 +293,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         onSendAssistMessage();
                       }
                     }}
-                    placeholder="Ask Fitout Hub for help..."
+                    placeholder="Ask Mimo for help..."
                     className="flex-1 rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                     disabled={assistSending}
                   />
@@ -321,7 +321,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                     <h3 className="font-bold text-white text-sm">
                       Private Chat with {selectedProfessional.professional.fullName || selectedProfessional.professional.businessName || selectedProfessional.professional.email}
                     </h3>
-                    <p className="text-xs text-slate-300">Only visible to you, this professional, and Fitout Hub</p>
+                    <p className="text-xs text-slate-300">Only visible to you, this professional, and Mimo</p>
                   </div>
                   <button
                     onClick={() => onSelectProfessional(null)}

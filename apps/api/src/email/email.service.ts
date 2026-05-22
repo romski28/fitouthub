@@ -46,9 +46,9 @@ export class EmailService {
     const greeting = params.firstName ? `Hi ${params.firstName},` : 'Hi,';
 
     await this.resend.emails.send({
-      from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+      from: 'Mimo <noreply@mail.romski.me.uk>',
       to: params.to,
-      subject: 'Your Fitout Hub verification code',
+      subject: 'Your Mimo verification code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #4f46e5;">Verify your account</h2>
@@ -93,7 +93,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `New Project Opportunity: ${params.projectName}`,
         html: `
@@ -174,7 +174,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Project Accepted: ${params.projectName}`,
         html: `
@@ -231,7 +231,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `New Quote Received: ${params.projectName}`,
         html: `
@@ -294,7 +294,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `⏰ Reminder: Project Response Due Soon - ${params.projectName}`,
         html: `
@@ -352,7 +352,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `⏰ Reminder: Quote Submission Due Soon - ${params.projectName}`,
         html: `
@@ -408,7 +408,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Questionnaire invitation: ${params.questionnaireTitle}`,
         html: `
@@ -465,7 +465,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `⏰ Your quote deadline has been extended – ${params.projectName}`,
         html: `
@@ -518,7 +518,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `🎉 Congratulations: Your Quote Was Accepted - ${params.projectName}`,
         html: `
@@ -573,7 +573,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Project Update: "${params.projectName}" - Selection Made`,
         html: `
@@ -592,7 +592,7 @@ export class EmailService {
             
             <p>${params.thankYouMessage}</p>
             
-            <p>We encourage professionals to keep trying—every quote is an opportunity to build your reputation on Fitout Hub!</p>
+            <p>We encourage professionals to keep trying—every quote is an opportunity to build your reputation on Mimo!</p>
             
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
             
@@ -630,7 +630,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Contact Details Shared: ${params.projectName}`,
         html: `
@@ -688,7 +688,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `💰 Client Requests Better Offer: ${params.projectName}`,
         html: `
@@ -763,7 +763,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `🤝 Assist Requested: ${params.projectName}`,
         html: `
@@ -811,7 +811,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: 'We have received your consultation request',
         html: `
@@ -849,7 +849,7 @@ export class EmailService {
     const subjectPrefix = params.role === 'professional' ? '✅ Escrow Confirmed' : '✅ Funds Secured';
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `${subjectPrefix}: ${params.projectName}`,
         html: `
@@ -861,7 +861,7 @@ export class EmailService {
                 View Project
               </a>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Mimo.</p>
           </div>
         `,
       });
@@ -887,7 +887,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Materials wallet funded: ${params.projectName}`,
         html: `
@@ -901,7 +901,7 @@ export class EmailService {
                 View Project
               </a>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Mimo.</p>
           </div>
         `,
       });
@@ -930,7 +930,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `💰 Escrow Details: ${params.projectName}`,
         html: `
@@ -949,7 +949,7 @@ export class EmailService {
             <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 6px;">
               <h4 style="color: #92400e; margin-top: 0;">💡 How Escrow Works</h4>
               <ol style="color: #78350f; margin: 10px 0; padding-left: 20px;">
-                <li style="margin-bottom: 10px;">The client will pay the full invoice amount into Fitout Hub's escrow account</li>
+                <li style="margin-bottom: 10px;">The client will pay the full invoice amount into Mimo's escrow account</li>
                 <li style="margin-bottom: 10px;">Your funds are securely held until project milestones are met</li>
                 <li style="margin-bottom: 10px;">You can request advance payment for tools, materials, and upfront costs</li>
                 <li>Final payment is released upon project completion and client approval</li>
@@ -977,7 +977,7 @@ export class EmailService {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
             
             <p style="color: #6b7280; font-size: 14px;">
-              <strong>Important:</strong> Your funds are protected by Fitout Hub's escrow service. 
+              <strong>Important:</strong> Your funds are protected by Mimo's escrow service. 
               Payment will only be released according to the agreed project milestones.
             </p>
           </div>
@@ -1016,7 +1016,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `💰 Advance Payment Request: ${params.projectName}`,
         html: `
@@ -1043,7 +1043,7 @@ export class EmailService {
             
             <div style="background-color: #f0fdf4; border: 1px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
               <p style="color: #047857; margin: 0;">
-                <strong>✓ Protected by Escrow:</strong> All funds are held securely by Fitout Hub until project milestones are met.
+                <strong>✓ Protected by Escrow:</strong> All funds are held securely by Mimo until project milestones are met.
               </p>
             </div>
             
@@ -1056,7 +1056,7 @@ export class EmailService {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
             
             <p style="color: #6b7280; font-size: 14px;">
-              Fitout Hub will review this request and contact you to discuss the next steps.
+              Mimo will review this request and contact you to discuss the next steps.
             </p>
           </div>
         `,
@@ -1084,7 +1084,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Project Update: ${params.projectName} has been withdrawn`,
         html: `
@@ -1097,7 +1097,7 @@ export class EmailService {
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin: 18px 0;">
               <p style="color: #6b7280; margin: 0; font-size: 14px;">No action is required on your side. If the client reopens the project, we'll notify you.</p>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Mimo.</p>
           </div>
         `,
       });
@@ -1128,7 +1128,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Access date declined: ${params.projectName}`,
         html: `
@@ -1148,7 +1148,7 @@ export class EmailService {
                 Open Project Schedule
               </a>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Mimo.</p>
           </div>
         `,
       });
@@ -1177,7 +1177,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `✅ Site visit confirmed: ${params.projectName}`,
         html: `
@@ -1199,7 +1199,7 @@ export class EmailService {
                 View project
               </a>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Mimo.</p>
           </div>
         `,
       });
@@ -1238,7 +1238,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: `Site availability updated: ${params.projectName}`,
         html: `
@@ -1259,7 +1259,7 @@ export class EmailService {
                 Open site access
               </a>
             </div>
-            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Fitout Hub.</p>
+            <p style="color: #6b7280; font-size: 12px;">This is an automated notification from Mimo.</p>
           </div>
         `,
       });

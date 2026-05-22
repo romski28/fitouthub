@@ -1,5 +1,48 @@
 [
   {
+    "id": "2026-05-22-7036dc76",
+    "date": "2026-05-22T12:23:52+08:00",
+    "title": "chore(brand): rename Fitout Hub copy to Mimo",
+    "summary": "chore(brand): rename Fitout Hub copy to Mimo",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7036dc76",
+    "files": [
+      "apps/api/src/assist/assist-requests.service.ts",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/chat/chat.service.ts",
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/questionnaires/questionnaires.service.ts",
+      "apps/api/src/reminders/reminder.controller.ts",
+      "apps/api/src/reminders/reminder.service.ts",
+      "apps/api/src/support-requests/support-requests.service.ts",
+      "apps/web/src/app/docs/page.tsx",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/chat-tab.tsx",
+      "apps/web/src/app/professional/notifications/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/app/questionnaires/[token]/page.tsx",
+      "apps/web/src/components/client-financial-section.tsx",
+      "apps/web/src/components/next-steps/contract-action-modal.tsx",
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx",
+      "apps/web/src/data/form-schemas.ts",
+      "apps/web/src/i18n/locales/en.json",
+      "apps/web/src/i18n/request.ts",
+      "apps/web/src/lib/intent-matcher.ts"
+    ]
+  },
+  {
     "id": "2026-05-22-a16fcf07",
     "date": "2026-05-22T12:18:09+08:00",
     "title": "feat(create-project): streamline final review flow",

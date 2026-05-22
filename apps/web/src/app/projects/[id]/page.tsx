@@ -1910,10 +1910,10 @@ export default function ClientProjectDetailPage() {
           setAssistOpen(false);
           toast.success(
             assistConfig.contactMethod === 'call'
-              ? 'Call request sent to Fitout Hub.'
+              ? 'Call request sent to Mimo.'
               : assistConfig.contactMethod === 'whatsapp'
-                ? 'WhatsApp request sent to Fitout Hub.'
-                : 'Chat assistance request sent to Fitout Hub.',
+                ? 'WhatsApp request sent to Mimo.'
+                : 'Chat assistance request sent to Mimo.',
           );
         }
 
@@ -2206,9 +2206,9 @@ export default function ClientProjectDetailPage() {
                 );
               })()}
 
-              {/* Step 3 — Ask Fitout Hub */}
+              {/* Step 3 — Ask Mimo */}
               <div className="rounded-lg border border-indigo-200 bg-white p-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Step 3 — Ask Fitout Hub for assistance</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Step 3 — Ask Mimo for assistance</p>
                 <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
                 <button
                   onClick={handleOpenAssistFromBlocker}
@@ -2219,7 +2219,7 @@ export default function ClientProjectDetailPage() {
                   {assistRequestId ? '✅ Assistance requested (open chat)' : '💬 Ask for help'}
                 </button>
                 {assistRequestId && (
-                  <p className="text-xs text-emerald-700">Your request has been sent to Fitout Hub.</p>
+                  <p className="text-xs text-emerald-700">Your request has been sent to Mimo.</p>
                 )}
               </div>
 
@@ -2540,13 +2540,13 @@ export default function ClientProjectDetailPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-slate-900">
-                      {viewingAssistChat ? 'Fitout Hub Assistance' : (selectedProfessional
+                      {viewingAssistChat ? 'Mimo Assistance' : (selectedProfessional
                         ? `Chat with ${selectedProfessional?.professional?.fullName || selectedProfessional?.professional?.businessName || selectedProfessional?.professional?.email}`
                         : 'Select a professional to chat')}
                     </h3>
                     {viewingAssistChat && (
                       <p className="text-xs text-slate-600 mt-1">
-                        Get help from Fitout Hub experts
+                        Get help from Mimo experts
                       </p>
                     )}
                     {!viewingAssistChat && selectedProfessional && (
@@ -2560,7 +2560,7 @@ export default function ClientProjectDetailPage() {
                       onClick={() => setViewingAssistChat(!viewingAssistChat)}
                       className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
                     >
-                      {viewingAssistChat ? 'View Professional Chat' : 'Fitout Hub Assistance'}
+                      {viewingAssistChat ? 'View Professional Chat' : 'Mimo Assistance'}
                     </button>
                   )}
                 </div>
@@ -2580,7 +2580,7 @@ export default function ClientProjectDetailPage() {
                       <div className="text-center text-sm text-slate-500">Loading messages...</div>
                     ) : assistMessages.length === 0 ? (
                       <div className="text-center text-sm text-slate-500">
-                        No messages yet. Reach out to Fitout Hub for assistance!
+                        No messages yet. Reach out to Mimo for assistance!
                       </div>
                     ) : (
                       assistMessages.map((msg) => (
@@ -2616,7 +2616,7 @@ export default function ClientProjectDetailPage() {
                           handleSendAssistMessage();
                         }
                       }}
-                      placeholder="Ask Fitout Hub for help..."
+                      placeholder="Ask Mimo for help..."
                       className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
                       disabled={assistSending}
                     />

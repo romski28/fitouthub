@@ -278,7 +278,7 @@ export default function ClientFinancialSection({
 
             <p className="text-sm text-gray-700 mb-6">
               Please confirm that you have successfully deposited {formatHKD(projectCost)} into the escrow account. 
-              The Fitout Hub team will verify this deposit and notify the professional.
+              The Mimo team will verify this deposit and notify the professional.
             </p>
 
             <div className="flex gap-3">

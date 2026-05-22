@@ -35,7 +35,7 @@ export type FormSchema = {
 // Contractor, Company, and Reseller form schemas
 export const contractorFormSchema: FormSchema = {
   formTitle: 'Contractor Registration',
-  formDescription: 'Register as a contractor on Fitout Hub',
+  formDescription: 'Register as a contractor on Mimo',
   sections: [
     {
       id: 'personal_info',
@@ -154,7 +154,7 @@ export const contractorFormSchema: FormSchema = {
       fields: [
         {
           id: 'terms_agreed',
-          label: "I agree to Fitout Hub's Terms of Service and Contractor Agreement",
+          label: "I agree to Mimo's Terms of Service and Contractor Agreement",
           type: 'checkbox_single',
           required: true,
         },
@@ -165,7 +165,7 @@ export const contractorFormSchema: FormSchema = {
 
 export const companyFormSchema: FormSchema = {
   formTitle: 'Company Registration',
-  formDescription: 'Register your company as a contractor on Fitout Hub',
+  formDescription: 'Register your company as a contractor on Mimo',
   sections: [
     {
       id: 'company_info',
@@ -226,7 +226,7 @@ export const companyFormSchema: FormSchema = {
       fields: [
         {
           id: 'terms_agreed',
-          label: "I agree to Fitout Hub's Terms of Service and Contractor Agreement on behalf of the company",
+          label: "I agree to Mimo's Terms of Service and Contractor Agreement on behalf of the company",
           type: 'checkbox_single',
           required: true,
         },
@@ -237,7 +237,7 @@ export const companyFormSchema: FormSchema = {
 
 export const resellerFormSchema: FormSchema = {
   formTitle: 'Reseller Registration',
-  formDescription: 'Register your business as a reseller on Fitout Hub',
+  formDescription: 'Register your business as a reseller on Mimo',
   sections: [
     {
       id: 'business_info',
@@ -326,7 +326,7 @@ export const resellerFormSchema: FormSchema = {
       fields: [
         {
           id: 'terms_agreed',
-          label: "I agree to Fitout Hub's Terms of Service and Reseller Agreement on behalf of the company",
+          label: "I agree to Mimo's Terms of Service and Reseller Agreement on behalf of the company",
           type: 'checkbox_single',
           required: true,
         },

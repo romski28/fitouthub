@@ -345,7 +345,7 @@ export function ContractActionModal({
 
                     {requestChangesAdminOnly ? (
                       <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-                        Fitout Hub admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
+                        Mimo admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
                       </div>
                     ) : null}
                   </div>

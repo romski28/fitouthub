@@ -185,7 +185,7 @@ export class ReminderService {
     const message =
       `${greeting} Reminder: you have a site inspection tomorrow (${params.dateLabel}${timeClause}) ` +
       `for project "${params.projectName}" with ${params.counterpartName}. ` +
-      `Log in to Fitout Hub to view details.`;
+      `Log in to Mimo to view details.`;
 
     // WhatsApp / SMS via NotificationService
     if (user.mobile) {
@@ -228,7 +228,7 @@ export class ReminderService {
     const greeting = `Hi ${params.professionalName},`;
     const message =
       `${greeting} Reminder: you have a site visit tomorrow (${params.dateLabel}${timeClause}) ` +
-      `for project "${params.projectName}" on Fitout Hub. ` +
+      `for project "${params.projectName}" on Mimo. ` +
       `Log in to confirm your attendance.`;
 
     // WhatsApp / SMS
@@ -248,7 +248,7 @@ export class ReminderService {
         subject: `Reminder: site visit tomorrow for "${params.projectName}"`,
         greeting,
         body: `You have a confirmed site visit <strong>tomorrow, ${params.dateLabel}${timeClause}</strong> for project <strong>${params.projectName}</strong>.`,
-        detail: `Please ensure you arrive on time and log your visit in Fitout Hub after completion.`,
+        detail: `Please ensure you arrive on time and log your visit in Mimo after completion.`,
       });
     }
 
@@ -268,7 +268,7 @@ export class ReminderService {
       // EmailService exposes a generic send via Resend — build our own html here
       // and call the underlying resend client via the typed helper pattern.
       await (this.emailService as any).resend?.emails.send({
-        from: 'Fitout Hub <noreply@mail.romski.me.uk>',
+        from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
         subject: params.subject,
         html: `
@@ -280,11 +280,11 @@ export class ReminderService {
             <p style="margin-top:24px;">
               <a href="${process.env.WEB_APP_URL || 'https://fitouthub.com'}/projects"
                  style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
-                View in Fitout Hub
+                View in Mimo
               </a>
             </p>
             <p style="font-size:12px;color:#6b7280;margin-top:24px;">
-              You are receiving this because you have a confirmed appointment on Fitout Hub.
+              You are receiving this because you have a confirmed appointment on Mimo.
             </p>
           </div>
         `,

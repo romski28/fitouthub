@@ -200,7 +200,7 @@ export function getActionDescription(action: IntentAction): string {
     'find-professional': 'Browse and find professionals',
     'join': 'Register your business',
     'manage-projects': 'Manage your projects',
-    'unknown': 'Explore Fitout Hub',
+    'unknown': 'Explore Mimo',
   };
   return descriptions[action] || 'Explore';
 }

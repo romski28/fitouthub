@@ -1568,7 +1568,7 @@ export default function ProjectDetailPage() {
       const data = await res.json().catch(() => ({}));
       if (!data?.caseNumber) {
         setAssistOpen(false);
-        toast.success('Support request sent to Fitout Hub.');
+        toast.success('Support request sent to Mimo.');
       }
       return { caseNumber: data?.caseNumber };
     } catch (err) {

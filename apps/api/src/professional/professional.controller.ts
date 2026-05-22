@@ -2360,7 +2360,7 @@ export class ProfessionalController {
           senderProfessionalId: professionalId,
           content: body.paymentMilestoneId
             ? `💰 Milestone payment requested: $${requestAmount.toFixed(2)} for ${requestDescription}.${requestNotes?.includes('Timing: late') ? ' ⚠️ Submitted after the planned milestone date; schedule review may be required.' : ''}`
-            : `💰 Payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Fitout Hub will review and contact the client.`,
+            : `💰 Payment requested: ${body.requestType === 'percentage' ? `${body.percentage}% (` : ''}$${requestAmount.toFixed(2)}${body.requestType === 'percentage' ? ')' : ''} for upfront costs. Mimo will review and contact the client.`,
         },
       });
 

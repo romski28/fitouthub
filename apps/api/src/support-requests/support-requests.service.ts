@@ -85,7 +85,7 @@ export class SupportRequestsService {
     });
 
     return [
-      'Fitout Hub marked this support case as pending closure.',
+      'Mimo marked this support case as pending closure.',
       reason ? `Reason: ${reason}.` : null,
       `It will auto-close after ${formattedDueAt}. Reply if you still need help.`,
     ]

@@ -264,7 +264,7 @@ const STARTER_QUESTIONS: QuestionDefinition[] = [
   },
   {
     code: 'biggest_platform_concerns',
-    title: 'What is your biggest concern about joining a platform like FitOut Hub? (Select all that apply)',
+    title: 'What is your biggest concern about joining a platform like Mimo? (Select all that apply)',
     type: 'multi_select',
     isRequired: true,
     sortOrder: 13,
@@ -300,7 +300,7 @@ const STARTER_QUESTIONS: QuestionDefinition[] = [
   },
   {
     code: 'verified_contractor_interest',
-    title: 'Would you be interested in joining FitOut Hub as a verified contractor when it launches?',
+    title: 'Would you be interested in joining Mimo as a verified contractor when it launches?',
     type: 'single_select',
     isRequired: true,
     sortOrder: 14,
@@ -314,7 +314,7 @@ const STARTER_QUESTIONS: QuestionDefinition[] = [
   },
   {
     code: 'most_useful_single_thing',
-    title: 'What single thing would make FitOut Hub most useful for your business?',
+    title: 'What single thing would make Mimo most useful for your business?',
     type: 'long_text',
     isRequired: true,
     sortOrder: 15,
@@ -377,7 +377,7 @@ const STARTER_TEMPLATES: StarterTemplateDefinition[] = [
   {
     key: 'verified_contractor_interest',
     label: 'Verified contractor interest',
-    prompt: 'Would you be interested in joining FitOut Hub as a verified contractor when it launches?',
+    prompt: 'Would you be interested in joining Mimo as a verified contractor when it launches?',
     type: 'single_select',
     options: [
       { value: 'yes_definitely', label: 'Yes, definitely', sortOrder: 1 },
@@ -799,17 +799,17 @@ export class QuestionnairesService {
     const created = await this.prisma.questionnaire.create({
       data: {
         slug: STARTER_SLUG,
-        title: 'FitOut Hub — Contractor & Tradesman Research',
+        title: 'Mimo — Contractor & Tradesman Research',
         audienceKey: STARTER_AUDIENCE,
         description:
           'Bilingual contractor and tradesman research survey focused on lead quality, pain points, monetisation preference, and platform fit.',
         welcomeTitle: 'Welcome to the contractor & tradesman research survey',
         welcomeMessage:
-          'This short survey helps us design FitOut Hub around real contractor and tradesman needs in Hong Kong.',
+          'This short survey helps us design Mimo around real contractor and tradesman needs in Hong Kong.',
         thankYouTitle: 'Thank you for your feedback',
         thankYouMessage:
           'Your responses have been saved and will help shape product priorities and launch design.',
-        joinCtaLabel: 'Explore joining FitOut Hub',
+        joinCtaLabel: 'Explore joining Mimo',
         joinCtaUrl: '/professionals',
         status: 'active',
         createdBy: adminUserId,

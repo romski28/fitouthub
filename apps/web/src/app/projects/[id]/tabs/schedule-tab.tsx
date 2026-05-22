@@ -526,7 +526,7 @@ export const ClientScheduleTab: React.FC<ClientScheduleTabProps> = ({
                                     type="button"
                                     onClick={() => onOpenChatTab?.()}
                                     className="inline-flex items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/20"
-                                    title="Escalate to Fitout Hub"
+                                    title="Escalate to Mimo"
                                   >
                                     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-400 text-[9px] font-bold text-slate-950">
                                       FoH

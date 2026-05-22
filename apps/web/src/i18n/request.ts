@@ -48,7 +48,7 @@ const messages = {
     },
     "auth": {
       "join": {
-        "title": "Join Fitout Hub",
+        "title": "Join Mimo",
         "subtitle": "Choose how you'd like to get started",
         "clientTitle": "Join as Client",
         "clientDescription": "Find professionals for your fitout project. Post projects and get quotes from verified contractors.",
@@ -63,7 +63,7 @@ const messages = {
         "noAccount": "Don't have an account?",
         "forgotPassword": "Forgot password?",
         "success": "Welcome back!",
-        "welcome": "Welcome to Fitout Hub",
+        "welcome": "Welcome to Mimo",
         "clientLabel": "Client",
         "professionalLabel": "Professional",
         "professionalText": "Professional account?",
@@ -123,7 +123,7 @@ const messages = {
         "contactSmsComing": "SMS (coming)",
         "contactWeChatDisabled": "WeChat (disabled)",
         "partnerOffers": "Do you want selected news and offers from our registered suppliers and partners?",
-        "platformUpdates": "Do you want news and updates on the Fitout Hub platform and its associates?",
+        "platformUpdates": "Do you want news and updates on the Mimo platform and its associates?",
         "agreePrefix": "I agree to the",
         "agreeMiddle": "and acknowledge the",
         "termsAndConditions": "Terms and Conditions",
@@ -173,7 +173,7 @@ const messages = {
           "submitWithFiles": "Creating Project & uploading",
           "askAdvice": "Ask for advice",
           "needHelp": "Need Help Executing This Project?",
-          "helpDescription": "Ask for advice: Get personalized guidance from Fitout Hub experts. We'll help you scope your project, find the right professionals, and manage the entire process from start to finish.",
+          "helpDescription": "Ask for advice: Get personalized guidance from Mimo experts. We'll help you scope your project, find the right professionals, and manage the entire process from start to finish.",
           "removeFile": "Remove"
         },
         "list": {
@@ -210,8 +210,8 @@ const messages = {
           "paid": "Paid",
           "updated": "Updated:",
           "id": "ID:",
-          "assistRequestedAlt": "Fitout Hub Assistance Requested",
-          "assistRequestedTitle": "Fitout Hub Assistance Requested",
+          "assistRequestedAlt": "Mimo Assistance Requested",
+          "assistRequestedTitle": "Mimo Assistance Requested",
           "noAssistAlt": "No Assistance",
           "noAssistTitle": "No Assistance",
           "labels": {
@@ -369,7 +369,7 @@ const messages = {
         "anonMatchFoundNoTrade": "We found {count} professionals who could help with your project. Join to see all options.",
         "anonMatchFoundNoLocation": "There are {count} {trade} professionals available. Join to see all options and their locations.",
         "anonMatchFoundNoBoth": "We have professionals available to help. Join to find the right match for your project.",
-        "anonMatchNone": "We don't have an exact match right now. Join Fitout Hub and our team will help you find the right professional.",
+        "anonMatchNone": "We don't have an exact match right now. Join Mimo and our team will help you find the right professional.",
         "anonRegisterPrompt": "To find out more, please register with our platform.",
         "anonRegisterCta": "Register free →",
         "readyToProceed": "Ready to proceed?",
@@ -380,7 +380,7 @@ const messages = {
       },
       "hero": {
         "tagline": "Professional Fitout Management Platform",
-        "title": "Transform Your Space with Fitout Hub",
+        "title": "Transform Your Space with Mimo",
         "description": "Connect with trusted professionals, manage projects, and complete fitouts on time and budget"
       },
       "quickStart": {
@@ -396,7 +396,7 @@ const messages = {
           "choose": "Why We Stand Out"
         },
         "why": {
-          "title": "Why Choose FitoutHub",
+          "title": "Why Choose Mimo",
           "description": "The complete platform for renovation projects",
           "secure": {
             "title": "Secure Payments",
@@ -456,7 +456,7 @@ const messages = {
         },
         "choose": {
           "title": "Why We Stand Out",
-          "description": "Features that make FitoutHub the best choice",
+          "description": "Features that make Mimo the best choice",
           "pm": {
             "title": "Project Management",
             "description": "Comprehensive tools to manage every aspect of your renovation"
@@ -611,7 +611,7 @@ const messages = {
     },
     "auth": {
       "join": {
-        "title": "加入 Fitout Hub",
+        "title": "加入 Mimo",
         "subtitle": "選擇您想如何開始",
         "clientTitle": "以客戶身份加入",
         "clientDescription": "為您的裝修項目尋找專業人士。發佈項目並獲取已認證承辦商報價。",
@@ -626,7 +626,7 @@ const messages = {
         "noAccount": "還未有帳戶?",
         "forgotPassword": "忘記密碼?",
         "success": "歡迎返回!",
-        "welcome": "歡迎來到 Fitout Hub",
+        "welcome": "歡迎來到 Mimo",
         "clientLabel": "客戶",
         "professionalLabel": "專業人士",
         "professionalText": "專業人士帳戶？",
@@ -686,7 +686,7 @@ const messages = {
         "contactSmsComing": "SMS（即將推出）",
         "contactWeChatDisabled": "WeChat（未啟用）",
         "partnerOffers": "您是否希望接收來自已註冊供應商及合作夥伴的精選資訊和優惠？",
-        "platformUpdates": "您是否希望接收有關 Fitout Hub 平台及其合作夥伴的消息和更新？",
+        "platformUpdates": "您是否希望接收有關 Mimo 平台及其合作夥伴的消息和更新？",
         "agreePrefix": "我同意",
         "agreeMiddle": "並確認已閱讀",
         "termsAndConditions": "條款及細則",
@@ -736,7 +736,7 @@ const messages = {
           "submitWithFiles": "正在建立項目及上傳",
           "askAdvice": "徵求建議",
           "needHelp": "需要協助執行此項目嗎?",
-          "helpDescription": "徵求建議：獲取來自 Fitout Hub 專家的個性化指導。我們將幫助您界定項目範圍、尋找合適的專業人士、協商報價，並從頭至尾管理整個過程。",
+          "helpDescription": "徵求建議：獲取來自 Mimo 專家的個性化指導。我們將幫助您界定項目範圍、尋找合適的專業人士、協商報價，並從頭至尾管理整個過程。",
           "removeFile": "移除"
         },
         "list": {
@@ -773,8 +773,8 @@ const messages = {
           "paid": "已付款",
           "updated": "更新時間:",
           "id": "編號:",
-          "assistRequestedAlt": "已要求 Fitout Hub 協助",
-          "assistRequestedTitle": "已要求 Fitout Hub 協助",
+          "assistRequestedAlt": "已要求 Mimo 協助",
+          "assistRequestedTitle": "已要求 Mimo 協助",
           "noAssistAlt": "未要求協助",
           "noAssistTitle": "未要求協助",
           "labels": {
@@ -929,7 +929,7 @@ const messages = {
       "searchFlow": {
         "anonMatchFound": "有{count}位{trade}專業人士可以協助您的項目。",
         "anonMatchFoundInLocation": "{location}有{count}位{trade}專業人士可以協助您的項目。",
-        "anonMatchNone": "目前暫無完全符合的配對。加入 Fitout Hub，我們的團隊將協助您尋找合適的專業人士。",
+        "anonMatchNone": "目前暫無完全符合的配對。加入 Mimo，我們的團隊將協助您尋找合適的專業人士。",
         "anonRegisterPrompt": "如需了解更多，請在我們的平台上註冊。",
         "anonRegisterCta": "免費註冊 →",
         "readyToProceed": "準備好繼續了嗎？",
@@ -940,7 +940,7 @@ const messages = {
       },
       "hero": {
         "tagline": "專業裝修管理平台",
-        "title": "使用 Fitout Hub 改造您的空間",
+        "title": "使用 Mimo 改造您的空間",
         "description": "連接信任的專業人士、管理項目、按時間和預算完成裝修"
       },
       "quickStart": {
@@ -950,13 +950,13 @@ const messages = {
       },
       "features": {
         "tabs": {
-          "why": "為什麼選擇Fitout Hub",
+          "why": "為什麼選擇Mimo",
           "how": "運作方式",
           "who": "我們是誰",
-          "choose": "選擇Fitout Hub"
+          "choose": "選擇Mimo"
         },
         "why": {
-          "title": "為什麼選擇Fitout Hub？",
+          "title": "為什麼選擇Mimo？",
           "description": "完整的裝修項目管理方案",
           "secure": {
             "title": "安全交易",
@@ -1016,7 +1016,7 @@ const messages = {
           }
         },
         "choose": {
-          "title": "為什麼選擇Fitout Hub？",
+          "title": "為什麼選擇Mimo？",
           "description": "加入數百名滿意的客戶和專業人士",
           "pm": {
             "title": "項目管理",
@@ -1048,7 +1048,7 @@ const messages = {
       "createProject": "建立項目",
       "login": "登入",
       "join": "加入",
-      "copyright": "© {year} Fitout Hub。版權所有。",
+      "copyright": "© {year} Mimo。版權所有。",
       "twitter": "Twitter",
       "linkedin": "LinkedIn",
       "instagram": "Instagram"

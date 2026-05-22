@@ -94,7 +94,7 @@ function getUiText(locale: string) {
       responseReceived: "已收到你的回覆",
       thankYou: "多謝你",
       submittedSuccess: "你的答案已成功提交。",
-      joinFallback: "加入 FitOut Hub",
+      joinFallback: "加入 Mimo",
       language: "語言",
       inviteFallback: "請回答以下問題。",
     };
@@ -124,7 +124,7 @@ function getUiText(locale: string) {
     responseReceived: "Response received",
     thankYou: "Thank you",
     submittedSuccess: "Your answers have been submitted successfully.",
-    joinFallback: "Join FitOut Hub",
+    joinFallback: "Join Mimo",
     language: "Language",
     inviteFallback: "Please answer the following questions.",
   };

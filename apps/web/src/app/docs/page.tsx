@@ -8,7 +8,7 @@ export default function DocsPage() {
           <p className="text-sm uppercase tracking-wide text-emerald-700">Docs &amp; Tools</p>
           <h1 className="text-3xl font-bold">Guides, calculators, and practical helpers</h1>
           <p className="max-w-3xl text-slate-700">
-            One home for your FitoutHub reference material and homeowner-friendly helper tools.
+            One home for your Mimo reference material and homeowner-friendly helper tools.
             Start with a guide, or jump straight into the first live helper: the AC calculator.
           </p>
         </header>
@@ -21,12 +21,12 @@ export default function DocsPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Link href="/docs/user-manual" className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-5 transition hover:border-emerald-400 hover:bg-[rgba(245,238,219,0.95)]">
               <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">User manual</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">FitoutHub User Manual</h3>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">Mimo User Manual</h3>
               <p className="mt-2 text-sm text-slate-700">The operational reference for the platform, API basics, environment setup, and troubleshooting.</p>
             </Link>
             <Link href="/docs/how-to-use" className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-5 transition hover:border-emerald-400 hover:bg-[rgba(245,238,219,0.95)]">
               <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Walkthrough</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">How to Use FitoutHub</h3>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">How to Use Mimo</h3>
               <p className="mt-2 text-sm text-slate-700">A simpler start-here guide for browsing professionals, creating projects, and managing invites.</p>
             </Link>
             <Link href="/tradesmen" className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-5 transition hover:border-emerald-400 hover:bg-[rgba(245,238,219,0.95)]">
