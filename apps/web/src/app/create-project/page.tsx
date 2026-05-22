@@ -443,12 +443,12 @@ export default function CreateProjectPage() {
       />
 
       <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] text-slate-900 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+        <section className="mimo-panel overflow-hidden text-slate-900">
           <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project creation</p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
-              <p className="max-w-2xl text-sm text-slate-700 sm:text-base">Review the final brief, confirm your recipients, and make sure your images are ready before you open bidding.</p>
+              <p className="mimo-panel-eyebrow">Project creation</p>
+              <h1 className="mimo-panel-title-xl">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
+              <p className="mimo-panel-body max-w-2xl">Review the final brief, confirm your recipients, and make sure your images are ready before you open bidding.</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px] lg:grid-cols-1 xl:grid-cols-3">
@@ -468,16 +468,16 @@ export default function CreateProjectPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-5 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+        <section className="mimo-panel mimo-panel-padding mt-6 text-slate-900">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Bidding recipients</p>
-              <h2 className="text-xl font-bold text-slate-900">
+              <p className="mimo-panel-eyebrow">Bidding recipients</p>
+              <h2 className="mimo-panel-title-lg">
                 {invitedCount > 0
                   ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
                   : 'No professionals selected yet'}
               </h2>
-              <p className="max-w-2xl text-sm text-slate-700">
+              <p className="mimo-panel-body max-w-2xl">
                 {invitedCount > 0
                   ? 'These professionals will be linked to the project immediately and bidding will open as soon as you confirm the final form.'
                   : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
@@ -508,11 +508,11 @@ export default function CreateProjectPage() {
         </section>
 
         {!showDescriptionModal && (
-          <div className="mt-8 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-6 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="mimo-panel mimo-panel-padding mt-8 text-slate-900">
             <div className="px-1 pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project review</p>
-              <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
-              <p className="mt-1 text-sm text-slate-700">
+              <p className="mimo-panel-eyebrow">Project review</p>
+              <h2 className="mimo-panel-title-lg">Review project brief</h2>
+              <p className="mimo-panel-body mt-1">
                 Confirm the brief, attachments, and final bidding setup before you submit.
               </p>
             </div>

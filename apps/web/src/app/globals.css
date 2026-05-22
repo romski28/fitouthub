@@ -150,6 +150,46 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Standard parent panel theme (based on home hero shell) */
+.mimo-panel {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(245, 238, 222, 0.9);
+  box-shadow: 0 12px 28px rgba(81, 55, 32, 0.08);
+}
+
+.mimo-panel-padding {
+  padding: 1.5rem;
+}
+
+.mimo-panel-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(185, 78, 45, 0.92);
+}
+
+.mimo-panel-title-xl {
+  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+  line-height: 1.15;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mimo-panel-title-lg {
+  font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mimo-panel-body {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
 /* Temporary CSS-first remap: keep green text accents aligned to Mimo coral until inline Tailwind sweep. */
 [class*="text-emerald-"],
 [class*="text-green-"] {

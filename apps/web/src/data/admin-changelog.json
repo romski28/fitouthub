@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-22-1a1d8b5e",
+    "date": "2026-05-22T15:07:25+08:00",
+    "title": "style(ui): define standard panel hierarchy from home hero",
+    "summary": "style(ui): define standard panel hierarchy from home hero",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "1a1d8b5e",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/globals.css",
+      "docs/UI_PANEL_THEME_STANDARD.md"
+    ]
+  },
+  {
     "id": "2026-05-22-34e4dc48",
     "date": "2026-05-22T14:52:05+08:00",
     "title": "refine(create-project): group review details and move actions into help panel",
