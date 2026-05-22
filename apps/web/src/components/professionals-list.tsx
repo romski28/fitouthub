@@ -1561,6 +1561,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         existingDraft?.initialData?.isEmergency ??
         shareInitialData.isEmergency,
       aiFrom: shareInitialData.aiFrom || memoryDraft?.initialData?.aiFrom || existingDraft?.initialData?.aiFrom,
+      photoUrls:
+        shareInitialData.photoUrls ??
+        memoryDraft?.initialData?.photoUrls ??
+        existingDraft?.initialData?.photoUrls,
+      existingPhotos:
+        shareInitialData.existingPhotos ??
+        memoryDraft?.initialData?.existingPhotos ??
+        existingDraft?.initialData?.existingPhotos,
     };
 
     if (handoffDebug) {

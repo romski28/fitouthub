@@ -98,9 +98,7 @@ export default function FileUploader({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className={`rounded-md bg-action px-3 py-1.5 text-xs font-semibold hover:bg-action-hover cursor-pointer transition ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}
+              className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer transition"
             >
               Choose files
             </button>

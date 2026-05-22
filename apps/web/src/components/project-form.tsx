@@ -230,6 +230,9 @@ export function ProjectForm({
   const isReadOnly = mode === 'view';
   const usesDarkCreateSurface = mode === 'create' && !confirmationMode;
   const creamPanelClassName = 'border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]';
+  const solidGreenButtonClassName = 'rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50';
+  const solidBlueButtonClassName = 'rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50';
+  const solidCrimsonButtonClassName = 'rounded-lg bg-rose-700 px-6 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-rose-800 disabled:opacity-50';
 
   useEffect(() => {
     const nextFormState = buildInitialFormState(initialData);
@@ -673,11 +676,7 @@ export function ProjectForm({
               <button
                 type="button"
                 onClick={() => setIsOverviewEditing((prev) => !prev)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-                  usesDarkCreateSurface
-                    ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
-                    : 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-100'
-                }`}
+                className={solidGreenButtonClassName}
               >
                 {isOverviewEditing ? 'Done editing overview' : 'Edit overview'}
               </button>
@@ -1002,6 +1001,7 @@ export function ProjectForm({
       </div>
 
       {/* Timescale */}
+      <div className={usesDarkCreateSurface ? '' : `rounded-xl border p-4 ${creamPanelClassName}`}>
       {isConfirmationView ? (
         !formData.isEmergency ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1027,7 +1027,7 @@ export function ProjectForm({
                 className={`rounded-md border px-3 py-2 text-sm ${
                   usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-slate-300'
+                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
                 }`}
               />
             </div>
@@ -1053,7 +1053,7 @@ export function ProjectForm({
                 className={`rounded-md border px-3 py-2 text-sm ${
                   usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-slate-300'
+                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
                 }`}
               />
             </div>
@@ -1126,7 +1126,7 @@ export function ProjectForm({
                 className={`rounded-md border px-3 py-2 text-sm ${
                   usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-slate-300'
+                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
                 }`}
               />
             </div>
@@ -1152,17 +1152,18 @@ export function ProjectForm({
                 className={`rounded-md border px-3 py-2 text-sm ${
                   usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-slate-300'
+                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
                 }`}
               />
             </div>
           </div>
         </div>
       )}
+      </div>
 
       {/* File Upload */}
       {!isReadOnly && (
-        <div>
+        <div className={usesDarkCreateSurface ? '' : `rounded-xl border p-4 ${creamPanelClassName}`}>
           <label className={`block text-sm font-semibold mb-2 ${
             usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
@@ -1251,11 +1252,7 @@ export function ProjectForm({
               type="button"
               onClick={handleAssistClick}
               disabled={isSubmitting}
-              className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                usesDarkCreateSurface
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-              }`}
+              className={`shrink-0 ${solidBlueButtonClassName}`}
             >
               Ask for advice
             </button>
@@ -1277,11 +1274,7 @@ export function ProjectForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className={`w-full rounded-lg px-6 py-2.5 text-center font-semibold transition disabled:opacity-50 ${
-              usesDarkCreateSurface
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
+            className={`w-full ${solidCrimsonButtonClassName}`}
           >
             Cancel
           </button>
@@ -1290,11 +1283,7 @@ export function ProjectForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full rounded-lg py-2.5 font-semibold text-white transition disabled:opacity-50 ${
-              usesDarkCreateSurface
-                ? 'bg-emerald-600 hover:bg-emerald-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+            className={`w-full ${solidGreenButtonClassName}`}
           >
             {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
           </button>
