@@ -448,17 +448,36 @@ export class ProjectsService {
     );
   }
 
-  private isMissingProjectLastActivityColumnError(error: any): boolean {
+  private isMissingProjectActivityColumnError(error: any): boolean {
     const message = String(error?.message || '');
+    const missingColumn = String(error?.meta?.column || '');
     return (
       error?.code === 'P2022' &&
-      (message.includes('Project.lastActivityAt') || message.includes('lastActivityAt'))
+      (message.includes('Project.lastActivityAt') ||
+        message.includes('Project.lastClientActivityAt') ||
+        message.includes('Project.lastProfessionalActivityAt') ||
+        message.includes('Project.lastAdminActivityAt') ||
+        message.includes('Project.lastSystemActivityAt') ||
+        /Project\.last\w+ActivityAt/.test(message) ||
+        missingColumn.startsWith('Project.last') && missingColumn.endsWith('ActivityAt'))
     );
   }
 
-  private async ensureProjectLastActivityColumn(): Promise<void> {
+  private async ensureProjectActivityColumns(): Promise<void> {
     await this.prisma.$executeRawUnsafe(
-      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastActivityAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP',
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastActivityAt" TIMESTAMP(3)',
+    );
+    await this.prisma.$executeRawUnsafe(
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastClientActivityAt" TIMESTAMP(3)',
+    );
+    await this.prisma.$executeRawUnsafe(
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastProfessionalActivityAt" TIMESTAMP(3)',
+    );
+    await this.prisma.$executeRawUnsafe(
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastAdminActivityAt" TIMESTAMP(3)',
+    );
+    await this.prisma.$executeRawUnsafe(
+      'ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "lastSystemActivityAt" TIMESTAMP(3)',
     );
   }
 
@@ -2468,10 +2487,10 @@ Please review the project details and respond with your quote or decline the inv
     } catch (error) {
       let retryError: any = error;
 
-      if (this.isMissingProjectLastActivityColumnError(retryError)) {
-        console.warn('[ProjectsService.create] Missing Project.lastActivityAt detected, applying hotfix DDL and retrying');
+      if (this.isMissingProjectActivityColumnError(retryError)) {
+        console.warn('[ProjectsService.create] Missing Project activity column detected, applying hotfix DDL and retrying');
         try {
-          await this.ensureProjectLastActivityColumn();
+          await this.ensureProjectActivityColumns();
           project = await createProjectRecord(createData);
           retryError = null;
         } catch (ddlRetryError) {

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-9b7cc406",
+    "date": "2026-05-22T23:12:16+08:00",
+    "title": "fix(api): recover when Project activity columns are missing",
+    "summary": "fix(api): recover when Project activity columns are missing",
+    "areas": [
+      "api"
+    ],
+    "commit": "9b7cc406",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-22-5ba4bcf7",
     "date": "2026-05-22T23:01:43+08:00",
     "title": "fix(web): show take-photo action on mobile only",
