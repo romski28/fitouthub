@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-22-fa53bdde",
+    "date": "2026-05-22T12:47:52+08:00",
+    "title": "chore(chat): align support copy and capture migration plan",
+    "summary": "chore(chat): align support copy and capture migration plan",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "fa53bdde",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/project-chat.tsx",
+      "docs/CHAT_SHARED_COMPONENT_MIGRATION_PLAN.md"
+    ]
+  },
+  {
     "id": "2026-05-22-75088371",
     "date": "2026-05-22T12:43:05+08:00",
     "title": "fix(create-project): polish review flow and disable AI brief modal",

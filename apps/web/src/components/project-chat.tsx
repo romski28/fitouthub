@@ -44,7 +44,7 @@ export default function ProjectChat({
   fillHeight = false,
   refreshToken = 0,
   headerTitle = 'Project Team Chat',
-  headerSubtitle = 'Client, awarded professionals & Fitout Hub',
+  headerSubtitle = 'Client, awarded professionals & Mimo',
   showPresenceIndicator = true,
 }: ProjectChatProps) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -145,7 +145,7 @@ export default function ProjectChat({
 
   const getSenderLabel = (msg: ChatMessage): string => {
     if (msg.senderName) return msg.senderName;
-    if (msg.senderType === 'foh') return 'Fitout Hub';
+    if (msg.senderType === 'foh') return 'Mimo';
     if (msg.senderType === 'client') return 'Client';
     if (msg.senderType === 'professional') return 'Professional';
     return 'Unknown';
