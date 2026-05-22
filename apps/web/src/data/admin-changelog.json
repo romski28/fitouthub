@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-22-bce2f60a",
+    "date": "2026-05-22T16:15:00+08:00",
+    "title": "refine(ai-wizard): compute picker height and increase step viewport",
+    "summary": "refine(ai-wizard): compute picker height and increase step viewport",
+    "areas": [
+      "web"
+    ],
+    "commit": "bce2f60a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/hk-district-map.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-ea43a699",
     "date": "2026-05-22T15:57:34+08:00",
     "title": "refine(ai-wizard): constrain location picker and reclaim vertical space",

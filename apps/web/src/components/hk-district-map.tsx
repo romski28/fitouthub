@@ -37,10 +37,10 @@ export function HkDistrictMap({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+    <div className={`rounded-xl border border-slate-200 bg-slate-50 ${compact ? 'p-2' : 'p-3'}`}>
       <svg
         viewBox={HK_DISTRICT_VIEWBOX}
-        className="w-full h-auto max-h-[min(45vh,_400px)]"
+        className={`w-full h-auto ${compact ? 'max-h-none' : 'max-h-[min(45vh,_400px)]'}`}
         role="img"
         aria-label="Hong Kong district map selector"
       >
