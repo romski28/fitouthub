@@ -276,6 +276,18 @@ export default function CreateProjectPage() {
     };
   };
 
+  const getPersistedPhotoUrls = (formData: ProjectFormData, newlyUploadedPhotoUrls: string[]) => {
+    const existingFromForm = (formData.existingPhotos || [])
+      .map((photo) => photo?.url)
+      .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+
+    const fallbackFromPhotoUrls = (formData.photoUrls || [])
+      .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+
+    const base = existingFromForm.length > 0 ? existingFromForm : fallbackFromPhotoUrls;
+    return Array.from(new Set([...base, ...newlyUploadedPhotoUrls]));
+  };
+
   const createProject = async (payload: ReturnType<typeof buildProjectPayload>) => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
@@ -300,7 +312,8 @@ export default function CreateProjectPage() {
 
     setIsSubmitting(true);
     try {
-      const photoUrls = await uploadPendingFiles(pendingFiles);
+      const uploadedPhotoUrls = await uploadPendingFiles(pendingFiles);
+      const photoUrls = getPersistedPhotoUrls(formData, uploadedPhotoUrls);
       const payload = buildProjectPayload(
         formData,
         photoUrls,
@@ -339,7 +352,8 @@ export default function CreateProjectPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const photoUrls = await uploadPendingFiles(assistDraft.pendingFiles);
+      const uploadedPhotoUrls = await uploadPendingFiles(assistDraft.pendingFiles);
+      const photoUrls = getPersistedPhotoUrls(assistDraft.formData, uploadedPhotoUrls);
       const payload = {
         ...buildProjectPayload(assistDraft.formData, photoUrls, []),
         onlySelectedProfessionalsCanBid: true,
