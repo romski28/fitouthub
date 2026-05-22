@@ -329,6 +329,22 @@ export function ProjectForm({
     setPendingFiles(files);
   };
 
+  const pendingFilePreviews = useMemo(
+    () =>
+      pendingFiles.map((file, index) => ({
+        key: `${file.name}-${file.lastModified}-${index}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })),
+    [pendingFiles],
+  );
+
+  useEffect(() => {
+    return () => {
+      pendingFilePreviews.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    };
+  }, [pendingFilePreviews]);
+
   const handleWizardStyleFilesChange = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const incoming = Array.from(files);
@@ -1158,42 +1174,61 @@ export function ProjectForm({
           </label>
           {isConfirmationView ? (
             <div className="space-y-3">
-              <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
-                Upload images, documents or photos
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
-                  disabled={isSubmitting}
-                />
-              </label>
+              <div className="flex flex-wrap gap-2">
+                <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
+                  Upload images, documents or photos
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
+                    disabled={isSubmitting}
+                  />
+                </label>
 
-              {pendingFiles.length > 0 && (
+                <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800 hover:bg-slate-50">
+                  Take photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
+                    disabled={isSubmitting}
+                  />
+                </label>
+              </div>
+
+              {pendingFilePreviews.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm leading-relaxed text-slate-700">New images selected ({pendingFilePreviews.length})</p>
+                  <div className="flex gap-3 overflow-x-auto pb-1">
+                    {pendingFilePreviews.map(({ key, file, previewUrl }) => (
+                      <div key={key} className="min-w-32 rounded-lg border border-slate-200 bg-white p-2">
+                        <div className="relative h-24 overflow-hidden rounded">
+                          <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePendingFile(file)}
+                          className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {pendingFilePreviews.length > 0 && (
                 <div className={`rounded-md border px-3 py-2 text-xs ${
                   usesDarkCreateSurface
                     ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
                     : 'bg-blue-50 border-blue-200 text-blue-700'
                 }`}>
-                  <p className="font-semibold">New files to upload on submit ({pendingFiles.length})</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {pendingFiles.map((file, index) => (
-                      <span
-                        key={`${file.name}-${file.lastModified}-${index}`}
-                        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-2.5 py-1"
-                      >
-                        <span className="max-w-[220px] truncate">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removePendingFile(file)}
-                          className="text-rose-700 hover:text-rose-800"
-                        >
-                          Remove
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  {pendingFilePreviews.length} new file{pendingFilePreviews.length !== 1 ? 's' : ''} ready to upload on submit
                 </div>
               )}
             </div>

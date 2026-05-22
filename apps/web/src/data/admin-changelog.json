@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-d72dfb45",
+    "date": "2026-05-22T22:48:32+08:00",
+    "title": "feat(create-project): add thumb previews and mobile camera capture",
+    "summary": "feat(create-project): add thumb previews and mobile camera capture",
+    "areas": [
+      "web"
+    ],
+    "commit": "d72dfb45",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-5d180da3",
     "date": "2026-05-22T22:42:50+08:00",
     "title": "fix(api): harden project invite/create against schema drift",
