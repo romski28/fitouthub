@@ -534,7 +534,7 @@ export default function CreateProjectPage() {
         )}
 
         {!showDescriptionModal && (
-          <div className="mt-8 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-6 shadow-[0_24px_60px_rgba(81,55,32,0.08)] backdrop-blur-sm">
+          <div className="mt-8">
             <div className="px-1 pb-4">
               <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
               <p className="mt-1 text-sm text-slate-700">

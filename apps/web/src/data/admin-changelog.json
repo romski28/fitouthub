@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-f4a83a3c",
+    "date": "2026-05-22T13:26:09+08:00",
+    "title": "style(create-project): remove outer review wrapper panel",
+    "summary": "style(create-project): remove outer review wrapper panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "f4a83a3c",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-5833283c",
     "date": "2026-05-22T13:11:23+08:00",
     "title": "fix(create-project): persist wizard photos on submit",
