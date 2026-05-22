@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-22-933928a8",
+    "date": "2026-05-22T17:29:46+08:00",
+    "title": "fix(ai-wizard): normalize full location container stack",
+    "summary": "fix(ai-wizard): normalize full location container stack",
+    "areas": [
+      "web"
+    ],
+    "commit": "933928a8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/hk-district-map.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-84ef1ba6",
     "date": "2026-05-22T17:24:22+08:00",
     "title": "fix(ai-wizard): use fixed 300px location picker height",

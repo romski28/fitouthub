@@ -95,7 +95,7 @@ const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate
 const panelNoteClass = 'text-sm leading-relaxed text-slate-700';
 const panelCardClass = 'space-y-4';
 const panelContentClass = 'flex h-full min-h-0 flex-col gap-4';
-const LOCATION_PICKER_FIXED_HEIGHT_PX = 300;
+const LOCATION_PICKER_CONTAINER_CLASS = 'h-[300px] shrink-0 overflow-hidden';
 
 export default function CreateProjectWizardPage() {
   const router = useRouter();
@@ -465,7 +465,7 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'location' && (
-                      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4">
+                      <div className="flex h-full min-h-0 flex-col gap-4">
                         <div className="flex items-start justify-between gap-3">
                           <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
                           <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
@@ -494,12 +494,7 @@ export default function CreateProjectWizardPage() {
                           </div>
                         </div>
 
-                        <div
-                          className="min-h-0 overflow-hidden"
-                          style={{
-                            height: `${LOCATION_PICKER_FIXED_HEIGHT_PX}px`,
-                          }}
-                        >
+                        <div className={LOCATION_PICKER_CONTAINER_CLASS}>
                           {locationInputMode === 'map' ? (
                             <div className="h-full overflow-hidden pr-1">
                               <HkDistrictMap

@@ -70,7 +70,7 @@ export function HkDistrictMap({
   };
 
   return (
-    <div className={`rounded-xl border border-slate-200 bg-slate-50 ${compact ? 'p-2' : 'p-3'}`}>
+    <div className={`rounded-xl border border-slate-200 bg-slate-50 ${compact ? 'flex h-full min-h-0 flex-col p-2' : 'p-3'}`}>
       <div
         ref={mapContainerRef}
         className={compact ? 'flex h-full min-h-0 items-center justify-center overflow-hidden' : 'flex items-center justify-center overflow-hidden'}
