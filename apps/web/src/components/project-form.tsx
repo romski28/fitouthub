@@ -229,7 +229,7 @@ export function ProjectForm({
   });
   const isReadOnly = mode === 'view';
   const usesDarkCreateSurface = mode === 'create' && !confirmationMode;
-  const creamPanelClassName = 'border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]';
+  const creamPanelClassName = 'mimo-panel';
   const solidGreenButtonClassName = 'rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50';
   const solidBlueButtonClassName = 'rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50';
   const solidCrimsonButtonClassName = 'rounded-lg bg-rose-700 px-6 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-rose-800 disabled:opacity-50';
@@ -659,7 +659,7 @@ export function ProjectForm({
         <div className={`rounded-lg border p-4 space-y-3 ${
           usesDarkCreateSurface
             ? 'border-emerald-500/40 bg-emerald-500/10'
-            : creamPanelClassName
+            : 'mimo-panel'
         }`}>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -732,7 +732,7 @@ export function ProjectForm({
         <div className={`rounded-lg border p-3 ${
           usesDarkCreateSurface
             ? 'border-violet-500/40 bg-violet-500/10'
-            : creamPanelClassName
+            : 'mimo-panel'
         }`}>
           <button
             type="button"
@@ -1001,7 +1001,7 @@ export function ProjectForm({
       </div>
 
       {/* Timescale */}
-      <div className={usesDarkCreateSurface ? '' : `rounded-xl border p-4 ${creamPanelClassName}`}>
+      <div className={usesDarkCreateSurface ? '' : 'mimo-panel p-4'}>
       {isConfirmationView ? (
         !formData.isEmergency ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1163,7 +1163,7 @@ export function ProjectForm({
 
       {/* File Upload */}
       {!isReadOnly && (
-        <div className={usesDarkCreateSurface ? '' : `rounded-xl border p-4 ${creamPanelClassName}`}>
+        <div className={usesDarkCreateSurface ? '' : 'mimo-panel p-4'}>
           <label className={`block text-sm font-semibold mb-2 ${
             usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
@@ -1231,7 +1231,7 @@ export function ProjectForm({
         <div className={`rounded-lg border p-4 text-sm ${
           usesDarkCreateSurface
             ? 'border-red-500/40 bg-red-500/10 text-red-200'
-            : `${creamPanelClassName} text-red-700`
+            : 'mimo-panel text-red-700'
         }`}>
           {error}
         </div>
@@ -1242,7 +1242,7 @@ export function ProjectForm({
         <div className={`rounded-lg border px-4 py-3 ${
           usesDarkCreateSurface
             ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
-            : creamPanelClassName
+            : 'mimo-panel'
         }`}>
           <div className="mb-1 flex items-center justify-between gap-3">
             <p className={`text-sm font-semibold ${usesDarkCreateSurface ? 'text-white' : 'text-blue-900'}`}>

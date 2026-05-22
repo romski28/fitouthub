@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-b82b36c1",
+    "date": "2026-05-22T15:27:56+08:00",
+    "title": "style(create-project): align summary sub-panels to standard theme",
+    "summary": "style(create-project): align summary sub-panels to standard theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "b82b36c1",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-2b52ffe4",
     "date": "2026-05-22T15:16:42+08:00",
     "title": "style(home): fix hydration warning and standardize remaining panel surfaces",
