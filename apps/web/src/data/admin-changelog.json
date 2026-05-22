@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-84ef1ba6",
+    "date": "2026-05-22T17:24:22+08:00",
+    "title": "fix(ai-wizard): use fixed 300px location picker height",
+    "summary": "fix(ai-wizard): use fixed 300px location picker height",
+    "areas": [
+      "web"
+    ],
+    "commit": "84ef1ba6",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-765c3756",
     "date": "2026-05-22T17:15:03+08:00",
     "title": "fix(ai-wizard): calibrate location picker to 768->300 baseline",

@@ -95,7 +95,7 @@ const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate
 const panelNoteClass = 'text-sm leading-relaxed text-slate-700';
 const panelCardClass = 'space-y-4';
 const panelContentClass = 'flex h-full min-h-0 flex-col gap-4';
-const LOCATION_PICKER_HEIGHT_RATIO = 300 / 768;
+const LOCATION_PICKER_FIXED_HEIGHT_PX = 300;
 
 export default function CreateProjectWizardPage() {
   const router = useRouter();
@@ -497,7 +497,7 @@ export default function CreateProjectWizardPage() {
                         <div
                           className="min-h-0 overflow-hidden"
                           style={{
-                            height: `min(100%, calc(100dvh * ${LOCATION_PICKER_HEIGHT_RATIO}))`,
+                            height: `${LOCATION_PICKER_FIXED_HEIGHT_PX}px`,
                           }}
                         >
                           {locationInputMode === 'map' ? (
