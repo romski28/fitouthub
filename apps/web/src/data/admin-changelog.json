@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-5ba4bcf7",
+    "date": "2026-05-22T23:01:43+08:00",
+    "title": "fix(web): show take-photo action on mobile only",
+    "summary": "fix(web): show take-photo action on mobile only",
+    "areas": [
+      "web"
+    ],
+    "commit": "5ba4bcf7",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-23b59d36",
     "date": "2026-05-22T23:00:12+08:00",
     "title": "fix(api): recover from missing Project.lastActivityAt column",

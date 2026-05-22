@@ -282,6 +282,12 @@ export function ProjectForm({
     });
   }, [availableTrades]);
 
+  const isMobileUploaderDevice = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /Android|iPhone|iPad|iPod|Windows Phone|IEMobile|Opera Mini|Mobile/i.test(ua);
+  }, []);
+
   const filteredTrades = useMemo(() => {
     if (!tradeSearchTerm.trim()) return availableTrades;
     const search = tradeSearchTerm.toLowerCase();
@@ -1179,17 +1185,19 @@ export function ProjectForm({
                   />
                 </label>
 
-                <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800 hover:bg-slate-50">
-                  Take photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
-                    disabled={isSubmitting}
-                  />
-                </label>
+                {isMobileUploaderDevice && (
+                  <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-3 text-base font-semibold text-slate-800 hover:bg-slate-50">
+                    Take photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
+                      disabled={isSubmitting}
+                    />
+                  </label>
+                )}
               </div>
 
               {pendingFilePreviews.length > 0 && (
