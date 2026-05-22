@@ -1034,6 +1034,10 @@ export class UpdatesService {
           take: safeLimit,
           where: {
             senderType: 'client',
+            OR: [
+              { readByFohAt: null },
+              { assistRequest: { status: 'closure_pending' } },
+            ],
           },
           orderBy: { createdAt: 'desc' },
           include: {
@@ -1060,6 +1064,10 @@ export class UpdatesService {
           take: safeLimit,
           where: {
             senderType: { in: ['user', 'professional'] },
+            OR: [
+              { readByFohAt: null },
+              { thread: { status: 'closure_pending' } },
+            ],
           },
           orderBy: { createdAt: 'desc' },
           include: {
@@ -1087,6 +1095,9 @@ export class UpdatesService {
           take: safeLimit,
           where: {
             senderType: 'anonymous',
+            thread: {
+              status: { not: 'closed' },
+            },
           },
           orderBy: { createdAt: 'desc' },
           include: {
@@ -1258,42 +1269,112 @@ export class UpdatesService {
       });
     });
 
+    const assistThreadMap = new Map<
+      string,
+      {
+        latestMessage: (typeof assistMessages)[number];
+        unreadCount: number;
+      }
+    >();
+
     assistMessages.forEach((message) => {
+      const key = message.assistRequestId;
+      const existing = assistThreadMap.get(key);
+      if (!existing) {
+        assistThreadMap.set(key, {
+          latestMessage: message,
+          unreadCount: message.readByFohAt ? 0 : 1,
+        });
+        return;
+      }
+      if (!message.readByFohAt) {
+        existing.unreadCount += 1;
+      }
+    });
+
+    assistThreadMap.forEach(({ latestMessage, unreadCount }) => {
+      const message = latestMessage;
       const author = message.assistRequest.user
-        ? `${message.assistRequest.user.firstName || ''} ${message.assistRequest.user.surname || ''}`.trim() || message.assistRequest.user.email || 'Client'
+        ? `${message.assistRequest.user.firstName || ''} ${message.assistRequest.user.surname || ''}`.trim() ||
+          message.assistRequest.user.email ||
+          'Client'
         : 'Client';
+      const isClosurePending = message.assistRequest.status === 'closure_pending';
+
+      if (unreadCount <= 0 && !isClosurePending) return;
+
       feedItems.push({
-        id: `assist:${message.id}`,
-        sourceType: 'assist',
-        sourceId: message.id,
+        id: `assist-thread:${message.assistRequestId}`,
+        sourceType: 'assist-thread',
+        sourceId: message.assistRequestId,
+        domain: 'messaging',
+        eventType: unreadCount > 0 ? 'assist_unread' : 'assist_closure_pending',
+        urgencyLevel: unreadCount > 0 ? 'high' : 'medium',
+        urgencyScore: unreadCount > 0 ? 82 : 58,
         conversationType: 'assist',
         conversationId: message.assistRequestId,
         replyChannel: 'assist',
-        actionRequired: !['closed', 'closure_pending'].includes(message.assistRequest.status),
-        type: 'Assist Message',
-        transport: message.assistRequest.contactMethod === 'whatsapp'
-          ? 'WhatsApp'
-          : message.assistRequest.contactMethod === 'call'
-            ? 'Call'
-            : 'In-app Chat',
+        actionRequired: true,
+        type: unreadCount > 0 ? 'Assist Thread Unread' : 'Assist Thread Pending Closure',
+        transport:
+          message.assistRequest.contactMethod === 'whatsapp'
+            ? 'WhatsApp'
+            : message.assistRequest.contactMethod === 'call'
+              ? 'Call'
+              : 'In-app Chat',
         context: message.assistRequest.project
           ? `Project · ${message.assistRequest.project.projectName}`
           : 'Assist Queue',
         user: author,
         status: message.assistRequest.status,
         assignmentStatus: 'unassigned',
-        preview: message.content,
+        preview:
+          unreadCount > 0
+            ? `${unreadCount} unread client message${unreadCount === 1 ? '' : 's'} · ${message.content}`
+            : `Closure pending · ${message.content}`,
         createdAt: message.createdAt.toISOString(),
         href: '/admin/messaging?view=assist',
       });
     });
 
+    const privateThreadMap = new Map<
+      string,
+      {
+        latestMessage: (typeof privateMessages)[number];
+        unreadCount: number;
+      }
+    >();
+
     privateMessages.forEach((message) => {
+      const key = message.threadId;
+      const existing = privateThreadMap.get(key);
+      if (!existing) {
+        privateThreadMap.set(key, {
+          latestMessage: message,
+          unreadCount: message.readByFohAt ? 0 : 1,
+        });
+        return;
+      }
+      if (!message.readByFohAt) {
+        existing.unreadCount += 1;
+      }
+    });
+
+    privateThreadMap.forEach(({ latestMessage, unreadCount }) => {
+      const message = latestMessage;
+      const isClosurePending = message.thread.status === 'closure_pending';
+      if (unreadCount <= 0 && !isClosurePending) return;
+
       const userLabel =
         message.senderType === 'professional'
-          ? message.thread.professional?.fullName || message.thread.professional?.businessName || message.thread.professional?.email || 'Professional'
+          ? message.thread.professional?.fullName ||
+            message.thread.professional?.businessName ||
+            message.thread.professional?.email ||
+            'Professional'
           : message.thread.user
-            ? `${message.thread.user.firstName || ''} ${message.thread.user.surname || ''}`.trim() || message.thread.user.email || 'Client'
+            ? `${message.thread.user.firstName || ''} ${message.thread.user.surname || ''}`.trim() ||
+              message.thread.user.email ||
+              'Client'
             : 'Client';
 
       const privateContext =
@@ -1314,35 +1395,53 @@ export class UpdatesService {
           : 'FOH Client Thread';
 
       feedItems.push({
-        id: `private:${message.id}`,
-        sourceType: 'private',
-        sourceId: message.id,
+        id: `private-thread:${message.threadId}`,
+        sourceType: 'private-thread',
+        sourceId: message.threadId,
+        domain: 'messaging',
+        eventType: unreadCount > 0 ? 'private_thread_unread' : 'private_thread_closure_pending',
+        urgencyLevel: unreadCount > 0 ? 'high' : 'medium',
+        urgencyScore: unreadCount > 0 ? 80 : 56,
         conversationType: 'chat',
         conversationId: message.threadId,
         replyChannel: 'chat',
-        actionRequired: !['closed', 'closure_pending'].includes(message.thread.status),
-        type: message.senderType === 'professional' ? 'Professional Inbox' : 'Client Inbox',
+        actionRequired: true,
+        type: unreadCount > 0 ? 'Support Thread Unread' : 'Support Thread Pending Closure',
         transport: 'In-app Chat',
         context: contextLabel,
         user: userLabel,
         status: message.thread.status,
         assignmentStatus: 'unassigned',
-        preview: message.content,
+        preview:
+          unreadCount > 0
+            ? `${unreadCount} unread message${unreadCount === 1 ? '' : 's'} · ${message.content}`
+            : `Closure pending · ${message.content}`,
         createdAt: message.createdAt.toISOString(),
         href: '/admin/messaging?view=general&type=support',
       });
     });
 
+    const anonymousThreadMap = new Map<string, (typeof anonymousMessages)[number]>();
     anonymousMessages.forEach((message) => {
+      if (!anonymousThreadMap.has(message.threadId)) {
+        anonymousThreadMap.set(message.threadId, message);
+      }
+    });
+
+    anonymousThreadMap.forEach((message) => {
       feedItems.push({
-        id: `anonymous:${message.id}`,
-        sourceType: 'anonymous',
-        sourceId: message.id,
+        id: `anonymous-thread:${message.threadId}`,
+        sourceType: 'anonymous-thread',
+        sourceId: message.threadId,
+        domain: 'messaging',
+        eventType: message.thread.status === 'closure_pending' ? 'anonymous_thread_closure_pending' : 'anonymous_thread_unread',
+        urgencyLevel: message.thread.status === 'closure_pending' ? 'medium' : 'high',
+        urgencyScore: message.thread.status === 'closure_pending' ? 54 : 76,
         conversationType: 'chat',
         conversationId: message.threadId,
         replyChannel: 'chat',
-        actionRequired: !['closed', 'closure_pending'].includes(message.thread.status),
-        type: 'Anonymous Inbox',
+        actionRequired: true,
+        type: message.thread.status === 'closure_pending' ? 'Anonymous Thread Pending Closure' : 'Anonymous Thread Unread',
         transport: 'In-app Chat',
         context: `Session · ${message.thread.sessionId.slice(0, 8)}`,
         user: 'Anonymous visitor',

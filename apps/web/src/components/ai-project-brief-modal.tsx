@@ -41,6 +41,8 @@ const MOTIVATION = [
   'Final stretch — let’s launch this 🚀',
 ];
 
+// TODO: Remove this temporary AI brief modal before production release.
+// It is retained only as an internal prototype surface and should not have live user entry points.
 export function AiProjectBriefModal({
   isOpen,
   onClose,

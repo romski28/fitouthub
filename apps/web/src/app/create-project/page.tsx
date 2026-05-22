@@ -1,13 +1,12 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
-import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { ProjectDescriptionModal } from '@/components/project-description-modal';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import type { ProjectFormData } from '@/components/project-form';
@@ -62,7 +61,6 @@ const filterProjectSelectableProfessionals = (professionals: Professional[]) => 
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations('project');
   const { isLoggedIn, accessToken, user, userLocation } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,16 +68,6 @@ export default function CreateProjectPage() {
   const [hydrated, setHydrated] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
-  const [showAiBriefWizard, setShowAiBriefWizard] = useState(false);
-  const [aiWizardSeed, setAiWizardSeed] = useState<{
-    title: string;
-    summary: string;
-    scope: string;
-    assumptions: string[];
-    location?: CanonicalLocation;
-    emergency?: boolean;
-    followUpQuestions?: string[];
-  } | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
@@ -98,7 +86,6 @@ export default function CreateProjectPage() {
 
   useEffect(() => {
     if (hydrated && isLoggedIn) {
-      const routeSource = searchParams.get('source');
       const handoffDebug =
         typeof window !== 'undefined' &&
         (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
@@ -191,57 +178,6 @@ export default function CreateProjectPage() {
         }
       }
 
-      const hasAiHandoff = Boolean(mergedDraft || parsedDescriptionForDebug);
-      if (routeSource === 'ai' && hasAiHandoff) {
-        const seedTitle =
-          mergedDraft?.initialData?.projectName ||
-          parsedDescriptionForDebug?.title ||
-          '';
-        const seedSummary =
-          parsedDescriptionForDebug?.description ||
-          mergedDraft?.initialData?.notes ||
-          '';
-        const seedScope = mergedDraft?.initialData?.notes || parsedDescriptionForDebug?.description || '';
-        const seedAssumptions = mergedDraft?.initialData?.aiFrom?.assumptions || [];
-        const seedLocation = mergedDraft?.initialData?.location || parsedDescriptionForDebug?.location;
-        const seedEmergency = mergedDraft?.initialData?.isEmergency ?? parsedDescriptionForDebug?.isEmergency;
-        const seedFollowUpQuestions = (
-          parsedDescriptionForDebug?.followUpQuestions ||
-          mergedDraft?.followUpQuestions ||
-          []
-        ).filter((q: string) => typeof q === 'string' && q.trim().length > 0);
-
-        console.log('[AI-WIZARD-SEED] Setting wizard seed:', {
-          seedTitle,
-          seedSummary,
-          seedScope,
-          seedAssumptions,
-          seedLocation,
-          seedEmergency,
-          seedFollowUpQuestions,
-          mergedDraft: {
-            projectName: mergedDraft?.initialData?.projectName,
-            notes: (mergedDraft?.initialData?.notes || '').substring(0, 100),
-          },
-          parsedDescription: {
-            title: parsedDescriptionForDebug?.title,
-            description: (parsedDescriptionForDebug?.description || '').substring(0, 100),
-            followUpQuestions: parsedDescriptionForDebug?.followUpQuestions,
-          },
-        });
-
-        setAiWizardSeed({
-          title: seedTitle,
-          summary: seedSummary,
-          scope: seedScope,
-          assumptions: seedAssumptions,
-          location: seedLocation,
-          emergency: seedEmergency,
-          followUpQuestions: seedFollowUpQuestions,
-        });
-        setShowAiBriefWizard(true);
-      }
-
       if (handoffDebug) {
         const resolvedTitle =
           parsedDraftForDebug?.initialData?.projectName || parsedDescriptionForDebug?.title || '';
@@ -278,54 +214,7 @@ export default function CreateProjectPage() {
         setShowDescriptionModal(true);
       }
     }
-  }, [hydrated, isLoggedIn, searchParams]);
-
-  const handleAiWizardComplete = (payload: {
-    title: string;
-    summary: string;
-    location: CanonicalLocation;
-    isEmergency: boolean;
-    followUpAnswers: Array<{ question: string; answer: string }>;
-  }) => {
-    const followUpBlock = (payload.followUpAnswers || [])
-      .map((item) => ({
-        question: (item.question || '').trim(),
-        answer: (item.answer || '').trim(),
-      }))
-      .filter((item) => item.question.length > 0 && item.answer.length > 0)
-      .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
-      .join('\n\n');
-
-    const mergedSummary = [
-      (payload.summary || '').trim(),
-      followUpBlock ? `Additional Questions & Answers:\n${followUpBlock}` : '',
-    ].filter(Boolean).join('\n\n');
-
-    const resolvedRegion = [payload.location.secondary, payload.location.primary]
-      .filter((item): item is string => Boolean(item && item.trim()))
-      .join(', ');
-
-    setInitialFormData((prev) => ({
-      ...prev,
-      projectName: payload.title || prev.projectName || '',
-      notes: mergedSummary || prev.notes || '',
-      location: payload.location,
-      region: resolvedRegion || prev.region || '',
-      isEmergency: payload.isEmergency,
-    }));
-
-    setDescriptionData((prev) => ({
-      title: payload.title || prev?.title || '',
-      description: mergedSummary || prev?.description || '',
-      projectScale: prev?.projectScale,
-      isEmergency: payload.isEmergency,
-      profession: prev?.profession,
-      location: payload.location,
-      tradesRequired: prev?.tradesRequired || initialFormData.tradesRequired || [],
-    }));
-
-    setShowAiBriefWizard(false);
-  };
+  }, [hydrated, isLoggedIn]);
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
@@ -512,9 +401,10 @@ export default function CreateProjectPage() {
       ? descriptionData.tradesRequired.join(', ')
       : 'General project';
   const emergencySummary = initialFormData.isEmergency ?? descriptionData?.isEmergency;
-  const existingPhotoUrls = initialFormData.existingPhotos?.map((photo) => photo.url).filter(Boolean)
-    || initialFormData.photoUrls
-    || [];
+  const resolvedExistingPhotos = initialFormData.existingPhotos?.length
+    ? initialFormData.existingPhotos.filter((photo): photo is { id?: string; url: string; note?: string | null } => Boolean(photo?.url))
+    : (initialFormData.photoUrls || []).filter((url): url is string => Boolean(url && url.trim()));
+  const existingPhotoUrls = resolvedExistingPhotos.map((photoOrUrl) => typeof photoOrUrl === 'string' ? photoOrUrl : photoOrUrl.url).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f3ede2_100%)]">
@@ -526,21 +416,6 @@ export default function CreateProjectPage() {
           setShowDescriptionModal(false);
         }}
         onCancel={() => router.push('/projects')}
-      />
-
-      <AiProjectBriefModal
-        key={`${showAiBriefWizard ? 'open' : 'closed'}-${aiWizardSeed?.title || 'untitled'}-${(aiWizardSeed?.followUpQuestions || []).join('|')}`}
-        isOpen={showAiBriefWizard && !!aiWizardSeed}
-        onClose={() => setShowAiBriefWizard(false)}
-        initialTitle={aiWizardSeed?.title || initialFormData.projectName || descriptionData?.title || ''}
-        initialSummary={aiWizardSeed?.summary || descriptionData?.description || ''}
-        initialScope={aiWizardSeed?.scope || initialFormData.notes || descriptionData?.description || ''}
-        initialAssumptions={aiWizardSeed?.assumptions || initialFormData.aiFrom?.assumptions || []}
-        initialLocation={aiWizardSeed?.location || initialFormData.location || descriptionData?.location}
-        fallbackLocation={userLocation}
-        initialEmergency={aiWizardSeed?.emergency ?? initialFormData.isEmergency ?? descriptionData?.isEmergency}
-        followUpQuestions={aiWizardSeed?.followUpQuestions || []}
-        onComplete={handleAiWizardComplete}
       />
 
       <AssistRequestModal
@@ -583,7 +458,7 @@ export default function CreateProjectPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-[32px] border border-[rgba(185,78,45,0.18)] bg-[rgba(255,244,235,0.82)] px-6 py-5 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.08)]">
+        <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-5 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Bidding recipients</p>
@@ -623,20 +498,20 @@ export default function CreateProjectPage() {
         </section>
 
         {existingPhotoUrls.length > 0 && (
-          <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.8)] px-6 py-5 shadow-[0_20px_50px_rgba(81,55,32,0.06)]">
+          <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-5 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project images</p>
                 <h2 className="mt-1 text-xl font-bold text-slate-900">Images from your wizard are ready</h2>
                 <p className="mt-2 max-w-2xl text-sm text-slate-700">These images will be attached to the project when you save or open bidding.</p>
               </div>
-              <span className="rounded-full bg-[rgba(239,231,207,0.82)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
+              <span className="rounded-full bg-[rgba(255,250,240,0.72)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
                 {existingPhotoUrls.length} image{existingPhotoUrls.length === 1 ? '' : 's'} attached
               </span>
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
               {existingPhotoUrls.map((url, index) => (
-                <div key={`${url}-${index}`} className="h-24 w-32 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.5)] shadow-sm">
+                <div key={`${url}-${index}`} className="h-24 w-32 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] shadow-sm">
                   <img src={resolveMediaAssetUrl(url)} alt={`Project image ${index + 1}`} className="h-full w-full object-cover" />
                 </div>
               ))}
@@ -645,8 +520,8 @@ export default function CreateProjectPage() {
         )}
 
         {!showDescriptionModal && (
-          <div className="mt-8 overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] shadow-[0_24px_60px_rgba(81,55,32,0.08)] backdrop-blur-sm">
-            <div className="border-b border-[rgba(120,53,15,0.1)] px-6 py-4">
+          <div className="mt-8 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-6 shadow-[0_24px_60px_rgba(81,55,32,0.08)] backdrop-blur-sm">
+            <div className="px-1 pb-4">
               <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
               <p className="mt-1 text-sm text-slate-700">
                 Confirm the brief, attachments, and final bidding setup before you submit.
@@ -671,9 +546,9 @@ export default function CreateProjectPage() {
                   : (descriptionData?.tradesRequired || []),
                 location: initialFormData.location || descriptionData?.location || userLocation || undefined,
                 photoUrls: initialFormData.photoUrls || [],
-                existingPhotos:
-                  initialFormData.existingPhotos ||
-                  (initialFormData.photoUrls?.map((url) => ({ url })) ?? []),
+                existingPhotos: resolvedExistingPhotos.map((photoOrUrl) =>
+                  typeof photoOrUrl === 'string' ? { url: photoOrUrl } : photoOrUrl,
+                ),
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}

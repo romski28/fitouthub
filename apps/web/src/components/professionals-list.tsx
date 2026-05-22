@@ -968,29 +968,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       const requiredTradesLower = trades.map((trade) => trade.toLowerCase());
 
       return professionals.filter((pro) => {
-        const haystacks = [
-          pro.professionType,
-          pro.fullName,
-          pro.businessName,
-          pro.primaryTrade,
-          ...(pro.tradesOffered ?? []),
-          ...(pro.suppliesOffered ?? []),
-        ]
-          .filter(Boolean)
-          .map((s) => s!.toString().toLowerCase());
-
-        const textMatch = activeFilterContext.needle
-          ? haystacks.some((s) => s.includes(activeFilterContext.needle))
-          : false;
-        const professionMatch = activeFilterContext.effectiveProfession
-          ? haystacks.some((s) => s.includes(activeFilterContext.effectiveProfession!))
-          : false;
-
-        const bySearch = activeFilterContext.needle || activeFilterContext.effectiveProfession
-          ? textMatch || professionMatch || (!activeFilterContext.needle && professionMatch)
-          : true;
-        if (!bySearch) return false;
-
         if (!matchesTradeAutoFilterMode(pro, requiredTradesLower, mode)) {
           return false;
         }
@@ -1008,7 +985,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       teams: countWithMode('teams', requiredTrades),
       single,
     };
-  }, [professionals, requiredTrades, activeFilterContext, minRating]);
+  }, [professionals, requiredTrades]);
 
   useEffect(() => {
     if (requiredTrades.length <= 1) return;

@@ -10,7 +10,6 @@ import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import ChatImageUploader from '@/components/chat-image-uploader';
 import { SearchHelpModal } from '@/components/search-help-modal';
-import { AiProjectBriefModal } from '@/components/ai-project-brief-modal';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ModalOverlay } from '@/components/modal-overlay';
 import { useAuth } from '@/context/auth-context';
@@ -716,7 +715,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     inlineImageError?: string | null;
     message?: string;
   } | null>(null);
-  const [showBriefModal, setShowBriefModal] = useState(false);
   const [showConsultChoiceModal, setShowConsultChoiceModal] = useState(false);
   const [leadName, setLeadName] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
@@ -744,160 +742,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setPortalEl(el);
     }
   }, [resultsPortalId]);
-
-  const handleContinueToProfessionals = (payload: {
-    title: string;
-    summary: string;
-    location: { primary?: string; secondary?: string; tertiary?: string };
-    isEmergency: boolean;
-    followUpAnswers: Array<{ question: string; answer: string }>;
-  }) => {
-    if (!aiStructured) return;
-    const selectedTrades = activeTrades.length > 0 ? activeTrades : aiStructured.trades;
-    const removedTrades = aiStructured.trades.filter((trade) => !selectedTrades.includes(trade));
-
-    const handoffDebug =
-      typeof window !== 'undefined' &&
-      (new URLSearchParams(window.location.search).get('debugFlow') === '1' ||
-        window.localStorage.getItem('fh_debug_handoff') === '1');
-
-    const normalizeBlock = (value?: string | null) => (value || '').trim();
-    const summaryBlock =
-      normalizeBlock(payload.summary) ||
-      normalizeBlock(aiStructured.summary) ||
-      normalizeBlock(aiStructured.scope);
-    const assumptionsBlock = (aiStructured.assumptions || [])
-      .map((assumption) => (assumption || '').trim())
-      .filter((assumption) => assumption.length > 0);
-    const followUpBlock = (payload.followUpAnswers || [])
-      .map((item) => ({
-        question: (item.question || '').trim(),
-        answer: (item.answer || '').trim(),
-      }))
-      .filter((item) => item.question.length > 0 && item.answer.length > 0);
-
-    const notesSections: string[] = [];
-    if (summaryBlock) {
-      notesSections.push(`Summary:\n${summaryBlock}`);
-    }
-    if (assumptionsBlock.length > 0) {
-      notesSections.push(`Assumptions:\n${assumptionsBlock.map((assumption) => `- ${assumption}`).join('\n')}`);
-    }
-    if (followUpBlock.length > 0) {
-      notesSections.push(
-        `Additional Questions & Answers:\n${followUpBlock
-          .map((item) => `Q: ${item.question}\nA: ${item.answer}`)
-          .join('\n\n')}`,
-      );
-    }
-
-    const combinedNotes = notesSections.join('\n\n').trim();
-
-    const resolvedRegion = [payload.location.secondary, payload.location.primary]
-      .filter((item): item is string => Boolean(item && item.trim()))
-      .join(', ');
-
-    const aiDraft = {
-      initialData: {
-        projectName: payload.title || aiStructured.title || aiStructured.summary || '',
-        notes: combinedNotes || payload.summary || aiStructured.scope || aiStructured.summary || '',
-        projectScale: aiStructured.projectScale || undefined,
-        tradesRequired: selectedTrades,
-        region: resolvedRegion,
-        location: payload.location,
-        photoUrls: initialAiImageUrls,
-        isEmergency: payload.isEmergency,
-        aiFrom: {
-          assumptions: aiStructured.assumptions,
-          risks: aiStructured.risks,
-          safety: aiStructured.safetyAssessment,
-          selectedTrades,
-          removedTrades,
-        },
-      },
-      ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
-      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
-    };
-
-    const saved = writeCreateProjectDraftSafely(aiDraft);
-    setCreateProjectDraftHandoff(aiDraft);
-    if (!saved) {
-      console.warn('[search-flow] Unable to persist full createProjectDraft due to storage limits.');
-    }
-
-    const projectDescriptionPayload = {
-      title: aiDraft.initialData.projectName || '',
-      description: aiDraft.initialData.notes || '',
-      projectScale: aiDraft.initialData.projectScale,
-      isEmergency: Boolean(aiDraft.initialData.isEmergency),
-      profession: aiDraft.initialData.tradesRequired?.[0],
-      location: aiDraft.initialData.location,
-      tradesRequired: aiDraft.initialData.tradesRequired || [],
-      followUpQuestions: (aiStructured.nextQuestions || []).filter((q) => q.trim().length > 0),
-    };
-    setProjectDescriptionHandoff(projectDescriptionPayload);
-
-    try {
-      sessionStorage.setItem(
-        'projectDescription',
-        JSON.stringify(projectDescriptionPayload),
-      );
-    } catch {
-      // ignore storage failures; createProjectDraft is the primary handoff
-    }
-
-    const params = new URLSearchParams();
-    if (selectedTrades[0]) params.set('trade', selectedTrades[0]);
-    if (selectedTrades.length > 0) params.set('trades', selectedTrades.join(','));
-    if (payload.location.tertiary) params.set('location', payload.location.tertiary);
-    else if (payload.location.secondary) params.set('location', payload.location.secondary);
-    else if (payload.location.primary) params.set('location', payload.location.primary);
-    else params.set('askRegion', '1');
-    if (aiDraft.initialData.projectName) {
-      params.set('aiTitle', aiDraft.initialData.projectName.slice(0, 180));
-    }
-    if (aiDraft.initialData.notes) {
-      params.set('aiScope', aiDraft.initialData.notes.slice(0, 1800));
-    }
-    if (aiDraft.initialData.projectScale) {
-      params.set('aiScale', aiDraft.initialData.projectScale);
-    }
-    params.set('aiEmergency', aiDraft.initialData.isEmergency ? '1' : '0');
-
-    if (handoffDebug) {
-      console.info('[AI-HANDOFF][search-flow] prepared draft', {
-        title: aiDraft.initialData.projectName,
-        notesLength: (aiDraft.initialData.notes || '').length,
-        isEmergency: aiDraft.initialData.isEmergency,
-        tradesRequired: aiDraft.initialData.tradesRequired,
-        removedTrades,
-        location: aiDraft.initialData.location,
-        followUpAnswers: payload.followUpAnswers,
-        route: `/professionals?${params.toString()}`,
-      });
-    }
-
-    if (aiStructured.intakeId) {
-      fetch(`${API_BASE_URL}/ai/intake/${aiStructured.intakeId}/trade-feedback`, {
-        method: 'POST',
-        keepalive: true,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          sessionId: aiSessionId,
-          selectedTrades,
-          removedTrades,
-        }),
-      }).catch(() => {
-        // Best-effort metadata sync; project handoff still carries trade selection.
-      });
-    }
-
-    setShowBriefModal(false);
-    router.push(`/professionals?${params.toString()}`);
-  };
 
   const clearAiResponseState = () => {
     setAiLoading(false);
@@ -1131,13 +975,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       return;
     }
     setShowConsultChoiceModal(false);
-    router.push('/create-project/wizard?source=ai');
+    router.push('/create-project');
   }, [persistAiWizardHandoffForAuth, router]);
 
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project');
     } catch {
       // Ignore storage failures
     }
@@ -1148,7 +992,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const handleGuestLogin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project');
     } catch {
       // Ignore storage failures
     }
@@ -1938,7 +1782,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     clearAiResponseState();
     setIntent(null);
     setMatchCount(null);
-    setShowBriefModal(false);
   };
 
   const handleSequenceStateChange = useCallback((complete: boolean) => {
@@ -2450,36 +2293,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         countLoading={countLoading}
         isLoggedIn={isLoggedIn}
         openJoinModal={openJoinModal}
-      />
-      <AiProjectBriefModal
-        key={`${showBriefModal ? 'open' : 'closed'}-${aiStructured?.intakeId || aiStructured?.title || aiStructured?.summary || 'ai-brief'}`}
-        isOpen={showBriefModal && !!aiStructured}
-        onClose={() => setShowBriefModal(false)}
-        initialTitle={aiStructured?.title || aiStructured?.summary || ''}
-        initialSummary={aiStructured?.summary || ''}
-        initialScope={aiStructured?.scope || ''}
-        initialAssumptions={aiStructured?.assumptions || []}
-        initialLocation={
-          aiStructured?.locationPrimary
-            ? {
-                primary: aiStructured.locationPrimary,
-                secondary: aiStructured.locationSecondary || undefined,
-              }
-            : undefined
-        }
-        fallbackLocation={userLocation}
-        initialEmergency={
-          aiStructured?.safetyAssessment
-            ? Boolean(
-                aiStructured.safetyAssessment.shouldEscalateEmergency ||
-                  aiStructured.safetyAssessment.isDangerous ||
-                  (aiStructured.safetyAssessment.riskLevel || '').toLowerCase() === 'high' ||
-                  (aiStructured.safetyAssessment.riskLevel || '').toLowerCase() === 'critical',
-              )
-            : undefined
-        }
-        followUpQuestions={aiStructured?.nextQuestions || []}
-        onComplete={handleContinueToProfessionals}
       />
       <SearchHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>

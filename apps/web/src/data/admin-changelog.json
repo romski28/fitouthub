@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-05-22-75088371",
+    "date": "2026-05-22T12:43:05+08:00",
+    "title": "fix(create-project): polish review flow and disable AI brief modal",
+    "summary": "fix(create-project): polish review flow and disable AI brief modal",
+    "areas": [
+      "api",
+      "web",
+      "infra"
+    ],
+    "commit": "75088371",
+    "files": [
+      "apps/api/src/updates/updates.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/ai-project-brief-modal.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/project-form.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "docs/ADMIN_COMMAND_CENTER_SPEC.md",
+      "docs/ADMIN_MIGRATION_TRACKER.md"
+    ]
+  },
+  {
     "id": "2026-05-22-7036dc76",
     "date": "2026-05-22T12:23:52+08:00",
     "title": "chore(brand): rename Fitout Hub copy to Mimo",

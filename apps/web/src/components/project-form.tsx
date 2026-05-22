@@ -133,7 +133,20 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   selectedService: initialData?.selectedService || '',
   location: initialData?.location || {},
   photoUrls: initialData?.photoUrls || [],
-  existingPhotos: initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []),
+  existingPhotos: (() => {
+    const seededPhotos = (initialData?.existingPhotos || []).filter(
+      (photo): photo is { id?: string; url: string; note?: string | null } =>
+        typeof photo?.url === 'string' && photo.url.trim().length > 0,
+    );
+
+    if (seededPhotos.length > 0) {
+      return seededPhotos;
+    }
+
+    return (initialData?.photoUrls || [])
+      .filter((url): url is string => typeof url === 'string' && url.trim().length > 0)
+      .map((url) => ({ url }));
+  })(),
   tradesRequired: initialData?.tradesRequired || [],
   isEmergency: initialData?.isEmergency ?? inferEmergencyFromSafety(initialData),
   onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
@@ -207,7 +220,7 @@ export function ProjectForm({
   const [showTradeDropdown, setShowTradeDropdown] = useState(false);
   const [tradeSearchTerm, setTradeSearchTerm] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(initialData?.existingPhotos || (initialData?.photoUrls?.map((url) => ({ url })) ?? []));
+  const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(() => buildInitialFormState(initialData).existingPhotos ?? []);
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const [isOverviewEditing, setIsOverviewEditing] = useState(false);
   const [showAiExtract, setShowAiExtract] = useState(() => {
@@ -215,6 +228,8 @@ export function ProjectForm({
     return riskLevel === 'medium' || riskLevel === 'high' || riskLevel === 'critical';
   });
   const isReadOnly = mode === 'view';
+  const usesDarkCreateSurface = mode === 'create' && !confirmationMode;
+  const creamPanelClassName = 'border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]';
 
   useEffect(() => {
     const nextFormState = buildInitialFormState(initialData);
@@ -511,7 +526,7 @@ export function ProjectForm({
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
-            darkMode={mode === 'create'}
+            darkMode={usesDarkCreateSurface}
           />
           {pendingFiles.length > 0 && (
             <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
@@ -606,17 +621,17 @@ export function ProjectForm({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className={mode === 'create' ? 'space-y-6 px-6 py-6 text-white sm:px-8 sm:py-8' : 'space-y-6'}
+      className={usesDarkCreateSurface ? 'space-y-6 px-6 py-6 text-white sm:px-8 sm:py-8' : 'space-y-6'}
     >
       {/* Professional List (if applicable) */}
       {displayNames.length > 0 && !confirmationMode && (
         <div className={`rounded-md border p-3 ${
-          mode === 'create'
+          usesDarkCreateSurface
             ? 'border-slate-700/40 bg-white/5 text-white'
             : 'border-slate-200 bg-slate-50 text-slate-700'
         }`}>
           <p className={`text-xs font-semibold ${
-            mode === 'create' ? 'text-slate-300' : 'text-slate-700'
+            usesDarkCreateSurface ? 'text-slate-300' : 'text-slate-700'
           }`}>
             Professional{displayNames.length !== 1 ? 's' : ''} ({displayNames.length})
           </p>
@@ -625,7 +640,7 @@ export function ProjectForm({
               <span
                 key={`${name}-${idx}`}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'bg-emerald-500/30 text-emerald-200'
                     : 'bg-emerald-100 text-emerald-700'
                 }`}
@@ -639,17 +654,17 @@ export function ProjectForm({
 
       {hasAiContext && (
         <div className={`rounded-lg border p-4 space-y-3 ${
-          mode === 'create'
+          usesDarkCreateSurface
             ? 'border-emerald-500/40 bg-emerald-500/10'
-            : 'border-emerald-200 bg-emerald-50'
+            : creamPanelClassName
         }`}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className={`text-[11px] font-semibold uppercase tracking-[0.1em] ${
-                mode === 'create' ? 'text-emerald-300' : 'text-emerald-700'
+                usesDarkCreateSurface ? 'text-emerald-300' : 'text-emerald-700'
               }`}>Project Overview</p>
               <h3 className={`text-base font-bold ${
-                mode === 'create' ? 'text-white' : 'text-emerald-900'
+                usesDarkCreateSurface ? 'text-white' : 'text-emerald-900'
               }`}>
                 {formData.projectName?.trim() || 'Untitled project'}
               </h3>
@@ -659,7 +674,7 @@ export function ProjectForm({
                 type="button"
                 onClick={() => setIsOverviewEditing((prev) => !prev)}
                 className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
                     : 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-100'
                 }`}
@@ -670,33 +685,33 @@ export function ProjectForm({
           </div>
 
           <div className={`space-y-2 text-sm ${
-            mode === 'create' ? 'text-slate-200' : 'text-slate-700'
+            usesDarkCreateSurface ? 'text-slate-200' : 'text-slate-700'
           }`}>
             {formData.projectName?.trim() && (
               <p>
                 <span className={`font-semibold ${
-                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Project:</span> {formData.projectName}
               </p>
             )}
             {(locationSummary || formData.region?.trim()) && (
               <p>
                 <span className={`font-semibold ${
-                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Location:</span> {locationSummary || formData.region}
               </p>
             )}
             {formData.tradesRequired.length > 0 && (
               <p>
                 <span className={`font-semibold ${
-                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Trades:</span> {formData.tradesRequired.join(', ')}
               </p>
             )}
             {formData.notes?.trim() && (
               <div>
                 <p className={`font-semibold ${
-                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Scope</p>
                 <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
               </div>
@@ -704,7 +719,7 @@ export function ProjectForm({
             {confirmationMode && (
               <p>
                 <span className={`font-semibold ${
-                  mode === 'create' ? 'text-white' : 'text-slate-900'
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Priority:</span>{' '}
                 {formData.isEmergency ? 'Emergency project' : 'Standard priority'}
                 {!formData.isEmergency && formData.endDate ? ` · Target by ${formData.endDate}` : ''}
@@ -716,9 +731,9 @@ export function ProjectForm({
 
       {formData.aiFrom && (
         <div className={`rounded-lg border p-3 ${
-          mode === 'create'
+          usesDarkCreateSurface
             ? 'border-violet-500/40 bg-violet-500/10'
-            : 'border-violet-200 bg-violet-50'
+            : creamPanelClassName
         }`}>
           <button
             type="button"
@@ -726,10 +741,10 @@ export function ProjectForm({
             className="w-full flex items-center justify-between text-left"
           >
             <span className={`text-sm font-semibold ${
-              mode === 'create' ? 'text-violet-300' : 'text-violet-900'
+              usesDarkCreateSurface ? 'text-violet-300' : 'text-violet-900'
             }`}>Safety, Assumptions and Risks</span>
             <span className={`text-xs font-semibold ${
-              mode === 'create' ? 'text-violet-300' : 'text-violet-700'
+              usesDarkCreateSurface ? 'text-violet-300' : 'text-violet-700'
             }`}>{showAiExtract ? 'Hide' : 'Show'}</span>
           </button>
           {showAiExtract && (
@@ -741,7 +756,7 @@ export function ProjectForm({
               }}
               mode="client"
               className={`mt-3 ${
-                mode === 'create' ? 'text-white' : ''
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
               }`}
             />
           )}
@@ -751,7 +766,7 @@ export function ProjectForm({
       {/* Project Name */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className={`block text-sm font-semibold mb-2 ${
-          mode === 'create' ? 'text-white' : 'text-slate-900'
+          usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
         }`}>
           Project Name {!isReadOnly && '*'}
         </label>
@@ -763,7 +778,7 @@ export function ProjectForm({
           onChange={(e) => handleChange('projectName', e.target.value)}
           disabled={isReadOnly || isSubmitting}
           className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 ${
-            mode === 'create'
+            usesDarkCreateSurface
               ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
               : 'border-slate-300 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:ring-blue-500'
           }`}
@@ -774,7 +789,7 @@ export function ProjectForm({
       {showClientName && (
         <div>
           <label className={`block text-sm font-semibold mb-2 ${
-            mode === 'create' ? 'text-white' : 'text-slate-900'
+            usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
             Your Name
           </label>
@@ -785,7 +800,7 @@ export function ProjectForm({
             onChange={(e) => handleChange('clientName', e.target.value)}
             disabled={isReadOnly || isSubmitting}
             className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 ${
-              mode === 'create'
+              usesDarkCreateSurface
                 ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
                 : 'border-slate-300 text-base disabled:bg-slate-50 disabled:text-slate-600 focus:border-blue-500 focus:ring-blue-500'
             }`}
@@ -796,7 +811,7 @@ export function ProjectForm({
       {/* Location */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className={`block text-sm font-semibold mb-2 ${
-          mode === 'create' ? 'text-white' : 'text-slate-900'
+          usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
         }`}>
           Region/Location {!isReadOnly && '*'}
         </label>
@@ -832,7 +847,7 @@ export function ProjectForm({
           }
         />
         {locationSummary ? (
-          <p className={`mt-2 text-xs ${mode === 'create' ? 'text-slate-300' : 'text-slate-500'}`}>
+          <p className={`mt-2 text-xs ${usesDarkCreateSurface ? 'text-slate-300' : 'text-slate-500'}`}>
             Selected: {locationSummary}
           </p>
         ) : null}
@@ -842,12 +857,12 @@ export function ProjectForm({
       {showService && (
         <div className={showEditableAiFields ? '' : 'hidden'}>
           <label className={`block text-sm font-semibold mb-2 ${
-            mode === 'create' ? 'text-white' : 'text-slate-900'
+            usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
             Required Trades/Services {!isReadOnly && '*'}
           </label>
           <div className={`flex min-h-[46px] flex-wrap gap-2 rounded-lg border px-4 py-2.5 ${
-            mode === 'create'
+            usesDarkCreateSurface
               ? 'border-slate-600 bg-white/5 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400'
               : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'
           }`}>
@@ -855,7 +870,7 @@ export function ProjectForm({
               <span
                 key={`${trade}-${idx}`}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'bg-blue-500/20 text-blue-100'
                     : 'bg-blue-100 text-blue-700'
                 }`}
@@ -865,7 +880,7 @@ export function ProjectForm({
                   type="button"
                   onClick={() => handleChange('tradesRequired', formData.tradesRequired.filter((_, i) => i !== idx))}
                   disabled={isReadOnly || isSubmitting}
-                  className={mode === 'create' ? 'hover:text-white disabled:opacity-50' : 'hover:text-blue-900 disabled:opacity-50'}
+                  className={usesDarkCreateSurface ? 'hover:text-white disabled:opacity-50' : 'hover:text-blue-900 disabled:opacity-50'}
                 >
                   ×
                 </button>
@@ -884,14 +899,14 @@ export function ProjectForm({
                 disabled={isReadOnly || isSubmitting}
                 required={shouldRequirePrimaryFields && formData.tradesRequired.length === 0}
                 className={`w-full border-0 bg-transparent px-2 py-1 text-base outline-none ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'text-white placeholder-slate-400 disabled:text-slate-500'
                     : 'disabled:bg-slate-50'
                 }`}
               />
               {showTradeDropdown && filteredTrades.length > 0 && !isReadOnly && !isSubmitting && (
                 <div className={`absolute top-full left-0 z-10 mt-1 max-h-60 w-full min-w-[250px] overflow-y-auto rounded-md border shadow-lg ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-slate-700 bg-slate-900/95 shadow-slate-950/50 backdrop-blur'
                     : 'border-slate-200 bg-white'
                 }`}>
@@ -907,14 +922,14 @@ export function ProjectForm({
                         setShowTradeDropdown(false);
                       }}
                       className={`flex w-full items-center justify-between border-b px-3 py-2.5 text-left last:border-0 ${
-                        mode === 'create'
+                        usesDarkCreateSurface
                           ? 'border-slate-800 hover:bg-blue-500/10'
                           : 'border-slate-100 hover:bg-blue-50'
                       }`}
                     >
-                      <span className={mode === 'create' ? 'font-medium text-white' : 'font-medium text-slate-900'}>{trade.name}</span>
+                      <span className={usesDarkCreateSurface ? 'font-medium text-white' : 'font-medium text-slate-900'}>{trade.name}</span>
                       <span className={`text-xs uppercase tracking-wide ${
-                        mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+                        usesDarkCreateSurface ? 'text-slate-400' : 'text-slate-500'
                       }`}>{trade.category}</span>
                     </button>
                   ))}
@@ -922,7 +937,7 @@ export function ProjectForm({
               )}
             </div>
           </div>
-          <p className={`mt-1 text-xs ${mode === 'create' ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`mt-1 text-xs ${usesDarkCreateSurface ? 'text-slate-400' : 'text-slate-500'}`}>
             Select from available trades. Type to search, click to add.
           </p>
         </div>
@@ -932,15 +947,15 @@ export function ProjectForm({
       {showBudget && (
         <div>
           <label className={`block text-sm font-semibold mb-2 ${
-            mode === 'create' ? 'text-white' : 'text-slate-900'
+            usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
             Budget (HKD) <span className={`font-normal ${
-              mode === 'create' ? 'text-slate-300' : 'text-slate-500'
+              usesDarkCreateSurface ? 'text-slate-300' : 'text-slate-500'
             }`}>(Optional)</span>
           </label>
           <div className="relative">
             <span className={`absolute left-4 top-3 font-medium ${
-              mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+              usesDarkCreateSurface ? 'text-slate-400' : 'text-slate-500'
             }`}>$</span>
             <input
               type="number"
@@ -951,7 +966,7 @@ export function ProjectForm({
               min="0"
               step="1000"
               className={`w-full rounded-lg border px-4 py-2.5 pl-8 text-base focus:outline-none focus:ring-1 ${
-              mode === 'create'
+              usesDarkCreateSurface
                 ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
                 : 'border-slate-300 disabled:bg-slate-50 focus:border-blue-500 focus:ring-blue-500'
             }`}
@@ -963,10 +978,10 @@ export function ProjectForm({
       {/* Project Scope & Notes */}
       <div className={showEditableAiFields ? '' : 'hidden'}>
         <label className={`block text-sm font-semibold mb-2 ${
-          mode === 'create' ? 'text-white' : 'text-slate-900'
+          usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
         }`}>
           Project Scope & Details <span className={`font-normal ${
-            mode === 'create' ? 'text-slate-300' : 'text-slate-500'
+            usesDarkCreateSurface ? 'text-slate-300' : 'text-slate-500'
           }`}>(Optional)</span>
         </label>
         <textarea
@@ -976,13 +991,13 @@ export function ProjectForm({
           disabled={isReadOnly || isSubmitting}
           rows={6}
           className={`w-full rounded-lg border px-4 py-2.5 text-base focus:outline-none focus:ring-1 resize-none ${
-            mode === 'create'
+            usesDarkCreateSurface
               ? 'border-slate-600 bg-slate-800/50 text-white placeholder-slate-400 focus:border-blue-400 focus:ring-blue-400 disabled:bg-slate-700 disabled:text-slate-500'
               : 'border-slate-300 disabled:bg-slate-50 focus:border-blue-500 focus:ring-blue-500'
           }`}
         />
         <p className={`text-xs mt-1 ${
-          mode === 'create' ? 'text-slate-400' : 'text-slate-500'
+          usesDarkCreateSurface ? 'text-slate-400' : 'text-slate-500'
         }`}>You can add photos and more details after creating the project.</p>
       </div>
 
@@ -992,7 +1007,7 @@ export function ProjectForm({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1">
               <label className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -1010,7 +1025,7 @@ export function ProjectForm({
                 onChange={(e) => handleChange('endDate', e.target.value)}
                 disabled={isReadOnly || isSubmitting}
                 className={`rounded-md border px-3 py-2 text-sm ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                     : 'border-slate-300'
                 }`}
@@ -1018,7 +1033,7 @@ export function ProjectForm({
             </div>
             <div className="grid gap-1">
               <label className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -1036,7 +1051,7 @@ export function ProjectForm({
                 onChange={(e) => handleChange('siteInspectionAvailableOn', e.target.value)}
                 disabled={isReadOnly || isSubmitting}
                 className={`rounded-md border px-3 py-2 text-sm ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                     : 'border-slate-300'
                 }`}
@@ -1045,9 +1060,9 @@ export function ProjectForm({
           </div>
         ) : (
           <div className={`rounded-md border px-3 py-2 text-sm ${
-            mode === 'create'
+            usesDarkCreateSurface
               ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
-              : 'border-rose-200 bg-rose-50 text-rose-700'
+              : `${creamPanelClassName} text-rose-700`
           }`}>
             Emergency project detected — completion-by date is optional and hidden in this quick confirmation view.
           </div>
@@ -1063,11 +1078,11 @@ export function ProjectForm({
                 onChange={(e) => handleChange('isEmergency', e.target.checked)}
                 disabled={isReadOnly || isSubmitting}
                 className={`h-4 w-4 rounded ${
-                  mode === 'create' ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
+                  usesDarkCreateSurface ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
                 }`}
               />
               <label htmlFor="isEmergency" className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>This is an emergency</label>
             </div>
             <div className="flex items-start gap-2">
@@ -1078,11 +1093,11 @@ export function ProjectForm({
                 onChange={(e) => handleChange('onlySelectedProfessionalsCanBid', e.target.checked)}
                 disabled={isReadOnly || isSubmitting}
                 className={`mt-0.5 h-4 w-4 rounded ${
-                  mode === 'create' ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
+                  usesDarkCreateSurface ? 'border-slate-600 accent-blue-400' : 'border-slate-300'
                 }`}
               />
               <label htmlFor="onlySelectedProfessionalsCanBid" className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>
                 Only allow professionals that I select to bid on this project
               </label>
@@ -1091,7 +1106,7 @@ export function ProjectForm({
           <div className="grid gap-3">
             <div className="grid gap-1">
               <label className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -1109,7 +1124,7 @@ export function ProjectForm({
                 onChange={(e) => handleChange('endDate', e.target.value)}
                 disabled={isReadOnly || isSubmitting}
                 className={`rounded-md border px-3 py-2 text-sm ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                     : 'border-slate-300'
                 }`}
@@ -1117,7 +1132,7 @@ export function ProjectForm({
             </div>
             <div className="grid gap-1">
               <label className={`text-sm font-medium ${
-                mode === 'create' ? 'text-white' : 'text-slate-800'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
               }`}>
                 <span className="inline-flex items-center gap-1.5">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -1135,7 +1150,7 @@ export function ProjectForm({
                 onChange={(e) => handleChange('siteInspectionAvailableOn', e.target.value)}
                 disabled={isReadOnly || isSubmitting}
                 className={`rounded-md border px-3 py-2 text-sm ${
-                  mode === 'create'
+                  usesDarkCreateSurface
                     ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
                     : 'border-slate-300'
                 }`}
@@ -1149,7 +1164,7 @@ export function ProjectForm({
       {!isReadOnly && (
         <div>
           <label className={`block text-sm font-semibold mb-2 ${
-            mode === 'create' ? 'text-white' : 'text-slate-900'
+            usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
           }`}>
             <span className="inline-flex items-center gap-1.5">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -1164,11 +1179,11 @@ export function ProjectForm({
             maxFileSize={MAX_FILE_SIZE}
             onFilesChange={handleFilesChange}
             showUploadAction={false}
-            darkMode={mode === 'create'}
+            darkMode={usesDarkCreateSurface}
           />
           {pendingFiles.length > 0 && (
             <div className={`rounded-md border px-3 py-2 text-xs mt-2 ${
-              mode === 'create'
+              usesDarkCreateSurface
                 ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
                 : 'bg-blue-50 border-blue-200 text-blue-700'
             }`}>
@@ -1177,10 +1192,10 @@ export function ProjectForm({
           )}
           {existingPhotos.length > 0 && (
             <div className={`mt-3 space-y-2 text-xs ${
-              mode === 'create' ? 'text-slate-300' : 'text-slate-700'
+              usesDarkCreateSurface ? 'text-slate-300' : 'text-slate-700'
             }`}>
               <div className={`font-semibold ${
-                mode === 'create' ? 'text-white' : 'text-slate-900'
+                usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
               }`}>Existing photos</div>
               <div className="flex flex-wrap gap-2">
                 {existingPhotos.map((photo) => {
@@ -1213,9 +1228,9 @@ export function ProjectForm({
       {/* Error */}
       {error && (
         <div className={`rounded-lg border p-4 text-sm ${
-          mode === 'create'
+          usesDarkCreateSurface
             ? 'border-red-500/40 bg-red-500/10 text-red-200'
-            : 'bg-red-50 border-red-200 text-red-700'
+            : `${creamPanelClassName} text-red-700`
         }`}>
           {error}
         </div>
@@ -1224,12 +1239,12 @@ export function ProjectForm({
       {/* Assistance Explanation */}
       {onAssistRequest && !isReadOnly && (
         <div className={`rounded-lg border px-4 py-3 ${
-          mode === 'create'
+          usesDarkCreateSurface
             ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
-            : 'border-blue-200 bg-blue-50'
+            : creamPanelClassName
         }`}>
           <div className="mb-1 flex items-center justify-between gap-3">
-            <p className={`text-sm font-semibold ${mode === 'create' ? 'text-white' : 'text-blue-900'}`}>
+            <p className={`text-sm font-semibold ${usesDarkCreateSurface ? 'text-white' : 'text-blue-900'}`}>
               💡 Need help?
             </p>
             <button
@@ -1237,7 +1252,7 @@ export function ProjectForm({
               onClick={handleAssistClick}
               disabled={isSubmitting}
               className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                mode === 'create'
+                usesDarkCreateSurface
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
               }`}
@@ -1245,7 +1260,7 @@ export function ProjectForm({
               Ask for advice
             </button>
           </div>
-          <p className={`text-sm ${mode === 'create' ? 'text-blue-100' : 'text-blue-800'}`}>
+          <p className={`text-sm ${usesDarkCreateSurface ? 'text-blue-100' : 'text-blue-800'}`}>
             Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
           </p>
         </div>
@@ -1263,7 +1278,7 @@ export function ProjectForm({
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
             className={`w-full rounded-lg px-6 py-2.5 text-center font-semibold transition disabled:opacity-50 ${
-              mode === 'create'
+              usesDarkCreateSurface
                 ? 'bg-red-600 text-white hover:bg-red-700'
                 : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
@@ -1276,7 +1291,7 @@ export function ProjectForm({
             type="submit"
             disabled={isSubmitting}
             className={`w-full rounded-lg py-2.5 font-semibold text-white transition disabled:opacity-50 ${
-              mode === 'create'
+              usesDarkCreateSurface
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : 'bg-blue-600 hover:bg-blue-700'
             }`}
@@ -1289,4 +1304,5 @@ export function ProjectForm({
     </form>
   );
 }
+
 
