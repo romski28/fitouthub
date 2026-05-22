@@ -1260,35 +1260,57 @@ export function ProjectForm({
           <p className={`text-sm ${usesDarkCreateSurface ? 'text-blue-100' : 'text-blue-800'}`}>
             Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
           </p>
+
+          <div className={`mt-4 grid gap-3 ${onCancel ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting || isReadOnly}
+                className={`w-full ${solidCrimsonButtonClassName}`}
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full ${solidGreenButtonClassName}`}
+            >
+              {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Buttons */}
-      <div
-        className={`grid gap-3 pt-4 ${
-          onCancel ? 'grid-cols-2' : 'grid-cols-1'
-        }`}
-      >
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSubmitting || isReadOnly}
-            className={`w-full ${solidCrimsonButtonClassName}`}
-          >
-            Cancel
-          </button>
-        )}
-        {!isReadOnly && (
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full ${solidGreenButtonClassName}`}
-          >
-            {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
-          </button>
-        )}
-      </div>
+      {(!onAssistRequest || isReadOnly) && (
+        <div
+          className={`grid gap-3 pt-4 ${
+            onCancel ? 'grid-cols-2' : 'grid-cols-1'
+          }`}
+        >
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting || isReadOnly}
+              className={`w-full ${solidCrimsonButtonClassName}`}
+            >
+              Cancel
+            </button>
+          )}
+          {!isReadOnly && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full ${solidGreenButtonClassName}`}
+            >
+              {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
+            </button>
+          )}
+        </div>
+      )}
 
     </form>
   );

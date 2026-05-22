@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-22-34e4dc48",
+    "date": "2026-05-22T14:52:05+08:00",
+    "title": "refine(create-project): group review details and move actions into help panel",
+    "summary": "refine(create-project): group review details and move actions into help panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "34e4dc48",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-fa612b88",
     "date": "2026-05-22T14:40:05+08:00",
     "title": "fix(create-project): remove root page wrapper container",

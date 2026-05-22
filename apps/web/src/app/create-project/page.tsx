@@ -508,8 +508,9 @@ export default function CreateProjectPage() {
         </section>
 
         {!showDescriptionModal && (
-          <div className="mt-8">
+          <div className="mt-8 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-6 text-slate-900 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
             <div className="px-1 pb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project review</p>
               <h2 className="text-lg font-semibold text-slate-900">Review project brief</h2>
               <p className="mt-1 text-sm text-slate-700">
                 Confirm the brief, attachments, and final bidding setup before you submit.
