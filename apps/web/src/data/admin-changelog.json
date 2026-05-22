@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-22-f963d6a1",
+    "date": "2026-05-22T11:13:44+08:00",
+    "title": "feat(admin): add urgency triage and quote-window signals",
+    "summary": "feat(admin): add urgency triage and quote-window signals",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f963d6a1",
+    "files": [
+      "apps/api/src/updates/updates.module.ts",
+      "apps/api/src/updates/updates.service.ts",
+      "apps/web/src/app/admin/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-21-e14e04ae",
     "date": "2026-05-21T21:14:07+08:00",
     "title": "fix(admin): wrap chat event cards in dark container; disable strict mode double-fetch",
@@ -126,8 +142,8 @@
   {
     "id": "2026-05-21-acb90cd3",
     "date": "2026-05-21T17:31:06+08:00",
-    "title": "chore(branding): update footer references from Fitout Hub to Mimo",
-    "summary": "chore(branding): update footer references from Fitout Hub to Mimo",
+    "title": "chore(branding): update footer references from Mimo to Mimo",
+    "summary": "chore(branding): update footer references from Mimo to Mimo",
     "areas": [
       "web"
     ],
@@ -140,8 +156,8 @@
   {
     "id": "2026-05-21-0ed86db4",
     "date": "2026-05-21T17:16:50+08:00",
-    "title": "chore(branding): change FitOut Hub to Mimo in homepage video panel description",
-    "summary": "chore(branding): change FitOut Hub to Mimo in homepage video panel description",
+    "title": "chore(branding): change Mimo to Mimo in homepage video panel description",
+    "summary": "chore(branding): change Mimo to Mimo in homepage video panel description",
     "areas": [
       "web"
     ],
@@ -153,8 +169,8 @@
   {
     "id": "2026-05-21-e9b46acb",
     "date": "2026-05-21T17:14:22+08:00",
-    "title": "style(docs): repaint how-to-use page with paper theme, round main panel, remove hero third line, and rebrand FitoutHub to Mimo in docs titles",
-    "summary": "style(docs): repaint how-to-use page with paper theme, round main panel, remove hero third line, and rebrand FitoutHub to Mimo in docs titles",
+    "title": "style(docs): repaint how-to-use page with paper theme, round main panel, remove hero third line, and rebrand Mimo to Mimo in docs titles",
+    "summary": "style(docs): repaint how-to-use page with paper theme, round main panel, remove hero third line, and rebrand Mimo to Mimo in docs titles",
     "areas": [
       "web"
     ],

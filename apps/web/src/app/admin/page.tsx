@@ -47,6 +47,11 @@ type AdminCommsFeedItem = {
   id: string;
   sourceType: string;
   sourceId: string;
+  domain?: string;
+  eventType?: string;
+  urgencyLevel?: "low" | "medium" | "high" | "critical";
+  urgencyScore?: number;
+  dueAt?: string;
   conversationType?: "assist" | "chat" | "support" | "none";
   conversationId?: string;
   replyChannel?: "assist" | "chat" | "whatsapp" | "email" | "none";
@@ -229,11 +234,16 @@ export default function AdminDashboardPage() {
       }
 
       const payload = (await response.json()) as AdminCommsFeed;
-      setFeed(payload.items || []);
+      const sorted = [...(payload.items || [])].sort((left, right) => {
+        const urgencyDiff = Number(right.urgencyScore || 0) - Number(left.urgencyScore || 0);
+        if (urgencyDiff !== 0) return urgencyDiff;
+        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      });
+      setFeed(sorted);
 
       setSelectedItem((previousSelected) => {
         if (!previousSelected) return null;
-        const refreshedSelected = (payload.items || []).find(
+        const refreshedSelected = sorted.find(
           (item) =>
             item.sourceType === previousSelected.sourceType &&
             item.sourceId === previousSelected.sourceId,

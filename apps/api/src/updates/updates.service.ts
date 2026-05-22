@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConversationContainerType, ConversationChannelKey, ConversationActorType } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { ConversationService } from '../conversation/conversation.service';
+import { ActivityLogService } from '../activity-log.service';
 
 export interface FinancialActionItem {
   id: string;
@@ -84,6 +85,11 @@ export interface AdminCommsFeedItem {
   id: string;
   sourceType: string;
   sourceId: string;
+  domain?: string;
+  eventType?: string;
+  urgencyLevel?: 'low' | 'medium' | 'high' | 'critical';
+  urgencyScore?: number;
+  dueAt?: string;
   conversationType?: 'assist' | 'chat' | 'support' | 'none';
   conversationId?: string;
   replyChannel?: 'assist' | 'chat' | 'whatsapp' | 'email' | 'none';
@@ -143,6 +149,7 @@ export interface AdminConversationIndex {
 @Injectable()
 export class UpdatesService {
   private readonly logger = new Logger(UpdatesService.name);
+  private readonly signalLogCache = new Map<string, number>();
   private readonly summaryCache = new Map<
     string,
     { expiresAt: number; value: UpdatesSummary }
@@ -154,7 +161,48 @@ export class UpdatesService {
   constructor(
     private prisma: PrismaService,
     private conversationService: ConversationService,
+    private activityLogService: ActivityLogService,
   ) {}
+
+  private async recordPlatformSignalOnce(params: {
+    action: string;
+    resource: string;
+    resourceId: string;
+    details: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    const cacheKey = `${params.action}:${params.resource}:${params.resourceId}`;
+    const cachedUntil = this.signalLogCache.get(cacheKey) || 0;
+    if (cachedUntil > Date.now()) return;
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existing = await (this.prisma as any).activityLog.findFirst({
+      where: {
+        action: params.action,
+        resource: params.resource,
+        resourceId: params.resourceId,
+        createdAt: { gte: since },
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      await this.activityLogService.record({
+        actorType: 'system',
+        actorName: 'System',
+        action: params.action,
+        resource: params.resource,
+        resourceId: params.resourceId,
+        details: params.details,
+        metadata: params.metadata || null,
+        status: 'info',
+        projectId: params.resource === 'Project' ? params.resourceId : null,
+        bumpProjectActivity: false,
+      });
+    }
+
+    this.signalLogCache.set(cacheKey, Date.now() + 30 * 60 * 1000);
+  }
 
   private normalizeSeverity(value: unknown): string {
     if (typeof value !== 'string') return '';
@@ -947,6 +995,7 @@ export class UpdatesService {
   ): Promise<AdminCommsFeed> {
     await this.finalizeExpiredClosuresForDashboard();
     const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Number(limit), 10), 300) : 120;
+    const newProjectCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const [
       supportRequests,
@@ -957,6 +1006,8 @@ export class UpdatesService {
       escrowAdminActions,
       professionalCertifications,
       aiProjects,
+      recentProjects,
+      quoteWindowCandidates,
     ] =
       await Promise.all([
         this.prisma.supportRequest.findMany({
@@ -1130,9 +1181,56 @@ export class UpdatesService {
           take: safeLimit,
           orderBy: { updatedAt: 'desc' },
         }),
+        this.prisma.project.findMany({
+          where: {
+            createdAt: { gte: newProjectCutoff },
+            status: { not: 'archived' },
+          },
+          select: {
+            id: true,
+            projectName: true,
+            region: true,
+            isEmergency: true,
+            status: true,
+            currentStage: true,
+            createdAt: true,
+          },
+          take: safeLimit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        (this.prisma as any).projectProfessional.findMany({
+          take: safeLimit,
+          where: {
+            status: 'accepted',
+            quotedAt: null,
+            project: {
+              status: { not: 'archived' },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+          include: {
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+                isEmergency: true,
+                status: true,
+                currentStage: true,
+              },
+            },
+            professional: {
+              select: {
+                fullName: true,
+                businessName: true,
+                email: true,
+              },
+            },
+          },
+        }),
       ]);
 
     const feedItems: AdminCommsFeedItem[] = [];
+    const signalLogTasks: Array<Promise<void>> = [];
 
     supportRequests.forEach((request) => {
       const assignedName = request.assignedAdmin
@@ -1331,6 +1429,10 @@ export class UpdatesService {
         id: `professional-certification:${certification.id}`,
         sourceType: 'professional-certification',
         sourceId: certification.id,
+        domain: 'verification',
+        eventType: 'professional_certification_submitted',
+        urgencyLevel: certification.verificationStatus === 'SUBMITTED' ? 'high' : 'medium',
+        urgencyScore: certification.verificationStatus === 'SUBMITTED' ? 85 : 45,
         conversationType: 'none',
         conversationId: undefined,
         replyChannel: 'none',
@@ -1385,6 +1487,142 @@ export class UpdatesService {
         href: '/admin/projects',
       });
     });
+
+    recentProjects.forEach((project) => {
+      const normalizedStage = String(project.currentStage || '').toUpperCase();
+      const needsTriage =
+        normalizedStage === 'CREATED' ||
+        normalizedStage === 'BIDDING_ACTIVE' ||
+        !normalizedStage;
+
+      feedItems.push({
+        id: `project-created:${project.id}`,
+        sourceType: 'project-created',
+        sourceId: project.id,
+        domain: 'project',
+        eventType: 'project_created',
+        urgencyLevel: project.isEmergency ? 'critical' : 'medium',
+        urgencyScore: project.isEmergency ? 95 : 60,
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: needsTriage,
+        type: project.isEmergency ? 'Emergency Project Created' : 'New Project Created',
+        transport: 'Project Intake',
+        context: `Project · ${project.region || 'Unspecified region'}`,
+        user: 'Client',
+        status: String(project.currentStage || project.status || 'created').toLowerCase(),
+        assignmentStatus: 'unassigned',
+        preview: `${project.projectName} was created and is ready for admin triage.`,
+        createdAt: project.createdAt.toISOString(),
+        href: `/admin/projects/${encodeURIComponent(project.id)}`,
+      });
+
+      if (needsTriage) {
+        signalLogTasks.push(
+          this.recordPlatformSignalOnce({
+            action: 'admin_signal_project_created',
+            resource: 'Project',
+            resourceId: project.id,
+            details: project.isEmergency
+              ? 'Emergency project appeared in admin triage feed'
+              : 'New project appeared in admin triage feed',
+            metadata: {
+              sourceType: 'project-created',
+              eventType: 'project_created',
+              urgencyLevel: project.isEmergency ? 'critical' : 'medium',
+              projectName: project.projectName,
+            },
+          }).catch((error) => {
+            this.logger.warn(
+              `Failed to log project-created signal for ${project.id}: ${(error as Error)?.message}`,
+            );
+          }),
+        );
+      }
+    });
+
+    quoteWindowCandidates.forEach((candidate: any) => {
+      const createdAt = candidate?.createdAt ? new Date(candidate.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return;
+
+      const project = candidate?.project;
+      if (!project) return;
+
+      const defaultWindowMs = project.isEmergency
+        ? 1 * 60 * 60 * 1000
+        : 3 * 24 * 60 * 60 * 1000;
+      const extendedUntil = candidate?.quoteExtendedUntil
+        ? new Date(candidate.quoteExtendedUntil)
+        : null;
+      const deadline =
+        extendedUntil && !Number.isNaN(extendedUntil.getTime())
+          ? extendedUntil
+          : new Date(createdAt.getTime() + defaultWindowMs);
+
+      const remainingMs = deadline.getTime() - Date.now();
+      if (remainingMs <= 0) return;
+
+      const warnWindowMs = project.isEmergency
+        ? 30 * 60 * 1000
+        : 12 * 60 * 60 * 1000;
+      if (remainingMs > warnWindowMs) return;
+
+      const professionalLabel =
+        candidate?.professional?.fullName ||
+        candidate?.professional?.businessName ||
+        candidate?.professional?.email ||
+        'Professional';
+      const urgencyLevel: 'high' | 'critical' = project.isEmergency ? 'critical' : 'high';
+
+      feedItems.push({
+        id: `project-quote-window:${candidate.id}`,
+        sourceType: 'project-quote-window',
+        sourceId: candidate.id,
+        domain: 'project',
+        eventType: 'quote_window_expiring',
+        urgencyLevel,
+        urgencyScore: project.isEmergency ? 98 : 78,
+        dueAt: deadline.toISOString(),
+        conversationType: 'none',
+        conversationId: undefined,
+        replyChannel: 'none',
+        actionRequired: true,
+        type: project.isEmergency ? 'Emergency Quote Window Expiring' : 'Quote Window Expiring',
+        transport: 'Project Bidding',
+        context: `Project · ${project.projectName}`,
+        user: professionalLabel,
+        status: String(project.currentStage || project.status || 'bidding_active').toLowerCase(),
+        assignmentStatus: 'unassigned',
+        preview: `Quote response window closes ${deadline.toLocaleString('en-GB')} for ${professionalLabel}.`,
+        createdAt: createdAt.toISOString(),
+        href: `/admin/projects/${encodeURIComponent(project.id)}`,
+      });
+
+      signalLogTasks.push(
+        this.recordPlatformSignalOnce({
+          action: 'admin_signal_quote_window_expiring',
+          resource: 'Project',
+          resourceId: project.id,
+          details: `Quote window is nearing deadline for ${professionalLabel}`,
+          metadata: {
+            sourceType: 'project-quote-window',
+            eventType: 'quote_window_expiring',
+            urgencyLevel,
+            dueAt: deadline.toISOString(),
+            professionalLabel,
+          },
+        }).catch((error) => {
+          this.logger.warn(
+            `Failed to log quote-window signal for ${project.id}: ${(error as Error)?.message}`,
+          );
+        }),
+      );
+    });
+
+    if (signalLogTasks.length > 0) {
+      await Promise.all(signalLogTasks);
+    }
 
     const uniqueKeys = Array.from(
       new Set(feedItems.map((item) => this.feedKey(item.sourceType, item.sourceId))),
