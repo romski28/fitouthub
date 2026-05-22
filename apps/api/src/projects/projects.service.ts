@@ -438,6 +438,32 @@ export class ProjectsService {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+  private isMissingProjectProfessionalTradeScopeFieldError(error: any): boolean {
+    const message = String(error?.message || '');
+    return (
+      message.includes('quoteRequestedTrades') ||
+      message.includes('projectTradesSnapshot') ||
+      (error?.code === 'P2022' &&
+        (message.includes('ProjectProfessional') || message.includes('projectprofessional')))
+    );
+  }
+
+  private buildProjectProfessionalTradeScopeWrite(input: {
+    status: 'pending' | 'selected';
+    requestedTrades: string[];
+    projectTrades: string[];
+    includeTradeScope: boolean;
+  }) {
+    if (!input.includeTradeScope) {
+      return { status: input.status };
+    }
+    return {
+      status: input.status,
+      quoteRequestedTrades: input.requestedTrades,
+      projectTradesSnapshot: input.projectTrades,
+    };
+  }
+
   private async addProjectChatMessage(
     projectId: string,
     senderType: 'client' | 'professional',
@@ -1912,35 +1938,48 @@ export class ProjectsService {
       ]),
     );
 
-    // Create or ensure ProjectProfessional relations (update status to 'pending' if exists)
-    const junctionPromises = professionals.map((pro) =>
-      (this.prisma as any).projectProfessional.upsert({
-        where: {
-          projectId_professionalId: {
+    const buildJunctionPromises = (includeTradeScope: boolean) =>
+      professionals.map((pro) =>
+        (this.prisma as any).projectProfessional.upsert({
+          where: {
+            projectId_professionalId: {
+              projectId,
+              professionalId: pro.id,
+            },
+          },
+          update: this.buildProjectProfessionalTradeScopeWrite({
+            status: 'pending',
+            requestedTrades:
+              invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
+            projectTrades:
+              invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
+            includeTradeScope,
+          }),
+          create: {
             projectId,
             professionalId: pro.id,
+            ...this.buildProjectProfessionalTradeScopeWrite({
+              status: 'pending',
+              requestedTrades:
+                invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
+              projectTrades:
+                invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
+              includeTradeScope,
+            }),
           },
-        },
-        update: {
-          status: 'pending',
-          quoteRequestedTrades:
-            invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
-          projectTradesSnapshot:
-            invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
-        },
-        create: {
-          projectId,
-          professionalId: pro.id,
-          status: 'pending',
-          quoteRequestedTrades:
-            invitationScopeByProfessionalId.get(pro.id)?.requestedTrades || [],
-          projectTradesSnapshot:
-            invitationScopeByProfessionalId.get(pro.id)?.projectTrades || [],
-        },
-      }),
-    );
+        }),
+      );
 
-    const junctionResults = await Promise.all(junctionPromises);
+    let junctionResults: any[] = [];
+    try {
+      junctionResults = await Promise.all(buildJunctionPromises(true));
+    } catch (error) {
+      if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
+        throw error;
+      }
+      console.warn('[ProjectsService.inviteProfessionals] Trade-scope columns unavailable, retrying without scoped trade fields');
+      junctionResults = await Promise.all(buildJunctionPromises(false));
+    }
 
     // Create invitation messages for each professional
     const messagePromises = junctionResults.map(async (projectProfessional) => {
@@ -2185,28 +2224,56 @@ Please review the project details and respond with your quote or decline the inv
         .catch(() => null);
 
       if (!existing) {
-        const created = await (this.prisma as any).projectProfessional.create({
-          data: {
-            projectId,
-            professionalId: proId,
-            status: 'selected',
-            quoteRequestedTrades:
-              invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
-            projectTradesSnapshot:
-              invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
-          },
-        });
+        let created: any;
+        try {
+          created = await (this.prisma as any).projectProfessional.create({
+            data: {
+              projectId,
+              professionalId: proId,
+              ...this.buildProjectProfessionalTradeScopeWrite({
+                status: 'selected',
+                requestedTrades:
+                  invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
+                projectTrades:
+                  invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
+                includeTradeScope: true,
+              }),
+            },
+          });
+        } catch (error) {
+          if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
+            throw error;
+          }
+          created = await (this.prisma as any).projectProfessional.create({
+            data: {
+              projectId,
+              professionalId: proId,
+              ...this.buildProjectProfessionalTradeScopeWrite({
+                status: 'selected',
+                requestedTrades: [],
+                projectTrades: [],
+                includeTradeScope: false,
+              }),
+            },
+          });
+        }
         results.push(created);
       } else {
-        await (this.prisma as any).projectProfessional.update({
-          where: { id: existing.id },
-          data: {
-            quoteRequestedTrades:
-              invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
-            projectTradesSnapshot:
-              invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
-          },
-        });
+        try {
+          await (this.prisma as any).projectProfessional.update({
+            where: { id: existing.id },
+            data: {
+              quoteRequestedTrades:
+                invitationScopeByProfessionalId.get(proId)?.requestedTrades || [],
+              projectTradesSnapshot:
+                invitationScopeByProfessionalId.get(proId)?.projectTrades || [],
+            },
+          });
+        } catch (error) {
+          if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
+            throw error;
+          }
+        }
         // Preserve existing lifecycle status for already-linked professionals.
         // Do not downgrade active invitations back to `selected`, otherwise they
         // disappear from the bidding board even though bidding is still live.
@@ -2310,20 +2377,25 @@ Please review the project details and respond with your quote or decline the inv
     normalized.projectScale = resolvedScale;
     normalized.escrowFundingPolicy = this.escrowPolicyForScale(resolvedScale);
 
-    const createData: any = {
+    const buildCreateData = (includeTradeScope: boolean) => ({
       ...normalized,
       currentStage: ids.length > 0 ? ProjectStage.BIDDING_ACTIVE : ProjectStage.CREATED,
       professionals: {
         create: ids.map((id) => ({
           professionalId: id,
-          status: 'pending',
-          quoteRequestedTrades:
-            invitationScopeByProfessionalId.get(id)?.requestedTrades || [],
-          projectTradesSnapshot:
-            invitationScopeByProfessionalId.get(id)?.projectTrades || [],
+          ...this.buildProjectProfessionalTradeScopeWrite({
+            status: 'pending',
+            requestedTrades:
+              invitationScopeByProfessionalId.get(id)?.requestedTrades || [],
+            projectTrades:
+              invitationScopeByProfessionalId.get(id)?.projectTrades || [],
+            includeTradeScope,
+          }),
         })),
       },
-    };
+    });
+
+    const createData: any = buildCreateData(true);
 
     // Link to AI intake if provided
     if (aiIntakeId) {
@@ -2341,18 +2413,39 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     // Create project with all ProjectProfessional junctions
-    const project = await this.prisma.project.create({
-      data: createData,
-      include: {
+    let project: any;
+    try {
+      project = await this.prisma.project.create({
+        data: createData,
+        include: {
 
-        professionals: {
-          include: {
-            professional: true,
+          professionals: {
+            include: {
+              professional: true,
+            },
           },
+          photos: true,
         },
-        photos: true,
-      },
-    });
+      });
+    } catch (error) {
+      if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
+        throw error;
+      }
+
+      console.warn('[ProjectsService.create] Trade-scope columns unavailable, retrying project create without scoped trade fields');
+      project = await this.prisma.project.create({
+        data: buildCreateData(false),
+        include: {
+
+          professionals: {
+            include: {
+              professional: true,
+            },
+          },
+          photos: true,
+        },
+      });
+    }
 
     // Create invitation messages for each professional
     if (professionals.length > 0 && project.professionals.length > 0) {

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-5d180da3",
+    "date": "2026-05-22T22:42:50+08:00",
+    "title": "fix(api): harden project invite/create against schema drift",
+    "summary": "fix(api): harden project invite/create against schema drift",
+    "areas": [
+      "api"
+    ],
+    "commit": "5d180da3",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-22-2e2cb085",
     "date": "2026-05-22T22:36:39+08:00",
     "title": "refactor(create-project): simplify confirmation-only review UI",
