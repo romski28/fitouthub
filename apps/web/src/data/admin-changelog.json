@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-dc4e273e",
+    "date": "2026-05-22T13:49:36+08:00",
+    "title": "fix(create-project): stop modal auto-open on page refresh",
+    "summary": "fix(create-project): stop modal auto-open on page refresh",
+    "areas": [
+      "web"
+    ],
+    "commit": "dc4e273e",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-1660f0f6",
     "date": "2026-05-22T13:45:48+08:00",
     "title": "fix(create-project): ship button refresh and preserve wizard photos",

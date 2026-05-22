@@ -209,10 +209,8 @@ export default function CreateProjectPage() {
       clearCreateProjectDraftHandoff();
       clearProjectDescriptionHandoff();
 
-      // Show description modal if no data stored
-      if (!stored && !storedDraft && !parsedDraftForDebug && !parsedDescriptionForDebug) {
-        setShowDescriptionModal(true);
-      }
+      // Keep create-project as a stable review page on refresh.
+      // Do not auto-open the description modal when handoff data is absent.
     }
   }, [hydrated, isLoggedIn]);
 
