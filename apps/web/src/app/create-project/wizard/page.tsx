@@ -7,7 +7,6 @@ import type { CanonicalLocation } from '@/components/location-select';
 import LocationSelect from '@/components/location-select';
 import { HkDistrictList } from '@/components/hk-district-list';
 import { HkDistrictMap } from '@/components/hk-district-map';
-import { MapOrList } from '@/components/map-or-list';
 import type { ProjectFormData } from '@/components/project-form';
 import type { Professional } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
@@ -29,6 +28,8 @@ type WizardStep =
   | { kind: 'scopeDates' }
   | { kind: 'images' }
   | { kind: 'review' };
+
+type LocationInputMode = 'map' | 'list';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -116,6 +117,15 @@ export default function CreateProjectWizardPage() {
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
+    if (typeof window === 'undefined') return 'map';
+    try {
+      const storedMode = window.localStorage.getItem('fh-map-or-list-preference');
+      return storedMode === 'list' ? 'list' : 'map';
+    } catch {
+      return 'map';
+    }
+  });
 
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -260,6 +270,15 @@ export default function CreateProjectWizardPage() {
   };
 
   const goBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
+
+  const handleLocationInputMode = (nextMode: LocationInputMode) => {
+    setLocationInputMode(nextMode);
+    try {
+      window.localStorage.setItem('fh-map-or-list-preference', nextMode);
+    } catch {
+      // no-op
+    }
+  };
 
   const addImageUrl = () => {
     const normalized = imageUrlDraft.trim();
@@ -416,14 +435,14 @@ export default function CreateProjectWizardPage() {
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="mx-auto flex max-h-[calc(100vh-250px)] min-h-[340px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
+          <div className="relative mx-auto flex max-h-[calc(100vh-210px)] min-h-[340px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
             <div className="min-h-0 flex-1 overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
               >
                 {steps.map((step, index) => (
-                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 sm:p-6">
+                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 pb-24 sm:p-6 sm:pb-24">
                     {step.kind === 'basics' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📝</span><span>Project basics</span></h3>
@@ -448,24 +467,43 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'location' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
-                        <p className={panelNoteClass}>Select your project district.</p>
-                        <MapOrList
-                          storageKey="fh-map-or-list-preference"
-                          label=""
-                          helperText=""
-                          mapLabel="Map"
-                          listLabel="Words"
-                          listPanelClassName="max-h-[32vh] overflow-y-auto pr-1"
-                          map={
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
+                          <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                            <button
+                              type="button"
+                              onClick={() => handleLocationInputMode('map')}
+                              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                                locationInputMode === 'map'
+                                  ? 'bg-orange-600 text-amber-50 shadow-md'
+                                  : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
+                              }`}
+                            >
+                              Map
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleLocationInputMode('list')}
+                              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                                locationInputMode === 'list'
+                                  ? 'bg-orange-600 text-amber-50 shadow-md'
+                                  : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
+                              }`}
+                            >
+                              Words
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-auto">
+                          {locationInputMode === 'map' ? (
                             <HkDistrictMap
                               selectionMode="single"
                               selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
                               onChange={handleProjectMapSelection}
                             />
-                          }
-                          list={
-                            <div className="space-y-3">
+                          ) : (
+                            <div className="space-y-3 pr-1">
                               <HkDistrictList
                                 selectionMode="single"
                                 selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
@@ -475,8 +513,8 @@ export default function CreateProjectWizardPage() {
                                 <LocationSelect value={location} onChange={setLocation} enableSearch={true} />
                               </div>
                             </div>
-                          }
-                        />
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -614,12 +652,12 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white/60 p-4">
+            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/80 p-3 backdrop-blur">
               <button
                 type="button"
                 onClick={goBack}
                 disabled={currentStep === 0}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
+                className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
               >
                 Back
               </button>
@@ -629,7 +667,7 @@ export default function CreateProjectWizardPage() {
                   type="button"
                   onClick={goNext}
                   disabled={!canGoNext}
-                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -637,7 +675,7 @@ export default function CreateProjectWizardPage() {
                 <button
                   type="button"
                   onClick={submitWizard}
-                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
+                  className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
                 >
                   Continue to Invite Professionals
                 </button>

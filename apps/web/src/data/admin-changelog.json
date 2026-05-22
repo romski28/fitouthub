@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-19dbc084",
+    "date": "2026-05-22T15:43:51+08:00",
+    "title": "refine(ai-wizard): free map space on location step",
+    "summary": "refine(ai-wizard): free map space on location step",
+    "areas": [
+      "web"
+    ],
+    "commit": "19dbc084",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-b82b36c1",
     "date": "2026-05-22T15:27:56+08:00",
     "title": "style(create-project): align summary sub-panels to standard theme",
