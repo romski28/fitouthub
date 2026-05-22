@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-4e511069",
+    "date": "2026-05-22T16:29:42+08:00",
+    "title": "refine(map): auto-fit district map by container aspect",
+    "summary": "refine(map): auto-fit district map by container aspect",
+    "areas": [
+      "web"
+    ],
+    "commit": "4e511069",
+    "files": [
+      "apps/web/src/components/hk-district-map.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-bce2f60a",
     "date": "2026-05-22T16:15:00+08:00",
     "title": "refine(ai-wizard): compute picker height and increase step viewport",
