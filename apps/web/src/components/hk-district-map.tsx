@@ -73,7 +73,7 @@ export function HkDistrictMap({
     <div className={`rounded-xl border border-slate-200 bg-slate-50 ${compact ? 'p-2' : 'p-3'}`}>
       <div
         ref={mapContainerRef}
-        className={compact ? 'flex h-full min-h-[220px] items-center justify-center overflow-hidden' : 'flex items-center justify-center overflow-hidden'}
+        className={compact ? 'flex h-full min-h-0 items-center justify-center overflow-hidden' : 'flex items-center justify-center overflow-hidden'}
       >
         <svg
           viewBox={HK_DISTRICT_VIEWBOX}
@@ -82,7 +82,7 @@ export function HkDistrictMap({
             compact
               ? fitAxis === 'height'
                 ? 'h-full w-auto max-w-none'
-                : 'h-auto w-full'
+                : 'h-auto w-full max-h-full'
               : `w-full h-auto ${compact ? 'max-h-none' : 'max-h-[min(45vh,_400px)]'}`
           }
           role="img"

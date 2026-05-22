@@ -296,8 +296,9 @@ export default function CreateProjectWizardPage() {
 
       const panelStyles = window.getComputedStyle(panelEl);
       const gap = Number.parseFloat(panelStyles.rowGap || panelStyles.gap || '0') || 0;
-      const available = Math.max(220, panelEl.clientHeight - headerEl.offsetHeight - gap);
-      setLocationPickerHeight(available);
+      // Keep a small safety buffer to avoid 1-2px overflow from borders/padding rounding.
+      const available = Math.max(220, panelEl.clientHeight - headerEl.offsetHeight - gap - 8);
+      setLocationPickerHeight(Math.floor(available));
     };
 
     recalculate();
@@ -468,7 +469,12 @@ export default function CreateProjectWizardPage() {
                 style={{ transform: `translateX(-${currentStep * 100}%)` }}
               >
                 {steps.map((step, index) => (
-                  <div key={`${step.kind}-${index}`} className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5 pb-24 sm:p-6 sm:pb-24">
+                  <div
+                    key={`${step.kind}-${index}`}
+                    className={`flex h-full w-full shrink-0 flex-col p-5 pb-24 sm:p-6 sm:pb-24 ${
+                      step.kind === 'location' ? 'overflow-hidden' : 'overflow-y-auto'
+                    }`}
+                  >
                     {step.kind === 'basics' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>📝</span><span>Project basics</span></h3>
@@ -523,7 +529,7 @@ export default function CreateProjectWizardPage() {
 
                         <div className="min-h-0 flex-1 overflow-hidden" style={locationPickerHeight ? { height: `${locationPickerHeight}px` } : undefined}>
                           {locationInputMode === 'map' ? (
-                            <div className="h-full overflow-auto pr-1">
+                            <div className="h-full overflow-hidden pr-1">
                               <HkDistrictMap
                                 selectionMode="single"
                                 selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
