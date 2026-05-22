@@ -1055,16 +1055,8 @@ export function ProjectForm({
       </div>
 
       {/* Timescale */}
+      {!isConfirmationView && (
       <div className={usesDarkCreateSurface ? '' : 'mimo-panel p-4'}>
-      {isConfirmationView ? (
-        <div className={`rounded-md border px-3 py-2 text-sm ${
-          usesDarkCreateSurface
-            ? 'border-slate-600 bg-slate-800/40 text-slate-100'
-            : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-700'
-        }`}>
-          Dates are captured in the wizard and shown in the overview above.
-        </div>
-      ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -1155,8 +1147,8 @@ export function ProjectForm({
             </div>
           </div>
         </div>
-      )}
       </div>
+      )}
 
       {/* File Upload */}
       {!isReadOnly && (

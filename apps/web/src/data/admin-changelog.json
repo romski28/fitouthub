@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-880db831",
+    "date": "2026-05-22T22:54:56+08:00",
+    "title": "fix(create-project): remove redundant confirmation dates panel",
+    "summary": "fix(create-project): remove redundant confirmation dates panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "880db831",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-d72dfb45",
     "date": "2026-05-22T22:48:32+08:00",
     "title": "feat(create-project): add thumb previews and mobile camera capture",
