@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-765c3756",
+    "date": "2026-05-22T17:15:03+08:00",
+    "title": "fix(ai-wizard): calibrate location picker to 768->300 baseline",
+    "summary": "fix(ai-wizard): calibrate location picker to 768->300 baseline",
+    "areas": [
+      "web"
+    ],
+    "commit": "765c3756",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-13fb2c43",
     "date": "2026-05-22T17:04:22+08:00",
     "title": "fix(ai-wizard): use row-based location layout instead of JS height math",
