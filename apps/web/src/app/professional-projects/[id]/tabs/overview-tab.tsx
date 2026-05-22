@@ -41,6 +41,8 @@ interface OverviewTabProps {
   tab?: string;
   project: {
     id: string;
+    quoteRequestedTrades?: string[];
+    projectTradesSnapshot?: string[];
     project: {
       id: string;
       projectName: string;
@@ -259,6 +261,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isInitialQuoteLocked = shouldEnforceInitialDeadline && isOverdue;
   const showQuoteForm = ['pending', 'accepted', 'counter_requested'].includes(project.status);
   const overviewSummaryLines = extractOverviewSummaryLines(project.project.notes);
+  const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
+    ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
+    : [];
+  const projectTradeScope = Array.isArray(project.projectTradesSnapshot)
+    ? project.projectTradesSnapshot.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
+    : [];
 
   const countdownBadge = quoteDeadline && shouldEnforceInitialDeadline ? (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -329,6 +337,47 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {(requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">Your Trade Scope</h2>
+          <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Quoted by you</p>
+              {requestedTradeScope.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {requestedTradeScope.map((trade) => (
+                    <span
+                      key={`scope-requested-${trade}`}
+                      className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800"
+                    >
+                      {trade}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-600">To be confirmed based on your supplied trade scope.</p>
+              )}
+            </div>
+
+            {projectTradeScope.length > 0 && (
+              <div className="border-t border-[rgba(120,53,15,0.12)] pt-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">All project trades</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {projectTradeScope.map((trade) => (
+                    <span
+                      key={`scope-project-${trade}`}
+                      className="rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.82)] px-2 py-0.5 text-[11px] font-semibold text-slate-700"
+                    >
+                      {trade}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {overviewSummaryLines.length > 0 && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Summary</h2>

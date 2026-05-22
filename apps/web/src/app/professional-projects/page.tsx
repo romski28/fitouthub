@@ -25,6 +25,8 @@ import type { UpdatesSummary } from '@/lib/updates-cache';
 interface ProjectProfessional {
   id: string;
   projectId: string;
+  quoteRequestedTrades?: string[];
+  projectTradesSnapshot?: string[];
   createdAt?: string;
   quoteExtendedUntil?: string;
   quoteReminderSentAt?: string;
@@ -474,6 +476,33 @@ export default function ProfessionalProjectsPage() {
                               </>
                             )}
                           </div>
+                          {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              {projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
+                                <>
+                                  <span className={`text-[11px] font-semibold ${quoteOverdue || isStopStatus ? 'text-amber-100' : 'text-slate-600'}`}>
+                                    Your scope:
+                                  </span>
+                                  {projectProf.quoteRequestedTrades.map((trade) => (
+                                    <span
+                                      key={`requested-${projectProf.id}-${trade}`}
+                                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                        quoteOverdue || isStopStatus
+                                          ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
+                                          : 'border border-amber-300 bg-amber-50 text-amber-800'
+                                      }`}
+                                    >
+                                      {trade}
+                                    </span>
+                                  ))}
+                                </>
+                              ) : (
+                                <span className={`text-[11px] ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
+                                  Your scope: to be confirmed
+                                </span>
+                              )}
+                            </div>
+                          ) : null}
                           {isRestricted ? (
                             <p className={`mt-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
                               {projectProf.project.notes || 'Bidding has concluded for this project.'}

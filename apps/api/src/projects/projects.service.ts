@@ -225,10 +225,6 @@ export class ProjectsService {
       tradeTokens.some((token) => token.includes(trade.toLowerCase()) || trade.toLowerCase().includes(token)),
     );
 
-    if (requestedTrades.length === 0) {
-      requestedTrades = normalizedProjectTrades.slice();
-    }
-
     requestedTrades = this.normalizeTradeLabels(requestedTrades);
     const requestedKeys = new Set(requestedTrades.map((trade) => trade.toLowerCase()));
     const otherRequiredTrades = normalizedProjectTrades.filter(
@@ -251,7 +247,7 @@ export class ProjectsService {
       requestedTradesLine:
         scope.requestedTrades.length > 0
           ? `Quote requested for: ${scope.requestedTrades.join(', ')}`
-          : null,
+          : 'Quote requested for: To be confirmed based on your supplied trade scope',
       otherRequiredTradesLine:
         scope.otherRequiredTrades.length > 0
           ? `Other trades required on this project: ${scope.otherRequiredTrades.join(', ')}`
@@ -264,7 +260,7 @@ export class ProjectsService {
         scope.requestedTrades.length > 0
           ? `Quote requested for ${scope.requestedTrades.join(', ')}${scope.otherRequiredTrades.length > 0 ? `. Other project trades: ${scope.otherRequiredTrades.join(', ')}` : ''}.`
           : scope.projectTrades.length > 0
-            ? `Trades required: ${scope.projectTrades.join(', ')}.`
+            ? `Your quote scope will be confirmed from your supplied trades. Project requires: ${scope.projectTrades.join(', ')}.`
             : 'Trades to be discussed.',
     };
   }
