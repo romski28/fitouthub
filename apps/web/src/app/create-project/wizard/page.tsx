@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { CanonicalLocation } from '@/components/location-select';
@@ -128,9 +128,6 @@ export default function CreateProjectWizardPage() {
   });
 
   const [currentStep, setCurrentStep] = useState(0);
-  const locationPickerHostRef = useRef<HTMLDivElement | null>(null);
-  const wizardNavRef = useRef<HTMLDivElement | null>(null);
-  const [locationPickerHeight, setLocationPickerHeight] = useState<number | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -282,37 +279,6 @@ export default function CreateProjectWizardPage() {
       // no-op
     }
   };
-
-  useEffect(() => {
-    if (activeStep?.kind !== 'location') {
-      setLocationPickerHeight(null);
-      return;
-    }
-
-    const recalculate = () => {
-      const pickerHostEl = locationPickerHostRef.current;
-      const navEl = wizardNavRef.current;
-      if (!pickerHostEl || !navEl) return;
-
-      const pickerTop = pickerHostEl.getBoundingClientRect().top;
-      const navTop = navEl.getBoundingClientRect().top;
-      // Safety buffer avoids collisions from border/padding rounding.
-      const available = Math.max(220, navTop - pickerTop - 8);
-      setLocationPickerHeight(Math.floor(available));
-    };
-
-    recalculate();
-
-    const resizeObserver = new ResizeObserver(() => recalculate());
-    if (locationPickerHostRef.current) resizeObserver.observe(locationPickerHostRef.current);
-    if (wizardNavRef.current) resizeObserver.observe(wizardNavRef.current);
-    window.addEventListener('resize', recalculate);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', recalculate);
-    };
-  }, [activeStep?.kind, currentStep]);
 
   const addImageUrl = () => {
     const normalized = imageUrlDraft.trim();
@@ -498,7 +464,7 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'location' && (
-                      <div className={panelContentClass}>
+                      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4">
                         <div className="flex items-start justify-between gap-3">
                           <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
                           <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
@@ -527,7 +493,7 @@ export default function CreateProjectWizardPage() {
                           </div>
                         </div>
 
-                        <div ref={locationPickerHostRef} className="min-h-0 flex-1 overflow-hidden" style={locationPickerHeight ? { height: `${locationPickerHeight}px` } : undefined}>
+                        <div className="min-h-0 overflow-hidden">
                           {locationInputMode === 'map' ? (
                             <div className="h-full overflow-hidden pr-1">
                               <HkDistrictMap
@@ -687,7 +653,7 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            <div ref={wizardNavRef} className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
+            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={goBack}

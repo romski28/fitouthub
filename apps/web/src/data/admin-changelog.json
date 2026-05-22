@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-13fb2c43",
+    "date": "2026-05-22T17:04:22+08:00",
+    "title": "fix(ai-wizard): use row-based location layout instead of JS height math",
+    "summary": "fix(ai-wizard): use row-based location layout instead of JS height math",
+    "areas": [
+      "web"
+    ],
+    "commit": "13fb2c43",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-a8c71e37",
     "date": "2026-05-22T16:57:05+08:00",
     "title": "fix(ai-wizard): size location picker from actual nav offset",
