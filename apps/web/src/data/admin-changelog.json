@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-09f8ac50",
+    "date": "2026-05-22T15:10:57+08:00",
+    "title": "style(home): apply standard parent panel shell",
+    "summary": "style(home): apply standard parent panel shell",
+    "areas": [
+      "web"
+    ],
+    "commit": "09f8ac50",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-1a1d8b5e",
     "date": "2026-05-22T15:07:25+08:00",
     "title": "style(ui): define standard panel hierarchy from home hero",
