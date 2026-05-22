@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-5585c626",
+    "date": "2026-05-22T17:35:59+08:00",
+    "title": "fix(ai-wizard): let location picker fill available space",
+    "summary": "fix(ai-wizard): let location picker fill available space",
+    "areas": [
+      "web"
+    ],
+    "commit": "5585c626",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-933928a8",
     "date": "2026-05-22T17:29:46+08:00",
     "title": "fix(ai-wizard): normalize full location container stack",

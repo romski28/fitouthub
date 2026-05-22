@@ -95,7 +95,7 @@ const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate
 const panelNoteClass = 'text-sm leading-relaxed text-slate-700';
 const panelCardClass = 'space-y-4';
 const panelContentClass = 'flex h-full min-h-0 flex-col gap-4';
-const LOCATION_PICKER_CONTAINER_CLASS = 'h-[300px] shrink-0 overflow-hidden';
+const LOCATION_PICKER_CONTAINER_CLASS = 'min-h-[300px] flex-1 overflow-hidden';
 
 export default function CreateProjectWizardPage() {
   const router = useRouter();
