@@ -414,19 +414,12 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-10 pt-6">
+    <div className="min-h-screen pb-10 pt-3">
       <section className="-mx-6 px-6">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">AI Project Wizard</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Let&apos;s lock in your project</h1>
-        </div>
-      </section>
-
-      <section className="-mx-6 mt-6 px-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-              Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+              AI Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
             </p>
             <p className="text-base font-semibold text-slate-700">{progress}% complete</p>
           </div>
@@ -435,7 +428,7 @@ export default function CreateProjectWizardPage() {
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="relative mx-auto flex max-h-[calc(100vh-210px)] min-h-[340px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
+          <div className="relative mx-auto flex max-h-[calc(100vh-170px)] min-h-[340px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
             <div className="min-h-0 flex-1 overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
@@ -495,15 +488,18 @@ export default function CreateProjectWizardPage() {
                           </div>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-auto">
+                        <div className="min-h-0 flex-1 overflow-hidden max-h-[calc(100vh-390px)]">
                           {locationInputMode === 'map' ? (
-                            <HkDistrictMap
-                              selectionMode="single"
-                              selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
-                              onChange={handleProjectMapSelection}
-                            />
+                            <div className="h-full overflow-auto pr-1">
+                              <HkDistrictMap
+                                selectionMode="single"
+                                selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
+                                onChange={handleProjectMapSelection}
+                                compact={true}
+                              />
+                            </div>
                           ) : (
-                            <div className="space-y-3 pr-1">
+                            <div className="h-full overflow-auto space-y-3 pr-1">
                               <HkDistrictList
                                 selectionMode="single"
                                 selectedAreaCodes={selectedProjectAreaCode ? [selectedProjectAreaCode] : []}
@@ -652,7 +648,7 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/80 p-3 backdrop-blur">
+            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={goBack}

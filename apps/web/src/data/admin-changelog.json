@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-ea43a699",
+    "date": "2026-05-22T15:57:34+08:00",
+    "title": "refine(ai-wizard): constrain location picker and reclaim vertical space",
+    "summary": "refine(ai-wizard): constrain location picker and reclaim vertical space",
+    "areas": [
+      "web"
+    ],
+    "commit": "ea43a699",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-19dbc084",
     "date": "2026-05-22T15:43:51+08:00",
     "title": "refine(ai-wizard): free map space on location step",
