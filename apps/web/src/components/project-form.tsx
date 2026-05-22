@@ -222,14 +222,12 @@ export function ProjectForm({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Array<{ id?: string; url: string; note?: string | null }>>(() => buildInitialFormState(initialData).existingPhotos ?? []);
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
-  const [isOverviewEditing, setIsOverviewEditing] = useState(false);
   const [showAiExtract, setShowAiExtract] = useState(() => {
     const riskLevel = (initialData?.aiFrom?.safety?.riskLevel || '').toLowerCase();
     return riskLevel === 'medium' || riskLevel === 'high' || riskLevel === 'critical';
   });
   const isReadOnly = mode === 'view';
   const usesDarkCreateSurface = mode === 'create' && !confirmationMode;
-  const creamPanelClassName = 'mimo-panel';
   const solidGreenButtonClassName = 'rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50';
   const solidBlueButtonClassName = 'rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50';
   const solidCrimsonButtonClassName = 'rounded-lg bg-rose-700 px-6 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-rose-800 disabled:opacity-50';
@@ -242,7 +240,6 @@ export function ProjectForm({
     setRemovedPhotos([]);
     setTradeSearchTerm('');
     setShowTradeDropdown(false);
-    setIsOverviewEditing(false);
     const riskLevel = (initialData?.aiFrom?.safety?.riskLevel || '').toLowerCase();
     setShowAiExtract(riskLevel === 'medium' || riskLevel === 'high' || riskLevel === 'critical');
   }, [initialDataKey]);
@@ -332,6 +329,36 @@ export function ProjectForm({
     setPendingFiles(files);
   };
 
+  const handleWizardStyleFilesChange = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+    setPendingFiles((prev) => {
+      const dedupe = new Set(prev.map((file) => `${file.name}:${file.size}:${file.lastModified}`));
+      const next = [...prev];
+      for (const file of incoming) {
+        const key = `${file.name}:${file.size}:${file.lastModified}`;
+        if (!dedupe.has(key)) {
+          dedupe.add(key);
+          next.push(file);
+        }
+      }
+      return next;
+    });
+  };
+
+  const removePendingFile = (target: File) => {
+    setPendingFiles((prev) =>
+      prev.filter(
+        (file) =>
+          !(
+            file.name === target.name &&
+            file.size === target.size &&
+            file.lastModified === target.lastModified
+          ),
+      ),
+    );
+  };
+
   const handleRemoveExistingPhoto = (urlOrId: string) => {
     setExistingPhotos((prev) => prev.filter((p) => p.id !== urlOrId && p.url !== urlOrId));
     setRemovedPhotos((prev) => (prev.includes(urlOrId) ? prev : [...prev, urlOrId]));
@@ -393,10 +420,17 @@ export function ProjectForm({
         formData.tradesRequired.length > 0),
   );
 
-  const isConfirmationView = confirmationMode && hasAiContext && !isOverviewEditing;
+  const isConfirmationView = confirmationMode && hasAiContext;
 
-  const showEditableAiFields = !hasAiContext || isOverviewEditing;
+  const showEditableAiFields = !hasAiContext || !confirmationMode;
   const shouldRequirePrimaryFields = !isReadOnly && showEditableAiFields;
+
+  const formatDateForSummary = (value?: string) => {
+    if (!value) return 'Not set';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('en-HK', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
 
   // Quick request form (compact)
   if (isQuickRequest) {
@@ -672,15 +706,6 @@ export function ProjectForm({
                 {formData.projectName?.trim() || 'Untitled project'}
               </h3>
             </div>
-            {!isReadOnly && (
-              <button
-                type="button"
-                onClick={() => setIsOverviewEditing((prev) => !prev)}
-                className={solidGreenButtonClassName}
-              >
-                {isOverviewEditing ? 'Done editing overview' : 'Edit overview'}
-              </button>
-            )}
           </div>
 
           <div className={`space-y-2 text-sm ${
@@ -721,7 +746,20 @@ export function ProjectForm({
                   usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
                 }`}>Priority:</span>{' '}
                 {formData.isEmergency ? 'Emergency project' : 'Standard priority'}
-                {!formData.isEmergency && formData.endDate ? ` · Target by ${formData.endDate}` : ''}
+              </p>
+            )}
+            {confirmationMode && (
+              <p>
+                <span className={`font-semibold ${
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
+                }`}>Site inspection:</span> {formatDateForSummary(formData.siteInspectionAvailableOn)}
+              </p>
+            )}
+            {confirmationMode && (
+              <p>
+                <span className={`font-semibold ${
+                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
+                }`}>Completion target:</span> {formatDateForSummary(formData.endDate)}
               </p>
             )}
           </div>
@@ -1003,70 +1041,13 @@ export function ProjectForm({
       {/* Timescale */}
       <div className={usesDarkCreateSurface ? '' : 'mimo-panel p-4'}>
       {isConfirmationView ? (
-        !formData.isEmergency ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="grid gap-1">
-              <label className={`text-sm font-medium ${
-                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
-              }`}>
-                <span className="inline-flex items-center gap-1.5">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  I need this completed by
-                </span>
-              </label>
-              <input
-                type="date"
-                value={formData.endDate || ''}
-                onChange={(e) => handleChange('endDate', e.target.value)}
-                disabled={isReadOnly || isSubmitting}
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  usesDarkCreateSurface
-                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
-                }`}
-              />
-            </div>
-            <div className="grid gap-1">
-              <label className={`text-sm font-medium ${
-                usesDarkCreateSurface ? 'text-white' : 'text-slate-800'
-              }`}>
-                <span className="inline-flex items-center gap-1.5">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  I can allow site inspection on
-                </span>
-              </label>
-              <input
-                type="date"
-                value={formData.siteInspectionAvailableOn || ''}
-                onChange={(e) => handleChange('siteInspectionAvailableOn', e.target.value)}
-                disabled={isReadOnly || isSubmitting}
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  usesDarkCreateSurface
-                    ? 'border-slate-600 bg-slate-800/50 text-white focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert'
-                    : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-900 focus:border-[rgba(185,78,45,0.5)] focus:outline-none focus:ring-1 focus:ring-[rgba(185,78,45,0.3)]'
-                }`}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className={`rounded-md border px-3 py-2 text-sm ${
-            usesDarkCreateSurface
-              ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
-              : `${creamPanelClassName} text-rose-700`
-          }`}>
-            Emergency project detected — completion-by date is optional and hidden in this quick confirmation view.
-          </div>
-        )
+        <div className={`rounded-md border px-3 py-2 text-sm ${
+          usesDarkCreateSurface
+            ? 'border-slate-600 bg-slate-800/40 text-slate-100'
+            : 'border-[rgba(120,53,15,0.16)] bg-[rgba(245,238,222,0.9)] text-slate-700'
+        }`}>
+          Dates are captured in the wizard and shown in the overview above.
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-3">
@@ -1175,21 +1156,66 @@ export function ProjectForm({
               Photos (optional)
             </span>
           </label>
-          <FileUploader
-            maxFiles={MAX_FILES}
-            maxFileSize={MAX_FILE_SIZE}
-            onFilesChange={handleFilesChange}
-            showUploadAction={false}
-            darkMode={usesDarkCreateSurface}
-          />
-          {pendingFiles.length > 0 && (
-            <div className={`rounded-md border px-3 py-2 text-xs mt-2 ${
-              usesDarkCreateSurface
-                ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
-                : 'bg-blue-50 border-blue-200 text-blue-700'
-            }`}>
-              📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
+          {isConfirmationView ? (
+            <div className="space-y-3">
+              <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
+                Upload images, documents or photos
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleWizardStyleFilesChange(e.target.files)}
+                  disabled={isSubmitting}
+                />
+              </label>
+
+              {pendingFiles.length > 0 && (
+                <div className={`rounded-md border px-3 py-2 text-xs ${
+                  usesDarkCreateSurface
+                    ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
+                    : 'bg-blue-50 border-blue-200 text-blue-700'
+                }`}>
+                  <p className="font-semibold">New files to upload on submit ({pendingFiles.length})</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {pendingFiles.map((file, index) => (
+                      <span
+                        key={`${file.name}-${file.lastModified}-${index}`}
+                        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-2.5 py-1"
+                      >
+                        <span className="max-w-[220px] truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removePendingFile(file)}
+                          className="text-rose-700 hover:text-rose-800"
+                        >
+                          Remove
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              <FileUploader
+                maxFiles={MAX_FILES}
+                maxFileSize={MAX_FILE_SIZE}
+                onFilesChange={handleFilesChange}
+                showUploadAction={false}
+                darkMode={usesDarkCreateSurface}
+              />
+              {pendingFiles.length > 0 && (
+                <div className={`rounded-md border px-3 py-2 text-xs mt-2 ${
+                  usesDarkCreateSurface
+                    ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
+                    : 'bg-blue-50 border-blue-200 text-blue-700'
+                }`}>
+                  📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
+                </div>
+              )}
+            </>
           )}
           {existingPhotos.length > 0 && (
             <div className={`mt-3 space-y-2 text-xs ${

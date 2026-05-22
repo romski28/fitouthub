@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-2e2cb085",
+    "date": "2026-05-22T22:36:39+08:00",
+    "title": "refactor(create-project): simplify confirmation-only review UI",
+    "summary": "refactor(create-project): simplify confirmation-only review UI",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e2cb085",
+    "files": [
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-5585c626",
     "date": "2026-05-22T17:35:59+08:00",
     "title": "fix(ai-wizard): let location picker fill available space",
