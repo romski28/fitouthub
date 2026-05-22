@@ -975,13 +975,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       return;
     }
     setShowConsultChoiceModal(false);
-    router.push('/create-project');
+    router.push('/create-project/wizard?source=ai');
   }, [persistAiWizardHandoffForAuth, router]);
 
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
     } catch {
       // Ignore storage failures
     }
@@ -992,7 +992,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const handleGuestLogin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
     } catch {
       // Ignore storage failures
     }
