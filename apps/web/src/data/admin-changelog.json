@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-22-2b52ffe4",
+    "date": "2026-05-22T15:16:42+08:00",
+    "title": "style(home): fix hydration warning and standardize remaining panel surfaces",
+    "summary": "style(home): fix hydration warning and standardize remaining panel surfaces",
+    "areas": [
+      "web"
+    ],
+    "commit": "2b52ffe4",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/home-card-rail.tsx",
+      "apps/web/src/components/information-section.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-09f8ac50",
     "date": "2026-05-22T15:10:57+08:00",
     "title": "style(home): apply standard parent panel shell",

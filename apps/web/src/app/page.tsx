@@ -27,17 +27,12 @@ export default function Home() {
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [hydrated, setHydrated] = useState(false);
   const [greetingIndex, setGreetingIndex] = useState(0);
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [mimoThinking, setMimoThinking] = useState(false);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -49,19 +44,18 @@ export default function Home() {
 
   // Redirect professionals to their dashboard
   useEffect(() => {
-    if (!hydrated) return;
     if (profIsLoggedIn && !user) {
       router.replace('/professional-projects');
       return;
     }
-  }, [hydrated, user, profIsLoggedIn, router]);
+  }, [user, profIsLoggedIn, router]);
 
 
 
   return (
       <div className="space-y-6 pb-8 pt-2">
         {/* Emergency FAB — top of active area, same right column as other FABs */}
-        {hydrated && isLoggedIn && user?.role === 'client' && (
+        {isLoggedIn && user?.role === 'client' && (
           <div className="fixed right-6 top-[90px] z-30">
             <div className="relative h-14 w-14">
               <span className="absolute inset-0 rounded-full bg-[#DC143C]/40 animate-ping" />
@@ -78,7 +72,7 @@ export default function Home() {
         )}
 
         {/* Updates button fixed on right for thumb access, same as project list pages */}
-        {hydrated && (isLoggedIn || profIsLoggedIn) && (
+        {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
             <UpdatesButton />
           </div>

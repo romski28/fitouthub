@@ -149,7 +149,7 @@ export function HomeCardRail() {
 
   return (
     <section className="-mx-6 px-6" aria-label="Browse fitout highlights">
-      <div className="mx-auto max-w-6xl">
+      <div className="mimo-panel mx-auto max-w-6xl p-3 sm:p-4">
         <div className="relative">
           <button
             type="button"
@@ -191,7 +191,7 @@ export function HomeCardRail() {
               <a
                 key={card.id}
                 href={card.ctaHref}
-                className="group flex h-[10vh] min-h-[72px] max-h-[96px] w-full min-w-full snap-start overflow-hidden rounded-xl border border-white/55 bg-[#F5EEDE] pr-2 shadow-sm shadow-black/10 lg:px-12"
+                className="group flex h-[10vh] min-h-[72px] max-h-[96px] w-full min-w-full snap-start overflow-hidden rounded-xl border border-white/55 bg-[rgba(245,238,222,0.9)] pr-2 shadow-sm shadow-black/10 backdrop-blur-sm lg:px-12"
               >
                 <div className="h-full aspect-square overflow-hidden bg-slate-100">
                   <img

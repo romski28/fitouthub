@@ -147,7 +147,7 @@ export default function InformationSection() {
       </div>
 
       {/* Content */}
-      <div className="space-y-6 rounded-3xl border border-white/45 bg-[#F5EEDE] p-6 sm:p-8">
+      <div className="mimo-panel space-y-6 p-6 sm:p-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-slate-900">{currentContent.title}</h2>
           {currentContent.description && (
@@ -162,7 +162,7 @@ export default function InformationSection() {
           {currentContent.cards.map((card, index) => (
             <div
               key={index}
-              className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="rounded-xl border border-white/60 bg-white/88 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               {card.number && (
                 <div className="text-4xl font-bold text-emerald-600 mb-2">
