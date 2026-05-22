@@ -417,7 +417,7 @@ export default function CreateProjectPage() {
     ? initialFormData.existingPhotos.filter((photo): photo is { id?: string; url: string; note?: string | null } => Boolean(photo?.url))
     : (initialFormData.photoUrls || []).filter((url): url is string => Boolean(url && url.trim()));
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f3ede2_100%)]">
+    <>
       <ProjectDescriptionModal
         isOpen={showDescriptionModal}
         onSubmit={(data) => {
@@ -569,6 +569,6 @@ export default function CreateProjectPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

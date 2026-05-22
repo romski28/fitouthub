@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-fa612b88",
+    "date": "2026-05-22T14:40:05+08:00",
+    "title": "fix(create-project): remove root page wrapper container",
+    "summary": "fix(create-project): remove root page wrapper container",
+    "areas": [
+      "web"
+    ],
+    "commit": "fa612b88",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-3e43bbf8",
     "date": "2026-05-22T13:59:05+08:00",
     "title": "fix(create-project): remove duplicate wizard image preview panel",
