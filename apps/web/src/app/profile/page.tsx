@@ -23,6 +23,10 @@ export default function ProfilePage() {
   const [passwordDraft, setPasswordDraft] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [mobile, setMobile] = useState('');
 
   const selectedLocationAreaCode = useMemo(
     () => deriveProjectAreaCodeFromLocation(locationDraft),
@@ -55,11 +59,6 @@ export default function ProfilePage() {
     const canonical = code ? areaCodeToCanonicalLocation(code) : {};
     setLocationDraft(canonical as CanonicalLocation);
   };
-
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [surname, setSurname] = useState('');
-  const [mobile, setMobile] = useState('');
 
   // Notification preferences
   const [allowPartnerOffers, setAllowPartnerOffers] = useState(false);

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-6a8983d3",
+    "date": "2026-05-22T11:57:49+08:00",
+    "title": "fix(profile): reorder client profile state",
+    "summary": "fix(profile): reorder client profile state",
+    "areas": [
+      "web"
+    ],
+    "commit": "6a8983d3",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-f9cdd992",
     "date": "2026-05-22T11:51:19+08:00",
     "title": "feat(profile): refine client account controls",
