@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-a8c71e37",
+    "date": "2026-05-22T16:57:05+08:00",
+    "title": "fix(ai-wizard): size location picker from actual nav offset",
+    "summary": "fix(ai-wizard): size location picker from actual nav offset",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8c71e37",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-6cd368a3",
     "date": "2026-05-22T16:47:12+08:00",
     "title": "fix(ai-wizard): derive card height from real remaining viewport",

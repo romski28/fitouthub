@@ -128,8 +128,8 @@ export default function CreateProjectWizardPage() {
   });
 
   const [currentStep, setCurrentStep] = useState(0);
-  const locationPanelRef = useRef<HTMLDivElement | null>(null);
-  const locationHeaderRef = useRef<HTMLDivElement | null>(null);
+  const locationPickerHostRef = useRef<HTMLDivElement | null>(null);
+  const wizardNavRef = useRef<HTMLDivElement | null>(null);
   const [locationPickerHeight, setLocationPickerHeight] = useState<number | null>(null);
 
   useEffect(() => {
@@ -290,22 +290,22 @@ export default function CreateProjectWizardPage() {
     }
 
     const recalculate = () => {
-      const panelEl = locationPanelRef.current;
-      const headerEl = locationHeaderRef.current;
-      if (!panelEl || !headerEl) return;
+      const pickerHostEl = locationPickerHostRef.current;
+      const navEl = wizardNavRef.current;
+      if (!pickerHostEl || !navEl) return;
 
-      const panelStyles = window.getComputedStyle(panelEl);
-      const gap = Number.parseFloat(panelStyles.rowGap || panelStyles.gap || '0') || 0;
-      // Keep a small safety buffer to avoid 1-2px overflow from borders/padding rounding.
-      const available = Math.max(220, panelEl.clientHeight - headerEl.offsetHeight - gap - 8);
+      const pickerTop = pickerHostEl.getBoundingClientRect().top;
+      const navTop = navEl.getBoundingClientRect().top;
+      // Safety buffer avoids collisions from border/padding rounding.
+      const available = Math.max(220, navTop - pickerTop - 8);
       setLocationPickerHeight(Math.floor(available));
     };
 
     recalculate();
 
     const resizeObserver = new ResizeObserver(() => recalculate());
-    if (locationPanelRef.current) resizeObserver.observe(locationPanelRef.current);
-    if (locationHeaderRef.current) resizeObserver.observe(locationHeaderRef.current);
+    if (locationPickerHostRef.current) resizeObserver.observe(locationPickerHostRef.current);
+    if (wizardNavRef.current) resizeObserver.observe(wizardNavRef.current);
     window.addEventListener('resize', recalculate);
 
     return () => {
@@ -498,8 +498,8 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'location' && (
-                      <div className={panelContentClass} ref={locationPanelRef}>
-                        <div className="flex items-start justify-between gap-3" ref={locationHeaderRef}>
+                      <div className={panelContentClass}>
+                        <div className="flex items-start justify-between gap-3">
                           <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
                           <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
                             <button
@@ -527,7 +527,7 @@ export default function CreateProjectWizardPage() {
                           </div>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-hidden" style={locationPickerHeight ? { height: `${locationPickerHeight}px` } : undefined}>
+                        <div ref={locationPickerHostRef} className="min-h-0 flex-1 overflow-hidden" style={locationPickerHeight ? { height: `${locationPickerHeight}px` } : undefined}>
                           {locationInputMode === 'map' ? (
                             <div className="h-full overflow-hidden pr-1">
                               <HkDistrictMap
@@ -687,7 +687,7 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
+            <div ref={wizardNavRef} className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={goBack}
