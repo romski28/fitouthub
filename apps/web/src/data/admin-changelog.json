@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-6cd368a3",
+    "date": "2026-05-22T16:47:12+08:00",
+    "title": "fix(ai-wizard): derive card height from real remaining viewport",
+    "summary": "fix(ai-wizard): derive card height from real remaining viewport",
+    "areas": [
+      "web"
+    ],
+    "commit": "6cd368a3",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-919ab007",
     "date": "2026-05-22T16:42:41+08:00",
     "title": "fix(ai-wizard): stop location map clipping at step footer",

@@ -448,9 +448,9 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-10 pt-3">
+    <div className="min-h-screen pb-6 pt-3">
       <section className="-mx-6 px-6">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
+        <div className="mx-auto flex h-[calc(100dvh-2rem)] max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
               AI Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
@@ -462,7 +462,7 @@ export default function CreateProjectWizardPage() {
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="relative mx-auto flex h-[calc(100dvh-170px)] min-h-[460px] max-h-[860px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
+          <div className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
             <div className="min-h-0 flex-1 overflow-hidden">
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
