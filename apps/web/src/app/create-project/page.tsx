@@ -18,7 +18,7 @@ import {
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
-import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
+import { getUploadResponseKeys } from '@/lib/media-assets';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -416,8 +416,6 @@ export default function CreateProjectPage() {
   const resolvedExistingPhotos = initialFormData.existingPhotos?.length
     ? initialFormData.existingPhotos.filter((photo): photo is { id?: string; url: string; note?: string | null } => Boolean(photo?.url))
     : (initialFormData.photoUrls || []).filter((url): url is string => Boolean(url && url.trim()));
-  const existingPhotoUrls = resolvedExistingPhotos.map((photoOrUrl) => typeof photoOrUrl === 'string' ? photoOrUrl : photoOrUrl.url).filter(Boolean);
-
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f2e8_0%,#fffaf4_52%,#f3ede2_100%)]">
       <ProjectDescriptionModal
@@ -508,28 +506,6 @@ export default function CreateProjectPage() {
             )}
           </div>
         </section>
-
-        {existingPhotoUrls.length > 0 && (
-          <section className="mt-6 rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-5 shadow-[0_20px_50px_rgba(81,55,32,0.06)] backdrop-blur-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[rgba(185,78,45,0.92)]">Project images</p>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">Images from your wizard are ready</h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-700">These images will be attached to the project when you save or open bidding.</p>
-              </div>
-              <span className="rounded-full bg-[rgba(255,250,240,0.72)] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-[rgba(120,53,15,0.12)]">
-                {existingPhotoUrls.length} image{existingPhotoUrls.length === 1 ? '' : 's'} attached
-              </span>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {existingPhotoUrls.map((url, index) => (
-                <div key={`${url}-${index}`} className="h-24 w-32 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] shadow-sm">
-                  <img src={resolveMediaAssetUrl(url)} alt={`Project image ${index + 1}`} className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {!showDescriptionModal && (
           <div className="mt-8">

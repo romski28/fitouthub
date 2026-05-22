@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-22-3e43bbf8",
+    "date": "2026-05-22T13:59:05+08:00",
+    "title": "fix(create-project): remove duplicate wizard image preview panel",
+    "summary": "fix(create-project): remove duplicate wizard image preview panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e43bbf8",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-dc4e273e",
     "date": "2026-05-22T13:49:36+08:00",
     "title": "fix(create-project): stop modal auto-open on page refresh",
