@@ -238,6 +238,39 @@ export class ProjectsService {
     };
   }
 
+  private resolveInvitationTradeScope(
+    projectTrades: string[] | null | undefined,
+    professional: any,
+    explicitRequestedTrades?: string[] | null,
+  ): {
+    requestedTrades: string[];
+    otherRequiredTrades: string[];
+    projectTrades: string[];
+  } {
+    const normalizedProjectTrades = this.normalizeTradeLabels(projectTrades || []);
+    const explicit = this.normalizeTradeLabels(explicitRequestedTrades || []);
+
+    let requestedTrades = explicit.length > 0
+      ? explicit
+      : this.deriveInvitationTradeScope(normalizedProjectTrades, professional).requestedTrades;
+
+    if (requestedTrades.length === 0 && normalizedProjectTrades.length === 1) {
+      requestedTrades = [normalizedProjectTrades[0]];
+    }
+
+    requestedTrades = this.normalizeTradeLabels(requestedTrades);
+    const requestedKeys = new Set(requestedTrades.map((trade) => trade.toLowerCase()));
+    const otherRequiredTrades = normalizedProjectTrades.filter(
+      (trade) => !requestedKeys.has(trade.toLowerCase()),
+    );
+
+    return {
+      requestedTrades,
+      otherRequiredTrades,
+      projectTrades: normalizedProjectTrades,
+    };
+  }
+
   private buildInvitationTradeCopy(scope: {
     requestedTrades: string[];
     otherRequiredTrades: string[];
@@ -246,8 +279,8 @@ export class ProjectsService {
     return {
       requestedTradesLine:
         scope.requestedTrades.length > 0
-          ? `Quote requested for: ${scope.requestedTrades.join(', ')}`
-          : 'Quote requested for: To be confirmed based on your supplied trade scope',
+          ? `Trade required from you: ${scope.requestedTrades.join(', ')}`
+          : 'Trade required from you: To be confirmed',
       otherRequiredTradesLine:
         scope.otherRequiredTrades.length > 0
           ? `Other trades required on this project: ${scope.otherRequiredTrades.join(', ')}`
@@ -2026,13 +2059,18 @@ export class ProjectsService {
         ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
         : 'Timeline: Flexible';
 
-      const invitationMessage = `📋 Project Invitation: ${project.projectName}
+      const invitationTitle = tradeCopy.requestedTradesLine
+        ? `${project.projectName} - ${tradeCopy.requestedTradesLine.replace('Trade required from you: ', '')}`
+        : project.projectName;
+
+      const invitationMessage = `📋 New Project Invitation
 
 You've been invited to submit a quote for this project.
 
-${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}
-` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}
-` : ''}${tradeCopy.projectTradesLine}
+    ${invitationTitle}
+    ${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}
+    ` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}
+    ` : ''}${tradeCopy.projectTradesLine}
 Region: ${project.region}
 ${timelineText}
 
@@ -2324,7 +2362,15 @@ Please review the project details and respond with your quote or decline the inv
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { professionalIds, userId, photos, photoUrls, aiIntakeId, ...rest } = createProjectDto;
+    const {
+      professionalIds,
+      professionalTradeScopes,
+      userId,
+      photos,
+      photoUrls,
+      aiIntakeId,
+      ...rest
+    } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field
 
     const { professionalId: _legacyField, ...projectData } = rest as any;
@@ -2391,10 +2437,19 @@ Please review the project details and respond with your quote or decline the inv
     const normalizedProjectTrades = this.normalizeTradeLabels(
       Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
     );
+    const explicitScopeByProfessionalId = new Map(
+      (professionalTradeScopes || [])
+        .filter((scope) => scope?.professionalId)
+        .map((scope) => [scope.professionalId, this.normalizeTradeLabels(scope.requestedTrades || [])]),
+    );
     const invitationScopeByProfessionalId = new Map(
       professionals.map((professional) => [
         professional.id,
-        this.deriveInvitationTradeScope(normalizedProjectTrades, professional),
+        this.resolveInvitationTradeScope(
+          normalizedProjectTrades,
+          professional,
+          explicitScopeByProfessionalId.get(professional.id),
+        ),
       ]),
     );
 
@@ -2528,6 +2583,10 @@ Please review the project details and respond with your quote or decline the inv
           ? `Timeline: Needed by ${new Date(project.endDate).toLocaleDateString()}`
           : 'Timeline: Flexible';
 
+        const invitationTitle = tradeCopy.requestedTradesLine
+          ? `${project.projectName} - ${tradeCopy.requestedTradesLine.replace('Trade required from you: ', '')}`
+          : project.projectName;
+
         const invitationMessage = project.isEmergency
           ? `🚨 EMERGENCY PROJECT: ${project.projectName}
 
@@ -2538,10 +2597,11 @@ ${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}\n` : ''}${tr
 ${emergencyAiInvite?.inAppLines.length ? `${emergencyAiInvite.inAppLines.join('\n')}\n` : ''}Region: ${project.region}
 
 Please review the project details and respond immediately with your availability or decline. Emergency callout rates apply.`
-          : `📋 Project Invitation: ${project.projectName}
+          : `📋 New Project Invitation
 
 You've been invited to submit a quote for this project.
 
+${invitationTitle}
 ${budgetText}
 ${tradeCopy.requestedTradesLine ? `${tradeCopy.requestedTradesLine}
 ` : ''}${tradeCopy.otherRequiredTradesLine ? `${tradeCopy.otherRequiredTradesLine}

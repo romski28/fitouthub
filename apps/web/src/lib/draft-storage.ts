@@ -29,6 +29,7 @@ type CreateProjectDraftValue = {
     rating: number;
     fullName?: string | null;
     businessName?: string | null;
+    requestedTrades?: string[];
   }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];

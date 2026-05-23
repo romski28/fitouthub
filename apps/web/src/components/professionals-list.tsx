@@ -222,6 +222,31 @@ const matchesTradeAutoFilterMode = (
   return tradeCoverage.matchedCount > 0;
 };
 
+const deriveRequestedTradesForProfessional = (
+  pro: Professional,
+  requiredTrades: string[],
+  tradeAutoFilterMode: TradeAutoFilterMode,
+) => {
+  const normalizedRequiredTrades = normalizeUniqueList(requiredTrades);
+  if (normalizedRequiredTrades.length === 0) return [] as string[];
+
+  if (tradeAutoFilterMode.startsWith('single:')) {
+    const selectedTradeLower = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
+    const selectedTrade = normalizedRequiredTrades.find((trade) => trade.toLowerCase() === selectedTradeLower);
+    if (selectedTrade) return [selectedTrade];
+  }
+
+  const tradeTokens = getProfessionalTradeTokens(pro);
+  const matchedTrades = normalizedRequiredTrades.filter((trade) => {
+    const tradeLower = trade.toLowerCase();
+    return tradeTokens.some((token) => token.includes(tradeLower) || tradeLower.includes(token));
+  });
+
+  if (matchedTrades.length > 0) return normalizeUniqueList(matchedTrades);
+  if (normalizedRequiredTrades.length === 1) return [normalizedRequiredTrades[0]];
+  return [] as string[];
+};
+
 const getTopLevelCoverageLabels = (pro: Professional): string[] => {
   const labels = new Set<string>();
 
@@ -1642,6 +1667,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       rating: Number.isFinite(professional.rating) ? professional.rating : 0,
       fullName: professional.fullName ?? null,
       businessName: professional.businessName ?? null,
+      requestedTrades: deriveRequestedTradesForProfessional(
+        professional,
+        mergedInitialData.tradesRequired || [],
+        tradeAutoFilterMode,
+      ),
     }));
 
     const saved = writeCreateProjectDraftSafely({

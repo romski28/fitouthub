@@ -39,10 +39,12 @@ interface AssistDraft {
 
 interface CreateProjectDraft {
   initialData?: Partial<ProjectFormData>;
-  selectedProfessionals?: Professional[];
+  selectedProfessionals?: Array<Professional & { requestedTrades?: string[] }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
 }
+
+type SelectedProfessionalWithScope = Professional & { requestedTrades?: string[] };
 
 const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null => {
   if (!value) return null;
@@ -71,7 +73,7 @@ export default function CreateProjectPage() {
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
-  const [selectedProfessionals, setSelectedProfessionals] = useState<Professional[]>([]);
+  const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
   const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export default function CreateProjectPage() {
         setInitialFormData(mergedDraft.initialData || {});
         setSelectedProfessionals(
           Array.isArray(mergedDraft.selectedProfessionals)
-            ? filterProjectSelectableProfessionals(mergedDraft.selectedProfessionals)
+            ? (filterProjectSelectableProfessionals(mergedDraft.selectedProfessionals) as SelectedProfessionalWithScope[])
             : [],
         );
         if (mergedDraft.aiIntakeId) {
@@ -239,7 +241,12 @@ export default function CreateProjectPage() {
     return photoUrls;
   };
 
-  const buildProjectPayload = (formData: ProjectFormData, photoUrls: string[], professionalIds: string[] = []) => {
+  const buildProjectPayload = (
+    formData: ProjectFormData,
+    photoUrls: string[],
+    professionalIds: string[] = [],
+    professionalTradeScopes: Array<{ professionalId: string; requestedTrades: string[] }> = [],
+  ) => {
     const locationRegion = [
       formData.location?.primary,
       formData.location?.secondary,
@@ -261,6 +268,7 @@ export default function CreateProjectPage() {
       notes: formData.notes,
       status: 'pending',
       professionalIds,
+      professionalTradeScopes,
       userId: user?.id,
       tradesRequired: formData.tradesRequired || [],
       onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
@@ -316,6 +324,12 @@ export default function CreateProjectPage() {
         formData,
         photoUrls,
         selectedProfessionals.map((professional) => professional.id),
+        selectedProfessionals.map((professional) => ({
+          professionalId: professional.id,
+          requestedTrades: Array.isArray(professional.requestedTrades)
+            ? professional.requestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
+            : [],
+        })),
       );
 
       console.log('[create-project] Submitting payload:', payload);

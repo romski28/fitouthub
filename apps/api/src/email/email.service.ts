@@ -92,10 +92,14 @@ export class EmailService {
     const quoteWindowLabel = params.quoteWindowLabel || '3 days';
 
     try {
+      const invitationTitle = params.requestedTradesText
+        ? `${params.projectName} - ${params.requestedTradesText}`
+        : params.projectName;
+
       await this.resend.emails.send({
         from: 'Mimo <noreply@mail.romski.me.uk>',
         to: params.to,
-        subject: `New Project Opportunity: ${params.projectName}`,
+        subject: 'New Project Invitation',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #4f46e5;">New Project Invitation</h2>
@@ -105,13 +109,9 @@ export class EmailService {
             <p>You've been invited to quote on a new renovation project:</p>
             
             <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #1f2937;">${params.projectName}</h3>
+              <h3 style="margin-top: 0; color: #1f2937;">${invitationTitle}</h3>
               <p style="color: #6b7280; margin: 10px 0;"><strong>Location:</strong> ${params.location}</p>
-              ${params.requestedTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Quote requested for:</strong> ${params.requestedTradesText}</p>` : ''}
-              ${params.otherRequiredTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Other trades required:</strong> ${params.otherRequiredTradesText}</p>` : ''}
-              ${params.projectTradesText ? `<p style="color: #6b7280; margin: 10px 0;"><strong>Full trade scope:</strong> ${params.projectTradesText}</p>` : ''}
-              <p style="color: #6b7280; margin: 10px 0;"><strong>Description:</strong></p>
-              <p style="color: #374151;">${params.projectDescription}</p>
+              <p style="color: #374151; margin: 10px 0;">${params.projectDescription}</p>
             </div>
             
             <p style="font-weight: 600; color: #dc2626;">⏰ Please respond within 2 hours to maintain your rating.</p>

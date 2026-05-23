@@ -4,7 +4,7 @@ import type { Professional } from '@/lib/types';
 
 export interface CreateProjectDraftHandoff {
   initialData?: Partial<ProjectFormData>;
-  selectedProfessionals?: Professional[];
+  selectedProfessionals?: Array<Professional & { requestedTrades?: string[] }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
 }
