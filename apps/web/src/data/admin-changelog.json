@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-2f9b39a3",
+    "date": "2026-05-23T17:49:32+08:00",
+    "title": "feat(ai): add refresh memory toggle for conversation threads",
+    "summary": "feat(ai): add refresh memory toggle for conversation threads",
+    "areas": [
+      "web"
+    ],
+    "commit": "2f9b39a3",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-23-aa10fe22",
     "date": "2026-05-23T17:18:33+08:00",
     "title": "fix(projects): hard-fail when trade-scope columns are missing",

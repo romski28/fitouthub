@@ -660,9 +660,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
   const MAX_AI_ROUNDS = 2;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
+  const AI_KEEP_CONVERSATION_PREF_KEY = 'aiKeepConversationOnRefresh';
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
+  const [keepConversationOnRefresh, setKeepConversationOnRefresh] = useState(true);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>(deepSeekSandboxEnabled ? 'ai' : 'legacy');
   const [aiViewMode, setAiViewMode] = useState<'human' | 'json'>('human');
   const [intent, setIntent] = useState<IntentResult | null>(null);
@@ -1306,6 +1308,32 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   }, [isLoggedIn, router]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem(AI_KEEP_CONVERSATION_PREF_KEY);
+      if (stored === '0') {
+        setKeepConversationOnRefresh(false);
+      } else {
+        setKeepConversationOnRefresh(true);
+      }
+    } catch {
+      setKeepConversationOnRefresh(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        AI_KEEP_CONVERSATION_PREF_KEY,
+        keepConversationOnRefresh ? '1' : '0',
+      );
+    } catch {
+      // Ignore storage failures
+    }
+  }, [keepConversationOnRefresh]);
+
+  useEffect(() => {
     try {
       // If resetAiSession is true (e.g., on home page), clear all AI state and start fresh
       if (resetAiSession) {
@@ -1316,12 +1344,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         setMatchCount(null);
       }
       const existing = sessionStorage.getItem(AI_SESSION_STORAGE_KEY);
-      if (existing && !resetAiSession) { setAiSessionId(existing); return; }
+      if (existing && !resetAiSession && keepConversationOnRefresh) { setAiSessionId(existing); return; }
       assignNewAiSessionId();
     } catch {
       setAiSessionId(null);
     }
-  }, [assignNewAiSessionId, clearPendingAssistDraft, resetAiSession]);
+  }, [assignNewAiSessionId, clearPendingAssistDraft, keepConversationOnRefresh, resetAiSession]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1826,6 +1854,17 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setMatchCount(null);
   };
 
+  const handleResetConversation = () => {
+    clearPendingAssistDraft();
+    clearAiClientState();
+    clearAiResponseState();
+    setIntent(null);
+    setMatchCount(null);
+    setSearchBoxClearKey((k) => k + 1);
+    assignNewAiSessionId();
+    setAiRoundNotice('Conversation reset. Your next prompt will start fresh.');
+  };
+
   const handleSequenceStateChange = useCallback((complete: boolean) => {
     setIsConversationSequenceComplete(complete);
     if (aiRoundCount !== 1 || !complete || hasClearedForgottenPromptRef.current) return;
@@ -1954,6 +1993,33 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
           clearKey={searchBoxClearKey}
         />
+
+        {deepSeekSandboxEnabled && searchMode === 'ai' && (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={keepConversationOnRefresh}
+                onChange={(e) => {
+                  const nextValue = e.target.checked;
+                  setKeepConversationOnRefresh(nextValue);
+                  if (!nextValue) {
+                    handleResetConversation();
+                  }
+                }}
+                className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              Keep conversation on refresh
+            </label>
+            <button
+              type="button"
+              onClick={handleResetConversation}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Reset conversation
+            </button>
+          </div>
+        )}
 
         {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
           <div className="mt-3 rounded-lg shadow-lg border border-slate-200 bg-white p-3">
