@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-23-1e7838e1",
+    "date": "2026-05-23T15:17:17+08:00",
+    "title": "fix(ai-wizard): recover trades from broader AI handoff fields",
+    "summary": "fix(ai-wizard): recover trades from broader AI handoff fields",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "1e7838e1",
+    "files": [
+      "apps/web/src/components/search-flow.tsx",
+      "docs/AI_WIZARD_MODE_SYSTEM.md"
+    ]
+  },
+  {
     "id": "2026-05-23-99108590",
     "date": "2026-05-23T14:51:21+08:00",
     "title": "fix(ai-wizard): preserve non-empty trades in handoff",

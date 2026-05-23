@@ -17,6 +17,7 @@ import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
 import { AI_STATE_CLEAR_EVENT, clearAiClientState } from '@/lib/client-session';
 import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
+import { matchMultipleServices } from '@/lib/service-matcher';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
 
@@ -58,6 +59,27 @@ interface AiStructured {
   } | null;
   overallConfidence: number | null;
 }
+
+const normalizeTradeList = (...inputs: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const input of inputs) {
+    if (!Array.isArray(input)) continue;
+
+    for (const item of input) {
+      if (typeof item !== 'string') continue;
+      const cleaned = item.trim();
+      if (!cleaned) continue;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(cleaned);
+    }
+  }
+
+  return result;
+};
 
 const normalizeQuestionList = (value: unknown): string[] =>
   Array.isArray(value)
@@ -1536,6 +1558,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           project?: {
             propertyType?: string | null;
             scopeText?: string | null;
+            tradesRequired?: string[];
             projectScale?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
             projectScaleSuggested?: 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | null;
           };
@@ -1617,9 +1640,28 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         }
       }
 
-      const parsedTrades = Array.isArray(p?.trades)
-        ? p.trades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
-        : [];
+      const inferredTradesFromText = matchMultipleServices(
+        [
+          p?.title,
+          p?.summary,
+          p?.scope,
+          p?.project?.scopeText,
+          payload.conversationalText,
+          payload.output,
+        ]
+          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          .join(' ')
+          .toLowerCase(),
+      );
+      const projectTradesRequired =
+        p?.project && typeof p.project === 'object' && 'tradesRequired' in p.project
+          ? (p.project as { tradesRequired?: string[] }).tradesRequired
+          : [];
+      const parsedTrades = normalizeTradeList(
+        p?.trades,
+        projectTradesRequired,
+        inferredTradesFromText,
+      );
       const projectScaleFromProject =
         p?.project &&
         typeof p.project === 'object' &&
