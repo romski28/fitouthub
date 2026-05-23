@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-9b88bc3b",
+    "date": "2026-05-23T18:11:36+08:00",
+    "title": "fix(handoff): preserve required trades when selecting professionals",
+    "summary": "fix(handoff): preserve required trades when selecting professionals",
+    "areas": [
+      "web"
+    ],
+    "commit": "9b88bc3b",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-23-4c95a091",
     "date": "2026-05-23T17:50:47+08:00",
     "title": "fix(db): migrate ProjectProfessional trade-scope columns",

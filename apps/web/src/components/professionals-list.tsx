@@ -1561,6 +1561,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const memoryDraft = getCreateProjectDraftHandoff();
     const memoryProjectDescription = getProjectDescriptionHandoff();
 
+    const resolvedTradesRequired = normalizeUniqueList([
+      ...(memoryDraft?.initialData?.tradesRequired || []),
+      ...(existingDraft?.initialData?.tradesRequired || []),
+      ...(memoryProjectDescription?.tradesRequired || []),
+      ...(existingProjectDescription?.tradesRequired || []),
+      ...(shareInitialData.tradesRequired || []),
+      ...(requiredTrades || []),
+    ]);
+
     const mergedInitialData: Partial<ProjectFormData> = {
       ...(memoryDraft?.initialData || existingDraft?.initialData || {}),
       ...shareInitialData,
@@ -1594,6 +1603,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         shareInitialData.existingPhotos ??
         memoryDraft?.initialData?.existingPhotos ??
         existingDraft?.initialData?.existingPhotos,
+      tradesRequired: resolvedTradesRequired,
     };
 
     if (handoffDebug) {
@@ -1634,9 +1644,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               ? mergedInitialData.projectScale
               : undefined,
           isEmergency: Boolean(mergedInitialData.isEmergency),
-          profession: mergedInitialData.tradesRequired?.[0],
+          profession: resolvedTradesRequired[0],
           location: mergedInitialData.location,
-          tradesRequired: mergedInitialData.tradesRequired || [],
+          tradesRequired: resolvedTradesRequired,
         }),
       );
     } catch {
@@ -1653,9 +1663,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           ? mergedInitialData.projectScale
           : undefined,
       isEmergency: Boolean(mergedInitialData.isEmergency),
-      profession: mergedInitialData.tradesRequired?.[0],
+      profession: resolvedTradesRequired[0],
       location: mergedInitialData.location,
-      tradesRequired: mergedInitialData.tradesRequired || [],
+      tradesRequired: resolvedTradesRequired,
     });
 
     const selectedProfessionalsForDraft = selectedProfessionals.map((professional) => ({
@@ -1669,7 +1679,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       businessName: professional.businessName ?? null,
       requestedTrades: deriveRequestedTradesForProfessional(
         professional,
-        mergedInitialData.tradesRequired || [],
+        resolvedTradesRequired,
         tradeAutoFilterMode,
       ),
     }));
