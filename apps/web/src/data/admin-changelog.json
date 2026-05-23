@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-2a8f82aa",
+    "date": "2026-05-23T15:39:28+08:00",
+    "title": "feat(ai): add mode classification fields to structured intake prompt",
+    "summary": "feat(ai): add mode classification fields to structured intake prompt",
+    "areas": [
+      "api"
+    ],
+    "commit": "2a8f82aa",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-23-1e7838e1",
     "date": "2026-05-23T15:17:17+08:00",
     "title": "fix(ai-wizard): recover trades from broader AI handoff fields",

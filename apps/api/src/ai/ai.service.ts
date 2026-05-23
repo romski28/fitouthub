@@ -419,6 +419,17 @@ CRITICAL RULES
 8) Prefer precision over completeness. Do not hallucinate.
 9) Return every top-level key in the schema.
 
+PROJECT MODE CLASSIFICATION (NEW)
+- Classify the project into exactly one mode based on dominant user intent.
+- Allowed values for modeSuggested:
+  - repair: fixing faults, leaks, damage, breakage, malfunction, urgent restoration.
+  - refresh: cosmetic or light upgrades without major redesign.
+  - design: layout rethink, substantial redesign, or transformation-led scope.
+- If signals are mixed, choose the dominant intent and explain briefly in modeReasoning.
+- modeSuggested must never be null.
+- modeConfidence must be between 0 and 1.
+- modeReasoning should be 1-2 short sentences grounded in the user request.
+
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
 - Only include a trade if it is explicitly needed based on the user's description.
@@ -509,7 +520,10 @@ OUTPUT SCHEMA
     "requiresImmediateHumanContact": false,
     "disclaimer": "string|null"
   },
-  "overallConfidence": number
+  "overallConfidence": number,
+  "modeSuggested": "repair|refresh|design",
+  "modeConfidence": number,
+  "modeReasoning": "string"
 }`;
 
     return {
