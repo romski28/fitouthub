@@ -508,6 +508,7 @@ export class EmailService {
     professionalName: string;
     projectName: string;
     quoteAmount: string;
+    awardedTradesText?: string;
     quoteBreakdownLines?: string[];
     nextStepsMessage: string;
   }): Promise<void> {
@@ -532,6 +533,7 @@ export class EmailService {
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">
               <h3 style="margin-top: 0; color: #047857;">${params.projectName}</h3>
               <p style="color: #065f46; margin: 10px 0;"><strong>Quote Amount:</strong> ${params.quoteAmount}</p>
+              ${params.awardedTradesText ? `<p style="color: #065f46; margin: 10px 0;"><strong>Trades Awarded:</strong> ${params.awardedTradesText}</p>` : ''}
               ${this.renderQuoteBreakdownList(params.quoteBreakdownLines)}
             </div>
             

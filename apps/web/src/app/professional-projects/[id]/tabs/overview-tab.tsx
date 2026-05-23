@@ -261,6 +261,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isInitialQuoteLocked = shouldEnforceInitialDeadline && isOverdue;
   const showQuoteForm = ['pending', 'accepted', 'counter_requested'].includes(project.status);
   const overviewSummaryLines = extractOverviewSummaryLines(project.project.notes);
+  const isAwardedProject = String(project.status || '').toLowerCase() === 'awarded';
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
     : [];
@@ -337,12 +338,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {(requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
+      {(isAwardedProject || requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
-          <h2 className="mb-3 text-lg font-bold text-slate-900">Your Trade Scope</h2>
+          <h2 className="mb-3 text-lg font-bold text-slate-900">{isAwardedProject ? 'Trades Awarded' : 'Your Trade Scope'}</h2>
           <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Quoted by you</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{isAwardedProject ? 'Awarded to you' : 'Quoted by you'}</p>
               {requestedTradeScope.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {requestedTradeScope.map((trade) => (
@@ -355,7 +356,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-600">To be confirmed based on your supplied trade scope.</p>
+                <p className="text-sm text-slate-600">
+                  {isAwardedProject
+                    ? 'No awarded trade tags were recorded for this project yet.'
+                    : 'To be confirmed based on your supplied trade scope.'}
+                </p>
               )}
             </div>
 

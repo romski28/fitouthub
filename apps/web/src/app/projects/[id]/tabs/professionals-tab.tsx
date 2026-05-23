@@ -14,6 +14,8 @@ interface ProjectProfessional {
   professionalId: string;
   projectId: string;
   status: string;
+  quoteRequestedTrades?: string[];
+  projectTradesSnapshot?: string[];
   quoteAmount?: string | number;
   quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
@@ -378,6 +380,9 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
               {biddingProfessionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || 'Professional';
                 const hasQuote = Number.isFinite(getNumericQuote(pp.quoteAmount));
+                const scopedTrades = Array.isArray(pp.quoteRequestedTrades)
+                  ? pp.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
+                  : [];
                 const breakdownItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
                 const isLowestQuote = lowestQuoteProfessional?.id === pp.id;
                 const isEarliestStart = earliestStartProfessional?.id === pp.id;
@@ -463,6 +468,24 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     )}
 
                     <div className="mb-3 rounded-md bg-slate-900/60 p-3 border border-slate-700">
+                      <div className="mb-2">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300">Trade Scope</p>
+                        {scopedTrades.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {scopedTrades.map((trade) => (
+                              <span
+                                key={`scope-${pp.id}-${trade}`}
+                                className="rounded-full border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200"
+                              >
+                                {trade}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400">Scope not tagged yet for this professional.</p>
+                        )}
+                      </div>
+
                       {(() => {
                         const scheduleText = formatScheduleWindow(pp.quoteEstimatedStartAt, pp.quoteEstimatedDurationMinutes);
                         const statusLower = (pp.status || '').toLowerCase();
@@ -603,6 +626,24 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                   </div>
                 );
               })()}
+
+              <div className="rounded-md bg-slate-900/60 p-3 border border-emerald-500/30">
+                <p className="text-xs text-white font-semibold uppercase mb-2">Trades Awarded</p>
+                {Array.isArray(awardedProfessional.quoteRequestedTrades) && awardedProfessional.quoteRequestedTrades.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {awardedProfessional.quoteRequestedTrades.map((trade) => (
+                      <span
+                        key={`awarded-trade-${awardedProfessional.id}-${trade}`}
+                        className="rounded-full border border-emerald-400/50 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200"
+                      >
+                        {trade}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-300">No awarded trade tags are recorded for this professional yet.</p>
+                )}
+              </div>
 
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 p-4">
                 <div className="flex items-start justify-between mb-3">

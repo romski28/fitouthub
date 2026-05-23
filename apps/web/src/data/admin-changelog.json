@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-23-db0f67ff",
+    "date": "2026-05-23T10:15:32+08:00",
+    "title": "feat(awards): surface awarded trade scope across email and boards",
+    "summary": "feat(awards): surface awarded trade scope across email and boards",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "db0f67ff",
+    "files": [
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-22-8f58133a",
     "date": "2026-05-22T23:40:13+08:00",
     "title": "feat(trade-scope): restrict per-pro bidding scope to matched trades",

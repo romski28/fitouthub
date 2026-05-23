@@ -5676,6 +5676,17 @@ Please review the project details and respond with your quote or decline the inv
 
     const project = projectProfessional.project;
     const professionals = project.professionals;
+    const awardedTradeScope = this.normalizeTradeLabels([
+      ...(((projectProfessional as any).quoteRequestedTrades as string[] | undefined) || []),
+      ...(
+        (((projectProfessional as any).quoteRequestedTrades as string[] | undefined)?.length || 0) > 0
+          ? []
+          : this.deriveInvitationTradeScope(
+              this.normalizeTradeLabels((project as any)?.tradesRequired || []),
+              projectProfessional.professional,
+            ).requestedTrades
+      ),
+    ]);
     const winnerName =
       projectProfessional.professional.fullName ||
       projectProfessional.professional.businessName ||
@@ -5710,6 +5721,8 @@ Please review the project details and respond with your quote or decline the inv
         professionalName: winnerName,
         projectName: project.projectName,
         quoteAmount: projectProfessional.quoteAmount?.toString() || '0',
+        awardedTradesText:
+          awardedTradeScope.length > 0 ? awardedTradeScope.join(', ') : undefined,
         quoteBreakdownLines: getQuoteBreakdownDisplayLines((projectProfessional as any).quoteBreakdown),
         nextStepsMessage:
           'The client will contact you soon to discuss next steps. You can share your contact details or continue communicating via the platform for transparency and project management.\n\nWhile you are waiting for the client to get in contact with you, please ensure you sign the project contract, available in your project panel. Without a signed, binding contract we will not ask the client to fund the project.',
