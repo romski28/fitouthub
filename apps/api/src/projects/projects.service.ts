@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
@@ -479,6 +479,13 @@ export class ProjectsService {
       message.includes('projectTradesSnapshot') ||
       (error?.code === 'P2022' &&
         (message.includes('ProjectProfessional') || message.includes('projectprofessional')))
+    );
+  }
+
+  private throwProjectProfessionalTradeScopeSchemaError(error: any): never {
+    const details = String(error?.message || 'Unknown schema mismatch');
+    throw new ServiceUnavailableException(
+      `ProjectProfessional trade scope columns are unavailable. Run DB migration for quoteRequestedTrades/projectTradesSnapshot. Details: ${details}`,
     );
   }
 
@@ -2044,8 +2051,7 @@ export class ProjectsService {
       if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
         throw error;
       }
-      console.warn('[ProjectsService.inviteProfessionals] Trade-scope columns unavailable, retrying without scoped trade fields');
-      junctionResults = await Promise.all(buildJunctionPromises(false));
+      this.throwProjectProfessionalTradeScopeSchemaError(error);
     }
 
     // Create invitation messages for each professional
@@ -2316,18 +2322,7 @@ Please review the project details and respond with your quote or decline the inv
           if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
             throw error;
           }
-          created = await (this.prisma as any).projectProfessional.create({
-            data: {
-              projectId,
-              professionalId: proId,
-              ...this.buildProjectProfessionalTradeScopeWrite({
-                status: 'selected',
-                requestedTrades: [],
-                projectTrades: [],
-                includeTradeScope: false,
-              }),
-            },
-          });
+          this.throwProjectProfessionalTradeScopeSchemaError(error);
         }
         results.push(created);
       } else {
@@ -2345,6 +2340,7 @@ Please review the project details and respond with your quote or decline the inv
           if (!this.isMissingProjectProfessionalTradeScopeFieldError(error)) {
             throw error;
           }
+          this.throwProjectProfessionalTradeScopeSchemaError(error);
         }
         // Preserve existing lifecycle status for already-linked professionals.
         // Do not downgrade active invitations back to `selected`, otherwise they
@@ -2561,9 +2557,7 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       if (!project && this.isMissingProjectProfessionalTradeScopeFieldError(retryError)) {
-        console.warn('[ProjectsService.create] Trade-scope columns unavailable, retrying project create without scoped trade fields');
-        const retryCreateData = enrichCreateData(buildCreateData(false));
-        project = await createProjectRecord(retryCreateData);
+        this.throwProjectProfessionalTradeScopeSchemaError(retryError);
       }
 
       if (!project) {

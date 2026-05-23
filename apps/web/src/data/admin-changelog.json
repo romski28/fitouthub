@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-aa10fe22",
+    "date": "2026-05-23T17:18:33+08:00",
+    "title": "fix(projects): hard-fail when trade-scope columns are missing",
+    "summary": "fix(projects): hard-fail when trade-scope columns are missing",
+    "areas": [
+      "api"
+    ],
+    "commit": "aa10fe22",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-23-2a8f82aa",
     "date": "2026-05-23T15:39:28+08:00",
     "title": "feat(ai): add mode classification fields to structured intake prompt",
