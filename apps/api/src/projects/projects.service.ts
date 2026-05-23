@@ -225,6 +225,11 @@ export class ProjectsService {
       tradeTokens.some((token) => token.includes(trade.toLowerCase()) || trade.toLowerCase().includes(token)),
     );
 
+    // Never leave scope empty when project trades exist; use the first required trade as fallback.
+    if (requestedTrades.length === 0 && normalizedProjectTrades.length > 0) {
+      requestedTrades = [normalizedProjectTrades[0]];
+    }
+
     requestedTrades = this.normalizeTradeLabels(requestedTrades);
     const requestedKeys = new Set(requestedTrades.map((trade) => trade.toLowerCase()));
     const otherRequiredTrades = normalizedProjectTrades.filter(
@@ -254,7 +259,7 @@ export class ProjectsService {
       ? explicit
       : this.deriveInvitationTradeScope(normalizedProjectTrades, professional).requestedTrades;
 
-    if (requestedTrades.length === 0 && normalizedProjectTrades.length === 1) {
+    if (requestedTrades.length === 0 && normalizedProjectTrades.length > 0) {
       requestedTrades = [normalizedProjectTrades[0]];
     }
 
@@ -2437,20 +2442,26 @@ Please review the project details and respond with your quote or decline the inv
     const normalizedProjectTrades = this.normalizeTradeLabels(
       Array.isArray(normalized.tradesRequired) ? normalized.tradesRequired : [],
     );
-    const explicitScopeByProfessionalId = new Map(
-      (professionalTradeScopes || [])
-        .filter((scope) => scope?.professionalId)
-        .map((scope) => [scope.professionalId, this.normalizeTradeLabels(scope.requestedTrades || [])]),
-    );
+    const explicitScopePairs = (professionalTradeScopes || [])
+      .filter((scope) => scope?.professionalId)
+      .map((scope) => [String(scope.professionalId).trim(), this.normalizeTradeLabels(scope.requestedTrades || [])] as const);
+    const explicitScopeByProfessionalId = new Map(explicitScopePairs);
+    const explicitScopeList = explicitScopePairs.map(([, requestedTrades]) => requestedTrades);
     const invitationScopeByProfessionalId = new Map(
-      professionals.map((professional) => [
-        professional.id,
-        this.resolveInvitationTradeScope(
-          normalizedProjectTrades,
-          professional,
-          explicitScopeByProfessionalId.get(professional.id),
-        ),
-      ]),
+      professionals.map((professional, index) => {
+        const professionalId = String(professional.id || '').trim();
+        const explicitRequestedTrades =
+          explicitScopeByProfessionalId.get(professionalId) || explicitScopeList[index] || [];
+
+        return [
+          professional.id,
+          this.resolveInvitationTradeScope(
+            normalizedProjectTrades,
+            professional,
+            explicitRequestedTrades,
+          ),
+        ] as const;
+      }),
     );
 
     const resolvedScale = this.inferProjectScaleFromContext({

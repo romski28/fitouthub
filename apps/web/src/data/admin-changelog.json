@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-87a687df",
+    "date": "2026-05-23T12:02:12+08:00",
+    "title": "fix(trade-scope): prevent empty requested scopes on project invite records",
+    "summary": "fix(trade-scope): prevent empty requested scopes on project invite records",
+    "areas": [
+      "api"
+    ],
+    "commit": "87a687df",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-23-c6d10829",
     "date": "2026-05-23T10:54:56+08:00",
     "title": "fix(trade-scope): persist per-pro requested trades from selection",
