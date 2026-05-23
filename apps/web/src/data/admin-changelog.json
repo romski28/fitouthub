@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-23-157241ee",
+    "date": "2026-05-23T18:42:46+08:00",
+    "title": "fix(trades): enforce non-empty resolved trades in create flow",
+    "summary": "fix(trades): enforce non-empty resolved trades in create flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "157241ee",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-23-9b88bc3b",
     "date": "2026-05-23T18:11:36+08:00",
     "title": "fix(handoff): preserve required trades when selecting professionals",

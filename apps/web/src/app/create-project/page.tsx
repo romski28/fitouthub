@@ -61,6 +61,27 @@ const filterProjectSelectableProfessionals = (professionals: Professional[]) => 
   return professionals.filter((professional) => PROJECT_SELECTABLE_TYPES.has(professional.professionType));
 };
 
+const normalizeUniqueStringList = (...inputs: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const input of inputs) {
+    if (!Array.isArray(input)) continue;
+
+    for (const item of input) {
+      if (typeof item !== 'string') continue;
+      const trimmed = item.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      normalized.push(trimmed);
+    }
+  }
+
+  return normalized;
+};
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const t = useTranslations('project');
@@ -260,6 +281,18 @@ export default function CreateProjectPage() {
       throw new Error('Project name and region are required');
     }
 
+    const resolvedTradesRequired = normalizeUniqueStringList(
+      formData.tradesRequired,
+      initialFormData.tradesRequired,
+      descriptionData?.tradesRequired,
+      descriptionData?.profession ? [descriptionData.profession] : [],
+      professionalTradeScopes.flatMap((scope) => scope.requestedTrades || []),
+    );
+
+    if (professionalIds.length > 0 && resolvedTradesRequired.length === 0) {
+      throw new Error('Please select at least one required trade before opening bidding.');
+    }
+
     return {
       projectName: formData.projectName,
       clientName: formData.clientName,
@@ -270,7 +303,7 @@ export default function CreateProjectPage() {
       professionalIds,
       professionalTradeScopes,
       userId: user?.id,
-      tradesRequired: formData.tradesRequired || [],
+      tradesRequired: resolvedTradesRequired,
       onlySelectedProfessionalsCanBid: formData.onlySelectedProfessionalsCanBid ?? true,
       photos: photoUrls.length > 0 ? photoUrls.map((url) => ({ url })) : [],
       userPrompt: descriptionData?.description || null,

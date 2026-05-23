@@ -66,6 +66,27 @@ const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
   return [];
 };
 
+const normalizeUniqueStringList = (...inputs: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const input of inputs) {
+    if (!Array.isArray(input)) continue;
+
+    for (const item of input) {
+      if (typeof item !== 'string') continue;
+      const trimmed = item.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      normalized.push(trimmed);
+    }
+  }
+
+  return normalized;
+};
+
 const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | undefined => {
   const normalized = String(value || '').trim().toUpperCase();
   if (normalized === 'SCALE_1' || normalized === 'SCALE_2' || normalized === 'SCALE_3') {
@@ -340,9 +361,16 @@ export default function CreateProjectWizardPage() {
   };
 
   const submitWizard = () => {
-    const resolvedTradesRequired = firstNonEmptyStringArray(
+    const firstResolvedTrades = firstNonEmptyStringArray(
       seedDraft?.initialData?.tradesRequired,
       seedDescription?.tradesRequired,
+    );
+    const professionFallback = typeof seedDescription?.profession === 'string'
+      ? seedDescription.profession.trim()
+      : '';
+    const resolvedTradesRequired = normalizeUniqueStringList(
+      firstResolvedTrades,
+      professionFallback ? [professionFallback] : [],
     );
 
     const followUpBlock = followUpStepQuestions
