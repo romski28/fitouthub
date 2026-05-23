@@ -49,6 +49,23 @@ interface CreateProjectDraft {
   followUpQuestions?: string[];
 }
 
+const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
+  for (const input of inputs) {
+    if (!Array.isArray(input)) continue;
+
+    const normalized = input
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+
+    if (normalized.length > 0) {
+      return normalized;
+    }
+  }
+
+  return [];
+};
+
 const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | 'SCALE_3' | undefined => {
   const normalized = String(value || '').trim().toUpperCase();
   if (normalized === 'SCALE_1' || normalized === 'SCALE_2' || normalized === 'SCALE_3') {
@@ -323,6 +340,11 @@ export default function CreateProjectWizardPage() {
   };
 
   const submitWizard = () => {
+    const resolvedTradesRequired = firstNonEmptyStringArray(
+      seedDraft?.initialData?.tradesRequired,
+      seedDescription?.tradesRequired,
+    );
+
     const followUpBlock = followUpStepQuestions
       .map((question, index) => {
         const answer = (answers[`q-${index}`] || '').trim();
@@ -353,10 +375,7 @@ export default function CreateProjectWizardPage() {
           normalizeProjectScale(seedDraft?.initialData?.projectScale) ||
           normalizeProjectScale(seedDescription?.projectScale) ||
           undefined,
-        tradesRequired:
-          seedDraft?.initialData?.tradesRequired ||
-          seedDescription?.tradesRequired ||
-          [],
+        tradesRequired: resolvedTradesRequired,
         endDate: endDate || undefined,
         siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
         photoUrls: existingImageUrls,

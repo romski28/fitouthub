@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-99108590",
+    "date": "2026-05-23T14:51:21+08:00",
+    "title": "fix(ai-wizard): preserve non-empty trades in handoff",
+    "summary": "fix(ai-wizard): preserve non-empty trades in handoff",
+    "areas": [
+      "web"
+    ],
+    "commit": "99108590",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-23-87a687df",
     "date": "2026-05-23T12:02:12+08:00",
     "title": "fix(trade-scope): prevent empty requested scopes on project invite records",
