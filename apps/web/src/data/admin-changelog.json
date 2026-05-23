@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-23-4c95a091",
+    "date": "2026-05-23T17:50:47+08:00",
+    "title": "fix(db): migrate ProjectProfessional trade-scope columns",
+    "summary": "fix(db): migrate ProjectProfessional trade-scope columns",
+    "areas": [
+      "api"
+    ],
+    "commit": "4c95a091",
+    "files": [
+      "apps/api/prisma/migrations/20260523183000_add_project_professional_trade_scope/migration.sql"
+    ]
+  },
+  {
     "id": "2026-05-23-2f9b39a3",
     "date": "2026-05-23T17:49:32+08:00",
     "title": "feat(ai): add refresh memory toggle for conversation threads",
