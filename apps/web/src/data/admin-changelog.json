@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-bc471eed",
+    "date": "2026-05-24T17:48:41+08:00",
+    "title": "feat(wizard): add conversational AI route in AI followup step",
+    "summary": "feat(wizard): add conversational AI route in AI followup step",
+    "areas": [
+      "web"
+    ],
+    "commit": "bc471eed",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-05727794",
     "date": "2026-05-24T17:31:51+08:00",
     "title": "feat(ai): refine path chooser copy, suggestions, and scroll fallback",

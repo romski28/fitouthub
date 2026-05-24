@@ -50,6 +50,11 @@ interface CreateProjectDraft {
   followUpQuestions?: string[];
 }
 
+interface WizardChatMessage {
+  role: 'assistant' | 'user';
+  text: string;
+}
+
 const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
   for (const input of inputs) {
     if (!Array.isArray(input)) continue;
@@ -151,6 +156,12 @@ export default function CreateProjectWizardPage() {
   const [location, setLocation] = useState<CanonicalLocation>({});
   const [isEmergency, setIsEmergency] = useState<boolean | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [chatMessages, setChatMessages] = useState<WizardChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [aiSessionId, setAiSessionId] = useState<string | null>(null);
+  const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [endDate, setEndDate] = useState('');
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
@@ -168,6 +179,12 @@ export default function CreateProjectWizardPage() {
   });
 
   const [currentStep, setCurrentStep] = useState(0);
+
+  const createAiSessionId = () => (
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `wiz_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+  );
 
   useEffect(() => {
     setHydrated(true);
@@ -276,12 +293,27 @@ export default function CreateProjectWizardPage() {
     setLocation(nextLocation);
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
     setFollowUpQuestions(nextQuestions);
+    setChatError(null);
+    setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
+
+    const openingSummary = nextSummary || nextTitle;
+    const starterText = openingSummary
+      ? `Great start. I can help shape this into a clear project brief without making it feel like homework. ${openingSummary}`
+      : 'Nice, let\'s make this easy. I\'ll help you build a clear brief step by step so pros can quote with fewer surprises.';
+    setChatMessages([{ role: 'assistant', text: starterText }]);
+
     setEndDate(nextEndDate);
     setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
     setCurrentStep(0);
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (aiSessionId) return;
+    setAiSessionId(createAiSessionId());
+  }, [hydrated, aiSessionId]);
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
@@ -379,6 +411,103 @@ export default function CreateProjectWizardPage() {
       setUploadError((error as Error).message || 'Failed to upload images');
     } finally {
       setIsUploadingImages(false);
+    }
+  };
+
+  const sendWizardAiTurn = async () => {
+    const prompt = chatInput.trim();
+    if (!prompt || chatBusy) return;
+
+    setChatInput('');
+    setChatBusy(true);
+    setChatError(null);
+    setChatMessages((prev) => [...prev, { role: 'user', text: prompt }]);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/sandbox/requirements/conversational`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          prompt,
+          sessionId: aiSessionId || undefined,
+          intakeId: currentAiIntakeId || seedDraft?.aiIntakeId || undefined,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.message || `AI wizard request failed (${response.status})`);
+      }
+
+      const parsed = payload?.parsedOutput && typeof payload.parsedOutput === 'object'
+        ? (payload.parsedOutput as Record<string, unknown>)
+        : null;
+
+      const nextConversationalText = typeof payload?.conversationalText === 'string' && payload.conversationalText.trim().length > 0
+        ? payload.conversationalText.trim()
+        : (typeof parsed?.conversationalText === 'string' && parsed.conversationalText.trim().length > 0
+            ? parsed.conversationalText.trim()
+            : 'Nice update. I captured that. We are building a strong brief together.');
+
+      setChatMessages((prev) => [...prev, { role: 'assistant', text: nextConversationalText }]);
+
+      const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
+        ? parsed.title.trim()
+        : title;
+      const parsedScope = typeof parsed?.scope === 'string' && parsed.scope.trim().length > 0
+        ? parsed.scope.trim()
+        : (typeof parsed?.summary === 'string' && parsed.summary.trim().length > 0 ? parsed.summary.trim() : '');
+      const nextSummary = parsedScope || summary;
+
+      const parsedTrades = Array.isArray(parsed?.trades)
+        ? parsed.trades.filter((item): item is string => typeof item === 'string')
+        : [];
+      const mergedTrades = normalizeUniqueStringList(
+        parsedTrades,
+        seedDraft?.initialData?.tradesRequired,
+        seedDescription?.tradesRequired,
+      );
+
+      const parsedQuestions = sanitizeFollowUpQuestions(
+        Array.from(
+          new Set(
+            [
+              ...(Array.isArray(parsed?.nextQuestions) ? parsed.nextQuestions : []),
+              ...(Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions : []),
+              ...(Array.isArray(parsed?.missingInfo) ? parsed.missingInfo : []),
+            ].filter((q): q is string => typeof q === 'string' && q.trim().length > 0),
+          ),
+        ),
+      );
+
+      if (nextTitle) setTitle(nextTitle);
+      if (nextSummary) setSummary(nextSummary);
+      if (mergedTrades.length > 0) {
+        setSeedDraft((prev) => ({
+          ...(prev || {}),
+          initialData: {
+            ...(prev?.initialData || {}),
+            tradesRequired: mergedTrades,
+          },
+        }));
+      }
+      if (parsedQuestions.length > 0) {
+        setFollowUpQuestions(parsedQuestions);
+      }
+
+      const nextIntakeId = typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0
+        ? payload.intakeId.trim()
+        : null;
+      if (nextIntakeId) {
+        setCurrentAiIntakeId(nextIntakeId);
+      }
+    } catch (error) {
+      setChatError((error as Error).message || 'Unable to continue AI chat right now.');
+    } finally {
+      setChatBusy(false);
     }
   };
 
@@ -675,29 +804,77 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followups' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>💡</span><span>Clarifications</span></h3>
-                        <p className={panelNoteClass}>Answer these quick questions so we can brief professionals properly.</p>
-                        <div className="space-y-3">
-                          {followUpStepQuestions.length === 0 ? (
-                            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No clarification questions at this time.</p>
-                          ) : (
-                            followUpStepQuestions.map((question, index) => {
-                              const answerKey = `q-${index}`;
-                              return (
-                                <div key={answerKey} className="space-y-1.5">
-                                  <p className={panelNoteClass}>{question}</p>
-                                  <textarea
-                                    value={answers[answerKey] || ''}
-                                    onChange={(e) => setAnswers((prev) => ({ ...prev, [answerKey]: e.target.value }))}
-                                    rows={2}
-                                    placeholder="Type your answer..."
-                                    className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                                  />
+                        {wizardMode === 'ai' ? (
+                          <>
+                            <h3 className={panelTitleClass}><span>💬</span><span>AI chat</span></h3>
+                            <p className={panelNoteClass}>Friendly mode is on. I will keep this light while guiding us to a complete brief.</p>
+
+                            <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                              {chatMessages.map((message, idx) => (
+                                <div key={`chat-${idx}`} className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
+                                  {message.text}
                                 </div>
-                              );
-                            })
-                          )}
-                        </div>
+                              ))}
+                              {chatBusy && (
+                                <p className="text-xs text-slate-500">Mimo is thinking...</p>
+                              )}
+                            </div>
+
+                            {followUpStepQuestions.length > 0 && (
+                              <p className="text-xs text-slate-600">
+                                Next likely question: {followUpStepQuestions[0]}
+                              </p>
+                            )}
+
+                            {chatError && (
+                              <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
+                            )}
+
+                            <div className="flex items-end gap-2">
+                              <textarea
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                rows={2}
+                                placeholder="Reply to Mimo..."
+                                className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                              />
+                              <button
+                                type="button"
+                                onClick={sendWizardAiTurn}
+                                disabled={chatBusy || chatInput.trim().length === 0}
+                                className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                Send
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className={panelTitleClass}><span>💡</span><span>Clarifications</span></h3>
+                            <p className={panelNoteClass}>Answer these quick questions so we can brief professionals properly.</p>
+                            <div className="space-y-3">
+                              {followUpStepQuestions.length === 0 ? (
+                                <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No clarification questions at this time.</p>
+                              ) : (
+                                followUpStepQuestions.map((question, index) => {
+                                  const answerKey = `q-${index}`;
+                                  return (
+                                    <div key={answerKey} className="space-y-1.5">
+                                      <p className={panelNoteClass}>{question}</p>
+                                      <textarea
+                                        value={answers[answerKey] || ''}
+                                        onChange={(e) => setAnswers((prev) => ({ ...prev, [answerKey]: e.target.value }))}
+                                        rows={2}
+                                        placeholder="Type your answer..."
+                                        className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                                      />
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
 
