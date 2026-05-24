@@ -476,6 +476,24 @@ export default function CreateProjectWizardPage() {
     router.push(`/professionals?${params.toString()}`);
   };
 
+  const handleTalkToPersonNow = () => {
+    const initialMessage = [
+      'General enquiry',
+      title.trim() ? `Project title: ${title.trim()}` : '',
+      summary.trim() ? `Project scope: ${summary.trim()}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    window.dispatchEvent(
+      new CustomEvent('foh-open-chat', {
+        detail: {
+          context: 'project_creation',
+          projectName: title.trim() || 'Project scoping help',
+          initialMessage,
+        },
+      }),
+    );
+  };
+
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen" />;
   }
@@ -484,12 +502,14 @@ export default function CreateProjectWizardPage() {
     return (
       <div className="min-h-screen pb-6 pt-6">
         <section className="-mx-6 px-6">
-          <div className="mx-auto max-w-4xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Choose your path</p>
-            <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">How would you like to create your project?</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-700">
-              Both paths use your saved location and include the same image upload stage. You can switch anytime.
-            </p>
+          <div className="mx-auto max-w-5xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Fork Screen</p>
+              <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Choose how you want to scope your project</h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                Get started in minutes. You can switch paths at any time without losing progress.
+              </p>
+            </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <button
@@ -497,8 +517,12 @@ export default function CreateProjectWizardPage() {
                 onClick={() => setWizardMode('classic')}
                 className="rounded-2xl border border-slate-300 bg-white p-5 text-left transition hover:border-slate-400 hover:bg-slate-50"
               >
-                <p className="text-base font-semibold text-slate-900">Proceed to Match</p>
-                <p className="mt-1 text-sm text-slate-700">Use the existing flow and set details directly.</p>
+                <p className="text-base font-semibold text-slate-900">Proceed To Match</p>
+                <p className="mt-1 text-sm font-medium text-slate-700">Use the current flow and set details manually</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you already know what you need.</p>
+                <span className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">
+                  Use Existing Flow
+                </span>
               </button>
 
               <button
@@ -507,7 +531,22 @@ export default function CreateProjectWizardPage() {
                 className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-left transition hover:border-emerald-400 hover:bg-emerald-100"
               >
                 <p className="text-base font-semibold text-emerald-900">AI Wizard</p>
-                <p className="mt-1 text-sm text-emerald-800">Guided adaptive questions for richer project scope.</p>
+                <p className="mt-1 text-sm font-medium text-emerald-700">Fast guided scope in 2-6 minutes</p>
+                <p className="mt-2 text-sm leading-relaxed text-emerald-900">Best if you want quick matching and clear next steps.</p>
+                <span className="mt-4 inline-flex rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
+                  Start AI Wizard
+                </span>
+              </button>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-slate-700">Prefer human help? Talk to an advisor any time.</p>
+              <button
+                type="button"
+                onClick={handleTalkToPersonNow}
+                className="mt-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-800"
+              >
+                Talk to a person now
               </button>
             </div>
           </div>

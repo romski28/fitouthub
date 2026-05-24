@@ -859,20 +859,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     sessionStorage.setItem(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
   }, [aiStructured, buildAiAssistProjectPayload]);
 
-  const handleOpenWizardRoute = useCallback((mode: 'classic' | 'ai') => {
-    if (!aiStructured) return;
-    persistTempAssistDraft();
-    router.push(`/create-project/wizard?wizard=${mode}`);
-  }, [aiStructured, persistTempAssistDraft, router]);
-
-  const handleContinueToMatching = useCallback(() => {
-    handleOpenWizardRoute('classic');
-  }, [handleOpenWizardRoute]);
-
-  const handleLetsTalk = useCallback(() => {
-    handleOpenWizardRoute('ai');
-  }, [handleOpenWizardRoute]);
-
   const persistAiWizardHandoffForAuth = useCallback(() => {
     if (!aiStructured) return false;
 
@@ -960,6 +946,35 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
     return true;
   }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput]);
+
+  const handleOpenWizardRoute = useCallback((mode: 'classic' | 'ai') => {
+    if (!aiStructured) return;
+    const persisted = persistAiWizardHandoffForAuth();
+    if (!persisted) return;
+    persistTempAssistDraft();
+    router.push(`/create-project/wizard?wizard=${mode}`);
+  }, [aiStructured, persistAiWizardHandoffForAuth, persistTempAssistDraft, router]);
+
+  const handleContinueToMatching = useCallback(() => {
+    handleOpenWizardRoute('classic');
+  }, [handleOpenWizardRoute]);
+
+  const handleStartAiWizard = useCallback(() => {
+    handleOpenWizardRoute('ai');
+  }, [handleOpenWizardRoute]);
+
+  const handleTalkToPersonNow = useCallback(() => {
+    if (!aiStructured) return;
+    setAssistError(null);
+    persistTempAssistDraft();
+
+    if (!isLoggedIn || !accessToken) {
+      openJoinModal();
+      return;
+    }
+
+    setShowAssistModal(true);
+  }, [aiStructured, persistTempAssistDraft, isLoggedIn, accessToken, openJoinModal]);
 
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
@@ -2005,48 +2020,73 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
       {hasAiResponse && (
         <div className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-center shadow-sm">
-            <p className="text-sm font-semibold text-emerald-900">Choose what happens next</p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-700">
-              Keep the existing matching flow, or switch into the guided route if you want Mimo to stay involved a little longer.
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
-              {isLoggedIn === true ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleContinueToMatching}
-                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                  >
-                    Continue to Matching
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLetsTalk}
-                    className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-3 font-semibold text-amber-800 transition-all duration-200 hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-100"
-                  >
-                    Let&rsquo;s talk
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleGuestJoin}
-                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                  >
-                    Join to Continue
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleGuestLogin}
-                    className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
-                  >
-                    Login
-                  </button>
-                </>
-              )}
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
+            <div className="text-center">
+              <p className="text-lg font-semibold text-slate-900">Choose how you want to scope your project</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-700">
+                Get started in minutes. You can switch paths at any time without losing progress.
+              </p>
             </div>
+
+            {isLoggedIn === true ? (
+              <>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-emerald-300 bg-white p-4">
+                    <p className="text-base font-semibold text-slate-900">AI Wizard</p>
+                    <p className="mt-1 text-sm font-medium text-emerald-700">Fast guided scope in 2-6 minutes</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you want quick matching and clear next steps.</p>
+                    <button
+                      type="button"
+                      onClick={handleStartAiWizard}
+                      className="mt-4 w-full rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    >
+                      Start AI Wizard
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-300 bg-white p-4">
+                    <p className="text-base font-semibold text-slate-900">Proceed To Match</p>
+                    <p className="mt-1 text-sm font-medium text-slate-700">Use the current flow and set details manually</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you already know what you need.</p>
+                    <button
+                      type="button"
+                      onClick={handleContinueToMatching}
+                      className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      Use Existing Flow
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-5 text-center">
+                  <p className="text-sm text-slate-700">Prefer human help? Talk to an advisor any time.</p>
+                  <button
+                    type="button"
+                    onClick={handleTalkToPersonNow}
+                    className="mt-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-800"
+                  >
+                    Talk to a person now
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="mt-4 flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleGuestJoin}
+                  className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                >
+                  Join to Continue
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGuestLogin}
+                  className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
+                >
+                  Login
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
