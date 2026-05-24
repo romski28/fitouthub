@@ -859,7 +859,7 @@ export default function CreateProjectWizardPage() {
                   <div
                     key={`${step.kind}-${index}`}
                     className={`flex h-full w-full shrink-0 flex-col p-5 pb-24 sm:p-6 sm:pb-24 ${
-                      step.kind === 'location' ? 'overflow-hidden' : 'overflow-y-auto'
+                      step.kind === 'location' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
                   >
                     {step.kind === 'basics' && (
@@ -947,7 +947,7 @@ export default function CreateProjectWizardPage() {
                             <h3 className={panelTitleClass}><span>💬</span><span>AI chat</span></h3>
                             <p className={panelNoteClass}>Friendly mode is on. I will keep this light while guiding us to a complete brief.</p>
 
-                            <div ref={chatContainerRef} className="flex-1 min-h-0 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                            <div ref={chatContainerRef} className="flex-1 min-h-[220px] sm:min-h-[280px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {message.text}

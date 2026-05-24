@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-f291a04a",
+    "date": "2026-05-25T00:38:46+08:00",
+    "title": "fix(wizard): keep AI chat history panel readable height",
+    "summary": "fix(wizard): keep AI chat history panel readable height",
+    "areas": [
+      "web"
+    ],
+    "commit": "f291a04a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-9dd9a3d4",
     "date": "2026-05-25T00:21:28+08:00",
     "title": "fix(api): resolve TS2559 weak type mismatch in thread summary",
