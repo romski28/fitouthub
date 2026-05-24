@@ -325,6 +325,11 @@ export default function CreateProjectWizardPage() {
   }, [hydrated, aiSessionId]);
 
   useEffect(() => {
+    if (wizardMode === null) return;
+    setCurrentStep(0);
+  }, [wizardMode]);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatBusy]);
 

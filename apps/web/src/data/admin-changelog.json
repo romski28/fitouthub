@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-e341d0ee",
+    "date": "2026-05-24T18:40:20+08:00",
+    "title": "fix(wizard): always start at first step when entering a path",
+    "summary": "fix(wizard): always start at first step when entering a path",
+    "areas": [
+      "web"
+    ],
+    "commit": "e341d0ee",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-7e9b47df",
     "date": "2026-05-24T18:28:52+08:00",
     "title": "fix(wizard): add explicit AI-chat completion CTA",
