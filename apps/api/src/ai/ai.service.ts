@@ -159,6 +159,8 @@ export class AiService {
   }
 
   private buildAiThreadContextSummary(intake: {
+    id?: string;
+    project?: unknown;
     rawPrompt?: string | null;
     title?: string | null;
     summary?: string | null;

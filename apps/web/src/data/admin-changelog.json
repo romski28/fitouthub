@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-9dd9a3d4",
+    "date": "2026-05-25T00:21:28+08:00",
+    "title": "fix(api): resolve TS2559 weak type mismatch in thread summary",
+    "summary": "fix(api): resolve TS2559 weak type mismatch in thread summary",
+    "areas": [
+      "api"
+    ],
+    "commit": "9dd9a3d4",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-25-7757f910",
     "date": "2026-05-25T00:12:20+08:00",
     "title": "fix(api): resolve ai thread summary type mismatch",
