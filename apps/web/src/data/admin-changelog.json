@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-24-b80e2207",
+    "date": "2026-05-24T17:07:26+08:00",
+    "title": "refactor(ai): reduce post-reply clutter and simplify fork heading",
+    "summary": "refactor(ai): reduce post-reply clutter and simplify fork heading",
+    "areas": [
+      "web"
+    ],
+    "commit": "b80e2207",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-3907ffa5",
     "date": "2026-05-24T16:45:07+08:00",
     "title": "fix(ai): preserve scoped draft data across fork choices",

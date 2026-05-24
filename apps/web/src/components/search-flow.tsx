@@ -562,7 +562,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       )}
 
       {showForgottenPrompt && isSequenceComplete && (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p id="ai-forgotten-prompt" className="text-sm font-semibold text-emerald-700">
           Anything you have forgotten? Let Mimo know now.
         </p>
       )}
@@ -1841,6 +1841,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     if (aiRoundCount !== 1 || !complete || hasClearedForgottenPromptRef.current) return;
     hasClearedForgottenPromptRef.current = true;
     setSearchBoxClearKey((k) => k + 1);
+
+    // Keep the follow-up prompt visible without forcing manual scrolling.
+    window.setTimeout(() => {
+      document.getElementById('ai-forgotten-prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
   }, [aiRoundCount]);
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
@@ -1965,7 +1970,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           clearKey={searchBoxClearKey}
         />
 
-        {deepSeekSandboxEnabled && searchMode === 'ai' && (
+        {deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <label className="inline-flex items-center gap-2 text-xs text-slate-700">
               <input
@@ -2022,10 +2027,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         <div className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
             <div className="text-center">
-              <p className="text-lg font-semibold text-slate-900">Choose how you want to scope your project</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-700">
-                Get started in minutes. You can switch paths at any time without losing progress.
-              </p>
+              <p className="text-lg font-semibold text-slate-900">Choose your path</p>
             </div>
 
             {isLoggedIn === true ? (

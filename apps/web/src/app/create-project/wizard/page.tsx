@@ -505,10 +505,7 @@ export default function CreateProjectWizardPage() {
           <div className="mx-auto max-w-5xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
             <div className="text-center">
               <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Fork Screen</p>
-              <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Choose how you want to scope your project</h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                Get started in minutes. You can switch paths at any time without losing progress.
-              </p>
+              <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Choose your path</h1>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
