@@ -303,7 +303,10 @@ export default function CreateProjectWizardPage() {
     const starterText = openingSummary
       ? `Great start. I can help shape this into a clear project brief without making it feel like homework. ${openingSummary}`
       : 'Nice, let\'s make this easy. I\'ll help you build a clear brief step by step so pros can quote with fewer surprises.';
-    setChatMessages([{ role: 'assistant', text: starterText }]);
+    const firstQuestion = sanitizeFollowUpQuestions(normalizeQuestions(nextQuestions))[0] || null;
+    const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText }];
+    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion });
+    setChatMessages(seedMessages);
 
     setEndDate(nextEndDate);
     setSiteInspectionAvailableOn(nextSiteInspection);

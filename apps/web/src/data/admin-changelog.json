@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-3bd16edb",
+    "date": "2026-05-24T18:19:10+08:00",
+    "title": "fix(wizard): inject first seeded question into chat on load",
+    "summary": "fix(wizard): inject first seeded question into chat on load",
+    "areas": [
+      "web"
+    ],
+    "commit": "3bd16edb",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-122dc587",
     "date": "2026-05-24T18:12:41+08:00",
     "title": "feat(wizard): chat UX polish - auto-scroll, Enter-to-send, question in chat, hide nav",
