@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-7e9b47df",
+    "date": "2026-05-24T18:28:52+08:00",
+    "title": "fix(wizard): add explicit AI-chat completion CTA",
+    "summary": "fix(wizard): add explicit AI-chat completion CTA",
+    "areas": [
+      "web"
+    ],
+    "commit": "7e9b47df",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-3bd16edb",
     "date": "2026-05-24T18:19:10+08:00",
     "title": "fix(wizard): inject first seeded question into chat on load",

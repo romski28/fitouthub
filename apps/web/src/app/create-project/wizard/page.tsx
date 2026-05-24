@@ -160,6 +160,7 @@ export default function CreateProjectWizardPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -297,6 +298,7 @@ export default function CreateProjectWizardPage() {
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
     setFollowUpQuestions(nextQuestions);
     setChatError(null);
+    setAiChatCanContinue(false);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
 
     const openingSummary = nextSummary || nextTitle;
@@ -321,6 +323,10 @@ export default function CreateProjectWizardPage() {
     if (aiSessionId) return;
     setAiSessionId(createAiSessionId());
   }, [hydrated, aiSessionId]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, chatBusy]);
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
@@ -379,6 +385,11 @@ export default function CreateProjectWizardPage() {
 
   const goBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
+  const handleAiContinue = () => {
+    setAiChatCanContinue(false);
+    goNext();
+  };
+
   const handleLocationInputMode = (nextMode: LocationInputMode) => {
     setLocationInputMode(nextMode);
     try {
@@ -428,6 +439,7 @@ export default function CreateProjectWizardPage() {
     setChatInput('');
     setChatBusy(true);
     setChatError(null);
+    setAiChatCanContinue(false);
     setChatMessages((prev) => [...prev, { role: 'user', text: prompt }]);
 
     try {
@@ -460,7 +472,6 @@ export default function CreateProjectWizardPage() {
             : 'Nice update. I captured that. We are building a strong brief together.');
 
       setChatMessages((prev) => [...prev, { role: 'assistant', text: nextConversationalText }]);
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
         ? parsed.title.trim()
@@ -515,7 +526,18 @@ export default function CreateProjectWizardPage() {
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
       if (parsedQuestions.length > 0) {
+        setAiChatCanContinue(false);
         setChatMessages((prev) => [...prev, { role: 'assistant', text: parsedQuestions[0] }]);
+      } else {
+        const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
+        setAiChatCanContinue(true);
+        setChatMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage?.role === 'assistant' && lastMessage.text === completionText) {
+            return prev;
+          }
+          return [...prev, { role: 'assistant', text: completionText }];
+        });
       }
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
@@ -861,6 +883,16 @@ export default function CreateProjectWizardPage() {
                                 Send
                               </button>
                             </div>
+
+                            {aiChatCanContinue && !chatBusy && (
+                              <button
+                                type="button"
+                                onClick={handleAiContinue}
+                                className="self-end rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                              >
+                                Continue to scope and dates
+                              </button>
+                            )}
                           </>
                         ) : (
                           <>
