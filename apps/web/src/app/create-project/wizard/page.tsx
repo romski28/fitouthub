@@ -181,7 +181,7 @@ export default function CreateProjectWizardPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const hasInitializedFromSeedRef = useRef(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
 
   const createAiSessionId = () => (
@@ -346,10 +346,6 @@ export default function CreateProjectWizardPage() {
     }
   }, [wizardMode, currentStep]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, chatBusy]);
-
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
   const steps = useMemo<WizardStep[]>(
@@ -399,6 +395,14 @@ export default function CreateProjectWizardPage() {
   const repairSignalText = [title, summary, seedDescription?.description || '', seedDescription?.title || ''].join(' ').toLowerCase();
   const isLikelyRepairMode = /(repair|fix|broken|damage|damaged|leak|leaking|replace|urgent maintenance|maintenance)/i.test(repairSignalText);
   const suggestedPath: 'ai' | 'fast-track' = isLikelyRepairMode ? 'fast-track' : 'ai';
+
+  useEffect(() => {
+    if (wizardMode !== 'ai') return;
+    if (activeStep?.kind !== 'followups') return;
+    const node = chatContainerRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [wizardMode, activeStep, chatMessages, chatBusy]);
 
   const goNext = () => {
     if (!canGoNext) return;
@@ -870,7 +874,7 @@ export default function CreateProjectWizardPage() {
                             <h3 className={panelTitleClass}><span>💬</span><span>AI chat</span></h3>
                             <p className={panelNoteClass}>Friendly mode is on. I will keep this light while guiding us to a complete brief.</p>
 
-                            <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                            <div ref={chatContainerRef} className="flex-1 min-h-0 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {message.text}
@@ -879,7 +883,6 @@ export default function CreateProjectWizardPage() {
                               {chatBusy && (
                                 <p className="text-xs text-slate-500">Mimo is thinking...</p>
                               )}
-                              <div ref={chatEndRef} />
                             </div>
 
                             {chatError && (
