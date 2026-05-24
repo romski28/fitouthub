@@ -55,6 +55,8 @@ interface WizardChatMessage {
   text: string;
 }
 
+const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
+
 const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
   for (const input of inputs) {
     if (!Array.isArray(input)) continue;
@@ -132,6 +134,27 @@ const normalizeQuestionKey = (question: string): string =>
 const mergeQuestions = (...inputs: unknown[]): string[] =>
   sanitizeFollowUpQuestions(Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input)))));
 
+const getNextBestMissingBriefQuestion = (context: {
+  title: string;
+  summary: string;
+  trades: string[];
+  isEmergency: boolean | null;
+}): string | null => {
+  if (!context.title.trim()) {
+    return 'What short project title should we use for this work?';
+  }
+  if (context.trades.length === 0) {
+    return 'Which parts of the room are included in this scope so I can lock the right trade match?';
+  }
+  if (context.summary.trim().length < 90) {
+    return 'Can you confirm the key deliverables and finish expectations in one message?';
+  }
+  if (context.isEmergency === null) {
+    return 'Is this urgent or can it be planned as a normal timeline project?';
+  }
+  return null;
+};
+
 const stripSummaryPrefix = (value: string): string => {
   const trimmed = value.trimStart();
   if (/^summary\s*:\s*/i.test(trimmed)) {
@@ -173,6 +196,7 @@ export default function CreateProjectWizardPage() {
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
+  const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -319,6 +343,7 @@ export default function CreateProjectWizardPage() {
     setFollowUpQuestions(nextQuestions);
     setChatError(null);
     setAiChatCanContinue(false);
+    setAiSummaryForConfirmation(null);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
 
     const openingSummary = nextSummary || nextTitle;
@@ -482,6 +507,7 @@ export default function CreateProjectWizardPage() {
     setChatBusy(true);
     setChatError(null);
     setAiChatCanContinue(false);
+    setAiSummaryForConfirmation(null);
     setChatMessages((prev) => [...prev, { role: 'user', text: prompt }]);
 
     try {
@@ -551,6 +577,9 @@ export default function CreateProjectWizardPage() {
           .filter((key) => key.length > 0),
       );
       const nextUnaskedQuestion = parsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
+      const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
+      const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
+      const shouldOfferSummaryConfirmation = hasCoreBrief && Boolean(overallConfidence !== null && overallConfidence >= AI_SUMMARY_CONFIDENCE_THRESHOLD);
 
       if (nextTitle) setTitle(nextTitle);
       if (nextSummary) setSummary(nextSummary);
@@ -578,16 +607,40 @@ export default function CreateProjectWizardPage() {
       if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
         setChatMessages((prev) => [...prev, { role: 'assistant', text: nextUnaskedQuestion }]);
-      } else {
-        const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
+      } else if (shouldOfferSummaryConfirmation) {
+        const summaryForConfirmation = [
+          'Mimo summary for confirmation:',
+          `Project: ${nextTitle || title || 'Not set'}`,
+          `Scope: ${nextSummary || summary || 'Not set'}`,
+          `Suggested trades: ${mergedTrades.length > 0 ? mergedTrades.join(', ') : 'Not set'}`,
+          `Urgency: ${(typeof isEmergency === 'boolean' ? isEmergency : null) === true ? 'Urgent' : 'Standard'}`,
+        ].join('\n');
+
+        setAiSummaryForConfirmation(summaryForConfirmation);
         setAiChatCanContinue(true);
-        setChatMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          if (lastMessage?.role === 'assistant' && lastMessage.text === completionText) {
-            return prev;
-          }
-          return [...prev, { role: 'assistant', text: completionText }];
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: `${summaryForConfirmation}\n\nIf this looks right, continue and we will finalize the remaining details.` }]);
+      } else {
+        const fallbackQuestion = getNextBestMissingBriefQuestion({
+          title: nextTitle || title,
+          summary: nextSummary || summary,
+          trades: mergedTrades,
+          isEmergency,
         });
+
+        if (fallbackQuestion) {
+          setAiChatCanContinue(false);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: fallbackQuestion }]);
+        } else {
+          const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
+          setAiChatCanContinue(true);
+          setChatMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage?.role === 'assistant' && lastMessage.text === completionText) {
+              return prev;
+            }
+            return [...prev, { role: 'assistant', text: completionText }];
+          });
+        }
       }
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
@@ -939,7 +992,7 @@ export default function CreateProjectWizardPage() {
                                 onClick={handleAiContinue}
                                 className="self-end rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
                               >
-                                Continue to scope and dates
+                                {aiSummaryForConfirmation ? 'Continue with this summary' : 'Continue to scope and dates'}
                               </button>
                             )}
                           </>

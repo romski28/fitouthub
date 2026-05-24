@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-25-7cb7baf1",
+    "date": "2026-05-25T00:07:54+08:00",
+    "title": "feat(ai-wizard): one-question strategy, seriousness guard, and summary confirmation gate",
+    "summary": "feat(ai-wizard): one-question strategy, seriousness guard, and summary confirmation gate",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7cb7baf1",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-81b0c53e",
     "date": "2026-05-24T23:36:48+08:00",
     "title": "fix(ai-wizard): prevent duplicate date/price questions and preserve thread objective",

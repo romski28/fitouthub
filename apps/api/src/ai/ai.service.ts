@@ -200,6 +200,65 @@ export class AiService {
     };
   }
 
+  private normalizeQuestionTopicKey(input: string): string {
+    return input
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private toStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  private extractAskedQuestionsFromIntakeOutput(rawOutput: unknown): string[] {
+    if (!rawOutput || typeof rawOutput !== 'object' || Array.isArray(rawOutput)) return [];
+    const parsed = rawOutput as Record<string, unknown>;
+    return Array.from(
+      new Set([
+        ...this.toStringArray(parsed.nextQuestions),
+        ...this.toStringArray(parsed.followUpQuestions),
+      ]),
+    );
+  }
+
+  private async collectThreadAskedQuestions(activeThread?: { id: string; project?: unknown } | null): Promise<string[]> {
+    if (!activeThread) return [];
+
+    const visited = new Set<string>();
+    const chain: Array<{ id: string; project?: unknown; rawOutput?: unknown }> = [];
+    let cursor: { id: string; project?: unknown; rawOutput?: unknown } | null = activeThread;
+
+    for (let depth = 0; depth < 20; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+      chain.push(cursor);
+
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent
+        ? { id: parent.id, project: parent.project, rawOutput: parent.rawOutput }
+        : null;
+    }
+
+    const questions = new Set<string>();
+    for (const intake of chain) {
+      for (const question of this.extractAskedQuestionsFromIntakeOutput(intake.rawOutput)) {
+        const key = this.normalizeQuestionTopicKey(question);
+        if (!key) continue;
+        questions.add(question);
+      }
+    }
+
+    return Array.from(questions);
+  }
+
   private extractSourceIntakeIdFromProject(project: unknown): string | null {
     if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
     const projectRecord = project as Record<string, unknown>;
@@ -580,6 +639,7 @@ CONVERSATION STYLE
 - Include encouraging phrases about working with Mimo
 - End with an invitation to connect with professionals
 - Always address the person as "you"; never refer to them as "the user"
+- If the prompt contains risk/emergency language (danger, hazard, urgent, leak, electrical risk, safety), reduce humor and switch to clear, calm, practical wording
 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
@@ -591,6 +651,7 @@ CRITICAL RULES FOR DATA EXTRACTION
 7) Do NOT ask budget or timing follow-up questions in nextQuestions/followUpQuestions (budget, price, cost, completion date, deadline, timeline, site inspection) because these are collected in dedicated wizard steps.
 8) Avoid repeating previously asked questions. If prior context already answered a point, do not ask it again.
 9) Preserve the user's core project objective from earlier thread context. Treat new messages as refinements unless they explicitly replace the objective.
+10) Ask only ONE best next question each turn (highest-value missing field for matching/tender quality). Keep nextQuestions/followUpQuestions to max 1 item.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -1775,9 +1836,10 @@ OUTPUT FORMAT (JSON only)
     const threadSummary = activeThread ? this.buildAiThreadContextSummary(activeThread) : null;
     const threadOrigin = activeThread ? await this.resolveThreadOriginIntake(activeThread) : null;
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
+    const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
 
     const userMessage = threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${threadOriginSummary?.priorPrompt || threadSummary.priorPrompt}\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it`
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${threadOriginSummary?.priorPrompt || threadSummary.priorPrompt}\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n- Already asked questions: ${askedQuestions.length > 0 ? askedQuestions.join(' | ') : 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
       : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     const messages: DeepSeekMessage[] = [
@@ -2106,6 +2168,8 @@ OUTPUT FORMAT (JSON only)
       ...(parsedObject || {}),
       conversationalText,
       trades,
+      nextQuestions: this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions).slice(0, 1),
+      followUpQuestions: this.toStringArray((parsedObject as Record<string, unknown> | null)?.followUpQuestions).slice(0, 1),
     };
 
     return {
