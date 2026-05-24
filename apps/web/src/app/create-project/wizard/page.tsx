@@ -132,7 +132,6 @@ const MOTIVATION = [
 
 const panelTitleClass = 'flex items-start gap-2 text-xl font-semibold text-slate-900 sm:text-2xl';
 const panelNoteClass = 'text-sm leading-relaxed text-slate-700';
-const panelCardClass = 'space-y-4';
 const panelContentClass = 'flex h-full min-h-0 flex-col gap-4';
 const LOCATION_PICKER_CONTAINER_CLASS = 'min-h-[300px] flex-1 overflow-hidden';
 
@@ -156,7 +155,6 @@ export default function CreateProjectWizardPage() {
   const [endDate, setEndDate] = useState('');
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-  const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
@@ -321,9 +319,6 @@ export default function CreateProjectWizardPage() {
     setLocation((nextCode ? areaCodeToCanonicalLocation(nextCode) : {}) as CanonicalLocation);
   };
 
-  const seedAssumptions = seedDraft?.initialData?.aiFrom?.assumptions || [];
-  const seedSummary = (seedDescription?.description || '').trim();
-  const seedScope = (seedDraft?.initialData?.notes || '').trim();
   const canGoNext = useMemo(() => {
     if (!activeStep) return false;
     if (activeStep.kind === 'basics') return title.trim().length > 0;
@@ -331,7 +326,7 @@ export default function CreateProjectWizardPage() {
     if (activeStep.kind === 'followups') return true;
     if (activeStep.kind === 'scopeDates') return summary.trim().length > 0;
     return true;
-  }, [activeStep, title, location.primary, location.secondary, location.tertiary, followUpStepQuestions, summary]);
+  }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
 
   const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
 
@@ -349,14 +344,6 @@ export default function CreateProjectWizardPage() {
     } catch {
       // no-op
     }
-  };
-
-  const addImageUrl = () => {
-    const normalized = imageUrlDraft.trim();
-    if (!normalized) return;
-    if (!/^https?:\/\//i.test(normalized)) return;
-    setExistingImageUrls((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
-    setImageUrlDraft('');
   };
 
   const removeImageUrl = (url: string) => {

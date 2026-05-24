@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-24-994f369b",
+    "date": "2026-05-24T12:33:29+08:00",
+    "title": "feat(ai): move project fork into Ask Mimo response actions",
+    "summary": "feat(ai): move project fork into Ask Mimo response actions",
+    "areas": [
+      "web"
+    ],
+    "commit": "994f369b",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-1fbcdc58",
     "date": "2026-05-24T12:09:38+08:00",
     "title": "feat(wizard): add classic vs AI fork with shared core steps",

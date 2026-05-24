@@ -5,13 +5,11 @@ import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import toast from 'react-hot-toast';
 import { matchIntent, type IntentResult } from '@/lib/intent-matcher';
 import SearchBox from '@/components/search-box';
 import ChatImageUploader from '@/components/chat-image-uploader';
 import { SearchHelpModal } from '@/components/search-help-modal';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
-import { ModalOverlay } from '@/components/modal-overlay';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { API_BASE_URL } from '@/config/api';
@@ -758,12 +756,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     inlineImageError?: string | null;
     message?: string;
   } | null>(null);
-  const [showConsultChoiceModal, setShowConsultChoiceModal] = useState(false);
   const [leadName, setLeadName] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
   const [leadMobile, setLeadMobile] = useState('');
-  const [leadChecking, setLeadChecking] = useState(false);
-  const [leadFormError, setLeadFormError] = useState<string | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistSubmitting, setAssistSubmitting] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
@@ -807,11 +802,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     hasClearedForgottenPromptRef.current = false;
     setPromptImages([]);
     setPromptUploaderClearKey((key) => key + 1);
-    setShowConsultChoiceModal(false);
     setLeadName('');
     setLeadEmail('');
     setLeadMobile('');
-    setLeadFormError(null);
     setShowAssistModal(false);
     setAssistSubmitting(false);
     setAssistError(null);
@@ -866,62 +859,19 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     sessionStorage.setItem(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
   }, [aiStructured, buildAiAssistProjectPayload]);
 
-  const handleLetsTalk = useCallback(() => {
+  const handleOpenWizardRoute = useCallback((mode: 'classic' | 'ai') => {
     if (!aiStructured) return;
-    setLeadFormError(null);
-    setAssistError(null);
     persistTempAssistDraft();
+    router.push(`/create-project/wizard?wizard=${mode}`);
+  }, [aiStructured, persistTempAssistDraft, router]);
 
-    if (!isLoggedIn || !accessToken) {
-      setShowConsultChoiceModal(true);
-      return;
-    }
+  const handleContinueToMatching = useCallback(() => {
+    handleOpenWizardRoute('classic');
+  }, [handleOpenWizardRoute]);
 
-    setShowAssistModal(true);
-  }, [aiStructured, persistTempAssistDraft, isLoggedIn, accessToken]);
-
-  const handleGuestContinueQuick = useCallback(async () => {
-    const safeName = leadName.trim();
-    const safeEmail = leadEmail.trim();
-    const safeMobile = leadMobile.trim();
-
-    if (!safeName) {
-      setLeadFormError('Please share your name.');
-      return;
-    }
-    if (!safeEmail && !safeMobile) {
-      setLeadFormError('Please provide either email or mobile.');
-      return;
-    }
-
-    setLeadFormError(null);
-    setLeadChecking(true);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/assist-requests/ai-consultation/precheck`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: safeEmail || undefined,
-          mobile: safeMobile || undefined,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({} as { eligible?: boolean; message?: string }));
-
-      if (!response.ok || data.eligible === false) {
-        setLeadFormError(data.message || 'These contact details are already in our system. Please log in to continue.');
-        return;
-      }
-
-      setShowConsultChoiceModal(false);
-      setShowAssistModal(true);
-    } catch {
-      setLeadFormError('Unable to validate your contact details right now. Please try again.');
-    } finally {
-      setLeadChecking(false);
-    }
-  }, [leadName, leadEmail, leadMobile]);
+  const handleLetsTalk = useCallback(() => {
+    handleOpenWizardRoute('ai');
+  }, [handleOpenWizardRoute]);
 
   const persistAiWizardHandoffForAuth = useCallback(() => {
     if (!aiStructured) return false;
@@ -1011,35 +961,23 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     return true;
   }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput]);
 
-  const handleOpenAiWizardRoute = useCallback(() => {
-    const persisted = persistAiWizardHandoffForAuth();
-    if (!persisted) {
-      toast.error('Unable to prepare AI project details. Please try again.');
-      return;
-    }
-    setShowConsultChoiceModal(false);
-    router.push('/create-project/wizard?source=ai');
-  }, [persistAiWizardHandoffForAuth, router]);
-
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?wizard=ai');
     } catch {
       // Ignore storage failures
     }
-    setShowConsultChoiceModal(false);
     openJoinModal();
   }, [openJoinModal, persistAiWizardHandoffForAuth]);
 
   const handleGuestLogin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
-      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?source=ai');
+      sessionStorage.setItem('postLoginRedirect', '/create-project/wizard?wizard=ai');
     } catch {
       // Ignore storage failures
     }
-    setShowConsultChoiceModal(false);
     openLoginModal();
   }, [openLoginModal, persistAiWizardHandoffForAuth]);
 
@@ -1800,7 +1738,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
       // Show thinking panel immediately on submit
       clearPendingAssistDraft();
-      setShowConsultChoiceModal(false);
       setShowAssistModal(false);
       setAiLoading(true);
       setAiError(null);
@@ -2067,121 +2004,52 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       </div>
 
       {hasAiResponse && (
-        <div className={`flex flex-wrap justify-center gap-3 border-t border-emerald-100 pt-1 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
-          {isLoggedIn === true ? (
-            <button
-              type="button"
-              onClick={handleOpenAiWizardRoute}
-              className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-            >
-              Continue to Matching
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={handleGuestJoin}
-                className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-              >
-                Join to Continue
-              </button>
-              <button
-                type="button"
-                onClick={handleGuestLogin}
-                className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
-              >
-                Login
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={handleLetsTalk}
-            className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-3 font-semibold text-amber-800 transition-all duration-200 hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-100"
-          >
-            Let&rsquo;s talk
-          </button>
+        <div className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-center shadow-sm">
+            <p className="text-sm font-semibold text-emerald-900">Choose what happens next</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-700">
+              Keep the existing matching flow, or switch into the guided route if you want Mimo to stay involved a little longer.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {isLoggedIn === true ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleContinueToMatching}
+                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    Continue to Matching
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLetsTalk}
+                    className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-3 font-semibold text-amber-800 transition-all duration-200 hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-100"
+                  >
+                    Let&rsquo;s talk
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleGuestJoin}
+                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    Join to Continue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGuestLogin}
+                    className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
+                  >
+                    Login
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
-
-      <ModalOverlay isOpen={showConsultChoiceModal} onClose={() => setShowConsultChoiceModal(false)} maxWidth="max-w-2xl">
-        <div className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
-            <div className="mx-auto md:mx-0">
-              <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={108} height={140} className="object-contain" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600">Sarah from Mimo</p>
-              <h3 className="text-2xl font-bold text-slate-900">Let&rsquo;s set up your consultation</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                Choose quick booking with basic details, or join as a full client now. Both options keep your project context linked to the consultation.
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
-            <p className="text-sm font-semibold text-emerald-900">Book chat now (lightweight)</p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <input
-                value={leadName}
-                onChange={(e) => setLeadName(e.target.value)}
-                placeholder="Your name"
-                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm"
-              />
-              <input
-                value={leadEmail}
-                onChange={(e) => setLeadEmail(e.target.value)}
-                placeholder="Email (optional if mobile provided)"
-                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm"
-              />
-              <input
-                value={leadMobile}
-                onChange={(e) => setLeadMobile(e.target.value)}
-                placeholder="Mobile (optional if email provided)"
-                className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm md:col-span-2"
-              />
-            </div>
-            <p className="text-xs text-slate-600">
-              We will create a lightweight prospective profile so your project and call booking stay linked.
-            </p>
-            <button
-              type="button"
-              onClick={handleGuestContinueQuick}
-              disabled={leadChecking}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {leadChecking ? 'Checking details...' : 'Continue to Booking'}
-            </button>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-900">Join as client instead</p>
-            <p className="mt-1 text-xs text-slate-600">Create your full Mimo client account now and continue with the same consultation context.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleGuestJoin}
-                className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                Join as Client
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleGuestLogin();
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                I already have an account
-              </button>
-            </div>
-          </div>
-
-          {leadFormError && (
-            <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{leadFormError}</p>
-          )}
-        </div>
-      </ModalOverlay>
 
       <AssistRequestModal
         key={showAssistModal ? `${aiStructured?.title || 'ai-assist'}-${aiStructured?.summary || ''}` : 'ai-assist-closed'}
@@ -2389,7 +2257,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 {isLoggedIn === true && (
                   <button
                     type="button"
-                    onClick={handleOpenAiWizardRoute}
+                    onClick={handleContinueToMatching}
                     className="flex-1 min-w-[140px] rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
                   >
                     Continue to Matching
