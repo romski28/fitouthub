@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-7757f910",
+    "date": "2026-05-25T00:12:20+08:00",
+    "title": "fix(api): resolve ai thread summary type mismatch",
+    "summary": "fix(api): resolve ai thread summary type mismatch",
+    "areas": [
+      "api"
+    ],
+    "commit": "7757f910",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-25-7cb7baf1",
     "date": "2026-05-25T00:07:54+08:00",
     "title": "feat(ai-wizard): one-question strategy, seriousness guard, and summary confirmation gate",

@@ -159,11 +159,11 @@ export class AiService {
   }
 
   private buildAiThreadContextSummary(intake: {
-    rawPrompt: string;
+    rawPrompt?: string | null;
     title?: string | null;
     summary?: string | null;
     scope?: string | null;
-    trades: string[];
+    trades?: string[] | null;
     locationPrimary?: string | null;
     locationSecondary?: string | null;
     locationTertiary?: string | null;
@@ -189,7 +189,7 @@ export class AiService {
       : '';
 
     return {
-      priorPrompt: intake.rawPrompt.trim(),
+      priorPrompt: typeof intake.rawPrompt === 'string' ? intake.rawPrompt.trim() : '',
       title: intake.title?.trim() || null,
       summary: intake.summary?.trim() || intake.scope?.trim() || null,
       trades: Array.isArray(intake.trades) ? intake.trades.filter(Boolean) : [],
