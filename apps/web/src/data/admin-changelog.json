@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-18498c78",
+    "date": "2026-05-24T10:17:12+08:00",
+    "title": "fix(ai-trades): canonicalize woodworking suggestions",
+    "summary": "fix(ai-trades): canonicalize woodworking suggestions",
+    "areas": [
+      "web"
+    ],
+    "commit": "18498c78",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-23-157241ee",
     "date": "2026-05-23T18:42:46+08:00",
     "title": "fix(trades): enforce non-empty resolved trades in create flow",

@@ -61,6 +61,24 @@ interface AiStructured {
 }
 
 const normalizeTradeList = (...inputs: unknown[]): string[] => {
+  const canonicalizeTrade = (value: string): { key: string; label: string } => {
+    const trimmed = value.trim();
+    const lowered = trimmed.toLowerCase();
+    const normalized = lowered
+      .replace(/[&/,+]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Collapse common woodworking synonyms to a single canonical trade.
+    if (
+      /\b(carpenter|carpentry|joiner|joinery)\b/.test(normalized)
+    ) {
+      return { key: 'carpenter', label: 'Carpenter' };
+    }
+
+    return { key: normalized || lowered, label: trimmed };
+  };
+
   const seen = new Set<string>();
   const result: string[] = [];
 
@@ -71,10 +89,11 @@ const normalizeTradeList = (...inputs: unknown[]): string[] => {
       if (typeof item !== 'string') continue;
       const cleaned = item.trim();
       if (!cleaned) continue;
-      const key = cleaned.toLowerCase();
+      const canonical = canonicalizeTrade(cleaned);
+      const key = canonical.key;
       if (seen.has(key)) continue;
       seen.add(key);
-      result.push(cleaned);
+      result.push(canonical.label);
     }
   }
 
