@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-1fbcdc58",
+    "date": "2026-05-24T12:09:38+08:00",
+    "title": "feat(wizard): add classic vs AI fork with shared core steps",
+    "summary": "feat(wizard): add classic vs AI fork with shared core steps",
+    "areas": [
+      "web"
+    ],
+    "commit": "1fbcdc58",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-736048a6",
     "date": "2026-05-24T10:55:37+08:00",
     "title": "fix(scope): derive per-professional requested trades correctly",

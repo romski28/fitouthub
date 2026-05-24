@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { CanonicalLocation } from '@/components/location-select';
 import LocationSelect from '@/components/location-select';
 import { HkDistrictList } from '@/components/hk-district-list';
@@ -30,6 +30,7 @@ type WizardStep =
   | { kind: 'review' };
 
 type LocationInputMode = 'map' | 'list';
+type WizardMode = 'ai' | 'classic';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -137,9 +138,11 @@ const LOCATION_PICKER_CONTAINER_CLASS = 'min-h-[300px] flex-1 overflow-hidden';
 
 export default function CreateProjectWizardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoggedIn, userLocation, accessToken } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
+  const [wizardMode, setWizardMode] = useState<WizardMode | null>(null);
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
   const [seedDescription, setSeedDescription] = useState<ProjectDescriptionData | null>(null);
   const [seedLoaded, setSeedLoaded] = useState(false);
@@ -171,6 +174,25 @@ export default function CreateProjectWizardPage() {
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
+    const source = (searchParams.get('source') || '').trim().toLowerCase();
+
+    if (requestedMode === 'ai' || requestedMode === 'classic') {
+      setWizardMode(requestedMode);
+      return;
+    }
+
+    if (source === 'ai') {
+      setWizardMode('ai');
+      return;
+    }
+
+    setWizardMode(null);
+  }, [hydrated, searchParams]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -266,15 +288,25 @@ export default function CreateProjectWizardPage() {
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
   const steps = useMemo<WizardStep[]>(
-    () => [
-      { kind: 'basics' },
-      { kind: 'location' },
-      { kind: 'followups' },
-      { kind: 'scopeDates' },
-      { kind: 'images' },
-      { kind: 'review' },
-    ],
-    [],
+    () => {
+      const base: WizardStep[] = [
+        { kind: 'basics' },
+        { kind: 'location' },
+      ];
+
+      if (wizardMode !== 'classic') {
+        base.push({ kind: 'followups' });
+      }
+
+      base.push(
+        { kind: 'scopeDates' },
+        { kind: 'images' },
+        { kind: 'review' },
+      );
+
+      return base;
+    },
+    [wizardMode],
   );
 
   const activeStep = steps[currentStep];
@@ -452,7 +484,7 @@ export default function CreateProjectWizardPage() {
       params.set('aiScale', nextDraft.initialData.projectScale);
     }
     params.set('aiEmergency', nextDraft.initialData?.isEmergency ? '1' : '0');
-    params.set('source', 'ai-wizard');
+    params.set('source', wizardMode === 'classic' ? 'classic-wizard' : 'ai-wizard');
 
     router.push(`/professionals?${params.toString()}`);
   };
@@ -461,13 +493,49 @@ export default function CreateProjectWizardPage() {
     return <div className="min-h-screen" />;
   }
 
+  if (wizardMode === null) {
+    return (
+      <div className="min-h-screen pb-6 pt-6">
+        <section className="-mx-6 px-6">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Choose your path</p>
+            <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">How would you like to create your project?</h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">
+              Both paths use your saved location and include the same image upload stage. You can switch anytime.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setWizardMode('classic')}
+                className="rounded-2xl border border-slate-300 bg-white p-5 text-left transition hover:border-slate-400 hover:bg-slate-50"
+              >
+                <p className="text-base font-semibold text-slate-900">Proceed to Match</p>
+                <p className="mt-1 text-sm text-slate-700">Use the existing flow and set details directly.</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setWizardMode('ai')}
+                className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-left transition hover:border-emerald-400 hover:bg-emerald-100"
+              >
+                <p className="text-base font-semibold text-emerald-900">AI Wizard</p>
+                <p className="mt-1 text-sm text-emerald-800">Guided adaptive questions for richer project scope.</p>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pb-6 pt-3">
       <section className="-mx-6 px-6">
         <div className="mx-auto flex h-[calc(100dvh-2rem)] max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-              AI Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+              {wizardMode === 'classic' ? 'Project Wizard' : 'AI Project Wizard'} · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
             </p>
             <p className="text-base font-semibold text-slate-700">{progress}% complete</p>
           </div>
