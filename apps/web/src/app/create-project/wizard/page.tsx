@@ -180,6 +180,7 @@ export default function CreateProjectWizardPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const hasInitializedFromSeedRef = useRef(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -456,6 +457,7 @@ export default function CreateProjectWizardPage() {
             : 'Nice update. I captured that. We are building a strong brief together.');
 
       setChatMessages((prev) => [...prev, { role: 'assistant', text: nextConversationalText }]);
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
         ? parsed.title.trim()
@@ -506,6 +508,11 @@ export default function CreateProjectWizardPage() {
         : null;
       if (nextIntakeId) {
         setCurrentAiIntakeId(nextIntakeId);
+      }
+
+      // Inject the first next-question as the next chat prompt so it appears inside the conversation
+      if (parsedQuestions.length > 0) {
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: parsedQuestions[0] }]);
       }
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
@@ -821,13 +828,8 @@ export default function CreateProjectWizardPage() {
                               {chatBusy && (
                                 <p className="text-xs text-slate-500">Mimo is thinking...</p>
                               )}
+                              <div ref={chatEndRef} />
                             </div>
-
-                            {followUpStepQuestions.length > 0 && (
-                              <p className="text-xs text-slate-600">
-                                Next likely question: {followUpStepQuestions[0]}
-                              </p>
-                            )}
 
                             {chatError && (
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
@@ -837,8 +839,14 @@ export default function CreateProjectWizardPage() {
                               <textarea
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendWizardAiTurn();
+                                  }
+                                }}
                                 rows={2}
-                                placeholder="Reply to Mimo..."
+                                placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
                                 className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                               />
                               <button
@@ -987,35 +995,37 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                disabled={currentStep === 0}
-                className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
-              >
-                Back
-              </button>
+            {activeStep?.kind !== 'followups' || wizardMode !== 'ai' ? (
+              <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  disabled={currentStep === 0}
+                  className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
+                >
+                  Back
+                </button>
 
-              {currentStep < steps.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!canGoNext}
-                  className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={submitWizard}
-                  className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
-                >
-                  Continue to Invite Professionals
-                </button>
-              )}
-            </div>
+                {currentStep < steps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!canGoNext}
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={submitWizard}
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
+                  >
+                    Continue to Invite Professionals
+                  </button>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

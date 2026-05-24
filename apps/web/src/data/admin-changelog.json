@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-122dc587",
+    "date": "2026-05-24T18:12:41+08:00",
+    "title": "feat(wizard): chat UX polish - auto-scroll, Enter-to-send, question in chat, hide nav",
+    "summary": "feat(wizard): chat UX polish - auto-scroll, Enter-to-send, question in chat, hide nav",
+    "areas": [
+      "web"
+    ],
+    "commit": "122dc587",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-b49bbbe7",
     "date": "2026-05-24T17:59:08+08:00",
     "title": "fix(wizard): stop AI chat step resets and tighten persona address",
