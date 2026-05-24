@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { CanonicalLocation } from '@/components/location-select';
@@ -179,6 +179,7 @@ export default function CreateProjectWizardPage() {
   });
 
   const [currentStep, setCurrentStep] = useState(0);
+  const hasInitializedFromSeedRef = useRef(false);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -275,6 +276,7 @@ export default function CreateProjectWizardPage() {
 
   useEffect(() => {
     if (!seedLoaded) return;
+    if (hasInitializedFromSeedRef.current) return;
 
     const nextTitle = seedDraft?.initialData?.projectName || seedDescription?.title || '';
     const nextSummaryRaw = seedDescription?.description || seedDraft?.initialData?.notes || '';
@@ -307,6 +309,7 @@ export default function CreateProjectWizardPage() {
     setExistingImageUrls(seededPhotos);
     setAnswers({});
     setCurrentStep(0);
+    hasInitializedFromSeedRef.current = true;
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
   useEffect(() => {
@@ -560,7 +563,7 @@ export default function CreateProjectWizardPage() {
         photoUrls: existingImageUrls,
       },
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
-      aiIntakeId: seedDraft?.aiIntakeId,
+      aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
       followUpQuestions: followUpStepQuestions,
     };
 

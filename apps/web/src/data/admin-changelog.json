@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-24-b49bbbe7",
+    "date": "2026-05-24T17:59:08+08:00",
+    "title": "fix(wizard): stop AI chat step resets and tighten persona address",
+    "summary": "fix(wizard): stop AI chat step resets and tighten persona address",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b49bbbe7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-bc471eed",
     "date": "2026-05-24T17:48:41+08:00",
     "title": "feat(wizard): add conversational AI route in AI followup step",
