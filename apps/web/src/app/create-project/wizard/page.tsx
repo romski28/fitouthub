@@ -197,6 +197,13 @@ export default function CreateProjectWizardPage() {
   useEffect(() => {
     if (!hydrated) return;
 
+    // Defensive reset when route query context is re-evaluated.
+    // This prevents preserved client state from reopening mid-wizard.
+    hasInitializedFromSeedRef.current = false;
+    hasManualStepNavigationRef.current = false;
+    setAiChatCanContinue(false);
+    setCurrentStep(0);
+
     const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
     const source = (searchParams.get('source') || '').trim().toLowerCase();
 
