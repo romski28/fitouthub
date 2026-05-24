@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-96d7d7b7",
+    "date": "2026-05-24T10:50:51+08:00",
+    "title": "fix(api-trades): canonicalize joiner/carpenter variants",
+    "summary": "fix(api-trades): canonicalize joiner/carpenter variants",
+    "areas": [
+      "api"
+    ],
+    "commit": "96d7d7b7",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-24-18498c78",
     "date": "2026-05-24T10:17:12+08:00",
     "title": "fix(ai-trades): canonicalize woodworking suggestions",

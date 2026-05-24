@@ -179,16 +179,33 @@ export class ProjectsService {
   }
 
   private normalizeTradeLabels(values: Array<string | null | undefined>): string[] {
+    const canonicalizeTradeLabel = (value: string): string => {
+      const trimmed = value.trim();
+      const lowered = trimmed.toLowerCase();
+      const normalized = lowered
+        .replace(/[&/,+]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Keep woodworking labels canonical for persistence and scope calculations.
+      if (/\b(carpenter|carpentry|joiner|joinery)\b/.test(normalized)) {
+        return 'Carpenter';
+      }
+
+      return trimmed;
+    };
+
     const seen = new Set<string>();
     const result: string[] = [];
 
     for (const value of values) {
       const cleaned = String(value || '').trim();
       if (!cleaned) continue;
-      const key = cleaned.toLowerCase();
+      const canonical = canonicalizeTradeLabel(cleaned);
+      const key = canonical.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      result.push(cleaned);
+      result.push(canonical);
     }
 
     return result;
