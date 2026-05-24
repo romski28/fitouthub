@@ -230,17 +230,17 @@ const deriveRequestedTradesForProfessional = (
   const normalizedRequiredTrades = normalizeUniqueList(requiredTrades);
   if (normalizedRequiredTrades.length === 0) return [] as string[];
 
-  if (tradeAutoFilterMode.startsWith('single:')) {
-    const selectedTradeLower = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
-    const selectedTrade = normalizedRequiredTrades.find((trade) => trade.toLowerCase() === selectedTradeLower);
-    if (selectedTrade) return [selectedTrade];
-  }
-
   const tradeTokens = getProfessionalTradeTokens(pro);
   const matchedTrades = normalizedRequiredTrades.filter((trade) => {
     const tradeLower = trade.toLowerCase();
     return tradeTokens.some((token) => token.includes(tradeLower) || tradeLower.includes(token));
   });
+
+  if (tradeAutoFilterMode.startsWith('single:')) {
+    const selectedTradeLower = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
+    const selectedTrade = matchedTrades.find((trade) => trade.toLowerCase() === selectedTradeLower);
+    if (selectedTrade) return [selectedTrade];
+  }
 
   if (matchedTrades.length > 0) return normalizeUniqueList(matchedTrades);
   if (normalizedRequiredTrades.length === 1) return [normalizedRequiredTrades[0]];

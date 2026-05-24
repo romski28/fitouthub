@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-24-736048a6",
+    "date": "2026-05-24T10:55:37+08:00",
+    "title": "fix(scope): derive per-professional requested trades correctly",
+    "summary": "fix(scope): derive per-professional requested trades correctly",
+    "areas": [
+      "web"
+    ],
+    "commit": "736048a6",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-96d7d7b7",
     "date": "2026-05-24T10:50:51+08:00",
     "title": "fix(api-trades): canonicalize joiner/carpenter variants",
