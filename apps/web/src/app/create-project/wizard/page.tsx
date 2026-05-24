@@ -182,6 +182,7 @@ export default function CreateProjectWizardPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const hasInitializedFromSeedRef = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const hasManualStepNavigationRef = useRef(false);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -326,8 +327,17 @@ export default function CreateProjectWizardPage() {
 
   useEffect(() => {
     if (wizardMode === null) return;
+    hasManualStepNavigationRef.current = false;
     setCurrentStep(0);
   }, [wizardMode]);
+
+  useEffect(() => {
+    if (wizardMode === null) return;
+    if (hasManualStepNavigationRef.current) return;
+    if (currentStep !== 0) {
+      setCurrentStep(0);
+    }
+  }, [wizardMode, currentStep]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -385,10 +395,14 @@ export default function CreateProjectWizardPage() {
 
   const goNext = () => {
     if (!canGoNext) return;
+    hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
-  const goBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
+  const goBack = () => {
+    hasManualStepNavigationRef.current = true;
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
 
   const handleAiContinue = () => {
     setAiChatCanContinue(false);
