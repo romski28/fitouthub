@@ -200,6 +200,36 @@ export class AiService {
     };
   }
 
+  private extractSourceIntakeIdFromProject(project: unknown): string | null {
+    if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
+    const projectRecord = project as Record<string, unknown>;
+    const aiThread = projectRecord.aiThread;
+    if (!aiThread || typeof aiThread !== 'object' || Array.isArray(aiThread)) return null;
+    const sourceIntakeId = (aiThread as Record<string, unknown>).sourceIntakeId;
+    return typeof sourceIntakeId === 'string' && sourceIntakeId.trim().length > 0
+      ? sourceIntakeId.trim()
+      : null;
+  }
+
+  private async resolveThreadOriginIntake(intake: { id: string; project?: unknown }) {
+    let current = intake;
+    const visited = new Set<string>([intake.id]);
+
+    for (let depth = 0; depth < 10; depth += 1) {
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(current.project);
+      if (!sourceIntakeId || visited.has(sourceIntakeId)) {
+        break;
+      }
+      visited.add(sourceIntakeId);
+
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      if (!parent) break;
+      current = parent;
+    }
+
+    return current;
+  }
+
   private async findActiveAiThread(context?: { sessionId?: string; userId?: string; intakeId?: string }) {
     const sessionId = this.sanitizeSessionId(context?.sessionId);
     const userId = context?.userId;
@@ -558,6 +588,9 @@ CRITICAL RULES FOR DATA EXTRACTION
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
 6) Do NOT ask location-related follow-up questions in nextQuestions/followUpQuestions because location is collected separately in the wizard (avoid asking about district/area/region/address).
+7) Do NOT ask budget or timing follow-up questions in nextQuestions/followUpQuestions (budget, price, cost, completion date, deadline, timeline, site inspection) because these are collected in dedicated wizard steps.
+8) Avoid repeating previously asked questions. If prior context already answered a point, do not ask it again.
+9) Preserve the user's core project objective from earlier thread context. Treat new messages as refinements unless they explicitly replace the objective.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -1740,9 +1773,11 @@ OUTPUT FORMAT (JSON only)
 
     const activeThread = await this.findActiveAiThread(context);
     const threadSummary = activeThread ? this.buildAiThreadContextSummary(activeThread) : null;
+    const threadOrigin = activeThread ? await this.resolveThreadOriginIntake(activeThread) : null;
+    const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
 
     const userMessage = threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request`
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${threadOriginSummary?.priorPrompt || threadSummary.priorPrompt}\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it`
       : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     const messages: DeepSeekMessage[] = [

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-24-81b0c53e",
+    "date": "2026-05-24T23:36:48+08:00",
+    "title": "fix(ai-wizard): prevent duplicate date/price questions and preserve thread objective",
+    "summary": "fix(ai-wizard): prevent duplicate date/price questions and preserve thread objective",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "81b0c53e",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-dd2f64aa",
     "date": "2026-05-24T18:55:12+08:00",
     "title": "fix(wizard): stop off-screen chat auto-scroll page jump",

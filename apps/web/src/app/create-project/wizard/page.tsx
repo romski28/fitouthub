@@ -114,8 +114,20 @@ const isLocationFollowUpQuestion = (question: string): boolean => {
   return /(location|district|area|region|neighbou?rhood|where\s+is|where\s+in|hong\s*kong|hk\b|kowloon|new\s*territories|island|address|postal|postcode|zip|estate|building)/i.test(normalized);
 };
 
+const isBudgetOrTimelineFollowUpQuestion = (question: string): boolean => {
+  const normalized = question.toLowerCase();
+  return /(budget|price|cost|how\s+much|spend|timeline|when\s+do\s+you\s+need|completion\s+date|deadline|finish\s+by|site\s*inspection|inspection\s+date|target\s+date|due\s+date)/i.test(normalized);
+};
+
 const sanitizeFollowUpQuestions = (questions: string[]): string[] =>
-  questions.filter((question) => !isLocationFollowUpQuestion(question));
+  questions.filter((question) => !isLocationFollowUpQuestion(question) && !isBudgetOrTimelineFollowUpQuestion(question));
+
+const normalizeQuestionKey = (question: string): string =>
+  question
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const mergeQuestions = (...inputs: unknown[]): string[] =>
   sanitizeFollowUpQuestions(Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input)))));
@@ -532,6 +544,14 @@ export default function CreateProjectWizardPage() {
         ),
       );
 
+      const askedAssistantQuestionKeys = new Set(
+        chatMessages
+          .filter((message) => message.role === 'assistant')
+          .map((message) => normalizeQuestionKey(message.text))
+          .filter((key) => key.length > 0),
+      );
+      const nextUnaskedQuestion = parsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
+
       if (nextTitle) setTitle(nextTitle);
       if (nextSummary) setSummary(nextSummary);
       if (mergedTrades.length > 0) {
@@ -555,9 +575,9 @@ export default function CreateProjectWizardPage() {
       }
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
-      if (parsedQuestions.length > 0) {
+      if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: parsedQuestions[0] }]);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: nextUnaskedQuestion }]);
       } else {
         const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
         setAiChatCanContinue(true);
