@@ -1844,7 +1844,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
     // Keep the follow-up prompt visible without forcing manual scrolling.
     window.setTimeout(() => {
-      document.getElementById('ai-forgotten-prompt')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const forgottenPromptEl = document.getElementById('ai-forgotten-prompt');
+      const pathForkEl = document.getElementById('ai-path-fork');
+      (forgottenPromptEl || pathForkEl)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
   }, [aiRoundCount]);
 
@@ -1858,6 +1860,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const showPromptHelperText = aiRoundCount === 0;
   const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
+  const repairSignalText = [
+    initialAiPrompt || '',
+    aiStructured?.title || '',
+    aiStructured?.summary || '',
+    aiStructured?.scope || '',
+  ].join(' ').toLowerCase();
+  const isLikelyRepairMode = /(repair|fix|broken|damage|damaged|leak|leaking|replace|urgent maintenance|maintenance)/i.test(repairSignalText);
+  const suggestedPath: 'ai' | 'fast-track' = isLikelyRepairMode ? 'fast-track' : 'ai';
   const isLargeProject = (() => {
     if (!aiStructured?.size || aiStructured.size.value === null) return false;
     const value = aiStructured.size.value;
@@ -2024,7 +2034,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       </div>
 
       {hasAiResponse && (
-        <div className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+        <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
             <div className="text-center">
               <p className="text-lg font-semibold text-slate-900">Choose your path</p>
@@ -2034,40 +2044,52 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               <>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-emerald-300 bg-white p-4">
-                    <p className="text-base font-semibold text-slate-900">AI Wizard</p>
-                    <p className="mt-1 text-sm font-medium text-emerald-700">Fast guided scope in 2-6 minutes</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you want quick matching and clear next steps.</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-slate-900">✨ AI chat</p>
+                      {suggestedPath === 'ai' && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Our AI works with you to complete your project narrative.</p>
                     <button
                       type="button"
                       onClick={handleStartAiWizard}
                       className="mt-4 w-full rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                     >
-                      Start AI Wizard
+                      AI chat
                     </button>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-300 bg-white p-4">
-                    <p className="text-base font-semibold text-slate-900">Proceed To Match</p>
-                    <p className="mt-1 text-sm font-medium text-slate-700">Use the current flow and set details manually</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you already know what you need.</p>
+                  <div className="rounded-2xl border border-emerald-300 bg-white p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-slate-900">Fast track</p>
+                      {suggestedPath === 'fast-track' && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Less questions. Fast to tender. More details later.</p>
                     <button
                       type="button"
                       onClick={handleContinueToMatching}
-                      className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-slate-50"
+                      className="mt-4 w-full rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                     >
-                      Use Existing Flow
+                      Fast track
                     </button>
                   </div>
                 </div>
 
                 <div className="mt-5 text-center">
-                  <p className="text-sm text-slate-700">Prefer human help? Talk to an advisor any time.</p>
+                  <p className="text-sm text-slate-700">You can talk to us directly at any time. Use the AI to get your ideas together first and then reach out when you have your basics set.</p>
                   <button
                     type="button"
                     onClick={handleTalkToPersonNow}
-                    className="mt-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-800"
+                    className="mt-3 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-700"
                   >
-                    Talk to a person now
+                    Book a chat
                   </button>
                 </div>
               </>
@@ -2083,7 +2105,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 <button
                   type="button"
                   onClick={handleGuestLogin}
-                  className="rounded-lg border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-white"
+                  className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                 >
                   Login
                 </button>

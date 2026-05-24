@@ -329,6 +329,9 @@ export default function CreateProjectWizardPage() {
   }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
 
   const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
+  const repairSignalText = [title, summary, seedDescription?.description || '', seedDescription?.title || ''].join(' ').toLowerCase();
+  const isLikelyRepairMode = /(repair|fix|broken|damage|damaged|leak|leaking|replace|urgent maintenance|maintenance)/i.test(repairSignalText);
+  const suggestedPath: 'ai' | 'fast-track' = isLikelyRepairMode ? 'fast-track' : 'ai';
 
   const goNext = () => {
     if (!canGoNext) return;
@@ -514,11 +517,17 @@ export default function CreateProjectWizardPage() {
                 onClick={() => setWizardMode('classic')}
                 className="rounded-2xl border border-slate-300 bg-white p-5 text-left transition hover:border-slate-400 hover:bg-slate-50"
               >
-                <p className="text-base font-semibold text-slate-900">Proceed To Match</p>
-                <p className="mt-1 text-sm font-medium text-slate-700">Use the current flow and set details manually</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">Best if you already know what you need.</p>
-                <span className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800">
-                  Use Existing Flow
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-base font-semibold text-slate-900">Fast track</p>
+                  {suggestedPath === 'fast-track' && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">Less questions. Fast to tender. More details later.</p>
+                <span className="mt-4 inline-flex rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
+                  Fast track
                 </span>
               </button>
 
@@ -527,23 +536,29 @@ export default function CreateProjectWizardPage() {
                 onClick={() => setWizardMode('ai')}
                 className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-left transition hover:border-emerald-400 hover:bg-emerald-100"
               >
-                <p className="text-base font-semibold text-emerald-900">AI Wizard</p>
-                <p className="mt-1 text-sm font-medium text-emerald-700">Fast guided scope in 2-6 minutes</p>
-                <p className="mt-2 text-sm leading-relaxed text-emerald-900">Best if you want quick matching and clear next steps.</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-base font-semibold text-emerald-900">✨ AI chat</p>
+                  {suggestedPath === 'ai' && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-emerald-900">Our AI works with you to complete your project narrative.</p>
                 <span className="mt-4 inline-flex rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
-                  Start AI Wizard
+                  AI chat
                 </span>
               </button>
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-700">Prefer human help? Talk to an advisor any time.</p>
+              <p className="text-sm text-slate-700">You can talk to us directly at any time. Use the AI to get your ideas together first and then reach out when you have your basics set.</p>
               <button
                 type="button"
                 onClick={handleTalkToPersonNow}
-                className="mt-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-800"
+                className="mt-3 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-700"
               >
-                Talk to a person now
+                Book a chat
               </button>
             </div>
           </div>

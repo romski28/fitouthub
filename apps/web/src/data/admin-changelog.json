@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-24-05727794",
+    "date": "2026-05-24T17:31:51+08:00",
+    "title": "feat(ai): refine path chooser copy, suggestions, and scroll fallback",
+    "summary": "feat(ai): refine path chooser copy, suggestions, and scroll fallback",
+    "areas": [
+      "web"
+    ],
+    "commit": "05727794",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-24-b80e2207",
     "date": "2026-05-24T17:07:26+08:00",
     "title": "refactor(ai): reduce post-reply clutter and simplify fork heading",
