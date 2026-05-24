@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-25-9865ee89",
+    "date": "2026-05-25T01:08:23+08:00",
+    "title": "fix(ai): enforce true memory reset boundaries",
+    "summary": "fix(ai): enforce true memory reset boundaries",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9865ee89",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/client-session.ts"
+    ]
+  },
+  {
     "id": "2026-05-25-f291a04a",
     "date": "2026-05-25T00:38:46+08:00",
     "title": "fix(wizard): keep AI chat history panel readable height",

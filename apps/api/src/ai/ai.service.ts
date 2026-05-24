@@ -158,6 +158,13 @@ export class AiService {
     return new Date(Date.now() - this.aiThreadWindowMs);
   }
 
+  private isMemoryResetPrompt(prompt: string): boolean {
+    const normalized = prompt.trim().toLowerCase();
+    if (!normalized) return false;
+
+    return /(forget\s+(everything|all|this|that)|reset\s+(conversation|chat|context|memory)|start\s+(over|fresh|new)|clear\s+(conversation|chat|context|memory)|new\s+conversation\b)/i.test(normalized);
+  }
+
   private buildAiThreadContextSummary(intake: {
     id?: string;
     project?: unknown;
@@ -301,20 +308,27 @@ export class AiService {
       const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
       if (!intake) return null;
       if (intake.createdAt < createdAt.gte) return null;
+      // When session id is present, require session affinity to prevent stale cross-session carryover.
+      if (sessionId) {
+        if (intake.sessionId && intake.sessionId === sessionId) return intake;
+        return null;
+      }
+
       if (intake.userId && userId && intake.userId === userId) return intake;
-      if (intake.sessionId && sessionId && intake.sessionId === sessionId) return intake;
     }
 
-    const whereClauses: Array<Record<string, unknown>> = [];
-    if (userId) whereClauses.push({ userId });
-    if (sessionId) whereClauses.push({ sessionId });
-    if (whereClauses.length === 0) return null;
+    const identityClause = sessionId
+      ? { sessionId }
+      : userId
+        ? { userId }
+        : null;
+    if (!identityClause) return null;
 
     return this.prisma.aiIntake.findFirst({
       where: {
         AND: [
           { createdAt },
-          { OR: whereClauses },
+          identityClause,
         ],
       },
       orderBy: { createdAt: 'desc' },
@@ -1834,7 +1848,8 @@ OUTPUT FORMAT (JSON only)
     const mode = context?.mode ?? 'structured';
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
 
-    const activeThread = await this.findActiveAiThread(context);
+    const shouldResetMemory = this.isMemoryResetPrompt(trimmedPrompt);
+    const activeThread = shouldResetMemory ? null : await this.findActiveAiThread(context);
     const threadSummary = activeThread ? this.buildAiThreadContextSummary(activeThread) : null;
     const threadOrigin = activeThread ? await this.resolveThreadOriginIntake(activeThread) : null;
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
