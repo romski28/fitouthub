@@ -217,6 +217,43 @@ export class AiService {
       .trim();
   }
 
+  private areQuestionsNearDuplicate(a: string, b: string): boolean {
+    const keyA = this.normalizeQuestionTopicKey(a);
+    const keyB = this.normalizeQuestionTopicKey(b);
+    if (!keyA || !keyB) return false;
+    if (keyA === keyB) return true;
+    if (keyA.includes(keyB) || keyB.includes(keyA)) return true;
+
+    const tokensA = new Set(keyA.split(' ').filter((token) => token.length > 2));
+    const tokensB = new Set(keyB.split(' ').filter((token) => token.length > 2));
+    if (tokensA.size === 0 || tokensB.size === 0) return false;
+
+    let overlap = 0;
+    for (const token of tokensA) {
+      if (tokensB.has(token)) overlap += 1;
+    }
+
+    const minSize = Math.min(tokensA.size, tokensB.size);
+    return minSize > 0 && overlap / minSize >= 0.7;
+  }
+
+  private filterRepeatedQuestions(candidates: string[], alreadyAsked: string[]): string[] {
+    const unique: string[] = [];
+    for (const candidate of candidates) {
+      const trimmed = candidate.trim();
+      if (!trimmed) continue;
+
+      const isRepeatedInHistory = alreadyAsked.some((asked) => this.areQuestionsNearDuplicate(trimmed, asked));
+      if (isRepeatedInHistory) continue;
+
+      const isRepeatedInBatch = unique.some((existing) => this.areQuestionsNearDuplicate(trimmed, existing));
+      if (isRepeatedInBatch) continue;
+
+      unique.push(trimmed);
+    }
+    return unique;
+  }
+
   private toStringArray(value: unknown): string[] {
     if (!Array.isArray(value)) return [];
     return value
@@ -256,16 +293,18 @@ export class AiService {
         : null;
     }
 
-    const questions = new Set<string>();
+    const questionsByKey = new Map<string, string>();
     for (const intake of chain) {
       for (const question of this.extractAskedQuestionsFromIntakeOutput(intake.rawOutput)) {
         const key = this.normalizeQuestionTopicKey(question);
         if (!key) continue;
-        questions.add(question);
+        if (!questionsByKey.has(key)) {
+          questionsByKey.set(key, question.trim());
+        }
       }
     }
 
-    return Array.from(questions);
+    return Array.from(questionsByKey.values());
   }
 
   private extractSourceIntakeIdFromProject(project: unknown): string | null {
@@ -2017,6 +2056,21 @@ OUTPUT FORMAT (JSON only)
         }
       }
 
+      if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        const parsedObject = parsedOutput as Record<string, unknown>;
+        const proposedQuestions = this.filterRepeatedQuestions(
+          [
+            ...this.toStringArray(parsedObject.nextQuestions),
+            ...this.toStringArray(parsedObject.followUpQuestions),
+          ],
+          askedQuestions,
+        ).slice(0, 1);
+
+        parsedObject.nextQuestions = proposedQuestions;
+        parsedObject.followUpQuestions = proposedQuestions;
+        parsedOutput = parsedObject;
+      }
+
       const normalizedContractDocumentation =
         parsedOutput &&
         typeof parsedOutput === 'object' &&
@@ -2185,8 +2239,14 @@ OUTPUT FORMAT (JSON only)
       ...(parsedObject || {}),
       conversationalText,
       trades,
-      nextQuestions: this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions).slice(0, 1),
-      followUpQuestions: this.toStringArray((parsedObject as Record<string, unknown> | null)?.followUpQuestions).slice(0, 1),
+      nextQuestions: this.filterRepeatedQuestions(
+        this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
+        [],
+      ).slice(0, 1),
+      followUpQuestions: this.filterRepeatedQuestions(
+        this.toStringArray((parsedObject as Record<string, unknown> | null)?.followUpQuestions),
+        [],
+      ).slice(0, 1),
     };
 
     return {

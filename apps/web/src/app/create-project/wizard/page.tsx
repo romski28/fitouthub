@@ -56,6 +56,7 @@ interface WizardChatMessage {
 }
 
 const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
+const AI_CHAT_MAX_IMAGES_PER_TURN = 2;
 
 const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
   for (const input of inputs) {
@@ -131,6 +132,26 @@ const normalizeQuestionKey = (question: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const areQuestionsNearDuplicate = (a: string, b: string): boolean => {
+  const keyA = normalizeQuestionKey(a);
+  const keyB = normalizeQuestionKey(b);
+  if (!keyA || !keyB) return false;
+  if (keyA === keyB) return true;
+  if (keyA.includes(keyB) || keyB.includes(keyA)) return true;
+
+  const tokensA = new Set(keyA.split(' ').filter((token) => token.length > 2));
+  const tokensB = new Set(keyB.split(' ').filter((token) => token.length > 2));
+  if (tokensA.size === 0 || tokensB.size === 0) return false;
+
+  let overlap = 0;
+  for (const token of tokensA) {
+    if (tokensB.has(token)) overlap += 1;
+  }
+
+  const minSize = Math.min(tokensA.size, tokensB.size);
+  return minSize > 0 && overlap / minSize >= 0.7;
+};
+
 const mergeQuestions = (...inputs: unknown[]): string[] =>
   sanitizeFollowUpQuestions(Array.from(new Set(inputs.flatMap((input) => normalizeQuestions(input)))));
 
@@ -195,6 +216,9 @@ export default function CreateProjectWizardPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [chatImageUrls, setChatImageUrls] = useState<string[]>([]);
+  const [chatImageUploadBusy, setChatImageUploadBusy] = useState(false);
+  const [chatImageError, setChatImageError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -342,6 +366,7 @@ export default function CreateProjectWizardPage() {
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
     setFollowUpQuestions(nextQuestions);
     setChatError(null);
+    setChatImageError(null);
     setAiChatCanContinue(false);
     setAiSummaryForConfirmation(null);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
@@ -499,9 +524,54 @@ export default function CreateProjectWizardPage() {
     }
   };
 
+  const removeChatImageUrl = (url: string) => {
+    setChatImageUrls((prev) => prev.filter((item) => item !== url));
+  };
+
+  const uploadChatImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const pending = Array.from(files);
+    const remainingSlots = Math.max(0, AI_CHAT_MAX_IMAGES_PER_TURN - chatImageUrls.length);
+    if (remainingSlots <= 0) {
+      setChatImageError(`You can attach up to ${AI_CHAT_MAX_IMAGES_PER_TURN} images per message.`);
+      return;
+    }
+
+    const filesToUpload = pending.slice(0, remainingSlots);
+    if (filesToUpload.length < pending.length) {
+      setChatImageError(`Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
+    } else {
+      setChatImageError(null);
+    }
+
+    setChatImageUploadBusy(true);
+    try {
+      const formData = new FormData();
+      filesToUpload.forEach((file) => formData.append('files', file));
+      const response = await fetch(`${API_BASE_URL}/uploads`, {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        body: formData,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.message || `Image upload failed (${response.status})`);
+      }
+      const uploadedUrls = getUploadResponseKeys(payload);
+      if (uploadedUrls.length > 0) {
+        setChatImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])).slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
+      }
+    } catch (error) {
+      setChatImageError((error as Error).message || 'Failed to upload chat images');
+    } finally {
+      setChatImageUploadBusy(false);
+    }
+  };
+
   const sendWizardAiTurn = async () => {
     const prompt = chatInput.trim();
     if (!prompt || chatBusy) return;
+    const turnImageUrls = chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN);
 
     setChatInput('');
     setChatBusy(true);
@@ -521,6 +591,7 @@ export default function CreateProjectWizardPage() {
           prompt,
           sessionId: aiSessionId || undefined,
           intakeId: currentAiIntakeId || seedDraft?.aiIntakeId || undefined,
+          imageUrls: turnImageUrls,
         }),
       });
 
@@ -570,13 +641,25 @@ export default function CreateProjectWizardPage() {
         ),
       );
 
+      const priorAssistantQuestions = [
+        ...chatMessages
+          .filter((message) => message.role === 'assistant')
+          .map((message) => message.text),
+        ...followUpQuestions,
+      ];
+      const dedupedParsedQuestions = parsedQuestions.filter(
+        (candidate, index, all) =>
+          !priorAssistantQuestions.some((existing) => areQuestionsNearDuplicate(candidate, existing)) &&
+          all.findIndex((item) => areQuestionsNearDuplicate(item, candidate)) === index,
+      );
+
       const askedAssistantQuestionKeys = new Set(
         chatMessages
           .filter((message) => message.role === 'assistant')
           .map((message) => normalizeQuestionKey(message.text))
           .filter((key) => key.length > 0),
       );
-      const nextUnaskedQuestion = parsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
+          const nextUnaskedQuestion = dedupedParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const shouldOfferSummaryConfirmation = hasCoreBrief && Boolean(overallConfidence !== null && overallConfidence >= AI_SUMMARY_CONFIDENCE_THRESHOLD);
@@ -592,8 +675,8 @@ export default function CreateProjectWizardPage() {
           },
         }));
       }
-      if (parsedQuestions.length > 0) {
-        setFollowUpQuestions(parsedQuestions);
+      if (dedupedParsedQuestions.length > 0) {
+        setFollowUpQuestions(dedupedParsedQuestions);
       }
 
       const nextIntakeId = typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0
@@ -610,10 +693,16 @@ export default function CreateProjectWizardPage() {
       } else if (shouldOfferSummaryConfirmation) {
         const summaryForConfirmation = [
           'Mimo summary for confirmation:',
+          '',
+          `Title: ${nextTitle || title || 'Not set'}`,
           `Project: ${nextTitle || title || 'Not set'}`,
+          '',
           `Scope: ${nextSummary || summary || 'Not set'}`,
+          '',
           `Suggested trades: ${mergedTrades.length > 0 ? mergedTrades.join(', ') : 'Not set'}`,
           `Urgency: ${(typeof isEmergency === 'boolean' ? isEmergency : null) === true ? 'Urgent' : 'Standard'}`,
+          '',
+          `Summary: ${nextSummary || summary || 'Not set'}`,
         ].join('\n');
 
         setAiSummaryForConfirmation(summaryForConfirmation);
@@ -642,6 +731,9 @@ export default function CreateProjectWizardPage() {
           });
         }
       }
+
+      setChatImageUrls([]);
+      setChatImageError(null);
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
     } finally {
@@ -949,7 +1041,7 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[220px] sm:min-h-[280px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                               {chatMessages.map((message, idx) => (
-                                <div key={`chat-${idx}`} className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
+                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {message.text}
                                 </div>
                               ))}
@@ -961,6 +1053,46 @@ export default function CreateProjectWizardPage() {
                             {chatError && (
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
                             )}
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs text-slate-600">Optional: add up to {AI_CHAT_MAX_IMAGES_PER_TURN} reference photo(s) for this message.</p>
+                                <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                                  {chatImageUploadBusy ? 'Uploading...' : 'Add images'}
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => uploadChatImages(e.target.files)}
+                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                  />
+                                </label>
+                              </div>
+
+                              {chatImageError && (
+                                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
+                              )}
+
+                              {chatImageUrls.length > 0 && (
+                                <div className="flex gap-2 overflow-x-auto pb-1">
+                                  {chatImageUrls.map((url) => (
+                                    <div key={`chat-img-${url}`} className="w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5">
+                                      <div className="relative h-14 overflow-hidden rounded">
+                                        <Image src={resolveMediaAssetUrl(url)} alt="Chat reference" fill className="object-cover" unoptimized />
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeChatImageUrl(url)}
+                                        className="mt-1.5 w-full rounded bg-rose-600 px-1.5 py-1 text-[10px] font-semibold text-white hover:bg-rose-700"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
 
                             <div className="flex items-end gap-2">
                               <textarea
