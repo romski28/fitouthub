@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-9c730902",
+    "date": "2026-05-25T12:00:17+08:00",
+    "title": "fix(wizard): shrink chrome for 1024x768",
+    "summary": "fix(wizard): shrink chrome for 1024x768",
+    "areas": [
+      "web"
+    ],
+    "commit": "9c730902",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-ad1e7abc",
     "date": "2026-05-25T11:39:58+08:00",
     "title": "fix(wizard): fit viewport and compact top chrome",
