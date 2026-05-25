@@ -235,6 +235,7 @@ export default function CreateProjectWizardPage() {
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
   const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
+  const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -1375,31 +1376,52 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'review' && (
                       <div className={panelContentClass}>
                         <h3 className={panelTitleClass}><span>✅</span><span>Review and save</span></h3>
-                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                          <div className="text-base overflow-x-auto">
-                            {[
-                              ['Title', title || 'N/A'],
-                              ['Emergency', isEmergency ? 'Yes' : 'No'],
-                              ['Follow-up questions', followUpStepQuestions.length ? `${followUpStepQuestions.length}` : 'None'],
-                              ['Site inspection', siteInspectionAvailableOn || 'Not set'],
-                              ['Completion date', endDate || 'Not set'],
-                              ['Photos', `${existingImageUrls.length}`],
-                            ].map(([label, value], rowIndex, rows) => (
-                              <div
-                                key={label}
-                                className={`grid grid-cols-2 sm:grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
-                              >
-                                <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
-                                <div className="px-4 py-3 text-left text-slate-900">{value}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
                         {aiVisionReview && (
-                          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">AI image analysis</p>
-                            <p className="mt-1 text-xs text-emerald-800">
+                          <div className="inline-flex w-fit rounded-lg border border-slate-200 bg-white p-1">
+                            <button
+                              type="button"
+                              onClick={() => setReviewTab('summary')}
+                              className={`rounded-md px-3 py-1 text-xs font-semibold ${reviewTab === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+                            >
+                              Summary
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReviewTab('vision')}
+                              className={`rounded-md px-3 py-1 text-xs font-semibold ${reviewTab === 'vision' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+                            >
+                              Image analysis
+                            </button>
+                          </div>
+                        )}
+
+                        {(!aiVisionReview || reviewTab === 'summary') && (
+                          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <div className="overflow-x-auto text-sm">
+                              {[
+                                ['Title', title || 'N/A'],
+                                ['Emergency', isEmergency ? 'Yes' : 'No'],
+                                ['Follow-up questions', followUpStepQuestions.length ? `${followUpStepQuestions.length}` : 'None'],
+                                ['Site inspection', siteInspectionAvailableOn || 'Not set'],
+                                ['Completion date', endDate || 'Not set'],
+                                ['Photos', `${existingImageUrls.length}`],
+                              ].map(([label, value], rowIndex, rows) => (
+                                <div
+                                  key={label}
+                                  className={`grid grid-cols-2 sm:grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
+                                >
+                                  <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
+                                  <div className="px-4 py-3 text-left text-slate-900">{value}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {aiVisionReview && reviewTab === 'vision' && (
+                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">AI image analysis</p>
+                            <p className="mt-1 text-xs text-slate-600">
                               Processed {aiVisionReview.processedImageCount} image{aiVisionReview.processedImageCount === 1 ? '' : 's'}
                               {aiVisionReview.provider ? ` via ${aiVisionReview.provider}` : ''}
                               {aiVisionReview.model ? ` (${aiVisionReview.model})` : ''}.
@@ -1407,13 +1429,13 @@ export default function CreateProjectWizardPage() {
                             </p>
 
                             {aiVisionReview.summary && (
-                              <p className="mt-2 rounded-md border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-900">{aiVisionReview.summary}</p>
+                              <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">{aiVisionReview.summary}</p>
                             )}
 
                             {aiVisionReview.conditionFindings.length > 0 && (
                               <div className="mt-2">
-                                <p className="text-xs font-semibold text-emerald-900">Condition findings</p>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-emerald-900">
+                                <p className="text-xs font-semibold text-slate-800">Condition findings</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
                                   {aiVisionReview.conditionFindings.map((item, index) => (
                                     <li key={`vision-cond-${index}`}>{item}</li>
                                   ))}
@@ -1423,8 +1445,8 @@ export default function CreateProjectWizardPage() {
 
                             {aiVisionReview.safetyFlags.length > 0 && (
                               <div className="mt-2">
-                                <p className="text-xs font-semibold text-rose-800">Safety flags</p>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-rose-800">
+                                <p className="text-xs font-semibold text-rose-700">Safety Flags</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
                                   {aiVisionReview.safetyFlags.map((item, index) => (
                                     <li key={`vision-flag-${index}`}>{item}</li>
                                   ))}
