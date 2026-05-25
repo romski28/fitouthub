@@ -491,14 +491,14 @@ export default function CreateProjectPage() {
 
       <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-6 lg:px-8">
         <section className="mimo-panel overflow-hidden text-slate-900">
-          <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div className="space-y-3">
+          <div className="space-y-6 px-6 py-6">
+            <div className="min-w-0 space-y-3">
               <p className="mimo-panel-eyebrow">Project creation</p>
-              <h1 className="mimo-panel-title-xl">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
+              <h1 className="mimo-panel-title-xl break-words">{initialFormData.projectName || descriptionData?.title || 'New Project'}</h1>
               <p className="mimo-panel-body max-w-2xl">Review the final brief, confirm your recipients, and make sure your images are ready before you open bidding.</p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px] lg:grid-cols-1 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.74)] px-4 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Invited pros</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900">{invitedCount}</p>

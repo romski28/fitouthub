@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-05-25-b570a36b",
+    "date": "2026-05-25T16:53:15+08:00",
+    "title": "feat(ai): persist per-image vision insights and tighten create-project layout",
+    "summary": "feat(ai): persist per-image vision insights and tighten create-project layout",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "b570a36b",
+    "files": [
+      "MANUAL_SQL_ADD_AI_INTAKE_IMAGE_INSIGHTS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/main-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-1f0bb12c",
     "date": "2026-05-25T16:04:15+08:00",
     "title": "fix(ai): prevent follow-up chat stalls and streamline composer controls",

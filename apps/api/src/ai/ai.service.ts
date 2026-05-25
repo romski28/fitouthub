@@ -382,6 +382,95 @@ export class AiService {
     return `${compact.slice(0, Math.max(0, maxChars - 1)).trimEnd()}...`;
   }
 
+  private async persistAiIntakeImageInsights(params: {
+    intakeId: string;
+    imageUrls: string[];
+    requestId: string;
+    visionUsage: Record<string, unknown>;
+    imageInsights?: {
+      summary: string | null;
+      conditionFindings: string[];
+      safetyFlags: string[];
+      followUpQuestions: string[];
+      confidence: number | null;
+      provider: string | null;
+      model: string | null;
+    } | null;
+  }) {
+    const normalizedUrls = Array.from(
+      new Set(
+        params.imageUrls
+          .map((url) => (typeof url === 'string' ? url.trim() : ''))
+          .filter((url) => url.length > 0),
+      ),
+    );
+
+    if (normalizedUrls.length === 0) return;
+
+    const provider =
+      typeof params.imageInsights?.provider === 'string'
+        ? params.imageInsights.provider
+        : typeof params.visionUsage.provider === 'string'
+          ? params.visionUsage.provider
+          : null;
+    const model =
+      typeof params.imageInsights?.model === 'string'
+        ? params.imageInsights.model
+        : typeof params.visionUsage.model === 'string'
+          ? params.visionUsage.model
+          : null;
+    const status = typeof params.visionUsage.status === 'string' ? params.visionUsage.status : null;
+    const durationMs = typeof params.visionUsage.durationMs === 'number' ? params.visionUsage.durationMs : null;
+
+    const summary = params.imageInsights?.summary || null;
+    const conditionFindings = params.imageInsights?.conditionFindings || [];
+    const safetyFlags = params.imageInsights?.safetyFlags || [];
+    const followUpQuestions = params.imageInsights?.followUpQuestions || [];
+    const confidence = typeof params.imageInsights?.confidence === 'number' ? params.imageInsights.confidence : null;
+
+    for (const imageUrl of normalizedUrls) {
+      try {
+        await this.prisma.$executeRawUnsafe(
+          `
+          INSERT INTO ai_intake_image_insights
+            ("intakeId", "imageUrl", provider, model, status, "requestId", "durationMs", summary, "conditionFindings", "safetyFlags", "followUpQuestions", confidence, "updatedAt")
+          VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12, now())
+          ON CONFLICT ("intakeId", "imageUrl")
+          DO UPDATE SET
+            provider = EXCLUDED.provider,
+            model = EXCLUDED.model,
+            status = EXCLUDED.status,
+            "requestId" = EXCLUDED."requestId",
+            "durationMs" = EXCLUDED."durationMs",
+            summary = EXCLUDED.summary,
+            "conditionFindings" = EXCLUDED."conditionFindings",
+            "safetyFlags" = EXCLUDED."safetyFlags",
+            "followUpQuestions" = EXCLUDED."followUpQuestions",
+            confidence = EXCLUDED.confidence,
+            "updatedAt" = now()
+          `,
+          params.intakeId,
+          imageUrl,
+          provider,
+          model,
+          status,
+          params.requestId,
+          durationMs,
+          summary,
+          JSON.stringify(conditionFindings),
+          JSON.stringify(safetyFlags),
+          JSON.stringify(followUpQuestions),
+          confidence,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `[${params.requestId}] Failed to persist ai_intake_image_insights row for intake=${params.intakeId}: ${(error as Error).message}`,
+        );
+      }
+    }
+  }
+
   private normalizeLocationText(input: string): string {
     return input
       .toLowerCase()
@@ -1917,7 +2006,6 @@ OUTPUT FORMAT (JSON only)
       .join(' | ');
 
     const userMessage = threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${threadOriginSummary?.priorPrompt || threadSummary.priorPrompt}\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n- Already asked questions: ${askedQuestions.length > 0 ? askedQuestions.join(' | ') : 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
       ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
       : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
@@ -1987,6 +2075,15 @@ OUTPUT FORMAT (JSON only)
         durationMs: null,
         error: null,
       };
+      let imageInsightsRecord: {
+        summary: string | null;
+        conditionFindings: string[];
+        safetyFlags: string[];
+        followUpQuestions: string[];
+        confidence: number | null;
+        provider: string | null;
+        model: string | null;
+      } | null = null;
 
       if (output) {
         try {
@@ -2023,6 +2120,16 @@ OUTPUT FORMAT (JSON only)
             ? parsed.suggestedTrades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
             : [];
 
+          const conditionFindings = Array.isArray(parsed.conditionFindings)
+            ? parsed.conditionFindings.filter((item): item is string => typeof item === 'string')
+            : [];
+          const safetyFlags = Array.isArray(parsed.safetyFlags)
+            ? parsed.safetyFlags.filter((item): item is string => typeof item === 'string')
+            : [];
+          const followUpQuestions = Array.isArray(parsed.followUpQuestions)
+            ? parsed.followUpQuestions.filter((item): item is string => typeof item === 'string')
+            : [];
+
           if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
             const parsedObject = parsedOutput as Record<string, unknown>;
             const existingTrades = Array.isArray(parsedObject.trades)
@@ -2037,15 +2144,9 @@ OUTPUT FORMAT (JSON only)
 
             projectObject.imageInsights = {
               summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
-              conditionFindings: Array.isArray(parsed.conditionFindings)
-                ? parsed.conditionFindings.filter((item): item is string => typeof item === 'string')
-                : [],
-              safetyFlags: Array.isArray(parsed.safetyFlags)
-                ? parsed.safetyFlags.filter((item): item is string => typeof item === 'string')
-                : [],
-              followUpQuestions: Array.isArray(parsed.followUpQuestions)
-                ? parsed.followUpQuestions.filter((item): item is string => typeof item === 'string')
-                : [],
+              conditionFindings,
+              safetyFlags,
+              followUpQuestions,
               confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null,
               provider: 'qwen',
               model: qwenVision.model,
@@ -2053,6 +2154,16 @@ OUTPUT FORMAT (JSON only)
             parsedObject.project = projectObject;
             parsedOutput = parsedObject;
           }
+
+          imageInsightsRecord = {
+            summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
+            conditionFindings,
+            safetyFlags,
+            followUpQuestions,
+            confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null,
+            provider: 'qwen',
+            model: qwenVision.model,
+          };
 
           visionUsageMeta = {
             requestedImageCount,
@@ -2163,6 +2274,16 @@ OUTPUT FORMAT (JSON only)
         });
         intakeId = intake.id;
         this.logger.log(`[${requestId}] Intake saved id=${intakeId}`);
+
+        if (requestedImageCount > 0) {
+          await this.persistAiIntakeImageInsights({
+            intakeId,
+            imageUrls: normalizedImageUrls,
+            requestId,
+            visionUsage: visionUsageMeta,
+            imageInsights: imageInsightsRecord,
+          });
+        }
       } catch (dbErr) {
         // Non-fatal — log and continue; don't fail the user response
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);

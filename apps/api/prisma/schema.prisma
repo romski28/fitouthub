@@ -1944,6 +1944,7 @@ model SupportRequest {
     status            String    @default("draft")
     projectId         String?   @unique
     convertedProject  Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+    imageInsights     AiIntakeImageInsight[]
 
     @@index([userId])
     @@index([sessionId])
@@ -1952,6 +1953,31 @@ model SupportRequest {
     @@index([projectId])
     @@map("ai_intakes")
   }
+
+model AiIntakeImageInsight {
+  id                String   @id @default(cuid())
+  intakeId          String
+  imageUrl          String
+  provider          String?
+  model             String?
+  status            String?
+  requestId         String?
+  durationMs        Int?
+  summary           String?
+  conditionFindings Json?
+  safetyFlags       Json?
+  followUpQuestions Json?
+  confidence        Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  intake            AiIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+
+  @@unique([intakeId, imageUrl])
+  @@index([intakeId])
+  @@index([createdAt])
+  @@map("ai_intake_image_insights")
+}
 
 // ============================================================
 // Case Management

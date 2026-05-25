@@ -55,6 +55,17 @@ interface WizardChatMessage {
   text: string;
 }
 
+interface AiVisionReviewSnapshot {
+  summary: string;
+  conditionFindings: string[];
+  safetyFlags: string[];
+  followUpQuestions: string[];
+  confidence: number | null;
+  processedImageCount: number;
+  provider: string | null;
+  model: string | null;
+}
+
 const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
 const AI_CHAT_MAX_IMAGES_PER_TURN = 2;
 
@@ -223,6 +234,7 @@ export default function CreateProjectWizardPage() {
   const [chatImageError, setChatImageError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
+  const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -265,6 +277,7 @@ export default function CreateProjectWizardPage() {
     hasManualStepNavigationRef.current = false;
     setAiChatCanContinue(false);
     setCurrentStep(0);
+    setAiVisionReview(null);
 
     const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
     const source = (searchParams.get('source') || '').trim().toLowerCase();
@@ -664,7 +677,37 @@ export default function CreateProjectWizardPage() {
             ? parsed.conversationalText.trim()
             : 'Nice update. I captured that. We are building a strong brief together.');
 
-      setChatMessages((prev) => [...prev, { role: 'assistant', text: nextConversationalText }]);
+      const imageInsights =
+        parsed?.project && typeof parsed.project === 'object' && !Array.isArray(parsed.project)
+          ? ((parsed.project as Record<string, unknown>).imageInsights as Record<string, unknown> | undefined)
+          : undefined;
+      const imageInsightSummary = typeof imageInsights?.summary === 'string' ? imageInsights.summary.trim() : '';
+      const imageConditionFindings = Array.isArray(imageInsights?.conditionFindings)
+        ? imageInsights.conditionFindings.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        : [];
+      const imageSafetyFlags = Array.isArray(imageInsights?.safetyFlags)
+        ? imageInsights.safetyFlags.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        : [];
+      const imageFollowUpQuestions = Array.isArray(imageInsights?.followUpQuestions)
+        ? imageInsights.followUpQuestions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        : [];
+      const processedImageCount =
+        payload?.vision?.usage && typeof payload.vision.usage === 'object' && typeof payload.vision.usage.processedImageCount === 'number'
+          ? payload.vision.usage.processedImageCount
+          : turnImageUrls.length;
+      const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
+      const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
+      const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null;
+      const imageWorkflowNote = turnImageUrls.length > 0
+        ? (imageInsightSummary
+            ? `I reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'} and used them in this reply. Visual summary: ${imageInsightSummary}`
+            : `I reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'} and used them in this reply. I also added them to your project photos for final review.`)
+        : null;
+
+      setChatMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: imageWorkflowNote ? `${nextConversationalText}\n\n${imageWorkflowNote}` : nextConversationalText },
+      ]);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
         ? parsed.title.trim()
@@ -738,6 +781,20 @@ export default function CreateProjectWizardPage() {
         : null;
       if (nextIntakeId) {
         setCurrentAiIntakeId(nextIntakeId);
+      }
+
+      if (turnImageUrls.length > 0) {
+        setExistingImageUrls((prev) => Array.from(new Set([...prev, ...turnImageUrls])));
+        setAiVisionReview({
+          summary: imageInsightSummary,
+          conditionFindings: imageConditionFindings,
+          safetyFlags: imageSafetyFlags,
+          followUpQuestions: imageFollowUpQuestions,
+          confidence: imageConfidence,
+          processedImageCount,
+          provider: imageProvider,
+          model: imageModel,
+        });
       }
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
@@ -1338,6 +1395,44 @@ export default function CreateProjectWizardPage() {
                             ))}
                           </div>
                         </div>
+
+                        {aiVisionReview && (
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">AI image analysis</p>
+                            <p className="mt-1 text-xs text-emerald-800">
+                              Processed {aiVisionReview.processedImageCount} image{aiVisionReview.processedImageCount === 1 ? '' : 's'}
+                              {aiVisionReview.provider ? ` via ${aiVisionReview.provider}` : ''}
+                              {aiVisionReview.model ? ` (${aiVisionReview.model})` : ''}.
+                              {typeof aiVisionReview.confidence === 'number' ? ` Confidence ${Math.round(Math.max(0, Math.min(1, aiVisionReview.confidence)) * 100)}%.` : ''}
+                            </p>
+
+                            {aiVisionReview.summary && (
+                              <p className="mt-2 rounded-md border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-900">{aiVisionReview.summary}</p>
+                            )}
+
+                            {aiVisionReview.conditionFindings.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-semibold text-emerald-900">Condition findings</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-emerald-900">
+                                  {aiVisionReview.conditionFindings.map((item, index) => (
+                                    <li key={`vision-cond-${index}`}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {aiVisionReview.safetyFlags.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-semibold text-rose-800">Safety flags</p>
+                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-rose-800">
+                                  {aiVisionReview.safetyFlags.map((item, index) => (
+                                    <li key={`vision-flag-${index}`}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

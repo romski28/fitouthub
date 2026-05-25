@@ -8,6 +8,7 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
   const isHomePath = pathname === '/';
   const isProjectsListPath = pathname === '/projects' || pathname === '/professional-projects';
   const isGetStartedPath = pathname === '/get-started';
+  const isCreateProjectWizardPath = pathname?.startsWith('/create-project/wizard');
 
   // Admin and get-started pages manage their own layout completely
   if (isAdminPath || isGetStartedPath) {
@@ -16,6 +17,10 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
 
   if (isProjectsListPath) {
     return <main className="w-full px-0 py-6">{children}</main>;
+  }
+
+  if (isCreateProjectWizardPath) {
+    return <main className="mx-auto max-w-6xl px-6 py-2">{children}</main>;
   }
 
   // Regular pages get standard padding and max-width
