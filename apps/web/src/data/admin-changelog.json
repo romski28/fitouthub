@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-ad1e7abc",
+    "date": "2026-05-25T11:39:58+08:00",
+    "title": "fix(wizard): fit viewport and compact top chrome",
+    "summary": "fix(wizard): fit viewport and compact top chrome",
+    "areas": [
+      "web"
+    ],
+    "commit": "ad1e7abc",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-2e7a107e",
     "date": "2026-05-25T10:56:36+08:00",
     "title": "feat(wizard): render AI summary as structured chat card",

@@ -976,17 +976,19 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-6 pt-3">
+    <div className="min-h-screen pb-3 pt-2 sm:pb-4 sm:pt-3">
       <section className="-mx-6 px-6">
-        <div className="mx-auto flex h-[calc(100dvh-2rem)] max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-4 sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-              {wizardMode === 'classic' ? 'Project Wizard' : 'AI Project Wizard'} · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
-            </p>
-            <p className="text-base font-semibold text-slate-700">{progress}% complete</p>
+        <div className="mx-auto flex h-[calc(100dvh-6.5rem)] max-h-[calc(100dvh-6.5rem)] min-h-0 max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-3 sm:h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-7rem)] sm:p-4">
+          <div className="mb-2 flex items-start justify-between gap-2 sm:mb-2.5 sm:items-center sm:gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700 sm:text-sm sm:tracking-[0.12em]">
+                {wizardMode === 'classic' ? 'Project Wizard' : 'AI Project Wizard'} · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+              </p>
+              <p className="mt-0.5 truncate text-xs text-slate-600 sm:text-sm">{currentMotivation}</p>
+            </div>
+            <p className="shrink-0 text-sm font-semibold text-slate-700 sm:text-base">{progress}% complete</p>
           </div>
-          <p className="mb-4 text-base text-slate-700">{currentMotivation}</p>
-          <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/70">
+          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/70 sm:mb-4 sm:h-2">
             <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
 
@@ -999,7 +1001,9 @@ export default function CreateProjectWizardPage() {
                 {steps.map((step, index) => (
                   <div
                     key={`${step.kind}-${index}`}
-                    className={`flex h-full w-full shrink-0 flex-col p-5 pb-24 sm:p-6 sm:pb-24 ${
+                    className={`flex h-full w-full shrink-0 flex-col p-4 pb-20 sm:p-5 ${
+                      step.kind === 'followups' && wizardMode === 'ai' ? 'sm:pb-5' : 'sm:pb-20'
+                    } ${
                       step.kind === 'location' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
                   >
@@ -1082,13 +1086,13 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'followups' && (
-                      <div className={panelContentClass}>
+                      <div className="flex h-full min-h-0 flex-col gap-3 sm:gap-4">
                         {wizardMode === 'ai' ? (
                           <>
                             <h3 className={panelTitleClass}><span>💬</span><span>AI chat</span></h3>
                             <p className={panelNoteClass}>Friendly mode is on. I will keep this light while guiding us to a complete brief.</p>
 
-                            <div ref={chatContainerRef} className="flex-1 min-h-[220px] sm:min-h-[280px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                            <div ref={chatContainerRef} className="flex-1 min-h-[180px] sm:min-h-[220px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
@@ -1155,7 +1159,7 @@ export default function CreateProjectWizardPage() {
                                 }}
                                 rows={2}
                                 placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
-                                className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                                className="w-full min-h-[72px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm sm:min-h-[80px] sm:text-base"
                               />
                               <button
                                 type="button"
@@ -1314,12 +1318,12 @@ export default function CreateProjectWizardPage() {
             </div>
 
             {activeStep?.kind !== 'followups' || wizardMode !== 'ai' ? (
-              <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3">
+              <div className="pointer-events-none absolute inset-x-3 bottom-2 flex items-center justify-between gap-2 sm:bottom-3 sm:gap-3">
                 <button
                   type="button"
                   onClick={goBack}
                   disabled={currentStep === 0}
-                  className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-800 disabled:opacity-50"
+                  className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-base"
                 >
                   Back
                 </button>
@@ -1329,7 +1333,7 @@ export default function CreateProjectWizardPage() {
                     type="button"
                     onClick={goNext}
                     disabled={!canGoNext}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-base"
                   >
                     Next
                   </button>
@@ -1337,7 +1341,7 @@ export default function CreateProjectWizardPage() {
                   <button
                     type="button"
                     onClick={submitWizard}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-emerald-700 transition"
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition sm:px-4 sm:py-2.5 sm:text-base"
                   >
                     Continue to Invite Professionals
                   </button>
