@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-2e7a107e",
+    "date": "2026-05-25T10:56:36+08:00",
+    "title": "feat(wizard): render AI summary as structured chat card",
+    "summary": "feat(wizard): render AI summary as structured chat card",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e7a107e",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-54e14e3e",
     "date": "2026-05-25T10:45:43+08:00",
     "title": "feat(wizard): add limited chat images and tighten AI repeats",

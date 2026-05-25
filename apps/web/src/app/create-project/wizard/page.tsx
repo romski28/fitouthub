@@ -184,6 +184,8 @@ const stripSummaryPrefix = (value: string): string => {
   return value;
 };
 
+const SUMMARY_CONFIRMATION_PREFIX = 'Mimo summary for confirmation:';
+
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
   'You\'re on fire, one quick step at a time.',
@@ -409,6 +411,53 @@ export default function CreateProjectWizardPage() {
   }, [wizardMode, currentStep]);
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
+
+  const renderChatMessageBody = (message: WizardChatMessage) => {
+    if (message.role !== 'assistant' || !message.text.startsWith(SUMMARY_CONFIRMATION_PREFIX)) {
+      return message.text;
+    }
+
+    const [summaryBlock, continuationRaw] = message.text.split('\n\nIf this looks right,');
+    const summaryLines = summaryBlock
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    const heading = summaryLines[0] || SUMMARY_CONFIRMATION_PREFIX;
+    const fieldRows = summaryLines
+      .slice(1)
+      .map((line) => {
+        const separatorIndex = line.indexOf(':');
+        if (separatorIndex < 0) {
+          return { label: 'Note', value: line };
+        }
+
+        return {
+          label: line.slice(0, separatorIndex).trim(),
+          value: line.slice(separatorIndex + 1).trim(),
+        };
+      })
+      .filter((row) => row.value.length > 0);
+
+    const continuationText = continuationRaw
+      ? `If this looks right,${continuationRaw}`.trim()
+      : '';
+
+    return (
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-slate-900">{heading}</p>
+        <div className="space-y-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
+          {fieldRows.map((row, rowIndex) => (
+            <div key={`${row.label}-${rowIndex}`} className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 text-xs sm:text-sm">
+              <span className="font-semibold text-slate-700">{row.label}</span>
+              <span className="text-slate-800">{row.value}</span>
+            </div>
+          ))}
+        </div>
+        {continuationText && <p className="text-xs text-slate-600">{continuationText}</p>}
+      </div>
+    );
+  };
 
   const steps = useMemo<WizardStep[]>(
     () => {
@@ -1042,7 +1091,7 @@ export default function CreateProjectWizardPage() {
                             <div ref={chatContainerRef} className="flex-1 min-h-[220px] sm:min-h-[280px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
-                                  {message.text}
+                                  {renderChatMessageBody(message)}
                                 </div>
                               ))}
                               {chatBusy && (
