@@ -700,8 +700,8 @@ export default function CreateProjectWizardPage() {
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null;
       const imageWorkflowNote = turnImageUrls.length > 0
         ? (imageInsightSummary
-            ? `I reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'} and used them in this reply. Visual summary: ${imageInsightSummary}`
-            : `I reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'} and used them in this reply. I also added them to your project photos for final review.`)
+            ? `Images ready in project photos. AI vision reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'}. ${imageInsightSummary}`
+            : `Images ready in project photos. AI vision reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'}.`)
         : null;
 
       setChatMessages((prev) => [
