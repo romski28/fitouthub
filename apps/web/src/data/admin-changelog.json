@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-54861c50",
+    "date": "2026-05-25T12:16:28+08:00",
+    "title": "fix(wizard): keep AI composer visible with attachments",
+    "summary": "fix(wizard): keep AI composer visible with attachments",
+    "areas": [
+      "web"
+    ],
+    "commit": "54861c50",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-9c730902",
     "date": "2026-05-25T12:00:17+08:00",
     "title": "fix(wizard): shrink chrome for 1024x768",

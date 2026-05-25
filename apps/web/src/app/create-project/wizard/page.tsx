@@ -1109,8 +1109,8 @@ export default function CreateProjectWizardPage() {
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
                             )}
 
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between gap-2">
+                            <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
+                              <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs text-slate-600">Optional: add up to {AI_CHAT_MAX_IMAGES_PER_TURN} reference photo(s) for this message.</p>
                                 <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                   {chatImageUploadBusy ? 'Uploading...' : 'Add images'}
@@ -1126,51 +1126,57 @@ export default function CreateProjectWizardPage() {
                               </div>
 
                               {chatImageError && (
-                                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
+                                <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
                               )}
 
-                              {chatImageUrls.length > 0 && (
-                                <div className="flex gap-2 overflow-x-auto pb-1">
-                                  {chatImageUrls.map((url) => (
-                                    <div key={`chat-img-${url}`} className="w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5">
-                                      <div className="relative h-14 overflow-hidden rounded">
-                                        <Image src={resolveMediaAssetUrl(url)} alt="Chat reference" fill className="object-cover" unoptimized />
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeChatImageUrl(url)}
-                                        className="mt-1.5 w-full rounded bg-rose-600 px-1.5 py-1 text-[10px] font-semibold text-white hover:bg-rose-700"
-                                      >
-                                        Remove
-                                      </button>
-                                    </div>
-                                  ))}
+                              <div className={`flex gap-2 ${chatImageUrls.length > 0 ? 'flex-col sm:flex-row' : 'flex-col'}`}>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-end gap-2">
+                                    <textarea
+                                      value={chatInput}
+                                      onChange={(e) => setChatInput(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          sendWizardAiTurn();
+                                        }
+                                      }}
+                                      rows={2}
+                                      placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
+                                      className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={sendWizardAiTurn}
+                                      disabled={chatBusy || chatInput.trim().length === 0}
+                                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3.5 sm:text-sm"
+                                    >
+                                      Send
+                                    </button>
+                                  </div>
                                 </div>
-                              )}
-                            </div>
 
-                            <div className="flex items-end gap-2">
-                              <textarea
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    sendWizardAiTurn();
-                                  }
-                                }}
-                                rows={2}
-                                placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
-                                className="w-full min-h-[60px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[68px] sm:text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={sendWizardAiTurn}
-                                disabled={chatBusy || chatInput.trim().length === 0}
-                                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3.5 sm:text-sm"
-                              >
-                                Send
-                              </button>
+                                {chatImageUrls.length > 0 && (
+                                  <div className="sm:w-[188px] sm:shrink-0">
+                                    <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:max-h-[96px] sm:grid-cols-2 sm:overflow-y-auto sm:overflow-x-hidden">
+                                      {chatImageUrls.map((url) => (
+                                        <div key={`chat-img-${url}`} className="w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5 sm:w-auto">
+                                          <div className="relative h-14 overflow-hidden rounded">
+                                            <Image src={resolveMediaAssetUrl(url)} alt="Chat reference" fill className="object-cover" unoptimized />
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeChatImageUrl(url)}
+                                            className="mt-1.5 w-full rounded bg-rose-600 px-1.5 py-1 text-[10px] font-semibold text-white hover:bg-rose-700"
+                                          >
+                                            Remove
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             {aiChatCanContinue && !chatBusy && (
