@@ -621,6 +621,11 @@ export default function CreateProjectWizardPage() {
     const prompt = chatInput.trim();
     if (!prompt || chatBusy) return;
     const turnImageUrls = chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN);
+    const effectiveSessionId = aiSessionId || createAiSessionId();
+
+    if (!aiSessionId) {
+      setAiSessionId(effectiveSessionId);
+    }
 
     setChatInput('');
     setChatBusy(true);
@@ -638,7 +643,7 @@ export default function CreateProjectWizardPage() {
         },
         body: JSON.stringify({
           prompt,
-          sessionId: aiSessionId || undefined,
+          sessionId: effectiveSessionId,
           intakeId: currentAiIntakeId || seedDraft?.aiIntakeId || undefined,
           imageUrls: turnImageUrls,
         }),
@@ -1110,28 +1115,6 @@ export default function CreateProjectWizardPage() {
                             )}
 
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
-                              <div className="mb-2 flex items-center justify-between gap-2">
-                                <p className="text-xs text-slate-600">Optional: add up to {AI_CHAT_MAX_IMAGES_PER_TURN} reference photo(s) for this message.</p>
-                                <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white p-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" title={chatImageUploadBusy ? 'Uploading' : 'Add images'}>
-                                  {chatImageUploadBusy ? (
-                                    <span className="h-4 w-4 animate-pulse rounded-full bg-emerald-200" />
-                                  ) : (
-                                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
-                                      <circle cx="8.5" cy="10.5" r="1.5" />
-                                      <path d="M21 15l-5-5L5 21" />
-                                    </svg>
-                                  )}
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) => uploadChatImages(e.target.files)}
-                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
-                                  />
-                                </label>
-                              </div>
 
                               {chatImageError && (
                                 <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
@@ -1154,6 +1137,26 @@ export default function CreateProjectWizardPage() {
                                       className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
                                     />
                                     <div className="flex flex-col gap-1.5">
+                                      <label className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title={chatImageUploadBusy ? 'Uploading' : 'Add images'}>
+                                        {chatImageUploadBusy ? (
+                                          <span className="h-4 w-4 animate-pulse rounded-full bg-emerald-200" />
+                                        ) : (
+                                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                                            <circle cx="8.5" cy="10.5" r="1.5" />
+                                            <path d="M21 15l-5-5L5 21" />
+                                          </svg>
+                                        )}
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          multiple
+                                          className="hidden"
+                                          onChange={(e) => uploadChatImages(e.target.files)}
+                                          disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                        />
+                                      </label>
+
                                       <button
                                         type="button"
                                         onClick={sendWizardAiTurn}

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-25-1f0bb12c",
+    "date": "2026-05-25T16:04:15+08:00",
+    "title": "fix(ai): prevent follow-up chat stalls and streamline composer controls",
+    "summary": "fix(ai): prevent follow-up chat stalls and streamline composer controls",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1f0bb12c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-fc3c3053",
     "date": "2026-05-25T15:51:15+08:00",
     "title": "feat(web): polish AI followups chat controls and spacing",

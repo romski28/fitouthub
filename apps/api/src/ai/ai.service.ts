@@ -374,6 +374,14 @@ export class AiService {
     });
   }
 
+  private truncateForPrompt(value: string | null | undefined, maxChars: number): string {
+    if (!value) return '';
+    const compact = value.replace(/\s+/g, ' ').trim();
+    if (!compact) return '';
+    if (compact.length <= maxChars) return compact;
+    return `${compact.slice(0, Math.max(0, maxChars - 1)).trimEnd()}...`;
+  }
+
   private normalizeLocationText(input: string): string {
     return input
       .toLowerCase()
@@ -1894,8 +1902,23 @@ OUTPUT FORMAT (JSON only)
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
 
+    const summarizedOriginPrompt = this.truncateForPrompt(threadOriginSummary?.priorPrompt || threadSummary?.priorPrompt, 500);
+    const summarizedPriorPrompt = this.truncateForPrompt(threadSummary?.priorPrompt, 450);
+    const summarizedPriorTitle = this.truncateForPrompt(threadSummary?.title, 120) || 'unknown';
+    const summarizedPriorSummary = this.truncateForPrompt(threadSummary?.summary, 260) || 'unknown';
+    const summarizedPriorLocation = this.truncateForPrompt(threadSummary?.location, 120) || 'unknown';
+    const summarizedPriorBudget = this.truncateForPrompt(threadSummary?.budget, 80) || 'unknown';
+    const summarizedPriorTimeline = this.truncateForPrompt(threadSummary?.timeline, 80) || 'unknown';
+    const summarizedPriorReply = this.truncateForPrompt(threadSummary?.conversationalText, 220) || 'unknown';
+    const askedQuestionsSummary = askedQuestions
+      .slice(0, 6)
+      .map((question) => this.truncateForPrompt(question, 120))
+      .filter((question) => question.length > 0)
+      .join(' | ');
+
     const userMessage = threadSummary
       ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${threadOriginSummary?.priorPrompt || threadSummary.priorPrompt}\n\nEARLIER_USER_PROMPT:\n${threadSummary.priorPrompt}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${threadSummary.title ?? 'unknown'}\n- Summary: ${threadSummary.summary ?? 'unknown'}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.join(', ') : 'unknown'}\n- Location: ${threadSummary.location ?? 'unknown'}\n- Budget: ${threadSummary.budget ?? 'unknown'}\n- Timeline: ${threadSummary.timeline ?? 'unknown'}\n- Prior assistant reply: ${threadSummary.conversationalText ?? 'unknown'}\n- Already asked questions: ${askedQuestions.length > 0 ? askedQuestions.join(' | ') : 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
       : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     const messages: DeepSeekMessage[] = [
