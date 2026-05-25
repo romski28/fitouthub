@@ -976,7 +976,7 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-1 pt-0.5 sm:pb-2 sm:pt-1">
+    <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
       <section className="-mx-6 px-6">
         <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
@@ -1096,7 +1096,7 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[150px] sm:min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
-                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-xs leading-relaxed sm:text-sm ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
+                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
                                 </div>
                               ))}
@@ -1112,8 +1112,16 @@ export default function CreateProjectWizardPage() {
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs text-slate-600">Optional: add up to {AI_CHAT_MAX_IMAGES_PER_TURN} reference photo(s) for this message.</p>
-                                <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                                  {chatImageUploadBusy ? 'Uploading...' : 'Add images'}
+                                <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white p-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" title={chatImageUploadBusy ? 'Uploading' : 'Add images'}>
+                                  {chatImageUploadBusy ? (
+                                    <span className="h-4 w-4 animate-pulse rounded-full bg-emerald-200" />
+                                  ) : (
+                                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                                      <circle cx="8.5" cy="10.5" r="1.5" />
+                                      <path d="M21 15l-5-5L5 21" />
+                                    </svg>
+                                  )}
                                   <input
                                     type="file"
                                     accept="image/*"
@@ -1145,14 +1153,30 @@ export default function CreateProjectWizardPage() {
                                       placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
                                       className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
                                     />
-                                    <button
-                                      type="button"
-                                      onClick={sendWizardAiTurn}
-                                      disabled={chatBusy || chatInput.trim().length === 0}
-                                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3.5 sm:text-sm"
-                                    >
-                                      Send
-                                    </button>
+                                    <div className="flex flex-col gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={sendWizardAiTurn}
+                                        disabled={chatBusy || chatInput.trim().length === 0}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                                        title="Send"
+                                      >
+                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M22 2L11 13" />
+                                          <path d="M22 2l-7 20-4-9-9-4z" />
+                                        </svg>
+                                      </button>
+
+                                      {aiChatCanContinue && !chatBusy && (
+                                        <button
+                                          type="button"
+                                          onClick={handleAiContinue}
+                                          className="rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-emerald-700 sm:text-xs"
+                                        >
+                                          {aiSummaryForConfirmation ? 'Use summary' : 'Continue'}
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -1160,16 +1184,19 @@ export default function CreateProjectWizardPage() {
                                   <div className="sm:w-[188px] sm:shrink-0">
                                     <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:max-h-[96px] sm:grid-cols-2 sm:overflow-y-auto sm:overflow-x-hidden">
                                       {chatImageUrls.map((url) => (
-                                        <div key={`chat-img-${url}`} className="w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5 sm:w-auto">
+                                        <div key={`chat-img-${url}`} className="relative w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5 sm:w-auto">
                                           <div className="relative h-14 overflow-hidden rounded">
                                             <Image src={resolveMediaAssetUrl(url)} alt="Chat reference" fill className="object-cover" unoptimized />
                                           </div>
                                           <button
                                             type="button"
                                             onClick={() => removeChatImageUrl(url)}
-                                            className="mt-1.5 w-full rounded bg-rose-600 px-1.5 py-1 text-[10px] font-semibold text-white hover:bg-rose-700"
+                                            className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700"
+                                            title="Remove image"
                                           >
-                                            Remove
+                                            <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                              <path d="M6 6l12 12M18 6L6 18" />
+                                            </svg>
                                           </button>
                                         </div>
                                       ))}
@@ -1178,16 +1205,6 @@ export default function CreateProjectWizardPage() {
                                 )}
                               </div>
                             </div>
-
-                            {aiChatCanContinue && !chatBusy && (
-                              <button
-                                type="button"
-                                onClick={handleAiContinue}
-                                className="self-end rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 sm:text-sm"
-                              >
-                                {aiSummaryForConfirmation ? 'Continue with this summary' : 'Continue to scope and dates'}
-                              </button>
-                            )}
                           </>
                         ) : (
                           <>

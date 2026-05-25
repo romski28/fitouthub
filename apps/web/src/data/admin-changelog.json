@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-25-fc3c3053",
+    "date": "2026-05-25T15:51:15+08:00",
+    "title": "feat(web): polish AI followups chat controls and spacing",
+    "summary": "feat(web): polish AI followups chat controls and spacing",
+    "areas": [
+      "web"
+    ],
+    "commit": "fc3c3053",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-54861c50",
     "date": "2026-05-25T12:16:28+08:00",
     "title": "fix(wizard): keep AI composer visible with attachments",
