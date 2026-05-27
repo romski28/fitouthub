@@ -37,6 +37,11 @@ const normalizeUniqueList = (values: Array<string | null | undefined>) => {
   return result;
 };
 
+const isInteriorDesignTrade = (trade: string): boolean => {
+  const normalized = trade.trim().toLowerCase();
+  return /(interior\s*designer|interior\s*design|designer)/i.test(normalized);
+};
+
 const splitCsvUnique = (value?: string | null) =>
   normalizeUniqueList((value || '').split(',').map((part) => part.trim()));
 
@@ -918,27 +923,65 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
+  const [activeRequiredTrades, setActiveRequiredTrades] = useState<string[]>(requiredTrades);
+  const [includeMimoDesignService, setIncludeMimoDesignService] = useState(false);
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
   useEffect(() => {
+    setActiveRequiredTrades(requiredTrades);
+  }, [requiredTrades]);
+
+  useEffect(() => {
     if (hasInitializedTradeAutoFilter) return;
 
-    if (requiredTrades.length > 1) {
+    if (activeRequiredTrades.length > 1) {
       setTradeAutoFilterMode('teams');
       setHasInitializedTradeAutoFilter(true);
       return;
     }
 
-    if (requiredTrades.length === 1) {
-      setTradeAutoFilterMode(`single:${requiredTrades[0]!.toLowerCase()}`);
+    if (activeRequiredTrades.length === 1) {
+      setTradeAutoFilterMode(`single:${activeRequiredTrades[0]!.toLowerCase()}`);
       setHasInitializedTradeAutoFilter(true);
       return;
     }
 
     setTradeAutoFilterMode('teams');
     setHasInitializedTradeAutoFilter(true);
-  }, [requiredTrades, hasInitializedTradeAutoFilter]);
+  }, [activeRequiredTrades, hasInitializedTradeAutoFilter]);
+
+  useEffect(() => {
+    if (activeRequiredTrades.length === 0) {
+      if (tradeAutoFilterMode !== 'teams') setTradeAutoFilterMode('teams');
+      return;
+    }
+
+    const activeLower = new Set(activeRequiredTrades.map((trade) => trade.toLowerCase()));
+    const firstActive = activeRequiredTrades[0]?.toLowerCase();
+
+    if (tradeAutoFilterMode.startsWith('single:')) {
+      const selectedTrade = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
+      if (!activeLower.has(selectedTrade)) {
+        if (activeRequiredTrades.length > 1) {
+          setTradeAutoFilterMode('teams');
+        } else if (firstActive) {
+          setTradeAutoFilterMode(`single:${firstActive}`);
+        }
+      }
+      return;
+    }
+
+    if (tradeAutoFilterMode === 'teams' && activeRequiredTrades.length === 1 && firstActive) {
+      setTradeAutoFilterMode(`single:${firstActive}`);
+    }
+  }, [activeRequiredTrades, tradeAutoFilterMode]);
+
+  useEffect(() => {
+    if (!activeRequiredTrades.some((trade) => isInteriorDesignTrade(trade))) {
+      setIncludeMimoDesignService(false);
+    }
+  }, [activeRequiredTrades]);
 
   const enforcedRequiredTrades = useMemo(
     () => {
@@ -946,9 +989,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         const trade = tradeAutoFilterMode.slice('single:'.length).trim();
         return trade ? [trade] : [];
       }
-      return requiredTrades;
+      return activeRequiredTrades;
     },
-    [tradeAutoFilterMode, requiredTrades],
+    [tradeAutoFilterMode, activeRequiredTrades],
   );
 
   const activeFilterContext = useMemo(() => {
@@ -1002,29 +1045,29 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
 
     const single: Record<string, number> = {};
-    requiredTrades.forEach((trade) => {
+    activeRequiredTrades.forEach((trade) => {
       single[trade.toLowerCase()] = countWithMode(`single:${trade.toLowerCase()}`, [trade]);
     });
 
     return {
-      teams: countWithMode('teams', requiredTrades),
+      teams: countWithMode('teams', activeRequiredTrades),
       single,
     };
-  }, [professionals, requiredTrades]);
+  }, [professionals, activeRequiredTrades]);
 
   useEffect(() => {
-    if (requiredTrades.length <= 1) return;
+    if (activeRequiredTrades.length <= 1) return;
     if (tradeAutoFilterMode !== 'teams') return;
     if (tradeAutoFilterCounts.teams > 0) return;
 
-    const firstTradeWithMatches = requiredTrades.find(
+    const firstTradeWithMatches = activeRequiredTrades.find(
       (trade) => (tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0) > 0,
     );
 
     if (firstTradeWithMatches) {
       setTradeAutoFilterMode(`single:${firstTradeWithMatches.toLowerCase()}`);
     }
-  }, [requiredTrades, tradeAutoFilterCounts, tradeAutoFilterMode]);
+  }, [activeRequiredTrades, tradeAutoFilterCounts, tradeAutoFilterMode]);
 
   useEffect(() => {
     const hasSelectedLocation = Boolean(loc.primary || loc.secondary || loc.tertiary);
@@ -1306,11 +1349,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // Show expand nudge when a region is active, not yet expanded, and local results are thin (≤2)
   const canShowExpand = locationIsActive && !regionExpanded && filteredBaseCount <= 2;
 
-  const maxSelect = requiredTrades.length > 1 ? Math.max(3, requiredTrades.length * 2) : 3;
+  const maxSelect = activeRequiredTrades.length > 1 ? Math.max(3, activeRequiredTrades.length * 2) : 3;
   // Always start with empty selection - no persistence
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const selectedTradeCoverageKeys = useMemo(() => {
-    const requiredTradesLower = requiredTrades.map((trade) => trade.toLowerCase());
+    const requiredTradesLower = activeRequiredTrades.map((trade) => trade.toLowerCase());
     const covered = new Set<string>();
 
     professionals.forEach((pro) => {
@@ -1325,7 +1368,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return covered;
-  }, [professionals, selectedIds, requiredTrades]);
+  }, [professionals, selectedIds, activeRequiredTrades]);
   const locationSelected = Boolean(loc.primary || loc.secondary || loc.tertiary);
   const blockInviteForMissingLocation = requireLocation && !locationSelected;
 
@@ -1469,14 +1512,19 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   }, [filtered, enforcedRequiredTrades, tradeAutoFilterMode]);
 
   const activeFilterLabel = useMemo(() => {
-    if (requiredTrades.length === 0) return null;
+    if (activeRequiredTrades.length === 0) return null;
     if (tradeAutoFilterMode === 'teams') return 'Teams';
     if (tradeAutoFilterMode.startsWith('single:')) {
       const selectedTrade = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
-      return requiredTrades.find((trade) => trade.toLowerCase() === selectedTrade) || enforcedRequiredTrades[0] || 'Trade';
+      return activeRequiredTrades.find((trade) => trade.toLowerCase() === selectedTrade) || enforcedRequiredTrades[0] || 'Trade';
     }
     return null;
-  }, [requiredTrades, tradeAutoFilterMode, enforcedRequiredTrades]);
+  }, [activeRequiredTrades, tradeAutoFilterMode, enforcedRequiredTrades]);
+
+  const shouldShowMimoDesignCard = useMemo(
+    () => activeRequiredTrades.some((trade) => isInteriorDesignTrade(trade)),
+    [activeRequiredTrades],
+  );
 
   const shareInitialData = useMemo<Partial<ProjectFormData>>(() => {
     const needle = (searchTerm || '').trim();
@@ -1494,15 +1542,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     return {
       projectName: prefill.projectName || defaultTitle,
       location: prefill.location || loc,
-      tradesRequired: (prefill.tradesRequired && prefill.tradesRequired.length > 0)
-        ? prefill.tradesRequired
+      tradesRequired: activeRequiredTrades.length > 0
+        ? activeRequiredTrades
         : (mainTrade ? [mainTrade] : []),
       notes: prefill.notes || initialFromIntent.description || '',
       isEmergency: prefill.isEmergency,
+      requiresDesignService: includeMimoDesignService,
       photoUrls: prefill.photoUrls,
       onlySelectedProfessionalsCanBid: prefill.onlySelectedProfessionalsCanBid ?? true,
     };
-  }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t]);
+  }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t, activeRequiredTrades, includeMimoDesignService]);
 
   const handleInviteSelected = () => {
     if (requireLocation && !loc.primary && !loc.secondary && !loc.tertiary) {
@@ -1561,14 +1610,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const memoryDraft = getCreateProjectDraftHandoff();
     const memoryProjectDescription = getProjectDescriptionHandoff();
 
-    const resolvedTradesRequired = normalizeUniqueList([
-      ...(memoryDraft?.initialData?.tradesRequired || []),
-      ...(existingDraft?.initialData?.tradesRequired || []),
-      ...(memoryProjectDescription?.tradesRequired || []),
-      ...(existingProjectDescription?.tradesRequired || []),
-      ...(shareInitialData.tradesRequired || []),
-      ...(requiredTrades || []),
-    ]);
+    const resolvedTradesRequired = activeRequiredTrades.length > 0
+      ? normalizeUniqueList(activeRequiredTrades)
+      : normalizeUniqueList([
+          ...(memoryDraft?.initialData?.tradesRequired || []),
+          ...(existingDraft?.initialData?.tradesRequired || []),
+          ...(memoryProjectDescription?.tradesRequired || []),
+          ...(existingProjectDescription?.tradesRequired || []),
+          ...(shareInitialData.tradesRequired || []),
+        ]);
 
     const mergedInitialData: Partial<ProjectFormData> = {
       ...(memoryDraft?.initialData || existingDraft?.initialData || {}),
@@ -1599,6 +1649,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         shareInitialData.photoUrls ??
         memoryDraft?.initialData?.photoUrls ??
         existingDraft?.initialData?.photoUrls,
+      requiresDesignService:
+        includeMimoDesignService ||
+        shareInitialData.requiresDesignService ||
+        memoryDraft?.initialData?.requiresDesignService ||
+        existingDraft?.initialData?.requiresDesignService,
       existingPhotos:
         shareInitialData.existingPhotos ??
         memoryDraft?.initialData?.existingPhotos ??
@@ -1849,11 +1904,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         )}
       </div>
 
-      {requiredTrades.length > 1 && (
+      {activeRequiredTrades.length > 0 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
           <p className="mb-2 text-center text-sm font-semibold text-slate-700">Select your team</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {tradeAutoFilterCounts.teams > 0 && (
+            {activeRequiredTrades.length > 1 && tradeAutoFilterCounts.teams > 0 && (
               <button
                 type="button"
                 onClick={() => {
@@ -1869,29 +1924,74 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 {`${tradeAutoFilterCounts.teams} x Teams`}
               </button>
             )}
-            {requiredTrades.map((trade) => {
+            {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
               const hasSelectedTrade = selectedTradeCoverageKeys.has(trade.toLowerCase());
               return (
-                <button
-                  key={`autofilter-${trade}`}
-                  type="button"
-                  onClick={() => {
-                    setTradeAutoFilterMode(key);
-                    setSearchTerm('');
-                  }}
-                  className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
-                    tradeAutoFilterMode === key
-                      ? 'bg-sky-600 text-white shadow-sm'
-                      : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {`${count} x ${trade}`}
-                  {hasSelectedTrade && <span className="ml-2">✓</span>}
-                </button>
+                <div key={`autofilter-${trade}`} className="group flex h-10 items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTradeAutoFilterMode(key);
+                      setSearchTerm('');
+                    }}
+                    className={`h-10 px-4 text-sm font-semibold transition ${
+                      tradeAutoFilterMode === key
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {`${count} x ${trade}`}
+                    {hasSelectedTrade && <span className="ml-2">✓</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveRequiredTrades((prev) => prev.filter((item) => item.toLowerCase() !== trade.toLowerCase()));
+                    }}
+                    className="h-10 border-l border-slate-200 px-2.5 text-slate-500 transition hover:bg-rose-50 hover:text-rose-700"
+                    aria-label={`Remove ${trade}`}
+                    title={`Remove ${trade}`}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {shouldShowMimoDesignCard && (
+        <div className={`rounded-2xl border px-4 py-3 shadow-sm ${
+          includeMimoDesignService
+            ? 'border-emerald-300 bg-emerald-50'
+            : 'border-slate-200 bg-white'
+        }`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <img src="/assets/mimo.webp" alt="Mimo" className="h-8 w-8 object-contain" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Mimo Interior Design Service</p>
+                <p className="mt-0.5 text-xs text-slate-600">Prefer Mimo to handle design direction and styling scope for this project.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIncludeMimoDesignService((prev) => !prev)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                includeMimoDesignService
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {includeMimoDesignService ? 'Added' : 'Add service'}
+            </button>
           </div>
         </div>
       )}

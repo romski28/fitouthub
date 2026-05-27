@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-27-4f11ce1f",
+    "date": "2026-05-27T10:56:03+08:00",
+    "title": "feat(matching): allow trade removal and add Mimo design option",
+    "summary": "feat(matching): allow trade removal and add Mimo design option",
+    "areas": [
+      "web"
+    ],
+    "commit": "4f11ce1f",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-27-335600a4",
     "date": "2026-05-27T09:54:01+08:00",
     "title": "feat(upload): harden image-send gating and standardize upload feedback",

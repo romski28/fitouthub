@@ -1275,7 +1275,7 @@ export default function CreateProjectWizardPage() {
                                         className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg border text-white transition ${
                                           chatImageUploadBusy
                                             ? 'cursor-progress border-emerald-700 bg-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
-                                            : 'cursor-pointer border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                                            : 'cursor-pointer border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700'
                                         }`}
                                         title={chatImageUploadBusy ? 'Uploading images' : 'Add images'}
                                       >
