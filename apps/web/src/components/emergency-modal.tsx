@@ -255,6 +255,8 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
                 setUploadError(null);
               }}
               disabled={uploadingPhotos}
+              isUploading={uploadingPhotos && pendingPhotoFiles.length > 0}
+              uploadingCount={pendingPhotoFiles.length}
             />
             {uploadError && <p className="text-xs text-rose-700">{uploadError}</p>}
           </div>

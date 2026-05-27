@@ -518,6 +518,8 @@ export function ProfessionalCertificationManager({
                 onFilesSelected={setPendingFiles}
                 maxImages={1}
                 disabled={saving}
+                isUploading={saving && pendingFiles.length > 0}
+                uploadingCount={pendingFiles.length}
                 clearKey={uploaderClearKey}
               />
               {form.existingDocumentUrl && pendingFiles.length === 0 ? (

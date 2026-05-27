@@ -48,6 +48,7 @@ export default function ProjectChat({
   showPresenceIndicator = true,
 }: ProjectChatProps) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [newMessage, setNewMessage] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -106,12 +107,13 @@ export default function ProjectChat({
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && pendingFiles.length === 0) || sending) return;
+    if ((!newMessage.trim() && pendingFiles.length === 0) || sending || uploadingAttachments) return;
 
     try {
       // Upload any pending files first
       let attachments: { url: string; filename: string }[] = [];
       if (pendingFiles.length > 0) {
+        setUploadingAttachments(true);
         const formData = new FormData();
         pendingFiles.forEach((file) => formData.append('files', file));
         if (projectId) formData.append('projectId', projectId);
@@ -132,6 +134,7 @@ export default function ProjectChat({
           url,
           filename: pendingFiles[i].name,
         }));
+        setUploadingAttachments(false);
       }
 
       await conversationSend(newMessage, attachments);
@@ -140,6 +143,8 @@ export default function ProjectChat({
       setUploaderClearKey((k) => k + 1);
     } catch {
       // sendError is surfaced via hook
+    } finally {
+      setUploadingAttachments(false);
     }
   };
 
@@ -268,7 +273,9 @@ export default function ProjectChat({
           <ChatImageUploader
             onFilesSelected={setPendingFiles}
             maxImages={3}
-            disabled={sending || loading}
+            disabled={sending || loading || uploadingAttachments}
+            isUploading={uploadingAttachments}
+            uploadingCount={pendingFiles.length}
             clearKey={uploaderClearKey}
           />
         </div>
@@ -279,15 +286,17 @@ export default function ProjectChat({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={messagePlaceholder}
-            disabled={sending || loading}
+            disabled={sending || loading || uploadingAttachments}
             className="min-w-0 flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-900"
           />
           <button
             type="submit"
-            disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading}
+            disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading || uploadingAttachments}
             className="w-full shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-700 sm:w-auto"
           >
-            {sending
+            {uploadingAttachments
+              ? 'Uploading images...'
+              : sending
               ? (pendingFiles.length > 0 ? 'Uploading & Sending...' : 'Sending...')
               : sendButtonLabel}
           </button>

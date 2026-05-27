@@ -437,6 +437,8 @@ export function ProfessionalPortfolioManager({
                 onFilesSelected={setStandalonePendingFiles}
                 maxImages={10}
                 disabled={standaloneUploading}
+                isUploading={standaloneUploading && standalonePendingFiles.length > 0}
+                uploadingCount={standalonePendingFiles.length}
                 clearKey={standaloneUploaderClearKey}
               />
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -502,6 +504,8 @@ export function ProfessionalPortfolioManager({
                   onFilesSelected={setRefPendingFiles}
                   maxImages={5}
                   disabled={refSaving}
+                  isUploading={refSaving && refPendingFiles.length > 0}
+                  uploadingCount={refPendingFiles.length}
                   clearKey={refUploaderClearKey}
                 />
                 <p className="text-xs text-slate-500">

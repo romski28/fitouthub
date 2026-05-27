@@ -2022,6 +2022,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               onFilesSelected={setPromptImages}
               maxImages={promptImageLimit}
               disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+              isUploading={aiLoading && promptImages.length > 0}
+              uploadingCount={promptImages.length}
               clearKey={promptUploaderClearKey}
             />
             {visionQuota && !visionQuota.canUseVision && (

@@ -239,6 +239,8 @@ export default function CreateProjectWizardPage() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatImageUrls, setChatImageUrls] = useState<string[]>([]);
   const [chatImageUploadBusy, setChatImageUploadBusy] = useState(false);
+  const [chatPendingUploadCount, setChatPendingUploadCount] = useState(0);
+  const [isChatSendFinalizing, setIsChatSendFinalizing] = useState(false);
   const [chatImageError, setChatImageError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
@@ -557,6 +559,13 @@ export default function CreateProjectWizardPage() {
     node.scrollTop = node.scrollHeight;
   }, [wizardMode, activeStep, chatMessages, chatBusy]);
 
+  useEffect(() => {
+    if (chatImageUploadBusy) return;
+    if (isChatSendFinalizing) {
+      setIsChatSendFinalizing(false);
+    }
+  }, [chatImageUploadBusy, isChatSendFinalizing]);
+
   const goNext = () => {
     if (!canGoNext) return;
     hasManualStepNavigationRef.current = true;
@@ -636,6 +645,7 @@ export default function CreateProjectWizardPage() {
     }
 
     setChatImageUploadBusy(true);
+    setChatPendingUploadCount(filesToUpload.length);
     try {
       const formData = new FormData();
       filesToUpload.forEach((file) => formData.append('files', file));
@@ -656,12 +666,20 @@ export default function CreateProjectWizardPage() {
       setChatImageError((error as Error).message || 'Failed to upload chat images');
     } finally {
       setChatImageUploadBusy(false);
+      setChatPendingUploadCount(0);
     }
   };
 
   const sendWizardAiTurn = async () => {
     const prompt = chatInput.trim();
     if (!prompt || chatBusy) return;
+    if (chatImageUploadBusy) {
+      setIsChatSendFinalizing(true);
+      setChatImageError('Still uploading photos. Please wait until upload completes before sending.');
+      return;
+    }
+
+    setIsChatSendFinalizing(false);
     const turnImageUrls = chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN);
     const effectiveSessionId = aiSessionId || createAiSessionId();
 
@@ -1230,6 +1248,12 @@ export default function CreateProjectWizardPage() {
                                 <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
                               )}
 
+                              {chatImageUploadBusy && (
+                                <p className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                                  Uploading {chatPendingUploadCount} photo{chatPendingUploadCount === 1 ? '' : 's'}... Send is temporarily locked.
+                                </p>
+                              )}
+
                               <div className={`flex gap-2 ${chatImageUrls.length > 0 ? 'flex-col sm:flex-row' : 'flex-col'}`}>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-end gap-2">
@@ -1247,9 +1271,23 @@ export default function CreateProjectWizardPage() {
                                       className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
                                     />
                                     <div className="flex flex-col gap-1.5">
-                                      <label className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title={chatImageUploadBusy ? 'Uploading' : 'Add images'}>
+                                      <label
+                                        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg border text-white transition ${
+                                          chatImageUploadBusy
+                                            ? 'cursor-progress border-emerald-700 bg-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
+                                            : 'cursor-pointer border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                        title={chatImageUploadBusy ? 'Uploading images' : 'Add images'}
+                                      >
                                         {chatImageUploadBusy ? (
-                                          <span className="h-4 w-4 animate-pulse rounded-full bg-emerald-200" />
+                                          <>
+                                            <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                            </svg>
+                                            <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-emerald-700">
+                                              {Math.max(1, chatPendingUploadCount)}
+                                            </span>
+                                          </>
                                         ) : (
                                           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
@@ -1270,9 +1308,9 @@ export default function CreateProjectWizardPage() {
                                       <button
                                         type="button"
                                         onClick={sendWizardAiTurn}
-                                        disabled={chatBusy || chatInput.trim().length === 0}
+                                        disabled={chatBusy || chatImageUploadBusy || chatInput.trim().length === 0}
                                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                                        title="Send"
+                                        title={chatImageUploadBusy ? 'Wait for image upload to finish' : 'Send'}
                                       >
                                         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                           <path d="M22 2L11 13" />
@@ -1624,6 +1662,16 @@ export default function CreateProjectWizardPage() {
                 Yes
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isChatSendFinalizing && chatImageUploadBusy && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-white/70 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white/90 p-5 text-center shadow-xl">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-emerald-300 border-t-emerald-700" />
+            <p className="text-sm font-semibold text-slate-900">Preparing your photos</p>
+            <p className="mt-1 text-xs text-slate-700">Please wait while uploads complete. We will keep your message ready to send.</p>
           </div>
         </div>
       )}

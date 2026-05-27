@@ -118,6 +118,8 @@ export function RespondMaterialsClaimModal({
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
   const [uploadRows, setUploadRows] = React.useState<UploadRow[]>([]);
   const [savingClaim, setSavingClaim] = React.useState(false);
+  const [uploadingAttachments, setUploadingAttachments] = React.useState(false);
+  const [uploadingAttachmentCount, setUploadingAttachmentCount] = React.useState(0);
   // Track original rows so we can detect edits and compute a diff
   const originalRowsRef = React.useRef<UploadRow[]>([]);
 
@@ -465,6 +467,8 @@ export function RespondMaterialsClaimModal({
                 <ChatImageUploader
                   onFilesSelected={async (files) => {
                     if (files.length === 0) return;
+                    setUploadingAttachments(true);
+                    setUploadingAttachmentCount(files.length);
                     try {
                       const formData = new FormData();
                       files.forEach((file) => formData.append('files', file));
@@ -493,10 +497,15 @@ export function RespondMaterialsClaimModal({
                       ]);
                     } catch {
                       // error shown by uploader's own validation; nothing more needed
+                    } finally {
+                      setUploadingAttachments(false);
+                      setUploadingAttachmentCount(0);
                     }
                   }}
                   maxImages={5}
-                  disabled={savingClaim}
+                  disabled={savingClaim || uploadingAttachments}
+                  isUploading={uploadingAttachments}
+                  uploadingCount={uploadingAttachmentCount}
                 />
               </div>
 

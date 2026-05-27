@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-05-27-335600a4",
+    "date": "2026-05-27T09:54:01+08:00",
+    "title": "feat(upload): harden image-send gating and standardize upload feedback",
+    "summary": "feat(upload): harden image-send gating and standardize upload feedback",
+    "areas": [
+      "web"
+    ],
+    "commit": "335600a4",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx",
+      "apps/web/src/components/chat-image-uploader.tsx",
+      "apps/web/src/components/emergency-modal.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/professional-certification-manager.tsx",
+      "apps/web/src/components/professional-portfolio-manager.tsx",
+      "apps/web/src/components/project-chat.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-05-27-0cb67083",
     "date": "2026-05-27T09:25:36+08:00",
     "title": "feat(wizard): add service-offer modals and tighten AI scope continuity",

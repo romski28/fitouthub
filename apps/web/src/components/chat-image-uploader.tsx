@@ -6,6 +6,8 @@ interface ChatImageUploaderProps {
   onFilesSelected: (files: File[]) => void;
   maxImages?: number;
   disabled?: boolean;
+  isUploading?: boolean;
+  uploadingCount?: number;
   /** Increment this value to programmatically clear the uploader (e.g. after a successful send). */
   clearKey?: number;
   compact?: boolean;
@@ -15,6 +17,8 @@ export default function ChatImageUploader({
   onFilesSelected,
   maxImages = 3,
   disabled = false,
+  isUploading = false,
+  uploadingCount = 0,
   clearKey = 0,
   compact = false,
 }: ChatImageUploaderProps) {
@@ -106,16 +110,27 @@ export default function ChatImageUploader({
           disabled={disabled}
           className={
             compact
-              ? `inline-flex h-10 w-10 items-center justify-center rounded-lg transition shadow-sm ${disabled ? 'bg-slate-400 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
-              : `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm ${disabled ? 'bg-slate-600 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
+              ? `relative inline-flex h-10 w-10 items-center justify-center rounded-lg transition shadow-sm ${disabled ? 'bg-slate-400 opacity-50 cursor-not-allowed' : isUploading ? 'bg-emerald-700 ring-2 ring-emerald-300/70 cursor-progress' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
+              : `relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm ${disabled ? 'bg-slate-600 opacity-50 cursor-not-allowed' : isUploading ? 'bg-emerald-700 ring-2 ring-emerald-300/70 cursor-progress' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`
           }
-          title="Attach images"
-          aria-label="Attach images"
+          title={isUploading ? 'Uploading images' : 'Attach images'}
+          aria-label={isUploading ? 'Uploading images' : 'Attach images'}
         >
-          <svg className={compact ? 'w-5 h-5' : 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          {!compact && <span>Add images</span>}
+          {isUploading ? (
+            <svg className={compact ? 'h-5 w-5 animate-spin' : 'h-4 w-4 animate-spin'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          ) : (
+            <svg className={compact ? 'w-5 h-5' : 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          )}
+          {!compact && <span>{isUploading ? 'Uploading...' : 'Add images'}</span>}
+          {isUploading && (
+            <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-emerald-700">
+              {Math.max(1, uploadingCount)}
+            </span>
+          )}
         </button>
 
         <input
@@ -160,6 +175,12 @@ export default function ChatImageUploader({
         {previewFiles.length > 0 && !compact && (
           <span className="text-xs text-slate-400 ml-1">
             {previewFiles.length} image{previewFiles.length > 1 ? 's' : ''} attached — will send with message
+          </span>
+        )}
+
+        {isUploading && !compact && (
+          <span className="text-xs font-semibold text-emerald-400">
+            Uploading {Math.max(1, uploadingCount)} image{Math.max(1, uploadingCount) === 1 ? '' : 's'}...
           </span>
         )}
       </div>

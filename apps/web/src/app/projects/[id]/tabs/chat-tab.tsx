@@ -426,6 +426,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         onFilesSelected={onPendingFilesChange}
                         maxImages={3}
                         disabled={sending || loadingMessages}
+                        isUploading={sending && pendingFiles.length > 0}
+                        uploadingCount={pendingFiles.length}
                         clearKey={uploaderClearKey}
                       />
                     </div>
