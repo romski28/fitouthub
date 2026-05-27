@@ -382,6 +382,82 @@ export class AiService {
     return `${compact.slice(0, Math.max(0, maxChars - 1)).trimEnd()}...`;
   }
 
+  private classifyScopeSignal(text: string): 'room' | 'whole' | 'unknown' {
+    const normalized = text.toLowerCase();
+    if (!normalized.trim()) return 'unknown';
+
+    const wholeScopePattern = /(whole\s+(flat|apartment|home|house|unit)|entire\s+(flat|apartment|home|house|unit)|full\s+(flat|apartment|home|house|unit)|throughout|all\s+rooms|complete\s+renovation|full\s+renovation|gut\s+renovation)/i;
+    if (wholeScopePattern.test(normalized)) return 'whole';
+
+    const roomScopePattern = /(bathroom|toilet|washroom|powder\s+room|kitchen|bedroom|living\s+room|study\s+room|single\s+room|one\s+room|shower\s+area|balcony)/i;
+    if (roomScopePattern.test(normalized)) return 'room';
+
+    return 'unknown';
+  }
+
+  private isExplicitScopeExpansionPrompt(prompt: string): boolean {
+    const normalized = prompt.toLowerCase();
+    return /(expand|whole\s+(flat|apartment|home|house|unit)|entire\s+(flat|apartment|home|house|unit)|full\s+(flat|apartment|home|house|unit)|not\s+just\s+the\s+bathroom|instead\s+of\s+bathroom|change\s+to\s+whole|upgrade\s+to\s+full)/i.test(normalized);
+  }
+
+  private enforceScopeContinuity(params: {
+    parsedObject: Record<string, unknown>;
+    prompt: string;
+    threadSummary: { title: string | null; summary: string | null; priorPrompt: string };
+    threadOriginSummary: { priorPrompt: string } | null;
+    requestId: string;
+  }): Record<string, unknown> {
+    const { parsedObject, prompt, threadSummary, threadOriginSummary, requestId } = params;
+
+    const priorReferenceText = [
+      threadOriginSummary?.priorPrompt || '',
+      threadSummary.priorPrompt || '',
+      threadSummary.title || '',
+      threadSummary.summary || '',
+    ].join(' ');
+
+    const project =
+      parsedObject.project && typeof parsedObject.project === 'object' && !Array.isArray(parsedObject.project)
+        ? ({ ...(parsedObject.project as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+    const candidateText = [
+      typeof parsedObject.title === 'string' ? parsedObject.title : '',
+      typeof parsedObject.summary === 'string' ? parsedObject.summary : '',
+      typeof parsedObject.scope === 'string' ? parsedObject.scope : '',
+      typeof project.scopeText === 'string' ? project.scopeText : '',
+    ].join(' ');
+
+    const priorScope = this.classifyScopeSignal(priorReferenceText);
+    const nextScope = this.classifyScopeSignal(candidateText);
+    const canExpandScope = this.isExplicitScopeExpansionPrompt(prompt);
+
+    if (priorScope === 'room' && nextScope === 'whole' && !canExpandScope) {
+      if (threadSummary.title) {
+        parsedObject.title = threadSummary.title;
+      }
+      if (threadSummary.summary) {
+        parsedObject.summary = threadSummary.summary;
+        parsedObject.scope = threadSummary.summary;
+        project.scopeText = threadSummary.summary;
+      }
+
+      const clarification = 'To confirm, should this stay bathroom-only, or expand to the whole flat?';
+      parsedObject.nextQuestions = [clarification];
+      parsedObject.followUpQuestions = [clarification];
+      parsedObject.project = project;
+
+      const conversationalText =
+        typeof parsedObject.conversationalText === 'string' ? parsedObject.conversationalText.trim() : '';
+      if (conversationalText) {
+        parsedObject.conversationalText = `${conversationalText}\n\nI will keep this scoped to the bathroom unless you tell me to expand it.`;
+      }
+
+      this.logger.warn(`[${requestId}] Scope continuity guard prevented unintended expansion from room-level to whole-property`);
+    }
+
+    return parsedObject;
+  }
+
   private async persistAiIntakeImageInsights(params: {
     intakeId: string;
     imageUrls: string[];
@@ -804,6 +880,7 @@ CRITICAL RULES FOR DATA EXTRACTION
 8) Avoid repeating previously asked questions. If prior context already answered a point, do not ask it again.
 9) Preserve the user's core project objective from earlier thread context. Treat new messages as refinements unless they explicitly replace the objective.
 10) Ask only ONE best next question each turn (highest-value missing field for matching/tender quality). Keep nextQuestions/followUpQuestions to max 1 item.
+11) Do NOT expand project scope from room-level (e.g., bathroom) to whole-property unless the latest user message explicitly requests expansion.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -2188,6 +2265,22 @@ OUTPUT FORMAT (JSON only)
             error: (visionError as Error).message || 'Qwen image analysis failed',
           };
         }
+      }
+
+      if (mode === 'conversational' && threadSummary && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        parsedOutput = this.enforceScopeContinuity({
+          parsedObject: parsedOutput as Record<string, unknown>,
+          prompt: trimmedPrompt,
+          threadSummary: {
+            title: threadSummary.title,
+            summary: threadSummary.summary,
+            priorPrompt: threadSummary.priorPrompt,
+          },
+          threadOriginSummary: threadOriginSummary
+            ? { priorPrompt: threadOriginSummary.priorPrompt }
+            : null,
+          requestId,
+        });
       }
 
       if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {

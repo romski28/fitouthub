@@ -29,6 +29,8 @@ export interface ProjectFormData {
   onlySelectedProfessionalsCanBid?: boolean;
   endDate?: string; // ISO date string (YYYY-MM-DD)
   siteInspectionAvailableOn?: string; // ISO date string (YYYY-MM-DD)
+  requiresSurveyService?: boolean;
+  requiresDesignService?: boolean;
   aiFrom?: {
     assumptions?: string[];
     risks?: string[];

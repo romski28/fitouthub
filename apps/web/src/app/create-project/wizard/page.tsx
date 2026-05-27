@@ -66,6 +66,8 @@ interface AiVisionReviewSnapshot {
   model: string | null;
 }
 
+type ServiceOfferType = 'survey' | 'design';
+
 const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
 const AI_CHAT_MAX_IMAGES_PER_TURN = 2;
 
@@ -209,6 +211,12 @@ const panelNoteClass = 'text-xs leading-relaxed text-slate-700 sm:text-sm';
 const panelContentClass = 'flex h-full min-h-0 flex-col gap-3 sm:gap-4';
 const LOCATION_PICKER_CONTAINER_CLASS = 'min-h-[300px] flex-1 overflow-hidden';
 
+const shouldPromptSurveyService = (text: string): boolean =>
+  /(size|dimensions?|measurements?|sqm|sq\.?\s?m|sqft|square\s+(feet|foot|metres|meters)|floor\s+area|site\s+measure|how\s+big|what\s+size)/i.test(text);
+
+const shouldPromptDesignService = (text: string): boolean =>
+  /(design|look\s+and\s+feel|style|aesthetic|interior\s+design|theme|mood\s*board|layout\s+design|concept\s+design|finish\s+selection)/i.test(text);
+
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -236,6 +244,9 @@ export default function CreateProjectWizardPage() {
   const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
   const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
   const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
+  const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
+  const [requiresDesignService, setRequiresDesignService] = useState<boolean | null>(null);
+  const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -279,6 +290,9 @@ export default function CreateProjectWizardPage() {
     setAiChatCanContinue(false);
     setCurrentStep(0);
     setAiVisionReview(null);
+    setRequiresSurveyService(null);
+    setRequiresDesignService(null);
+    setPendingServiceOffer(null);
 
     const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
     const source = (searchParams.get('source') || '').trim().toLowerCase();
@@ -369,6 +383,12 @@ export default function CreateProjectWizardPage() {
     const nextSummary = stripSummaryPrefix(nextSummaryRaw);
     const nextLocation = seedDraft?.initialData?.location || seedDescription?.location || userLocation || {};
     const nextEmergency = seedDraft?.initialData?.isEmergency ?? seedDescription?.isEmergency ?? null;
+    const nextSurveyToggle = typeof seedDraft?.initialData?.requiresSurveyService === 'boolean'
+      ? seedDraft.initialData.requiresSurveyService
+      : null;
+    const nextDesignToggle = typeof seedDraft?.initialData?.requiresDesignService === 'boolean'
+      ? seedDraft.initialData.requiresDesignService
+      : null;
     const nextQuestions = mergeQuestions(seedDescription?.followUpQuestions, seedDraft?.followUpQuestions);
     const nextEndDate = seedDraft?.initialData?.endDate || '';
     const nextSiteInspection = seedDraft?.initialData?.siteInspectionAvailableOn || '';
@@ -380,6 +400,8 @@ export default function CreateProjectWizardPage() {
     setSummary(nextSummary);
     setLocation(nextLocation);
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
+    setRequiresSurveyService(nextSurveyToggle);
+    setRequiresDesignService(nextDesignToggle);
     setFollowUpQuestions(nextQuestions);
     setChatError(null);
     setChatImageError(null);
@@ -409,6 +431,12 @@ export default function CreateProjectWizardPage() {
     if (aiSessionId) return;
     setAiSessionId(createAiSessionId());
   }, [hydrated, aiSessionId]);
+
+  useEffect(() => {
+    if (isEmergency === true) {
+      setPendingServiceOffer(null);
+    }
+  }, [isEmergency]);
 
   useEffect(() => {
     if (wizardMode === null) return;
@@ -798,6 +826,22 @@ export default function CreateProjectWizardPage() {
         });
       }
 
+      if (isEmergency === true) {
+        setPendingServiceOffer(null);
+      } else {
+        const candidateOfferText = [
+          nextConversationalText,
+          nextUnaskedQuestion || '',
+          ...dedupedParsedQuestions,
+        ].join(' ');
+
+        if (requiresSurveyService === null && shouldPromptSurveyService(candidateOfferText)) {
+          setPendingServiceOffer('survey');
+        } else if (requiresDesignService === null && shouldPromptDesignService(candidateOfferText)) {
+          setPendingServiceOffer('design');
+        }
+      }
+
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
       if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
@@ -878,6 +922,12 @@ export default function CreateProjectWizardPage() {
     const mergedSummary = [
       summary.trim(),
       followUpBlock ? `Additional Questions & Answers:\n${followUpBlock}` : '',
+      typeof requiresSurveyService === 'boolean'
+        ? `Survey service requested: ${requiresSurveyService ? 'Yes' : 'No'}`
+        : '',
+      typeof requiresDesignService === 'boolean'
+        ? `Design service requested: ${requiresDesignService ? 'Yes' : 'No'}`
+        : '',
     ].filter(Boolean).join('\n\n');
 
     const resolvedRegion = [location.secondary, location.primary]
@@ -900,6 +950,8 @@ export default function CreateProjectWizardPage() {
         endDate: endDate || undefined,
         siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
         photoUrls: existingImageUrls,
+        requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : undefined,
+        requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : undefined,
       },
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
       aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
@@ -1308,10 +1360,9 @@ export default function CreateProjectWizardPage() {
                           placeholder="Add any additional context or requirements..."
                           className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         />
-                        <div className="grid gap-4">
+                        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                           <div className="grid gap-1.5">
                             <p className={panelNoteClass}>Date you can allow site inspection.</p>
-                            <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                             <input
                               type="date"
                               value={siteInspectionAvailableOn}
@@ -1329,6 +1380,7 @@ export default function CreateProjectWizardPage() {
                             />
                           </div>
                         </div>
+                        <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                       </div>
                     )}
 
@@ -1405,6 +1457,8 @@ export default function CreateProjectWizardPage() {
                                 ['Site inspection', siteInspectionAvailableOn || 'Not set'],
                                 ['Completion date', endDate || 'Not set'],
                                 ['Photos', `${existingImageUrls.length}`],
+                                ['Survey service', requiresSurveyService === null ? 'Not asked' : requiresSurveyService ? 'Yes' : 'No'],
+                                ['Design service', requiresDesignService === null ? 'Not asked' : requiresDesignService ? 'Yes' : 'No'],
                               ].map(([label, value], rowIndex, rows) => (
                                 <div
                                   key={label}
@@ -1510,6 +1564,68 @@ export default function CreateProjectWizardPage() {
             </button>
           </div>
         </section>
+      )}
+
+      {pendingServiceOffer === 'survey' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+            <p className="text-sm font-semibold text-slate-900">Survey Service</p>
+            <p className="mt-2 text-sm text-slate-700">Would you like to include our survey service (dimensional + due diligence) before tender?</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRequiresSurveyService(false);
+                  setPendingServiceOffer(null);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequiresSurveyService(true);
+                  setPendingServiceOffer(null);
+                }}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingServiceOffer === 'design' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+            <p className="text-sm font-semibold text-slate-900">Design Service</p>
+            <p className="mt-2 text-sm text-slate-700">Would you like to include our design service for look, feel, and styling direction?</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRequiresDesignService(false);
+                  setPendingServiceOffer(null);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequiresDesignService(true);
+                  setPendingServiceOffer(null);
+                }}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

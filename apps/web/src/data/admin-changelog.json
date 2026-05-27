@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-05-27-0cb67083",
+    "date": "2026-05-27T09:25:36+08:00",
+    "title": "feat(wizard): add service-offer modals and tighten AI scope continuity",
+    "summary": "feat(wizard): add service-offer modals and tighten AI scope continuity",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0cb67083",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-25-2348c21c",
     "date": "2026-05-25T18:47:23+08:00",
     "title": "feat(web): split wizard review into summary and image-analysis tabs",
