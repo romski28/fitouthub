@@ -68,8 +68,18 @@ interface AiVisionReviewSnapshot {
 
 type ServiceOfferType = 'survey' | 'design';
 
+interface ServiceOfferCopy {
+  title: string;
+  hint: string;
+  modalIntro: string;
+  details: string[];
+  price?: string;
+  selectedMessage: string;
+}
+
 const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
 const AI_CHAT_MAX_IMAGES_PER_TURN = 2;
+const SERVICE_OFFER_MARKER_PREFIX = '[[service-offer:';
 
 const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
   for (const input of inputs) {
@@ -173,6 +183,7 @@ const getNextBestMissingBriefQuestion = (context: {
   summary: string;
   trades: string[];
   isEmergency: boolean | null;
+  allowSurveyPrompt?: boolean;
 }): string | null => {
   if (!context.title.trim()) {
     return 'What short project title should we use for this work?';
@@ -180,7 +191,7 @@ const getNextBestMissingBriefQuestion = (context: {
   if (context.trades.length === 0) {
     return 'Which parts of the room are included in this scope so I can lock the right trade match?';
   }
-  if (context.summary.trim().length < 90) {
+  if (context.summary.trim().length < 90 && context.allowSurveyPrompt !== false) {
     return 'Roughly how big is the area, and are there any access or site-condition issues we should keep in mind?';
   }
   if (context.isEmergency === null) {
@@ -217,16 +228,50 @@ const shouldPromptSurveyService = (text: string): boolean =>
 const shouldPromptDesignService = (text: string): boolean =>
   /(design|look\s+and\s+feel|style|aesthetic|interior\s+design|theme|mood\s*board|layout\s+design|concept\s+design|finish\s+selection)/i.test(text);
 
-const SERVICE_OFFER_COPY: Record<ServiceOfferType, { title: string; description: string; details: string }> = {
+const appendServiceOfferHint = (text: string, offerType: ServiceOfferType | null): string => {
+  if (!offerType || !text.trim()) return text;
+  return `${text}\n\n${SERVICE_OFFER_COPY[offerType].hint}\n${SERVICE_OFFER_MARKER_PREFIX}${offerType}]]`;
+};
+
+const extractServiceOfferFromMessage = (text: string): { body: string; offerType: ServiceOfferType | null } => {
+  const match = text.match(/\n?\[\[service-offer:(survey|design)\]\]$/);
+  if (!match) {
+    return { body: text, offerType: null };
+  }
+
+  return {
+    body: text.replace(/\n?\[\[service-offer:(survey|design)\]\]$/, ''),
+    offerType: match[1] as ServiceOfferType,
+  };
+};
+
+const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
   survey: {
-    title: 'Mimo Site Survey',
-    description: 'Need a clearer read on size, access, and site conditions? Mimo can sort a survey before you lock the brief.',
-    details: 'A Mimo site survey helps confirm measurements, access limits, and any condition issues before quoting. It reduces surprises and helps the team price the job properly.',
+    title: 'Mimo Surveying+',
+    hint: "If you're unsure on the size, Mimo can provide a Surveying+ service.",
+    modalIntro: 'Mimo can handle the site survey before the brief is locked, so you do not need to guess the room size or site conditions.',
+    details: [
+      'Full digital measured 360 photo survey',
+      'Assessment of structure',
+      'Utilities and services review',
+      'Openings and access review',
+      'Condition and defects assessment',
+      'Environmental factors review',
+    ],
+    price: 'HK$1,000',
+    selectedMessage: 'Mimo survey service selected.',
   },
   design: {
     title: 'Mimo Interior Design',
-    description: 'If you want help with layout, style, and finish direction, Mimo can take that on too.',
-    details: 'Mimo design support can help shape the look and feel, organise finish choices, and keep the project moving in one direction before professionals quote.',
+    hint: 'If you want help shaping the look and feel, Mimo can provide interior design support.',
+    modalIntro: 'Mimo can take on the design layer before quoting so the brief has a clearer direction and professionals are pricing against the same intent.',
+    details: [
+      'Layout and space-planning direction',
+      'Look and feel development',
+      'Style and finish guidance',
+      'Concept alignment before professionals quote',
+    ],
+    selectedMessage: 'Mimo interior design service selected.',
   },
 };
 
@@ -473,12 +518,73 @@ export default function CreateProjectWizardPage() {
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
 
-  const renderChatMessageBody = (message: WizardChatMessage) => {
-    if (message.role !== 'assistant' || !message.text.startsWith(SUMMARY_CONFIRMATION_PREFIX)) {
-      return message.text;
+  const isOfferStillPending = (offerType: ServiceOfferType): boolean => {
+    if (pendingServiceOffer !== offerType) return false;
+    if (offerType === 'survey') return requiresSurveyService === null;
+    return requiresDesignService === null;
+  };
+
+  const pickNextQuestionAfterServiceSelection = (offerType: ServiceOfferType): string | null => {
+    const remainingQuestions = followUpQuestions.filter((question) => {
+      if (offerType === 'survey') return !shouldPromptSurveyService(question);
+      return !shouldPromptDesignService(question);
+    });
+
+    setFollowUpQuestions(remainingQuestions);
+
+    const askedAssistantQuestionKeys = new Set(
+      chatMessages
+        .filter((message) => message.role === 'assistant')
+        .map((message) => normalizeQuestionKey(extractServiceOfferFromMessage(message.text).body))
+        .filter((key) => key.length > 0),
+    );
+
+    const nextQuestion = remainingQuestions.find(
+      (question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question)),
+    );
+
+    if (nextQuestion) {
+      return nextQuestion;
     }
 
-    const [summaryBlock, continuationRaw] = message.text.split('\n\nIf this looks right,');
+    const currentTrades = normalizeUniqueStringList(
+      seedDraft?.initialData?.tradesRequired,
+      seedDescription?.tradesRequired,
+    );
+
+    return getNextBestMissingBriefQuestion({
+      title,
+      summary,
+      trades: currentTrades,
+      isEmergency,
+      allowSurveyPrompt: offerType !== 'survey',
+    });
+  };
+
+  const renderChatMessageBody = (message: WizardChatMessage) => {
+    const { body, offerType } = extractServiceOfferFromMessage(message.text);
+    const shouldShowOfferAction = Boolean(offerType && message.role === 'assistant' && isOfferStillPending(offerType));
+
+    if (message.role !== 'assistant' || !body.startsWith(SUMMARY_CONFIRMATION_PREFIX)) {
+      if (!shouldShowOfferAction) {
+        return body;
+      }
+
+      return (
+        <div className="space-y-2">
+          <p className="whitespace-pre-wrap">{body}</p>
+          <button
+            type="button"
+            onClick={() => setExpandedServiceOffer(offerType)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Find out more
+          </button>
+        </div>
+      );
+    }
+
+    const [summaryBlock, continuationRaw] = body.split('\n\nIf this looks right,');
     const summaryLines = summaryBlock
       .split('\n')
       .map((line) => line.trim())
@@ -516,6 +622,15 @@ export default function CreateProjectWizardPage() {
           ))}
         </div>
         {continuationText && <p className="text-xs text-slate-600">{continuationText}</p>}
+        {shouldShowOfferAction && offerType && (
+          <button
+            type="button"
+            onClick={() => setExpandedServiceOffer(offerType)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Find out more
+          </button>
+        )}
       </div>
     );
   };
@@ -600,14 +715,30 @@ export default function CreateProjectWizardPage() {
   };
 
   const handleServiceOfferChoice = (accepted: boolean) => {
-    if (pendingServiceOffer === 'survey') {
+    const offerType = expandedServiceOffer || pendingServiceOffer;
+    if (!offerType) return;
+
+    if (offerType === 'survey') {
       setRequiresSurveyService(accepted);
     }
-    if (pendingServiceOffer === 'design') {
+    if (offerType === 'design') {
       setRequiresDesignService(accepted);
     }
+
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
+
+    if (!accepted) return;
+
+    const nextQuestion = pickNextQuestionAfterServiceSelection(offerType);
+
+    setChatMessages((prev) => {
+      const nextMessages = [...prev, { role: 'user' as const, text: SERVICE_OFFER_COPY[offerType].selectedMessage }];
+      if (nextQuestion) {
+        nextMessages.push({ role: 'assistant' as const, text: nextQuestion });
+      }
+      return nextMessages;
+    });
   };
 
   const handleLocationInputMode = (nextMode: LocationInputMode) => {
@@ -708,6 +839,8 @@ export default function CreateProjectWizardPage() {
     }
 
     setIsChatSendFinalizing(false);
+  setPendingServiceOffer(null);
+  setExpandedServiceOffer(null);
     const turnImageUrls = chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN);
     const effectiveSessionId = aiSessionId || createAiSessionId();
 
@@ -872,6 +1005,8 @@ export default function CreateProjectWizardPage() {
         });
       }
 
+      let nextPendingOffer: ServiceOfferType | null = null;
+
       if (isEmergency === true) {
         setPendingServiceOffer(null);
       } else {
@@ -883,14 +1018,20 @@ export default function CreateProjectWizardPage() {
 
         if (requiresSurveyService === null && shouldPromptSurveyService(candidateOfferText)) {
           setPendingServiceOffer('survey');
+          nextPendingOffer = 'survey';
         } else if (requiresDesignService === null && shouldPromptDesignService(candidateOfferText)) {
           setPendingServiceOffer('design');
+          nextPendingOffer = 'design';
+        } else {
+          setPendingServiceOffer(null);
         }
       }
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
       if (shouldOfferSummaryConfirmation) {
-        const summaryQuestion = nextUnaskedQuestion ? `\n\nOne more thing: ${nextUnaskedQuestion}` : '';
+        const summaryQuestion = nextUnaskedQuestion
+          ? `\n\nOne more thing: ${appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)}`
+          : '';
         const summaryForConfirmation = [
           'Mimo summary for confirmation:',
           '',
@@ -910,18 +1051,19 @@ export default function CreateProjectWizardPage() {
         setChatMessages((prev) => [...prev, { role: 'assistant', text: `${summaryForConfirmation}${summaryQuestion}\n\nIf this looks right, continue and we will finalize the remaining details.` }]);
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: nextUnaskedQuestion }]);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer) }]);
       } else {
         const fallbackQuestion = getNextBestMissingBriefQuestion({
           title: nextTitle || title,
           summary: nextSummary || summary,
           trades: mergedTrades,
           isEmergency,
+          allowSurveyPrompt: requiresSurveyService !== true,
         });
 
         if (fallbackQuestion) {
           setAiChatCanContinue(false);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: fallbackQuestion }]);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer) }]);
         } else {
           const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
           setAiChatCanContinue(true);
@@ -1271,50 +1413,6 @@ export default function CreateProjectWizardPage() {
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
                             )}
 
-                            {pendingServiceOffer && (
-                              <div className="mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                                <div className="flex items-start gap-3">
-                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                    <Image src="/assets/mimo.webp" alt="Mimo" width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-slate-900">{SERVICE_OFFER_COPY[pendingServiceOffer].title}</p>
-                                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{SERVICE_OFFER_COPY[pendingServiceOffer].description}</p>
-                                  </div>
-                                </div>
-
-                                {expandedServiceOffer === pendingServiceOffer && (
-                                  <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
-                                    {SERVICE_OFFER_COPY[pendingServiceOffer].details}
-                                  </p>
-                                )}
-
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setExpandedServiceOffer((prev) => (prev === pendingServiceOffer ? null : pendingServiceOffer))}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    {expandedServiceOffer === pendingServiceOffer ? 'Hide details' : 'Find out more'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleServiceOfferChoice(true)}
-                                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                                  >
-                                    Add to project
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleServiceOfferChoice(false)}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    Not now
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
 
                               {chatImageError && (
@@ -1457,6 +1555,58 @@ export default function CreateProjectWizardPage() {
                             </div>
                           </>
                         )}
+                      </div>
+                    )}
+
+                    {expandedServiceOffer && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+                        <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                              <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-lg font-semibold text-slate-900">{SERVICE_OFFER_COPY[expandedServiceOffer].title}</p>
+                              <p className="mt-1 text-sm leading-relaxed text-slate-600">{SERVICE_OFFER_COPY[expandedServiceOffer].modalIntro}</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Included</p>
+                            <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
+                              {SERVICE_OFFER_COPY[expandedServiceOffer].details.map((detail) => (
+                                <li key={detail} className="flex items-start gap-2">
+                                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                  <span>{detail}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {SERVICE_OFFER_COPY[expandedServiceOffer].price && (
+                            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Service fee</p>
+                              <p className="mt-1 text-base font-semibold text-emerald-900">{SERVICE_OFFER_COPY[expandedServiceOffer].price}</p>
+                            </div>
+                          )}
+
+                          <div className="mt-5 flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleServiceOfferChoice(false)}
+                              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              Not now
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleServiceOfferChoice(true)}
+                              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            >
+                              Add Service
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
 

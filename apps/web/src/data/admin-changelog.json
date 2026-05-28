@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-7ecfcb11",
+    "date": "2026-05-28T11:56:18+08:00",
+    "title": "refine(ai): soften wizard service offers",
+    "summary": "refine(ai): soften wizard service offers",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ecfcb11",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-e15a4cc9",
     "date": "2026-05-28T10:47:53+08:00",
     "title": "feat(ai): soften wizard tone and keep trade gaps visible",
