@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-28-e15a4cc9",
+    "date": "2026-05-28T10:47:53+08:00",
+    "title": "feat(ai): soften wizard tone and keep trade gaps visible",
+    "summary": "feat(ai): soften wizard tone and keep trade gaps visible",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e15a4cc9",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-05-27-4f11ce1f",
     "date": "2026-05-27T10:56:03+08:00",
     "title": "feat(matching): allow trade removal and add Mimo design option",

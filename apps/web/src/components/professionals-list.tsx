@@ -1055,6 +1055,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
   }, [professionals, activeRequiredTrades]);
 
+  const missingTradeLabels = useMemo(
+    () => activeRequiredTrades.filter((trade) => (tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0) === 0),
+    [activeRequiredTrades, tradeAutoFilterCounts.single],
+  );
+
   useEffect(() => {
     if (activeRequiredTrades.length <= 1) return;
     if (tradeAutoFilterMode !== 'teams') return;
@@ -1996,6 +2001,22 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         </div>
       )}
 
+      {missingTradeLabels.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-sm">
+          <p className="text-sm font-semibold text-amber-900">No current professionals found for:</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {missingTradeLabels.map((trade) => (
+              <span key={`missing-${trade}`} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+                {trade}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-amber-800">
+            Keep these in the brief. Mimo can review sourcing options and help decide whether to widen the trade scope.
+          </p>
+        </div>
+      )}
+
       {isLocationMapOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={() => setIsLocationMapOpen(false)} />
@@ -2103,36 +2124,45 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               </section>
             )}
 
-            {groupedTradeDisplay.specialistSections
-              .filter((section) => section.professionals.length > 0)
-              .map((section) => (
+            {groupedTradeDisplay.specialistSections.map((section) => {
+              const hasMatches = section.professionals.length > 0;
+              return (
                 <section key={`specialists-${section.trade}`} className="space-y-3">
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-orange-700">Specialists for {section.trade}</p>
-                    <p className="text-sm text-orange-900">
-                      {section.professionals.length} match{section.professionals.length === 1 ? '' : 'es'} available for this trade.
+                  <div className={`rounded-lg px-4 py-2.5 ${hasMatches ? 'border border-orange-200 bg-orange-50' : 'border border-amber-200 bg-amber-50'}`}>
+                    <p className={`text-xs font-semibold uppercase tracking-[0.1em] ${hasMatches ? 'text-orange-700' : 'text-amber-800'}`}>Specialists for {section.trade}</p>
+                    <p className={`text-sm ${hasMatches ? 'text-orange-900' : 'text-amber-900'}`}>
+                      {hasMatches
+                        ? `${section.professionals.length} match${section.professionals.length === 1 ? '' : 'es'} available for this trade.`
+                        : 'No current professionals matched this trade. Keep it in review so Mimo can source or widen it later.'}
                     </p>
                   </div>
-                  <div className="space-y-3">
-                    {section.professionals.map((pro) => (
-                      <ProfessionalRowItem
-                        key={pro.id}
-                        pro={pro}
-                        requiredTrades={enforcedRequiredTrades}
-                        locationParts={locationPartsForRender}
-                        selectedZoneCode={selectedZoneCodeForRender}
-                        minRating={minRating}
-                        isSelected={selectedIds.has(pro.id)}
-                        onToggle={toggleSelection}
-                        onViewDetails={openDetails}
-                        disableSelection={blockInviteForMissingLocation}
-                        showSelectionAction={canInviteProfessionals}
-                        displayAllTrades={!canInviteProfessionals}
-                      />
-                    ))}
-                  </div>
+                  {hasMatches ? (
+                    <div className="space-y-3">
+                      {section.professionals.map((pro) => (
+                        <ProfessionalRowItem
+                          key={pro.id}
+                          pro={pro}
+                          requiredTrades={enforcedRequiredTrades}
+                          locationParts={locationPartsForRender}
+                          selectedZoneCode={selectedZoneCodeForRender}
+                          minRating={minRating}
+                          isSelected={selectedIds.has(pro.id)}
+                          onToggle={toggleSelection}
+                          onViewDetails={openDetails}
+                          disableSelection={blockInviteForMissingLocation}
+                          showSelectionAction={canInviteProfessionals}
+                          displayAllTrades={!canInviteProfessionals}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-amber-300 bg-white px-4 py-3 text-sm text-slate-600">
+                      No one is currently listed for this trade in the selected area.
+                    </div>
+                  )}
                 </section>
-              ))}
+              );
+            })}
 
             {groupedTradeDisplay.uncategorized.length > 0 && (
               <section className="space-y-3">

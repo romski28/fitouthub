@@ -181,7 +181,7 @@ const getNextBestMissingBriefQuestion = (context: {
     return 'Which parts of the room are included in this scope so I can lock the right trade match?';
   }
   if (context.summary.trim().length < 90) {
-    return 'Can you confirm the key deliverables and finish expectations in one message?';
+    return 'Roughly how big is the area, and are there any access or site-condition issues we should keep in mind?';
   }
   if (context.isEmergency === null) {
     return 'Is this urgent or can it be planned as a normal timeline project?';
@@ -217,6 +217,19 @@ const shouldPromptSurveyService = (text: string): boolean =>
 const shouldPromptDesignService = (text: string): boolean =>
   /(design|look\s+and\s+feel|style|aesthetic|interior\s+design|theme|mood\s*board|layout\s+design|concept\s+design|finish\s+selection)/i.test(text);
 
+const SERVICE_OFFER_COPY: Record<ServiceOfferType, { title: string; description: string; details: string }> = {
+  survey: {
+    title: 'Mimo Site Survey',
+    description: 'Need a clearer read on size, access, and site conditions? Mimo can sort a survey before you lock the brief.',
+    details: 'A Mimo site survey helps confirm measurements, access limits, and any condition issues before quoting. It reduces surprises and helps the team price the job properly.',
+  },
+  design: {
+    title: 'Mimo Interior Design',
+    description: 'If you want help with layout, style, and finish direction, Mimo can take that on too.',
+    details: 'Mimo design support can help shape the look and feel, organise finish choices, and keep the project moving in one direction before professionals quote.',
+  },
+};
+
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -249,6 +262,7 @@ export default function CreateProjectWizardPage() {
   const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
   const [requiresDesignService, setRequiresDesignService] = useState<boolean | null>(null);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
+  const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -295,6 +309,7 @@ export default function CreateProjectWizardPage() {
     setRequiresSurveyService(null);
     setRequiresDesignService(null);
     setPendingServiceOffer(null);
+    setExpandedServiceOffer(null);
 
     const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
     const source = (searchParams.get('source') || '').trim().toLowerCase();
@@ -410,6 +425,7 @@ export default function CreateProjectWizardPage() {
     setAiChatCanContinue(false);
     setAiSummaryForConfirmation(null);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
+    setExpandedServiceOffer(null);
 
     const openingSummary = nextSummary || nextTitle;
     const starterText = openingSummary
@@ -437,6 +453,7 @@ export default function CreateProjectWizardPage() {
   useEffect(() => {
     if (isEmergency === true) {
       setPendingServiceOffer(null);
+      setExpandedServiceOffer(null);
     }
   }, [isEmergency]);
 
@@ -580,6 +597,17 @@ export default function CreateProjectWizardPage() {
   const handleAiContinue = () => {
     setAiChatCanContinue(false);
     goNext();
+  };
+
+  const handleServiceOfferChoice = (accepted: boolean) => {
+    if (pendingServiceOffer === 'survey') {
+      setRequiresSurveyService(accepted);
+    }
+    if (pendingServiceOffer === 'design') {
+      setRequiresDesignService(accepted);
+    }
+    setPendingServiceOffer(null);
+    setExpandedServiceOffer(null);
   };
 
   const handleLocationInputMode = (nextMode: LocationInputMode) => {
@@ -861,10 +889,8 @@ export default function CreateProjectWizardPage() {
       }
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
-      if (nextUnaskedQuestion) {
-        setAiChatCanContinue(false);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: nextUnaskedQuestion }]);
-      } else if (shouldOfferSummaryConfirmation) {
+      if (shouldOfferSummaryConfirmation) {
+        const summaryQuestion = nextUnaskedQuestion ? `\n\nOne more thing: ${nextUnaskedQuestion}` : '';
         const summaryForConfirmation = [
           'Mimo summary for confirmation:',
           '',
@@ -881,7 +907,10 @@ export default function CreateProjectWizardPage() {
 
         setAiSummaryForConfirmation(summaryForConfirmation);
         setAiChatCanContinue(true);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: `${summaryForConfirmation}\n\nIf this looks right, continue and we will finalize the remaining details.` }]);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: `${summaryForConfirmation}${summaryQuestion}\n\nIf this looks right, continue and we will finalize the remaining details.` }]);
+      } else if (nextUnaskedQuestion) {
+        setAiChatCanContinue(false);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: nextUnaskedQuestion }]);
       } else {
         const fallbackQuestion = getNextBestMissingBriefQuestion({
           title: nextTitle || title,
@@ -1240,6 +1269,50 @@ export default function CreateProjectWizardPage() {
 
                             {chatError && (
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
+                            )}
+
+                            {pendingServiceOffer && (
+                              <div className="mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                    <Image src="/assets/mimo.webp" alt="Mimo" width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-slate-900">{SERVICE_OFFER_COPY[pendingServiceOffer].title}</p>
+                                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{SERVICE_OFFER_COPY[pendingServiceOffer].description}</p>
+                                  </div>
+                                </div>
+
+                                {expandedServiceOffer === pendingServiceOffer && (
+                                  <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+                                    {SERVICE_OFFER_COPY[pendingServiceOffer].details}
+                                  </p>
+                                )}
+
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedServiceOffer((prev) => (prev === pendingServiceOffer ? null : pendingServiceOffer))}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    {expandedServiceOffer === pendingServiceOffer ? 'Hide details' : 'Find out more'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleServiceOfferChoice(true)}
+                                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                                  >
+                                    Add to project
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleServiceOfferChoice(false)}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    Not now
+                                  </button>
+                                </div>
+                              </div>
                             )}
 
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
@@ -1602,68 +1675,6 @@ export default function CreateProjectWizardPage() {
             </button>
           </div>
         </section>
-      )}
-
-      {pendingServiceOffer === 'survey' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
-            <p className="text-sm font-semibold text-slate-900">Survey Service</p>
-            <p className="mt-2 text-sm text-slate-700">Would you like to include our survey service (dimensional + due diligence) before tender?</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setRequiresSurveyService(false);
-                  setPendingServiceOffer(null);
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                No
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRequiresSurveyService(true);
-                  setPendingServiceOffer(null);
-                }}
-                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {pendingServiceOffer === 'design' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
-            <p className="text-sm font-semibold text-slate-900">Design Service</p>
-            <p className="mt-2 text-sm text-slate-700">Would you like to include our design service for look, feel, and styling direction?</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setRequiresDesignService(false);
-                  setPendingServiceOffer(null);
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                No
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRequiresDesignService(true);
-                  setPendingServiceOffer(null);
-                }}
-                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {isChatSendFinalizing && chatImageUploadBusy && (
