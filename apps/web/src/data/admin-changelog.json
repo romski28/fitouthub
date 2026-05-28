@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-50f5039f",
+    "date": "2026-05-28T14:02:22+08:00",
+    "title": "feat(db): add manual SQL for project extras",
+    "summary": "feat(db): add manual SQL for project extras",
+    "areas": [
+      "infra"
+    ],
+    "commit": "50f5039f",
+    "files": [
+      "MANUAL_SQL_ADD_MIMO_PROJECT_EXTRAS.sql"
+    ]
+  },
+  {
     "id": "2026-05-28-08951591",
     "date": "2026-05-28T13:38:41+08:00",
     "title": "fix(ai): show survey prompt on seeded first question",
