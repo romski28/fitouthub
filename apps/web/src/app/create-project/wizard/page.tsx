@@ -576,7 +576,7 @@ export default function CreateProjectWizardPage() {
           <button
             type="button"
             onClick={() => setExpandedServiceOffer(offerType)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E95E51]"
           >
             Find out more
           </button>
@@ -626,7 +626,7 @@ export default function CreateProjectWizardPage() {
           <button
             type="button"
             onClick={() => setExpandedServiceOffer(offerType)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E95E51]"
           >
             Find out more
           </button>
@@ -1400,7 +1400,7 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[150px] sm:min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
-                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-white text-slate-800 border border-slate-200' : 'ml-auto bg-emerald-600 text-white'}`}>
+                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
                                 </div>
                               ))}
@@ -1555,58 +1555,6 @@ export default function CreateProjectWizardPage() {
                             </div>
                           </>
                         )}
-                      </div>
-                    )}
-
-                    {expandedServiceOffer && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-                        <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-                              <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-lg font-semibold text-slate-900">{SERVICE_OFFER_COPY[expandedServiceOffer].title}</p>
-                              <p className="mt-1 text-sm leading-relaxed text-slate-600">{SERVICE_OFFER_COPY[expandedServiceOffer].modalIntro}</p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Included</p>
-                            <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
-                              {SERVICE_OFFER_COPY[expandedServiceOffer].details.map((detail) => (
-                                <li key={detail} className="flex items-start gap-2">
-                                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                  <span>{detail}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {SERVICE_OFFER_COPY[expandedServiceOffer].price && (
-                            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Service fee</p>
-                              <p className="mt-1 text-base font-semibold text-emerald-900">{SERVICE_OFFER_COPY[expandedServiceOffer].price}</p>
-                            </div>
-                          )}
-
-                          <div className="mt-5 flex flex-wrap justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleServiceOfferChoice(false)}
-                              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              Not now
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleServiceOfferChoice(true)}
-                              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                            >
-                              Add Service
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     )}
 
@@ -1833,6 +1781,58 @@ export default function CreateProjectWizardPage() {
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-emerald-300 border-t-emerald-700" />
             <p className="text-sm font-semibold text-slate-900">Preparing your photos</p>
             <p className="mt-1 text-xs text-slate-700">Please wait while uploads complete. We will keep your message ready to send.</p>
+          </div>
+        </div>
+      )}
+
+      {expandedServiceOffer && (
+        <div className="fixed inset-0 z-[72] flex items-center justify-center bg-slate-950/45 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-lg font-semibold text-slate-900">{SERVICE_OFFER_COPY[expandedServiceOffer].title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">{SERVICE_OFFER_COPY[expandedServiceOffer].modalIntro}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Included</p>
+              <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
+                {SERVICE_OFFER_COPY[expandedServiceOffer].details.map((detail) => (
+                  <li key={detail} className="flex items-start gap-2">
+                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#F26F63]" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {SERVICE_OFFER_COPY[expandedServiceOffer].price && (
+              <div className="mt-4 rounded-2xl border border-[#F7D2C5] bg-[#FFF2EB] px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#A94237]">Service fee</p>
+                <p className="mt-1 text-base font-semibold text-[#8A3A31]">{SERVICE_OFFER_COPY[expandedServiceOffer].price}</p>
+              </div>
+            )}
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleServiceOfferChoice(false)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={() => handleServiceOfferChoice(true)}
+                className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E95E51]"
+              >
+                Add Service
+              </button>
+            </div>
           </div>
         </div>
       )}

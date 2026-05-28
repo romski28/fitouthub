@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-6c2be890",
+    "date": "2026-05-28T12:23:37+08:00",
+    "title": "fix(ai): restore service-offer modal action and update chat styling",
+    "summary": "fix(ai): restore service-offer modal action and update chat styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c2be890",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-7ecfcb11",
     "date": "2026-05-28T11:56:18+08:00",
     "title": "refine(ai): soften wizard service offers",
