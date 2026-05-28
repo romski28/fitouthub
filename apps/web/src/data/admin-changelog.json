@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-28-bb5b276d",
+    "date": "2026-05-28T17:39:58+08:00",
+    "title": "feat(ai): stabilize survey flow and persist project extras",
+    "summary": "feat(ai): stabilize survey flow and persist project extras",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bb5b276d",
+    "files": [
+      "apps/api/src/projects/dto/create-project.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-50f5039f",
     "date": "2026-05-28T14:02:22+08:00",
     "title": "feat(db): add manual SQL for project extras",

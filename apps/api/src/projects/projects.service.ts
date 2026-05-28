@@ -178,6 +178,89 @@ export class ProjectsService {
     return professionals;
   }
 
+  private async persistProjectExtraRequest(
+    projectId: string,
+    extraType: 'survey' | 'design',
+    payload: {
+      title: string;
+      summary: string;
+      source: string;
+      price?: number;
+    },
+  ) {
+    await this.prisma.$executeRaw`
+      INSERT INTO mimo_project_extras (
+        id,
+        "projectId",
+        "extraType",
+        status,
+        source,
+        title,
+        summary,
+        price,
+        currency,
+        "requestedAt",
+        "createdAt",
+        "updatedAt"
+      )
+      VALUES (
+        ${`mx_${createId()}`},
+        ${projectId},
+        ${extraType},
+        'requested',
+        ${payload.source},
+        ${payload.title},
+        ${payload.summary},
+        ${payload.price ?? null},
+        'HKD',
+        now(),
+        now(),
+        now()
+      )
+      ON CONFLICT ("projectId", "extraType") DO UPDATE
+      SET
+        status = 'requested',
+        source = EXCLUDED.source,
+        title = EXCLUDED.title,
+        summary = EXCLUDED.summary,
+        price = EXCLUDED.price,
+        currency = EXCLUDED.currency,
+        "requestedAt" = now(),
+        "updatedAt" = now();
+    `;
+  }
+
+  private async signalAdminFeedForProjectExtras(
+    project: { id: string; projectName: string; clientName: string; region: string; userId?: string | null },
+    requestedExtras: Array<'survey' | 'design'>,
+  ) {
+    if (requestedExtras.length === 0) return;
+
+    const extraSummary = requestedExtras
+      .map((extra) => (extra === 'survey' ? 'Surveying+' : 'Interior Design'))
+      .join(', ');
+
+    await (this.prisma as any).supportRequest.create({
+      data: {
+        channel: 'callback',
+        fromNumber: null,
+        clientName: project.clientName || 'Client',
+        clientEmail: null,
+        body: `Mimo project extras requested for project ${project.projectName} (${project.id}). Services: ${extraSummary}. Region: ${project.region}. Please schedule delivery.`,
+        projectId: project.id,
+        status: 'unassigned',
+        replies: [],
+        statusTimeline: [
+          {
+            at: new Date().toISOString(),
+            action: 'created',
+            status: 'unassigned',
+          },
+        ],
+      },
+    });
+  }
+
   private normalizeTradeLabels(values: Array<string | null | undefined>): string[] {
     const canonicalizeTradeLabel = (value: string): string => {
       const trimmed = value.trim();
@@ -2387,6 +2470,8 @@ Please review the project details and respond with your quote or decline the inv
       photos,
       photoUrls,
       aiIntakeId,
+      requiresSurveyService,
+      requiresDesignService,
       ...rest
     } = createProjectDto;
     // Strip legacy professionalId from the data object so Prisma does not see an unknown field
@@ -2583,6 +2668,60 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     // Create invitation messages for each professional
+    const requestedExtras: Array<'survey' | 'design'> = [];
+    if (requiresSurveyService === true) {
+      try {
+        await this.persistProjectExtraRequest(project.id, 'survey', {
+          title: 'Mimo Surveying+',
+          summary: 'Client requested Mimo Surveying+ service from AI wizard/project flow.',
+          source: 'project_create',
+          price: 500,
+        });
+        requestedExtras.push('survey');
+      } catch (error) {
+        console.warn('[ProjectsService.create] Failed to persist survey extra request:', {
+          projectId: project.id,
+          error: (error as Error)?.message,
+        });
+      }
+    }
+
+    if (requiresDesignService === true) {
+      try {
+        await this.persistProjectExtraRequest(project.id, 'design', {
+          title: 'Mimo Interior Design',
+          summary: 'Client requested Mimo Interior Design service from AI wizard/project flow.',
+          source: 'project_create',
+        });
+        requestedExtras.push('design');
+      } catch (error) {
+        console.warn('[ProjectsService.create] Failed to persist design extra request:', {
+          projectId: project.id,
+          error: (error as Error)?.message,
+        });
+      }
+    }
+
+    if (requestedExtras.length > 0) {
+      try {
+        await this.signalAdminFeedForProjectExtras(
+          {
+            id: project.id,
+            projectName: project.projectName,
+            clientName: project.clientName,
+            region: project.region,
+            userId: project.userId,
+          },
+          requestedExtras,
+        );
+      } catch (error) {
+        console.warn('[ProjectsService.create] Failed to signal admin feed for requested extras:', {
+          projectId: project.id,
+          error: (error as Error)?.message,
+        });
+      }
+    }
+
     if (professionals.length > 0 && project.professionals.length > 0) {
       const messagePromises = project.professionals.map(async (projectProfessional) => {
         const professional = professionals.find(p => p.id === projectProfessional.professionalId);

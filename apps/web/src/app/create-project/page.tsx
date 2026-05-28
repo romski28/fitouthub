@@ -312,6 +312,8 @@ export default function CreateProjectPage() {
       endDate: formData.endDate || null,
       siteInspectionAvailableOn: formData.siteInspectionAvailableOn || null,
       isEmergency: formData.isEmergency ?? false,
+      requiresSurveyService: formData.requiresSurveyService ?? false,
+      requiresDesignService: formData.requiresDesignService ?? false,
     };
   };
 

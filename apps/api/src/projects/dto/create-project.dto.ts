@@ -18,6 +18,8 @@ export class CreateProjectDto {
   endDate?: string; // ISO date string
   siteInspectionAvailableOn?: string; // ISO date string (entered as HK local date)
   isEmergency?: boolean;
+  requiresSurveyService?: boolean;
+  requiresDesignService?: boolean;
   onlySelectedProfessionalsCanBid?: boolean;
   photos?: Array<{ url: string; note?: string }>;
   photoUrls?: string[]; // Legacy compatibility

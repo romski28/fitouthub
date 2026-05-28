@@ -42,6 +42,11 @@ const isInteriorDesignTrade = (trade: string): boolean => {
   return /(interior\s*designer|interior\s*design|designer)/i.test(normalized);
 };
 
+const isMimoSurveyTrade = (trade: string): boolean => {
+  const normalized = trade.trim().toLowerCase();
+  return /(survey|surveying|measurement|measured\s*survey|site\s*survey)/i.test(normalized);
+};
+
 const splitCsvUnique = (value?: string | null) =>
   normalizeUniqueList((value || '').split(',').map((part) => part.trim()));
 
@@ -920,11 +925,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [hasManuallyClearedLocation, setHasManuallyClearedLocation] = useState(false);
 
   const requiredTrades = useMemo(
-    () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])]),
+    () => normalizeUniqueList([...(initialRequiredTrades || []), ...(initialProjectData?.tradesRequired || [])])
+      .filter((trade) => !isMimoSurveyTrade(trade)),
     [initialRequiredTrades, initialProjectData?.tradesRequired],
   );
   const [activeRequiredTrades, setActiveRequiredTrades] = useState<string[]>(requiredTrades);
   const [includeMimoDesignService, setIncludeMimoDesignService] = useState(false);
+  const [includeMimoSurveyService, setIncludeMimoSurveyService] = useState(Boolean(initialProjectData?.requiresSurveyService));
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
@@ -982,6 +989,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       setIncludeMimoDesignService(false);
     }
   }, [activeRequiredTrades]);
+
+  useEffect(() => {
+    if (typeof initialProjectData?.requiresSurveyService === 'boolean') {
+      setIncludeMimoSurveyService(initialProjectData.requiresSurveyService);
+    }
+  }, [initialProjectData?.requiresSurveyService]);
 
   const enforcedRequiredTrades = useMemo(
     () => {
@@ -1553,10 +1566,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       notes: prefill.notes || initialFromIntent.description || '',
       isEmergency: prefill.isEmergency,
       requiresDesignService: includeMimoDesignService,
+      requiresSurveyService: includeMimoSurveyService,
       photoUrls: prefill.photoUrls,
       onlySelectedProfessionalsCanBid: prefill.onlySelectedProfessionalsCanBid ?? true,
     };
-  }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t, activeRequiredTrades, includeMimoDesignService]);
+  }, [initialFromIntent.description, initialProjectData, loc, professionHint, searchTerm, t, activeRequiredTrades, includeMimoDesignService, includeMimoSurveyService]);
 
   const handleInviteSelected = () => {
     if (requireLocation && !loc.primary && !loc.secondary && !loc.tertiary) {
@@ -1659,6 +1673,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         shareInitialData.requiresDesignService ||
         memoryDraft?.initialData?.requiresDesignService ||
         existingDraft?.initialData?.requiresDesignService,
+      requiresSurveyService:
+        includeMimoSurveyService ||
+        shareInitialData.requiresSurveyService ||
+        memoryDraft?.initialData?.requiresSurveyService ||
+        existingDraft?.initialData?.requiresSurveyService,
       existingPhotos:
         shareInitialData.existingPhotos ??
         memoryDraft?.initialData?.existingPhotos ??
@@ -1997,6 +2016,21 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             >
               {includeMimoDesignService ? 'Added' : 'Add service'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {includeMimoSurveyService && (
+        <div className="rounded-2xl border border-[#F7D2C5] bg-[#FFF2EB] px-4 py-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <img src="/assets/mimo.webp" alt="Mimo" className="h-8 w-8 object-contain" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Mimo Surveying+ Service</p>
+              <p className="mt-0.5 text-xs text-slate-700">Requested in AI chat. This is delivered by Mimo and is not part of professional matching.</p>
+              <p className="mt-1 text-xs font-semibold text-[#A94237]">Status: Requested</p>
+            </div>
           </div>
         </div>
       )}

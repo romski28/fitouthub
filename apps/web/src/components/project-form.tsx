@@ -154,6 +154,8 @@ const buildInitialFormState = (initialData?: Partial<ProjectFormData>): ProjectF
   onlySelectedProfessionalsCanBid: initialData?.onlySelectedProfessionalsCanBid ?? true,
   endDate: initialData?.endDate || '',
   siteInspectionAvailableOn: initialData?.siteInspectionAvailableOn || '',
+  requiresSurveyService: initialData?.requiresSurveyService,
+  requiresDesignService: initialData?.requiresDesignService,
   aiFrom: initialData?.aiFrom,
 });
 

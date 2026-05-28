@@ -184,12 +184,26 @@ const getNextBestMissingBriefQuestion = (context: {
   trades: string[];
   isEmergency: boolean | null;
   allowSurveyPrompt?: boolean;
+  hasAskedSizeOrCondition?: boolean;
+  hasSurveyService?: boolean;
 }): string | null => {
   if (!context.title.trim()) {
     return 'What short project title should we use for this work?';
   }
   if (context.trades.length === 0) {
     return 'Which parts of the room are included in this scope so I can lock the right trade match?';
+  }
+  if (context.hasSurveyService === true) {
+    if (context.isEmergency === null) {
+      return 'Is this urgent or can it be planned as a normal timeline project?';
+    }
+    return null;
+  }
+  if (context.hasAskedSizeOrCondition) {
+    if (context.isEmergency === null) {
+      return 'Is this urgent or can it be planned as a normal timeline project?';
+    }
+    return null;
   }
   if (context.summary.trim().length < 90 && context.allowSurveyPrompt !== false) {
     return 'Roughly how big is the area, and are there any access or site-condition issues we should keep in mind?';
@@ -225,6 +239,9 @@ const LOCATION_PICKER_CONTAINER_CLASS = 'min-h-[300px] flex-1 overflow-hidden';
 const shouldPromptSurveyService = (text: string): boolean =>
   /(size|dimensions?|measurements?|sqm|sq\.?\s?m|sqft|square\s+(feet|foot|metres|meters)|floor\s+area|site\s+measure|how\s+big|what\s+size)/i.test(text);
 
+const isConditionFollowUpQuestion = (text: string): boolean =>
+  /(site\s*condition|current\s*condition|condition\s*of\s*(the\s*)?(site|space|bathroom|room)|water\s*damage|old\s*tiles|fixtures\s*to\s*replace|defects?)/i.test(text);
+
 const shouldPromptDesignService = (text: string): boolean =>
   /(design|look\s+and\s+feel|style|aesthetic|interior\s+design|theme|mood\s*board|layout\s+design|concept\s+design|finish\s+selection)/i.test(text);
 
@@ -258,7 +275,7 @@ const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
       'Condition and defects assessment',
       'Environmental factors review',
     ],
-    price: 'HK$1,000',
+    price: 'From HK$500',
     selectedMessage: 'Mimo survey service selected.',
   },
   design: {
@@ -306,6 +323,8 @@ export default function CreateProjectWizardPage() {
   const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
   const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
   const [requiresDesignService, setRequiresDesignService] = useState<boolean | null>(null);
+  const [surveyOfferPrompted, setSurveyOfferPrompted] = useState(false);
+  const [designOfferPrompted, setDesignOfferPrompted] = useState(false);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -353,6 +372,8 @@ export default function CreateProjectWizardPage() {
     setAiVisionReview(null);
     setRequiresSurveyService(null);
     setRequiresDesignService(null);
+    setSurveyOfferPrompted(false);
+    setDesignOfferPrompted(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
 
@@ -464,6 +485,8 @@ export default function CreateProjectWizardPage() {
     setIsEmergency(typeof nextEmergency === 'boolean' ? nextEmergency : null);
     setRequiresSurveyService(nextSurveyToggle);
     setRequiresDesignService(nextDesignToggle);
+    setSurveyOfferPrompted(nextSurveyToggle !== null);
+    setDesignOfferPrompted(nextDesignToggle !== null);
     setFollowUpQuestions(nextQuestions);
     setChatError(null);
     setChatImageError(null);
@@ -478,9 +501,9 @@ export default function CreateProjectWizardPage() {
       : 'Nice, let\'s make this easy. I\'ll help you build a clear brief step by step so pros can quote with fewer surprises.';
     const firstQuestionRaw = sanitizeFollowUpQuestions(normalizeQuestions(nextQuestions))[0] || null;
     const firstQuestionOfferType = firstQuestionRaw
-      ? (requiresSurveyService === null && shouldPromptSurveyService(firstQuestionRaw)
+      ? (nextSurveyToggle === null && shouldPromptSurveyService(firstQuestionRaw)
           ? 'survey'
-          : requiresDesignService === null && shouldPromptDesignService(firstQuestionRaw)
+          : nextDesignToggle === null && shouldPromptDesignService(firstQuestionRaw)
             ? 'design'
             : null)
       : null;
@@ -488,6 +511,8 @@ export default function CreateProjectWizardPage() {
 
     if (firstQuestionOfferType) {
       setPendingServiceOffer(firstQuestionOfferType);
+      if (firstQuestionOfferType === 'survey') setSurveyOfferPrompted(true);
+      if (firstQuestionOfferType === 'design') setDesignOfferPrompted(true);
     }
 
     const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText }];
@@ -500,7 +525,7 @@ export default function CreateProjectWizardPage() {
     setAnswers({});
     setCurrentStep(0);
     hasInitializedFromSeedRef.current = true;
-  }, [seedLoaded, seedDraft, seedDescription, userLocation, requiresSurveyService, requiresDesignService]);
+  }, [seedLoaded, seedDraft, seedDescription, userLocation]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -848,7 +873,7 @@ export default function CreateProjectWizardPage() {
         body: JSON.stringify({
           prompt,
           sessionId: effectiveSessionId,
-          intakeId: currentAiIntakeId || seedDraft?.aiIntakeId || undefined,
+          intakeId: currentAiIntakeId || undefined,
           imageUrls: turnImageUrls,
         }),
       });
@@ -941,13 +966,28 @@ export default function CreateProjectWizardPage() {
           all.findIndex((item) => areQuestionsNearDuplicate(item, candidate)) === index,
       );
 
+      const assistantQuestionBodies = chatMessages
+        .filter((message) => message.role === 'assistant')
+        .map((message) => extractServiceOfferFromMessage(message.text).body);
+      const hasAskedSizeOrCondition = assistantQuestionBodies.some(
+        (question) => shouldPromptSurveyService(question) || isConditionFollowUpQuestion(question),
+      );
+
+      const filteredParsedQuestions = dedupedParsedQuestions.filter((question) => {
+        const isSizeOrConditionQuestion = shouldPromptSurveyService(question) || isConditionFollowUpQuestion(question);
+        if (!isSizeOrConditionQuestion) return true;
+        if (requiresSurveyService === true) return false;
+        if (hasAskedSizeOrCondition) return false;
+        return true;
+      });
+
       const askedAssistantQuestionKeys = new Set(
         chatMessages
           .filter((message) => message.role === 'assistant')
           .map((message) => normalizeQuestionKey(message.text))
           .filter((key) => key.length > 0),
       );
-          const nextUnaskedQuestion = dedupedParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
+          const nextUnaskedQuestion = filteredParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const shouldOfferSummaryConfirmation = hasCoreBrief && Boolean(overallConfidence !== null && overallConfidence >= AI_SUMMARY_CONFIDENCE_THRESHOLD);
@@ -963,8 +1003,8 @@ export default function CreateProjectWizardPage() {
           },
         }));
       }
-      if (dedupedParsedQuestions.length > 0) {
-        setFollowUpQuestions(dedupedParsedQuestions);
+      if (filteredParsedQuestions.length > 0) {
+        setFollowUpQuestions(filteredParsedQuestions);
       }
 
       const nextIntakeId = typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0
@@ -996,14 +1036,16 @@ export default function CreateProjectWizardPage() {
         const candidateOfferText = [
           nextConversationalText,
           nextUnaskedQuestion || '',
-          ...dedupedParsedQuestions,
+          ...filteredParsedQuestions,
         ].join(' ');
 
-        if (requiresSurveyService === null && shouldPromptSurveyService(candidateOfferText)) {
+        if (requiresSurveyService === null && !surveyOfferPrompted && shouldPromptSurveyService(candidateOfferText)) {
           setPendingServiceOffer('survey');
+          setSurveyOfferPrompted(true);
           nextPendingOffer = 'survey';
-        } else if (requiresDesignService === null && shouldPromptDesignService(candidateOfferText)) {
+        } else if (requiresDesignService === null && !designOfferPrompted && shouldPromptDesignService(candidateOfferText)) {
           setPendingServiceOffer('design');
+          setDesignOfferPrompted(true);
           nextPendingOffer = 'design';
         } else {
           setPendingServiceOffer(null);
@@ -1042,16 +1084,20 @@ export default function CreateProjectWizardPage() {
           trades: mergedTrades,
           isEmergency,
           allowSurveyPrompt: requiresSurveyService !== true,
+          hasAskedSizeOrCondition,
+          hasSurveyService: requiresSurveyService === true,
         });
 
         if (fallbackQuestion) {
           if (isEmergency !== true && !nextPendingOffer) {
-            if (requiresSurveyService === null && shouldPromptSurveyService(fallbackQuestion)) {
+            if (requiresSurveyService === null && !surveyOfferPrompted && shouldPromptSurveyService(fallbackQuestion)) {
               nextPendingOffer = 'survey';
               setPendingServiceOffer('survey');
-            } else if (requiresDesignService === null && shouldPromptDesignService(fallbackQuestion)) {
+              setSurveyOfferPrompted(true);
+            } else if (requiresDesignService === null && !designOfferPrompted && shouldPromptDesignService(fallbackQuestion)) {
               nextPendingOffer = 'design';
               setPendingServiceOffer('design');
+              setDesignOfferPrompted(true);
             }
           }
 
