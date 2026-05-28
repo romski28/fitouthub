@@ -1032,6 +1032,16 @@ export default function CreateProjectWizardPage() {
         });
 
         if (fallbackQuestion) {
+          if (isEmergency !== true && !nextPendingOffer) {
+            if (requiresSurveyService === null && shouldPromptSurveyService(fallbackQuestion)) {
+              nextPendingOffer = 'survey';
+              setPendingServiceOffer('survey');
+            } else if (requiresDesignService === null && shouldPromptDesignService(fallbackQuestion)) {
+              nextPendingOffer = 'design';
+              setPendingServiceOffer('design');
+            }
+          }
+
           setAiChatCanContinue(false);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer) }]);
         } else {

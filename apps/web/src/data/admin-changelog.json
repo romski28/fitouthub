@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-0ae9edbd",
+    "date": "2026-05-28T13:29:23+08:00",
+    "title": "fix(ai): trigger survey hint on fallback question path",
+    "summary": "fix(ai): trigger survey hint on fallback question path",
+    "areas": [
+      "web"
+    ],
+    "commit": "0ae9edbd",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-68a01ee8",
     "date": "2026-05-28T13:09:05+08:00",
     "title": "fix(web): restore wizard send button typing",
