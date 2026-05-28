@@ -524,41 +524,11 @@ export default function CreateProjectWizardPage() {
     return requiresDesignService === null;
   };
 
-  const pickNextQuestionAfterServiceSelection = (offerType: ServiceOfferType): string | null => {
-    const remainingQuestions = followUpQuestions.filter((question) => {
-      if (offerType === 'survey') return !shouldPromptSurveyService(question);
-      return !shouldPromptDesignService(question);
-    });
-
-    setFollowUpQuestions(remainingQuestions);
-
-    const askedAssistantQuestionKeys = new Set(
-      chatMessages
-        .filter((message) => message.role === 'assistant')
-        .map((message) => normalizeQuestionKey(extractServiceOfferFromMessage(message.text).body))
-        .filter((key) => key.length > 0),
-    );
-
-    const nextQuestion = remainingQuestions.find(
-      (question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question)),
-    );
-
-    if (nextQuestion) {
-      return nextQuestion;
+  const getServiceSelectionPrompt = (offerType: ServiceOfferType): string => {
+    if (offerType === 'survey') {
+      return 'Size of room to be confirmed by survey.';
     }
-
-    const currentTrades = normalizeUniqueStringList(
-      seedDraft?.initialData?.tradesRequired,
-      seedDescription?.tradesRequired,
-    );
-
-    return getNextBestMissingBriefQuestion({
-      title,
-      summary,
-      trades: currentTrades,
-      isEmergency,
-      allowSurveyPrompt: offerType !== 'survey',
-    });
+    return 'A designer will be engaged to work out the details of the design.';
   };
 
   const renderChatMessageBody = (message: WizardChatMessage) => {
@@ -730,15 +700,8 @@ export default function CreateProjectWizardPage() {
 
     if (!accepted) return;
 
-    const nextQuestion = pickNextQuestionAfterServiceSelection(offerType);
-
-    setChatMessages((prev) => {
-      const nextMessages = [...prev, { role: 'user' as const, text: SERVICE_OFFER_COPY[offerType].selectedMessage }];
-      if (nextQuestion) {
-        nextMessages.push({ role: 'assistant' as const, text: nextQuestion });
-      }
-      return nextMessages;
-    });
+    setChatError(null);
+    void sendWizardAiTurn(getServiceSelectionPrompt(offerType), { includeAttachedImages: false });
   };
 
   const handleLocationInputMode = (nextMode: LocationInputMode) => {
@@ -829,26 +792,33 @@ export default function CreateProjectWizardPage() {
     }
   };
 
-  const sendWizardAiTurn = async () => {
-    const prompt = chatInput.trim();
+  const sendWizardAiTurn = async (
+    promptOverride?: string,
+    options?: { includeAttachedImages?: boolean },
+  ) => {
+    const prompt = (promptOverride ?? chatInput).trim();
+    const includeAttachedImages = options?.includeAttachedImages ?? true;
+
     if (!prompt || chatBusy) return;
-    if (chatImageUploadBusy) {
+    if (includeAttachedImages && chatImageUploadBusy) {
       setIsChatSendFinalizing(true);
       setChatImageError('Still uploading photos. Please wait until upload completes before sending.');
       return;
     }
 
     setIsChatSendFinalizing(false);
-  setPendingServiceOffer(null);
-  setExpandedServiceOffer(null);
-    const turnImageUrls = chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN);
+    setPendingServiceOffer(null);
+    setExpandedServiceOffer(null);
+    const turnImageUrls = includeAttachedImages ? chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN) : [];
     const effectiveSessionId = aiSessionId || createAiSessionId();
 
     if (!aiSessionId) {
       setAiSessionId(effectiveSessionId);
     }
 
-    setChatInput('');
+    if (!promptOverride) {
+      setChatInput('');
+    }
     setChatBusy(true);
     setChatError(null);
     setAiChatCanContinue(false);
@@ -1077,8 +1047,10 @@ export default function CreateProjectWizardPage() {
         }
       }
 
-      setChatImageUrls([]);
-      setChatImageError(null);
+      if (includeAttachedImages) {
+        setChatImageUrls([]);
+        setChatImageError(null);
+      }
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
     } finally {
