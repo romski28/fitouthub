@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-68a01ee8",
+    "date": "2026-05-28T13:09:05+08:00",
+    "title": "fix(web): restore wizard send button typing",
+    "summary": "fix(web): restore wizard send button typing",
+    "areas": [
+      "web"
+    ],
+    "commit": "68a01ee8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-c9a41b3e",
     "date": "2026-05-28T12:58:59+08:00",
     "title": "fix(ai): continue wizard after service selection",

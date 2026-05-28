@@ -1450,7 +1450,7 @@ export default function CreateProjectWizardPage() {
 
                                       <button
                                         type="button"
-                                        onClick={sendWizardAiTurn}
+                                        onClick={() => { void sendWizardAiTurn(); }}
                                         disabled={chatBusy || chatImageUploadBusy || chatInput.trim().length === 0}
                                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                                         title={chatImageUploadBusy ? 'Wait for image upload to finish' : 'Send'}
