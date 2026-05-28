@@ -6970,6 +6970,7 @@ Please review the project details and respond with your quote or decline the inv
   private async getProjectDeletionImpact(projectIds: string[]) {
     if (projectIds.length === 0) {
       return {
+        mimoProjectExtras: 0,
         projectPhotos: 0,
         projectProfessionals: 0,
         messages: 0,
@@ -6996,6 +6997,7 @@ Please review the project details and respond with your quote or decline the inv
         supportRequestsLinked: 0,
         questionnaireInvites: 0,
         aiIntakes: 0,
+        aiIntakeImageInsights: 0,
         siteAccessData: 0,
         projectLocationDetails: 0,
         cases: 0,
@@ -7003,6 +7005,15 @@ Please review the project details and respond with your quote or decline the inv
         acProjectsLinked: 0,
       };
     }
+
+    const mimoProjectExtras = await this.prisma
+      .$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(id)::bigint as count
+        FROM mimo_project_extras
+        WHERE "projectId" IN (${Prisma.join(projectIds)})
+      `
+      .then((rows) => Number(rows[0]?.count || 0n))
+      .catch(() => 0);
 
     const [projectProfessionalIds, assistRequestIds, projectChatThreadIds, privateChatThreadIds, supportRequestIds, paymentPlanIds] = await Promise.all([
       this.prisma.projectProfessional.findMany({ where: { projectId: { in: projectIds } }, select: { id: true } }),
@@ -7057,6 +7068,7 @@ Please review the project details and respond with your quote or decline the inv
       supportRequestsLinked,
       questionnaireInvites,
       aiIntakes,
+      aiIntakeImageInsights,
       siteAccessData,
       projectLocationDetails,
       cases,
@@ -7087,6 +7099,7 @@ Please review the project details and respond with your quote or decline the inv
       this.prisma.supportRequest.count({ where: { projectId: { in: projectIds } } }),
       (this.prisma as any).questionnaireInvite.count({ where: { projectId: { in: projectIds } } }),
       (this.prisma as any).aiIntake.count({ where: { projectId: { in: projectIds } } }),
+      this.prisma.aiIntakeImageInsight.count({ where: { intake: { projectId: { in: projectIds } } } }),
       this.prisma.siteAccessData.count({ where: { projectId: { in: projectIds } } }),
       this.prisma.projectLocationDetails.count({ where: { projectId: { in: projectIds } } }),
       (this.prisma as any).case.count({
@@ -7115,6 +7128,7 @@ Please review the project details and respond with your quote or decline the inv
     });
 
     return {
+      mimoProjectExtras,
       projectPhotos,
       projectProfessionals,
       messages,
@@ -7141,6 +7155,7 @@ Please review the project details and respond with your quote or decline the inv
       supportRequestsLinked,
       questionnaireInvites,
       aiIntakes,
+      aiIntakeImageInsights,
       siteAccessData,
       projectLocationDetails,
       cases,
@@ -7577,6 +7592,13 @@ Please review the project details and respond with your quote or decline the inv
         });
       }
 
+      await tx
+        .$executeRaw`
+          DELETE FROM mimo_project_extras
+          WHERE "projectId" = ${id}
+        `
+        .catch(() => 0);
+
       if (supportIds.length > 0) {
         await tx.supportRequest.deleteMany({
           where: {
@@ -7622,6 +7644,14 @@ Please review the project details and respond with your quote or decline the inv
       });
 
       const residualCounts = {
+        mimoProjectExtras: await tx
+          .$queryRaw<Array<{ count: bigint }>>`
+            SELECT COUNT(id)::bigint as count
+            FROM mimo_project_extras
+            WHERE "projectId" = ${id}
+          `
+          .then((rows) => Number(rows[0]?.count || 0n))
+          .catch(() => 0),
         project: await tx.project.count({ where: { id } }),
         projectPhotos: await tx.projectPhoto.count({ where: { projectId: id } }),
         projectProfessionals: await tx.projectProfessional.count({ where: { projectId: id } }),
@@ -7660,6 +7690,7 @@ Please review the project details and respond with your quote or decline the inv
         supportRequests: await tx.supportRequest.count({ where: { projectId: id } }),
         questionnaireInvites: await (tx as any).questionnaireInvite.count({ where: { projectId: id } }),
         aiIntakes: await (tx as any).aiIntake.count({ where: { projectId: id } }),
+        aiIntakeImageInsights: await tx.aiIntakeImageInsight.count({ where: { intake: { projectId: id } } }),
         siteAccessData: await tx.siteAccessData.count({ where: { projectId: id } }),
         locationDetails: await tx.projectLocationDetails.count({ where: { projectId: id } }),
         cases: await (tx as any).case.count({

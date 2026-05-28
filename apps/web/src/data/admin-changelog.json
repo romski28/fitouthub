@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-28-02afbb3b",
+    "date": "2026-05-28T17:51:32+08:00",
+    "title": "fix(api): include mimo extras in project hard-delete cleanup",
+    "summary": "fix(api): include mimo extras in project hard-delete cleanup",
+    "areas": [
+      "api"
+    ],
+    "commit": "02afbb3b",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-28-bb5b276d",
     "date": "2026-05-28T17:39:58+08:00",
     "title": "feat(ai): stabilize survey flow and persist project extras",
