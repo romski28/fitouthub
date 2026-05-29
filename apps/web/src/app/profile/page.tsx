@@ -390,7 +390,7 @@ export default function ProfilePage() {
                 <div className="mt-5 space-y-4 text-sm text-slate-700">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('accountType')}</p>
-                    <span className="mt-2 inline-flex rounded-full bg-[#ff7f50] px-3 py-1 text-xs font-semibold text-white">
+                    <span className="mt-2 inline-flex rounded-full bg-[#2563eb] px-3 py-1 text-xs font-semibold text-white">
                       {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : user.role === 'surveyor' ? 'Surveyor' : user.role === 'mimo_boh' ? 'Operations' : user.role === 'admin' ? 'Admin' : 'Client'}
                     </span>
                   </div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-3293dba0",
+    "date": "2026-05-29T22:52:26+08:00",
+    "title": "Set account type chip to blue informational color",
+    "summary": "Set account type chip to blue informational color",
+    "areas": [
+      "web"
+    ],
+    "commit": "3293dba0",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-eaeb7a5a",
     "date": "2026-05-29T22:51:24+08:00",
     "title": "Use coral account type chip and green readiness progress",
