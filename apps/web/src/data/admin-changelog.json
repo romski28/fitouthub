@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-60216f18",
+    "date": "2026-05-29T22:46:47+08:00",
+    "title": "Change profile brown text accents to coral",
+    "summary": "Change profile brown text accents to coral",
+    "areas": [
+      "web"
+    ],
+    "commit": "60216f18",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-b96c6528",
     "date": "2026-05-29T22:42:44+08:00",
     "title": "Display correct account type for surveyor and mimo_boh roles",
