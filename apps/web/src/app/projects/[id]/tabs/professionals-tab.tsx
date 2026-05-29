@@ -396,33 +396,12 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                     <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-900">{displayName}</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {isLowestQuote && (
-                            <span className="rounded-full border border-[rgba(194,110,37,0.35)] bg-[rgba(255,245,224,0.9)] px-2 py-0.5 text-[11px] font-semibold text-[rgba(144,86,30,0.95)]">
-                              Cheapest
-                            </span>
-                          )}
-                          {isEarliestStart && (
-                            <span className="rounded-full border border-[rgba(215,107,78,0.35)] bg-[rgba(255,240,232,0.85)] px-2 py-0.5 text-[11px] font-semibold text-[rgba(176,74,46,0.95)]">
-                              Soonest
-                            </span>
-                          )}
-                          {isQuickestDuration && (
-                            <span className="rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.92)] px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                              Fastest
-                            </span>
-                          )}
-                        </div>
                       </div>
 
                       <div className="flex flex-col items-start gap-2 sm:items-end">
                         {hasQuote ? (
                           <span
-                            className={`rounded-md border px-3 py-1.5 text-lg font-bold leading-none ${
-                              isLowestQuote
-                                ? 'border-[rgba(194,110,37,0.4)] bg-[rgba(255,245,224,0.95)] text-[rgba(144,86,30,0.95)]'
-                                : 'border-[rgba(120,53,15,0.2)] bg-white text-slate-900'
-                            }`}
+                            className="rounded-md border border-[rgba(46,125,50,0.35)] bg-[#F5EEDB] px-3 py-1.5 text-lg font-bold leading-none text-emerald-700"
                           >
                             {formatHKD(pp.quoteAmount)}
                           </span>
@@ -431,9 +410,23 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                             Awaiting quote
                           </span>
                         )}
-                        <span className="rounded border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.96)] px-2 py-1 text-xs font-semibold capitalize text-slate-700">
-                          {pp.status}
-                        </span>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {isLowestQuote && (
+                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                              Cheapest
+                            </span>
+                          )}
+                          {isEarliestStart && (
+                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                              Soonest
+                            </span>
+                          )}
+                          {isQuickestDuration && (
+                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                              Fastest
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -544,7 +537,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenChat?.(pp)}
-                          className="inline-flex w-full items-center justify-center rounded-md border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.96)] px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[rgba(245,238,219,0.9)]"
+                          className="inline-flex w-full items-center justify-center rounded-md border border-blue-700 bg-blue-600 px-2 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                           aria-label="Chat"
                         >
                           <span aria-hidden="true">💬</span>
@@ -570,7 +563,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           type="button"
                           onClick={() => handleAwarded(pp)}
                           disabled={actionBusy === 'award'}
-                          className="inline-flex w-full items-center justify-center rounded-md bg-[rgba(215,107,78,0.95)] px-2 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50"
+                          className="inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-2 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                           aria-label="Award"
                         >
                           {actionBusy === 'award' ? '…' : (
@@ -584,7 +577,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                           type="button"
                           onClick={() => handleReject(pp)}
                           disabled={actionBusy === `reject-${pp.id}`}
-                          className="inline-flex w-full items-center justify-center rounded-md border border-[rgba(215,107,78,0.35)] bg-[rgba(255,240,232,0.92)] px-2 py-2 text-sm font-semibold text-[rgba(176,74,46,0.95)] transition hover:bg-[rgba(255,231,220,0.98)] disabled:opacity-50"
+                          className="inline-flex w-full items-center justify-center rounded-md border border-[rgba(151,17,56,0.9)] bg-[rgba(190,24,93,0.96)] px-2 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(157,23,77,0.98)] disabled:opacity-50"
                           aria-label="Decline"
                         >
                           <span aria-hidden="true">✕</span>
