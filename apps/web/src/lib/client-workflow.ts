@@ -7,6 +7,7 @@ export type ClientTimelineStep = {
 
 export const clientActionTabMap: Record<string, string> = {
   INVITE_PROFESSIONALS: 'professionals',
+  BOOK_MIMO_SURVEY: 'overview',
   REVIEW_INCOMING_QUOTES: 'professionals',
   COMPARE_QUOTES: 'professionals',
   SELECT_PROFESSIONAL: 'professionals',
@@ -42,7 +43,7 @@ export const clientTimelineSteps: ClientTimelineStep[] = [
     id: 'bidding',
     title: 'Bidding & Quote Intake',
     description: 'Collect and review incoming quotations.',
-    actionKeys: ['REVIEW_INCOMING_QUOTES', 'REQUEST_SITE_VISIT'],
+    actionKeys: ['BOOK_MIMO_SURVEY', 'REVIEW_INCOMING_QUOTES', 'REQUEST_SITE_VISIT'],
   },
   {
     id: 'site-visit',

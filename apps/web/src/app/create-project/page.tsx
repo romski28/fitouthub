@@ -376,7 +376,12 @@ export default function CreateProjectPage() {
           ? 'Project created and bidding is now open to your selected professionals.'
           : 'Project saved. You can open bidding when you are ready.',
       );
-      router.push(`/projects/${project.id}`);
+      const shouldLaunchSurveyStep = payload.requiresSurveyService === true;
+      router.push(
+        shouldLaunchSurveyStep
+          ? `/projects/${project.id}?launchNextStep=BOOK_MIMO_SURVEY`
+          : `/projects/${project.id}`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create project';
       console.error('[create-project] Error:', err);

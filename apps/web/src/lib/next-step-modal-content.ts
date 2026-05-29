@@ -115,6 +115,17 @@ const FALLBACK_MODAL_CONTENT: Record<string, NextStepModalContent> = {
     secondaryActionTarget: '{"tab":"site-access"}',
     detailsTarget: '{"tab":"site-access"}',
   },
+  BOOK_MIMO_SURVEY: {
+    title: 'Book in your site survey',
+    body: 'Confirm how many rooms need surveying and share your preferred survey date.',
+    detailsBody:
+      'Mimo Surveying+ is charged at HKD 500 per room. Submit your booking details and Mimo will coordinate the survey schedule with your project context.',
+    primaryButtonLabel: 'OK',
+    secondaryButtonLabel: 'Not now',
+    primaryActionType: 'custom_submit',
+    secondaryActionType: 'close_modal',
+    detailsTarget: '{"tab":"overview"}',
+  },
 };
 
 export function resolveNextStepModalContent(

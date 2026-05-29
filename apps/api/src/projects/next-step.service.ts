@@ -357,6 +357,55 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT') {
+      let surveyBookingDescription: string | null = null;
+
+      try {
+        const surveyExtras = await this.prisma.$queryRaw<Array<{
+          status: string;
+          metadata: Record<string, unknown> | null;
+          scheduledAt: Date | null;
+          requestedAt: Date | null;
+        }>>`
+          SELECT
+            status,
+            metadata,
+            "scheduledAt" as "scheduledAt",
+            "requestedAt" as "requestedAt"
+          FROM mimo_project_extras
+          WHERE "projectId" = ${projectId}
+            AND "extraType" = 'survey'
+          ORDER BY "requestedAt" DESC
+          LIMIT 1
+        `;
+
+        const surveyExtra = surveyExtras[0];
+        if (surveyExtra) {
+          const normalizedSurveyStatus = String(surveyExtra.status || '').toLowerCase();
+          const blockedSurveyStatuses = new Set(['declined', 'cancelled', 'completed']);
+          const isSurveyBookable = !blockedSurveyStatuses.has(normalizedSurveyStatus);
+          const alreadyScheduled = Boolean(surveyExtra.scheduledAt) || normalizedSurveyStatus === 'scheduled';
+
+          if (isSurveyBookable && !alreadyScheduled) {
+            const requestedAtLabel = surveyExtra.requestedAt
+              ? new Date(surveyExtra.requestedAt).toLocaleDateString('en-HK', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'recently';
+            const existingRooms = Number((surveyExtra.metadata as any)?.rooms || 0);
+            const roomHint = Number.isFinite(existingRooms) && existingRooms > 0
+              ? ` Current room count: ${existingRooms}.`
+              : '';
+
+            surveyBookingDescription =
+              `Mimo Surveying+ was requested ${requestedAtLabel}. Book your site survey by confirming room count and a preferred date.${roomHint}`;
+          }
+        }
+      } catch {
+        // Extras table may not be present in all environments.
+      }
+
       let manageSiteRequestsDescription: string | null = null;
 
       const pendingClientAccessRequest = await this.prisma.siteAccessRequest.findFirst({
@@ -423,6 +472,20 @@ export class NextStepService {
             manageSiteRequestsDescription,
           ),
           ...availableConfigSteps.filter((step) => step.actionKey !== 'CONFIRM_SITE_VISIT'),
+        ];
+      }
+
+      if (surveyBookingDescription) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'BOOK_MIMO_SURVEY',
+            'Book in your site survey',
+            true,
+            role,
+            effectiveStage,
+            surveyBookingDescription,
+          ),
+          ...availableConfigSteps.filter((step) => step.actionKey !== 'BOOK_MIMO_SURVEY'),
         ];
       }
     }

@@ -58,6 +58,15 @@ interface ProjectDetail {
       note?: string | null;
       createdAt?: string;
     }[];
+    mimoProjectExtras?: Array<{
+      id: string;
+      extraType: 'survey' | 'design' | string;
+      status: string;
+      price?: number | string | null;
+      currency?: string | null;
+      requestedAt?: string;
+      scheduledAt?: string | null;
+    }>;
   };
   status: string;
   quoteAmount?: string;

@@ -317,6 +317,73 @@ export class ProjectsController {
     );
   }
 
+  @Post(':id/mimo-survey/book')
+  @UseGuards(CombinedAuthGuard)
+  async bookMimoSurvey(
+    @Param('id') projectId: string,
+    @Body() body: { rooms?: number; proposedDate?: string },
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isProfessional = Boolean(req.user?.isProfessional);
+
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (tokenRole === 'professional' || isProfessional) {
+      throw new ForbiddenException('Only clients can book survey services');
+    }
+
+    const booking = await this.projectsService.bookMimoSurvey(projectId, userId, {
+      rooms: Number(body?.rooms || 0),
+      proposedDate: String(body?.proposedDate || ''),
+    });
+
+    try {
+      const thread = await this.chatService.getOrCreateProjectThread(projectId, {
+        threadScope: 'mimosurvey',
+        threadScopeId: String(booking.survey.id),
+      });
+
+      const initialMessage = [
+        'MimoSurvey booking request',
+        `Project: ${booking.projectName} (${booking.projectId})`,
+        `Rooms: ${booking.rooms}`,
+        `Proposed date: ${new Date(booking.proposedDate).toLocaleString('en-HK', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        })}`,
+        `Calculated service fee: HKD ${booking.totalFee.toLocaleString('en-HK')}`,
+      ].join('\n');
+
+      await this.chatService.addProjectMessage(
+        thread.id,
+        'client',
+        userId,
+        null,
+        initialMessage,
+        [],
+        {
+          threadScope: 'mimosurvey',
+          threadScopeId: String(booking.survey.id),
+        },
+      );
+    } catch (error) {
+      console.warn('[ProjectsController.bookMimoSurvey] Failed to create scoped survey message:', {
+        projectId,
+        error: (error as Error)?.message,
+      });
+    }
+
+    return booking;
+  }
+
   @Post(':id/quote')
   async submitQuote(
     @Param('id') projectId: string,

@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { useNextStepModal } from '@/context/next-step-modal-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
+import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
 import { getClientTabForAction } from '@/lib/client-workflow';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
@@ -87,6 +89,15 @@ interface ProjectDetail {
   contractorContactPhone?: string;
   contractorContactEmail?: string;
   tradesRequired?: string[];
+  mimoProjectExtras?: Array<{
+    id: string;
+    extraType: 'survey' | 'design' | string;
+    status: string;
+    price?: number | string | null;
+    currency?: string | null;
+    requestedAt?: string;
+    scheduledAt?: string | null;
+  }>;
 }
 
 interface Message {
@@ -269,6 +280,7 @@ export default function ClientProjectDetailPage() {
   const projectId = params.id as string;
 
   const { isLoggedIn, accessToken, user } = useAuth();
+  const { openModal } = useNextStepModal();
   const { openLoginModal } = useAuthModalControl();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -301,6 +313,7 @@ export default function ClientProjectDetailPage() {
   const hasLoadedRef = useRef(false);
   const lastSiteAccessRefreshAtRef = useRef(0);
   const authPromptShownRef = useRef(false);
+  const launchedNextStepRef = useRef(false);
 
   const promptLoginInPlace = useCallback(() => {
     if (authPromptShownRef.current) return;
@@ -602,6 +615,58 @@ export default function ClientProjectDetailPage() {
     const query = url.searchParams.toString();
     window.history.replaceState({}, '', `${url.pathname}${query ? `?${query}` : ''}${url.hash}`);
   }, [accessToken, openPaymentWorkflowModal, searchParams]);
+
+  useEffect(() => {
+    const launchNextStep = searchParams.get('launchNextStep');
+    if (launchNextStep !== 'BOOK_MIMO_SURVEY') return;
+    if (!accessToken || !user?.id || !projectId) return;
+    if (launchedNextStepRef.current) return;
+
+    launchedNextStepRef.current = true;
+
+    const projectDetailsPath = `/projects/${projectId}?tab=overview`;
+
+    const clearLaunchParam = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('launchNextStep');
+      const query = url.searchParams.toString();
+      window.history.replaceState({}, '', `${url.pathname}${query ? `?${query}` : ''}${url.hash}`);
+    };
+
+    const launchModal = async () => {
+      try {
+        const next = await fetchPrimaryNextStep(projectId, accessToken, {
+          cacheScope: `client-project-launch-next-step:${projectId}`,
+          forceRefresh: true,
+        });
+
+        const actionKey = next?.actionKey === 'BOOK_MIMO_SURVEY' ? next.actionKey : 'BOOK_MIMO_SURVEY';
+        const modalContent = resolveNextStepModalContent(actionKey, next?.modalContent);
+
+        await openModal(
+          actionKey,
+          projectId,
+          projectDetailsPath,
+          user.id,
+          String(user.role || 'CLIENT').toUpperCase(),
+          modalContent,
+        );
+      } catch {
+        await openModal(
+          'BOOK_MIMO_SURVEY',
+          projectId,
+          projectDetailsPath,
+          user.id,
+          String(user.role || 'CLIENT').toUpperCase(),
+          resolveNextStepModalContent('BOOK_MIMO_SURVEY'),
+        );
+      } finally {
+        clearLaunchParam();
+      }
+    };
+
+    void launchModal();
+  }, [accessToken, openModal, projectId, searchParams, user?.id, user?.role]);
 
   const parseJsonResponse = async <T,>(response: Response): Promise<T | null> => {
     const text = await response.text();

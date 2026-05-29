@@ -63,6 +63,58 @@ export class ProfessionalController {
     return this.activeProfessionalStatuses.includes(String(status || '').toLowerCase());
   }
 
+  private async listProjectExtras(projectId: string) {
+    try {
+      return await this.prisma.$queryRaw<Array<{
+        id: string;
+        projectId: string;
+        extraType: string;
+        status: string;
+        source: string | null;
+        title: string | null;
+        summary: string | null;
+        notes: string | null;
+        price: number | string | null;
+        currency: string;
+        metadata: Record<string, unknown> | null;
+        requestedAt: Date;
+        approvedAt: Date | null;
+        scheduledAt: Date | null;
+        startedAt: Date | null;
+        completedAt: Date | null;
+        cancelledAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>>`
+        SELECT
+          id,
+          "projectId" as "projectId",
+          "extraType" as "extraType",
+          status,
+          source,
+          title,
+          summary,
+          notes,
+          price,
+          currency,
+          metadata,
+          "requestedAt" as "requestedAt",
+          "approvedAt" as "approvedAt",
+          "scheduledAt" as "scheduledAt",
+          "startedAt" as "startedAt",
+          "completedAt" as "completedAt",
+          "cancelledAt" as "cancelledAt",
+          "createdAt" as "createdAt",
+          "updatedAt" as "updatedAt"
+        FROM mimo_project_extras
+        WHERE "projectId" = ${projectId}
+        ORDER BY "requestedAt" DESC
+      `;
+    } catch {
+      return [];
+    }
+  }
+
   private getProfessionalProfileInclude() {
     return {
       media: {
@@ -1499,7 +1551,15 @@ export class ProfessionalController {
         throw new BadRequestException('Project not found');
       }
 
-      return projectProfessional;
+      const mimoProjectExtras = await this.listProjectExtras(projectProfessional.projectId);
+
+      return {
+        ...projectProfessional,
+        project: {
+          ...(projectProfessional as any).project,
+          mimoProjectExtras,
+        },
+      };
     } catch (error) {
       console.error('Error fetching project detail, retrying with explicit project select:', error);
 
@@ -1569,7 +1629,15 @@ export class ProfessionalController {
           throw new BadRequestException('Project not found');
         }
 
-        return projectProfessional;
+        const mimoProjectExtras = await this.listProjectExtras(projectProfessional.projectId);
+
+        return {
+          ...projectProfessional,
+          project: {
+            ...(projectProfessional as any).project,
+            mimoProjectExtras,
+          },
+        };
       } catch (fallbackError) {
         console.error('Fallback error fetching project detail:', fallbackError);
         throw fallbackError;

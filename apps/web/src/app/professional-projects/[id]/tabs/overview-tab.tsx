@@ -57,6 +57,15 @@ interface OverviewTabProps {
         risks?: unknown;
         project?: unknown;
       } | null;
+      mimoProjectExtras?: Array<{
+        id: string;
+        extraType: 'survey' | 'design' | string;
+        status: string;
+        price?: number | string | null;
+        currency?: string | null;
+        requestedAt?: string;
+        scheduledAt?: string | null;
+      }>;
     };
     status: string;
     quoteAmount?: string;
@@ -148,6 +157,33 @@ const formatHKD = (value?: number | string): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (Number.isNaN(num)) return '—';
   return `HK$${num.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+};
+
+const formatExtraTypeLabel = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized === 'survey') return 'Mimo Surveying+';
+  if (normalized === 'design') return 'Mimo Interior Design';
+  return value || 'Mimo service';
+};
+
+const formatExtraStatusLabel = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (!normalized) return 'Unknown';
+  return normalized.replace(/_/g, ' ');
+};
+
+const getExtraStatusClasses = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (['scheduled', 'in_progress'].includes(normalized)) {
+    return 'border-sky-300 bg-sky-50 text-sky-700';
+  }
+  if (normalized === 'completed') {
+    return 'border-emerald-300 bg-emerald-50 text-emerald-700';
+  }
+  if (['declined', 'cancelled'].includes(normalized)) {
+    return 'border-rose-300 bg-rose-50 text-rose-700';
+  }
+  return 'border-amber-300 bg-amber-50 text-amber-700';
 };
 
 const extractOverviewSummaryLines = (value?: string): string[] => {
@@ -268,6 +304,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectTradeScope = Array.isArray(project.projectTradesSnapshot)
     ? project.projectTradesSnapshot.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
     : [];
+  const mimoExtras = Array.isArray(project.project.mimoProjectExtras)
+    ? project.project.mimoProjectExtras
+    : [];
 
   const countdownBadge = quoteDeadline && shouldEnforceInitialDeadline ? (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -379,6 +418,38 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {mimoExtras.length > 0 && (
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.05)]">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">Mimo Added Services</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {mimoExtras.map((extra) => (
+              <div
+                key={extra.id}
+                className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.72)] px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">{formatExtraTypeLabel(extra.extraType)}</p>
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}
+                  >
+                    {formatExtraStatusLabel(extra.status)}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-slate-600">
+                  {extra.price ? (
+                    <p>
+                      Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}
+                    </p>
+                  ) : null}
+                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
+                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

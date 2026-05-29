@@ -51,6 +51,29 @@ interface NotificationAuditEvent {
   recipients: NotificationAuditRecipient[];
 }
 
+type MimoProjectExtraRow = {
+  id: string;
+  projectId: string;
+  extraType: 'survey' | 'design' | string;
+  status: string;
+  source: string | null;
+  title: string | null;
+  summary: string | null;
+  notes: string | null;
+  price: number | string | null;
+  currency: string;
+  metadata: Record<string, unknown> | null;
+  adminFeedMessageId: string | null;
+  requestedAt: Date;
+  approvedAt: Date | null;
+  scheduledAt: Date | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  cancelledAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
 
 @Injectable()
@@ -228,6 +251,149 @@ export class ProjectsService {
         "requestedAt" = now(),
         "updatedAt" = now();
     `;
+  }
+
+  private async listProjectExtras(projectId: string): Promise<MimoProjectExtraRow[]> {
+    try {
+      return await this.prisma.$queryRaw<MimoProjectExtraRow[]>`
+        SELECT
+          id,
+          "projectId" as "projectId",
+          "extraType" as "extraType",
+          status,
+          source,
+          title,
+          summary,
+          notes,
+          price,
+          currency,
+          metadata,
+          "adminFeedMessageId" as "adminFeedMessageId",
+          "requestedAt" as "requestedAt",
+          "approvedAt" as "approvedAt",
+          "scheduledAt" as "scheduledAt",
+          "startedAt" as "startedAt",
+          "completedAt" as "completedAt",
+          "cancelledAt" as "cancelledAt",
+          "createdAt" as "createdAt",
+          "updatedAt" as "updatedAt"
+        FROM mimo_project_extras
+        WHERE "projectId" = ${projectId}
+        ORDER BY "requestedAt" DESC
+      `;
+    } catch {
+      // Extras table may not exist yet on some environments.
+      return [];
+    }
+  }
+
+  async bookMimoSurvey(
+    projectId: string,
+    userId: string,
+    payload: { rooms: number; proposedDate: string },
+  ) {
+    const rooms = Number(payload.rooms);
+    if (!Number.isInteger(rooms) || rooms <= 0) {
+      throw new BadRequestException('Rooms must be a positive whole number');
+    }
+
+    const scheduledAt = new Date(payload.proposedDate);
+    if (!payload.proposedDate || Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException('A valid proposed survey date is required');
+    }
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        status: { not: this.ARCHIVED_STATUS },
+        OR: [{ userId }, { clientId: userId }],
+      },
+      select: {
+        id: true,
+        projectName: true,
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const surveyRows = await this.prisma.$queryRaw<Array<{
+      id: string;
+      status: string;
+      metadata: Record<string, unknown> | null;
+    }>>`
+      SELECT id, status, metadata
+      FROM mimo_project_extras
+      WHERE "projectId" = ${projectId}
+        AND "extraType" = 'survey'
+      LIMIT 1
+    `;
+
+    const survey = surveyRows[0];
+    if (!survey) {
+      throw new BadRequestException('Survey service was not requested for this project');
+    }
+
+    const blockedStatuses = new Set(['declined', 'cancelled', 'completed']);
+    if (blockedStatuses.has(String(survey.status || '').toLowerCase())) {
+      throw new BadRequestException('Survey service can no longer be booked');
+    }
+
+    const totalFee = rooms * 500;
+    const mergedMetadata = {
+      ...(survey.metadata || {}),
+      rooms,
+      feePerRoom: 500,
+      calculatedFee: totalFee,
+      proposedDate: scheduledAt.toISOString(),
+      bookingSource: 'next_step_modal',
+      bookedAt: new Date().toISOString(),
+    };
+
+    const updatedRows = await this.prisma.$queryRaw<Array<{
+      id: string;
+      projectId: string;
+      extraType: string;
+      status: string;
+      price: number | string | null;
+      currency: string;
+      metadata: Record<string, unknown> | null;
+      scheduledAt: Date | null;
+    }>>`
+      UPDATE mimo_project_extras
+      SET
+        status = 'scheduled',
+        price = ${totalFee},
+        currency = 'HKD',
+        metadata = ${JSON.stringify(mergedMetadata)}::jsonb,
+        "scheduledAt" = ${scheduledAt.toISOString()}::timestamptz,
+        "updatedAt" = now()
+      WHERE id = ${survey.id}
+      RETURNING
+        id,
+        "projectId" as "projectId",
+        "extraType" as "extraType",
+        status,
+        price,
+        currency,
+        metadata,
+        "scheduledAt" as "scheduledAt"
+    `;
+
+    const updated = updatedRows[0];
+    if (!updated) {
+      throw new BadRequestException('Unable to book survey at this time');
+    }
+
+    return {
+      projectId: project.id,
+      projectName: project.projectName,
+      survey: updated,
+      rooms,
+      totalFee,
+      proposedDate: scheduledAt.toISOString(),
+    };
   }
 
   private async signalAdminFeedForProjectExtras(
@@ -1952,9 +2118,11 @@ export class ProjectsService {
       });
       console.log('[ProjectsService.findOneForClient] Project found:', !!project);
       if (!project) return null;
+      const mimoProjectExtras = await this.listProjectExtras(project.id);
       const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
       return {
         ...project,
+        mimoProjectExtras,
         ...walletTransferTimeline,
         professionals: this.dedupeProfessionals((project as any).professionals),
         photos: this.resolveProjectPhotos((project as any).photos),
@@ -2030,9 +2198,11 @@ export class ProjectsService {
         console.log('[ProjectsService.findOneForClient] Fallback project found:', !!project);
         if (!project) return null;
 
+        const mimoProjectExtras = await this.listProjectExtras(project.id);
         const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
         return {
           ...project,
+          mimoProjectExtras,
           ...walletTransferTimeline,
           professionals: this.dedupeProfessionals((project as any).professionals),
           photos: this.resolveProjectPhotos((project as any).photos),

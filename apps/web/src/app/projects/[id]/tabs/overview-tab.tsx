@@ -43,6 +43,15 @@ interface ProjectDetail {
   contractorContactEmail?: string;
   tradesRequired?: string[];
   professionals?: any[];
+  mimoProjectExtras?: Array<{
+    id: string;
+    extraType: 'survey' | 'design' | string;
+    status: string;
+    price?: number | string | null;
+    currency?: string | null;
+    requestedAt?: string;
+    scheduledAt?: string | null;
+  }>;
   aiIntake?: {
     id?: string;
     assumptions?: unknown;
@@ -138,6 +147,33 @@ const formatProjectClass = (value?: string) => {
   if (normalized === 'SCALE_3') return 'Class 3';
   if (!normalized) return '—';
   return value || '—';
+};
+
+const formatExtraTypeLabel = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized === 'survey') return 'Mimo Surveying+';
+  if (normalized === 'design') return 'Mimo Interior Design';
+  return value || 'Mimo service';
+};
+
+const formatExtraStatusLabel = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (!normalized) return 'Unknown';
+  return normalized.replace(/_/g, ' ');
+};
+
+const getExtraStatusClasses = (value?: string) => {
+  const normalized = String(value || '').toLowerCase();
+  if (['scheduled', 'in_progress'].includes(normalized)) {
+    return 'border-sky-300 bg-sky-50 text-sky-700';
+  }
+  if (['completed'].includes(normalized)) {
+    return 'border-emerald-300 bg-emerald-50 text-emerald-700';
+  }
+  if (['declined', 'cancelled'].includes(normalized)) {
+    return 'border-rose-300 bg-rose-50 text-rose-700';
+  }
+  return 'border-amber-300 bg-amber-50 text-amber-700';
 };
 
 const projectStatusBadge: Record<string, string> = {
@@ -324,6 +360,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     projectStatus === 'pending' ||
     projectStatus === 'quoted' ||
     projectStatus === 'counter_requested';
+  const mimoExtras = Array.isArray(project.mimoProjectExtras)
+    ? project.mimoProjectExtras
+    : [];
 
   const currentTimelineStepIndex = useMemo(() => {
     const actionKey = primaryNextStep?.actionKey;
@@ -554,6 +593,49 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-4">
+      {mimoExtras.length > 0 && (
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Mimo Added Services</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Track requested Surveying+ and Design services for this project.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {mimoExtras.map((extra) => (
+              <div
+                key={extra.id}
+                className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.72)] px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatExtraTypeLabel(extra.extraType)}
+                  </p>
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}
+                  >
+                    {formatExtraStatusLabel(extra.status)}
+                  </span>
+                </div>
+
+                <div className="mt-2 space-y-1 text-xs text-slate-600">
+                  {extra.price ? (
+                    <p>
+                      Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}
+                    </p>
+                  ) : null}
+                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
+                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {hasBiddingActivity && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
