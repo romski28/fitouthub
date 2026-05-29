@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 
 type User = {
   id: string;
+  nickname?: string;
   email: string;
   firstName: string;
   surname: string;
@@ -27,6 +28,19 @@ function formatDate(date?: string): string {
   } catch {
     return "—";
   }
+}
+
+function buildNickname(input: {
+  email?: string;
+  firstName?: string;
+  surname?: string;
+}): string {
+  const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24);
+
+  const emailLocal = String(input.email || '').split('@')[0] || '';
+  const nameBase = `${String(input.firstName || '')}${String(input.surname || '')}`;
+  const base = slugify(nameBase) || slugify(emailLocal) || 'user';
+  return base;
 }
 
 export default function AdminUsersPage() {
@@ -108,7 +122,35 @@ export default function AdminUsersPage() {
   };
 
   const handleCreate = async (data: Record<string, any>) => {
+    const nicknameInput = String(data.nickname || '').trim();
+    const existingNicknames = new Set(
+      users
+        .map((user) => String(user.nickname || '').trim().toLowerCase())
+        .filter(Boolean),
+    );
+
+    let nickname = nicknameInput || buildNickname({
+      email: data.email,
+      firstName: data.firstName,
+      surname: data.surname,
+    });
+
+    if (nicknameInput && existingNicknames.has(nicknameInput.toLowerCase())) {
+      throw new Error('Nickname already taken');
+    }
+
+    if (!nicknameInput) {
+      let counter = 1;
+      let candidate = nickname;
+      while (existingNicknames.has(candidate.toLowerCase())) {
+        candidate = `${nickname}${counter}`;
+        counter += 1;
+      }
+      nickname = candidate;
+    }
+
     const payload = {
+      nickname,
       email: data.email,
       firstName: data.firstName,
       surname: data.surname,
@@ -174,6 +216,14 @@ export default function AdminUsersPage() {
     { name: "email", label: "Email", type: "email", value: "", required: true },
     { name: "firstName", label: "First Name", type: "text", value: "", required: true },
     { name: "surname", label: "Surname", type: "text", value: "", required: true },
+    {
+      name: "nickname",
+      label: "Nickname",
+      type: "text",
+      value: "",
+      required: true,
+      placeholder: "Auto-hydrated from name/email. You can edit this.",
+    },
     { name: "password", label: "Password", type: "text", value: "", required: true, placeholder: "Minimum 6 characters" },
     {
       name: "role",

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-29-08bbc784",
+    "date": "2026-05-29T22:21:23+08:00",
+    "title": "Allow editable hydrated nickname in admin user creation",
+    "summary": "Allow editable hydrated nickname in admin user creation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "08bbc784",
+    "files": [
+      "apps/api/src/users/users.service.ts",
+      "apps/web/src/app/admin/users/page.tsx",
+      "apps/web/src/components/edit-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-8d581491",
     "date": "2026-05-29T22:06:36+08:00",
     "title": "Route survey roles to survey ops after login",

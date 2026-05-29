@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ModalOverlay } from "./modal-overlay";
 
 export type FieldDefinition = {
@@ -24,14 +24,52 @@ interface EditModalProps {
 }
 
 export function EditModal({ isOpen, onClose, title, fields, onSave, submitting }: EditModalProps) {
+  const buildAutoNickname = (seed: Record<string, any>) => {
+    const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 24);
+    const emailLocal = String(seed.email || "").split("@")[0] || "";
+    const fullName = `${String(seed.firstName || "")}${String(seed.surname || "")}`;
+    return slugify(fullName) || slugify(emailLocal) || "user";
+  };
+
   const [formData, setFormData] = useState<Record<string, any>>(
-    fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value ?? "" }), {})
+    (() => {
+      const seed = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value ?? "" }), {});
+      if (Object.prototype.hasOwnProperty.call(seed, "nickname") && !seed.nickname) {
+        seed.nickname = buildAutoNickname(seed);
+      }
+      return seed;
+    })()
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const seed = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value ?? "" }), {} as Record<string, any>);
+    if (Object.prototype.hasOwnProperty.call(seed, "nickname") && !seed.nickname) {
+      seed.nickname = buildAutoNickname(seed);
+    }
+    setFormData(seed);
+    setError(null);
+  }, [fields, isOpen]);
+
   const handleChange = (name: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      const hasNicknameField = fields.some((field) => field.name === "nickname");
+      const canHydrateNickname = ["firstName", "surname", "email"].includes(name);
+
+      if (hasNicknameField && canHydrateNickname) {
+        const prevAuto = buildAutoNickname(prev);
+        const nextAuto = buildAutoNickname(next);
+        if (!prev.nickname || prev.nickname === prevAuto) {
+          next.nickname = nextAuto;
+        }
+      }
+
+      return next;
+    });
     setError(null);
   };
 
