@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-e14465ce",
+    "date": "2026-05-29T13:15:03+08:00",
+    "title": "style(web): repaint client professionals tab to warm palette",
+    "summary": "style(web): repaint client professionals tab to warm palette",
+    "areas": [
+      "web"
+    ],
+    "commit": "e14465ce",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-ad5e1024",
     "date": "2026-05-29T13:06:52+08:00",
     "title": "style(web): repaint client site access tab to warm paper palette",
