@@ -284,6 +284,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     budgetValue > 0 && Number.isFinite(awardedQuoteNumeric)
       ? awardedQuoteNumeric - budgetValue
       : null;
+  const hasBiddingActivity =
+    invitedCount > 0 ||
+    quotedCount > 0 ||
+    pendingQuoteCount > 0 ||
+    projectStatus === 'pending' ||
+    projectStatus === 'quoted' ||
+    projectStatus === 'counter_requested';
 
   const currentTimelineStepIndex = useMemo(() => {
     const actionKey = primaryNextStep?.actionKey;
@@ -514,6 +521,43 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-4">
+      {hasBiddingActivity && (
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-transparent p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Bidding Status</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                A quick snapshot of where the project is in the quote cycle.
+              </p>
+            </div>
+            <span className="rounded-full border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              {projectStatus.replace('_', ' ')}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Invited professionals</p>
+              <p className="mt-1 text-xl font-bold text-slate-900">{invitedCount || '—'}</p>
+            </div>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Quotes received</p>
+              <p className="mt-1 text-xl font-bold text-slate-900">{quotedCount || '—'}</p>
+            </div>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Still pending</p>
+              <p className="mt-1 text-xl font-bold text-slate-900">{pendingQuoteCount || '—'}</p>
+            </div>
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Awarded pro</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {awardedProfessional ? (awardedProfessional.professional?.fullName || awardedProfessional.professional?.businessName || 'Professional') : 'Not yet'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AccordionGroup>
         {/* Project Details */}
         <AccordionItem

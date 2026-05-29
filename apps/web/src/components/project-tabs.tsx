@@ -245,27 +245,27 @@ interface AccordionItemProps {
 
 export const AccordionItem: React.FC<AccordionItemProps> = ({ id, title, isOpen, onToggle, children, badge }) => {
   return (
-    <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-900/50 backdrop-blur-sm">
+    <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent backdrop-blur-sm">
       <button
         onClick={() => onToggle(id)}
         className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-          isOpen ? 'bg-emerald-500/15 border-b border-slate-700' : 'hover:bg-white/5'
+          isOpen ? 'bg-[rgba(255,250,240,0.82)] border-b border-[rgba(120,53,15,0.12)]' : 'hover:bg-[rgba(255,250,240,0.52)]'
         }`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
-          <h3 className="font-semibold text-white">{title}</h3>
+          <h3 className="font-semibold text-slate-900">{title}</h3>
           {badge && (
-            <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">
+            <span className="ml-2 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
               {badge}
             </span>
           )}
         </div>
-        <span className={`ml-3 flex-shrink-0 transition-transform text-slate-400 ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`ml-3 flex-shrink-0 transition-transform text-slate-500 ${isOpen ? 'rotate-180' : ''}`}>
           ▼
         </span>
       </button>
       {isOpen && (
-        <div className="px-4 py-3 border-t border-slate-700 bg-slate-950/50">
+        <div className="border-t border-[rgba(120,53,15,0.12)] px-4 py-3 bg-transparent">
           {children}
         </div>
       )}

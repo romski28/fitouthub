@@ -2055,7 +2055,7 @@ export default function ClientProjectDetailPage() {
     <>
       <div className="min-h-screen pb-16">
         <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Project Info & Tab Navigation */}
+        {/* Project Hero */}
         <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm space-y-4">
           <div className="flex items-center justify-between">
             <Link href="/projects" className="text-sm font-semibold text-[rgba(126,58,33,0.92)] hover:underline">
@@ -2074,15 +2074,14 @@ export default function ClientProjectDetailPage() {
 
           <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-5 py-4">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-2xl font-bold text-slate-900">
                   {project.projectName}
                 </h1>
                 <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.9)]">
                   {project.region}
                 </p>
-                {/* Badges row - mobile only, right-aligned, below region */}
-                <div className="flex justify-end gap-2 mt-3 md:hidden">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   {projectClassBadge && (
                     <span className="inline-flex items-center justify-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.9)] px-3 py-1 text-xs font-semibold text-slate-700">
                       Class {projectClassBadge}
@@ -2090,29 +2089,7 @@ export default function ClientProjectDetailPage() {
                   )}
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                      projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {projectStatus.replace('_', ' ')}
-                  </span>
-                  <ProjectSentimentBadge
-                    projectId={project.id}
-                    storageScope="client"
-                    hideTextOnMobile
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                {/* Badges row - desktop only, inline */}
-                <div className="hidden md:flex items-center justify-end gap-2">
-                  {projectClassBadge && (
-                    <span className="inline-flex items-center justify-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.9)] px-3 py-1 text-xs font-semibold text-slate-700">
-                      Class {projectClassBadge}
-                    </span>
-                  )}
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                      projectStatusBadge[projectStatus] || 'bg-slate-100 text-slate-700'
+                      projectStatusBadge[projectStatus] || 'border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.9)] text-slate-700'
                     }`}
                   >
                     {projectStatus.replace('_', ' ')}
@@ -2123,41 +2100,39 @@ export default function ClientProjectDetailPage() {
                   />
                 </div>
                 {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
-                  <span className="text-xs font-medium text-slate-600">
+                  <span className="mt-2 block text-xs font-medium text-slate-600">
                     {project.professionals.find((pp) => pp.status === 'awarded')?.professional.fullName || 
                      project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
                      'Professional'}
                   </span>
                 )}
               </div>
+              {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
+                <div className="flex-shrink-0 self-start pt-1">
+                  {projectStatus === 'withdrawn' ? (
+                    <span className="inline-flex rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      Project withdrawn from bidding.
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setShowWithdrawConfirm(true)}
+                      disabled={withdrawing}
+                      className="inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                    >
+                      {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] p-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
-                {projectStatus === 'withdrawn' && (
-                  <span className="text-sm text-slate-600">Project withdrawn from bidding.</span>
-                )}
-              </div>
-              {!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn' && (
-                <button
-                  onClick={() => setShowWithdrawConfirm(true)}
-                  disabled={withdrawing}
-                  className="inline-flex items-center justify-center rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
-                >
-                  {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
-                </button>
-              )}
-            </div>
-          )}
-
           {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab === 'overview' && (
-            <div className="border-b border-rose-200 bg-rose-50 p-5 space-y-4">
+            <div className="space-y-4 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] p-5">
               {/* Header */}
               <div>
-                <p className="text-sm font-semibold text-rose-800">🚫 Quote window expired</p>
-                <p className="mt-1 text-sm text-rose-700">
+                <p className="text-sm font-semibold text-slate-900">🚫 Quote window expired</p>
+                <p className="mt-1 text-sm text-slate-600">
                   No quote was received within the {(project as any)?.isEmergency ? '12-hour' : '3-day'} window.
                   Use the options below to continue.
                 </p>
@@ -2175,8 +2150,8 @@ export default function ClientProjectDetailPage() {
                 }) ?? [];
                 if (pendingPros.length === 0) return null;
                 return (
-                  <div className="rounded-lg border border-rose-200 bg-white p-4 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Step 1 — Remind professional{pendingPros.length > 1 ? 's' : ''}</p>
+                  <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent p-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 1 — Remind professional{pendingPros.length > 1 ? 's' : ''}</p>
                     <p className="text-xs text-slate-500">Sends a notification and grants an additional 24-hour window (one-shot per professional).</p>
                     <div className="flex flex-col gap-2 mt-1">
                       {pendingPros.map((pp) => {
@@ -2184,7 +2159,7 @@ export default function ClientProjectDetailPage() {
                         const alreadySent = Boolean(pp.quoteReminderSentAt);
                         const busy = remindingPros.has(pp.id);
                         return (
-                          <div key={pp.id} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-sm">
+                          <div key={pp.id} className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.12)] px-3 py-2 text-sm">
                             <span className="font-medium text-slate-700">{name}</span>
                             {alreadySent ? (
                               <span className="text-xs font-medium text-emerald-600">✅ Reminded (+24h granted)</span>
@@ -2192,7 +2167,7 @@ export default function ClientProjectDetailPage() {
                               <button
                                 onClick={() => handleRemindPro(pp)}
                                 disabled={busy}
-                                className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60"
                               >
                                 {busy ? 'Sending…' : '⏰ Remind & extend 24h'}
                               </button>
@@ -2206,13 +2181,13 @@ export default function ClientProjectDetailPage() {
               })()}
 
               {/* Step 3 — Ask Mimo */}
-              <div className="rounded-lg border border-indigo-200 bg-white p-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Step 3 — Ask Mimo for assistance</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent p-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 3 — Ask Mimo for assistance</p>
                 <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
                 <button
                   onClick={handleOpenAssistFromBlocker}
                   className={`inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-semibold text-white transition mt-1 ${
-                    assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                    assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[rgba(126,58,33,0.92)] hover:bg-[rgba(100,45,26,0.96)]'
                   }`}
                 >
                   {assistRequestId ? '✅ Assistance requested (open chat)' : '💬 Ask for help'}
@@ -2237,14 +2212,17 @@ export default function ClientProjectDetailPage() {
           )}
 
           {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab !== 'overview' && (
-            <div className="border-b border-rose-200 bg-rose-50 px-5 py-3">
-              <p className="text-sm text-rose-800">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-5 py-3">
+              <p className="text-sm text-slate-700">
                 🚫 Quote window expired — see <button onClick={() => setActiveTab('overview')} className="font-semibold underline hover:text-rose-900">Overview</button> for recovery actions.
               </p>
             </div>
           )}
 
-          {/* Tab Navigation */}
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="rounded-[28px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.78)] shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
           <ProjectTabs 
             activeTab={activeTab} 
             onTabChange={setActiveTab}
