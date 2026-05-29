@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-bcbd69f3",
+    "date": "2026-05-29T12:20:24+08:00",
+    "title": "fix(web): make client project loading state transparent",
+    "summary": "fix(web): make client project loading state transparent",
+    "areas": [
+      "web"
+    ],
+    "commit": "bcbd69f3",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-5f77a974",
     "date": "2026-05-29T12:16:09+08:00",
     "title": "feat(web): merge bidding recovery into overview dashboard",
