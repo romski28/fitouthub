@@ -2058,37 +2058,28 @@ export default function ClientProjectDetailPage() {
         {/* Project Hero */}
         <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm space-y-4">
           <div className="flex items-center justify-between">
-            <Link href="/projects" className="text-sm font-semibold text-[rgba(126,58,33,0.92)] hover:underline">
+            <Link href="/projects" className="text-sm font-semibold text-sky-700 hover:underline">
               ← Back to projects
             </Link>
-            <button
-              type="button"
-              onClick={handleOpenAssistFromBlocker}
-              className={`inline-flex items-center rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition ${
-                assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[rgba(126,58,33,0.92)] hover:bg-[rgba(100,45,26,0.96)]'
-              }`}
-            >
-              {assistRequestId ? 'Open active PM case' : 'Request PM Support'}
-            </button>
           </div>
 
           <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-5 py-4">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <h1 className="text-2xl font-bold text-slate-900">
                   {project.projectName}
                 </h1>
-                <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.9)]">
+                <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-coral-700 text-[rgba(215,107,78,0.96)]">
                   {project.region}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {projectClassBadge && (
-                    <span className="inline-flex items-center justify-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.9)] px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span className="inline-flex h-9 items-center justify-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.9)] px-3 text-xs font-semibold text-slate-700">
                       Class {projectClassBadge}
                     </span>
                   )}
                   <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                    className={`inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold capitalize ${
                       projectStatusBadge[projectStatus] || 'border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.9)] text-slate-700'
                     }`}
                   >
@@ -2097,6 +2088,9 @@ export default function ClientProjectDetailPage() {
                   <ProjectSentimentBadge
                     projectId={project.id}
                     storageScope="client"
+                    iconOnly
+                    size="md"
+                    className="h-9 w-9 justify-center px-0 py-0"
                   />
                 </div>
                 {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
@@ -2107,23 +2101,23 @@ export default function ClientProjectDetailPage() {
                   </span>
                 )}
               </div>
-              {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
-                <div className="flex-shrink-0 self-start pt-1">
-                  {projectStatus === 'withdrawn' ? (
-                    <span className="inline-flex rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <div className="flex flex-shrink-0 flex-wrap items-center gap-2 self-start lg:pt-1">
+                {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
+                  projectStatus === 'withdrawn' ? (
+                    <span className="inline-flex h-9 items-center rounded-full border border-slate-300 bg-slate-100 px-3 text-xs font-semibold text-slate-700">
                       Project withdrawn from bidding.
                     </span>
                   ) : (
                     <button
                       onClick={() => setShowWithdrawConfirm(true)}
                       disabled={withdrawing}
-                      className="inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-rose-300 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                     >
                       {withdrawing ? 'Withdrawing…' : 'Withdraw Project'}
                     </button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           </div>
 

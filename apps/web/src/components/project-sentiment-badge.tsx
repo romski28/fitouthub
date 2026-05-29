@@ -35,6 +35,7 @@ type ProjectSentimentBadgeProps = {
   hideTextOnMobile?: boolean;
   iconOnly?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  className?: string;
 };
 
 export function ProjectSentimentBadge({
@@ -43,6 +44,7 @@ export function ProjectSentimentBadge({
   hideTextOnMobile,
   iconOnly = false,
   size = 'sm',
+  className = '',
 }: ProjectSentimentBadgeProps) {
   const storageKey = `fitouthub:project-sentiment:${storageScope}:${projectId}`;
   const [sentiment, setSentiment] = React.useState<ProjectSentiment>('ok');
@@ -76,7 +78,7 @@ export function ProjectSentimentBadge({
       type="button"
       onClick={handleCycle}
       data-dispute-sentiment-tag="DISPUTE_MANAGEMENT_PLACEHOLDER"
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${meta.className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${meta.className} ${className}`}
       title={`Project sentiment: ${meta.label}. Click to cycle sentiment state.`}
       aria-label={`Project sentiment ${meta.label}. Click to change sentiment.`}
     >
