@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-e7550faa",
+    "date": "2026-05-29T22:47:13+08:00",
+    "title": "Change profile save button to green",
+    "summary": "Change profile save button to green",
+    "areas": [
+      "web"
+    ],
+    "commit": "e7550faa",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-60216f18",
     "date": "2026-05-29T22:46:47+08:00",
     "title": "Change profile brown text accents to coral",

@@ -539,7 +539,7 @@ export default function ProfilePage() {
             type="submit"
             form="client-profile-form"
             disabled={saving}
-            className="pointer-events-auto rounded-full bg-[#b94e2d] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(81,55,32,0.18)] transition hover:bg-[#a84426] disabled:opacity-60"
+            className="pointer-events-auto rounded-full bg-[#16a34a] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(81,55,32,0.18)] transition hover:bg-[#15803d] disabled:opacity-60"
           >
             {saving ? t('saving') : t('saveChanges')}
           </button>
