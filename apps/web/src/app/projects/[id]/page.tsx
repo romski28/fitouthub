@@ -27,6 +27,7 @@ import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
+import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
@@ -2019,14 +2020,7 @@ export default function ClientProjectDetailPage() {
 
   if (loading || isLoggedIn === undefined) {
     return (
-      <>
-        <div className="min-h-screen bg-transparent flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-600">Loading project...</p>
-          </div>
-        </div>
-      </>
+      <PageLoadingState message="Loading project..." />
     );
   }
 
@@ -2177,6 +2171,7 @@ export default function ClientProjectDetailPage() {
               onRemindProfessional={handleRemindPro}
               remindingProfessionalIds={Array.from(remindingPros)}
               onOpenChatTab={() => setActiveTab('chat')}
+              onManageBidding={() => setActiveTab('professionals')}
               onShowWithdrawConfirm={() => setShowWithdrawConfirm(true)}
               onScheduleUpdate={async (data) => {
                 const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {

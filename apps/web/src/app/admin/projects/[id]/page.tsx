@@ -13,6 +13,7 @@ import { useFundsSecured } from "@/hooks/use-funds-secured";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { ProjectAiPanel } from "@/components/project-ai-panel";
 import { ProjectAiScopePanel } from "@/components/project-ai-scope-panel";
+import { PageLoadingState } from "@/components/page-loading-state";
 
 interface ProjectProfessional {
   id: string;
@@ -151,7 +152,7 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
   }, [projectId, loading, router]);
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-600">Loading project…</div>;
+    return <PageLoadingState message="Loading project..." className="p-6" />;
   }
 
   if (error || !project) {

@@ -66,6 +66,7 @@ interface OverviewTabProps {
   onRemindProfessional?: (projectProfessional: any) => void;
   remindingProfessionalIds?: string[];
   onOpenChatTab?: () => void;
+  onManageBidding?: () => void;
   onShowWithdrawConfirm?: () => void;
 }
 
@@ -183,6 +184,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onRemindProfessional,
   remindingProfessionalIds = [],
   onOpenChatTab,
+  onManageBidding,
   onShowWithdrawConfirm,
 }) => {
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -284,6 +286,27 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       );
     }) ?? [];
   const quotedCount = quotedProfessionals.length;
+  const biddingRows =
+    project.professionals?.map((pp) => {
+      const professionalName =
+        pp?.professional?.fullName ||
+        pp?.professional?.businessName ||
+        pp?.professional?.email ||
+        'Professional';
+      const status = String(pp?.status || '').toLowerCase();
+      const bidAt =
+        pp?.quotedAt ||
+        (status === 'quoted' || status === 'counter_requested' || status === 'awarded'
+          ? pp?.respondedAt
+          : undefined);
+
+      return {
+        id: pp?.id || professionalName,
+        professionalName,
+        bidDateLabel: bidAt ? formatDate(bidAt) : 'No bid',
+        totalQuoteLabel: pp?.quoteAmount ? formatHKD(pp.quoteAmount) : 'HK$ —',
+      };
+    }) ?? [];
   const pendingQuoteCount = Math.max(invitedCount - quotedCount, 0);
   const awardedProfessional =
     project.professionals?.find((pp) => String(pp?.status || '').toLowerCase() === 'awarded') || null;
@@ -537,33 +560,44 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div>
               <h2 className="text-lg font-bold text-slate-900">Bidding Status</h2>
               <p className="mt-1 text-sm text-slate-600">
-                A quick snapshot of where the project is in the quote cycle.
+                Summary of invited professionals, bid dates, and total quote values.
               </p>
             </div>
-            <span className="rounded-full border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
-              {projectStatus.replace('_', ' ')}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                {projectStatus.replace('_', ' ')}
+              </span>
+              {onManageBidding && (
+                <button
+                  type="button"
+                  onClick={onManageBidding}
+                  className="inline-flex items-center rounded-xl border border-emerald-300 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  Manage bidding
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Invited professionals</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{invitedCount || '—'}</p>
+          <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
+            <div className="grid grid-cols-12 border-b border-[rgba(120,53,15,0.12)] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span className="col-span-6">Professional</span>
+              <span className="col-span-3">Bid date</span>
+              <span className="col-span-3 text-right">Total quote</span>
             </div>
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Quotes received</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{quotedCount || '—'}</p>
-            </div>
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Still pending</p>
-              <p className="mt-1 text-xl font-bold text-slate-900">{pendingQuoteCount || '—'}</p>
-            </div>
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.68)] p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Awarded pro</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {awardedProfessional ? (awardedProfessional.professional?.fullName || awardedProfessional.professional?.businessName || 'Professional') : 'Not yet'}
-              </p>
-            </div>
+            {biddingRows.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-slate-600">No professionals invited yet.</div>
+            ) : (
+              <div className="divide-y divide-[rgba(120,53,15,0.10)]">
+                {biddingRows.map((row) => (
+                  <div key={row.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm text-slate-700">
+                    <span className="col-span-6 font-medium text-slate-800">{row.professionalName}</span>
+                    <span className="col-span-3">{row.bidDateLabel}</span>
+                    <span className="col-span-3 text-right font-semibold text-slate-900">{row.totalQuoteLabel}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {quoteOverdueBlocker && (

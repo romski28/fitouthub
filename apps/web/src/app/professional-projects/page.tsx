@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
+import { PageLoadingState } from '@/components/page-loading-state';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 import { fetchWithRetry } from '@/lib/http';
 import {
@@ -314,14 +315,7 @@ export default function ProfessionalProjectsPage() {
   };
 
   if (isLoggedIn === undefined || loading) {
-    return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-gray-600">Loading projects...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message="Loading projects..." />;
   }
 
   if (!isLoggedIn) {

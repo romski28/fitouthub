@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-29-1900e7be",
+    "date": "2026-05-29T13:01:13+08:00",
+    "title": "feat(web): unify loading visuals and simplify bidding summary",
+    "summary": "feat(web): unify loading visuals and simplify bidding summary",
+    "areas": [
+      "web"
+    ],
+    "commit": "1900e7be",
+    "files": [
+      "apps/web/src/app/admin/projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/page-loading-state.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-bcbd69f3",
     "date": "2026-05-29T12:20:24+08:00",
     "title": "fix(web): make client project loading state transparent",

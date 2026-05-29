@@ -21,6 +21,7 @@ import { ChatTab } from './tabs/chat-tab';
 import { AcPlansTab } from './tabs/ac-plans-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import {
   buildQuoteBreakdownPayload,
@@ -1482,14 +1483,7 @@ export default function ProjectDetailPage() {
   }, [project?.project?.id, project?.project?.projectName]);
 
   if (isLoggedIn === undefined || loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-          <p className="mt-4 text-slate-300">Loading project...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message="Loading project..." />;
   }
 
   if (!isLoggedIn) {
