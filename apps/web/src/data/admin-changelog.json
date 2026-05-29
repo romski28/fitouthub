@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-29-8d581491",
+    "date": "2026-05-29T22:06:36+08:00",
+    "title": "Route survey roles to survey ops after login",
+    "summary": "Route survey roles to survey ops after login",
+    "areas": [
+      "web"
+    ],
+    "commit": "8d581491",
+    "files": [
+      "apps/web/src/app/login/page.tsx",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-acd43abe",
     "date": "2026-05-29T19:38:55+08:00",
     "title": "Add survey ops roles, queue page, and calendar SQL scaffolding",

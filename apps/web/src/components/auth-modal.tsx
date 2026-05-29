@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
 import { useAuth } from '@/context/auth-context';
@@ -50,6 +51,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const modalT = useTranslations('auth.modal');
   const commonT = useTranslations('common');
   const locale = useLocale();
+  const router = useRouter();
   const { login, register, googleLogin } = useAuth();
   const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
@@ -86,6 +88,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     loginMethod === 'google' &&
     typeof error === 'string' &&
     error.toLowerCase().includes('please join first');
+
+  const getPostLoginPath = (role?: string | null) => {
+    const normalizedRole = String(role || '').toLowerCase();
+    if (normalizedRole === 'surveyor' || normalizedRole === 'mimo_boh') {
+      return '/survey-ops';
+    }
+    return null;
+  };
 
   React.useEffect(() => {
     setActiveTab(defaultTab);
@@ -167,12 +177,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       if (userType === 'professional') {
         await loginProfessional(loginEmail, loginPassword);
+        onClose();
+        setLoginEmail('');
+        setLoginPassword('');
       } else {
-        await login(loginEmail, loginPassword);
+        const result = await login(loginEmail, loginPassword);
+        const postLoginPath = getPostLoginPath(result?.user?.role);
+        onClose();
+        setLoginEmail('');
+        setLoginPassword('');
+        if (postLoginPath) {
+          router.push(postLoginPath);
+        }
       }
-      onClose();
-      setLoginEmail('');
-      setLoginPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : modalT('loginFailed'));
     } finally {
@@ -186,16 +203,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       if (userType === 'professional') {
         await googleLoginProfessional(credential);
+        onClose();
       } else {
-        await googleLogin(credential);
+        const result = await googleLogin(credential);
+        const postLoginPath = getPostLoginPath(result?.user?.role);
+        onClose();
+        if (postLoginPath) {
+          router.push(postLoginPath);
+        }
       }
-      onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     } finally {
       setLoading(false);
     }
-  }, [googleLogin, googleLoginProfessional, onClose, userType]);
+  }, [googleLogin, googleLoginProfessional, onClose, router, userType]);
 
   React.useEffect(() => {
     if (!isOpen || activeTab !== 'login' || loginMethod !== 'google') return;
@@ -385,16 +407,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       // Auto-login and close after 2.5 seconds
       setTimeout(async () => {
         try {
+          let postLoginPath: string | null = null;
           if (pendingVerification.userType === 'professional') {
             await loginProfessional(professionalForm.email, professionalForm.password);
           } else {
-            await login(clientForm.email, clientForm.password);
+            const result = await login(clientForm.email, clientForm.password);
+            postLoginPath = getPostLoginPath(result?.user?.role);
           }
 
           setPendingVerification(null);
           setOtpCode('');
           setVerificationSuccess(false);
           onClose();
+          if (postLoginPath) {
+            router.push(postLoginPath);
+          }
         } catch (loginErr) {
           setError(loginErr instanceof Error ? loginErr.message : modalT('loginFailed'));
           setVerificationSuccess(false);

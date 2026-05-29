@@ -7,13 +7,16 @@ import { useAuth } from '@/context/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, role } = useAuth();
   const { openLoginModal } = useAuthModalControl();
+
+  const postLoginPath =
+    role === 'surveyor' || role === 'mimo_boh' ? '/survey-ops' : '/';
 
   useEffect(() => {
     // If already logged in, redirect to home
     if (isLoggedIn) {
-      router.push('/');
+      router.push(postLoginPath);
       return;
     }
 
@@ -25,7 +28,7 @@ export default function LoginPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [isLoggedIn, router, openLoginModal]);
+  }, [isLoggedIn, postLoginPath, router, openLoginModal]);
 
   // Temporary loading/redirect screen
   return (
