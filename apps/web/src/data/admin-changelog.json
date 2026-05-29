@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-29-5f77a974",
+    "date": "2026-05-29T12:16:09+08:00",
+    "title": "feat(web): merge bidding recovery into overview dashboard",
+    "summary": "feat(web): merge bidding recovery into overview dashboard",
+    "areas": [
+      "web"
+    ],
+    "commit": "5f77a974",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-67172bd6",
     "date": "2026-05-29T12:02:52+08:00",
     "title": "feat(web): tighten client project hero controls",

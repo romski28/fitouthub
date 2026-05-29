@@ -62,6 +62,11 @@ interface OverviewTabProps {
   isUpdatingSchedule: boolean;
   isUpdatingContact: boolean;
   siteAccessRequests?: any[];
+  quoteOverdueBlocker?: boolean;
+  onRemindProfessional?: (projectProfessional: any) => void;
+  remindingProfessionalIds?: string[];
+  onOpenChatTab?: () => void;
+  onShowWithdrawConfirm?: () => void;
 }
 
 const formatDate = (date?: string) => {
@@ -174,6 +179,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   isUpdatingSchedule,
   isUpdatingContact,
   siteAccessRequests,
+  quoteOverdueBlocker = false,
+  onRemindProfessional,
+  remindingProfessionalIds = [],
+  onOpenChatTab,
+  onShowWithdrawConfirm,
 }) => {
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
@@ -522,7 +532,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <div className="space-y-4">
       {hasBiddingActivity && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-transparent p-5">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Bidding Status</h2>
@@ -555,6 +565,78 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </p>
             </div>
           </div>
+
+          {quoteOverdueBlocker && (
+            <div className="mt-4 space-y-4 rounded-2xl border border-rose-200 bg-[rgba(255,250,240,0.78)] p-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Quote window expired</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  No quote was received within the {(project as any)?.isEmergency ? '12-hour' : '3-day'} window. Use the options below to continue.
+                </p>
+              </div>
+
+              {(() => {
+                const terminalStatuses = ['declined', 'rejected', 'withdrawn', 'quoted', 'awarded', 'counter_requested'];
+                const pendingPros = project.professionals?.filter((pp) => {
+                  const st = (pp.status || '').toLowerCase();
+                  return !terminalStatuses.includes(st) && !pp.quotedAt;
+                }) ?? [];
+
+                if (pendingPros.length === 0) return null;
+
+                return (
+                  <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent p-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 1 - Remind professional{pendingPros.length > 1 ? 's' : ''}</p>
+                    <p className="text-xs text-slate-500">Sends a notification and grants an additional 24-hour window one time per professional.</p>
+                    <div className="mt-1 flex flex-col gap-2">
+                      {pendingPros.map((pp) => {
+                        const name = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
+                        const alreadySent = Boolean(pp.quoteReminderSentAt);
+                        return (
+                          <div key={pp.id} className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.12)] px-3 py-2 text-sm">
+                            <span className="font-medium text-slate-700">{name}</span>
+                            {alreadySent ? (
+                              <span className="text-xs font-medium text-emerald-600">Reminded (+24h granted)</span>
+                            ) : onRemindProfessional ? (
+                              <button
+                                type="button"
+                                onClick={() => onRemindProfessional(pp)}
+                                disabled={remindingProfessionalIds.includes(pp.id)}
+                                className="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60"
+                              >
+                                {remindingProfessionalIds.includes(pp.id) ? 'Sending...' : 'Remind & extend 24h'}
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="flex flex-wrap gap-2">
+                {onOpenChatTab && (
+                  <button
+                    type="button"
+                    onClick={onOpenChatTab}
+                    className="inline-flex items-center rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
+                  >
+                    Open chat
+                  </button>
+                )}
+                {onShowWithdrawConfirm && (
+                  <button
+                    type="button"
+                    onClick={onShowWithdrawConfirm}
+                    className="inline-flex items-center rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                  >
+                    Withdraw project
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

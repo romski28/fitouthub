@@ -2121,90 +2121,6 @@ export default function ClientProjectDetailPage() {
             </div>
           </div>
 
-          {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab === 'overview' && (
-            <div className="space-y-4 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] p-5">
-              {/* Header */}
-              <div>
-                <p className="text-sm font-semibold text-slate-900">🚫 Quote window expired</p>
-                <p className="mt-1 text-sm text-slate-600">
-                  No quote was received within the {(project as any)?.isEmergency ? '12-hour' : '3-day'} window.
-                  Use the options below to continue.
-                </p>
-              </div>
-
-              {/* Step 1 — Remind each pending professional */}
-              {(() => {
-                // Include any professional who hasn't quoted and isn't in a terminal state.
-                // This covers both 'accepted' (past quota window) AND 'pending' (never accepted
-                // but invitation window elapsed) so the client can always poke them.
-                const TERMINAL_STATUSES = ['declined', 'rejected', 'withdrawn', 'quoted', 'awarded', 'counter_requested'];
-                const pendingPros = project.professionals?.filter((pp) => {
-                  const st = (pp.status || '').toLowerCase();
-                  return !TERMINAL_STATUSES.includes(st) && !pp.quotedAt;
-                }) ?? [];
-                if (pendingPros.length === 0) return null;
-                return (
-                  <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent p-4 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 1 — Remind professional{pendingPros.length > 1 ? 's' : ''}</p>
-                    <p className="text-xs text-slate-500">Sends a notification and grants an additional 24-hour window (one-shot per professional).</p>
-                    <div className="flex flex-col gap-2 mt-1">
-                      {pendingPros.map((pp) => {
-                        const name = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
-                        const alreadySent = Boolean(pp.quoteReminderSentAt);
-                        const busy = remindingPros.has(pp.id);
-                        return (
-                          <div key={pp.id} className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.12)] px-3 py-2 text-sm">
-                            <span className="font-medium text-slate-700">{name}</span>
-                            {alreadySent ? (
-                              <span className="text-xs font-medium text-emerald-600">✅ Reminded (+24h granted)</span>
-                            ) : (
-                              <button
-                                onClick={() => handleRemindPro(pp)}
-                                disabled={busy}
-                                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60"
-                              >
-                                {busy ? 'Sending…' : '⏰ Remind & extend 24h'}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Step 3 — Ask Mimo */}
-              <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent p-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 3 — Ask Mimo for assistance</p>
-                <p className="text-xs text-slate-500">Our team can help source quotes or advise on next steps for your project.</p>
-                <button
-                  onClick={handleOpenAssistFromBlocker}
-                  className={`inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-semibold text-white transition mt-1 ${
-                    assistRequestId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[rgba(126,58,33,0.92)] hover:bg-[rgba(100,45,26,0.96)]'
-                  }`}
-                >
-                  {assistRequestId ? '✅ Assistance requested (open chat)' : '💬 Ask for help'}
-                </button>
-                {assistRequestId && (
-                  <p className="text-xs text-emerald-700">Your request has been sent to Mimo.</p>
-                )}
-              </div>
-
-              {/* Step 4 */}
-              <p className="text-xs text-slate-500">
-                Step 4 —{' '}
-                <button
-                  onClick={() => setShowWithdrawConfirm(true)}
-                  className="underline hover:text-slate-800"
-                >
-                  Withdraw the project
-                </button>{' '}
-                if you no longer wish to proceed.
-              </p>
-            </div>
-          )}
-
           {quoteOverdueBlocker && projectStatus !== 'withdrawn' && activeTab !== 'overview' && (
             <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-5 py-3">
               <p className="text-sm text-slate-700">
@@ -2257,6 +2173,11 @@ export default function ClientProjectDetailPage() {
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
               accessToken={accessToken || ''}
+              quoteOverdueBlocker={quoteOverdueBlocker && projectStatus !== 'withdrawn'}
+              onRemindProfessional={handleRemindPro}
+              remindingProfessionalIds={Array.from(remindingPros)}
+              onOpenChatTab={() => setActiveTab('chat')}
+              onShowWithdrawConfirm={() => setShowWithdrawConfirm(true)}
               onScheduleUpdate={async (data) => {
                 const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {
                   method: 'POST',
@@ -2291,16 +2212,18 @@ export default function ClientProjectDetailPage() {
         )}
 
         {activeTab === 'ai-scope' && project && (
-          <ProjectAiScopePanel
-            projectId={projectId}
-            accessToken={accessToken || null}
-            mode="client"
-          />
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+            <ProjectAiScopePanel
+              projectId={projectId}
+              accessToken={accessToken || null}
+              mode="client"
+            />
+          </div>
         )}
 
         {/* Tab Content - Financials */}
         {activeTab === 'financials' && hasPostAwardLifecycleAccess && project && (
-          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
             <ClientFinancialsTab
               projectId={projectId}
               accessToken={accessToken || null}
@@ -2323,7 +2246,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Site Access */}
         {activeTab === 'site-access' && (
-          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
             <SiteAccessTab
               siteAccessRequests={siteAccessRequests}
               siteVisits={siteVisits}
@@ -2376,7 +2299,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Professionals */}
           {activeTab === 'professionals' && project && (
-            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
               <ProfessionalsTab
                 project={project}
                 professionals={project.professionals || []}
@@ -2405,17 +2328,19 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Contract */}
           {activeTab === 'contract' && isAwarded && project && (
-            <ContractTab
-              projectId={project.id}
-              accessToken={accessToken || ''}
-              userRole="client"
-              onNavigateTab={(tab) => setActiveTab(tab)}
-            />
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+              <ContractTab
+                projectId={project.id}
+                accessToken={accessToken || ''}
+                userRole="client"
+                onNavigateTab={(tab) => setActiveTab(tab)}
+              />
+            </div>
           )}
 
           {/* Tab Content - Schedule */}
           {activeTab === 'schedule' && isAwarded && project && (
-            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
               <ClientScheduleTab
                 tab="schedule"
                 projectId={projectId}
@@ -2438,7 +2363,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Media */}
           {activeTab === 'media' && project && (
-            <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
               <MediaTab
                 photos={(project as any).photos || []}
                 onPhotoNoteUpdate={handleSaveImageNote}
@@ -2449,7 +2374,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Chat */}
         {activeTab === 'chat' && (
-          <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 shadow-sm p-5">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
             <ChatTab
               projectId={projectId}
               professionals={project.professionals || []}
