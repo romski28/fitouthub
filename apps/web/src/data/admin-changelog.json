@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-29-ba4309bb",
+    "date": "2026-05-29T10:12:10+08:00",
+    "title": "feat(web): repaint client project hero and overview",
+    "summary": "feat(web): repaint client project hero and overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "ba4309bb",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-28-02afbb3b",
     "date": "2026-05-28T17:51:32+08:00",
     "title": "fix(api): include mimo extras in project hard-delete cleanup",

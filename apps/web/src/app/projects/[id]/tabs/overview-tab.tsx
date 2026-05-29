@@ -524,18 +524,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         >
           <div className="space-y-3">
             {project.notes && (
-              <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700">
-                <p className="font-semibold text-white mb-1">Description</p>
-                <p className="text-slate-300 leading-relaxed">{project.notes}</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-3 py-2 text-sm">
+                <p className="mb-1 font-semibold text-slate-800">Description</p>
+                <p className="leading-relaxed text-slate-700">{project.notes}</p>
               </div>
             )}
 
             {project.tradesRequired && project.tradesRequired.length > 0 && (
-              <div className="rounded-md bg-slate-800/50 px-3 py-2 text-sm border border-slate-700">
-                <p className="font-semibold text-white mb-2">Required Trades</p>
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-3 py-2 text-sm">
+                <p className="mb-2 font-semibold text-slate-800">Required Trades</p>
                 <div className="flex flex-wrap gap-1.5">
                   {project.tradesRequired.map((trade) => (
-                    <span key={trade} className="inline-flex items-center rounded-full bg-sky-950 border border-sky-400 px-2.5 py-1 text-xs font-medium text-white">
+                    <span key={trade} className="inline-flex items-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.88)] px-2.5 py-1 text-xs font-medium text-slate-700">
                       {trade}
                     </span>
                   ))}
@@ -545,21 +545,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               {project.budget && (
-                <div className="rounded-md bg-slate-800/50 p-3 border border-slate-700">
-                  <p className="text-xs text-white font-bold uppercase">Budget</p>
-                  <p className="text-white font-normal mt-1">{formatHKD(project.budget)}</p>
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+                  <p className="text-xs font-bold uppercase text-slate-600">Budget</p>
+                  <p className="mt-1 font-semibold text-slate-900">{formatHKD(project.budget)}</p>
                 </div>
               )}
 
               {project.approvedBudget && (
-                <div className="rounded-md bg-slate-800/50 p-3 border border-slate-700">
-                  <p className="text-xs text-white font-bold uppercase">Approved Budget</p>
-                  <p className="text-white font-normal mt-1">{formatHKD(project.approvedBudget)}</p>
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
+                  <p className="text-xs font-bold uppercase text-slate-600">Approved Budget</p>
+                  <p className="mt-1 font-semibold text-slate-900">{formatHKD(project.approvedBudget)}</p>
                 </div>
               )}
             </div>
 
-            <div className="flex gap-3 text-xs text-white border-t border-slate-700 pt-3">
+            <div className="flex gap-3 border-t border-[rgba(120,53,15,0.12)] pt-3 text-xs text-slate-500">
               {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
               {project.updatedAt && <span>Updated: {formatDate(project.updatedAt)}</span>}
             </div>
@@ -588,7 +588,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {!timelineLoading && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">
+                  <span className="text-slate-600">
                     Stage {Math.min(currentTimelineStepIndex + 1, timelineSteps.length)} of {timelineSteps.length}
                     {currentTimelineStep ? ` — ${currentTimelineStep.title}` : ''}
                   </span>
@@ -596,7 +596,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     {Math.round((currentTimelineStepIndex / timelineSteps.length) * 100)}% complete
                   </span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(120,53,15,0.15)]">
                   <div
                     className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                     style={{ width: `${Math.round((currentTimelineStepIndex / timelineSteps.length) * 100)}%` }}
@@ -606,7 +606,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
 
             {timelineLoading && (
-              <div className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-400">
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-3 py-2 text-sm text-slate-600">
                 Loading timeline status...
               </div>
             )}
@@ -642,29 +642,29 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   const toneClasses = isComplete
                     ? {
                         dot: 'bg-emerald-500',
-                        border: 'border-emerald-500/40',
-                        bg: 'bg-emerald-500/15',
-                        text: 'text-emerald-200',
+                        border: 'border-emerald-200',
+                        bg: 'bg-emerald-50',
+                        text: 'text-emerald-800',
                       }
                     : isCurrent
                       ? currentStepIsDelayed
                         ? {
                             dot: 'bg-rose-500',
-                            border: 'border-rose-500/40',
-                            bg: 'bg-rose-500/15',
-                            text: 'text-rose-200',
+                            border: 'border-rose-200',
+                            bg: 'bg-rose-50',
+                            text: 'text-rose-700',
                           }
                         : {
                             dot: 'bg-amber-500',
-                            border: 'border-amber-500/40',
-                            bg: 'bg-amber-500/15',
-                            text: 'text-amber-200',
+                            border: 'border-amber-200',
+                            bg: 'bg-amber-50',
+                            text: 'text-amber-800',
                           }
                       : {
-                          dot: 'bg-slate-500',
-                          border: 'border-slate-600',
-                          bg: 'bg-slate-800/50',
-                          text: 'text-slate-300',
+                          dot: 'bg-slate-400',
+                          border: 'border-[rgba(120,53,15,0.16)]',
+                          bg: 'bg-[rgba(255,250,240,0.66)]',
+                          text: 'text-slate-700',
                         };
 
                   return (
@@ -679,9 +679,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       <div className="relative mb-2">
                         <div className="pr-6">
                           <p className={`text-sm font-semibold leading-snug ${toneClasses.text}`}>{step.title}</p>
-                          <p className="mt-0.5 text-xs text-slate-400 leading-snug">{step.description}</p>
+                          <p className="mt-0.5 text-xs leading-snug text-slate-500">{step.description}</p>
                           {isCurrent && currentActionLabel && (
-                            <p className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-white/90">
+                            <p className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700">
                               Action: {currentActionLabel}
                             </p>
                           )}
@@ -701,9 +701,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       {/* Metrics: always stacked, never wrapped */}
                       <div className="flex flex-col gap-1">
                         {metrics.map((metric) => (
-                          <div key={metric.label} className="flex items-start justify-between rounded border border-slate-700 bg-slate-900/50 px-2 py-1.5">
-                            <p className="text-[10px] uppercase tracking-wide text-slate-400">{metric.label}</p>
-                            <p className="whitespace-pre-line text-xs font-semibold leading-tight text-slate-100 text-right">{metric.value}</p>
+                          <div key={metric.label} className="flex items-start justify-between rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.68)] px-2 py-1.5">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-500">{metric.label}</p>
+                            <p className="whitespace-pre-line text-right text-xs font-semibold leading-tight text-slate-800">{metric.value}</p>
                           </div>
                         ))}
                       </div>
@@ -711,7 +711,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       {!isCurrent && (
                         <Link
                           href={detailsHref}
-                          className="mt-2 inline-flex items-center rounded-md border border-sky-500/50 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/20 transition"
+                          className="mt-2 inline-flex items-center rounded-md border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
                         >
                           Open details
                         </Link>
