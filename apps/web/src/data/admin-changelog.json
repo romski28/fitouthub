@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-b96c6528",
+    "date": "2026-05-29T22:42:44+08:00",
+    "title": "Display correct account type for surveyor and mimo_boh roles",
+    "summary": "Display correct account type for surveyor and mimo_boh roles",
+    "areas": [
+      "web"
+    ],
+    "commit": "b96c6528",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-556ef444",
     "date": "2026-05-29T22:27:56+08:00",
     "title": "Fix TypeScript type error in edit-modal seed initialization",

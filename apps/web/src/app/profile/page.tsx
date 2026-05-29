@@ -391,7 +391,7 @@ export default function ProfilePage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('accountType')}</p>
                     <span className="mt-2 inline-flex rounded-full bg-[rgba(185,78,45,0.92)] px-3 py-1 text-xs font-semibold text-white">
-                      {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : 'Client'}
+                      {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : user.role === 'surveyor' ? 'Surveyor' : user.role === 'mimo_boh' ? 'Operations' : user.role === 'admin' ? 'Admin' : 'Client'}
                     </span>
                   </div>
                   <div>
