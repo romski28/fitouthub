@@ -11,5 +11,5 @@ export class RegisterDto {
   allowPartnerOffers?: boolean;
   allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;
-  role?: 'client' | 'professional' | 'reseller' | 'admin'; // defaults to 'client'
+  role?: 'client' | 'professional' | 'reseller' | 'admin' | 'mimo_boh' | 'surveyor'; // defaults to 'client'
 }

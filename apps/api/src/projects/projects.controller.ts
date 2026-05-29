@@ -58,7 +58,13 @@ export class ProjectsController {
 
   private requireAdmin(req: any): string {
     const userId = req.user?.id || req.user?.sub;
-    const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+    const tokenRole = req.user?.role as
+      | 'admin'
+      | 'client'
+      | 'professional'
+      | 'surveyor'
+      | 'mimo_boh'
+      | undefined;
 
     if (!userId) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -96,14 +102,24 @@ export class ProjectsController {
   async findAll(@Request() req: any) {
     try {
       const userId = req.user?.id || req.user?.sub;
-      const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+      const tokenRole = req.user?.role as
+        | 'admin'
+        | 'client'
+        | 'professional'
+        | 'surveyor'
+        | 'mimo_boh'
+        | undefined;
       const isProfessionalFlag = req.user?.isProfessional;
 
-      let role: 'client' | 'professional' | 'admin' = 'client';
+      let role: 'client' | 'professional' | 'admin' | 'surveyor' | 'mimo_boh' = 'client';
       if (tokenRole === 'admin') {
         role = 'admin';
       } else if (tokenRole === 'professional' || isProfessionalFlag) {
         role = 'professional';
+      } else if (tokenRole === 'surveyor') {
+        role = 'surveyor';
+      } else if (tokenRole === 'mimo_boh') {
+        role = 'mimo_boh';
       } else {
         role = 'client';
       }
@@ -118,6 +134,10 @@ export class ProjectsController {
 
       if (role === 'client') {
         return await this.projectsService.findAllForClient(userId);
+      }
+
+      if (role === 'surveyor' || role === 'mimo_boh') {
+        return await this.projectsService.findAllForSurveyOps();
       }
 
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
@@ -220,21 +240,62 @@ export class ProjectsController {
     `;
   }
 
+  @Get('survey-ops/queue')
+  @UseGuards(CombinedAuthGuard)
+  async getSurveyOpsQueue(@Request() req: any) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
+    return this.projectsService.findAllForSurveyOps();
+  }
+
+  @Get(':id/survey-ops/context')
+  @UseGuards(CombinedAuthGuard)
+  async getSurveyProjectContext(@Param('id') id: string, @Request() req: any) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
+    const project = await this.projectsService.findSurveyProjectContext(id);
+    if (!project) {
+      throw new HttpException('Project not found', HttpStatus.NOT_FOUND);
+    }
+
+    return project;
+  }
+
   @Get(':id')
   @UseGuards(CombinedAuthGuard)
   async findOne(@Param('id') id: string, @Request() req: any) {
     try {
       const userId = req.user?.id || req.user?.sub;
-      const tokenRole = req.user?.role as 'admin' | 'client' | 'professional' | undefined;
+      const tokenRole = req.user?.role as
+        | 'admin'
+        | 'client'
+        | 'professional'
+        | 'surveyor'
+        | 'mimo_boh'
+        | undefined;
       const isProfessionalFlag = req.user?.isProfessional;
 
       console.log('[ProjectsController.findOne] Request for project:', id, 'userId:', userId, 'role:', tokenRole);
 
-      let role: 'client' | 'professional' | 'admin' = 'client';
+      let role: 'client' | 'professional' | 'admin' | 'surveyor' | 'mimo_boh' = 'client';
       if (tokenRole === 'admin') {
         role = 'admin';
       } else if (tokenRole === 'professional' || isProfessionalFlag) {
         role = 'professional';
+      } else if (tokenRole === 'surveyor') {
+        role = 'surveyor';
+      } else if (tokenRole === 'mimo_boh') {
+        role = 'mimo_boh';
       } else {
         role = 'client';
       }
@@ -252,6 +313,12 @@ export class ProjectsController {
       if (role === 'client') {
         const project = await this.projectsService.findOneForClient(id, userId);
         console.log('[ProjectsController.findOne] Found project for client:', !!project);
+        return project;
+      }
+
+      if (role === 'surveyor' || role === 'mimo_boh') {
+        const project = await this.projectsService.findSurveyProjectContext(id);
+        console.log('[ProjectsController.findOne] Found project for survey ops:', !!project);
         return project;
       }
 

@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-05-29-acd43abe",
+    "date": "2026-05-29T19:38:55+08:00",
+    "title": "Add survey ops roles, queue page, and calendar SQL scaffolding",
+    "summary": "Add survey ops roles, queue page, and calendar SQL scaffolding",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "acd43abe",
+    "files": [
+      "MANUAL_SQL_ADD_SURVEYOR_ROLES_AND_UNIFIED_CALENDAR.sql",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/admin/users/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/survey-ops/page.tsx",
+      "apps/web/src/hooks/use-role-guard.ts"
+    ]
+  },
+  {
     "id": "2026-05-29-880537bc",
     "date": "2026-05-29T14:48:41+08:00",
     "title": "Add Mimo survey booking flow, extras visibility, and next-step modal wiring",

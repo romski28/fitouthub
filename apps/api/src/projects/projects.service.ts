@@ -74,6 +74,20 @@ type MimoProjectExtraRow = {
   updatedAt: Date;
 };
 
+type SurveyOpsQueueRow = {
+  projectId: string;
+  projectName: string;
+  clientName: string | null;
+  region: string | null;
+  projectStatus: string;
+  surveyExtraId: string;
+  surveyStatus: string;
+  requestedAt: Date;
+  scheduledAt: Date | null;
+  metadata: Record<string, unknown> | null;
+  updatedAt: Date;
+};
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
 
 @Injectable()
@@ -2002,6 +2016,92 @@ export class ProjectsService {
     } catch (error) {
       console.error('[ProjectsService.findAllForClient] Database error:', error?.message);
       return [];
+    }
+  }
+
+  async findAllForSurveyOps() {
+    try {
+      const rows = await this.prisma.$queryRaw<SurveyOpsQueueRow[]>`
+        SELECT
+          p.id AS "projectId",
+          p."projectName" AS "projectName",
+          p."clientName" AS "clientName",
+          p.region AS "region",
+          p.status AS "projectStatus",
+          mpe.id AS "surveyExtraId",
+          mpe.status AS "surveyStatus",
+          mpe."requestedAt" AS "requestedAt",
+          mpe."scheduledAt" AS "scheduledAt",
+          mpe.metadata AS "metadata",
+          mpe."updatedAt" AS "updatedAt"
+        FROM mimo_project_extras mpe
+        JOIN "Project" p ON p.id = mpe."projectId"
+        WHERE
+          mpe."extraType" = 'survey'
+          AND p.status <> ${this.ARCHIVED_STATUS}
+          AND COALESCE(LOWER(mpe.status), '') NOT IN ('cancelled', 'declined', 'completed')
+        ORDER BY
+          COALESCE(mpe."scheduledAt", mpe."requestedAt") ASC,
+          mpe."updatedAt" DESC
+      `;
+
+      return rows.map((row) => ({
+        projectId: row.projectId,
+        projectName: row.projectName,
+        clientName: row.clientName,
+        region: row.region,
+        projectStatus: row.projectStatus,
+        survey: {
+          id: row.surveyExtraId,
+          status: row.surveyStatus,
+          requestedAt: row.requestedAt,
+          scheduledAt: row.scheduledAt,
+          metadata: row.metadata || {},
+          updatedAt: row.updatedAt,
+        },
+      }));
+    } catch (error) {
+      const err = error as any;
+      console.error('[ProjectsService.findAllForSurveyOps] Error:', err?.message || err);
+      return [];
+    }
+  }
+
+  async findSurveyProjectContext(projectId: string) {
+    try {
+      const project = await this.prisma.project.findFirst({
+        where: {
+          id: projectId,
+          status: { not: this.ARCHIVED_STATUS },
+        },
+        select: {
+          id: true,
+          projectName: true,
+          clientName: true,
+          region: true,
+          projectScale: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          siteInspectionAvailableOn: true,
+          notes: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!project) return null;
+
+      const extras = await this.listProjectExtras(project.id);
+      const surveyExtra = extras.find((extra) => String(extra.extraType || '').toLowerCase() === 'survey') || null;
+
+      return {
+        ...project,
+        surveyExtra,
+      };
+    } catch (error) {
+      const err = error as any;
+      console.error('[ProjectsService.findSurveyProjectContext] Error:', err?.message || err);
+      return null;
     }
   }
 

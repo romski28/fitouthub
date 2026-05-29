@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 
-type Role = 'admin' | 'client' | 'professional';
+type Role = 'admin' | 'client' | 'professional' | 'mimo_boh' | 'surveyor';
 
 interface Options {
   fallback?: string;
@@ -23,7 +23,8 @@ export function useRoleGuard(allowed: Role[], { fallback = '/' }: Options = {}) 
     // Wait until auth states are resolved
     if (isLoggedIn === undefined) return;
 
-    const currentRole: Role | null = clientRole === 'admin' || clientRole === 'client' ? (clientRole as Role) : null;
+    const currentRole: Role | null =
+      typeof clientRole === 'string' ? (clientRole as Role) : null;
     const proRole: Role | null = proLoggedIn ? 'professional' : null;
     const role = currentRole ?? proRole;
 

@@ -764,6 +764,12 @@ export default function AdminDashboardPage() {
       stat: `${opsSummary?.adminActions.pending ?? 0} pending admin actions`,
     },
     {
+      title: "Survey Ops Queue",
+      description: "Unified survey pipeline for admin, Mimo BoH, and surveyor coordination.",
+      href: "/survey-ops",
+      stat: "Survey scheduling",
+    },
+    {
       title: "Reports",
       description: "Review and moderate submitted professional reports.",
       href: "/admin/reports",

@@ -46,7 +46,9 @@ export default function AdminUsersPage() {
       total: users.length,
       admin: users.filter(u => u.role === 'admin').length,
       professional: users.filter(u => u.role === 'professional').length,
-      homeowner: users.filter(u => u.role === 'homeowner').length,
+      client: users.filter(u => u.role === 'client' || u.role === 'homeowner').length,
+      surveyor: users.filter(u => u.role === 'surveyor').length,
+      mimoBoh: users.filter(u => u.role === 'mimo_boh').length,
       lastMonth: users.filter(u => new Date(u.createdAt) > oneMonthAgo).length,
     };
   }, [users]);
@@ -159,6 +161,8 @@ export default function AdminUsersPage() {
             { label: "Client", value: "client" },
             { label: "Admin", value: "admin" },
             { label: "Professional", value: "professional" },
+            { label: "Surveyor", value: "surveyor" },
+            { label: "Mimo BoH", value: "mimo_boh" },
           ],
           required: true,
         },
@@ -179,6 +183,9 @@ export default function AdminUsersPage() {
       options: [
         { label: "Admin", value: "admin" },
         { label: "Client", value: "client" },
+        { label: "Professional", value: "professional" },
+        { label: "Surveyor", value: "surveyor" },
+        { label: "Mimo BoH", value: "mimo_boh" },
       ],
       required: true,
     },
@@ -198,7 +205,7 @@ export default function AdminUsersPage() {
             <h1 className="text-2xl font-bold leading-tight">Users</h1>
             <p className="text-sm text-slate-200/90">{users.length} total users</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Admin</p>
               <p className="text-lg font-bold text-white">{totals.admin}</p>
@@ -208,8 +215,16 @@ export default function AdminUsersPage() {
               <p className="text-lg font-bold text-blue-300">{totals.professional}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
-              <p className="text-[11px] uppercase tracking-wide text-slate-200">Homeowner</p>
-              <p className="text-lg font-bold text-emerald-300">{totals.homeowner}</p>
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Client</p>
+              <p className="text-lg font-bold text-emerald-300">{totals.client}</p>
+            </div>
+            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Surveyor</p>
+              <p className="text-lg font-bold text-cyan-300">{totals.surveyor}</p>
+            </div>
+            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Mimo BoH</p>
+              <p className="text-lg font-bold text-orange-300">{totals.mimoBoh}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Last Month</p>
@@ -226,7 +241,7 @@ export default function AdminUsersPage() {
             onClick={() => setCreatingNew(true)}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
-            + Create Admin
+            + Create User
           </button>
         </div>
         <div className="relative">
@@ -281,7 +296,11 @@ export default function AdminUsersPage() {
                             ? 'bg-purple-600 text-white'
                             : user.role === 'professional'
                               ? 'bg-blue-600 text-white'
-                              : 'bg-emerald-600 text-white'
+                              : user.role === 'surveyor'
+                                ? 'bg-cyan-600 text-white'
+                                : user.role === 'mimo_boh'
+                                  ? 'bg-orange-600 text-white'
+                                  : 'bg-emerald-600 text-white'
                         }`}
                       >
                         {user.role}
@@ -366,7 +385,7 @@ export default function AdminUsersPage() {
         <EditModal
           isOpen={creatingNew}
           onClose={() => setCreatingNew(false)}
-          title="Create New Admin User"
+          title="Create New User"
           fields={createFields}
           onSave={handleCreate}
         />
