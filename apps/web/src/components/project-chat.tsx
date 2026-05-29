@@ -162,20 +162,20 @@ export default function ProjectChat({
   };
 
   return (
-    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-slate-700 bg-slate-900/60 shadow-sm${fillHeight ? ' flex h-full min-h-0 flex-col' : ''} ${className}`}>
+    <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.82)] shadow-sm${fillHeight ? ' flex h-full min-h-0 flex-col' : ''} ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
+      <div className="border-b border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.88)] px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-white">{headerTitle}</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{headerTitle}</h3>
             {headerSubtitle.trim() ? (
-              <p className="text-xs text-slate-300">{headerSubtitle}</p>
+              <p className="text-xs text-slate-600">{headerSubtitle}</p>
             ) : null}
           </div>
           {showPresenceIndicator ? (
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live chat"></div>
-              <span className="text-xs text-emerald-300 font-medium">Active</span>
+              <div className="h-2 w-2 animate-pulse rounded-full bg-[rgba(215,107,78,0.95)]" title="Live chat"></div>
+              <span className="text-xs font-medium text-[rgba(176,74,46,0.95)]">Active</span>
             </div>
           ) : null}
         </div>
@@ -184,11 +184,11 @@ export default function ProjectChat({
       {/* Messages */}
       <div ref={messagesContainerRef} className={`min-w-0 space-y-3 overflow-x-hidden overflow-y-auto p-4 ${fillHeight ? 'flex-1 min-h-0' : 'min-h-[300px] max-h-[500px]'}`}>
         {loading ? (
-          <div className="text-center text-slate-400 text-sm py-8">Loading chat...</div>
+          <div className="py-8 text-center text-sm text-slate-600">Loading chat...</div>
         ) : error ? (
-          <div className="text-center text-rose-300 text-sm py-8">{error}</div>
+          <div className="py-8 text-center text-sm text-[rgba(176,74,46,0.95)]">{error}</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-slate-400 text-sm py-8">
+          <div className="py-8 text-center text-sm text-slate-600">
             <p>No messages yet.</p>
             <p className="mt-1 text-xs">Start the conversation with your project team!</p>
           </div>
@@ -202,11 +202,11 @@ export default function ProjectChat({
               <div key={msg.id}>
                 {firstUnreadMessageId === msg.id && (
                   <div id={`project-chat-divider-${msg.id}`} className="my-2 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-amber-500/40" />
-                    <span className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                    <div className="h-px flex-1 bg-[rgba(215,107,78,0.35)]" />
+                    <span className="shrink-0 rounded-full border border-[rgba(215,107,78,0.35)] bg-[rgba(255,240,232,0.9)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[rgba(176,74,46,0.95)]">
                       New messages
                     </span>
-                    <div className="h-px flex-1 bg-amber-500/40" />
+                    <div className="h-px flex-1 bg-[rgba(215,107,78,0.35)]" />
                   </div>
                 )}
 
@@ -216,14 +216,14 @@ export default function ProjectChat({
                       event
                         ? ''
                         : isCurrent
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-[rgba(215,107,78,0.95)] text-white'
                         : isFoh
-                        ? 'bg-emerald-500/15 text-white border border-emerald-500/40'
-                        : 'bg-slate-800 text-white border border-slate-700'
+                        ? 'border border-[rgba(215,107,78,0.25)] bg-[rgba(255,240,232,0.92)] text-slate-800'
+                        : 'border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.95)] text-slate-800'
                     }`}
                   >
                     {!isCurrent && (
-                      <div className={`text-xs font-semibold mb-1 ${isFoh ? 'text-emerald-300' : 'text-slate-300'}`}>
+                      <div className={`mb-1 text-xs font-semibold ${isFoh ? 'text-[rgba(176,74,46,0.95)]' : 'text-slate-600'}`}>
                         {getSenderLabel(msg)}
                       </div>
                     )}
@@ -244,7 +244,7 @@ export default function ProjectChat({
                       </div>
                     )}
 
-                    <div className={`text-xs mt-1 ${isCurrent ? 'text-emerald-100' : 'text-slate-400'}`}>
+                    <div className={`mt-1 text-xs ${isCurrent ? 'text-[rgba(255,244,238,0.95)]' : 'text-slate-600'}`}>
                       {new Date(msg.createdAt).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: 'short',
@@ -261,9 +261,9 @@ export default function ProjectChat({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="border-t border-slate-700 p-4">
+      <form onSubmit={handleSend} className="border-t border-[rgba(120,53,15,0.14)] p-4">
         {sendError && (
-          <div className="mb-2 text-xs text-rose-200 bg-rose-500/15 border border-rose-500/40 rounded px-2 py-1">
+          <div className="mb-2 rounded border border-[rgba(215,107,78,0.35)] bg-[rgba(255,240,232,0.92)] px-2 py-1 text-xs text-[rgba(176,74,46,0.95)]">
             {sendError}
           </div>
         )}
@@ -287,12 +287,12 @@ export default function ProjectChat({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={messagePlaceholder}
             disabled={sending || loading || uploadingAttachments}
-            className="min-w-0 flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-900"
+            className="min-w-0 flex-1 rounded-lg border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[rgba(215,107,78,0.5)] disabled:bg-[rgba(245,238,219,0.8)]"
           />
           <button
             type="submit"
             disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading || uploadingAttachments}
-            className="w-full shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-700 sm:w-auto"
+            className="w-full shrink-0 rounded-lg bg-[rgba(215,107,78,0.95)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:bg-[rgba(120,53,15,0.35)] sm:w-auto"
           >
             {uploadingAttachments
               ? 'Uploading images...'
