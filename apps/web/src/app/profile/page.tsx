@@ -327,11 +327,11 @@ export default function ProfilePage() {
                 <div className="min-w-[180px]">
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="font-semibold text-slate-800">Ready to use</span>
-                    <span className="font-bold text-[#ff7f50]">{profileCompletion}%</span>
+                    <span className="font-bold text-[#16a34a]">{profileCompletion}%</span>
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(204,179,152,0.34)]">
                     <div
-                      className="h-full rounded-full bg-[rgba(185,78,45,0.92)] transition-all"
+                      className="h-full rounded-full bg-[#16a34a] transition-all"
                       style={{ width: `${Math.max(8, profileCompletion)}%` }}
                     />
                   </div>
@@ -390,7 +390,7 @@ export default function ProfilePage() {
                 <div className="mt-5 space-y-4 text-sm text-slate-700">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('accountType')}</p>
-                    <span className="mt-2 inline-flex rounded-full bg-[rgba(185,78,45,0.92)] px-3 py-1 text-xs font-semibold text-white">
+                    <span className="mt-2 inline-flex rounded-full bg-[#ff7f50] px-3 py-1 text-xs font-semibold text-white">
                       {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : user.role === 'surveyor' ? 'Surveyor' : user.role === 'mimo_boh' ? 'Operations' : user.role === 'admin' ? 'Admin' : 'Client'}
                     </span>
                   </div>

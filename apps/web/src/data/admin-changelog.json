@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-eaeb7a5a",
+    "date": "2026-05-29T22:51:24+08:00",
+    "title": "Use coral account type chip and green readiness progress",
+    "summary": "Use coral account type chip and green readiness progress",
+    "areas": [
+      "web"
+    ],
+    "commit": "eaeb7a5a",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-e7550faa",
     "date": "2026-05-29T22:47:13+08:00",
     "title": "Change profile save button to green",
