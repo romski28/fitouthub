@@ -33,7 +33,7 @@ export function EditModal({ isOpen, onClose, title, fields, onSave, submitting }
 
   const [formData, setFormData] = useState<Record<string, any>>(
     (() => {
-      const seed = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value ?? "" }), {});
+      const seed: Record<string, any> = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.value ?? "" }), {});
       if (Object.prototype.hasOwnProperty.call(seed, "nickname") && !seed.nickname) {
         seed.nickname = buildAutoNickname(seed);
       }

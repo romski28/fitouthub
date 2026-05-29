@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-556ef444",
+    "date": "2026-05-29T22:27:56+08:00",
+    "title": "Fix TypeScript type error in edit-modal seed initialization",
+    "summary": "Fix TypeScript type error in edit-modal seed initialization",
+    "areas": [
+      "web"
+    ],
+    "commit": "556ef444",
+    "files": [
+      "apps/web/src/components/edit-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-08bbc784",
     "date": "2026-05-29T22:21:23+08:00",
     "title": "Allow editable hydrated nickname in admin user creation",
