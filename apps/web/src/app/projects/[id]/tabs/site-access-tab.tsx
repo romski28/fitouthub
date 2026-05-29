@@ -327,7 +327,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     <div className="space-y-6">
 
       {/* Address details — collapsed when complete, open when required */}
-      <div className={`rounded-lg border overflow-hidden ${hasBasicLocation ? 'border-slate-700 bg-slate-900/60' : 'border-rose-500/70 bg-rose-950/25'}`}>
+      <div className={`overflow-hidden rounded-2xl border ${hasBasicLocation ? 'border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)]' : 'border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)]'}`}>
         {/* Header / collapsed summary */}
         <button
           type="button"
@@ -335,64 +335,64 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               Your address
               {hasBasicLocation
-                ? <span className="text-emerald-400 text-xs font-normal">Saved</span>
-                : <span className="text-rose-300 text-xs font-normal">Required</span>}
+                ? <span className="text-xs font-semibold text-emerald-700">Saved</span>
+                : <span className="text-xs font-semibold text-[rgba(215,107,78,0.96)]">Required</span>}
             </p>
             {hasBasicLocation && !addressOpen && addressSummary && (
-              <p className="mt-0.5 truncate text-xs text-slate-400">{addressSummary}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-600">{addressSummary}</p>
             )}
             {!hasBasicLocation && !addressOpen && (
-              <p className="mt-0.5 text-xs text-rose-300">Complete your address before accepting visits</p>
+              <p className="mt-0.5 text-xs text-[rgba(176,74,46,0.95)]">Complete your address before accepting visits</p>
             )}
           </div>
-          <span className="shrink-0 text-slate-400 text-xs">{addressOpen ? '▲' : '▼'}</span>
+          <span className="shrink-0 text-xs text-slate-600">{addressOpen ? '▲' : '▼'}</span>
         </button>
 
         {/* Expanded form */}
         {addressOpen && (
-          <div className="border-t border-slate-700/60 p-4 space-y-3">
-            <p className="text-xs text-slate-400">Required before accepting a visit. This will be shared with the contractor.</p>
+          <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
+            <p className="text-xs text-slate-600">Required before accepting a visit. This will be shared with the contractor.</p>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-white">Full Address *</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Full Address *</label>
               <input
                 type="text"
                 value={locationDetailsForm.addressFull}
                 onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
-                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 placeholder="e.g. 123 Nathan Road, Tsim Sha Tsui"
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Unit Number *</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Unit Number *</label>
                 <input
                   type="text"
                   value={locationDetailsForm.unitNumber}
                   onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                   placeholder="e.g. Flat 12A"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Floor Level *</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Floor Level *</label>
                 <input
                   type="text"
                   value={locationDetailsForm.floorLevel}
                   onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                   placeholder="e.g. 12/F"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Postal Code / District</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Postal Code / District</label>
                 <input
                   type="text"
                   value={locationDetailsForm.postalCode}
                   onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
             </div>
@@ -417,7 +417,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   }
                 }}
                 disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
-                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50"
               >
                 {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
               </button>
@@ -427,37 +427,37 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       </div>
 
       {/* Site availability date */}
-      <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Site availability date</p>
+      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Site availability date</p>
         {siteAvailabilityDate ? (
-          <p className="mt-1 text-base font-bold text-white">{formatDate(siteAvailabilityDate)}</p>
+          <p className="mt-1 text-base font-bold text-slate-900">{formatDate(siteAvailabilityDate)}</p>
         ) : (
-          <p className="mt-1 text-sm text-slate-400">Not set - use the section below to share a date with contractors.</p>
+          <p className="mt-1 text-sm text-slate-600">Not set - use the section below to share a date with contractors.</p>
         )}
       </div>
 
       {/* Error banners */}
       {siteVisitError && (
-        <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+        <div className="rounded-md border border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)] px-3 py-2 text-sm text-[rgba(176,74,46,0.95)]">
           {siteVisitError}
         </div>
       )}
       {locationDetailsError && (
-        <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+        <div className="rounded-md border border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)] px-3 py-2 text-sm text-[rgba(176,74,46,0.95)]">
           {locationDetailsError}
         </div>
       )}
       {siteAccessBlockers.length > 0 && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+        <div className="rounded-md border border-[rgba(215,107,78,0.35)] bg-[rgba(255,245,238,0.92)] px-3 py-2 text-sm text-[rgba(176,74,46,0.95)]">
           Complete required fields first: {siteAccessBlockers.join(', ')}
         </div>
       )}
 
       {/* Contractor visit / request list */}
       {siteVisitLoading ? (
-        <p className="text-sm text-slate-300">Loading visit requests...</p>
+        <p className="text-sm text-slate-600">Loading visit requests...</p>
       ) : !hasVisitOrRequestItems ? (
-        <div className="rounded-md border border-slate-700 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
+        <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3 text-sm text-slate-600">
           No visit requests yet. Contractors will appear here once they request access.
         </div>
       ) : (
@@ -474,11 +474,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={visit.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">will visit at {formatDateTime(visit.proposedAt)}</p>
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">will visit at {formatDateTime(visit.proposedAt)}</p>
                 </div>
                 <button
                   type="button"
@@ -494,7 +494,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   }}
                   disabled={isSubmitting || !hasBasicLocation}
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Confirm this visit'}
-                  className={`min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
+                  className={`min-w-[70px] rounded-lg bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
                 >
                   {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
                 </button>
@@ -518,11 +518,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={`req-${request.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">{proposedVisitLabel}</p>
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">{proposedVisitLabel}</p>
                 </div>
                 <button
                   type="button"
@@ -538,7 +538,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   }}
                   disabled={isSubmitting || !hasBasicLocation}
                   title={!hasBasicLocation ? 'Complete your address details first' : 'Approve this request'}
-                  className={`min-w-[70px] rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
+                  className={`min-w-[70px] rounded-lg bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
                 >
                   {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
                 </button>
@@ -555,13 +555,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={visit.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">{formatBookedSlot(visit.proposedAt)}</p>
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">{formatBookedSlot(visit.proposedAt)}</p>
                 </div>
-                <span className={`rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white ${acceptedVisitId === visit.id ? 'animate-thumbs-wiggle' : ''}`}>
+                <span className={`rounded-full bg-[rgba(215,107,78,0.92)] px-2.5 py-1 text-xs font-semibold text-white ${acceptedVisitId === visit.id ? 'animate-thumbs-wiggle' : ''}`}>
                   Booked
                 </span>
               </div>
@@ -586,13 +586,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={`approved-${request.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-300">{bookedLabel}</p>
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">{bookedLabel}</p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${rescheduleRequired ? 'bg-amber-600' : 'bg-blue-600'} ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${rescheduleRequired ? 'bg-[rgba(194,110,37,0.9)]' : 'bg-[rgba(215,107,78,0.92)]'} ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
                   {rescheduleRequired ? 'Reschedule' : 'Booked'}
                 </span>
               </div>
@@ -609,17 +609,17 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             return (
               <div
                 key={visit.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">
                     {rescheduleRequired
                       ? `Previous slot voided - new availability ${formatDate(siteAvailabilityDate)}`
                       : formatDateTime(visit.proposedAt)}
                   </p>
                 </div>
-                <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${rescheduleRequired ? 'border-amber-500 bg-amber-500/15 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300 capitalize'}`}>
+                <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${rescheduleRequired ? 'border-[rgba(194,110,37,0.35)] bg-[rgba(255,239,218,0.85)] text-[rgba(144,86,30,0.95)]' : 'border-[rgba(120,53,15,0.22)] bg-[rgba(245,238,219,0.92)] text-slate-700 capitalize'}`}>
                   {rescheduleRequired ? 'Reschedule' : visit.status}
                 </span>
               </div>
@@ -629,27 +629,27 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       )}
 
       {/* Building Information (optional, collapsible) */}
-      <div className="rounded-lg border border-slate-700 bg-slate-900/60 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)]">
         <button
           type="button"
           onClick={() => setShowBuildingInfo((v) => !v)}
           className="flex w-full items-center justify-between px-4 py-3 text-left"
         >
           <div>
-            <p className="text-sm font-semibold text-white">Building information</p>
-            <p className="text-xs text-slate-400">Optional - helps contractors prepare for the visit.</p>
+            <p className="text-sm font-semibold text-slate-900">Building information</p>
+            <p className="text-xs text-slate-600">Optional - helps contractors prepare for the visit.</p>
           </div>
-          <span className="shrink-0 text-slate-400 text-xs">{showBuildingInfo ? '▲' : '▼'}</span>
+          <span className="shrink-0 text-xs text-slate-600">{showBuildingInfo ? '▲' : '▼'}</span>
         </button>
         {showBuildingInfo && (
-          <div className="border-t border-slate-700 p-4 space-y-3">
+          <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Property Type</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Type</label>
                 <select
                   value={locationDetailsForm.propertyType || ''}
                   onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 >
                   <option value="">Select type</option>
                   <option value="residential">Residential</option>
@@ -661,79 +661,79 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Property Size</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Size</label>
                 <input
                   type="text"
                   value={locationDetailsForm.propertySize}
                   onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Property Age</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Age</label>
                 <input
                   type="text"
                   value={locationDetailsForm.propertyAge}
                   onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-white">Existing Conditions</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Existing Conditions</label>
               <textarea
                 rows={2}
                 value={locationDetailsForm.existingConditions}
                 onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
-                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-white">Access Details</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Access Details</label>
               <textarea
                 rows={2}
                 value={locationDetailsForm.accessDetails}
                 onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
-                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Access Hours</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Access Hours</label>
                 <input
                   type="text"
                   value={locationDetailsForm.accessHoursDescription}
                   onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">Desired Start Date</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Desired Start Date</label>
                 <input
                   type="date"
                   value={locationDetailsForm.desiredStartDate}
                   onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                  className="quote-picker-input w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">On-site Contact Name</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">On-site Contact Name</label>
                 <input
                   type="text"
                   value={locationDetailsForm.onSiteContactName}
                   onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-white">On-site Contact Phone</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">On-site Contact Phone</label>
                 <input
                   type="tel"
                   value={locationDetailsForm.onSiteContactPhone}
                   onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
-                  className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
               </div>
             </div>
@@ -752,39 +752,39 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   }
                 }}
                 disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
-                className="rounded-md border border-sky-500 bg-sky-900/40 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-900/60 disabled:opacity-50"
+                className="rounded-md border border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)] px-3 py-1.5 text-xs font-semibold text-[rgba(176,74,46,0.95)] transition hover:bg-[rgba(255,231,220,0.96)] disabled:opacity-50"
               >
                 {isSubmittingLocationDetails ? 'Saving...' : 'Update building information'}
               </button>
             </div>
             {buildingInfoSaved && (
-              <p className="text-right text-xs font-semibold text-emerald-300">Saved just now</p>
+              <p className="text-right text-xs font-semibold text-emerald-700">Saved just now</p>
             )}
           </div>
         )}
       </div>
 
       {/* Change site availability date */}
-      <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4 space-y-3">
-        <p className="text-sm font-semibold text-white">Update your site availability</p>
+      <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4">
+        <p className="text-sm font-semibold text-slate-900">Update your site availability</p>
         <div className="grid gap-3 lg:grid-cols-[220px_1fr]">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-white">New availability date</label>
+            <label className="mb-1 block text-xs font-semibold text-slate-800">New availability date</label>
             <input
               type="date"
               value={changeAvailDate}
               onChange={(e) => setChangeAvailDate(e.target.value)}
-              className="quote-picker-input w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-white">Reason for change</label>
+            <label className="mb-1 block text-xs font-semibold text-slate-800">Reason for change</label>
             <input
               type="text"
               value={changeAvailReason}
               onChange={(e) => setChangeAvailReason(e.target.value)}
               placeholder="Briefly explain why the date needs to change"
-              className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
             />
           </div>
         </div>
@@ -816,24 +816,24 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               !changeAvailReason.trim() ||
               isSameAvailabilityDate
             }
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isUpdatingSiteAvailability ? 'Sending...' : 'Send update'}
           </button>
         </div>
-        <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-md border border-[rgba(194,110,37,0.35)] bg-[rgba(255,245,224,0.9)] px-3 py-2 text-xs text-[rgba(144,86,30,0.95)]">
           We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes - it can cause unnecessary disruption to their schedules.
         </p>
       </div>
 
       {showAvailabilityConfirm && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-xl">
-            <h3 className="text-base font-semibold text-white">Confirm site inspection date change</h3>
-            <p className="mt-2 text-sm text-slate-300">
-              Change site inspection date to <span className="font-semibold text-white">{formatDate(changeAvailDate)}</span>?
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(81,55,32,0.34)] px-4">
+          <div className="w-full max-w-lg rounded-xl border border-[rgba(120,53,15,0.22)] bg-[rgba(255,250,240,0.98)] p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-slate-900">Confirm site inspection date change</h3>
+            <p className="mt-2 text-sm text-slate-700">
+              Change site inspection date to <span className="font-semibold text-slate-900">{formatDate(changeAvailDate)}</span>?
             </p>
-            <div className="mt-4 space-y-2 rounded-lg border border-slate-700 bg-slate-950/60 p-3 text-xs text-slate-300">
+            <div className="mt-4 space-y-2 rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,245,238,0.92)] p-3 text-xs text-slate-700">
               <p>
                 {bookedProfessionalCount > 0
                   ? `${bookedProfessionalCount} booked or proposed site visit slot(s) will be voided and professionals will be asked to rebook.`
@@ -851,7 +851,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 type="button"
                 onClick={() => setShowAvailabilityConfirm(false)}
                 disabled={isUpdatingSiteAvailability}
-                className="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-md border border-[rgba(120,53,15,0.2)] px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[rgba(245,238,219,0.8)] disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -867,7 +867,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   }
                 }}
                 disabled={isUpdatingSiteAvailability}
-                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50"
               >
                 {isUpdatingSiteAvailability ? 'Sending...' : 'Update date and notify professionals'}
               </button>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-29-ad5e1024",
+    "date": "2026-05-29T13:06:52+08:00",
+    "title": "style(web): repaint client site access tab to warm paper palette",
+    "summary": "style(web): repaint client site access tab to warm paper palette",
+    "areas": [
+      "web"
+    ],
+    "commit": "ad5e1024",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-1900e7be",
     "date": "2026-05-29T13:01:13+08:00",
     "title": "feat(web): unify loading visuals and simplify bidding summary",
