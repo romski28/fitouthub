@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-30-db40a295",
+    "date": "2026-05-30T11:59:17+08:00",
+    "title": "Restore Phase A site address service methods",
+    "summary": "Restore Phase A site address service methods",
+    "areas": [
+      "api"
+    ],
+    "commit": "db40a295",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-30-1b4a5e11",
     "date": "2026-05-30T11:52:16+08:00",
     "title": "Add building name to client site access details",

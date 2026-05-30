@@ -534,6 +534,150 @@ export class ProjectsService {
     }
   }
 
+  async listClientSiteAddresses(projectId: string, userId: string) {
+    await this.assertClientProjectAccess(projectId, userId);
+
+    const addresses = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        label: string | null;
+        buildingName: string | null;
+        addressFull: string;
+        unitNumber: string | null;
+        floorLevel: string | null;
+        accessDetails: string | null;
+        onSiteContactName: string | null;
+        onSiteContactPhone: string | null;
+      }>
+    >`
+      SELECT
+        id,
+        label,
+        "buildingName" as "buildingName",
+        "addressFull" as "addressFull",
+        "unitNumber" as "unitNumber",
+        "floorLevel" as "floorLevel",
+        "accessDetails" as "accessDetails",
+        "onSiteContactName" as "onSiteContactName",
+        "onSiteContactPhone" as "onSiteContactPhone"
+      FROM client_site_addresses
+      WHERE "userId" = ${userId}
+        AND "isActive" = true
+      ORDER BY "updatedAt" DESC
+    `;
+
+    return {
+      success: true,
+      addresses,
+    };
+  }
+
+  async setProjectPrimarySiteAddress(
+    projectId: string,
+    userId: string,
+    body: { clientAddressId: string },
+  ) {
+    await this.assertClientProjectAccess(projectId, userId);
+
+    if (!body?.clientAddressId) {
+      throw new BadRequestException('clientAddressId is required');
+    }
+
+    const addresses = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        label: string | null;
+        buildingName: string | null;
+        addressFull: string;
+        unitNumber: string | null;
+        floorLevel: string | null;
+        accessDetails: string | null;
+        onSiteContactName: string | null;
+        onSiteContactPhone: string | null;
+      }>
+    >`
+      SELECT
+        id,
+        label,
+        "buildingName" as "buildingName",
+        "addressFull" as "addressFull",
+        "unitNumber" as "unitNumber",
+        "floorLevel" as "floorLevel",
+        "accessDetails" as "accessDetails",
+        "onSiteContactName" as "onSiteContactName",
+        "onSiteContactPhone" as "onSiteContactPhone"
+      FROM client_site_addresses
+      WHERE id = ${body.clientAddressId}
+        AND "userId" = ${userId}
+        AND "isActive" = true
+      LIMIT 1
+    `;
+
+    const address = addresses[0];
+    if (!address) {
+      throw new BadRequestException('Address not found');
+    }
+
+    await this.prisma.$executeRaw`
+      INSERT INTO project_sites (
+        id,
+        "projectId",
+        "clientAddressId",
+        "siteLabel",
+        "buildingName",
+        "addressFullSnapshot",
+        "unitNumberSnapshot",
+        "floorLevelSnapshot",
+        "accessDetailsSnapshot",
+        "onSiteContactNameSnapshot",
+        "onSiteContactPhoneSnapshot",
+        "isPrimary",
+        "isActive",
+        metadata,
+        "createdByUserId",
+        "createdAt",
+        "updatedAt"
+      ) VALUES (
+        ${`ps_${createId()}`},
+        ${projectId},
+        ${address.id},
+        ${String(address.label || address.buildingName || 'Primary Site')},
+        ${address.buildingName},
+        ${address.addressFull},
+        ${address.unitNumber},
+        ${address.floorLevel},
+        ${address.accessDetails},
+        ${address.onSiteContactName},
+        ${address.onSiteContactPhone},
+        true,
+        true,
+        '{}'::jsonb,
+        ${userId},
+        now(),
+        now()
+      )
+      ON CONFLICT ("projectId", "isPrimary") WHERE "isPrimary" = true
+      DO UPDATE SET
+        "clientAddressId" = EXCLUDED."clientAddressId",
+        "siteLabel" = EXCLUDED."siteLabel",
+        "buildingName" = EXCLUDED."buildingName",
+        "addressFullSnapshot" = EXCLUDED."addressFullSnapshot",
+        "unitNumberSnapshot" = EXCLUDED."unitNumberSnapshot",
+        "floorLevelSnapshot" = EXCLUDED."floorLevelSnapshot",
+        "accessDetailsSnapshot" = EXCLUDED."accessDetailsSnapshot",
+        "onSiteContactNameSnapshot" = EXCLUDED."onSiteContactNameSnapshot",
+        "onSiteContactPhoneSnapshot" = EXCLUDED."onSiteContactPhoneSnapshot",
+        "isActive" = true,
+        "updatedAt" = now()
+    `;
+
+    return {
+      success: true,
+      projectId,
+      clientAddressId: address.id,
+    };
+  }
+
   private async supportsSurveyAssignmentCalendarLink(): Promise<boolean> {
     if (this.surveyAssignmentHasCalendarEventId !== null) {
       return this.surveyAssignmentHasCalendarEventId;
@@ -7177,7 +7321,7 @@ Please review the project details and respond with your quote or decline the inv
       WHERE "projectId" = ${projectId}
       LIMIT 1
     `;
-    const locationDetails = locationDetailsRows[0] || null;
+    const locationDetails: any = locationDetailsRows[0] || null;
     const locationBuildingName = locationDetails?.buildingName ?? siteAccessData?.buildingName ?? null;
 
     const mergedSiteAccessData = locationDetails
