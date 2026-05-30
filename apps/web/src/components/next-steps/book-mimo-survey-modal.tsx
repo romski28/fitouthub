@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
@@ -15,16 +15,52 @@ interface BookMimoSurveyModalProps {
 
 const FEE_PER_ROOM_HKD = 500;
 
-const toDateTimeLocalValue = (value: Date) => {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+type AvailabilitySlot = {
+  startsAt: string;
+  endsAt: string;
 };
 
-const toIsoFromDateTimeLocal = (value: string) => {
-  if (!value) return '';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '';
-  return parsed.toISOString();
+type AvailabilityResponse = {
+  rooms: number;
+  durationMinutes: number;
+  timezone: string;
+  slots: AvailabilitySlot[];
+  nextCursor: string | null;
+};
+
+const formatSlotDateTime = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString('en-HK', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Hong_Kong',
+  });
+};
+
+const formatSlotTime = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '--:--';
+  return date.toLocaleTimeString('en-HK', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Hong_Kong',
+  });
+};
+
+const formatDuration = (durationMinutes: number) => {
+  if (!durationMinutes) return 'Not set';
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
 };
 
 export function BookMimoSurveyModal({
@@ -37,16 +73,79 @@ export function BookMimoSurveyModal({
 
   const modalContent = resolveNextStepModalContent(state.actionKey || 'BOOK_MIMO_SURVEY', state.modalContent);
   const [rooms, setRooms] = useState<number>(1);
-  const [proposedDate, setProposedDate] = useState<string>(() => {
-    const initial = new Date();
-    initial.setDate(initial.getDate() + 2);
-    initial.setHours(10, 0, 0, 0);
-    return toDateTimeLocalValue(initial);
-  });
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [selectedSlotStart, setSelectedSlotStart] = useState<string>('');
+  const [durationMinutes, setDurationMinutes] = useState<number>(0);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const totalFee = useMemo(() => rooms * FEE_PER_ROOM_HKD, [rooms]);
+
+  const fetchAvailability = useCallback(
+    async (cursor?: string) => {
+      if (!accessToken || !state.projectId || !isOpen) return;
+
+      setLoadingSlots(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams({ rooms: String(rooms) });
+        if (cursor) {
+          params.set('cursor', cursor);
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/projects/${state.projectId}/mimo-survey/availability?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || 'Unable to load survey availability right now.');
+        }
+
+        const data = (await response.json()) as AvailabilityResponse;
+        setSlots(data.slots || []);
+        setNextCursor(data.nextCursor || null);
+        setDurationMinutes(Number(data.durationMinutes || 0));
+
+        if ((data.slots || []).length > 0) {
+          setSelectedSlotStart(data.slots[0].startsAt);
+        } else {
+          setSelectedSlotStart('');
+        }
+      } catch (err) {
+        setSlots([]);
+        setNextCursor(null);
+        setSelectedSlotStart('');
+        setDurationMinutes(0);
+        setError(err instanceof Error ? err.message : 'Unable to load survey availability right now.');
+      } finally {
+        setLoadingSlots(false);
+      }
+    },
+    [accessToken, isOpen, rooms, state.projectId],
+  );
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSlots([]);
+      setSelectedSlotStart('');
+      setNextCursor(null);
+      setDurationMinutes(0);
+      setError(null);
+      return;
+    }
+
+    void fetchAvailability();
+  }, [fetchAvailability, isOpen]);
 
   const handleBookSurvey = async () => {
     if (!accessToken || !state.projectId) return;
@@ -56,9 +155,8 @@ export function BookMimoSurveyModal({
       return;
     }
 
-    const isoProposedDate = toIsoFromDateTimeLocal(proposedDate);
-    if (!isoProposedDate) {
-      setError('Please select a valid proposed survey date and time.');
+    if (!selectedSlotStart) {
+      setError('Please select an available survey slot.');
       return;
     }
 
@@ -74,7 +172,7 @@ export function BookMimoSurveyModal({
         },
         body: JSON.stringify({
           rooms,
-          proposedDate: isoProposedDate,
+          proposedDate: selectedSlotStart,
         }),
       });
 
@@ -109,7 +207,7 @@ export function BookMimoSurveyModal({
       projectName ? `Project: ${projectName}` : '',
       `Project ID: ${state.projectId}`,
       `Rooms to survey: ${rooms}`,
-      `Proposed date: ${proposedDate ? new Date(proposedDate).toLocaleString('en-HK') : 'Not provided'}`,
+      `Proposed date: ${selectedSlotStart ? formatSlotDateTime(selectedSlotStart) : 'Not provided'}`,
     ].join('\n');
 
     window.dispatchEvent(
@@ -165,21 +263,64 @@ export function BookMimoSurveyModal({
                   setRooms(Number.isFinite(next) && next > 0 ? Math.floor(next) : 0);
                 }}
                 className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none"
-                disabled={isLoading || submitting}
+                disabled={isLoading || submitting || loadingSlots}
               />
             </label>
 
-            <label className="space-y-2 text-sm text-slate-200">
-              <span className="font-semibold">Proposed site survey date</span>
-              <input
-                type="datetime-local"
-                value={proposedDate}
-                min={toDateTimeLocalValue(new Date())}
-                onChange={(event) => setProposedDate(event.target.value)}
-                className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none"
-                disabled={isLoading || submitting}
-              />
-            </label>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/70 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Estimated booking window</p>
+              <p className="mt-1 text-sm font-semibold text-white">{formatDuration(durationMinutes)}</p>
+              <p className="mt-1 text-xs text-slate-400">Includes travel, setup, onsite survey and finalisation</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-200">Next available slots (from tomorrow)</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!nextCursor || loadingSlots || isLoading || submitting) return;
+                  void fetchAvailability(nextCursor);
+                }}
+                disabled={!nextCursor || loadingSlots || isLoading || submitting}
+                className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-60"
+              >
+                {loadingSlots ? 'Loading...' : 'Next 5'}
+              </button>
+            </div>
+
+            {slots.length > 0 ? (
+              <div className="grid gap-2">
+                {slots.map((slot) => {
+                  const isSelected = selectedSlotStart === slot.startsAt;
+                  return (
+                    <button
+                      key={slot.startsAt}
+                      type="button"
+                      onClick={() => setSelectedSlotStart(slot.startsAt)}
+                      className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                        isSelected
+                          ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                          : 'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-500'
+                      }`}
+                      disabled={isLoading || submitting || loadingSlots}
+                    >
+                      <p className="text-sm font-semibold">{formatSlotDateTime(slot.startsAt)}</p>
+                      <p className="mt-0.5 text-xs text-slate-300">
+                        {formatSlotTime(slot.startsAt)} - {formatSlotTime(slot.endsAt)} (HKT)
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-md border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                {loadingSlots
+                  ? 'Loading availability...'
+                  : 'No available slots found yet. Try again with Next 5 or adjust room count.'}
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-3">
@@ -210,7 +351,7 @@ export function BookMimoSurveyModal({
           <button
             type="button"
             onClick={handleBookSurvey}
-            disabled={isLoading || submitting}
+            disabled={isLoading || submitting || loadingSlots || !selectedSlotStart}
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
           >
             {submitting ? 'Submitting...' : modalContent.primaryButtonLabel || 'OK'}

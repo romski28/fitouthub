@@ -451,6 +451,32 @@ export class ProjectsController {
     return booking;
   }
 
+  @Get(':id/mimo-survey/availability')
+  @UseGuards(CombinedAuthGuard)
+  async getMimoSurveyAvailability(
+    @Param('id') projectId: string,
+    @Query('rooms') rooms: string,
+    @Query('cursor') cursor: string | undefined,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isProfessional = Boolean(req.user?.isProfessional);
+
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (tokenRole === 'professional' || isProfessional) {
+      throw new ForbiddenException('Only clients can view survey booking availability');
+    }
+
+    return this.projectsService.getMimoSurveyAvailability(projectId, userId, {
+      rooms: Number(rooms || 0),
+      cursor: cursor ? String(cursor) : undefined,
+    });
+  }
+
   @Post(':id/quote')
   async submitQuote(
     @Param('id') projectId: string,

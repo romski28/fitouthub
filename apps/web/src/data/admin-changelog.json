@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-30-bbd6933c",
+    "date": "2026-05-30T09:20:17+08:00",
+    "title": "Add paged Mimo survey availability slots with lunch break and non-overlap",
+    "summary": "Add paged Mimo survey availability slots with lunch break and non-overlap",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bbd6933c",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/book-mimo-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-29-3293dba0",
     "date": "2026-05-29T22:52:26+08:00",
     "title": "Set account type chip to blue informational color",

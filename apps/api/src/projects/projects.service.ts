@@ -88,7 +88,13 @@ type SurveyOpsQueueRow = {
   updatedAt: Date;
 };
 
+type TimeInterval = {
+  startsAt: Date;
+  endsAt: Date;
+};
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
+const HK_TIMEZONE_OFFSET_MS = HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
 @Injectable()
 export class ProjectsService {
@@ -114,6 +120,375 @@ export class ProjectsService {
 
   private readonly ARCHIVED_STATUS = 'archived';
   private readonly PROJECT_SELECTABLE_PROFESSION_TYPES = ['contractor', 'company'] as const;
+  private readonly MIMO_SURVEY_WORKDAY_START_HOUR = 9;
+  private readonly MIMO_SURVEY_WORKDAY_END_HOUR = 18;
+  private readonly MIMO_SURVEY_LUNCH_START_HOUR = 13;
+  private readonly MIMO_SURVEY_LUNCH_END_HOUR = 14;
+  private readonly MIMO_SURVEY_SLOT_STEP_MINUTES = 30;
+  private readonly MIMO_SURVEY_LOOKAHEAD_DAYS = 30;
+  private readonly MIMO_SURVEY_MAX_LOOKAHEAD_DAYS = 120;
+
+  private getMimoSurveyDurationMinutes(rooms: number): number {
+    const setupMinutes = 20;
+    const finalisationMinutes = 15;
+    const travelBeforeMinutes = 30;
+    const travelAfterMinutes = 30;
+    const onsiteBaseMinutes = 35;
+    const onsitePerRoomMinutes = 25;
+
+    return (
+      setupMinutes +
+      finalisationMinutes +
+      travelBeforeMinutes +
+      travelAfterMinutes +
+      onsiteBaseMinutes +
+      onsitePerRoomMinutes * rooms
+    );
+  }
+
+  private toHkDate(value: Date): Date {
+    return new Date(value.getTime() + HK_TIMEZONE_OFFSET_MS);
+  }
+
+  private fromHkDate(value: Date): Date {
+    return new Date(value.getTime() - HK_TIMEZONE_OFFSET_MS);
+  }
+
+  private getTomorrowStartUtcInHk(): Date {
+    const nowHk = this.toHkDate(new Date());
+    const tomorrowStartHk = new Date(
+      Date.UTC(
+        nowHk.getUTCFullYear(),
+        nowHk.getUTCMonth(),
+        nowHk.getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    return this.fromHkDate(tomorrowStartHk);
+  }
+
+  private alignToSlotStep(value: Date): Date {
+    const stepMs = this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000;
+    const aligned = Math.ceil(value.getTime() / stepMs) * stepMs;
+    return new Date(aligned);
+  }
+
+  private getWorkdayStartUtc(dateUtc: Date): Date {
+    const hk = this.toHkDate(dateUtc);
+    const hkStart = new Date(
+      Date.UTC(
+        hk.getUTCFullYear(),
+        hk.getUTCMonth(),
+        hk.getUTCDate(),
+        this.MIMO_SURVEY_WORKDAY_START_HOUR,
+        0,
+        0,
+        0,
+      ),
+    );
+    return this.fromHkDate(hkStart);
+  }
+
+  private getNextWorkdayStartUtc(dateUtc: Date): Date {
+    const hk = this.toHkDate(dateUtc);
+    const hkNextStart = new Date(
+      Date.UTC(
+        hk.getUTCFullYear(),
+        hk.getUTCMonth(),
+        hk.getUTCDate() + 1,
+        this.MIMO_SURVEY_WORKDAY_START_HOUR,
+        0,
+        0,
+        0,
+      ),
+    );
+    return this.fromHkDate(hkNextStart);
+  }
+
+  private isValidSurveyWindow(startUtc: Date, durationMinutes: number): boolean {
+    const endUtc = new Date(startUtc.getTime() + durationMinutes * 60 * 1000);
+    const hkStart = this.toHkDate(startUtc);
+    const hkEnd = this.toHkDate(endUtc);
+
+    // Slot must fit in one local day.
+    if (
+      hkStart.getUTCFullYear() !== hkEnd.getUTCFullYear() ||
+      hkStart.getUTCMonth() !== hkEnd.getUTCMonth() ||
+      hkStart.getUTCDate() !== hkEnd.getUTCDate()
+    ) {
+      return false;
+    }
+
+    const startMinutes = hkStart.getUTCHours() * 60 + hkStart.getUTCMinutes();
+    const endMinutes = hkEnd.getUTCHours() * 60 + hkEnd.getUTCMinutes();
+    const dayStart = this.MIMO_SURVEY_WORKDAY_START_HOUR * 60;
+    const dayEnd = this.MIMO_SURVEY_WORKDAY_END_HOUR * 60;
+    const lunchStart = this.MIMO_SURVEY_LUNCH_START_HOUR * 60;
+    const lunchEnd = this.MIMO_SURVEY_LUNCH_END_HOUR * 60;
+
+    if (startMinutes < dayStart || endMinutes > dayEnd) {
+      return false;
+    }
+
+    // No slot may straddle lunch break.
+    if (startMinutes < lunchEnd && endMinutes > lunchStart) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private moveToNextValidWindowStart(startUtc: Date): Date {
+    const hk = this.toHkDate(startUtc);
+    const minutes = hk.getUTCHours() * 60 + hk.getUTCMinutes();
+    const dayStart = this.MIMO_SURVEY_WORKDAY_START_HOUR * 60;
+    const dayEnd = this.MIMO_SURVEY_WORKDAY_END_HOUR * 60;
+    const lunchStart = this.MIMO_SURVEY_LUNCH_START_HOUR * 60;
+    const lunchEnd = this.MIMO_SURVEY_LUNCH_END_HOUR * 60;
+
+    if (minutes < dayStart) {
+      return this.getWorkdayStartUtc(startUtc);
+    }
+
+    if (minutes >= lunchStart && minutes < lunchEnd) {
+      const hkAfterLunch = new Date(
+        Date.UTC(
+          hk.getUTCFullYear(),
+          hk.getUTCMonth(),
+          hk.getUTCDate(),
+          this.MIMO_SURVEY_LUNCH_END_HOUR,
+          0,
+          0,
+          0,
+        ),
+      );
+      return this.fromHkDate(hkAfterLunch);
+    }
+
+    if (minutes >= dayEnd) {
+      return this.getNextWorkdayStartUtc(startUtc);
+    }
+
+    return startUtc;
+  }
+
+  private findBlockingInterval(
+    startUtc: Date,
+    endUtc: Date,
+    intervals: TimeInterval[],
+  ): TimeInterval | null {
+    for (const interval of intervals) {
+      if (interval.endsAt <= startUtc) continue;
+      if (interval.startsAt >= endUtc) break;
+      if (interval.startsAt < endUtc && interval.endsAt > startUtc) {
+        return interval;
+      }
+    }
+    return null;
+  }
+
+  private mergeIntervals(intervals: TimeInterval[]): TimeInterval[] {
+    if (intervals.length <= 1) return intervals;
+
+    const sorted = [...intervals].sort(
+      (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
+    );
+    const merged: TimeInterval[] = [sorted[0]];
+
+    for (let i = 1; i < sorted.length; i += 1) {
+      const current = sorted[i];
+      const last = merged[merged.length - 1];
+      if (current.startsAt <= last.endsAt) {
+        if (current.endsAt > last.endsAt) {
+          last.endsAt = current.endsAt;
+        }
+        continue;
+      }
+      merged.push({ ...current });
+    }
+
+    return merged;
+  }
+
+  private async listMimoSurveyBusyIntervals(
+    windowStart: Date,
+    windowEnd: Date,
+  ): Promise<TimeInterval[]> {
+    const intervals: TimeInterval[] = [];
+
+    try {
+      const eventRows = await this.prisma.$queryRaw<
+        Array<{ startsAt: Date; endsAt: Date | null }>
+      >`
+        SELECT
+          "startsAt" as "startsAt",
+          "endsAt" as "endsAt"
+        FROM mimo_calendar_events
+        WHERE status <> 'cancelled'
+          AND COALESCE("endsAt", "startsAt" + interval '30 minutes') > ${windowStart}
+          AND "startsAt" < ${windowEnd}
+      `;
+
+      for (const row of eventRows) {
+        const startsAt = new Date(row.startsAt);
+        const endsAt = row.endsAt
+          ? new Date(row.endsAt)
+          : new Date(startsAt.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+        intervals.push({ startsAt, endsAt });
+      }
+    } catch {
+      // Calendar table may not be present in all environments yet.
+    }
+
+    try {
+      const assignmentRows = await this.prisma.$queryRaw<
+        Array<{ startsAt: Date; endsAt: Date | null }>
+      >`
+        SELECT
+          "scheduledAt" as "startsAt",
+          "completedAt" as "endsAt"
+        FROM mimo_survey_assignments
+        WHERE status IN ('assigned', 'scheduled', 'in_progress')
+          AND "scheduledAt" IS NOT NULL
+          AND COALESCE("completedAt", "scheduledAt" + interval '30 minutes') > ${windowStart}
+          AND "scheduledAt" < ${windowEnd}
+      `;
+
+      for (const row of assignmentRows) {
+        const startsAt = new Date(row.startsAt);
+        const endsAt = row.endsAt
+          ? new Date(row.endsAt)
+          : new Date(startsAt.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+        intervals.push({ startsAt, endsAt });
+      }
+    } catch {
+      // Assignment table may not be present in all environments yet.
+    }
+
+    return this.mergeIntervals(intervals);
+  }
+
+  async getMimoSurveyAvailability(
+    projectId: string,
+    userId: string,
+    payload: { rooms: number; cursor?: string },
+  ) {
+    const rooms = Number(payload.rooms);
+    if (!Number.isInteger(rooms) || rooms <= 0) {
+      throw new BadRequestException('Rooms must be a positive whole number');
+    }
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        status: { not: this.ARCHIVED_STATUS },
+        OR: [{ userId }, { clientId: userId }],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const surveyRows = await this.prisma.$queryRaw<Array<{ id: string; status: string }>>`
+      SELECT id, status
+      FROM mimo_project_extras
+      WHERE "projectId" = ${projectId}
+        AND "extraType" = 'survey'
+      LIMIT 1
+    `;
+
+    const survey = surveyRows[0];
+    if (!survey) {
+      throw new BadRequestException('Survey service was not requested for this project');
+    }
+
+    const blockedStatuses = new Set(['declined', 'cancelled', 'completed']);
+    if (blockedStatuses.has(String(survey.status || '').toLowerCase())) {
+      throw new BadRequestException('Survey service can no longer be booked');
+    }
+
+    const durationMinutes = this.getMimoSurveyDurationMinutes(rooms);
+    const tomorrowStartUtc = this.getTomorrowStartUtcInHk();
+    let cursor = payload.cursor ? new Date(payload.cursor) : tomorrowStartUtc;
+
+    if (Number.isNaN(cursor.getTime())) {
+      throw new BadRequestException('Invalid availability cursor');
+    }
+
+    if (cursor < tomorrowStartUtc) {
+      cursor = tomorrowStartUtc;
+    }
+
+    cursor = this.alignToSlotStep(cursor);
+    cursor = this.moveToNextValidWindowStart(cursor);
+
+    const lookaheadEnd = new Date(
+      cursor.getTime() + this.MIMO_SURVEY_MAX_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+    );
+    let busyWindowStart = cursor;
+    let busyWindowEnd = new Date(
+      cursor.getTime() + this.MIMO_SURVEY_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+    );
+    let busyIntervals = await this.listMimoSurveyBusyIntervals(
+      busyWindowStart,
+      busyWindowEnd,
+    );
+
+    const slots: Array<{ startsAt: string; endsAt: string }> = [];
+    let pointer = cursor;
+
+    while (slots.length < 5 && pointer < lookaheadEnd) {
+      pointer = this.alignToSlotStep(pointer);
+      pointer = this.moveToNextValidWindowStart(pointer);
+
+      if (pointer >= busyWindowEnd) {
+        busyWindowStart = pointer;
+        busyWindowEnd = new Date(
+          pointer.getTime() + this.MIMO_SURVEY_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+        );
+        busyIntervals = await this.listMimoSurveyBusyIntervals(
+          busyWindowStart,
+          busyWindowEnd,
+        );
+      }
+
+      const slotEnd = new Date(pointer.getTime() + durationMinutes * 60 * 1000);
+
+      if (!this.isValidSurveyWindow(pointer, durationMinutes)) {
+        pointer = new Date(pointer.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+        continue;
+      }
+
+      const blockingInterval = this.findBlockingInterval(pointer, slotEnd, busyIntervals);
+      if (blockingInterval) {
+        pointer = blockingInterval.endsAt;
+        continue;
+      }
+
+      slots.push({
+        startsAt: pointer.toISOString(),
+        endsAt: slotEnd.toISOString(),
+      });
+
+      // Returned slots must not overlap one another.
+      pointer = slotEnd;
+    }
+
+    return {
+      rooms,
+      durationMinutes,
+      timezone: 'Asia/Hong_Kong',
+      slots,
+      nextCursor: slots.length > 0 ? slots[slots.length - 1].endsAt : null,
+    };
+  }
 
   private createNotificationAudit(
     event: string,
@@ -316,6 +691,23 @@ export class ProjectsService {
       throw new BadRequestException('A valid proposed survey date is required');
     }
 
+    const tomorrowStartUtc = this.getTomorrowStartUtcInHk();
+    if (scheduledAt < tomorrowStartUtc) {
+      throw new BadRequestException('Survey date must be from tomorrow onwards');
+    }
+
+    const durationMinutes = this.getMimoSurveyDurationMinutes(rooms);
+    if (!this.isValidSurveyWindow(scheduledAt, durationMinutes)) {
+      throw new BadRequestException('Selected time is outside survey operating windows');
+    }
+
+    const bookingEnd = new Date(scheduledAt.getTime() + durationMinutes * 60 * 1000);
+    const busyIntervals = await this.listMimoSurveyBusyIntervals(scheduledAt, bookingEnd);
+    const blockingInterval = this.findBlockingInterval(scheduledAt, bookingEnd, busyIntervals);
+    if (blockingInterval) {
+      throw new BadRequestException('Selected slot is no longer available. Please choose another slot.');
+    }
+
     const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
@@ -361,6 +753,8 @@ export class ProjectsService {
       feePerRoom: 500,
       calculatedFee: totalFee,
       proposedDate: scheduledAt.toISOString(),
+      estimatedDurationMinutes: durationMinutes,
+      estimatedEndDate: bookingEnd.toISOString(),
       bookingSource: 'next_step_modal',
       bookedAt: new Date().toISOString(),
     };
