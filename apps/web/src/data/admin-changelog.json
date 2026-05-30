@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-05-30-5d123e14",
+    "date": "2026-05-30T09:51:18+08:00",
+    "title": "Implement survey event-linked assignment workflow and survey-ops assignee actions",
+    "summary": "Implement survey event-linked assignment workflow and survey-ops assignee actions",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "5d123e14",
+    "files": [
+      "MANUAL_SQL_ADD_SURVEYOR_ROLES_AND_UNIFIED_CALENDAR.sql",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-30-9a12ba8c",
     "date": "2026-05-30T09:29:07+08:00",
     "title": "Add Sunday exclusion and back pagination for survey slots",

@@ -22,6 +22,13 @@ type SurveyQueueItem = {
   };
 };
 
+type SurveyorOption = {
+  id: string;
+  label: string;
+  email: string;
+  role: string;
+};
+
 type SurveyProjectContext = {
   id: string;
   projectName: string;
@@ -87,7 +94,10 @@ export default function SurveyOpsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<SurveyQueueItem[]>([]);
+  const [surveyors, setSurveyors] = useState<SurveyorOption[]>([]);
   const [search, setSearch] = useState('');
+  const [assigningProjectId, setAssigningProjectId] = useState<string | null>(null);
+  const [selectedSurveyorByProject, setSelectedSurveyorByProject] = useState<Record<string, string>>({});
   const [contextByProject, setContextByProject] = useState<Record<string, SurveyProjectContext | undefined>>({});
   const [contextLoadingId, setContextLoadingId] = useState<string | null>(null);
 
@@ -125,6 +135,74 @@ export default function SurveyOpsPage() {
       void loadQueue();
     }
   }, [isLoggedIn, accessToken, loadQueue]);
+
+  const loadSurveyors = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/survey-ops/surveyors`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.message || 'Failed to load surveyors');
+      }
+
+      const payload = (await response.json()) as SurveyorOption[];
+      setSurveyors(Array.isArray(payload) ? payload : []);
+    } catch {
+      setSurveyors([]);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (isLoggedIn && accessToken) {
+      void loadSurveyors();
+    }
+  }, [isLoggedIn, accessToken, loadSurveyors]);
+
+  const assignSurveyor = useCallback(
+    async (projectId: string, surveyExtraId: string) => {
+      if (!accessToken || !surveyExtraId) return;
+      const selectedSurveyorUserId = selectedSurveyorByProject[projectId];
+      if (!selectedSurveyorUserId) {
+        setError('Please choose a surveyor before assigning.');
+        return;
+      }
+
+      setAssigningProjectId(projectId);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/projects/${encodeURIComponent(projectId)}/survey-ops/assign`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            surveyExtraId,
+            surveyorUserId: selectedSurveyorUserId,
+          }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload?.message || 'Failed to assign surveyor');
+        }
+
+        await loadQueue();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to assign surveyor');
+      } finally {
+        setAssigningProjectId(null);
+      }
+    },
+    [accessToken, loadQueue, selectedSurveyorByProject],
+  );
 
   const openProjectContext = useCallback(
     async (projectId: string) => {
@@ -236,6 +314,8 @@ export default function SurveyOpsPage() {
             const context = contextByProject[item.projectId];
             const rooms = Number(item.survey.metadata?.rooms || 0);
             const calculatedFee = Number(item.survey.metadata?.calculatedFee || 0);
+            const normalizedStatus = String(item.survey.status || '').toLowerCase();
+            const canAssign = ['requested', 'unassigned', 'pending', 'scheduled'].includes(normalizedStatus);
 
             return (
               <div key={item.projectId} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -282,6 +362,43 @@ export default function SurveyOpsPage() {
                     <p className="font-semibold text-slate-900">{formatDate(item.survey.updatedAt)}</p>
                   </div>
                 </div>
+
+                {canAssign ? (
+                  <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Assign surveyor</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <select
+                        value={selectedSurveyorByProject[item.projectId] || ''}
+                        onChange={(event) =>
+                          setSelectedSurveyorByProject((prev) => ({
+                            ...prev,
+                            [item.projectId]: event.target.value,
+                          }))
+                        }
+                        className="min-w-[240px] rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-slate-900"
+                        disabled={assigningProjectId === item.projectId}
+                      >
+                        <option value="">Select surveyor...</option>
+                        {surveyors.map((surveyor) => (
+                          <option key={surveyor.id} value={surveyor.id}>
+                            {surveyor.label} ({surveyor.email})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => void assignSurveyor(item.projectId, item.survey.id)}
+                        disabled={
+                          assigningProjectId === item.projectId ||
+                          !selectedSurveyorByProject[item.projectId]
+                        }
+                        className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                      >
+                        {assigningProjectId === item.projectId ? 'Assigning...' : 'Assign'}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
                 {context && (
                   <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-3 text-sm text-slate-700">

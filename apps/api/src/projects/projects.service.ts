@@ -93,6 +93,14 @@ type TimeInterval = {
   endsAt: Date;
 };
 
+type SurveyorRow = {
+  id: string;
+  firstName: string | null;
+  surname: string | null;
+  email: string;
+  role: string;
+};
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
 const HK_TIMEZONE_OFFSET_MS = HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
@@ -127,6 +135,7 @@ export class ProjectsService {
   private readonly MIMO_SURVEY_SLOT_STEP_MINUTES = 30;
   private readonly MIMO_SURVEY_LOOKAHEAD_DAYS = 30;
   private readonly MIMO_SURVEY_MAX_LOOKAHEAD_DAYS = 120;
+  private surveyAssignmentHasCalendarEventId: boolean | null = null;
 
   private getMimoSurveyDurationMinutes(rooms: number): number {
     const setupMinutes = 20;
@@ -337,6 +346,29 @@ export class ProjectsService {
     return merged;
   }
 
+  private async supportsSurveyAssignmentCalendarLink(): Promise<boolean> {
+    if (this.surveyAssignmentHasCalendarEventId !== null) {
+      return this.surveyAssignmentHasCalendarEventId;
+    }
+
+    try {
+      const rows = await this.prisma.$queryRaw<Array<{ exists: boolean }>>`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'mimo_survey_assignments'
+            AND column_name = 'calendarEventId'
+        ) as "exists"
+      `;
+      this.surveyAssignmentHasCalendarEventId = Boolean(rows?.[0]?.exists);
+    } catch {
+      this.surveyAssignmentHasCalendarEventId = false;
+    }
+
+    return this.surveyAssignmentHasCalendarEventId;
+  }
+
   private async listMimoSurveyBusyIntervals(
     windowStart: Date,
     windowEnd: Date,
@@ -352,6 +384,7 @@ export class ProjectsService {
           "endsAt" as "endsAt"
         FROM mimo_calendar_events
         WHERE status <> 'cancelled'
+          AND "eventType" = 'survey_visit'
           AND COALESCE("endsAt", "startsAt" + interval '30 minutes') > ${windowStart}
           AND "startsAt" < ${windowEnd}
       `;
@@ -367,26 +400,30 @@ export class ProjectsService {
       // Calendar table may not be present in all environments yet.
     }
 
+    // Fallback for environments that still store schedule only on assignment rows.
     try {
-      const assignmentRows = await this.prisma.$queryRaw<
-        Array<{ startsAt: Date; endsAt: Date | null }>
-      >`
-        SELECT
-          "scheduledAt" as "startsAt",
-          "completedAt" as "endsAt"
-        FROM mimo_survey_assignments
-        WHERE status IN ('assigned', 'scheduled', 'in_progress')
-          AND "scheduledAt" IS NOT NULL
-          AND COALESCE("completedAt", "scheduledAt" + interval '30 minutes') > ${windowStart}
-          AND "scheduledAt" < ${windowEnd}
-      `;
+      const hasCalendarLink = await this.supportsSurveyAssignmentCalendarLink();
+      if (!hasCalendarLink) {
+        const assignmentRows = await this.prisma.$queryRaw<
+          Array<{ startsAt: Date; endsAt: Date | null }>
+        >`
+          SELECT
+            "scheduledAt" as "startsAt",
+            "completedAt" as "endsAt"
+          FROM mimo_survey_assignments
+          WHERE status IN ('assigned', 'scheduled', 'in_progress')
+            AND "scheduledAt" IS NOT NULL
+            AND COALESCE("completedAt", "scheduledAt" + interval '30 minutes') > ${windowStart}
+            AND "scheduledAt" < ${windowEnd}
+        `;
 
-      for (const row of assignmentRows) {
-        const startsAt = new Date(row.startsAt);
-        const endsAt = row.endsAt
-          ? new Date(row.endsAt)
-          : new Date(startsAt.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
-        intervals.push({ startsAt, endsAt });
+        for (const row of assignmentRows) {
+          const startsAt = new Date(row.startsAt);
+          const endsAt = row.endsAt
+            ? new Date(row.endsAt)
+            : new Date(startsAt.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+          intervals.push({ startsAt, endsAt });
+        }
       }
     } catch {
       // Assignment table may not be present in all environments yet.
@@ -816,6 +853,88 @@ export class ProjectsService {
     const updated = updatedRows[0];
     if (!updated) {
       throw new BadRequestException('Unable to book survey at this time');
+    }
+
+    // Phase 2: create canonical survey_visit event and keep assignment linked to event.
+    try {
+      const calendarEventId = `mce_${createId()}`;
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_calendar_events (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "eventType",
+          title,
+          description,
+          status,
+          timezone,
+          "startsAt",
+          "endsAt",
+          metadata,
+          "createdByUserId",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${calendarEventId},
+          ${projectId},
+          ${survey.id},
+          'survey_visit',
+          ${`Survey - ${project.projectName}`},
+          'Client booked survey slot',
+          'scheduled',
+          'Asia/Hong_Kong',
+          ${scheduledAt.toISOString()}::timestamptz,
+          ${bookingEnd.toISOString()}::timestamptz,
+          ${JSON.stringify({
+            source: 'client_booking_modal',
+            rooms,
+            estimatedDurationMinutes: durationMinutes,
+          })}::jsonb,
+          ${userId},
+          now(),
+          now()
+        )
+      `;
+
+      const hasCalendarLink = await this.supportsSurveyAssignmentCalendarLink();
+      if (hasCalendarLink) {
+        await this.prisma.$executeRaw`
+          INSERT INTO mimo_survey_assignments (
+            id,
+            "projectId",
+            "surveyExtraId",
+            "calendarEventId",
+            status,
+            metadata,
+            "scheduledAt",
+            "createdAt",
+            "updatedAt"
+          )
+          VALUES (
+            ${`msa_${createId()}`},
+            ${projectId},
+            ${survey.id},
+            ${calendarEventId},
+            'unassigned',
+            ${JSON.stringify({ rooms, calculatedFee: totalFee })}::jsonb,
+            ${scheduledAt.toISOString()}::timestamptz,
+            now(),
+            now()
+          )
+          ON CONFLICT ("projectId") DO UPDATE
+          SET
+            "surveyExtraId" = EXCLUDED."surveyExtraId",
+            "calendarEventId" = EXCLUDED."calendarEventId",
+            status = 'unassigned',
+            "assignedSurveyorUserId" = NULL,
+            "assignedByUserId" = NULL,
+            "scheduledAt" = EXCLUDED."scheduledAt",
+            "updatedAt" = now()
+        `;
+      }
+    } catch (error) {
+      const err = error as any;
+      console.warn('[ProjectsService.bookMimoSurvey] Calendar/assignment sync skipped:', err?.message || err);
     }
 
     return {
@@ -2521,6 +2640,311 @@ export class ProjectsService {
       console.error('[ProjectsService.findSurveyProjectContext] Error:', err?.message || err);
       return null;
     }
+  }
+
+  async listSurveyOpsSurveyors() {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: 'surveyor',
+      },
+      select: {
+        id: true,
+        firstName: true,
+        surname: true,
+        email: true,
+        role: true,
+      },
+      orderBy: [
+        { firstName: 'asc' },
+        { surname: 'asc' },
+        { email: 'asc' },
+      ],
+    });
+
+    return (users as SurveyorRow[]).map((user) => ({
+      id: user.id,
+      label:
+        `${String(user.firstName || '').trim()} ${String(user.surname || '').trim()}`.trim() ||
+        user.email,
+      email: user.email,
+      role: user.role,
+    }));
+  }
+
+  async assignSurveyOpsSurveyor(
+    projectId: string,
+    payload: {
+      surveyExtraId: string;
+      surveyorUserId: string;
+      assignedByUserId: string;
+    },
+  ) {
+    const surveyor = await this.prisma.user.findFirst({
+      where: {
+        id: payload.surveyorUserId,
+        role: 'surveyor',
+      },
+      select: { id: true, firstName: true, surname: true, email: true },
+    });
+
+    if (!surveyor) {
+      throw new BadRequestException('Surveyor not found');
+    }
+
+    const extras = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        status: string;
+        metadata: Record<string, unknown> | null;
+        scheduledAt: Date | null;
+      }>
+    >`
+      SELECT
+        id,
+        status,
+        metadata,
+        "scheduledAt" as "scheduledAt"
+      FROM mimo_project_extras
+      WHERE id = ${payload.surveyExtraId}
+        AND "projectId" = ${projectId}
+        AND "extraType" = 'survey'
+      LIMIT 1
+    `;
+
+    const surveyExtra = extras[0];
+    if (!surveyExtra) {
+      throw new BadRequestException('Survey record not found');
+    }
+
+    const normalizedStatus = String(surveyExtra.status || '').toLowerCase();
+    if (['cancelled', 'declined', 'completed'].includes(normalizedStatus)) {
+      throw new BadRequestException('Survey is not assignable in its current state');
+    }
+
+    const rooms = Number(surveyExtra.metadata?.rooms || 1);
+    const durationMinutes = this.getMimoSurveyDurationMinutes(
+      Number.isFinite(rooms) && rooms > 0 ? Math.floor(rooms) : 1,
+    );
+    const startsAt = surveyExtra.scheduledAt
+      ? new Date(surveyExtra.scheduledAt)
+      : new Date(String(surveyExtra.metadata?.proposedDate || ''));
+
+    if (Number.isNaN(startsAt.getTime())) {
+      throw new BadRequestException('Survey slot has no valid scheduled date/time to assign');
+    }
+
+    const endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
+
+    const conflicts = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT e.id
+      FROM mimo_calendar_events e
+      JOIN mimo_calendar_event_participants p ON p."eventId" = e.id
+      WHERE p."userId" = ${surveyor.id}
+        AND e.status <> 'cancelled'
+        AND e."eventType" = 'survey_visit'
+        AND COALESCE(e."endsAt", e."startsAt" + interval '30 minutes') > ${startsAt}
+        AND e."startsAt" < ${endsAt}
+      LIMIT 1
+    `;
+
+    if (conflicts.length > 0) {
+      throw new BadRequestException('Selected surveyor is already booked for this timeslot');
+    }
+
+    const hasCalendarLink = await this.supportsSurveyAssignmentCalendarLink();
+    let calendarEventId: string | null = null;
+
+    if (hasCalendarLink) {
+      const rows = await this.prisma.$queryRaw<Array<{ calendarEventId: string | null }>>`
+        SELECT "calendarEventId" as "calendarEventId"
+        FROM mimo_survey_assignments
+        WHERE "projectId" = ${projectId}
+        LIMIT 1
+      `;
+      calendarEventId = rows[0]?.calendarEventId || null;
+    }
+
+    if (!calendarEventId) {
+      const eventRows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM mimo_calendar_events
+        WHERE "projectId" = ${projectId}
+          AND "surveyExtraId" = ${payload.surveyExtraId}
+          AND "eventType" = 'survey_visit'
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      `;
+      calendarEventId = eventRows[0]?.id || null;
+    }
+
+    if (!calendarEventId) {
+      calendarEventId = `mce_${createId()}`;
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_calendar_events (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "eventType",
+          title,
+          description,
+          status,
+          timezone,
+          "startsAt",
+          "endsAt",
+          metadata,
+          "createdByUserId",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${calendarEventId},
+          ${projectId},
+          ${payload.surveyExtraId},
+          'survey_visit',
+          'Survey visit',
+          'Survey assignment scheduled via Survey Ops',
+          'scheduled',
+          'Asia/Hong_Kong',
+          ${startsAt.toISOString()}::timestamptz,
+          ${endsAt.toISOString()}::timestamptz,
+          ${JSON.stringify({ assignedVia: 'survey_ops' })}::jsonb,
+          ${payload.assignedByUserId},
+          now(),
+          now()
+        )
+      `;
+    } else {
+      await this.prisma.$executeRaw`
+        UPDATE mimo_calendar_events
+        SET
+          "startsAt" = ${startsAt.toISOString()}::timestamptz,
+          "endsAt" = ${endsAt.toISOString()}::timestamptz,
+          status = 'scheduled',
+          "updatedAt" = now()
+        WHERE id = ${calendarEventId}
+      `;
+    }
+
+    await this.prisma.$executeRaw`
+      DELETE FROM mimo_calendar_event_participants
+      WHERE "eventId" = ${calendarEventId}
+        AND role = 'surveyor'
+    `;
+
+    await this.prisma.$executeRaw`
+      INSERT INTO mimo_calendar_event_participants (
+        id,
+        "eventId",
+        "userId",
+        role,
+        response,
+        "createdAt",
+        "updatedAt"
+      ) VALUES (
+        ${`mcep_${createId()}`},
+        ${calendarEventId},
+        ${surveyor.id},
+        'surveyor',
+        'accepted',
+        now(),
+        now()
+      )
+      ON CONFLICT ("eventId", "userId") WHERE "userId" IS NOT NULL
+      DO UPDATE SET
+        role = EXCLUDED.role,
+        response = EXCLUDED.response,
+        "updatedAt" = now()
+    `;
+
+    if (hasCalendarLink) {
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_survey_assignments (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "calendarEventId",
+          "assignedSurveyorUserId",
+          "assignedByUserId",
+          status,
+          "scheduledAt",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${`msa_${createId()}`},
+          ${projectId},
+          ${payload.surveyExtraId},
+          ${calendarEventId},
+          ${surveyor.id},
+          ${payload.assignedByUserId},
+          'assigned',
+          ${startsAt.toISOString()}::timestamptz,
+          now(),
+          now()
+        )
+        ON CONFLICT ("projectId") DO UPDATE
+        SET
+          "surveyExtraId" = EXCLUDED."surveyExtraId",
+          "calendarEventId" = EXCLUDED."calendarEventId",
+          "assignedSurveyorUserId" = EXCLUDED."assignedSurveyorUserId",
+          "assignedByUserId" = EXCLUDED."assignedByUserId",
+          status = 'assigned',
+          "scheduledAt" = EXCLUDED."scheduledAt",
+          "updatedAt" = now()
+      `;
+    } else {
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_survey_assignments (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "assignedSurveyorUserId",
+          "assignedByUserId",
+          status,
+          "scheduledAt",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${`msa_${createId()}`},
+          ${projectId},
+          ${payload.surveyExtraId},
+          ${surveyor.id},
+          ${payload.assignedByUserId},
+          'assigned',
+          ${startsAt.toISOString()}::timestamptz,
+          now(),
+          now()
+        )
+        ON CONFLICT ("projectId") DO UPDATE
+        SET
+          "surveyExtraId" = EXCLUDED."surveyExtraId",
+          "assignedSurveyorUserId" = EXCLUDED."assignedSurveyorUserId",
+          "assignedByUserId" = EXCLUDED."assignedByUserId",
+          status = 'assigned',
+          "scheduledAt" = EXCLUDED."scheduledAt",
+          "updatedAt" = now()
+      `;
+    }
+
+    await this.prisma.$executeRaw`
+      UPDATE mimo_project_extras
+      SET
+        status = 'assigned',
+        "updatedAt" = now()
+      WHERE id = ${payload.surveyExtraId}
+    `;
+
+    return {
+      projectId,
+      surveyExtraId: payload.surveyExtraId,
+      assignedSurveyor: {
+        id: surveyor.id,
+        firstName: surveyor.firstName,
+        surname: surveyor.surname,
+        email: surveyor.email,
+      },
+      calendarEventId,
+      scheduledAt: startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    };
   }
 
   private async getWalletTransferTimeline(projectId: string) {

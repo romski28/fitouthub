@@ -253,6 +253,19 @@ export class ProjectsController {
     return this.projectsService.findAllForSurveyOps();
   }
 
+  @Get('survey-ops/surveyors')
+  @UseGuards(CombinedAuthGuard)
+  async getSurveyOpsSurveyors(@Request() req: any) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
+    return this.projectsService.listSurveyOpsSurveyors();
+  }
+
   @Get(':id/survey-ops/context')
   @UseGuards(CombinedAuthGuard)
   async getSurveyProjectContext(@Param('id') id: string, @Request() req: any) {
@@ -269,6 +282,34 @@ export class ProjectsController {
     }
 
     return project;
+  }
+
+  @Post(':id/survey-ops/assign')
+  @UseGuards(CombinedAuthGuard)
+  async assignSurveyorToSurvey(
+    @Param('id') id: string,
+    @Body() body: { surveyExtraId?: string; surveyorUserId?: string },
+    @Request() req: any,
+  ) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+    const actorId = req.user?.id || req.user?.sub;
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!body?.surveyExtraId || !body?.surveyorUserId) {
+      throw new BadRequestException('surveyExtraId and surveyorUserId are required');
+    }
+
+    return this.projectsService.assignSurveyOpsSurveyor(id, {
+      surveyExtraId: body.surveyExtraId,
+      surveyorUserId: body.surveyorUserId,
+      assignedByUserId: actorId,
+    });
   }
 
   @Get(':id')

@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS mimo_survey_assignments (
   id text PRIMARY KEY,
   "projectId" text NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
   "surveyExtraId" text NULL REFERENCES mimo_project_extras(id) ON DELETE SET NULL,
+  "calendarEventId" text NULL REFERENCES mimo_calendar_events(id) ON DELETE SET NULL,
   "assignedSurveyorUserId" text NULL REFERENCES "User"(id) ON DELETE SET NULL,
   "assignedByUserId" text NULL REFERENCES "User"(id) ON DELETE SET NULL,
   status text NOT NULL DEFAULT 'unassigned',
@@ -102,11 +103,17 @@ CREATE TABLE IF NOT EXISTS mimo_survey_assignments (
   CHECK (status IN ('unassigned', 'assigned', 'scheduled', 'in_progress', 'completed', 'cancelled'))
 );
 
+ALTER TABLE mimo_survey_assignments
+  ADD COLUMN IF NOT EXISTS "calendarEventId" text NULL REFERENCES mimo_calendar_events(id) ON DELETE SET NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS ux_mimo_survey_assignments_project
   ON mimo_survey_assignments ("projectId");
 
 CREATE INDEX IF NOT EXISTS idx_mimo_survey_assignments_surveyor
   ON mimo_survey_assignments ("assignedSurveyorUserId", status);
+
+CREATE INDEX IF NOT EXISTS idx_mimo_survey_assignments_calendar_event
+  ON mimo_survey_assignments ("calendarEventId");
 
 -- 5) Keep updatedAt current for write operations.
 CREATE OR REPLACE FUNCTION set_mimo_updated_at()
