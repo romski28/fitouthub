@@ -21,6 +21,18 @@ interface SiteAccessRequest {
   };
 }
 
+interface ClientSiteAddress {
+  id: string;
+  label: string | null;
+  buildingName: string | null;
+  addressFull: string;
+  unitNumber: string | null;
+  floorLevel: string | null;
+  accessDetails: string | null;
+  onSiteContactName: string | null;
+  onSiteContactPhone: string | null;
+}
+
 interface SiteAccessVisit {
   id: string;
   status: 'proposed' | 'accepted' | 'declined' | 'cancelled' | 'completed' | string;
@@ -65,6 +77,8 @@ interface SiteAccessTabProps {
   onUpdateSiteAccessForm: (requestId: string, patch: any) => void;
   siteVisitResponseNotes: Record<string, string>;
   onUpdateSiteVisitResponseNotes: (visitId: string, notes: string) => void;
+  clientSiteAddresses: ClientSiteAddress[];
+  onSelectClientSiteAddress: (addressId: string) => void;
   locationDetailsForm: any;
   onUpdateLocationDetailsForm: (patch: any) => void;
   onSubmitLocationDetails: () => Promise<boolean>;
@@ -654,6 +668,37 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         </button>
         {showBuildingInfo && (
           <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Building Name</label>
+              <input
+                type="text"
+                value={locationDetailsForm.buildingName || ''}
+                onChange={(e) => onUpdateLocationDetailsForm({ buildingName: e.target.value })}
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                placeholder="e.g. Harbour View Tower"
+              />
+            </div>
+            {clientSiteAddresses.length > 0 && (
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Saved addresses</label>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    onSelectClientSiteAddress(e.target.value);
+                    e.currentTarget.value = '';
+                  }}
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                >
+                  <option value="">Select an address from your book</option>
+                  {clientSiteAddresses.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {(address.label || address.buildingName || 'Saved address').trim()} - {address.addressFull}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-800">Property Type</label>

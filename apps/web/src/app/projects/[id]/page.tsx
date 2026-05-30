@@ -126,6 +126,18 @@ interface SiteAccessData {
   desiredStartDate?: string | null;
 }
 
+interface ClientSiteAddress {
+  id: string;
+  label: string | null;
+  buildingName: string | null;
+  addressFull: string;
+  unitNumber: string | null;
+  floorLevel: string | null;
+  accessDetails: string | null;
+  onSiteContactName: string | null;
+  onSiteContactPhone: string | null;
+}
+
 interface SiteAccessRequest {
   id: string;
   status: string;
@@ -363,6 +375,7 @@ export default function ClientProjectDetailPage() {
   const [viewingAssistChat, setViewingAssistChat] = useState(false);
   const [siteAccessRequests, setSiteAccessRequests] = useState<SiteAccessRequest[]>([]);
   const [siteAccessData, setSiteAccessData] = useState<SiteAccessData | null>(null);
+  const [clientSiteAddresses, setClientSiteAddresses] = useState<ClientSiteAddress[]>([]);
   const [siteAccessLoading, setSiteAccessLoading] = useState(false);
   const [siteAccessError, setSiteAccessError] = useState<string | null>(null);
   const [submittingSiteAccess, setSubmittingSiteAccess] = useState<string | null>(null);
@@ -901,6 +914,33 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const fetchClientSiteAddresses = async () => {
+    if (!accessToken || !projectId) return;
+
+    try {
+      const response = await fetchWithRetry(
+        `${API_BASE_URL}/projects/${projectId}/site-addresses?_ts=${Date.now()}`,
+        {
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await parseJsonResponse<{ addresses?: ClientSiteAddress[] }>(response);
+      setClientSiteAddresses(data?.addresses || []);
+    } catch {
+      // Keep the form usable if the address-book endpoint is temporarily unavailable.
+    }
+  };
+
   const fetchSiteVisits = async () => {
     if (!accessToken || !projectId) return;
     setSiteVisitLoading(true);
@@ -1202,6 +1242,7 @@ export default function ClientProjectDetailPage() {
       toast.success('Location details submitted.');
       await fetchSiteAccessRequests();
       await fetchProject();
+      await fetchClientSiteAddresses();
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit location details';
@@ -1210,6 +1251,22 @@ export default function ClientProjectDetailPage() {
     } finally {
       setSubmittingLocationDetails(false);
     }
+  };
+
+  const handleSelectClientSiteAddress = (addressId: string) => {
+    const selectedAddress = clientSiteAddresses.find((address) => address.id === addressId);
+    if (!selectedAddress) return;
+
+    setLocationDetailsForm((prev) => ({
+      ...prev,
+      addressFull: selectedAddress.addressFull || prev.addressFull,
+      buildingName: selectedAddress.buildingName || prev.buildingName,
+      unitNumber: selectedAddress.unitNumber || prev.unitNumber,
+      floorLevel: selectedAddress.floorLevel || prev.floorLevel,
+      accessDetails: selectedAddress.accessDetails || prev.accessDetails,
+      onSiteContactName: selectedAddress.onSiteContactName || prev.onSiteContactName,
+      onSiteContactPhone: selectedAddress.onSiteContactPhone || prev.onSiteContactPhone,
+    }));
   };
 
   const handleUpdateSiteAvailability = async (date: string, reason: string) => {
@@ -1328,6 +1385,7 @@ export default function ClientProjectDetailPage() {
     fetchProject();
     fetchSiteAccessRequests();
     fetchSiteVisits();
+    fetchClientSiteAddresses();
   }, [isLoggedIn, accessToken, projectId, promptLoginInPlace]);
 
   useEffect(() => {
@@ -2348,6 +2406,8 @@ export default function ClientProjectDetailPage() {
                   [visitId]: notes,
                 }));
               }}
+              clientSiteAddresses={clientSiteAddresses}
+              onSelectClientSiteAddress={handleSelectClientSiteAddress}
               locationDetailsForm={locationDetailsForm}
               onUpdateLocationDetailsForm={(patch) => {
                 setLocationDetailsForm((prev) => ({

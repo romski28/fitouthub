@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-05-30-2a0e5eb6",
+    "date": "2026-05-30T19:06:34+08:00",
+    "title": "Add client address book selector to site access",
+    "summary": "Add client address book selector to site access",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a0e5eb6",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-30-db40a295",
     "date": "2026-05-30T11:59:17+08:00",
     "title": "Restore Phase A site address service methods",
