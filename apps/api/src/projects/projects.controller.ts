@@ -702,6 +702,48 @@ export class ProjectsController {
     return this.projectsService.submitSiteAccessData(projectId, userId, body);
   }
 
+  @Get(':id/site-addresses')
+  @UseGuards(CombinedAuthGuard)
+  async listClientSiteAddresses(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can view saved site addresses', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.listClientSiteAddresses(projectId, userId);
+  }
+
+  @Post(':id/site-addresses/select')
+  @UseGuards(CombinedAuthGuard)
+  async selectProjectPrimarySiteAddress(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: { clientAddressId?: string },
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only clients can select project site addresses', HttpStatus.FORBIDDEN);
+    }
+
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!body?.clientAddressId) {
+      throw new BadRequestException('clientAddressId is required');
+    }
+
+    return this.projectsService.setProjectPrimarySiteAddress(projectId, userId, {
+      clientAddressId: body.clientAddressId,
+    });
+  }
+
   @Put('site-access-requests/:requestId/respond')
   @UseGuards(CombinedAuthGuard)
   async respondToSiteAccessRequest(

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-05-30-747aece4",
+    "date": "2026-05-30T11:21:03+08:00",
+    "title": "Add Phase A client address book and project site foundation",
+    "summary": "Add Phase A client address book and project site foundation",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "747aece4",
+    "files": [
+      "MANUAL_SQL_ADD_PHASE_A_PROJECT_SITE_ADDRESS_BOOK.sql",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-30-aa729aab",
     "date": "2026-05-30T10:34:36+08:00",
     "title": "Normalize survey-ops page to UTF-8 for Turbopack parsing",
