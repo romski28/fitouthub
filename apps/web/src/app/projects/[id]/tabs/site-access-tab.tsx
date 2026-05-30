@@ -200,6 +200,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     setChangeAvailDate(siteInspectionAvailableOn || locationDetailsForm.desiredStartDate || '');
   }, [locationDetailsForm.desiredStartDate, siteInspectionAvailableOn]);
 
+  useEffect(() => {
+    if (clientSiteAddresses.length > 0 && !showBuildingInfo) {
+      setShowBuildingInfo(true);
+    }
+  }, [clientSiteAddresses.length, showBuildingInfo]);
+
   const hasBasicLocation =
     Boolean(locationDetailsForm.addressFull?.trim()) &&
     Boolean(locationDetailsForm.unitNumber?.trim()) &&
