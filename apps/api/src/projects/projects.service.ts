@@ -82,6 +82,13 @@ type SurveyOpsQueueRow = {
   projectStatus: string;
   surveyExtraId: string;
   surveyStatus: string;
+  assignmentStatus: string | null;
+  assignedSurveyorUserId: string | null;
+  assignedSurveyorFirstName: string | null;
+  assignedSurveyorSurname: string | null;
+  assignedSurveyorEmail: string | null;
+  calendarEventId: string | null;
+  calendarEventStatus: string | null;
   requestedAt: Date;
   scheduledAt: Date | null;
   metadata: Record<string, unknown> | null;
@@ -2567,12 +2574,36 @@ export class ProjectsService {
           p.status AS "projectStatus",
           mpe.id AS "surveyExtraId",
           mpe.status AS "surveyStatus",
+          msa.status AS "assignmentStatus",
+          msa."assignedSurveyorUserId" AS "assignedSurveyorUserId",
+          su."firstName" AS "assignedSurveyorFirstName",
+          su.surname AS "assignedSurveyorSurname",
+          su.email AS "assignedSurveyorEmail",
+          mce.id AS "calendarEventId",
+          mce.status AS "calendarEventStatus",
           mpe."requestedAt" AS "requestedAt",
           mpe."scheduledAt" AS "scheduledAt",
           mpe.metadata AS "metadata",
           mpe."updatedAt" AS "updatedAt"
         FROM mimo_project_extras mpe
         JOIN "Project" p ON p.id = mpe."projectId"
+        LEFT JOIN mimo_survey_assignments msa
+          ON msa."projectId" = p.id
+         AND (
+           msa."surveyExtraId" = mpe.id
+           OR msa."surveyExtraId" IS NULL
+         )
+        LEFT JOIN "User" su
+          ON su.id = msa."assignedSurveyorUserId"
+        LEFT JOIN LATERAL (
+          SELECT e.id, e.status
+          FROM mimo_calendar_events e
+          WHERE e."projectId" = p.id
+            AND e."surveyExtraId" = mpe.id
+            AND e."eventType" = 'survey_visit'
+          ORDER BY e."createdAt" DESC
+          LIMIT 1
+        ) mce ON TRUE
         WHERE
           mpe."extraType" = 'survey'
           AND p.status <> ${this.ARCHIVED_STATUS}
@@ -2591,6 +2622,17 @@ export class ProjectsService {
         survey: {
           id: row.surveyExtraId,
           status: row.surveyStatus,
+          assignmentStatus: row.assignmentStatus,
+          assignedSurveyor: row.assignedSurveyorUserId
+            ? {
+                id: row.assignedSurveyorUserId,
+                firstName: row.assignedSurveyorFirstName,
+                surname: row.assignedSurveyorSurname,
+                email: row.assignedSurveyorEmail,
+              }
+            : null,
+          calendarEventId: row.calendarEventId,
+          calendarEventStatus: row.calendarEventStatus,
           requestedAt: row.requestedAt,
           scheduledAt: row.scheduledAt,
           metadata: row.metadata || {},
@@ -2944,6 +2986,141 @@ export class ProjectsService {
       calendarEventId,
       scheduledAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
+    };
+  }
+
+  async updateSurveyOpsSurveyStatus(
+    projectId: string,
+    payload: {
+      surveyExtraId: string;
+      action: 'start' | 'cancel';
+      actorUserId: string;
+    },
+  ) {
+    const extras = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        status: string;
+      }>
+    >`
+      SELECT id, status
+      FROM mimo_project_extras
+      WHERE id = ${payload.surveyExtraId}
+        AND "projectId" = ${projectId}
+        AND "extraType" = 'survey'
+      LIMIT 1
+    `;
+
+    const surveyExtra = extras[0];
+    if (!surveyExtra) {
+      throw new BadRequestException('Survey record not found');
+    }
+
+    const hasCalendarLink = await this.supportsSurveyAssignmentCalendarLink();
+
+    let assignmentRows: Array<{ id: string; calendarEventId: string | null; assignedSurveyorUserId: string | null }> = [];
+    if (hasCalendarLink) {
+      assignmentRows = await this.prisma.$queryRaw<
+        Array<{ id: string; calendarEventId: string | null; assignedSurveyorUserId: string | null }>
+      >`
+        SELECT id, "calendarEventId" as "calendarEventId", "assignedSurveyorUserId" as "assignedSurveyorUserId"
+        FROM mimo_survey_assignments
+        WHERE "projectId" = ${projectId}
+        LIMIT 1
+      `;
+    } else {
+      assignmentRows = await this.prisma.$queryRaw<
+        Array<{ id: string; calendarEventId: string | null; assignedSurveyorUserId: string | null }>
+      >`
+        SELECT id, NULL::text as "calendarEventId", "assignedSurveyorUserId" as "assignedSurveyorUserId"
+        FROM mimo_survey_assignments
+        WHERE "projectId" = ${projectId}
+        LIMIT 1
+      `;
+    }
+
+    const assignment = assignmentRows[0];
+
+    if (payload.action === 'start') {
+      if (!assignment?.assignedSurveyorUserId) {
+        throw new BadRequestException('Please assign a surveyor before starting the survey');
+      }
+
+      await this.prisma.$executeRaw`
+        UPDATE mimo_survey_assignments
+        SET
+          status = 'in_progress',
+          "updatedAt" = now()
+        WHERE "projectId" = ${projectId}
+      `;
+
+      await this.prisma.$executeRaw`
+        UPDATE mimo_project_extras
+        SET
+          status = 'in_progress',
+          "updatedAt" = now()
+        WHERE id = ${payload.surveyExtraId}
+      `;
+
+      return {
+        projectId,
+        surveyExtraId: payload.surveyExtraId,
+        status: 'in_progress',
+      };
+    }
+
+    let calendarEventId = assignment?.calendarEventId || null;
+    if (!calendarEventId) {
+      const eventRows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM mimo_calendar_events
+        WHERE "projectId" = ${projectId}
+          AND "surveyExtraId" = ${payload.surveyExtraId}
+          AND "eventType" = 'survey_visit'
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      `;
+      calendarEventId = eventRows[0]?.id || null;
+    }
+
+    if (calendarEventId) {
+      await this.prisma.$executeRaw`
+        UPDATE mimo_calendar_events
+        SET
+          status = 'cancelled',
+          "updatedAt" = now(),
+          metadata = COALESCE(metadata, '{}'::jsonb) || ${JSON.stringify({
+            cancelledByUserId: payload.actorUserId,
+            cancelledAt: new Date().toISOString(),
+            cancelledFrom: 'survey_ops',
+          })}::jsonb
+        WHERE id = ${calendarEventId}
+      `;
+    }
+
+    await this.prisma.$executeRaw`
+      UPDATE mimo_survey_assignments
+      SET
+        status = 'unassigned',
+        "assignedSurveyorUserId" = NULL,
+        "assignedByUserId" = NULL,
+        "updatedAt" = now()
+      WHERE "projectId" = ${projectId}
+    `;
+
+    await this.prisma.$executeRaw`
+      UPDATE mimo_project_extras
+      SET
+        status = 'requested',
+        "updatedAt" = now()
+      WHERE id = ${payload.surveyExtraId}
+    `;
+
+    return {
+      projectId,
+      surveyExtraId: payload.surveyExtraId,
+      status: 'requested',
+      calendarEventId,
     };
   }
 

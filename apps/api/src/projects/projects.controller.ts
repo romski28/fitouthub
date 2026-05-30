@@ -312,6 +312,37 @@ export class ProjectsController {
     });
   }
 
+  @Post(':id/survey-ops/status')
+  @UseGuards(CombinedAuthGuard)
+  async updateSurveyOpsStatus(
+    @Param('id') id: string,
+    @Body() body: { surveyExtraId?: string; action?: 'start' | 'cancel' },
+    @Request() req: any,
+  ) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+    const actorId = req.user?.id || req.user?.sub;
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!body?.surveyExtraId || !body?.action) {
+      throw new BadRequestException('surveyExtraId and action are required');
+    }
+    if (!['start', 'cancel'].includes(body.action)) {
+      throw new BadRequestException('action must be either start or cancel');
+    }
+
+    return this.projectsService.updateSurveyOpsSurveyStatus(id, {
+      surveyExtraId: body.surveyExtraId,
+      action: body.action,
+      actorUserId: actorId,
+    });
+  }
+
   @Get(':id')
   @UseGuards(CombinedAuthGuard)
   async findOne(@Param('id') id: string, @Request() req: any) {
