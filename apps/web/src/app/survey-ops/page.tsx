@@ -414,10 +414,10 @@ export default function SurveyOpsPage() {
                   <div>
                     <h2 className="text-lg font-bold text-slate-900">{item.projectName}</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Client: {item.clientName || '-'} · Region: {item.region || '-'}
+                      Client: {item.clientName || '-'} ï¿½ Region: {item.region || '-'}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Requested: {formatDate(item.survey.requestedAt)} · Scheduled: {formatDate(item.survey.scheduledAt)}
+                      Requested: {formatDate(item.survey.requestedAt)} ï¿½ Scheduled: {formatDate(item.survey.scheduledAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -514,10 +514,10 @@ export default function SurveyOpsPage() {
                   <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-3 text-sm text-slate-700">
                     <p className="font-semibold text-slate-900">Project context</p>
                     <p className="mt-1">
-                      Scale: {context.projectScale || '-'} · Site inspection: {formatDate(context.siteInspectionAvailableOn)}
+                      Scale: {context.projectScale || '-'} ï¿½ Site inspection: {formatDate(context.siteInspectionAvailableOn)}
                     </p>
                     <p className="mt-1">
-                      Start: {formatDate(context.startDate)} · End: {formatDate(context.endDate)}
+                      Start: {formatDate(context.startDate)} ï¿½ End: {formatDate(context.endDate)}
                     </p>
                     {context.notes ? <p className="mt-1">Notes: {context.notes}</p> : null}
                   </div>
