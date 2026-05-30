@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-05-30-9a12ba8c",
+    "date": "2026-05-30T09:29:07+08:00",
+    "title": "Add Sunday exclusion and back pagination for survey slots",
+    "summary": "Add Sunday exclusion and back pagination for survey slots",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9a12ba8c",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/book-mimo-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-05-30-bbd6933c",
     "date": "2026-05-30T09:20:17+08:00",
     "title": "Add paged Mimo survey availability slots with lunch break and non-overlap",

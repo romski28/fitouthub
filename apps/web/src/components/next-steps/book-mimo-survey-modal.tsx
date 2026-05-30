@@ -75,6 +75,7 @@ export function BookMimoSurveyModal({
   const [rooms, setRooms] = useState<number>(1);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [selectedSlotStart, setSelectedSlotStart] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -84,7 +85,7 @@ export function BookMimoSurveyModal({
   const totalFee = useMemo(() => rooms * FEE_PER_ROOM_HKD, [rooms]);
 
   const fetchAvailability = useCallback(
-    async (cursor?: string) => {
+    async (cursor?: string, direction: 'reset' | 'next' | 'back' = 'reset') => {
       if (!accessToken || !state.projectId || !isOpen) return;
 
       setLoadingSlots(true);
@@ -116,6 +117,16 @@ export function BookMimoSurveyModal({
         setNextCursor(data.nextCursor || null);
         setDurationMinutes(Number(data.durationMinutes || 0));
 
+        if (direction === 'next' && cursor) {
+          setCursorHistory((prev) => [...prev, cursor]);
+        }
+        if (direction === 'back') {
+          setCursorHistory((prev) => prev.slice(0, -1));
+        }
+        if (direction === 'reset') {
+          setCursorHistory([]);
+        }
+
         if ((data.slots || []).length > 0) {
           setSelectedSlotStart(data.slots[0].startsAt);
         } else {
@@ -139,12 +150,13 @@ export function BookMimoSurveyModal({
       setSlots([]);
       setSelectedSlotStart('');
       setNextCursor(null);
+      setCursorHistory([]);
       setDurationMinutes(0);
       setError(null);
       return;
     }
 
-    void fetchAvailability();
+    void fetchAvailability(undefined, 'reset');
   }, [fetchAvailability, isOpen]);
 
   const handleBookSurvey = async () => {
@@ -277,17 +289,36 @@ export function BookMimoSurveyModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-200">Next available slots (from tomorrow)</p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!nextCursor || loadingSlots || isLoading || submitting) return;
-                  void fetchAvailability(nextCursor);
-                }}
-                disabled={!nextCursor || loadingSlots || isLoading || submitting}
-                className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-60"
-              >
-                {loadingSlots ? 'Loading...' : 'Next 5'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const previousCursor = cursorHistory[cursorHistory.length - 2];
+                    if (loadingSlots || isLoading || submitting) return;
+                    if (cursorHistory.length <= 1) {
+                      void fetchAvailability(undefined, 'reset');
+                      return;
+                    }
+                    if (!previousCursor) return;
+                    void fetchAvailability(previousCursor, 'back');
+                  }}
+                  disabled={loadingSlots || isLoading || submitting || cursorHistory.length === 0}
+                  className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!nextCursor || loadingSlots || isLoading || submitting) return;
+                    void fetchAvailability(nextCursor, 'next');
+                  }}
+                  disabled={!nextCursor || loadingSlots || isLoading || submitting}
+                  className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {loadingSlots ? 'Loading...' : 'Next 5'}
+                </button>
+              </div>
             </div>
 
             {slots.length > 0 ? (

@@ -208,10 +208,19 @@ export class ProjectsService {
     return this.fromHkDate(hkNextStart);
   }
 
+  private isSundayInHk(dateUtc: Date): boolean {
+    const hk = this.toHkDate(dateUtc);
+    return hk.getUTCDay() === 0;
+  }
+
   private isValidSurveyWindow(startUtc: Date, durationMinutes: number): boolean {
     const endUtc = new Date(startUtc.getTime() + durationMinutes * 60 * 1000);
     const hkStart = this.toHkDate(startUtc);
     const hkEnd = this.toHkDate(endUtc);
+
+    if (hkStart.getUTCDay() === 0) {
+      return false;
+    }
 
     // Slot must fit in one local day.
     if (
@@ -270,6 +279,21 @@ export class ProjectsService {
 
     if (minutes >= dayEnd) {
       return this.getNextWorkdayStartUtc(startUtc);
+    }
+
+    if (this.isSundayInHk(startUtc)) {
+      const hkNextDayStart = new Date(
+        Date.UTC(
+          hk.getUTCFullYear(),
+          hk.getUTCMonth(),
+          hk.getUTCDate() + 1,
+          this.MIMO_SURVEY_WORKDAY_START_HOUR,
+          0,
+          0,
+          0,
+        ),
+      );
+      return this.fromHkDate(hkNextDayStart);
     }
 
     return startUtc;
