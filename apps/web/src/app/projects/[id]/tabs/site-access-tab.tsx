@@ -176,6 +176,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   siteVisitError,
   submittingSiteAccess,
   submittingSiteVisit,
+  clientSiteAddresses,
+  onSelectClientSiteAddress,
   locationDetailsForm,
   onUpdateLocationDetailsForm,
   onSubmitLocationDetails,
