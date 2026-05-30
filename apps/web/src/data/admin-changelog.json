@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-30-a8a352ef",
+    "date": "2026-05-30T10:20:12+08:00",
+    "title": "Fix survey-ops page parse error caused by duplicated JSX blocks",
+    "summary": "Fix survey-ops page parse error caused by duplicated JSX blocks",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8a352ef",
+    "files": [
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-30-df914c7a",
     "date": "2026-05-30T10:17:04+08:00",
     "title": "Enhance survey-ops with assignee visibility, filters, and lifecycle actions",
