@@ -301,6 +301,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
 
   const addressSummary = [
+    locationDetailsForm.buildingName,
     locationDetailsForm.addressFull,
     [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
   ].filter(Boolean).join(' · ');
@@ -355,6 +356,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         {addressOpen && (
           <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
             <p className="text-xs text-slate-600">Required before accepting a visit. This will be shared with the contractor.</p>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Building Name</label>
+              <input
+                type="text"
+                value={locationDetailsForm.buildingName || ''}
+                onChange={(e) => onUpdateLocationDetailsForm({ buildingName: e.target.value })}
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                placeholder="e.g. Harbour View Tower"
+              />
+            </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-800">Full Address *</label>
               <input

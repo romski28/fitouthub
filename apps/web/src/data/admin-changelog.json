@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-05-30-1b4a5e11",
+    "date": "2026-05-30T11:52:16+08:00",
+    "title": "Add building name to client site access details",
+    "summary": "Add building name to client site access details",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1b4a5e11",
+    "files": [
+      "apps/api/prisma/migrations/20260530_add_building_name_to_project_location_details/migration.sql",
+      "apps/api/prisma/migrations/add_site_access_and_location_details.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/dto/project-location-details.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-30-747aece4",
     "date": "2026-05-30T11:21:03+08:00",
     "title": "Add Phase A client address book and project site foundation",

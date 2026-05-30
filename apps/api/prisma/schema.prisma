@@ -1556,6 +1556,7 @@ model ProjectLocationDetails {
   id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId              String    @unique
   addressFull            String
+  buildingName           String?
   postalCode             String?
   gpsCoordinates         Json?
   unitNumber             String?

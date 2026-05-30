@@ -404,12 +404,7 @@ export class ProjectsService {
           ) VALUES (
             ${addressId},
             ${userId},
-            ${
-              String(body.buildingName || '').trim() ||
-              String(body.addressFull || '')
-                .trim()
-                .slice(0, 80)
-            },
+            ${String(body.buildingName || '').trim() || String(body.addressFull || '').trim().slice(0, 80)},
             ${String(body.buildingName || '').trim() || null},
             ${addressFull},
             ${String(body.unitNumber || '').trim() || null},
@@ -493,15 +488,18 @@ export class ProjectsService {
     }
   }
 
-  private async getPrimaryProjectSiteAddress(projectId: string): Promise<{
-    buildingName: string | null;
-    addressFull: string | null;
-    unitNumber: string | null;
-    floorLevel: string | null;
-    accessDetails: string | null;
-    onSiteContactName: string | null;
-    onSiteContactPhone: string | null;
-  } | null> {
+  private async getPrimaryProjectSiteAddress(projectId: string): Promise<
+    | {
+        buildingName: string | null;
+        addressFull: string | null;
+        unitNumber: string | null;
+        floorLevel: string | null;
+        accessDetails: string | null;
+        onSiteContactName: string | null;
+        onSiteContactPhone: string | null;
+      }
+    | null
+  > {
     try {
       const rows = await this.prisma.$queryRaw<
         Array<{
@@ -5848,164 +5846,6 @@ Please review the project details and respond with your quote or decline the inv
     };
   }
 
-  async listClientSiteAddresses(projectId: string, userId: string) {
-    await this.assertClientProjectAccess(projectId, userId);
-
-    try {
-      const rows = await this.prisma.$queryRaw<
-        Array<{
-          id: string;
-          label: string | null;
-          buildingName: string | null;
-          addressFull: string;
-          unitNumber: string | null;
-          floorLevel: string | null;
-          accessDetails: string | null;
-          onSiteContactName: string | null;
-          onSiteContactPhone: string | null;
-          isActive: boolean;
-          createdAt: Date;
-          updatedAt: Date;
-        }>
-      >`
-        SELECT
-          id,
-          label,
-          "buildingName" as "buildingName",
-          "addressFull" as "addressFull",
-          "unitNumber" as "unitNumber",
-          "floorLevel" as "floorLevel",
-          "accessDetails" as "accessDetails",
-          "onSiteContactName" as "onSiteContactName",
-          "onSiteContactPhone" as "onSiteContactPhone",
-          "isActive" as "isActive",
-          "createdAt" as "createdAt",
-          "updatedAt" as "updatedAt"
-        FROM client_site_addresses
-        WHERE "userId" = ${userId}
-          AND "isActive" = true
-        ORDER BY "updatedAt" DESC
-      `;
-      return rows;
-    } catch {
-      return [];
-    }
-  }
-
-  async setProjectPrimarySiteAddress(
-    projectId: string,
-    userId: string,
-    payload: { clientAddressId: string },
-  ) {
-    await this.assertClientProjectAccess(projectId, userId);
-
-    const addressId = String(payload.clientAddressId || '').trim();
-    if (!addressId) {
-      throw new BadRequestException('clientAddressId is required');
-    }
-
-    try {
-      const addresses = await this.prisma.$queryRaw<
-        Array<{
-          id: string;
-          label: string | null;
-          buildingName: string | null;
-          addressFull: string;
-          unitNumber: string | null;
-          floorLevel: string | null;
-          accessDetails: string | null;
-          onSiteContactName: string | null;
-          onSiteContactPhone: string | null;
-        }>
-      >`
-        SELECT
-          id,
-          label,
-          "buildingName" as "buildingName",
-          "addressFull" as "addressFull",
-          "unitNumber" as "unitNumber",
-          "floorLevel" as "floorLevel",
-          "accessDetails" as "accessDetails",
-          "onSiteContactName" as "onSiteContactName",
-          "onSiteContactPhone" as "onSiteContactPhone"
-        FROM client_site_addresses
-        WHERE id = ${addressId}
-          AND "userId" = ${userId}
-          AND "isActive" = true
-        LIMIT 1
-      `;
-
-      const address = addresses[0];
-      if (!address) {
-        throw new BadRequestException('Address not found');
-      }
-
-      await this.prisma.$executeRaw`
-        INSERT INTO project_sites (
-          id,
-          "projectId",
-          "clientAddressId",
-          "siteLabel",
-          "buildingName",
-          "addressFullSnapshot",
-          "unitNumberSnapshot",
-          "floorLevelSnapshot",
-          "accessDetailsSnapshot",
-          "onSiteContactNameSnapshot",
-          "onSiteContactPhoneSnapshot",
-          "isPrimary",
-          "isActive",
-          metadata,
-          "createdByUserId",
-          "createdAt",
-          "updatedAt"
-        ) VALUES (
-          ${`ps_${createId()}`},
-          ${projectId},
-          ${address.id},
-          ${String(address.label || address.buildingName || 'Primary Site')},
-          ${address.buildingName},
-          ${address.addressFull},
-          ${address.unitNumber},
-          ${address.floorLevel},
-          ${address.accessDetails},
-          ${address.onSiteContactName},
-          ${address.onSiteContactPhone},
-          true,
-          true,
-          '{}'::jsonb,
-          ${userId},
-          now(),
-          now()
-        )
-        ON CONFLICT ("projectId", "isPrimary") WHERE "isPrimary" = true
-        DO UPDATE SET
-          "clientAddressId" = EXCLUDED."clientAddressId",
-          "siteLabel" = EXCLUDED."siteLabel",
-          "buildingName" = EXCLUDED."buildingName",
-          "addressFullSnapshot" = EXCLUDED."addressFullSnapshot",
-          "unitNumberSnapshot" = EXCLUDED."unitNumberSnapshot",
-          "floorLevelSnapshot" = EXCLUDED."floorLevelSnapshot",
-          "accessDetailsSnapshot" = EXCLUDED."accessDetailsSnapshot",
-          "onSiteContactNameSnapshot" = EXCLUDED."onSiteContactNameSnapshot",
-          "onSiteContactPhoneSnapshot" = EXCLUDED."onSiteContactPhoneSnapshot",
-          "isActive" = true,
-          "updatedAt" = now()
-      `;
-
-      return {
-        success: true,
-        projectId,
-        clientAddressId: address.id,
-      };
-    } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException('Address book feature is not yet available in this environment');
-    }
-  }
-
   async respondToSiteAccessRequest(
     requestId: string,
     userId: string,
@@ -6878,6 +6718,7 @@ Please review the project details and respond with your quote or decline the inv
     userId: string,
     body: {
       addressFull: string;
+      buildingName?: string;
       postalCode?: string;
       gpsCoordinates?: { lat: number; lng: number };
       unitNumber?: string;
@@ -6949,6 +6790,7 @@ Please review the project details and respond with your quote or decline the inv
       create: {
         projectId,
         addressFull: body.addressFull,
+        buildingName: body.buildingName,
         postalCode: body.postalCode,
         gpsCoordinates: body.gpsCoordinates || undefined,
         unitNumber: body.unitNumber,
@@ -6971,6 +6813,7 @@ Please review the project details and respond with your quote or decline the inv
       },
       update: {
         addressFull: body.addressFull,
+        buildingName: body.buildingName,
         postalCode: body.postalCode,
         gpsCoordinates: body.gpsCoordinates || undefined,
         unitNumber: body.unitNumber,
@@ -7297,13 +7140,50 @@ Please review the project details and respond with your quote or decline the inv
 
     // Also fetch projectLocationDetails — this is the table the client's "Save address"
     // button writes to. Prefer its fields over the older siteAccessData record.
-    const locationDetails = await this.prisma.projectLocationDetails.findUnique({
-      where: { projectId },
-    });
+    const locationDetailsRows = await this.prisma.$queryRaw<
+      Array<{
+        addressFull: string;
+        buildingName: string | null;
+        unitNumber: string | null;
+        floorLevel: string | null;
+        postalCode: string | null;
+        propertyType: string | null;
+        propertySize: string | null;
+        propertyAge: string | null;
+        accessDetails: string | null;
+        existingConditions: string | null;
+        accessHoursDescription: string | null;
+        onSiteContactName: string | null;
+        onSiteContactPhone: string | null;
+        desiredStartDate: Date | null;
+      }>
+    >`
+      SELECT
+        "addressFull" as "addressFull",
+        "buildingName" as "buildingName",
+        "unitNumber" as "unitNumber",
+        "floorLevel" as "floorLevel",
+        "postalCode" as "postalCode",
+        "propertyType" as "propertyType",
+        "propertySize" as "propertySize",
+        "propertyAge" as "propertyAge",
+        "accessDetails" as "accessDetails",
+        "existingConditions" as "existingConditions",
+        "accessHoursDescription" as "accessHoursDescription",
+        "onSiteContactName" as "onSiteContactName",
+        "onSiteContactPhone" as "onSiteContactPhone",
+        "desiredStartDate" as "desiredStartDate"
+      FROM "ProjectLocationDetails"
+      WHERE "projectId" = ${projectId}
+      LIMIT 1
+    `;
+    const locationDetails = locationDetailsRows[0] || null;
+    const locationBuildingName = locationDetails?.buildingName ?? siteAccessData?.buildingName ?? null;
 
     const mergedSiteAccessData = locationDetails
       ? {
           addressFull: locationDetails.addressFull,
+          buildingName: locationBuildingName,
           unitNumber: locationDetails.unitNumber ?? siteAccessData?.unitNumber ?? null,
           floorLevel: locationDetails.floorLevel ?? siteAccessData?.floorLevel ?? null,
           postalCode: locationDetails.postalCode ?? null,

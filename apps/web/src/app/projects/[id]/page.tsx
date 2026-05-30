@@ -111,6 +111,7 @@ interface Message {
 
 interface SiteAccessData {
   addressFull: string;
+  buildingName?: string | null;
   unitNumber?: string | null;
   floorLevel?: string | null;
   postalCode?: string | null;
@@ -371,6 +372,7 @@ export default function ClientProjectDetailPage() {
     visitScheduledAt?: string;
     reasonDenied?: string;
     addressFull?: string;
+    buildingName?: string;
     unitNumber?: string;
     floorLevel?: string;
     accessDetails?: string;
@@ -385,6 +387,7 @@ export default function ClientProjectDetailPage() {
   const [siteAccessBlockers, setSiteAccessBlockers] = useState<string[]>([]);
   const [locationDetailsForm, setLocationDetailsForm] = useState({
     addressFull: '',
+    buildingName: '',
     postalCode: '',
     unitNumber: '',
     floorLevel: '',
@@ -952,6 +955,8 @@ export default function ClientProjectDetailPage() {
 
     const locationPayload = {
       addressFull: locationDetailsForm.addressFull || form.addressFull || siteAccessData?.addressFull || '',
+      buildingName:
+        locationDetailsForm.buildingName || form.buildingName || siteAccessData?.buildingName || undefined,
       postalCode: locationDetailsForm.postalCode || undefined,
       unitNumber:
         locationDetailsForm.unitNumber || form.unitNumber || siteAccessData?.unitNumber || undefined,
@@ -1159,6 +1164,7 @@ export default function ClientProjectDetailPage() {
           },
           body: JSON.stringify({
             addressFull: locationDetailsForm.addressFull,
+            buildingName: locationDetailsForm.buildingName || undefined,
             postalCode: locationDetailsForm.postalCode || undefined,
             unitNumber: locationDetailsForm.unitNumber || undefined,
             floorLevel: locationDetailsForm.floorLevel || undefined,
@@ -1374,6 +1380,7 @@ export default function ClientProjectDetailPage() {
     setLocationDetailsForm((prev) => ({
       ...prev,
       addressFull: prev.addressFull || siteAccessData.addressFull || '',
+      buildingName: prev.buildingName || siteAccessData.buildingName || '',
       unitNumber: prev.unitNumber || siteAccessData.unitNumber || '',
       floorLevel: prev.floorLevel || siteAccessData.floorLevel || '',
       postalCode: prev.postalCode || siteAccessData.postalCode || '',

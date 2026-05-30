@@ -68,6 +68,7 @@ CREATE TABLE "ProjectLocationDetails" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
   "projectId" TEXT NOT NULL,
   "addressFull" TEXT NOT NULL,
+  "buildingName" TEXT,
   "postalCode" TEXT,
   "gpsCoordinates" JSONB,
   "unitNumber" TEXT,

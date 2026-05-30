@@ -1,5 +1,6 @@
 export class ProjectLocationDetailsDto {
   addressFull: string;
+  buildingName?: string;
   postalCode?: string;
   gpsCoordinates?: { lat: number; lng: number };
   unitNumber?: string;
