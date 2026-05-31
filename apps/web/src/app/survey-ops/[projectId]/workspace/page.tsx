@@ -106,9 +106,12 @@ export default function SurveyWorkspacePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [activeMarkerIndex, setActiveMarkerIndex] = useState<number | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [newPointColor, setNewPointColor] = useState('#ef4444');
 
   const [form, setForm] = useState<WorkspaceReport>({
@@ -224,40 +227,6 @@ export default function SurveyWorkspacePage() {
     }
   }, [accessToken, form, projectId, surveyExtraId]);
 
-  const saveDraftSnapshot = useCallback(
-    async (snapshot: WorkspaceReport) => {
-      if (!accessToken || !projectId || !surveyExtraId) return null;
-
-      const response = await fetch(
-        `${API_BASE_URL}/projects/${encodeURIComponent(projectId)}/survey-ops/workspace/draft`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            surveyExtraId,
-            title: snapshot.title,
-            summary: snapshot.summary,
-            accessNotes: snapshot.accessNotes,
-            recommendations: snapshot.recommendations,
-            rooms: snapshot.rooms,
-            photos: snapshot.photos,
-          }),
-        },
-      );
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to save survey draft');
-      }
-
-      return payload?.report as WorkspaceReport | undefined;
-    },
-    [accessToken, projectId, surveyExtraId],
-  );
-
   const submitForApproval = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) return;
 
@@ -292,81 +261,64 @@ export default function SurveyWorkspacePage() {
     }
   }, [accessToken, projectId, surveyExtraId]);
 
-  const uploadImages = useCallback(
-    async (files: File[]) => {
-      if (files.length === 0 || !activeRoom) return;
+  const uploadImages = useCallback(async () => {
+    if (pendingFiles.length === 0 || !activeRoom) return;
 
-      setUploading(true);
-      setError(null);
-      setSuccess(null);
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
 
-      try {
-        const formData = new FormData();
-        files.forEach((file) => formData.append('files', file));
+    try {
+      const formData = new FormData();
+      pendingFiles.forEach((file) => formData.append('files', file));
 
-        const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
-          method: 'POST',
-          body: formData,
-        });
+      const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+        method: 'POST',
+        body: formData,
+      });
 
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload?.message || 'Failed to upload images');
-        }
-
-        const urls = getUploadResponseKeys(payload);
-        if (urls.length === 0) {
-          throw new Error('Upload did not return image keys');
-        }
-
-        const photos: WorkspacePhoto[] = urls.map((url) => ({
-          storageKey: String(url || '').trim(),
-          imageUrl: String(url || '').trim(),
-          caption: '',
-          markup: { points: [] },
-        }));
-
-        const nextRooms = form.rooms.map((room, index) =>
-          index === selectedRoomIndex
-            ? {
-                ...room,
-                photos: [...(room.photos || []), ...photos],
-              }
-            : room,
-        );
-        const nextPhotos = flattenRoomPhotos(nextRooms);
-
-        setForm((prev) => ({
-          ...prev,
-          rooms: nextRooms,
-          photos: nextPhotos,
-        }));
-        setSelectedPhotoIndex((prev) => (nextRooms[selectedRoomIndex]?.photos?.length ? Math.max(prev, 0) : 0));
-
-        const savedReport = await saveDraftSnapshot({
-          ...form,
-          rooms: nextRooms,
-          photos: nextPhotos,
-        });
-
-        setForm((prev) => ({
-          ...prev,
-          id: savedReport?.id || prev.id,
-          status: savedReport?.status || prev.status,
-          updatedAt: savedReport?.updatedAt || prev.updatedAt,
-          rooms: Array.isArray(savedReport?.rooms) ? savedReport.rooms : nextRooms,
-          photos: Array.isArray(savedReport?.photos) ? savedReport.photos : nextPhotos,
-        }));
-        setUploaderClearKey((prev) => prev + 1);
-        setSuccess('Images uploaded and saved to the active room.');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to upload images');
-      } finally {
-        setUploading(false);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Failed to upload images');
       }
-    },
-    [activeRoom, form, saveDraftSnapshot, selectedRoomIndex],
-  );
+
+      const urls = getUploadResponseKeys(payload);
+      if (urls.length === 0) {
+        throw new Error('Upload did not return image keys');
+      }
+
+      const photos: WorkspacePhoto[] = urls.map((url) => ({
+        storageKey: String(url || '').trim(),
+        imageUrl: String(url || '').trim(),
+        caption: '',
+        markup: { points: [] },
+      }));
+
+      const nextRooms = form.rooms.map((room, index) =>
+        index === selectedRoomIndex
+          ? {
+              ...room,
+              photos: [...(room.photos || []), ...photos],
+            }
+          : room,
+      );
+      const nextPhotos = flattenRoomPhotos(nextRooms);
+
+      setForm((prev) => ({
+        ...prev,
+        rooms: nextRooms,
+        photos: nextPhotos,
+      }));
+      setSelectedPhotoIndex((prev) => (nextRooms[selectedRoomIndex]?.photos?.length ? Math.max(prev, 0) : 0));
+      setPendingFiles([]);
+      setUploaderClearKey((prev) => prev + 1);
+      setSuccess('Images uploaded. Save draft to persist room markup changes.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload images');
+    } finally {
+      setUploading(false);
+    }
+  }, [activeRoom, form.rooms, pendingFiles, selectedRoomIndex]);
 
   const updateActivePhoto = (updater: (photo: WorkspacePhoto) => WorkspacePhoto) => {
     setForm((prev) => {
@@ -381,6 +333,33 @@ export default function SurveyWorkspacePage() {
         ...room,
         photos: nextRoomPhotos,
       };
+
+      return {
+        ...prev,
+        rooms: nextRooms,
+        photos: flattenRoomPhotos(nextRooms),
+      };
+    });
+  };
+
+  const removePhotoAtIndex = (photoIndex: number) => {
+    setForm((prev) => {
+      const room = prev.rooms[selectedRoomIndex];
+      if (!room) return prev;
+
+      const nextRooms = [...prev.rooms];
+      const nextRoomPhotos = (room.photos || []).filter((_, index) => index !== photoIndex);
+      nextRooms[selectedRoomIndex] = {
+        ...room,
+        photos: nextRoomPhotos,
+      };
+
+      const nextSelectedIndex = Math.max(0, Math.min(selectedPhotoIndex, nextRoomPhotos.length - 1));
+      setSelectedPhotoIndex(nextSelectedIndex);
+      if (nextRoomPhotos.length === 0) {
+        setEditorOpen(false);
+      }
+      setActiveMarkerIndex(null);
 
       return {
         ...prev,
@@ -414,6 +393,8 @@ export default function SurveyWorkspacePage() {
     const x = toNumber(((event.clientX - rect.left) / rect.width) * 100);
     const y = toNumber(((event.clientY - rect.top) / rect.height) * 100);
 
+    const nextMarkerIndex = points.length;
+    setActiveMarkerIndex(nextMarkerIndex);
     updateActivePhoto((photo) => ({
       ...photo,
       markup: {
@@ -432,6 +413,12 @@ export default function SurveyWorkspacePage() {
 
   const points = useMemo(() => activePhoto?.markup?.points || [], [activePhoto]);
 
+  const setActivePhotoAndOpenEditor = (photoIndex: number) => {
+    setSelectedPhotoIndex(photoIndex);
+    setActiveMarkerIndex(null);
+    setEditorOpen(true);
+  };
+
   if (!surveyExtraId) {
     return (
       <div className="mx-auto max-w-4xl p-6">
@@ -443,7 +430,7 @@ export default function SurveyWorkspacePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl space-y-5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -645,114 +632,64 @@ export default function SurveyWorkspacePage() {
                   <div className="space-y-3 rounded-lg border border-white bg-white p-3 shadow-sm">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Room photos</h3>
                     <ChatImageUploader
-                      onFilesSelected={(files) => void uploadImages(files)}
+                      onFilesSelected={setPendingFiles}
                       maxImages={10}
                       disabled={uploading}
                       isUploading={uploading}
-                      uploadingCount={0}
+                      uploadingCount={pendingFiles.length}
                       clearKey={uploaderClearKey}
                     />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void uploadImages()}
+                        disabled={uploading || pendingFiles.length === 0}
+                        className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
+                      >
+                        {uploading ? 'Uploading...' : `Upload ${pendingFiles.length > 0 ? pendingFiles.length : ''} selected image${pendingFiles.length === 1 ? '' : 's'}`}
+                      </button>
+                    </div>
                     {activeRoom.photos.length > 0 ? (
                       <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">
                           {activeRoom.photos.map((photo, index) => (
-                            <button
+                            <div
                               key={`${photo.storageKey || photo.imageUrl || index}`}
-                              type="button"
-                              onClick={() => setSelectedPhotoIndex(index)}
-                              className={`overflow-hidden rounded border ${selectedPhotoIndex === index ? 'border-cyan-500' : 'border-slate-300'}`}
+                              className={`relative overflow-hidden rounded border ${selectedPhotoIndex === index ? 'border-cyan-500' : 'border-slate-300'}`}
                             >
-                              <img
-                                src={resolveMediaAssetUrl(photo.imageUrl || photo.storageKey || '')}
-                                alt={`Room photo ${index + 1}`}
-                                className="h-14 w-14 object-cover"
-                              />
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPhotoIndex(index);
+                                  setActiveMarkerIndex(null);
+                                }}
+                                className="block"
+                              >
+                                <img
+                                  src={resolveMediaAssetUrl(photo.imageUrl || photo.storageKey || '')}
+                                  alt={`Room photo ${index + 1}`}
+                                  className="h-20 w-20 object-cover"
+                                />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removePhotoAtIndex(index)}
+                                className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white shadow"
+                                aria-label={`Remove photo ${index + 1}`}
+                                title="Remove image"
+                              >
+                                x
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActivePhotoAndOpenEditor(index)}
+                                className="absolute bottom-0 left-0 right-0 bg-slate-900/75 px-1 py-0.5 text-[10px] font-semibold text-white"
+                              >
+                                Edit
+                              </button>
+                            </div>
                           ))}
                         </div>
-
-                        {activePhoto ? (
-                          <div className="space-y-2">
-                            <div>
-                              <label className="mb-1 block text-xs font-semibold text-slate-700">New marker color</label>
-                              <input
-                                type="color"
-                                value={newPointColor}
-                                onChange={(e) => setNewPointColor(e.target.value)}
-                                className="h-9 w-16 rounded border border-slate-300"
-                              />
-                            </div>
-                            <div className="relative inline-block overflow-hidden rounded-lg border border-slate-300">
-                              <img
-                                src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
-                                alt="Active room photo"
-                                className="max-h-[320px] w-auto cursor-crosshair"
-                                onClick={handleImageClick}
-                              />
-                              {points.map((point, index) => (
-                                <span
-                                  key={`${point.x}-${point.y}-${index}`}
-                                  className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white shadow"
-                                  style={{
-                                    left: `${toNumber(point.x)}%`,
-                                    top: `${toNumber(point.y)}%`,
-                                    backgroundColor: point.color || '#ef4444',
-                                  }}
-                                  title={point.note || `Point ${index + 1}`}
-                                />
-                              ))}
-                            </div>
-
-                            <input
-                              value={activePhoto.caption || ''}
-                              onChange={(e) =>
-                                updateActivePhoto((photo) => ({
-                                  ...photo,
-                                  caption: e.target.value,
-                                }))
-                              }
-                              placeholder="Photo caption"
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500"
-                            />
-
-                            <div className="space-y-2">
-                              {points.map((point, index) => (
-                                <div key={`point-${index}`} className="grid gap-2 rounded-lg border border-slate-200 p-2 sm:grid-cols-[80px_1fr_auto]">
-                                  <div className="text-xs text-slate-600">#{index + 1} ({point.x.toFixed(1)}%, {point.y.toFixed(1)}%)</div>
-                                  <input
-                                    value={point.note || ''}
-                                    onChange={(e) =>
-                                      updateActivePhoto((photo) => ({
-                                        ...photo,
-                                        markup: {
-                                          points: (photo.markup?.points || []).map((current, currentIndex) =>
-                                            currentIndex === index ? { ...current, note: e.target.value } : current,
-                                          ),
-                                        },
-                                      }))
-                                    }
-                                    placeholder="Marker note"
-                                    className="w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 outline-none focus:border-cyan-500"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      updateActivePhoto((photo) => ({
-                                        ...photo,
-                                        markup: {
-                                          points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== index),
-                                        },
-                                      }))
-                                    }
-                                    className="rounded bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
                     ) : (
                       <p className="text-sm text-slate-500">Upload survey photos to start marking up this room.</p>
@@ -762,30 +699,176 @@ export default function SurveyWorkspacePage() {
               ) : null}
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void saveDraft()}
-              disabled={saving || submitting}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60"
-            >
-              {saving ? 'Saving...' : 'Save Draft'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!window.confirm('Submit this survey report for client approval?')) return;
-                void submitForApproval();
-              }}
-              disabled={saving || submitting}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-            >
-              {submitting ? 'Submitting...' : 'Submit for Approval'}
-            </button>
-          </div>
         </>
       )}
+
+      {editorOpen && activePhoto ? (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm">
+          <div className="h-full w-full overflow-auto bg-white p-3 sm:p-5">
+            <div className="mx-auto flex max-w-5xl items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Image Editor</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditorOpen(false);
+                  setActiveMarkerIndex(null);
+                }}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mx-auto mt-3 max-w-5xl space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Photo caption</label>
+                <input
+                  value={activePhoto.caption || ''}
+                  onChange={(e) =>
+                    updateActivePhoto((photo) => ({
+                      ...photo,
+                      caption: e.target.value,
+                    }))
+                  }
+                  placeholder="Photo caption"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-slate-700">New marker color</label>
+                <input
+                  type="color"
+                  value={newPointColor}
+                  onChange={(e) => setNewPointColor(e.target.value)}
+                  className="h-9 w-16 rounded border border-slate-300"
+                />
+              </div>
+
+              <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
+                <div className="relative overflow-hidden rounded-lg border border-slate-300 bg-slate-100">
+                  <img
+                    src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
+                    alt="Active room photo"
+                    className="max-h-[70vh] w-full cursor-crosshair object-contain"
+                    onClick={handleImageClick}
+                  />
+                  {points.map((point, index) => {
+                    const markerActive = activeMarkerIndex === index;
+                    return (
+                      <button
+                        key={`${point.x}-${point.y}-${index}`}
+                        type="button"
+                        onClick={() => setActiveMarkerIndex(index)}
+                        className={`absolute grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 text-[11px] font-bold text-white shadow ${markerActive ? 'ring-2 ring-cyan-300 ring-offset-2' : ''}`}
+                        style={{
+                          left: `${toNumber(point.x)}%`,
+                          top: `${toNumber(point.y)}%`,
+                          backgroundColor: point.color || '#ef4444',
+                          borderColor: markerActive ? '#0f172a' : '#ffffff',
+                        }}
+                        title={point.note || `Point ${index + 1}`}
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Marker Notes</p>
+                  {points.length === 0 ? <p className="text-sm text-slate-500">Tap image to drop a marker.</p> : null}
+                  {points.map((point, index) => {
+                    const rowActive = activeMarkerIndex === index;
+                    return (
+                      <div
+                        key={`point-${index}`}
+                        className={`rounded-lg border p-2 ${rowActive ? 'border-cyan-500 bg-cyan-50' : 'border-slate-200 bg-white'}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setActiveMarkerIndex(index)}
+                          className="mb-2 flex w-full items-center gap-2 text-left"
+                        >
+                          <span
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                            style={{ backgroundColor: point.color || '#ef4444' }}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="text-xs text-slate-600">
+                            {point.x.toFixed(1)}%, {point.y.toFixed(1)}%
+                          </span>
+                        </button>
+                        <input
+                          value={point.note || ''}
+                          onFocus={() => setActiveMarkerIndex(index)}
+                          onChange={(e) =>
+                            updateActivePhoto((photo) => ({
+                              ...photo,
+                              markup: {
+                                points: (photo.markup?.points || []).map((current, currentIndex) =>
+                                  currentIndex === index ? { ...current, note: e.target.value } : current,
+                                ),
+                              },
+                            }))
+                          }
+                          placeholder="Marker note"
+                          className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMarkerIndex((current) => {
+                              if (current === null) return null;
+                              if (current === index) return null;
+                              if (current > index) return current - 1;
+                              return current;
+                            });
+                            updateActivePhoto((photo) => ({
+                              ...photo,
+                              markup: {
+                                points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== index),
+                              },
+                            }));
+                          }}
+                          className="mt-2 rounded bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200"
+                        >
+                          Remove marker
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => void saveDraft()}
+            disabled={saving || submitting}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Save Draft'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm('Submit this survey report for client approval?')) return;
+              void submitForApproval();
+            }}
+            disabled={saving || submitting}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {submitting ? 'Submitting...' : 'Submit for Approval'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
