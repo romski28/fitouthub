@@ -6,7 +6,6 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useRoleGuard } from '@/hooks/use-role-guard';
-import ChatImageUploader from '@/components/chat-image-uploader';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 
 const ALLOWED_ROLES = ['admin', 'surveyor', 'mimo_boh'] as const;
@@ -114,6 +113,7 @@ export default function SurveyWorkspacePage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [newPointColor, setNewPointColor] = useState('#ef4444');
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const markerNoteRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [form, setForm] = useState<WorkspaceReport>({
     id: null,
@@ -140,6 +140,18 @@ export default function SurveyWorkspacePage() {
       pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [pendingPreviewUrls]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!editorOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [editorOpen]);
 
   const loadWorkspace = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) {
@@ -496,6 +508,15 @@ export default function SurveyWorkspacePage() {
 
   const points = useMemo(() => activePhoto?.markup?.points || [], [activePhoto]);
 
+  useEffect(() => {
+    if (!editorOpen) return;
+    if (activeMarkerIndex === null) return;
+    const markerRow = markerNoteRefs.current[activeMarkerIndex];
+    if (markerRow) {
+      markerRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeMarkerIndex, editorOpen]);
+
   const setActivePhotoAndOpenEditor = (photoIndex: number) => {
     setSelectedPhotoIndex(photoIndex);
     setActiveMarkerIndex(null);
@@ -839,54 +860,31 @@ export default function SurveyWorkspacePage() {
       )}
 
       {editorOpen && activePhoto ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm">
-          <div className="h-full w-full overflow-auto bg-white p-3 sm:p-5">
-            <div className="mx-auto flex max-w-5xl items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900">Image Editor</h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditorOpen(false);
-                  setActiveMarkerIndex(null);
-                }}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700"
-              >
-                Close
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm sm:p-6">
+          <div className="w-full max-w-6xl rounded-3xl border border-white/40 bg-[#d8d1bc]/92 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <div className="space-y-3">
+                <h2 className="text-[28px] font-semibold text-[#1f2434]">Image editor</h2>
+                <div>
+                  <label className="mb-1 block text-[30px] font-medium text-[#1f2434]">Image caption</label>
+                  <input
+                    value={activePhoto.caption || ''}
+                    onChange={(e) =>
+                      updateActivePhoto((photo) => ({
+                        ...photo,
+                        caption: e.target.value,
+                      }))
+                    }
+                    placeholder=""
+                    className="w-full rounded-xl border border-[#f1e9d8] bg-[#f8f2e5] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
+                  />
+                </div>
 
-            <div className="mx-auto mt-3 max-w-5xl space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Photo caption</label>
-                <input
-                  value={activePhoto.caption || ''}
-                  onChange={(e) =>
-                    updateActivePhoto((photo) => ({
-                      ...photo,
-                      caption: e.target.value,
-                    }))
-                  }
-                  placeholder="Photo caption"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-slate-700">New marker color</label>
-                <input
-                  type="color"
-                  value={newPointColor}
-                  onChange={(e) => setNewPointColor(e.target.value)}
-                  className="h-9 w-16 rounded border border-slate-300"
-                />
-              </div>
-
-              <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
-                <div className="relative overflow-hidden rounded-lg border border-slate-300 bg-slate-100">
+                <div className="relative overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1">
                   <img
                     src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
                     alt="Active room photo"
-                    className="max-h-[70vh] w-full cursor-crosshair object-contain"
+                    className="max-h-[64vh] w-full cursor-crosshair rounded-xl object-contain"
                     onClick={handleImageClick}
                   />
                   {points.map((point, index) => {
@@ -896,12 +894,13 @@ export default function SurveyWorkspacePage() {
                         key={`${point.x}-${point.y}-${index}`}
                         type="button"
                         onClick={() => setActiveMarkerIndex(index)}
-                        className={`absolute grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 text-[11px] font-bold text-white shadow ${markerActive ? 'ring-2 ring-cyan-300 ring-offset-2' : ''}`}
+                        className={`absolute grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border text-sm font-bold shadow ${markerActive ? 'ring-2 ring-[#2b4b64]/50 ring-offset-2 ring-offset-[#ece8de]' : ''}`}
                         style={{
                           left: `${toNumber(point.x)}%`,
                           top: `${toNumber(point.y)}%`,
-                          backgroundColor: point.color || '#ef4444',
-                          borderColor: markerActive ? '#0f172a' : '#ffffff',
+                          backgroundColor: point.color || '#ff7f66',
+                          color: '#f8f2e5',
+                          borderColor: '#f8f2e5',
                         }}
                         title={point.note || `Point ${index + 1}`}
                       >
@@ -910,16 +909,33 @@ export default function SurveyWorkspacePage() {
                     );
                   })}
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Marker Notes</p>
-                  {points.length === 0 ? <p className="text-sm text-slate-500">Tap image to drop a marker.</p> : null}
+              <div className="flex h-[64vh] min-h-[420px] flex-col rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-2">
+                <div className="mb-2 flex items-center justify-between px-1">
+                  <p className="text-[32px] font-medium text-[#1f2434]">Marker Notes</p>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#31495f]">
+                    Marker color
+                    <input
+                      type="color"
+                      value={newPointColor}
+                      onChange={(e) => setNewPointColor(e.target.value)}
+                      className="h-8 w-10 rounded border border-[#d4c9b2]"
+                    />
+                  </label>
+                </div>
+
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                  {points.length === 0 ? <p className="px-2 py-1 text-sm text-[#5f6b74]">Tap image to drop a marker.</p> : null}
                   {points.map((point, index) => {
                     const rowActive = activeMarkerIndex === index;
                     return (
                       <div
                         key={`point-${index}`}
-                        className={`rounded-lg border p-2 ${rowActive ? 'border-cyan-500 bg-cyan-50' : 'border-slate-200 bg-white'}`}
+                        ref={(element) => {
+                          markerNoteRefs.current[index] = element;
+                        }}
+                        className={`rounded-xl border p-2 ${rowActive ? 'border-[#2b4b64] bg-[#f6efdf]' : 'border-[#d9ccaf] bg-[#f8f2e5]'}`}
                       >
                         <button
                           type="button"
@@ -927,13 +943,14 @@ export default function SurveyWorkspacePage() {
                           className="mb-2 flex w-full items-center gap-2 text-left"
                         >
                           <span
-                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                            style={{ backgroundColor: point.color || '#ef4444' }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold"
+                            style={{
+                              backgroundColor: point.color || '#ff7f66',
+                              color: '#f8f2e5',
+                              borderColor: '#f8f2e5',
+                            }}
                           >
                             {index + 1}
-                          </span>
-                          <span className="text-xs text-slate-600">
-                            {point.x.toFixed(1)}%, {point.y.toFixed(1)}%
                           </span>
                         </button>
                         <input
@@ -949,32 +966,57 @@ export default function SurveyWorkspacePage() {
                               },
                             }))
                           }
-                          placeholder="Marker note"
-                          className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500"
+                          placeholder="Type your marker note"
+                          className="w-full rounded-lg border border-[#d4c9b2] bg-[#fffaf0] px-2 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
                         />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveMarkerIndex((current) => {
-                              if (current === null) return null;
-                              if (current === index) return null;
-                              if (current > index) return current - 1;
-                              return current;
-                            });
-                            updateActivePhoto((photo) => ({
-                              ...photo,
-                              markup: {
-                                points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== index),
-                              },
-                            }));
-                          }}
-                          className="mt-2 rounded bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200"
-                        >
-                          Remove marker
-                        </button>
+                        <div className="mt-2 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveMarkerIndex((current) => {
+                                if (current === null) return null;
+                                if (current === index) return null;
+                                if (current > index) return current - 1;
+                                return current;
+                              });
+                              updateActivePhoto((photo) => ({
+                                ...photo,
+                                markup: {
+                                  points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== index),
+                                },
+                              }));
+                            }}
+                            className="text-xl"
+                            aria-label={`Remove marker ${index + 1}`}
+                            title="Remove marker"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditorOpen(false);
+                      setActiveMarkerIndex(null);
+                    }}
+                    className="rounded-lg bg-amber-400 px-3 py-2 text-lg font-semibold text-[#f8f2e5]"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void saveDraft()}
+                    disabled={saving}
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-lg font-semibold text-[#f8f2e5] disabled:opacity-60"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
                 </div>
               </div>
             </div>

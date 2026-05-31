@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-31-b24d2a58",
+    "date": "2026-05-31T16:19:51+08:00",
+    "title": "Polish survey image editor modal UX",
+    "summary": "Polish survey image editor modal UX",
+    "areas": [
+      "web"
+    ],
+    "commit": "b24d2a58",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-7fd2c9bb",
     "date": "2026-05-31T15:29:37+08:00",
     "title": "Stabilize survey workspace image selection",
