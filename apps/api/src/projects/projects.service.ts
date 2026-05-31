@@ -116,9 +116,9 @@ type SurveyWorkspacePoint = {
 };
 
 type SurveyWorkspacePhoto = {
-  storageKey?: string;
-  imageUrl?: string;
-  caption?: string;
+  storageKey?: string | null;
+  imageUrl?: string | null;
+  caption?: string | null;
   markup?: {
     points?: SurveyWorkspacePoint[];
   };
