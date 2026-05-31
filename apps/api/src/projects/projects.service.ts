@@ -358,9 +358,17 @@ export class ProjectsService {
     userId: string,
     body: {
       addressFull: string;
+      district?: string;
+      postalCode?: string;
       unitNumber?: string;
       floorLevel?: string;
+      propertyType?: string;
+      propertySize?: string;
+      propertyAge?: string;
       accessDetails?: string;
+      existingConditions?: string;
+      accessHoursType?: string;
+      workingHoursWindow?: string;
       onSiteContactName?: string;
       onSiteContactPhone?: string;
       buildingName?: string;
@@ -394,7 +402,15 @@ export class ProjectsService {
             "addressFull",
             "unitNumber",
             "floorLevel",
+            "district",
+            "postalCode",
+            "propertyType",
+            "propertySize",
+            "propertyAge",
             "accessDetails",
+            "existingConditions",
+            "accessHoursType",
+            "workingHoursWindow",
             "onSiteContactName",
             "onSiteContactPhone",
             "isActive",
@@ -409,7 +425,15 @@ export class ProjectsService {
             ${addressFull},
             ${String(body.unitNumber || '').trim() || null},
             ${String(body.floorLevel || '').trim() || null},
+            ${String(body.district || '').trim() || null},
+            ${String(body.postalCode || '').trim() || null},
+            ${String(body.propertyType || '').trim() || null},
+            ${String(body.propertySize || '').trim() || null},
+            ${String(body.propertyAge || '').trim() || null},
             ${String(body.accessDetails || '').trim() || null},
+            ${String(body.existingConditions || '').trim() || null},
+            ${String(body.accessHoursType || '').trim() || null},
+            ${String(body.workingHoursWindow || '').trim() || null},
             ${String(body.onSiteContactName || '').trim() || null},
             ${String(body.onSiteContactPhone || '').trim() || null},
             true,
@@ -423,7 +447,15 @@ export class ProjectsService {
           UPDATE client_site_addresses
           SET
             "buildingName" = COALESCE(${String(body.buildingName || '').trim() || null}, "buildingName"),
+            "district" = COALESCE(${String(body.district || '').trim() || null}, "district"),
+            "postalCode" = COALESCE(${String(body.postalCode || '').trim() || null}, "postalCode"),
+            "propertyType" = COALESCE(${String(body.propertyType || '').trim() || null}, "propertyType"),
+            "propertySize" = COALESCE(${String(body.propertySize || '').trim() || null}, "propertySize"),
+            "propertyAge" = COALESCE(${String(body.propertyAge || '').trim() || null}, "propertyAge"),
             "accessDetails" = COALESCE(${String(body.accessDetails || '').trim() || null}, "accessDetails"),
+            "existingConditions" = COALESCE(${String(body.existingConditions || '').trim() || null}, "existingConditions"),
+            "accessHoursType" = COALESCE(${String(body.accessHoursType || '').trim() || null}, "accessHoursType"),
+            "workingHoursWindow" = COALESCE(${String(body.workingHoursWindow || '').trim() || null}, "workingHoursWindow"),
             "onSiteContactName" = COALESCE(${String(body.onSiteContactName || '').trim() || null}, "onSiteContactName"),
             "onSiteContactPhone" = COALESCE(${String(body.onSiteContactPhone || '').trim() || null}, "onSiteContactPhone"),
             "updatedAt" = now()
@@ -441,7 +473,15 @@ export class ProjectsService {
           "addressFullSnapshot",
           "unitNumberSnapshot",
           "floorLevelSnapshot",
+          "districtSnapshot",
+          "postalCodeSnapshot",
+          "propertyTypeSnapshot",
+          "propertySizeSnapshot",
+          "propertyAgeSnapshot",
           "accessDetailsSnapshot",
+          "existingConditionsSnapshot",
+          "accessHoursTypeSnapshot",
+          "workingHoursWindowSnapshot",
           "onSiteContactNameSnapshot",
           "onSiteContactPhoneSnapshot",
           "isPrimary",
@@ -459,7 +499,15 @@ export class ProjectsService {
           ${addressFull},
           ${String(body.unitNumber || '').trim() || null},
           ${String(body.floorLevel || '').trim() || null},
+          ${String(body.district || '').trim() || null},
+          ${String(body.postalCode || '').trim() || null},
+          ${String(body.propertyType || '').trim() || null},
+          ${String(body.propertySize || '').trim() || null},
+          ${String(body.propertyAge || '').trim() || null},
           ${String(body.accessDetails || '').trim() || null},
+          ${String(body.existingConditions || '').trim() || null},
+          ${String(body.accessHoursType || '').trim() || null},
+          ${String(body.workingHoursWindow || '').trim() || null},
           ${String(body.onSiteContactName || '').trim() || null},
           ${String(body.onSiteContactPhone || '').trim() || null},
           true,
@@ -477,7 +525,15 @@ export class ProjectsService {
           "addressFullSnapshot" = EXCLUDED."addressFullSnapshot",
           "unitNumberSnapshot" = EXCLUDED."unitNumberSnapshot",
           "floorLevelSnapshot" = EXCLUDED."floorLevelSnapshot",
+            "districtSnapshot" = EXCLUDED."districtSnapshot",
+            "postalCodeSnapshot" = EXCLUDED."postalCodeSnapshot",
+            "propertyTypeSnapshot" = EXCLUDED."propertyTypeSnapshot",
+            "propertySizeSnapshot" = EXCLUDED."propertySizeSnapshot",
+            "propertyAgeSnapshot" = EXCLUDED."propertyAgeSnapshot",
           "accessDetailsSnapshot" = EXCLUDED."accessDetailsSnapshot",
+            "existingConditionsSnapshot" = EXCLUDED."existingConditionsSnapshot",
+            "accessHoursTypeSnapshot" = EXCLUDED."accessHoursTypeSnapshot",
+            "workingHoursWindowSnapshot" = EXCLUDED."workingHoursWindowSnapshot",
           "onSiteContactNameSnapshot" = EXCLUDED."onSiteContactNameSnapshot",
           "onSiteContactPhoneSnapshot" = EXCLUDED."onSiteContactPhoneSnapshot",
           "isActive" = true,
@@ -541,29 +597,54 @@ export class ProjectsService {
       Array<{
         id: string;
         label: string | null;
+        isProjectPrimary: boolean;
         buildingName: string | null;
         addressFull: string;
         unitNumber: string | null;
         floorLevel: string | null;
+        district: string | null;
+        postalCode: string | null;
+        propertyType: string | null;
+        propertySize: string | null;
+        propertyAge: string | null;
+        existingConditions: string | null;
+        accessHoursType: string | null;
+        workingHoursWindow: string | null;
         accessDetails: string | null;
         onSiteContactName: string | null;
         onSiteContactPhone: string | null;
       }>
     >`
       SELECT
-        id,
-        label,
-        "buildingName" as "buildingName",
-        "addressFull" as "addressFull",
-        "unitNumber" as "unitNumber",
-        "floorLevel" as "floorLevel",
-        "accessDetails" as "accessDetails",
-        "onSiteContactName" as "onSiteContactName",
-        "onSiteContactPhone" as "onSiteContactPhone"
-      FROM client_site_addresses
-      WHERE "userId" = ${userId}
-        AND "isActive" = true
-      ORDER BY "updatedAt" DESC
+        csa.id,
+        csa.label,
+        EXISTS (
+          SELECT 1
+          FROM project_sites ps
+          WHERE ps."projectId" = ${projectId}
+            AND ps."clientAddressId" = csa.id
+            AND ps."isPrimary" = true
+            AND ps."isActive" = true
+        ) as "isProjectPrimary",
+        csa."buildingName" as "buildingName",
+        csa."addressFull" as "addressFull",
+        csa."unitNumber" as "unitNumber",
+        csa."floorLevel" as "floorLevel",
+        csa."district" as "district",
+        csa."postalCode" as "postalCode",
+        csa."propertyType" as "propertyType",
+        csa."propertySize" as "propertySize",
+        csa."propertyAge" as "propertyAge",
+        csa."existingConditions" as "existingConditions",
+        csa."accessHoursType" as "accessHoursType",
+        csa."workingHoursWindow" as "workingHoursWindow",
+        csa."accessDetails" as "accessDetails",
+        csa."onSiteContactName" as "onSiteContactName",
+        csa."onSiteContactPhone" as "onSiteContactPhone"
+      FROM client_site_addresses csa
+      WHERE csa."userId" = ${userId}
+        AND csa."isActive" = true
+      ORDER BY csa."updatedAt" DESC
     `;
 
     return {
@@ -591,6 +672,14 @@ export class ProjectsService {
         addressFull: string;
         unitNumber: string | null;
         floorLevel: string | null;
+        district: string | null;
+        postalCode: string | null;
+        propertyType: string | null;
+        propertySize: string | null;
+        propertyAge: string | null;
+        existingConditions: string | null;
+        accessHoursType: string | null;
+        workingHoursWindow: string | null;
         accessDetails: string | null;
         onSiteContactName: string | null;
         onSiteContactPhone: string | null;
@@ -603,6 +692,14 @@ export class ProjectsService {
         "addressFull" as "addressFull",
         "unitNumber" as "unitNumber",
         "floorLevel" as "floorLevel",
+        "district" as "district",
+        "postalCode" as "postalCode",
+        "propertyType" as "propertyType",
+        "propertySize" as "propertySize",
+        "propertyAge" as "propertyAge",
+        "existingConditions" as "existingConditions",
+        "accessHoursType" as "accessHoursType",
+        "workingHoursWindow" as "workingHoursWindow",
         "accessDetails" as "accessDetails",
         "onSiteContactName" as "onSiteContactName",
         "onSiteContactPhone" as "onSiteContactPhone"
@@ -628,7 +725,15 @@ export class ProjectsService {
         "addressFullSnapshot",
         "unitNumberSnapshot",
         "floorLevelSnapshot",
+        "districtSnapshot",
+        "postalCodeSnapshot",
+        "propertyTypeSnapshot",
+        "propertySizeSnapshot",
+        "propertyAgeSnapshot",
         "accessDetailsSnapshot",
+        "existingConditionsSnapshot",
+        "accessHoursTypeSnapshot",
+        "workingHoursWindowSnapshot",
         "onSiteContactNameSnapshot",
         "onSiteContactPhoneSnapshot",
         "isPrimary",
@@ -646,7 +751,15 @@ export class ProjectsService {
         ${address.addressFull},
         ${address.unitNumber},
         ${address.floorLevel},
+        ${address.district},
+        ${address.postalCode},
+        ${address.propertyType},
+        ${address.propertySize},
+        ${address.propertyAge},
         ${address.accessDetails},
+        ${address.existingConditions},
+        ${address.accessHoursType},
+        ${address.workingHoursWindow},
         ${address.onSiteContactName},
         ${address.onSiteContactPhone},
         true,
@@ -664,7 +777,15 @@ export class ProjectsService {
         "addressFullSnapshot" = EXCLUDED."addressFullSnapshot",
         "unitNumberSnapshot" = EXCLUDED."unitNumberSnapshot",
         "floorLevelSnapshot" = EXCLUDED."floorLevelSnapshot",
+        "districtSnapshot" = EXCLUDED."districtSnapshot",
+        "postalCodeSnapshot" = EXCLUDED."postalCodeSnapshot",
+        "propertyTypeSnapshot" = EXCLUDED."propertyTypeSnapshot",
+        "propertySizeSnapshot" = EXCLUDED."propertySizeSnapshot",
+        "propertyAgeSnapshot" = EXCLUDED."propertyAgeSnapshot",
         "accessDetailsSnapshot" = EXCLUDED."accessDetailsSnapshot",
+        "existingConditionsSnapshot" = EXCLUDED."existingConditionsSnapshot",
+        "accessHoursTypeSnapshot" = EXCLUDED."accessHoursTypeSnapshot",
+        "workingHoursWindowSnapshot" = EXCLUDED."workingHoursWindowSnapshot",
         "onSiteContactNameSnapshot" = EXCLUDED."onSiteContactNameSnapshot",
         "onSiteContactPhoneSnapshot" = EXCLUDED."onSiteContactPhoneSnapshot",
         "isActive" = true,
@@ -6863,6 +6984,7 @@ Please review the project details and respond with your quote or decline the inv
     body: {
       addressFull: string;
       buildingName?: string;
+      district?: string;
       postalCode?: string;
       gpsCoordinates?: { lat: number; lng: number };
       unitNumber?: string;
@@ -6875,6 +6997,8 @@ Please review the project details and respond with your quote or decline the inv
       specialRequirements?: Array<string> | Record<string, unknown>;
       onSiteContactName?: string;
       onSiteContactPhone?: string;
+      accessHoursType?: string;
+      workingHoursWindow?: string;
       accessHoursDescription?: string;
       desiredStartDate?: string;
       photoUrls?: string[];
@@ -6891,21 +7015,29 @@ Please review the project details and respond with your quote or decline the inv
     });
 
     const isAwardedStage = project.status === 'awarded' || !!awardedAssignment;
+    const surveyRequestedRows = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(id)::bigint as count
+      FROM mimo_project_extras
+      WHERE "projectId" = ${projectId}
+        AND "extraType" = 'survey'
+    `;
+    const surveyRequested = Number(surveyRequestedRows[0]?.count || 0n) > 0;
 
     const missingFields: string[] = [];
 
     if (!body.addressFull?.trim()) missingFields.push('Full Address');
     if (!body.unitNumber?.trim()) missingFields.push('Unit Number');
     if (!body.floorLevel?.trim()) missingFields.push('Floor Level');
+    if (!body.district?.trim()) missingFields.push('District');
 
     if (isAwardedStage) {
-      if (!body.postalCode?.trim()) missingFields.push('Postal Code / District');
       if (!body.propertyType?.trim()) missingFields.push('Property Type');
-      if (!body.propertySize?.trim()) missingFields.push('Property Size');
-      if (!body.propertyAge?.trim()) missingFields.push('Property Age');
-      if (!body.existingConditions?.trim()) missingFields.push('Existing Conditions');
+      if (!surveyRequested && !body.propertySize?.trim()) missingFields.push('Property Size');
+      if (!surveyRequested && !body.propertyAge?.trim()) missingFields.push('Property Age');
+      if (!surveyRequested && !body.existingConditions?.trim()) missingFields.push('Existing Conditions');
       if (!body.accessDetails?.trim()) missingFields.push('Access Details');
-      if (!body.accessHoursDescription?.trim()) missingFields.push('Access Hours');
+      if (!body.accessHoursType?.trim()) missingFields.push('Access Hours');
+      if (!body.workingHoursWindow?.trim()) missingFields.push('Working Hours');
       if (!body.onSiteContactName?.trim()) missingFields.push('On-site Contact Name');
       if (!body.onSiteContactPhone?.trim()) missingFields.push('On-site Contact Phone');
       if (!body.desiredStartDate?.trim()) missingFields.push('Desired Start Date');
@@ -6979,12 +7111,33 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    try {
+      await this.prisma.$executeRaw`
+        UPDATE "ProjectLocationDetails"
+        SET
+          "district" = ${String(body.district || '').trim() || null},
+          "accessHoursType" = ${String(body.accessHoursType || '').trim() || null},
+          "workingHoursWindow" = ${String(body.workingHoursWindow || '').trim() || null}
+        WHERE "projectId" = ${projectId}
+      `;
+    } catch {
+      // Optional Phase B columns might not exist until SQL is applied.
+    }
+
     await this.upsertClientAddressBookAndProjectSite(projectId, userId, {
       addressFull: body.addressFull,
       buildingName: body.buildingName,
+      district: body.district,
+      postalCode: body.postalCode,
       unitNumber: body.unitNumber,
       floorLevel: body.floorLevel,
+      propertyType: body.propertyType,
+      propertySize: body.propertySize,
+      propertyAge: body.propertyAge,
       accessDetails: body.accessDetails,
+      existingConditions: body.existingConditions,
+      accessHoursType: body.accessHoursType,
+      workingHoursWindow: body.workingHoursWindow,
       onSiteContactName: body.onSiteContactName,
       onSiteContactPhone: body.onSiteContactPhone,
     });
@@ -7294,43 +7447,115 @@ Please review the project details and respond with your quote or decline the inv
 
     // Also fetch projectLocationDetails — this is the table the client's "Save address"
     // button writes to. Prefer its fields over the older siteAccessData record.
-    const locationDetailsRows = await this.prisma.$queryRaw<
-      Array<{
-        addressFull: string;
-        buildingName: string | null;
-        unitNumber: string | null;
-        floorLevel: string | null;
-        postalCode: string | null;
-        propertyType: string | null;
-        propertySize: string | null;
-        propertyAge: string | null;
-        accessDetails: string | null;
-        existingConditions: string | null;
-        accessHoursDescription: string | null;
-        onSiteContactName: string | null;
-        onSiteContactPhone: string | null;
-        desiredStartDate: Date | null;
-      }>
-    >`
-      SELECT
-        "addressFull" as "addressFull",
-        "buildingName" as "buildingName",
-        "unitNumber" as "unitNumber",
-        "floorLevel" as "floorLevel",
-        "postalCode" as "postalCode",
-        "propertyType" as "propertyType",
-        "propertySize" as "propertySize",
-        "propertyAge" as "propertyAge",
-        "accessDetails" as "accessDetails",
-        "existingConditions" as "existingConditions",
-        "accessHoursDescription" as "accessHoursDescription",
-        "onSiteContactName" as "onSiteContactName",
-        "onSiteContactPhone" as "onSiteContactPhone",
-        "desiredStartDate" as "desiredStartDate"
-      FROM "ProjectLocationDetails"
-      WHERE "projectId" = ${projectId}
-      LIMIT 1
-    `;
+    let locationDetailsRows: Array<{
+      addressFull: string;
+      buildingName: string | null;
+      district: string | null;
+      unitNumber: string | null;
+      floorLevel: string | null;
+      postalCode: string | null;
+      propertyType: string | null;
+      propertySize: string | null;
+      propertyAge: string | null;
+      accessDetails: string | null;
+      existingConditions: string | null;
+      accessHoursType: string | null;
+      workingHoursWindow: string | null;
+      accessHoursDescription: string | null;
+      onSiteContactName: string | null;
+      onSiteContactPhone: string | null;
+      desiredStartDate: Date | null;
+    }> = [];
+
+    try {
+      locationDetailsRows = await this.prisma.$queryRaw<
+        Array<{
+          addressFull: string;
+          buildingName: string | null;
+          district: string | null;
+          unitNumber: string | null;
+          floorLevel: string | null;
+          postalCode: string | null;
+          propertyType: string | null;
+          propertySize: string | null;
+          propertyAge: string | null;
+          accessDetails: string | null;
+          existingConditions: string | null;
+          accessHoursType: string | null;
+          workingHoursWindow: string | null;
+          accessHoursDescription: string | null;
+          onSiteContactName: string | null;
+          onSiteContactPhone: string | null;
+          desiredStartDate: Date | null;
+        }>
+      >`
+        SELECT
+          "addressFull" as "addressFull",
+          "buildingName" as "buildingName",
+          "district" as "district",
+          "unitNumber" as "unitNumber",
+          "floorLevel" as "floorLevel",
+          "postalCode" as "postalCode",
+          "propertyType" as "propertyType",
+          "propertySize" as "propertySize",
+          "propertyAge" as "propertyAge",
+          "accessDetails" as "accessDetails",
+          "existingConditions" as "existingConditions",
+          "accessHoursType" as "accessHoursType",
+          "workingHoursWindow" as "workingHoursWindow",
+          "accessHoursDescription" as "accessHoursDescription",
+          "onSiteContactName" as "onSiteContactName",
+          "onSiteContactPhone" as "onSiteContactPhone",
+          "desiredStartDate" as "desiredStartDate"
+        FROM "ProjectLocationDetails"
+        WHERE "projectId" = ${projectId}
+        LIMIT 1
+      `;
+    } catch {
+      locationDetailsRows = await this.prisma.$queryRaw<
+        Array<{
+          addressFull: string;
+          buildingName: string | null;
+          district: string | null;
+          unitNumber: string | null;
+          floorLevel: string | null;
+          postalCode: string | null;
+          propertyType: string | null;
+          propertySize: string | null;
+          propertyAge: string | null;
+          accessDetails: string | null;
+          existingConditions: string | null;
+          accessHoursType: string | null;
+          workingHoursWindow: string | null;
+          accessHoursDescription: string | null;
+          onSiteContactName: string | null;
+          onSiteContactPhone: string | null;
+          desiredStartDate: Date | null;
+        }>
+      >`
+        SELECT
+          "addressFull" as "addressFull",
+          "buildingName" as "buildingName",
+          NULL::text as "district",
+          "unitNumber" as "unitNumber",
+          "floorLevel" as "floorLevel",
+          "postalCode" as "postalCode",
+          "propertyType" as "propertyType",
+          "propertySize" as "propertySize",
+          "propertyAge" as "propertyAge",
+          "accessDetails" as "accessDetails",
+          "existingConditions" as "existingConditions",
+          NULL::text as "accessHoursType",
+          NULL::text as "workingHoursWindow",
+          "accessHoursDescription" as "accessHoursDescription",
+          "onSiteContactName" as "onSiteContactName",
+          "onSiteContactPhone" as "onSiteContactPhone",
+          "desiredStartDate" as "desiredStartDate"
+        FROM "ProjectLocationDetails"
+        WHERE "projectId" = ${projectId}
+        LIMIT 1
+      `;
+    }
     const locationDetails: any = locationDetailsRows[0] || null;
     const locationBuildingName = locationDetails?.buildingName ?? null;
 
@@ -7338,6 +7563,7 @@ Please review the project details and respond with your quote or decline the inv
       ? {
           addressFull: locationDetails.addressFull,
           buildingName: locationBuildingName,
+          district: locationDetails.district ?? null,
           unitNumber: locationDetails.unitNumber ?? siteAccessData?.unitNumber ?? null,
           floorLevel: locationDetails.floorLevel ?? siteAccessData?.floorLevel ?? null,
           postalCode: locationDetails.postalCode ?? null,
@@ -7346,6 +7572,8 @@ Please review the project details and respond with your quote or decline the inv
           propertyAge: locationDetails.propertyAge ?? null,
           accessDetails: locationDetails.accessDetails ?? siteAccessData?.accessDetails ?? null,
           existingConditions: locationDetails.existingConditions ?? null,
+          accessHoursType: locationDetails.accessHoursType ?? null,
+          workingHoursWindow: locationDetails.workingHoursWindow ?? null,
           accessHoursDescription: locationDetails.accessHoursDescription ?? null,
           onSiteContactName: locationDetails.onSiteContactName ?? siteAccessData?.onSiteContactName ?? null,
           onSiteContactPhone: locationDetails.onSiteContactPhone ?? siteAccessData?.onSiteContactPhone ?? null,

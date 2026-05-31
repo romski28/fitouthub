@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { HK_DISTRICTS } from '@/lib/hk-districts';
 
 interface SiteAccessRequest {
   id: string;
@@ -24,10 +25,19 @@ interface SiteAccessRequest {
 interface ClientSiteAddress {
   id: string;
   label: string | null;
+  isProjectPrimary?: boolean;
   buildingName: string | null;
   addressFull: string;
   unitNumber: string | null;
   floorLevel: string | null;
+  district: string | null;
+  postalCode: string | null;
+  propertyType: string | null;
+  propertySize: string | null;
+  propertyAge: string | null;
+  existingConditions: string | null;
+  accessHoursType: string | null;
+  workingHoursWindow: string | null;
   accessDetails: string | null;
   onSiteContactName: string | null;
   onSiteContactPhone: string | null;
@@ -62,6 +72,7 @@ interface SiteAccessTabProps {
   siteVisits: SiteAccessVisit[];
   siteInspectionAvailableOn?: string | null;
   projectIsAwarded: boolean;
+  surveyRequested: boolean;
   siteAccessBlockers: string[];
   expandedAccordions: Record<string, boolean>;
   onToggleAccordion: (id: string) => void;
@@ -169,6 +180,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   siteAccessRequests,
   siteVisits,
   siteInspectionAvailableOn,
+  surveyRequested,
   siteAccessBlockers,
   onRespondToRequest,
   onRespondToVisit,
@@ -209,7 +221,30 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const hasBasicLocation =
     Boolean(locationDetailsForm.addressFull?.trim()) &&
     Boolean(locationDetailsForm.unitNumber?.trim()) &&
-    Boolean(locationDetailsForm.floorLevel?.trim());
+    Boolean(locationDetailsForm.floorLevel?.trim()) &&
+    Boolean(locationDetailsForm.district?.trim());
+
+  const selectedAddressId = useMemo(() => {
+    if (!clientSiteAddresses.length) return '';
+
+    const normalize = (value?: string | null) => String(value || '').trim().toLowerCase();
+    const matched = clientSiteAddresses.find((address) => (
+      normalize(address.addressFull) === normalize(locationDetailsForm.addressFull) &&
+      normalize(address.unitNumber) === normalize(locationDetailsForm.unitNumber) &&
+      normalize(address.floorLevel) === normalize(locationDetailsForm.floorLevel)
+    ));
+    if (matched) return matched.id;
+
+    const projectPrimary = clientSiteAddresses.find((address) => address.isProjectPrimary);
+    if (projectPrimary) return projectPrimary.id;
+
+    return '';
+  }, [
+    clientSiteAddresses,
+    locationDetailsForm.addressFull,
+    locationDetailsForm.unitNumber,
+    locationDetailsForm.floorLevel,
+  ]);
 
   const pendingVisits = useMemo(
     () => siteVisits.filter((v) => v.status === 'proposed' && v.proposedByRole === 'professional'),
@@ -323,6 +358,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
 
   const addressSummary = [
+    locationDetailsForm.district,
     locationDetailsForm.buildingName,
     locationDetailsForm.addressFull,
     [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
@@ -378,6 +414,26 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         {addressOpen && (
           <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
             <p className="text-xs text-slate-600">Required before accepting a visit. This will be shared with the contractor.</p>
+            {clientSiteAddresses.length > 0 && (
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Your addresses</label>
+                <select
+                  value={selectedAddressId}
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    onSelectClientSiteAddress(e.target.value);
+                  }}
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                >
+                  <option value="">Select a saved address</option>
+                  {clientSiteAddresses.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {(address.label || address.buildingName || 'Saved address').trim()} - {address.addressFull}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-800">Building Name</label>
               <input
@@ -389,7 +445,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Full Address *</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Street Address *</label>
               <input
                 type="text"
                 value={locationDetailsForm.addressFull}
@@ -420,13 +476,41 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Postal Code / District</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">District *</label>
+                <select
+                  value={locationDetailsForm.district || ''}
+                  onChange={(e) => onUpdateLocationDetailsForm({ district: e.target.value })}
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                >
+                  <option value="">Select district</option>
+                  {HK_DISTRICTS.map((district) => (
+                    <option key={district.areaCode} value={district.name}>{district.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Postcode (optional)</label>
                 <input
                   type="text"
                   value={locationDetailsForm.postalCode}
                   onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
                   className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Size (optional)</label>
+                {surveyRequested ? (
+                  <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
+                ) : (
+                  <input
+                    type="text"
+                    value={locationDetailsForm.propertySize}
+                    onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
+                    className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                  />
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 pt-1">
@@ -676,29 +760,18 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         </button>
         {showBuildingInfo && (
           <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Building Name</label>
-              <input
-                type="text"
-                value={locationDetailsForm.buildingName || ''}
-                onChange={(e) => onUpdateLocationDetailsForm({ buildingName: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                placeholder="e.g. Harbour View Tower"
-              />
-            </div>
             {clientSiteAddresses.length > 0 && (
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Saved addresses</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Your addresses</label>
                 <select
-                  value=""
+                  value={selectedAddressId}
                   onChange={(e) => {
                     if (!e.target.value) return;
                     onSelectClientSiteAddress(e.target.value);
-                    e.currentTarget.value = '';
                   }}
                   className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
                 >
-                  <option value="">Select an address from your book</option>
+                  <option value="">Select a saved address</option>
                   {clientSiteAddresses.map((address) => (
                     <option key={address.id} value={address.id}>
                       {(address.label || address.buildingName || 'Saved address').trim()} - {address.addressFull}
@@ -725,32 +798,31 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Size</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.propertySize}
-                  onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Age</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.propertyAge}
-                  onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Age (optional)</label>
+                {surveyRequested ? (
+                  <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
+                ) : (
+                  <input
+                    type="text"
+                    value={locationDetailsForm.propertyAge}
+                    onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
+                    className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                  />
+                )}
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Existing Conditions</label>
-              <textarea
-                rows={2}
-                value={locationDetailsForm.existingConditions}
-                onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-              />
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Existing Conditions (optional)</label>
+              {surveyRequested ? (
+                <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
+              ) : (
+                <textarea
+                  rows={2}
+                  value={locationDetailsForm.existingConditions}
+                  onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                />
+              )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-800">Access Details</label>
@@ -764,22 +836,39 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-800">Access Hours</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.accessHoursDescription}
-                  onChange={(e) => onUpdateLocationDetailsForm({ accessHoursDescription: e.target.value })}
+                <select
+                  value={locationDetailsForm.accessHoursType || ''}
+                  onChange={(e) => onUpdateLocationDetailsForm({ accessHoursType: e.target.value })}
                   className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
+                >
+                  <option value="">Select access hours</option>
+                  <option value="24 Hour">24 Hour</option>
+                  <option value="Working Hours">Working Hours</option>
+                </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Desired Start Date</label>
-                <input
-                  type="date"
-                  value={locationDetailsForm.desiredStartDate}
-                  onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                  className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
+                <label className="mb-1 block text-xs font-semibold text-slate-800">Working Hours</label>
+                <select
+                  value={locationDetailsForm.workingHoursWindow || ''}
+                  onChange={(e) => onUpdateLocationDetailsForm({ workingHoursWindow: e.target.value })}
+                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+                >
+                  <option value="">Select working hours</option>
+                  <option value="24 Hour">24 Hour</option>
+                  <option value="Working Hours">Working Hours</option>
+                  <option value="After Hours">After Hours</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Desired Start Date</label>
+              <input
+                type="date"
+                value={locationDetailsForm.desiredStartDate}
+                onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
+                className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+              />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>

@@ -1,6 +1,7 @@
 export class ProjectLocationDetailsDto {
   addressFull: string;
   buildingName?: string;
+  district?: string;
   postalCode?: string;
   gpsCoordinates?: { lat: number; lng: number };
   unitNumber?: string;
@@ -13,6 +14,8 @@ export class ProjectLocationDetailsDto {
   specialRequirements?: Array<string> | Record<string, unknown>;
   onSiteContactName?: string;
   onSiteContactPhone?: string;
+  accessHoursType?: string;
+  workingHoursWindow?: string;
   accessHoursDescription?: string;
   desiredStartDate?: string; // ISO date
   photoUrls?: string[];

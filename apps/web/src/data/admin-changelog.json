@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-05-31-84f3c30e",
+    "date": "2026-05-31T10:41:18+08:00",
+    "title": "Implement expanded site-access address hydration UX and SQL",
+    "summary": "Implement expanded site-access address hydration UX and SQL",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "84f3c30e",
+    "files": [
+      "MANUAL_SQL_ADD_PHASE_A_PROJECT_SITE_ADDRESS_BOOK.sql",
+      "MANUAL_SQL_ADD_PHASE_B_SITE_ACCESS_EXPANDED_FIELDS.sql",
+      "apps/api/src/projects/dto/project-location-details.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-aa486097",
     "date": "2026-05-31T09:29:46+08:00",
     "title": "Sync location save with client address book",

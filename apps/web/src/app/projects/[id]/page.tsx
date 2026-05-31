@@ -112,6 +112,7 @@ interface Message {
 interface SiteAccessData {
   addressFull: string;
   buildingName?: string | null;
+  district?: string | null;
   unitNumber?: string | null;
   floorLevel?: string | null;
   postalCode?: string | null;
@@ -120,6 +121,8 @@ interface SiteAccessData {
   propertyAge?: string | null;
   accessDetails?: string | null;
   existingConditions?: string | null;
+  accessHoursType?: string | null;
+  workingHoursWindow?: string | null;
   accessHoursDescription?: string | null;
   onSiteContactName?: string | null;
   onSiteContactPhone?: string | null;
@@ -129,10 +132,19 @@ interface SiteAccessData {
 interface ClientSiteAddress {
   id: string;
   label: string | null;
+  isProjectPrimary?: boolean;
   buildingName: string | null;
   addressFull: string;
   unitNumber: string | null;
   floorLevel: string | null;
+  district: string | null;
+  postalCode: string | null;
+  propertyType: string | null;
+  propertySize: string | null;
+  propertyAge: string | null;
+  existingConditions: string | null;
+  accessHoursType: string | null;
+  workingHoursWindow: string | null;
   accessDetails: string | null;
   onSiteContactName: string | null;
   onSiteContactPhone: string | null;
@@ -401,6 +413,7 @@ export default function ClientProjectDetailPage() {
   const [locationDetailsForm, setLocationDetailsForm] = useState({
     addressFull: '',
     buildingName: '',
+    district: '',
     postalCode: '',
     unitNumber: '',
     floorLevel: '',
@@ -412,6 +425,8 @@ export default function ClientProjectDetailPage() {
     specialRequirements: '',
     onSiteContactName: '',
     onSiteContactPhone: '',
+    accessHoursType: '',
+    workingHoursWindow: '',
     accessHoursDescription: '',
     desiredStartDate: '',
     photoUrls: '' as string,
@@ -486,6 +501,7 @@ export default function ClientProjectDetailPage() {
   const projectClassBadge = getProjectClassBadgeLabel((project as any)?.projectScale);
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
+  const surveyRequested = Boolean(project?.mimoProjectExtras?.some((extra) => extra.extraType === 'survey'));
   const statusNormalized = projectStatus.toLowerCase();
   const hasPostAwardLifecycleAccess =
     isAwarded || ['started', 'completed', 'rated'].includes(statusNormalized);
@@ -997,6 +1013,7 @@ export default function ClientProjectDetailPage() {
       addressFull: locationDetailsForm.addressFull || form.addressFull || siteAccessData?.addressFull || '',
       buildingName:
         locationDetailsForm.buildingName || form.buildingName || siteAccessData?.buildingName || undefined,
+      district: locationDetailsForm.district || siteAccessData?.district || undefined,
       postalCode: locationDetailsForm.postalCode || undefined,
       unitNumber:
         locationDetailsForm.unitNumber || form.unitNumber || siteAccessData?.unitNumber || undefined,
@@ -1024,7 +1041,14 @@ export default function ClientProjectDetailPage() {
         form.onSiteContactPhone ||
         siteAccessData?.onSiteContactPhone ||
         undefined,
-      accessHoursDescription: locationDetailsForm.accessHoursDescription || undefined,
+      accessHoursType: locationDetailsForm.accessHoursType || siteAccessData?.accessHoursType || undefined,
+      workingHoursWindow: locationDetailsForm.workingHoursWindow || siteAccessData?.workingHoursWindow || undefined,
+      accessHoursDescription:
+        locationDetailsForm.accessHoursDescription ||
+        [locationDetailsForm.accessHoursType, locationDetailsForm.workingHoursWindow]
+          .filter(Boolean)
+          .join(' / ') ||
+        undefined,
       desiredStartDate: locationDetailsForm.desiredStartDate || undefined,
       photoUrls: locationDetailsForm.photoUrls
         ? locationDetailsForm.photoUrls
@@ -1038,15 +1062,16 @@ export default function ClientProjectDetailPage() {
     if (!locationPayload.addressFull?.trim()) locationBlockers.push('Full Address');
     if (!locationPayload.unitNumber?.trim()) locationBlockers.push('Unit Number');
     if (!locationPayload.floorLevel?.trim()) locationBlockers.push('Floor Level');
+    if (!locationPayload.district?.trim()) locationBlockers.push('District');
 
     if (isAwarded) {
-      if (!locationPayload.postalCode?.trim()) locationBlockers.push('Postal Code / District');
       if (!locationPayload.propertyType?.trim()) locationBlockers.push('Property Type');
-      if (!locationPayload.propertySize?.trim()) locationBlockers.push('Property Size');
-      if (!locationPayload.propertyAge?.trim()) locationBlockers.push('Property Age');
-      if (!locationPayload.existingConditions?.trim()) locationBlockers.push('Existing Conditions');
+      if (!surveyRequested && !locationPayload.propertySize?.trim()) locationBlockers.push('Property Size');
+      if (!surveyRequested && !locationPayload.propertyAge?.trim()) locationBlockers.push('Property Age');
+      if (!surveyRequested && !locationPayload.existingConditions?.trim()) locationBlockers.push('Existing Conditions');
       if (!locationPayload.accessDetails?.trim()) locationBlockers.push('Access Details');
-      if (!locationPayload.accessHoursDescription?.trim()) locationBlockers.push('Access Hours');
+      if (!locationPayload.accessHoursType?.trim()) locationBlockers.push('Access Hours');
+      if (!locationPayload.workingHoursWindow?.trim()) locationBlockers.push('Working Hours');
       if (!locationPayload.onSiteContactName?.trim()) locationBlockers.push('On-site Contact Name');
       if (!locationPayload.onSiteContactPhone?.trim()) locationBlockers.push('On-site Contact Phone');
       if (!locationPayload.desiredStartDate?.trim()) locationBlockers.push('Desired Start Date');
@@ -1205,6 +1230,7 @@ export default function ClientProjectDetailPage() {
           body: JSON.stringify({
             addressFull: locationDetailsForm.addressFull,
             buildingName: locationDetailsForm.buildingName || undefined,
+            district: locationDetailsForm.district || undefined,
             postalCode: locationDetailsForm.postalCode || undefined,
             unitNumber: locationDetailsForm.unitNumber || undefined,
             floorLevel: locationDetailsForm.floorLevel || undefined,
@@ -1221,7 +1247,14 @@ export default function ClientProjectDetailPage() {
               : undefined,
             onSiteContactName: locationDetailsForm.onSiteContactName || undefined,
             onSiteContactPhone: locationDetailsForm.onSiteContactPhone || undefined,
-            accessHoursDescription: locationDetailsForm.accessHoursDescription || undefined,
+            accessHoursType: locationDetailsForm.accessHoursType || undefined,
+            workingHoursWindow: locationDetailsForm.workingHoursWindow || undefined,
+            accessHoursDescription:
+              locationDetailsForm.accessHoursDescription ||
+              [locationDetailsForm.accessHoursType, locationDetailsForm.workingHoursWindow]
+                .filter(Boolean)
+                .join(' / ') ||
+              undefined,
             desiredStartDate: locationDetailsForm.desiredStartDate || undefined,
             photoUrls: locationDetailsForm.photoUrls
               ? locationDetailsForm.photoUrls
@@ -1259,14 +1292,35 @@ export default function ClientProjectDetailPage() {
 
     setLocationDetailsForm((prev) => ({
       ...prev,
-      addressFull: selectedAddress.addressFull || prev.addressFull,
-      buildingName: selectedAddress.buildingName || prev.buildingName,
-      unitNumber: selectedAddress.unitNumber || prev.unitNumber,
-      floorLevel: selectedAddress.floorLevel || prev.floorLevel,
-      accessDetails: selectedAddress.accessDetails || prev.accessDetails,
-      onSiteContactName: selectedAddress.onSiteContactName || prev.onSiteContactName,
-      onSiteContactPhone: selectedAddress.onSiteContactPhone || prev.onSiteContactPhone,
+      addressFull: selectedAddress.addressFull || '',
+      buildingName: selectedAddress.buildingName || '',
+      district: selectedAddress.district || '',
+      postalCode: selectedAddress.postalCode || '',
+      unitNumber: selectedAddress.unitNumber || '',
+      floorLevel: selectedAddress.floorLevel || '',
+      propertyType: selectedAddress.propertyType || '',
+      propertySize: selectedAddress.propertySize || '',
+      propertyAge: selectedAddress.propertyAge || '',
+      existingConditions: selectedAddress.existingConditions || '',
+      accessHoursType: selectedAddress.accessHoursType || '',
+      workingHoursWindow: selectedAddress.workingHoursWindow || '',
+      accessDetails: selectedAddress.accessDetails || '',
+      onSiteContactName: selectedAddress.onSiteContactName || '',
+      onSiteContactPhone: selectedAddress.onSiteContactPhone || '',
     }));
+
+    if (accessToken && projectId) {
+      void fetch(`${API_BASE_URL}/projects/${projectId}/site-addresses/select`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clientAddressId: addressId }),
+      }).catch(() => {
+        // Keep form hydration responsive even if persistence fails.
+      });
+    }
   };
 
   const handleUpdateSiteAvailability = async (date: string, reason: string) => {
@@ -1435,10 +1489,13 @@ export default function ClientProjectDetailPage() {
       const day = String(shifted.getUTCDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     })();
+    const [legacyAccessHoursType, legacyWorkingHoursWindow] =
+      (siteAccessData.accessHoursDescription || '').split('/').map((value) => value.trim());
     setLocationDetailsForm((prev) => ({
       ...prev,
       addressFull: prev.addressFull || siteAccessData.addressFull || '',
       buildingName: prev.buildingName || siteAccessData.buildingName || '',
+      district: prev.district || siteAccessData.district || '',
       unitNumber: prev.unitNumber || siteAccessData.unitNumber || '',
       floorLevel: prev.floorLevel || siteAccessData.floorLevel || '',
       postalCode: prev.postalCode || siteAccessData.postalCode || '',
@@ -1447,6 +1504,8 @@ export default function ClientProjectDetailPage() {
       propertyAge: prev.propertyAge || siteAccessData.propertyAge || '',
       accessDetails: prev.accessDetails || siteAccessData.accessDetails || '',
       existingConditions: prev.existingConditions || siteAccessData.existingConditions || '',
+      accessHoursType: prev.accessHoursType || siteAccessData.accessHoursType || legacyAccessHoursType || '',
+      workingHoursWindow: prev.workingHoursWindow || siteAccessData.workingHoursWindow || legacyWorkingHoursWindow || '',
       accessHoursDescription: prev.accessHoursDescription || siteAccessData.accessHoursDescription || '',
       onSiteContactName: prev.onSiteContactName || siteAccessData.onSiteContactName || '',
       onSiteContactPhone: prev.onSiteContactPhone || siteAccessData.onSiteContactPhone || '',
@@ -2377,6 +2436,7 @@ export default function ClientProjectDetailPage() {
               siteVisits={siteVisits}
               siteInspectionAvailableOn={project.siteInspectionAvailableOn || null}
               projectIsAwarded={isAwarded}
+              surveyRequested={surveyRequested}
               siteAccessBlockers={siteAccessBlockers}
               expandedAccordions={expandedAccordions}
               onToggleAccordion={toggleAccordion}
