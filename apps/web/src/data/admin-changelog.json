@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-31-aa486097",
+    "date": "2026-05-31T09:29:46+08:00",
+    "title": "Sync location save with client address book",
+    "summary": "Sync location save with client address book",
+    "areas": [
+      "api"
+    ],
+    "commit": "aa486097",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-05-30-06b59eea",
     "date": "2026-05-30T19:17:38+08:00",
     "title": "Auto-open building info when saved addresses exist",

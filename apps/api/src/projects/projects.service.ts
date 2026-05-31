@@ -6979,6 +6979,16 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    await this.upsertClientAddressBookAndProjectSite(projectId, userId, {
+      addressFull: body.addressFull,
+      buildingName: body.buildingName,
+      unitNumber: body.unitNumber,
+      floorLevel: body.floorLevel,
+      accessDetails: body.accessDetails,
+      onSiteContactName: body.onSiteContactName,
+      onSiteContactPhone: body.onSiteContactPhone,
+    });
+
     await this.prisma.project.update({
       where: { id: projectId },
       data: {
@@ -7322,7 +7332,7 @@ Please review the project details and respond with your quote or decline the inv
       LIMIT 1
     `;
     const locationDetails: any = locationDetailsRows[0] || null;
-    const locationBuildingName = locationDetails?.buildingName ?? siteAccessData?.buildingName ?? null;
+    const locationBuildingName = locationDetails?.buildingName ?? null;
 
     const mergedSiteAccessData = locationDetails
       ? {
