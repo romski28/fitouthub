@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-31-b6ec9526",
+    "date": "2026-05-31T10:58:38+08:00",
+    "title": "Polish site-access UX panel behavior and availability layout",
+    "summary": "Polish site-access UX panel behavior and availability layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "b6ec9526",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-84f3c30e",
     "date": "2026-05-31T10:41:18+08:00",
     "title": "Implement expanded site-access address hydration UX and SQL",

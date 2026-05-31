@@ -201,7 +201,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   const [basicAddressSaved, setBasicAddressSaved] = useState(false);
   const [buildingInfoSaved, setBuildingInfoSaved] = useState(false);
   const [showBuildingInfo, setShowBuildingInfo] = useState(false);
-  const [addressExpanded, setAddressExpanded] = useState<boolean | null>(null); // null = auto
+  const [addressExpanded, setAddressExpanded] = useState(true);
   const [acceptedVisitId, setAcceptedVisitId] = useState<string | null>(null);
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
@@ -354,8 +354,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     pendingAccessRequests.length > 0 ||
     acceptedAccessRequests.length > 0;
 
-  // Address panel is open when: explicitly expanded, OR auto (null) and address is incomplete
-  const addressOpen = addressExpanded !== null ? addressExpanded : !hasBasicLocation;
+  const addressOpen = addressExpanded;
 
   const addressSummary = [
     locationDetailsForm.district,
@@ -390,7 +389,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         {/* Header / collapsed summary */}
         <button
           type="button"
-          onClick={() => setAddressExpanded((v) => (v === null ? !addressOpen : !v))}
+          onClick={() => setAddressExpanded((v) => !v)}
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
         >
           <div className="min-w-0">
@@ -526,7 +525,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                     const saved = await onSubmitLocationDetails();
                     if (saved) {
                       setBasicAddressSaved(true);
-                      setAddressExpanded(false); // auto-collapse on successful save
                       setTimeout(() => setBasicAddressSaved(false), 8000);
                     }
                   } catch {
@@ -543,14 +541,73 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
         )}
       </div>
 
-      {/* Site availability date */}
-      <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Site availability date</p>
-        {siteAvailabilityDate ? (
-          <p className="mt-1 text-base font-bold text-slate-900">{formatDate(siteAvailabilityDate)}</p>
-        ) : (
-          <p className="mt-1 text-sm text-slate-600">Not set - use the section below to share a date with contractors.</p>
-        )}
+      {/* Site availability */}
+      <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Site availability date</p>
+          {siteAvailabilityDate ? (
+            <p className="mt-1 text-base font-bold text-slate-900">{formatDate(siteAvailabilityDate)}</p>
+          ) : (
+            <p className="mt-1 text-sm text-slate-600">Not set yet.</p>
+          )}
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[220px_1fr]">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-800">New availability date</label>
+            <input
+              type="date"
+              value={changeAvailDate}
+              onChange={(e) => setChangeAvailDate(e.target.value)}
+              className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-800">Reason for change</label>
+            <input
+              type="text"
+              value={changeAvailReason}
+              onChange={(e) => setChangeAvailReason(e.target.value)}
+              placeholder="Briefly explain why the date needs to change"
+              className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              const trimmedDate = changeAvailDate.trim();
+              const trimmedReason = changeAvailReason.trim();
+              if (!trimmedDate) {
+                toast.error('Please choose the new site inspection date');
+                return;
+              }
+              if (!trimmedReason) {
+                toast.error('Please enter a reason for the change');
+                return;
+              }
+              const normalizedDate = toDateInput(trimmedDate) || trimmedDate;
+              if (normalizedDate === currentAvailabilityInput) {
+                toast.error('Please choose a different date');
+                return;
+              }
+
+              setShowAvailabilityConfirm(true);
+            }}
+            disabled={
+              isUpdatingSiteAvailability ||
+              !changeAvailDate.trim() ||
+              !changeAvailReason.trim() ||
+              isSameAvailabilityDate
+            }
+            className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isUpdatingSiteAvailability ? 'Sending...' : 'Send update'}
+          </button>
+        </div>
+        <p className="rounded-md border border-[rgba(194,110,37,0.35)] bg-[rgba(255,245,224,0.9)] px-3 py-2 text-xs text-[rgba(144,86,30,0.95)]">
+          We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes - it can cause unnecessary disruption to their schedules.
+        </p>
       </div>
 
       {/* Error banners */}
@@ -861,15 +918,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </select>
               </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Desired Start Date</label>
-              <input
-                type="date"
-                value={locationDetailsForm.desiredStartDate}
-                onChange={(e) => onUpdateLocationDetailsForm({ desiredStartDate: e.target.value })}
-                className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-              />
-            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-800">On-site Contact Name</label>
@@ -915,68 +963,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             )}
           </div>
         )}
-      </div>
-
-      {/* Change site availability date */}
-      <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4">
-        <p className="text-sm font-semibold text-slate-900">Update your site availability</p>
-        <div className="grid gap-3 lg:grid-cols-[220px_1fr]">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-800">New availability date</label>
-            <input
-              type="date"
-              value={changeAvailDate}
-              onChange={(e) => setChangeAvailDate(e.target.value)}
-              className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-800">Reason for change</label>
-            <input
-              type="text"
-              value={changeAvailReason}
-              onChange={(e) => setChangeAvailReason(e.target.value)}
-              placeholder="Briefly explain why the date needs to change"
-              className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={async () => {
-              const trimmedDate = changeAvailDate.trim();
-              const trimmedReason = changeAvailReason.trim();
-              if (!trimmedDate) {
-                toast.error('Please choose the new site inspection date');
-                return;
-              }
-              if (!trimmedReason) {
-                toast.error('Please enter a reason for the change');
-                return;
-              }
-              const normalizedDate = toDateInput(trimmedDate) || trimmedDate;
-              if (normalizedDate === currentAvailabilityInput) {
-                toast.error('Please choose a different date');
-                return;
-              }
-
-              setShowAvailabilityConfirm(true);
-            }}
-            disabled={
-              isUpdatingSiteAvailability ||
-              !changeAvailDate.trim() ||
-              !changeAvailReason.trim() ||
-              isSameAvailabilityDate
-            }
-            className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isUpdatingSiteAvailability ? 'Sending...' : 'Send update'}
-          </button>
-        </div>
-        <p className="rounded-md border border-[rgba(194,110,37,0.35)] bg-[rgba(255,245,224,0.9)] px-3 py-2 text-xs text-[rgba(144,86,30,0.95)]">
-          We recommend only changing your availability date if absolutely necessary. If you have already confirmed visits with any contractors, please contact them directly before making changes - it can cause unnecessary disruption to their schedules.
-        </p>
       </div>
 
       {showAvailabilityConfirm && (
