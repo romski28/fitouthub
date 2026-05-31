@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-31-7fd2c9bb",
+    "date": "2026-05-31T15:29:37+08:00",
+    "title": "Stabilize survey workspace image selection",
+    "summary": "Stabilize survey workspace image selection",
+    "areas": [
+      "web"
+    ],
+    "commit": "7fd2c9bb",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-8e83ea55",
     "date": "2026-05-31T15:15:50+08:00",
     "title": "Refactor survey image editor into modal",

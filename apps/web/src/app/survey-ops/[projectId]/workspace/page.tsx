@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
@@ -107,12 +107,13 @@ export default function SurveyWorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [uploaderClearKey, setUploaderClearKey] = useState(0);
+  const [pendingPreviewUrls, setPendingPreviewUrls] = useState<string[]>([]);
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [activeMarkerIndex, setActiveMarkerIndex] = useState<number | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [newPointColor, setNewPointColor] = useState('#ef4444');
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<WorkspaceReport>({
     id: null,
@@ -129,6 +130,16 @@ export default function SurveyWorkspacePage() {
 
   const activeRoom = form.rooms[selectedRoomIndex] || form.rooms[0] || null;
   const activePhoto = activeRoom?.photos?.[selectedPhotoIndex] || null;
+  const localDraftKey = useMemo(
+    () => `survey-workspace-draft:${projectId}:${surveyExtraId}`,
+    [projectId, surveyExtraId],
+  );
+
+  useEffect(() => {
+    return () => {
+      pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [pendingPreviewUrls]);
 
   const loadWorkspace = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) {
@@ -156,17 +167,42 @@ export default function SurveyWorkspacePage() {
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
       const nextRooms = normalizeRooms(report.rooms, Array.isArray(report.photos) ? report.photos : [], initialRoomCount);
+      let localDraft: Partial<WorkspaceReport> | null = null;
+      if (typeof window !== 'undefined') {
+        const rawDraft = window.sessionStorage.getItem(localDraftKey);
+        if (rawDraft) {
+          try {
+            localDraft = JSON.parse(rawDraft) as Partial<WorkspaceReport>;
+          } catch {
+            window.sessionStorage.removeItem(localDraftKey);
+          }
+        }
+      }
+
+      const mergedReport: Partial<WorkspaceReport> = localDraft
+        ? {
+            ...report,
+            ...localDraft,
+            rooms: Array.isArray(localDraft.rooms) ? localDraft.rooms : report.rooms,
+          }
+        : report;
+      const mergedRooms = normalizeRooms(
+        mergedReport.rooms,
+        Array.isArray(mergedReport.photos) ? mergedReport.photos : [],
+        initialRoomCount,
+      );
+
       setForm({
-        id: report.id || null,
-        status: report.status || 'draft',
-        title: report.title || '',
-        summary: report.summary || '',
-        accessNotes: report.accessNotes || '',
-        recommendations: report.recommendations || '',
-        rooms: nextRooms,
-        photos: flattenRoomPhotos(nextRooms),
-        submittedAt: report.submittedAt || null,
-        updatedAt: report.updatedAt || null,
+        id: mergedReport.id || report.id || null,
+        status: mergedReport.status || report.status || 'draft',
+        title: mergedReport.title || report.title || '',
+        summary: mergedReport.summary || report.summary || '',
+        accessNotes: mergedReport.accessNotes || report.accessNotes || '',
+        recommendations: mergedReport.recommendations || report.recommendations || '',
+        rooms: mergedRooms,
+        photos: flattenRoomPhotos(mergedRooms),
+        submittedAt: mergedReport.submittedAt || report.submittedAt || null,
+        updatedAt: mergedReport.updatedAt || report.updatedAt || null,
       });
       setSelectedRoomIndex(0);
       setSelectedPhotoIndex(0);
@@ -175,11 +211,30 @@ export default function SurveyWorkspacePage() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, initialRoomCount, projectId, surveyExtraId]);
+  }, [accessToken, initialRoomCount, localDraftKey, projectId, surveyExtraId]);
 
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  useEffect(() => {
+    if (!projectId || !surveyExtraId || typeof window === 'undefined') return;
+
+    const draftToPersist = {
+      id: form.id,
+      status: form.status,
+      title: form.title,
+      summary: form.summary,
+      accessNotes: form.accessNotes,
+      recommendations: form.recommendations,
+      rooms: form.rooms,
+      photos: form.photos,
+      submittedAt: form.submittedAt,
+      updatedAt: form.updatedAt,
+    };
+
+    window.sessionStorage.setItem(localDraftKey, JSON.stringify(draftToPersist));
+  }, [form, localDraftKey, projectId, surveyExtraId]);
 
   const saveDraft = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) return;
@@ -219,13 +274,16 @@ export default function SurveyWorkspacePage() {
         rooms: Array.isArray(report.rooms) ? report.rooms : prev.rooms,
         updatedAt: report.updatedAt || prev.updatedAt,
       }));
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem(localDraftKey);
+      }
       setSuccess('Draft saved');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save survey draft');
     } finally {
       setSaving(false);
     }
-  }, [accessToken, form, projectId, surveyExtraId]);
+  }, [accessToken, form, localDraftKey, projectId, surveyExtraId]);
 
   const submitForApproval = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) return;
@@ -253,13 +311,39 @@ export default function SurveyWorkspacePage() {
         ...prev,
         status: 'submitted_for_client_approval',
       }));
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem(localDraftKey);
+      }
       setSuccess('Submitted for client approval');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit survey report');
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, projectId, surveyExtraId]);
+  }, [accessToken, localDraftKey, projectId, surveyExtraId]);
+
+  const handleFilesSelected = (files: File[]) => {
+    pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPendingFiles(files);
+    setPendingPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+  };
+
+  const removePendingFile = (index: number) => {
+    URL.revokeObjectURL(pendingPreviewUrls[index]);
+    const nextFiles = pendingFiles.filter((_, fileIndex) => fileIndex !== index);
+    const nextUrls = pendingPreviewUrls.filter((_, urlIndex) => urlIndex !== index);
+    setPendingFiles(nextFiles);
+    setPendingPreviewUrls(nextUrls);
+  };
+
+  const clearPendingFiles = () => {
+    pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPendingFiles([]);
+    setPendingPreviewUrls([]);
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+    }
+  };
 
   const uploadImages = useCallback(async () => {
     if (pendingFiles.length === 0 || !activeRoom) return;
@@ -310,15 +394,14 @@ export default function SurveyWorkspacePage() {
         photos: nextPhotos,
       }));
       setSelectedPhotoIndex((prev) => (nextRooms[selectedRoomIndex]?.photos?.length ? Math.max(prev, 0) : 0));
-      setPendingFiles([]);
-      setUploaderClearKey((prev) => prev + 1);
+      clearPendingFiles();
       setSuccess('Images uploaded. Save draft to persist room markup changes.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload images');
     } finally {
       setUploading(false);
     }
-  }, [activeRoom, form.rooms, pendingFiles, selectedRoomIndex]);
+  }, [activeRoom, clearPendingFiles, form.rooms, pendingFiles, selectedRoomIndex]);
 
   const updateActivePhoto = (updater: (photo: WorkspacePhoto) => WorkspacePhoto) => {
     setForm((prev) => {
@@ -631,23 +714,76 @@ export default function SurveyWorkspacePage() {
 
                   <div className="space-y-3 rounded-lg border border-white bg-white p-3 shadow-sm">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Room photos</h3>
-                    <ChatImageUploader
-                      onFilesSelected={setPendingFiles}
-                      maxImages={10}
-                      disabled={uploading}
-                      isUploading={uploading}
-                      uploadingCount={pendingFiles.length}
-                      clearKey={uploaderClearKey}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void uploadImages()}
-                        disabled={uploading || pendingFiles.length === 0}
-                        className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
-                      >
-                        {uploading ? 'Uploading...' : `Upload ${pendingFiles.length > 0 ? pendingFiles.length : ''} selected image${pendingFiles.length === 1 ? '' : 's'}`}
-                      </button>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          ref={galleryInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(event) => {
+                            const files = Array.from(event.target.files || []);
+                            handleFilesSelected(files);
+                            event.currentTarget.value = '';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => galleryInputRef.current?.click()}
+                          disabled={uploading}
+                          className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                        >
+                          {uploading ? 'Uploading...' : 'Select images'}
+                        </button>
+                        {pendingFiles.length > 0 ? (
+                          <span className="text-xs text-slate-500">
+                            {pendingFiles.length} image{pendingFiles.length === 1 ? '' : 's'} ready to upload
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {pendingPreviewUrls.length > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            {pendingPreviewUrls.map((previewUrl, index) => (
+                              <div key={`${previewUrl}-${index}`} className="relative overflow-hidden rounded-lg border border-slate-300 bg-white">
+                                <img
+                                  src={previewUrl}
+                                  alt={pendingFiles[index]?.name || `Pending upload ${index + 1}`}
+                                  className="h-20 w-20 object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removePendingFile(index)}
+                                  className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white shadow"
+                                  aria-label={`Remove pending image ${index + 1}`}
+                                >
+                                  x
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void uploadImages()}
+                              disabled={uploading || pendingFiles.length === 0}
+                              className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
+                            >
+                              {uploading ? 'Uploading...' : `Upload ${pendingFiles.length} image${pendingFiles.length === 1 ? '' : 's'}`}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={clearPendingFiles}
+                              disabled={uploading}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                            >
+                              Clear selection
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                     {activeRoom.photos.length > 0 ? (
                       <div className="space-y-3">
