@@ -378,6 +378,22 @@ export class ProjectsController {
       summary?: string;
       accessNotes?: string;
       recommendations?: string;
+      rooms?: Array<{
+        id?: string;
+        room?: string;
+        scanUrl?: string;
+        summary?: string;
+        accessNotes?: string;
+        recommendations?: string;
+        photos?: Array<{
+          storageKey?: string;
+          imageUrl?: string;
+          caption?: string;
+          markup?: {
+            points?: Array<{ x: number; y: number; note?: string; color?: string }>;
+          };
+        }>;
+      }>;
       photos?: Array<{
         storageKey?: string;
         imageUrl?: string;
@@ -408,6 +424,7 @@ export class ProjectsController {
       summary: body.summary,
       accessNotes: body.accessNotes,
       recommendations: body.recommendations,
+      rooms: body.rooms,
       photos: body.photos,
     });
   }

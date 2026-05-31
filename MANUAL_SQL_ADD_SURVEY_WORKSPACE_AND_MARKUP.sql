@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS mimo_survey_workspace_reports (
   summary TEXT,
   "accessNotes" TEXT,
   recommendations TEXT,
+  rooms JSONB NOT NULL DEFAULT '[]'::jsonb,
   photos JSONB NOT NULL DEFAULT '[]'::jsonb,
   "submittedAt" TIMESTAMPTZ,
   "approvedAt" TIMESTAMPTZ,
@@ -31,6 +32,9 @@ CREATE TABLE IF NOT EXISTS mimo_survey_workspace_reports (
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_mimo_survey_workspace_project_extra
   ON mimo_survey_workspace_reports ("projectId", "surveyExtraId");
+
+ALTER TABLE mimo_survey_workspace_reports
+  ADD COLUMN IF NOT EXISTS rooms JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_mimo_survey_workspace_status
   ON mimo_survey_workspace_reports (status, "updatedAt" DESC);

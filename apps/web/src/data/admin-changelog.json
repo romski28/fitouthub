@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-05-31-4408a864",
+    "date": "2026-05-31T12:16:05+08:00",
+    "title": "Add room pages to survey workspace",
+    "summary": "Add room pages to survey workspace",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "4408a864",
+    "files": [
+      "MANUAL_SQL_ADD_SURVEY_WORKSPACE_AND_MARKUP.sql",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-f9a70c01",
     "date": "2026-05-31T11:51:47+08:00",
     "title": "Add isolated survey workspace with photo markup",

@@ -124,6 +124,88 @@ type SurveyWorkspacePhoto = {
   };
 };
 
+type SurveyWorkspaceRoom = {
+  id?: string;
+  room?: string;
+  scanUrl?: string;
+  summary?: string;
+  accessNotes?: string;
+  recommendations?: string;
+  photos?: SurveyWorkspacePhoto[];
+};
+
+type SurveyWorkspaceRoomRecord = {
+  id: string;
+  room: string;
+  scanUrl: string;
+  summary: string;
+  accessNotes: string;
+  recommendations: string;
+  photos: SurveyWorkspacePhoto[];
+};
+
+const normalizeSurveyWorkspacePhotos = (photos?: SurveyWorkspacePhoto[]) =>
+  Array.isArray(photos)
+    ? photos
+        .slice(0, 100)
+        .map((photo) => ({
+          storageKey: String(photo?.storageKey || '').trim() || null,
+          imageUrl: String(photo?.imageUrl || '').trim() || null,
+          caption: String(photo?.caption || '').trim() || null,
+          markup: {
+            points: Array.isArray(photo?.markup?.points)
+              ? photo.markup.points
+                  .slice(0, 200)
+                  .map((point) => ({
+                    x: Number(point?.x || 0),
+                    y: Number(point?.y || 0),
+                    note: String(point?.note || '').slice(0, 500),
+                    color: String(point?.color || '#ef4444').slice(0, 20),
+                  }))
+              : [],
+          },
+        }))
+    : [];
+
+const normalizeSurveyWorkspaceRooms = (
+  rooms?: SurveyWorkspaceRoom[],
+  fallbackPhotos?: SurveyWorkspacePhoto[],
+  fallbackRoomCount = 1,
+): SurveyWorkspaceRoomRecord[] => {
+  const cleanRooms = Array.isArray(rooms)
+    ? rooms.slice(0, 25).map((room, index) => ({
+        id: String(room?.id || `room_${index + 1}`),
+        room: String(room?.room || `Room ${index + 1}`).trim() || `Room ${index + 1}`,
+        scanUrl: String(room?.scanUrl || '').trim(),
+        summary: String(room?.summary || '').trim(),
+        accessNotes: String(room?.accessNotes || '').trim(),
+        recommendations: String(room?.recommendations || '').trim(),
+        photos: normalizeSurveyWorkspacePhotos(room?.photos),
+      }))
+    : [];
+
+  if (cleanRooms.length > 0) {
+    return cleanRooms;
+  }
+
+  const roomCount = Number.isFinite(fallbackRoomCount) && fallbackRoomCount > 0 ? Math.floor(fallbackRoomCount) : 1;
+  const safeRoomCount = Math.max(roomCount, 1);
+  const legacyPhotos = normalizeSurveyWorkspacePhotos(fallbackPhotos);
+
+  return Array.from({ length: safeRoomCount }, (_, index) => ({
+    id: `room_${index + 1}`,
+    room: safeRoomCount > 1 ? `Room ${index + 1}` : 'Room',
+    scanUrl: '',
+    summary: '',
+    accessNotes: '',
+    recommendations: '',
+    photos: index === 0 ? legacyPhotos : [],
+  }));
+};
+
+const flattenSurveyWorkspaceRoomPhotos = (rooms: SurveyWorkspaceRoomRecord[]) =>
+  rooms.flatMap((room) => room.photos || []);
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
 const HK_TIMEZONE_OFFSET_MS = HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
@@ -3644,6 +3726,7 @@ export class ProjectsService {
           summary: string | null;
           accessNotes: string | null;
           recommendations: string | null;
+          rooms: Prisma.JsonValue | null;
           photos: Prisma.JsonValue | null;
           submittedAt: Date | null;
           updatedAt: Date;
@@ -3656,6 +3739,7 @@ export class ProjectsService {
           summary,
           "accessNotes" as "accessNotes",
           recommendations,
+          rooms,
           photos,
           "submittedAt" as "submittedAt",
           "updatedAt" as "updatedAt"
@@ -3678,6 +3762,10 @@ export class ProjectsService {
               summary: report.summary || '',
               accessNotes: report.accessNotes || '',
               recommendations: report.recommendations || '',
+              rooms: normalizeSurveyWorkspaceRooms(
+                Array.isArray(report.rooms) ? (report.rooms as SurveyWorkspaceRoom[]) : [],
+                Array.isArray(report.photos) ? (report.photos as SurveyWorkspacePhoto[]) : [],
+              ),
               photos: Array.isArray(report.photos) ? report.photos : [],
               submittedAt: report.submittedAt,
               updatedAt: report.updatedAt,
@@ -3689,6 +3777,7 @@ export class ProjectsService {
               summary: '',
               accessNotes: '',
               recommendations: '',
+              rooms: normalizeSurveyWorkspaceRooms([], [], 1),
               photos: [],
               submittedAt: null,
               updatedAt: null,
@@ -3714,32 +3803,14 @@ export class ProjectsService {
       summary?: string;
       accessNotes?: string;
       recommendations?: string;
+      rooms?: SurveyWorkspaceRoom[];
       photos?: SurveyWorkspacePhoto[];
     },
   ) {
     await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
 
-    const cleanPhotos = Array.isArray(payload.photos)
-      ? payload.photos
-          .slice(0, 100)
-          .map((photo) => ({
-            storageKey: String(photo?.storageKey || '').trim() || null,
-            imageUrl: String(photo?.imageUrl || '').trim() || null,
-            caption: String(photo?.caption || '').trim() || null,
-            markup: {
-              points: Array.isArray(photo?.markup?.points)
-                ? photo.markup.points
-                    .slice(0, 200)
-                    .map((point) => ({
-                      x: Number(point?.x || 0),
-                      y: Number(point?.y || 0),
-                      note: String(point?.note || '').slice(0, 500),
-                      color: String(point?.color || '#ef4444').slice(0, 20),
-                    }))
-                : [],
-            },
-          }))
-      : [];
+    const cleanRooms = normalizeSurveyWorkspaceRooms(payload.rooms, payload.photos, 1);
+    const cleanPhotos = flattenSurveyWorkspaceRoomPhotos(cleanRooms);
 
     try {
       await this.prisma.$executeRaw`
@@ -3753,6 +3824,7 @@ export class ProjectsService {
           summary,
           "accessNotes",
           recommendations,
+          rooms,
           photos,
           "createdAt",
           "updatedAt"
@@ -3766,6 +3838,7 @@ export class ProjectsService {
           ${String(payload.summary || '').trim() || null},
           ${String(payload.accessNotes || '').trim() || null},
           ${String(payload.recommendations || '').trim() || null},
+          ${JSON.stringify(cleanRooms)}::jsonb,
           ${JSON.stringify(cleanPhotos)}::jsonb,
           now(),
           now()
@@ -3777,6 +3850,7 @@ export class ProjectsService {
           summary = EXCLUDED.summary,
           "accessNotes" = EXCLUDED."accessNotes",
           recommendations = EXCLUDED.recommendations,
+            rooms = EXCLUDED.rooms,
           photos = EXCLUDED.photos,
           "updatedAt" = now()
       `;

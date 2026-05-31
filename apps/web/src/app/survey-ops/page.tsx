@@ -214,7 +214,7 @@ export default function SurveyOpsPage() {
   );
 
   const updateSurveyStatus = useCallback(
-    async (projectId: string, surveyExtraId: string, action: 'start' | 'cancel') => {
+    async (projectId: string, surveyExtraId: string, action: 'start' | 'cancel', roomCount?: number) => {
       if (!accessToken) return;
       setStatusActionProjectId(projectId);
       setError(null);
@@ -239,7 +239,10 @@ export default function SurveyOpsPage() {
 
         await loadQueue();
         if (action === 'start') {
-          router.push(`/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}`);
+          const safeRoomCount = Number.isFinite(roomCount || 0) && (roomCount || 0) > 0 ? Math.floor(roomCount || 0) : 1;
+          router.push(
+            `/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}&rooms=${encodeURIComponent(String(safeRoomCount))}`,
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update survey status');
@@ -497,7 +500,7 @@ export default function SurveyOpsPage() {
 
                       <button
                         type="button"
-                        onClick={() => void updateSurveyStatus(item.projectId, item.survey.id, 'start')}
+                        onClick={() => void updateSurveyStatus(item.projectId, item.survey.id, 'start', Number(item.survey.metadata?.rooms || 1))}
                         disabled={!canStart || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
                         className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
                       >
@@ -516,7 +519,10 @@ export default function SurveyOpsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          router.push(`/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}`);
+                          const roomCount = Number(item.survey.metadata?.rooms || 1);
+                          router.push(
+                            `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}`,
+                          );
                         }}
                         disabled={!canOpenWorkspace || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
                         className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
