@@ -106,7 +106,6 @@ export default function SurveyWorkspacePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
@@ -293,79 +292,81 @@ export default function SurveyWorkspacePage() {
     }
   }, [accessToken, projectId, surveyExtraId]);
 
-  const uploadImages = useCallback(async () => {
-    if (pendingFiles.length === 0 || !activeRoom) return;
+  const uploadImages = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0 || !activeRoom) return;
 
-    setUploading(true);
-    setError(null);
-    setSuccess(null);
+      setUploading(true);
+      setError(null);
+      setSuccess(null);
 
-    try {
-      const formData = new FormData();
-      pendingFiles.forEach((file) => formData.append('files', file));
+      try {
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
 
-      const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
-        method: 'POST',
-        body: formData,
-      });
+        const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/uploads`, {
+          method: 'POST',
+          body: formData,
+        });
 
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to upload images');
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.message || 'Failed to upload images');
+        }
+
+        const urls = getUploadResponseKeys(payload);
+        if (urls.length === 0) {
+          throw new Error('Upload did not return image keys');
+        }
+
+        const photos: WorkspacePhoto[] = urls.map((url) => ({
+          storageKey: String(url || '').trim(),
+          imageUrl: String(url || '').trim(),
+          caption: '',
+          markup: { points: [] },
+        }));
+
+        const nextRooms = form.rooms.map((room, index) =>
+          index === selectedRoomIndex
+            ? {
+                ...room,
+                photos: [...(room.photos || []), ...photos],
+              }
+            : room,
+        );
+        const nextPhotos = flattenRoomPhotos(nextRooms);
+
+        setForm((prev) => ({
+          ...prev,
+          rooms: nextRooms,
+          photos: nextPhotos,
+        }));
+        setSelectedPhotoIndex((prev) => (nextRooms[selectedRoomIndex]?.photos?.length ? Math.max(prev, 0) : 0));
+
+        const savedReport = await saveDraftSnapshot({
+          ...form,
+          rooms: nextRooms,
+          photos: nextPhotos,
+        });
+
+        setForm((prev) => ({
+          ...prev,
+          id: savedReport?.id || prev.id,
+          status: savedReport?.status || prev.status,
+          updatedAt: savedReport?.updatedAt || prev.updatedAt,
+          rooms: Array.isArray(savedReport?.rooms) ? savedReport.rooms : nextRooms,
+          photos: Array.isArray(savedReport?.photos) ? savedReport.photos : nextPhotos,
+        }));
+        setUploaderClearKey((prev) => prev + 1);
+        setSuccess('Images uploaded and saved to the active room.');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to upload images');
+      } finally {
+        setUploading(false);
       }
-
-      const urls = getUploadResponseKeys(payload);
-      if (urls.length === 0) {
-        throw new Error('Upload did not return image keys');
-      }
-
-      const photos: WorkspacePhoto[] = urls.map((url) => ({
-        storageKey: String(url || '').trim(),
-        imageUrl: String(url || '').trim(),
-        caption: '',
-        markup: { points: [] },
-      }));
-
-      const nextRooms = form.rooms.map((room, index) =>
-        index === selectedRoomIndex
-          ? {
-              ...room,
-              photos: [...(room.photos || []), ...photos],
-            }
-          : room,
-      );
-      const nextPhotos = flattenRoomPhotos(nextRooms);
-
-      setForm((prev) => ({
-        ...prev,
-        rooms: nextRooms,
-        photos: nextPhotos,
-      }));
-      setSelectedPhotoIndex((prev) => (nextRooms[selectedRoomIndex]?.photos?.length ? Math.max(prev, 0) : 0));
-
-      const savedReport = await saveDraftSnapshot({
-        ...form,
-        rooms: nextRooms,
-        photos: nextPhotos,
-      });
-
-      setForm((prev) => ({
-        ...prev,
-        id: savedReport?.id || prev.id,
-        status: savedReport?.status || prev.status,
-        updatedAt: savedReport?.updatedAt || prev.updatedAt,
-        rooms: Array.isArray(savedReport?.rooms) ? savedReport.rooms : nextRooms,
-        photos: Array.isArray(savedReport?.photos) ? savedReport.photos : nextPhotos,
-      }));
-      setPendingFiles([]);
-      setUploaderClearKey((prev) => prev + 1);
-      setSuccess('Images uploaded. Save draft to persist markup data.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload images');
-    } finally {
-      setUploading(false);
-    }
-  }, [activeRoom, form, pendingFiles, saveDraftSnapshot, selectedRoomIndex]);
+    },
+    [activeRoom, form, saveDraftSnapshot, selectedRoomIndex],
+  );
 
   const updateActivePhoto = (updater: (photo: WorkspacePhoto) => WorkspacePhoto) => {
     setForm((prev) => {
@@ -644,24 +645,13 @@ export default function SurveyWorkspacePage() {
                   <div className="space-y-3 rounded-lg border border-white bg-white p-3 shadow-sm">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Room photos</h3>
                     <ChatImageUploader
-                      onFilesSelected={setPendingFiles}
+                      onFilesSelected={(files) => void uploadImages(files)}
                       maxImages={10}
                       disabled={uploading}
                       isUploading={uploading}
-                      uploadingCount={pendingFiles.length}
+                      uploadingCount={0}
                       clearKey={uploaderClearKey}
                     />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void uploadImages()}
-                        disabled={uploading || pendingFiles.length === 0}
-                        className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
-                      >
-                        {uploading ? 'Uploading...' : 'Upload selected images'}
-                      </button>
-                    </div>
-
                     {activeRoom.photos.length > 0 ? (
                       <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">

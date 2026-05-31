@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-05-31-bba443c3",
+    "date": "2026-05-31T12:20:40+08:00",
+    "title": "Upload survey images immediately on select",
+    "summary": "Upload survey images immediately on select",
+    "areas": [
+      "web"
+    ],
+    "commit": "bba443c3",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-05-31-4408a864",
     "date": "2026-05-31T12:16:05+08:00",
     "title": "Add room pages to survey workspace",
