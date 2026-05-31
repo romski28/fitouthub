@@ -108,6 +108,22 @@ type SurveyorRow = {
   role: string;
 };
 
+type SurveyWorkspacePoint = {
+  x: number;
+  y: number;
+  note?: string;
+  color?: string;
+};
+
+type SurveyWorkspacePhoto = {
+  storageKey?: string;
+  imageUrl?: string;
+  caption?: string;
+  markup?: {
+    points?: SurveyWorkspacePoint[];
+  };
+};
+
 const HK_TIMEZONE_OFFSET_HOURS = 8;
 const HK_TIMEZONE_OFFSET_MS = HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
@@ -3567,6 +3583,264 @@ export class ProjectsService {
       surveyExtraId: payload.surveyExtraId,
       status: 'requested',
       calendarEventId,
+    };
+  }
+
+  private async assertSurveyWorkspaceAccess(
+    projectId: string,
+    surveyExtraId: string,
+    actorUserId: string,
+    actorRole: string,
+  ) {
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        status: string;
+        assignedSurveyorUserId: string | null;
+      }>
+    >`
+      SELECT
+        mpe.id,
+        mpe.status,
+        msa."assignedSurveyorUserId" as "assignedSurveyorUserId"
+      FROM mimo_project_extras mpe
+      LEFT JOIN mimo_survey_assignments msa ON msa."projectId" = mpe."projectId"
+      WHERE mpe.id = ${surveyExtraId}
+        AND mpe."projectId" = ${projectId}
+        AND mpe."extraType" = 'survey'
+      LIMIT 1
+    `;
+
+    const row = rows[0];
+    if (!row) {
+      throw new BadRequestException('Survey record not found for this project');
+    }
+
+    if (
+      String(actorRole || '').toLowerCase() === 'surveyor' &&
+      row.assignedSurveyorUserId &&
+      row.assignedSurveyorUserId !== actorUserId
+    ) {
+      throw new BadRequestException('You are not assigned to this survey task');
+    }
+
+    return row;
+  }
+
+  async getSurveyWorkspace(
+    projectId: string,
+    surveyExtraId: string,
+    actorUserId: string,
+    actorRole: string,
+  ) {
+    await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
+
+    try {
+      const rows = await this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          status: string;
+          title: string | null;
+          summary: string | null;
+          accessNotes: string | null;
+          recommendations: string | null;
+          photos: Prisma.JsonValue | null;
+          submittedAt: Date | null;
+          updatedAt: Date;
+        }>
+      >`
+        SELECT
+          id,
+          status,
+          title,
+          summary,
+          "accessNotes" as "accessNotes",
+          recommendations,
+          photos,
+          "submittedAt" as "submittedAt",
+          "updatedAt" as "updatedAt"
+        FROM mimo_survey_workspace_reports
+        WHERE "projectId" = ${projectId}
+          AND "surveyExtraId" = ${surveyExtraId}
+        LIMIT 1
+      `;
+
+      const report = rows[0] || null;
+      return {
+        success: true,
+        projectId,
+        surveyExtraId,
+        report: report
+          ? {
+              id: report.id,
+              status: report.status,
+              title: report.title || '',
+              summary: report.summary || '',
+              accessNotes: report.accessNotes || '',
+              recommendations: report.recommendations || '',
+              photos: Array.isArray(report.photos) ? report.photos : [],
+              submittedAt: report.submittedAt,
+              updatedAt: report.updatedAt,
+            }
+          : {
+              id: null,
+              status: 'draft',
+              title: '',
+              summary: '',
+              accessNotes: '',
+              recommendations: '',
+              photos: [],
+              submittedAt: null,
+              updatedAt: null,
+            },
+      };
+    } catch (error) {
+      const err = error as any;
+      throw new ServiceUnavailableException(
+        err?.message?.includes('mimo_survey_workspace_reports')
+          ? 'Survey workspace storage is not initialized. Run MANUAL_SQL_ADD_SURVEY_WORKSPACE_AND_MARKUP.sql first.'
+          : 'Failed to load survey workspace',
+      );
+    }
+  }
+
+  async saveSurveyWorkspaceDraft(
+    projectId: string,
+    surveyExtraId: string,
+    actorUserId: string,
+    actorRole: string,
+    payload: {
+      title?: string;
+      summary?: string;
+      accessNotes?: string;
+      recommendations?: string;
+      photos?: SurveyWorkspacePhoto[];
+    },
+  ) {
+    await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
+
+    const cleanPhotos = Array.isArray(payload.photos)
+      ? payload.photos
+          .slice(0, 100)
+          .map((photo) => ({
+            storageKey: String(photo?.storageKey || '').trim() || null,
+            imageUrl: String(photo?.imageUrl || '').trim() || null,
+            caption: String(photo?.caption || '').trim() || null,
+            markup: {
+              points: Array.isArray(photo?.markup?.points)
+                ? photo.markup.points
+                    .slice(0, 200)
+                    .map((point) => ({
+                      x: Number(point?.x || 0),
+                      y: Number(point?.y || 0),
+                      note: String(point?.note || '').slice(0, 500),
+                      color: String(point?.color || '#ef4444').slice(0, 20),
+                    }))
+                : [],
+            },
+          }))
+      : [];
+
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_survey_workspace_reports (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "createdByUserId",
+          status,
+          title,
+          summary,
+          "accessNotes",
+          recommendations,
+          photos,
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${`mswr_${createId()}`},
+          ${projectId},
+          ${surveyExtraId},
+          ${actorUserId},
+          'draft',
+          ${String(payload.title || '').trim() || null},
+          ${String(payload.summary || '').trim() || null},
+          ${String(payload.accessNotes || '').trim() || null},
+          ${String(payload.recommendations || '').trim() || null},
+          ${JSON.stringify(cleanPhotos)}::jsonb,
+          now(),
+          now()
+        )
+        ON CONFLICT ("projectId", "surveyExtraId") DO UPDATE
+        SET
+          status = 'draft',
+          title = EXCLUDED.title,
+          summary = EXCLUDED.summary,
+          "accessNotes" = EXCLUDED."accessNotes",
+          recommendations = EXCLUDED.recommendations,
+          photos = EXCLUDED.photos,
+          "updatedAt" = now()
+      `;
+    } catch (error) {
+      const err = error as any;
+      throw new ServiceUnavailableException(
+        err?.message?.includes('mimo_survey_workspace_reports')
+          ? 'Survey workspace storage is not initialized. Run MANUAL_SQL_ADD_SURVEY_WORKSPACE_AND_MARKUP.sql first.'
+          : 'Failed to save survey draft',
+      );
+    }
+
+    return this.getSurveyWorkspace(projectId, surveyExtraId, actorUserId, actorRole);
+  }
+
+  async submitSurveyWorkspace(
+    projectId: string,
+    surveyExtraId: string,
+    actorUserId: string,
+    actorRole: string,
+  ) {
+    await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
+
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_survey_workspace_reports (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "createdByUserId",
+          status,
+          "submittedAt",
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${`mswr_${createId()}`},
+          ${projectId},
+          ${surveyExtraId},
+          ${actorUserId},
+          'submitted_for_client_approval',
+          now(),
+          now(),
+          now()
+        )
+        ON CONFLICT ("projectId", "surveyExtraId") DO UPDATE
+        SET
+          status = 'submitted_for_client_approval',
+          "submittedAt" = now(),
+          "updatedAt" = now()
+      `;
+    } catch (error) {
+      const err = error as any;
+      throw new ServiceUnavailableException(
+        err?.message?.includes('mimo_survey_workspace_reports')
+          ? 'Survey workspace storage is not initialized. Run MANUAL_SQL_ADD_SURVEY_WORKSPACE_AND_MARKUP.sql first.'
+          : 'Failed to submit survey workspace',
+      );
+    }
+
+    return {
+      success: true,
+      projectId,
+      surveyExtraId,
+      status: 'submitted_for_client_approval',
     };
   }
 

@@ -343,6 +343,99 @@ export class ProjectsController {
     });
   }
 
+  @Get(':id/survey-ops/workspace')
+  @UseGuards(CombinedAuthGuard)
+  async getSurveyOpsWorkspace(
+    @Param('id') id: string,
+    @Query('surveyExtraId') surveyExtraId: string,
+    @Request() req: any,
+  ) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+    const actorId = req.user?.id || req.user?.sub;
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!surveyExtraId) {
+      throw new BadRequestException('surveyExtraId is required');
+    }
+
+    return this.projectsService.getSurveyWorkspace(id, surveyExtraId, actorId, tokenRole);
+  }
+
+  @Post(':id/survey-ops/workspace/draft')
+  @UseGuards(CombinedAuthGuard)
+  async saveSurveyOpsWorkspaceDraft(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      surveyExtraId?: string;
+      title?: string;
+      summary?: string;
+      accessNotes?: string;
+      recommendations?: string;
+      photos?: Array<{
+        storageKey?: string;
+        imageUrl?: string;
+        caption?: string;
+        markup?: {
+          points?: Array<{ x: number; y: number; note?: string; color?: string }>;
+        };
+      }>;
+    },
+    @Request() req: any,
+  ) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+    const actorId = req.user?.id || req.user?.sub;
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!body?.surveyExtraId) {
+      throw new BadRequestException('surveyExtraId is required');
+    }
+
+    return this.projectsService.saveSurveyWorkspaceDraft(id, body.surveyExtraId, actorId, tokenRole, {
+      title: body.title,
+      summary: body.summary,
+      accessNotes: body.accessNotes,
+      recommendations: body.recommendations,
+      photos: body.photos,
+    });
+  }
+
+  @Post(':id/survey-ops/workspace/submit')
+  @UseGuards(CombinedAuthGuard)
+  async submitSurveyOpsWorkspace(
+    @Param('id') id: string,
+    @Body() body: { surveyExtraId?: string },
+    @Request() req: any,
+  ) {
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isAllowed = ['admin', 'surveyor', 'mimo_boh'].includes(tokenRole);
+    const actorId = req.user?.id || req.user?.sub;
+
+    if (!isAllowed) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!body?.surveyExtraId) {
+      throw new BadRequestException('surveyExtraId is required');
+    }
+
+    return this.projectsService.submitSurveyWorkspace(id, body.surveyExtraId, actorId, tokenRole);
+  }
+
   @Get(':id')
   @UseGuards(CombinedAuthGuard)
   async findOne(@Param('id') id: string, @Request() req: any) {

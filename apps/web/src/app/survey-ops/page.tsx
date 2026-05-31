@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useRoleGuard } from '@/hooks/use-role-guard';
@@ -89,6 +90,7 @@ const getStatusPill = (status?: string) => {
 
 export default function SurveyOpsPage() {
   useRoleGuard([...ALLOWED_ROLES], { fallback: '/' });
+  const router = useRouter();
 
   const { accessToken, user, isLoggedIn } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -236,13 +238,16 @@ export default function SurveyOpsPage() {
         }
 
         await loadQueue();
+        if (action === 'start') {
+          router.push(`/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}`);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update survey status');
       } finally {
         setStatusActionProjectId(null);
       }
     },
-    [accessToken, loadQueue],
+    [accessToken, loadQueue, router],
   );
 
   const openProjectContext = useCallback(
@@ -407,6 +412,7 @@ export default function SurveyOpsPage() {
             const canAssign = ['requested', 'unassigned', 'pending', 'scheduled', 'assigned', 'in_progress'].includes(normalizedStatus);
             const canStart = ['assigned', 'scheduled'].includes(normalizedStatus) && Boolean(item.survey.assignedSurveyor?.id);
             const canCancel = ['assigned', 'scheduled', 'in_progress'].includes(normalizedStatus);
+            const canOpenWorkspace = ['in_progress', 'assigned', 'scheduled'].includes(normalizedStatus);
 
             return (
               <div key={item.projectId} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -505,6 +511,17 @@ export default function SurveyOpsPage() {
                         className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
                       >
                         {statusActionProjectId === item.projectId ? 'Working...' : 'Cancel Survey'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          router.push(`/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}`);
+                        }}
+                        disabled={!canOpenWorkspace || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
+                        className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                      >
+                        Open Workspace
                       </button>
                     </div>
                   </div>
