@@ -550,6 +550,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           ) : (
             <p className="mt-1 text-sm text-slate-600">Not set yet.</p>
           )}
+          <p className="mt-1 text-xs text-slate-600">Change date of site availability</p>
         </div>
         <div className="grid gap-3 lg:grid-cols-[220px_1fr]">
           <div>
@@ -558,7 +559,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               type="date"
               value={changeAvailDate}
               onChange={(e) => setChangeAvailDate(e.target.value)}
-              className="quote-picker-input w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+              className="quote-picker-input quote-picker-input-charcoal w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
             />
           </div>
           <div>
@@ -881,15 +882,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 />
               )}
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Access Details</label>
-              <textarea
-                rows={2}
-                value={locationDetailsForm.accessDetails}
-                onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-              />
-            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-800">Access Hours</label>
@@ -917,6 +909,15 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <option value="Other">Other</option>
                 </select>
               </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-800">Access Details</label>
+              <textarea
+                rows={2}
+                value={locationDetailsForm.accessDetails}
+                onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
+                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
+              />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>

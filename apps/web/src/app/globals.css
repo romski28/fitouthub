@@ -211,6 +211,16 @@ body {
   opacity: 1;
 }
 
+.quote-picker-input-charcoal {
+  color-scheme: light;
+}
+
+.quote-picker-input-charcoal::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: brightness(0) saturate(100%);
+  opacity: 0.72;
+}
+
 .quote-dark-select {
   appearance: none;
   -webkit-appearance: none;
