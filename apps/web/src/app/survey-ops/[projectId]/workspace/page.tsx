@@ -861,12 +861,12 @@ export default function SurveyWorkspacePage() {
 
       {editorOpen && activePhoto ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm sm:p-6">
-          <div className="w-full max-w-6xl rounded-3xl border border-white/40 bg-[#d8d1bc]/92 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-5">
+          <div className="w-full max-w-6xl rounded-3xl border border-white/40 bg-[#d8d1bc]/92 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4">
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
               <div className="space-y-3">
-                <h2 className="text-[28px] font-semibold text-[#1f2434]">Image editor</h2>
-                <div>
-                  <label className="mb-1 block text-[30px] font-medium text-[#1f2434]">Image caption</label>
+                <h2 className="text-xl font-semibold text-[#1f2434]">Image annotator</h2>
+                <div className="grid items-center gap-2 sm:grid-cols-[140px_1fr]">
+                  <label className="text-sm font-medium text-[#1f2434]">Image caption</label>
                   <input
                     value={activePhoto.caption || ''}
                     onChange={(e) =>
@@ -876,7 +876,7 @@ export default function SurveyWorkspacePage() {
                       }))
                     }
                     placeholder=""
-                    className="w-full rounded-xl border border-[#f1e9d8] bg-[#f8f2e5] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
+                    className="w-full rounded-lg border border-[#f1e9d8] bg-[#f8f2e5] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
                   />
                 </div>
 
@@ -908,21 +908,23 @@ export default function SurveyWorkspacePage() {
                       </button>
                     );
                   })}
+                  <div className="absolute bottom-2 right-2 rounded-lg border border-[#d4c9b2] bg-[#f8f2e5]/95 px-2 py-1 shadow-sm">
+                    <label className="flex items-center gap-2 text-xs font-medium text-[#31495f]">
+                      Marker color
+                      <input
+                        type="color"
+                        value={newPointColor}
+                        onChange={(e) => setNewPointColor(e.target.value)}
+                        className="h-7 w-8 rounded border border-[#d4c9b2]"
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 
               <div className="flex h-[64vh] min-h-[420px] flex-col rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-2">
-                <div className="mb-2 flex items-center justify-between px-1">
-                  <p className="text-[32px] font-medium text-[#1f2434]">Marker Notes</p>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#31495f]">
-                    Marker color
-                    <input
-                      type="color"
-                      value={newPointColor}
-                      onChange={(e) => setNewPointColor(e.target.value)}
-                      className="h-8 w-10 rounded border border-[#d4c9b2]"
-                    />
-                  </label>
+                <div className="mb-2 px-1">
+                  <p className="text-base font-semibold text-[#1f2434]">Annotations</p>
                 </div>
 
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -1005,7 +1007,7 @@ export default function SurveyWorkspacePage() {
                       setEditorOpen(false);
                       setActiveMarkerIndex(null);
                     }}
-                    className="rounded-lg bg-amber-400 px-3 py-2 text-lg font-semibold text-[#f8f2e5]"
+                    className="rounded-lg bg-amber-400 px-3 py-2 text-sm font-semibold text-[#f8f2e5]"
                   >
                     Close
                   </button>
@@ -1013,7 +1015,7 @@ export default function SurveyWorkspacePage() {
                     type="button"
                     onClick={() => void saveDraft()}
                     disabled={saving}
-                    className="rounded-lg bg-emerald-600 px-3 py-2 text-lg font-semibold text-[#f8f2e5] disabled:opacity-60"
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-[#f8f2e5] disabled:opacity-60"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
