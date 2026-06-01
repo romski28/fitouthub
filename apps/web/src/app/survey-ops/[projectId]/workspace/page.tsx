@@ -266,7 +266,8 @@ export default function SurveyWorkspacePage() {
         }
       }
 
-      const mergedReport: Partial<WorkspaceReport> = localDraft
+      const hasPersistedReport = Boolean(report?.id);
+      const mergedReport: Partial<WorkspaceReport> = !hasPersistedReport && localDraft
         ? {
             ...report,
             ...localDraft,

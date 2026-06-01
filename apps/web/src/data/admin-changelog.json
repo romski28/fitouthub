@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-6d1bde6e",
+    "date": "2026-06-01T13:32:48+08:00",
+    "title": "Prefer server rooms for existing workspaces",
+    "summary": "Prefer server rooms for existing workspaces",
+    "areas": [
+      "web"
+    ],
+    "commit": "6d1bde6e",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-4a39f48e",
     "date": "2026-06-01T13:27:46+08:00",
     "title": "Rollback fragile survey room draft gating",
