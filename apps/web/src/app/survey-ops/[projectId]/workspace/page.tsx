@@ -59,9 +59,29 @@ const createEmptyRoom = (index: number, photos: WorkspacePhoto[] = []): Workspac
   photos,
 });
 
+const coerceArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
+
 const normalizeRooms = (rooms: unknown, fallbackPhotos: WorkspacePhoto[], fallbackCount: number): WorkspaceRoom[] => {
-  const cleanRooms = Array.isArray(rooms)
-    ? rooms.slice(0, 25).map((room, index) => {
+  const roomList = coerceArray<WorkspaceRoom>(rooms);
+
+  const cleanRooms = roomList
+    .slice(0, 25)
+    .map((room, index) => {
         const candidate = room as Partial<WorkspaceRoom> | null | undefined;
         return {
           id: String(candidate?.id || `room_${index + 1}`),
@@ -70,10 +90,9 @@ const normalizeRooms = (rooms: unknown, fallbackPhotos: WorkspacePhoto[], fallba
           summary: String(candidate?.summary || '').trim(),
           accessNotes: String(candidate?.accessNotes || '').trim(),
           recommendations: String(candidate?.recommendations || '').trim(),
-          photos: Array.isArray(candidate?.photos) ? candidate.photos.slice(0, 100) : [],
+          photos: coerceArray<WorkspacePhoto>(candidate?.photos).slice(0, 100),
         };
-      })
-    : [];
+      });
 
   if (cleanRooms.length > 0) {
     return cleanRooms;
@@ -180,7 +199,8 @@ export default function SurveyWorkspacePage() {
       }
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
-      const nextRooms = normalizeRooms(report.rooms, Array.isArray(report.photos) ? report.photos : [], initialRoomCount);
+      const reportPhotos = coerceArray<WorkspacePhoto>(report.photos);
+      const nextRooms = normalizeRooms(report.rooms, reportPhotos, initialRoomCount);
       let localDraft: Partial<WorkspaceReport> | null = null;
       if (typeof window !== 'undefined') {
         const rawDraft = window.sessionStorage.getItem(localDraftKey);
@@ -202,7 +222,7 @@ export default function SurveyWorkspacePage() {
         : report;
       const mergedRooms = normalizeRooms(
         mergedReport.rooms,
-        Array.isArray(mergedReport.photos) ? mergedReport.photos : [],
+        coerceArray<WorkspacePhoto>(mergedReport.photos),
         initialRoomCount,
       );
 

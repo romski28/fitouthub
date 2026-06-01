@@ -144,9 +144,27 @@ type SurveyWorkspaceRoomRecord = {
   photos: SurveyWorkspacePhoto[];
 };
 
-const normalizeSurveyWorkspacePhotos = (photos?: SurveyWorkspacePhoto[]) =>
-  Array.isArray(photos)
-    ? photos
+const coerceJsonArray = <T>(value: unknown): T[] => {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
+
+const normalizeSurveyWorkspacePhotos = (photos?: unknown) => {
+  const sourcePhotos = coerceJsonArray<SurveyWorkspacePhoto>(photos);
+
+  return sourcePhotos
         .slice(0, 100)
         .map((photo) => ({
           storageKey: String(photo?.storageKey || '').trim() || null,
@@ -164,16 +182,19 @@ const normalizeSurveyWorkspacePhotos = (photos?: SurveyWorkspacePhoto[]) =>
                   }))
               : [],
           },
-        }))
-    : [];
+        }));
+};
 
 const normalizeSurveyWorkspaceRooms = (
-  rooms?: SurveyWorkspaceRoom[],
-  fallbackPhotos?: SurveyWorkspacePhoto[],
+  rooms?: unknown,
+  fallbackPhotos?: unknown,
   fallbackRoomCount = 1,
 ): SurveyWorkspaceRoomRecord[] => {
-  const cleanRooms = Array.isArray(rooms)
-    ? rooms.slice(0, 25).map((room, index) => ({
+  const sourceRooms = coerceJsonArray<SurveyWorkspaceRoom>(rooms);
+
+  const cleanRooms = sourceRooms
+    .slice(0, 25)
+    .map((room, index) => ({
         id: String(room?.id || `room_${index + 1}`),
         room: String(room?.room || `Room ${index + 1}`).trim() || `Room ${index + 1}`,
         scanUrl: String(room?.scanUrl || '').trim(),
@@ -181,8 +202,7 @@ const normalizeSurveyWorkspaceRooms = (
         accessNotes: String(room?.accessNotes || '').trim(),
         recommendations: String(room?.recommendations || '').trim(),
         photos: normalizeSurveyWorkspacePhotos(room?.photos),
-      }))
-    : [];
+      }));
 
   if (cleanRooms.length > 0) {
     return cleanRooms;
@@ -3785,6 +3805,10 @@ export class ProjectsService {
       `;
 
       const report = rows[0] || null;
+
+      const reportRooms = coerceJsonArray<SurveyWorkspaceRoom>(report?.rooms);
+      const reportPhotos = coerceJsonArray<SurveyWorkspacePhoto>(report?.photos);
+
       return {
         success: true,
         projectId,
@@ -3797,11 +3821,8 @@ export class ProjectsService {
               summary: report.summary || '',
               accessNotes: report.accessNotes || '',
               recommendations: report.recommendations || '',
-              rooms: normalizeSurveyWorkspaceRooms(
-                Array.isArray(report.rooms) ? (report.rooms as SurveyWorkspaceRoom[]) : [],
-                Array.isArray(report.photos) ? (report.photos as SurveyWorkspacePhoto[]) : [],
-              ),
-              photos: Array.isArray(report.photos) ? report.photos : [],
+              rooms: normalizeSurveyWorkspaceRooms(reportRooms, reportPhotos),
+              photos: normalizeSurveyWorkspacePhotos(reportPhotos),
               submittedAt: report.submittedAt,
               updatedAt: report.updatedAt,
             }

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-01-a35ecc1a",
+    "date": "2026-06-01T11:40:31+08:00",
+    "title": "Parse stringified survey workspace rooms payloads",
+    "summary": "Parse stringified survey workspace rooms payloads",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a35ecc1a",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-b5c9e486",
     "date": "2026-06-01T11:28:15+08:00",
     "title": "Stabilize survey queue selection per project",
