@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-01-5be075f1",
+    "date": "2026-06-01T11:50:09+08:00",
+    "title": "Fix survey workspace room hydration and mode UX",
+    "summary": "Fix survey workspace room hydration and mode UX",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5be075f1",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-a35ecc1a",
     "date": "2026-06-01T11:40:31+08:00",
     "title": "Parse stringified survey workspace rooms payloads",

@@ -3600,9 +3600,10 @@ export class ProjectsService {
       Array<{
         id: string;
         status: string;
+        metadata: Record<string, unknown> | null;
       }>
     >`
-      SELECT id, status
+      SELECT id, status, metadata
       FROM mimo_project_extras
       WHERE id = ${payload.surveyExtraId}
         AND "projectId" = ${projectId}
@@ -3644,6 +3645,48 @@ export class ProjectsService {
       if (!assignment?.assignedSurveyorUserId) {
         throw new BadRequestException('Please assign a surveyor before starting the survey');
       }
+
+      const requestedRooms = Number(surveyExtra.metadata?.rooms || 1);
+      const roomCount = Number.isFinite(requestedRooms) && requestedRooms > 0 ? Math.floor(requestedRooms) : 1;
+      const seededRooms = normalizeSurveyWorkspaceRooms([], [], roomCount);
+      const seededPhotos = flattenSurveyWorkspaceRoomPhotos(seededRooms);
+
+      await this.prisma.$executeRaw`
+        INSERT INTO mimo_survey_workspace_reports (
+          id,
+          "projectId",
+          "surveyExtraId",
+          "createdByUserId",
+          status,
+          rooms,
+          photos,
+          "createdAt",
+          "updatedAt"
+        ) VALUES (
+          ${`mswr_${createId()}`},
+          ${projectId},
+          ${payload.surveyExtraId},
+          ${payload.actorUserId},
+          'draft',
+          ${JSON.stringify(seededRooms)}::jsonb,
+          ${JSON.stringify(seededPhotos)}::jsonb,
+          now(),
+          now()
+        )
+        ON CONFLICT ("projectId", "surveyExtraId") DO UPDATE
+        SET
+          rooms = CASE
+            WHEN COALESCE(jsonb_array_length(mimo_survey_workspace_reports.rooms), 0) = 0
+              THEN EXCLUDED.rooms
+            ELSE mimo_survey_workspace_reports.rooms
+          END,
+          photos = CASE
+            WHEN COALESCE(jsonb_array_length(mimo_survey_workspace_reports.photos), 0) = 0
+              THEN EXCLUDED.photos
+            ELSE mimo_survey_workspace_reports.photos
+          END,
+          "updatedAt" = now()
+      `;
 
       await this.prisma.$executeRaw`
         UPDATE mimo_survey_assignments

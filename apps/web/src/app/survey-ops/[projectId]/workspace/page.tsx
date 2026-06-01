@@ -115,6 +115,7 @@ export default function SurveyWorkspacePage() {
   const searchParams = useSearchParams();
   const projectId = String(params?.projectId || '');
   const surveyExtraId = String(searchParams.get('surveyExtraId') || '');
+  const workspaceMode = String(searchParams.get('mode') || '').toLowerCase();
   const roomCountParam = Number(searchParams.get('rooms') || '1');
   const initialRoomCount = Number.isFinite(roomCountParam) && roomCountParam > 0 ? Math.floor(roomCountParam) : 1;
 
@@ -122,6 +123,7 @@ export default function SurveyWorkspacePage() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [workspaceHydrated, setWorkspaceHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -155,6 +157,7 @@ export default function SurveyWorkspacePage() {
     () => `survey-workspace-draft:${projectId}:${surveyExtraId}`,
     [projectId, surveyExtraId],
   );
+  const workspaceHeading = workspaceMode === 'open' ? 'Continue Survey' : 'Start Survey';
 
   useEffect(() => {
     return () => {
@@ -177,6 +180,7 @@ export default function SurveyWorkspacePage() {
   const loadWorkspace = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) {
       setLoading(false);
+      setWorkspaceHydrated(true);
       return;
     }
 
@@ -244,6 +248,7 @@ export default function SurveyWorkspacePage() {
       setError(err instanceof Error ? err.message : 'Failed to load survey workspace');
     } finally {
       setLoading(false);
+      setWorkspaceHydrated(true);
     }
   }, [accessToken, initialRoomCount, localDraftKey, projectId, surveyExtraId]);
 
@@ -252,6 +257,7 @@ export default function SurveyWorkspacePage() {
   }, [loadWorkspace]);
 
   useEffect(() => {
+    if (!workspaceHydrated) return;
     if (!projectId || !surveyExtraId || typeof window === 'undefined') return;
 
     const draftToPersist = {
@@ -268,7 +274,7 @@ export default function SurveyWorkspacePage() {
     };
 
     window.sessionStorage.setItem(localDraftKey, JSON.stringify(draftToPersist));
-  }, [form, localDraftKey, projectId, surveyExtraId]);
+  }, [form, localDraftKey, projectId, surveyExtraId, workspaceHydrated]);
 
   const saveDraft = useCallback(async () => {
     if (!accessToken || !projectId || !surveyExtraId) return;
@@ -620,7 +626,7 @@ export default function SurveyWorkspacePage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-600">Survey Ops Workspace</p>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">Start Survey</h1>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900">{workspaceHeading}</h1>
             <p className="mt-2 text-sm text-slate-600">
               Capture structured findings, annotate photos, and submit for client approval.
             </p>

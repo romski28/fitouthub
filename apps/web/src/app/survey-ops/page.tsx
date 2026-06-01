@@ -280,7 +280,7 @@ export default function SurveyOpsPage() {
         if (action === 'start') {
           const safeRoomCount = Number.isFinite(roomCount || 0) && (roomCount || 0) > 0 ? Math.floor(roomCount || 0) : 1;
           router.push(
-            `/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}&rooms=${encodeURIComponent(String(safeRoomCount))}`,
+            `/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}&rooms=${encodeURIComponent(String(safeRoomCount))}&mode=start`,
           );
         }
       } catch (err) {
@@ -559,7 +559,7 @@ export default function SurveyOpsPage() {
                           onClick={() => {
                             const roomCount = Number(item.survey.metadata?.rooms || 1);
                             router.push(
-                              `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}`,
+                              `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}&mode=open`,
                             );
                           }}
                           disabled={statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
