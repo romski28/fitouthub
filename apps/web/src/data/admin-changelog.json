@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-9a0798c4",
+    "date": "2026-06-01T09:25:50+08:00",
+    "title": "Constrain marker drops to visible image area",
+    "summary": "Constrain marker drops to visible image area",
+    "areas": [
+      "web"
+    ],
+    "commit": "9a0798c4",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-76931e3f",
     "date": "2026-06-01T09:20:36+08:00",
     "title": "Normalize image annotator modal sizing",

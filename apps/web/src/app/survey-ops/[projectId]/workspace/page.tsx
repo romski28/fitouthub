@@ -483,10 +483,39 @@ export default function SurveyWorkspacePage() {
   const handleImageClick = (event: React.MouseEvent<HTMLImageElement>) => {
     const image = event.currentTarget;
     const rect = image.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    if (!rect.width || !rect.height || !image.naturalWidth || !image.naturalHeight) return;
 
-    const x = toNumber(((event.clientX - rect.left) / rect.width) * 100);
-    const y = toNumber(((event.clientY - rect.top) / rect.height) * 100);
+    const containerWidth = rect.width;
+    const containerHeight = rect.height;
+    const imageAspect = image.naturalWidth / image.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+
+    let renderedWidth = containerWidth;
+    let renderedHeight = containerHeight;
+
+    if (imageAspect > containerAspect) {
+      renderedHeight = containerWidth / imageAspect;
+    } else {
+      renderedWidth = containerHeight * imageAspect;
+    }
+
+    const offsetX = (containerWidth - renderedWidth) / 2;
+    const offsetY = (containerHeight - renderedHeight) / 2;
+
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    if (
+      clickX < offsetX ||
+      clickX > offsetX + renderedWidth ||
+      clickY < offsetY ||
+      clickY > offsetY + renderedHeight
+    ) {
+      return;
+    }
+
+    const x = toNumber(((clickX - offsetX) / renderedWidth) * 100);
+    const y = toNumber(((clickY - offsetY) / renderedHeight) * 100);
 
     const nextMarkerIndex = points.length;
     setActiveMarkerIndex(nextMarkerIndex);
@@ -862,29 +891,28 @@ export default function SurveyWorkspacePage() {
       {editorOpen && activePhoto ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm sm:p-6">
           <div className="w-full max-w-6xl rounded-3xl border border-white/40 bg-[#d8d1bc]/92 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-              <div className="space-y-3">
-                <h2 className="text-xl font-semibold text-[#1f2434]">Image annotator</h2>
-                <div className="grid items-center gap-2 sm:grid-cols-[140px_1fr]">
-                  <label className="text-sm font-medium text-[#1f2434]">Image caption</label>
-                  <input
-                    value={activePhoto.caption || ''}
-                    onChange={(e) =>
-                      updateActivePhoto((photo) => ({
-                        ...photo,
-                        caption: e.target.value,
-                      }))
-                    }
-                    placeholder=""
-                    className="w-full rounded-lg border border-[#f1e9d8] bg-[#f8f2e5] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
-                  />
-                </div>
+            <h2 className="text-xl font-semibold text-[#1f2434]">Image annotator</h2>
+            <div className="mt-3 grid items-center gap-2 sm:grid-cols-[140px_1fr]">
+              <label className="text-sm font-medium text-[#1f2434]">Image caption</label>
+              <input
+                value={activePhoto.caption || ''}
+                onChange={(e) =>
+                  updateActivePhoto((photo) => ({
+                    ...photo,
+                    caption: e.target.value,
+                  }))
+                }
+                placeholder=""
+                className="w-full rounded-lg border border-[#f1e9d8] bg-[#f8f2e5] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
+              />
+            </div>
 
-                <div className="relative overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1">
+            <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <div className="relative h-[64vh] min-h-[420px] overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1">
                   <img
                     src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
                     alt="Active room photo"
-                    className="max-h-[64vh] w-full cursor-crosshair rounded-xl object-contain"
+                    className="h-full w-full cursor-crosshair rounded-xl object-contain"
                     onClick={handleImageClick}
                   />
                   {points.map((point, index) => {
@@ -920,7 +948,6 @@ export default function SurveyWorkspacePage() {
                     </label>
                   </div>
                 </div>
-              </div>
 
               <div className="flex h-[64vh] min-h-[420px] flex-col rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-2">
                 <div className="mb-2 px-1">
