@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-5139f987",
+    "date": "2026-06-01T13:10:21+08:00",
+    "title": "Fix mobile workspace hydration and simplify header",
+    "summary": "Fix mobile workspace hydration and simplify header",
+    "areas": [
+      "web"
+    ],
+    "commit": "5139f987",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-58a90be6",
     "date": "2026-06-01T12:57:13+08:00",
     "title": "Open survey workspace on saved room",

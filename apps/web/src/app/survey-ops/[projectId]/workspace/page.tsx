@@ -150,7 +150,7 @@ const toNumber = (value: number, min = 0, max = 100) => Math.max(min, Math.min(m
 export default function SurveyWorkspacePage() {
   useRoleGuard([...ALLOWED_ROLES], { fallback: '/' });
 
-  const { accessToken, user } = useAuth();
+  const { accessToken } = useAuth();
   const params = useParams<{ projectId: string }>();
   const searchParams = useSearchParams();
   const projectId = String(params?.projectId || '');
@@ -254,19 +254,26 @@ export default function SurveyWorkspacePage() {
       setSurveyTaskStatus(String(payload?.surveyStatus || ''));
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
-      let localDraft: Partial<WorkspaceReport> | null = null;
+      let localDraft: (Partial<WorkspaceReport> & { __savedAt?: string }) | null = null;
       if (typeof window !== 'undefined') {
         const rawDraft = window.sessionStorage.getItem(localDraftKey);
         if (rawDraft) {
           try {
-            localDraft = JSON.parse(rawDraft) as Partial<WorkspaceReport>;
+            localDraft = JSON.parse(rawDraft) as Partial<WorkspaceReport> & { __savedAt?: string };
           } catch {
             window.sessionStorage.removeItem(localDraftKey);
           }
         }
       }
 
-      const mergedReport: Partial<WorkspaceReport> = localDraft
+      const reportUpdatedAtMs = report?.updatedAt ? new Date(report.updatedAt).getTime() : 0;
+      const localDraftSavedAtMs = localDraft?.__savedAt ? new Date(localDraft.__savedAt).getTime() : 0;
+      const localDraftIsRecent = Number.isFinite(localDraftSavedAtMs) && localDraftSavedAtMs > Date.now() - 1000 * 60 * 60 * 12;
+      const shouldApplyLocalDraft =
+        Boolean(localDraft) &&
+        (Boolean(!report?.id) || (localDraftIsRecent && localDraftSavedAtMs > reportUpdatedAtMs));
+
+      const mergedReport: Partial<WorkspaceReport> = shouldApplyLocalDraft && localDraft
         ? {
             ...report,
             ...localDraft,
@@ -317,6 +324,7 @@ export default function SurveyWorkspacePage() {
     if (!projectId || !surveyExtraId || typeof window === 'undefined') return;
 
     const draftToPersist = {
+      __savedAt: new Date().toISOString(),
       id: form.id,
       status: form.status,
       title: form.title,
@@ -683,13 +691,9 @@ export default function SurveyWorkspacePage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-600">Survey Ops Workspace</p>
             <h1 className="mt-1 text-2xl font-bold text-slate-900">{workspaceHeading}</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Capture structured findings, annotate photos, and submit for client approval.
-            </p>
           </div>
           <div className="text-right text-xs text-slate-600">
-            <p>Signed in as {user?.email || 'User'}</p>
-            <p className="mt-1">Survey task: <span className="font-semibold text-slate-900">{formatStatusLabel(surveyTaskStatus)}</span></p>
+            <p>Survey task: <span className="font-semibold text-slate-900">{formatStatusLabel(surveyTaskStatus)}</span></p>
             <p className="mt-1">Workspace: <span className="font-semibold text-slate-900">{formatStatusLabel(form.status)}</span></p>
             <p className="mt-1">Last saved: <span className="font-semibold text-slate-900">{formatSavedAt(form.updatedAt)}</span></p>
             <Link href="/survey-ops" className="mt-2 inline-block rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100">
