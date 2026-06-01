@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-01-b5c9e486",
+    "date": "2026-06-01T11:28:15+08:00",
+    "title": "Stabilize survey queue selection per project",
+    "summary": "Stabilize survey queue selection per project",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b5c9e486",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-ededf61c",
     "date": "2026-06-01T11:19:06+08:00",
     "title": "Refine survey-ops queue card hierarchy and actions",

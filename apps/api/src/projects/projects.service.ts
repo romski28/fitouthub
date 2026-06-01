@@ -3157,7 +3157,7 @@ export class ProjectsService {
           mpe."updatedAt" DESC
       `;
 
-      return rows.map((row) => ({
+      const mappedRows = rows.map((row) => ({
         projectId: row.projectId,
         projectName: row.projectName,
         clientName: row.clientName,
@@ -3183,6 +3183,41 @@ export class ProjectsService {
           updatedAt: row.updatedAt,
         },
       }));
+
+      const scoreSurveyStatus = (status?: string | null) => {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'in_progress') return 100;
+        if (normalized === 'assigned' || normalized === 'scheduled') return 80;
+        if (normalized === 'requested' || normalized === 'pending' || normalized === 'unassigned') return 60;
+        return 10;
+      };
+
+      const pickPreferredQueueItem = (
+        current: (typeof mappedRows)[number] | undefined,
+        candidate: (typeof mappedRows)[number],
+      ) => {
+        if (!current) return candidate;
+
+        const currentScore = scoreSurveyStatus(current.survey.status);
+        const candidateScore = scoreSurveyStatus(candidate.survey.status);
+        if (candidateScore > currentScore) return candidate;
+        if (candidateScore < currentScore) return current;
+
+        const currentUpdated = new Date(current.survey.updatedAt || 0).getTime();
+        const candidateUpdated = new Date(candidate.survey.updatedAt || 0).getTime();
+        return candidateUpdated >= currentUpdated ? candidate : current;
+      };
+
+      const byProject = new Map<string, (typeof mappedRows)[number]>();
+      for (const item of mappedRows) {
+        byProject.set(item.projectId, pickPreferredQueueItem(byProject.get(item.projectId), item));
+      }
+
+      return Array.from(byProject.values()).sort((a, b) => {
+        const aTime = new Date(a.survey.scheduledAt || a.survey.requestedAt || 0).getTime();
+        const bTime = new Date(b.survey.scheduledAt || b.survey.requestedAt || 0).getTime();
+        return aTime - bTime;
+      });
     } catch (error) {
       const err = error as any;
       console.error('[ProjectsService.findAllForSurveyOps] Error:', err?.message || err);
