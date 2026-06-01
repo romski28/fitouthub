@@ -156,6 +156,7 @@ export default function SurveyWorkspacePage() {
   const projectId = String(params?.projectId || '');
   const surveyExtraId = String(searchParams.get('surveyExtraId') || '');
   const workspaceMode = String(searchParams.get('mode') || '').toLowerCase();
+  const projectNameParam = String(searchParams.get('projectName') || '').trim();
   const roomCountParam = Number(searchParams.get('rooms') || '1');
   const initialRoomCount = Number.isFinite(roomCountParam) && roomCountParam > 0 ? Math.floor(roomCountParam) : 1;
 
@@ -283,7 +284,7 @@ export default function SurveyWorkspacePage() {
       setForm({
         id: mergedReport.id || report.id || null,
         status: mergedReport.status || report.status || 'draft',
-        title: mergedReport.title || report.title || '',
+        title: mergedReport.title || report.title || (workspaceMode === 'start' ? projectNameParam : ''),
         summary: mergedReport.summary || report.summary || '',
         accessNotes: mergedReport.accessNotes || report.accessNotes || '',
         recommendations: mergedReport.recommendations || report.recommendations || '',
@@ -300,7 +301,7 @@ export default function SurveyWorkspacePage() {
       setLoading(false);
       setWorkspaceHydrated(true);
     }
-  }, [accessToken, initialRoomCount, localDraftKey, projectId, surveyExtraId]);
+  }, [accessToken, initialRoomCount, localDraftKey, projectId, projectNameParam, surveyExtraId, workspaceMode]);
 
   useEffect(() => {
     void loadWorkspace();
@@ -710,7 +711,7 @@ export default function SurveyWorkspacePage() {
         <>
           <div className="grid gap-5 lg:grid-cols-2">
             <div className={`space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${workspaceReadOnly ? 'pointer-events-none opacity-70' : ''}`}>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Survey Notes</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">General Notes</h2>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Title</label>
                 <input

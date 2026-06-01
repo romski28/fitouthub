@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-01-5a807d51",
+    "date": "2026-06-01T13:48:33+08:00",
+    "title": "Refine survey queue copy and workspace defaults",
+    "summary": "Refine survey queue copy and workspace defaults",
+    "areas": [
+      "web"
+    ],
+    "commit": "5a807d51",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-6d1bde6e",
     "date": "2026-06-01T13:32:48+08:00",
     "title": "Prefer server rooms for existing workspaces",

@@ -68,14 +68,16 @@ const formatDate = (value?: string | null) => {
   }).format(date);
 };
 
-const formatScheduleHeadline = (scheduledAt?: string | null, region?: string | null) => {
+const formatScheduleHeadline = (scheduledAt?: string | null, region?: string | null, clientName?: string | null) => {
+  const clientSuffix = clientName ? ` for ${clientName}` : '';
+
   if (!scheduledAt) {
-    return `Survey not yet scheduled${region ? ` in ${region}` : ''}`;
+    return `Survey not yet scheduled${clientSuffix}${region ? ` in ${region}` : ''}`;
   }
 
   const date = new Date(scheduledAt);
   if (Number.isNaN(date.getTime())) {
-    return `Survey timing unavailable${region ? ` in ${region}` : ''}`;
+    return `Survey timing unavailable${clientSuffix}${region ? ` in ${region}` : ''}`;
   }
 
   const dateLabel = new Intl.DateTimeFormat('en-HK', {
@@ -89,7 +91,7 @@ const formatScheduleHeadline = (scheduledAt?: string | null, region?: string | n
     hour12: false,
   }).format(date);
 
-  return `Survey scheduled for ${dateLabel} at ${timeLabel}${region ? ` in ${region}` : ''}`;
+  return `Survey scheduled for ${dateLabel} at ${timeLabel}${clientSuffix}${region ? ` in ${region}` : ''}`;
 };
 
 const sanitizeDisplayText = (value?: string | null) => {
@@ -279,8 +281,10 @@ export default function SurveyOpsPage() {
         await loadQueue();
         if (action === 'start') {
           const safeRoomCount = Number.isFinite(roomCount || 0) && (roomCount || 0) > 0 ? Math.floor(roomCount || 0) : 1;
+          const queueItem = queue.find((entry) => entry.projectId === projectId && entry.survey.id === surveyExtraId);
+          const projectName = String(queueItem?.projectName || '').trim();
           router.push(
-            `/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}&rooms=${encodeURIComponent(String(safeRoomCount))}&mode=start`,
+            `/survey-ops/${encodeURIComponent(projectId)}/workspace?surveyExtraId=${encodeURIComponent(surveyExtraId)}&rooms=${encodeURIComponent(String(safeRoomCount))}&mode=start&projectName=${encodeURIComponent(projectName)}`,
           );
         }
       } catch (err) {
@@ -289,7 +293,7 @@ export default function SurveyOpsPage() {
         setStatusActionProjectId(null);
       }
     },
-    [accessToken, loadQueue, router],
+    [accessToken, loadQueue, queue, router],
   );
 
   const openProjectContext = useCallback(
@@ -453,16 +457,14 @@ export default function SurveyOpsPage() {
             const projectName = sanitizeDisplayText(item.projectName) || '-';
             const clientName = sanitizeDisplayText(item.clientName) || '-';
             const region = sanitizeDisplayText(item.region) || '-';
-            const scheduleHeadline = formatScheduleHeadline(item.survey.scheduledAt, region !== '-' ? region : null);
+            const scheduleHeadline = formatScheduleHeadline(item.survey.scheduledAt, region !== '-' ? region : null, clientName !== '-' ? clientName : null);
 
             return (
               <div key={`${item.projectId}:${item.survey.id}`} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-slate-900">{projectName}</h2>
-                    <p className="mt-1 text-sm text-slate-600">Client: {clientName}</p>
                     <p className="mt-1 text-lg font-semibold text-slate-900">{scheduleHeadline}</p>
-                    <p className="mt-1 text-xs text-slate-500">Requested: {formatDate(item.survey.requestedAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPill(item.survey.status)}`}>
@@ -499,9 +501,8 @@ export default function SurveyOpsPage() {
                 </div>
 
                 {canAssign ? (
-                  <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Assign or Reassign surveyor</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       <select
                         value={selectedSurveyorByProject[item.projectId] || ''}
                         onChange={(event) =>
@@ -530,7 +531,7 @@ export default function SurveyOpsPage() {
                         }
                         className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                       >
-                        {assigningProjectId === item.projectId ? 'Assigning...' : 'Assign'}
+                        {assigningProjectId === item.projectId ? 'Assigning...' : item.survey.assignedSurveyor?.id ? 'Reassign' : 'Assign'}
                       </button>
 
                       {!canOpenWorkspace ? (
@@ -558,8 +559,9 @@ export default function SurveyOpsPage() {
                           type="button"
                           onClick={() => {
                             const roomCount = Number(item.survey.metadata?.rooms || 1);
+                            const projectNameParam = String(item.projectName || '').trim();
                             router.push(
-                              `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}&mode=open`,
+                              `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}&mode=open&projectName=${encodeURIComponent(projectNameParam)}`,
                             );
                           }}
                           disabled={statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
