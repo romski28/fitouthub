@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-ededf61c",
+    "date": "2026-06-01T11:19:06+08:00",
+    "title": "Refine survey-ops queue card hierarchy and actions",
+    "summary": "Refine survey-ops queue card hierarchy and actions",
+    "areas": [
+      "web"
+    ],
+    "commit": "ededf61c",
+    "files": [
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-a79a7909",
     "date": "2026-06-01T10:10:39+08:00",
     "title": "Reduce focus-trigger auth refresh remounts",

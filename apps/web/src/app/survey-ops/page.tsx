@@ -68,6 +68,45 @@ const formatDate = (value?: string | null) => {
   }).format(date);
 };
 
+const formatScheduleHeadline = (scheduledAt?: string | null, region?: string | null) => {
+  if (!scheduledAt) {
+    return `Survey not yet scheduled${region ? ` in ${region}` : ''}`;
+  }
+
+  const date = new Date(scheduledAt);
+  if (Number.isNaN(date.getTime())) {
+    return `Survey timing unavailable${region ? ` in ${region}` : ''}`;
+  }
+
+  const dateLabel = new Intl.DateTimeFormat('en-HK', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  }).format(date);
+  const timeLabel = new Intl.DateTimeFormat('en-HK', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+
+  return `Survey scheduled for ${dateLabel} at ${timeLabel}${region ? ` in ${region}` : ''}`;
+};
+
+const sanitizeDisplayText = (value?: string | null) => {
+  if (!value) return '';
+
+  return String(value)
+    .replace(/\uFFFD/g, '-')
+    .replace(/â€¢/g, '•')
+    .replace(/â€“/g, '–')
+    .replace(/â€”/g, '—')
+    .replace(/â€™/g, '’')
+    .replace(/â€œ/g, '“')
+    .replace(/â€�/g, '”')
+    .replace(/Â/g, '')
+    .trim();
+};
+
 const getStatusPill = (status?: string) => {
   const normalized = String(status || '').toLowerCase();
   if (['scheduled', 'assigned'].includes(normalized)) {
@@ -338,13 +377,8 @@ export default function SurveyOpsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300">Survey Ops</p>
             <h1 className="mt-1 text-2xl font-bold">Surveyor Queue</h1>
             <p className="mt-2 text-sm text-slate-200">
-              Shared queue for Admin, Mimo BoH, and Surveyor teams. Review scheduled surveys and pull project context.
+              Shared queue for Admin, Mimo BoH, and Surveyor teams.
             </p>
-          </div>
-          <div className="rounded-xl border border-slate-600 bg-slate-900/50 px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-wide text-slate-300">Signed in as</p>
-            <p className="text-sm font-semibold text-white">{user?.firstName || user?.email || 'User'}</p>
-            <p className="text-xs text-cyan-300">Role: {role || 'unknown'}</p>
           </div>
         </div>
       </div>
@@ -415,19 +449,20 @@ export default function SurveyOpsPage() {
             const canAssign = ['requested', 'unassigned', 'pending', 'scheduled', 'assigned', 'in_progress'].includes(normalizedStatus);
             const canStart = ['assigned', 'scheduled'].includes(normalizedStatus) && Boolean(item.survey.assignedSurveyor?.id);
             const canCancel = ['assigned', 'scheduled', 'in_progress'].includes(normalizedStatus);
-            const canOpenWorkspace = ['in_progress', 'assigned', 'scheduled'].includes(normalizedStatus);
+            const canOpenWorkspace = ['in_progress'].includes(normalizedStatus);
+            const projectName = sanitizeDisplayText(item.projectName) || '-';
+            const clientName = sanitizeDisplayText(item.clientName) || '-';
+            const region = sanitizeDisplayText(item.region) || '-';
+            const scheduleHeadline = formatScheduleHeadline(item.survey.scheduledAt, region !== '-' ? region : null);
 
             return (
               <div key={item.projectId} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">{item.projectName}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Client: {item.clientName || '-'} � Region: {item.region || '-'}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Requested: {formatDate(item.survey.requestedAt)} � Scheduled: {formatDate(item.survey.scheduledAt)}
-                    </p>
+                    <h2 className="text-base font-semibold text-slate-900">{projectName}</h2>
+                    <p className="mt-1 text-sm text-slate-600">Client: {clientName}</p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900">{scheduleHeadline}</p>
+                    <p className="mt-1 text-xs text-slate-500">Requested: {formatDate(item.survey.requestedAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPill(item.survey.status)}`}>
@@ -447,19 +482,19 @@ export default function SurveyOpsPage() {
                 <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-4">
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Assigned To</p>
-                    <p className="font-semibold text-slate-900">{formatSurveyorLabel(item)}</p>
+                    <p className="text-base font-semibold text-slate-900">{sanitizeDisplayText(formatSurveyorLabel(item))}</p>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Rooms</p>
-                    <p className="font-semibold text-slate-900">{rooms > 0 ? rooms : '-'}</p>
+                    <p className="text-base font-semibold text-slate-900">{rooms > 0 ? rooms : '-'}</p>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Survey Fee</p>
-                    <p className="font-semibold text-slate-900">{calculatedFee > 0 ? `HKD ${calculatedFee.toLocaleString('en-HK')}` : '-'}</p>
+                    <p className="text-base font-semibold text-slate-900">{calculatedFee > 0 ? `HKD ${calculatedFee.toLocaleString('en-HK')}` : '-'}</p>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Calendar Event</p>
-                    <p className="font-semibold text-slate-900">{item.survey.calendarEventStatus || '-'}</p>
+                    <p className="text-base font-semibold text-slate-900">{sanitizeDisplayText(item.survey.calendarEventStatus) || '-'}</p>
                   </div>
                 </div>
 
@@ -498,14 +533,16 @@ export default function SurveyOpsPage() {
                         {assigningProjectId === item.projectId ? 'Assigning...' : 'Assign'}
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => void updateSurveyStatus(item.projectId, item.survey.id, 'start', Number(item.survey.metadata?.rooms || 1))}
-                        disabled={!canStart || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
-                        className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                      >
-                        {statusActionProjectId === item.projectId ? 'Working...' : 'Start Survey'}
-                      </button>
+                      {!canOpenWorkspace ? (
+                        <button
+                          type="button"
+                          onClick={() => void updateSurveyStatus(item.projectId, item.survey.id, 'start', Number(item.survey.metadata?.rooms || 1))}
+                          disabled={!canStart || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
+                          className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                        >
+                          {statusActionProjectId === item.projectId ? 'Working...' : 'Start Survey'}
+                        </button>
+                      ) : null}
 
                       <button
                         type="button"
@@ -516,19 +553,21 @@ export default function SurveyOpsPage() {
                         {statusActionProjectId === item.projectId ? 'Working...' : 'Cancel Survey'}
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const roomCount = Number(item.survey.metadata?.rooms || 1);
-                          router.push(
-                            `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}`,
-                          );
-                        }}
-                        disabled={!canOpenWorkspace || statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
-                        className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-                      >
-                        Open Workspace
-                      </button>
+                      {canOpenWorkspace ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const roomCount = Number(item.survey.metadata?.rooms || 1);
+                            router.push(
+                              `/survey-ops/${encodeURIComponent(item.projectId)}/workspace?surveyExtraId=${encodeURIComponent(item.survey.id)}&rooms=${encodeURIComponent(String(Number.isFinite(roomCount) && roomCount > 0 ? Math.floor(roomCount) : 1))}`,
+                            );
+                          }}
+                          disabled={statusActionProjectId === item.projectId || assigningProjectId === item.projectId}
+                          className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          Open Workspace
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -537,12 +576,12 @@ export default function SurveyOpsPage() {
                   <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-3 text-sm text-slate-700">
                     <p className="font-semibold text-slate-900">Project context</p>
                     <p className="mt-1">
-                      Scale: {context.projectScale || '-'} � Site inspection: {formatDate(context.siteInspectionAvailableOn)}
+                      Scale: {sanitizeDisplayText(context.projectScale) || '-'} - Site inspection: {formatDate(context.siteInspectionAvailableOn)}
                     </p>
                     <p className="mt-1">
-                      Start: {formatDate(context.startDate)} � End: {formatDate(context.endDate)}
+                      Start: {formatDate(context.startDate)} - End: {formatDate(context.endDate)}
                     </p>
-                    {context.notes ? <p className="mt-1">Notes: {context.notes}</p> : null}
+                    {context.notes ? <p className="mt-1">Notes: {sanitizeDisplayText(context.notes)}</p> : null}
                   </div>
                 ) : null}
 
