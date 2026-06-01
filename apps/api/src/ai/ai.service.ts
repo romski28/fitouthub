@@ -127,6 +127,28 @@ type ScopeContainer = {
   versions: ScopeVersion[];
 };
 
+type UnifiedPromptEnvelope = {
+  schemaVersion: '1.0';
+  requestId: string;
+  mode: 'structured' | 'conversational';
+  userPrompt: string;
+  imageUrls: string[];
+  imageCount: number;
+  userMessage: string;
+  messages: DeepSeekMessage[];
+};
+
+type MergedImageInsightsRecord = {
+  schemaVersion: string;
+  summary: string | null;
+  conditionFindings: string[];
+  safetyFlags: string[];
+  followUpQuestions: string[];
+  confidence: number | null;
+  provider: string | null;
+  model: string | null;
+};
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -146,6 +168,11 @@ export class AiService {
 
   private shouldEnforceAiContract(): boolean {
     const raw = (process.env.AI_CONTRACT_ENFORCE_STRICT || '').trim().toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'yes';
+  }
+
+  private shouldUseUnifiedOrchestrator(): boolean {
+    const raw = (process.env.AI_UNIFIED_ORCHESTRATOR_ENABLED || '').trim().toLowerCase();
     return raw === '1' || raw === 'true' || raw === 'yes';
   }
 
@@ -1283,6 +1310,120 @@ OUTPUT FORMAT (JSON only)
     };
   }
 
+  private buildUnifiedPromptEnvelope(input: {
+    mode: 'structured' | 'conversational';
+    requestId: string;
+    trimmedPrompt: string;
+    promptWrapper: { systemPrompt: string };
+    threadSummary: ReturnType<AiService['buildAiThreadContextSummary']> | null;
+    threadOriginSummary: ReturnType<AiService['buildAiThreadContextSummary']> | null;
+    askedQuestionsSummary: string;
+  }): UnifiedPromptEnvelope {
+    const summarizedOriginPrompt = this.truncateForPrompt(
+      input.threadOriginSummary?.priorPrompt || input.threadSummary?.priorPrompt,
+      500,
+    );
+    const summarizedPriorPrompt = this.truncateForPrompt(input.threadSummary?.priorPrompt, 450);
+    const summarizedPriorTitle = this.truncateForPrompt(input.threadSummary?.title, 120) || 'unknown';
+    const summarizedPriorSummary = this.truncateForPrompt(input.threadSummary?.summary, 260) || 'unknown';
+    const summarizedPriorLocation = this.truncateForPrompt(input.threadSummary?.location, 120) || 'unknown';
+    const summarizedPriorBudget = this.truncateForPrompt(input.threadSummary?.budget, 80) || 'unknown';
+    const summarizedPriorTimeline = this.truncateForPrompt(input.threadSummary?.timeline, 80) || 'unknown';
+    const summarizedPriorReply = this.truncateForPrompt(input.threadSummary?.conversationalText, 220) || 'unknown';
+
+    const userMessage = input.threadSummary
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
+      : `USER_PROMPT:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
+
+    return {
+      schemaVersion: '1.0',
+      requestId: input.requestId,
+      mode: input.mode,
+      userPrompt: input.trimmedPrompt,
+      imageUrls: [],
+      imageCount: 0,
+      userMessage,
+      messages: [
+        {
+          role: 'system',
+          content: input.promptWrapper.systemPrompt,
+        },
+        {
+          role: 'user',
+          content: userMessage,
+        },
+      ],
+    };
+  }
+
+  private mergeStructuredAndVisionOutputs(input: {
+    parsedOutput: unknown;
+    qwenParsed: Record<string, unknown>;
+    qwenModel: string;
+  }): {
+    parsedOutput: unknown;
+    imageInsightsRecord: MergedImageInsightsRecord;
+  } {
+    const suggestedTrades = Array.isArray(input.qwenParsed.suggestedTrades)
+      ? input.qwenParsed.suggestedTrades.filter(
+          (trade): trade is string => typeof trade === 'string' && trade.trim().length > 0,
+        )
+      : [];
+
+    const conditionFindings = Array.isArray(input.qwenParsed.conditionFindings)
+      ? input.qwenParsed.conditionFindings.filter((item): item is string => typeof item === 'string')
+      : [];
+    const safetyFlags = Array.isArray(input.qwenParsed.safetyFlags)
+      ? input.qwenParsed.safetyFlags.filter((item): item is string => typeof item === 'string')
+      : [];
+    const followUpQuestions = Array.isArray(input.qwenParsed.followUpQuestions)
+      ? input.qwenParsed.followUpQuestions.filter((item): item is string => typeof item === 'string')
+      : [];
+
+    let mergedOutput = input.parsedOutput;
+    if (mergedOutput && typeof mergedOutput === 'object' && !Array.isArray(mergedOutput)) {
+      const parsedObject = mergedOutput as Record<string, unknown>;
+      const existingTrades = Array.isArray(parsedObject.trades)
+        ? parsedObject.trades.filter(
+            (trade): trade is string => typeof trade === 'string' && trade.trim().length > 0,
+          )
+        : [];
+      parsedObject.trades = Array.from(new Set([...existingTrades, ...suggestedTrades]));
+
+      const projectObject =
+        parsedObject.project && typeof parsedObject.project === 'object' && !Array.isArray(parsedObject.project)
+          ? (parsedObject.project as Record<string, unknown>)
+          : {};
+
+      projectObject.imageInsights = {
+        schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
+        summary: typeof input.qwenParsed.imageSummary === 'string' ? input.qwenParsed.imageSummary : null,
+        conditionFindings,
+        safetyFlags,
+        followUpQuestions,
+        confidence: typeof input.qwenParsed.confidence === 'number' ? input.qwenParsed.confidence : null,
+        provider: 'qwen',
+        model: input.qwenModel,
+      };
+      parsedObject.project = projectObject;
+      mergedOutput = parsedObject;
+    }
+
+    return {
+      parsedOutput: mergedOutput,
+      imageInsightsRecord: {
+        schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
+        summary: typeof input.qwenParsed.imageSummary === 'string' ? input.qwenParsed.imageSummary : null,
+        conditionFindings,
+        safetyFlags,
+        followUpQuestions,
+        confidence: typeof input.qwenParsed.confidence === 'number' ? input.qwenParsed.confidence : null,
+        provider: 'qwen',
+        model: input.qwenModel,
+      },
+    };
+  }
+
   async getSandboxHealth() {
     const endpoint = this.resolveDeepSeekChatEndpoint();
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
@@ -2085,6 +2226,7 @@ OUTPUT FORMAT (JSON only)
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
     const mode = context?.mode ?? 'structured';
+    const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
 
     const shouldResetMemory = this.isMemoryResetPrompt(trimmedPrompt);
@@ -2100,29 +2242,25 @@ OUTPUT FORMAT (JSON only)
       .filter((question) => question.length > 0)
       .join(' | ');
 
-    const summarizedOriginPrompt = this.truncateForPrompt(threadOriginSummary?.priorPrompt || threadSummary?.priorPrompt, 500);
-    const summarizedPriorPrompt = this.truncateForPrompt(threadSummary?.priorPrompt, 450);
-    const summarizedPriorTitle = this.truncateForPrompt(threadSummary?.title, 120) || 'unknown';
-    const summarizedPriorSummary = this.truncateForPrompt(threadSummary?.summary, 260) || 'unknown';
-    const summarizedPriorLocation = this.truncateForPrompt(threadSummary?.location, 120) || 'unknown';
-    const summarizedPriorBudget = this.truncateForPrompt(threadSummary?.budget, 80) || 'unknown';
-    const summarizedPriorTimeline = this.truncateForPrompt(threadSummary?.timeline, 80) || 'unknown';
-    const summarizedPriorReply = this.truncateForPrompt(threadSummary?.conversationalText, 220) || 'unknown';
+    const envelope = this.buildUnifiedPromptEnvelope({
+      mode,
+      requestId,
+      trimmedPrompt,
+      promptWrapper,
+      threadSummary,
+      threadOriginSummary,
+      askedQuestionsSummary,
+    });
+    envelope.imageUrls = normalizedImageUrls;
+    envelope.imageCount = requestedImageCount;
 
-    const userMessage = threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
-      : `USER_PROMPT:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
+    if (orchestratorEnabled) {
+      this.logger.log(
+        `[${requestId}] Unified orchestrator enabled envelopeVersion=${envelope.schemaVersion} mode=${envelope.mode} imageCount=${envelope.imageCount}`,
+      );
+    }
 
-    const messages: DeepSeekMessage[] = [
-      {
-        role: 'system',
-        content: promptWrapper.systemPrompt,
-      },
-      {
-        role: 'user',
-        content: userMessage,
-      },
-    ];
+    const messages: DeepSeekMessage[] = envelope.messages;
 
     const totalMessageChars = messages.reduce((sum, message) => sum + message.content.length, 0);
 
@@ -2131,7 +2269,7 @@ OUTPUT FORMAT (JSON only)
 
     try {
       this.logger.log(
-        `[${requestId}] DeepSeek request started model=${model} timeoutMs=${timeoutMs} userPromptChars=${trimmedPrompt.length} userMessageChars=${userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
+        `[${requestId}] DeepSeek request started model=${model} timeoutMs=${timeoutMs} userPromptChars=${trimmedPrompt.length} userMessageChars=${envelope.userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
       );
 
       const response = await fetch(endpoint, {
@@ -2230,56 +2368,13 @@ OUTPUT FORMAT (JSON only)
               throw new InternalServerErrorException('AI image output failed contract validation');
             }
           }
-          const suggestedTrades = Array.isArray(parsed.suggestedTrades)
-            ? parsed.suggestedTrades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
-            : [];
-
-          const conditionFindings = Array.isArray(parsed.conditionFindings)
-            ? parsed.conditionFindings.filter((item): item is string => typeof item === 'string')
-            : [];
-          const safetyFlags = Array.isArray(parsed.safetyFlags)
-            ? parsed.safetyFlags.filter((item): item is string => typeof item === 'string')
-            : [];
-          const followUpQuestions = Array.isArray(parsed.followUpQuestions)
-            ? parsed.followUpQuestions.filter((item): item is string => typeof item === 'string')
-            : [];
-
-          if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
-            const parsedObject = parsedOutput as Record<string, unknown>;
-            const existingTrades = Array.isArray(parsedObject.trades)
-              ? parsedObject.trades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
-              : [];
-            parsedObject.trades = Array.from(new Set([...existingTrades, ...suggestedTrades]));
-
-            const projectObject =
-              parsedObject.project && typeof parsedObject.project === 'object' && !Array.isArray(parsedObject.project)
-                ? (parsedObject.project as Record<string, unknown>)
-                : {};
-
-            projectObject.imageInsights = {
-              schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
-              summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
-              conditionFindings,
-              safetyFlags,
-              followUpQuestions,
-              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null,
-              provider: 'qwen',
-              model: qwenVision.model,
-            };
-            parsedObject.project = projectObject;
-            parsedOutput = parsedObject;
-          }
-
-          imageInsightsRecord = {
-            schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
-            summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
-            conditionFindings,
-            safetyFlags,
-            followUpQuestions,
-            confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null,
-            provider: 'qwen',
-            model: qwenVision.model,
-          };
+          const merged = this.mergeStructuredAndVisionOutputs({
+            parsedOutput,
+            qwenParsed: parsed,
+            qwenModel: qwenVision.model,
+          });
+          parsedOutput = merged.parsedOutput;
+          imageInsightsRecord = merged.imageInsightsRecord;
 
           visionUsageMeta = {
             requestedImageCount,
@@ -2460,6 +2555,11 @@ OUTPUT FORMAT (JSON only)
               windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
             }
           : null,
+        orchestrator: {
+          enabled: orchestratorEnabled,
+          envelopeVersion: envelope.schemaVersion,
+          imageCount: envelope.imageCount,
+        },
         conversationalText: mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
           ? (parsedOutput as Record<string, unknown>).conversationalText ?? null
           : null,

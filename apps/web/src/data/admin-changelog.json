@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-aeb80576",
+    "date": "2026-06-01T21:08:32+08:00",
+    "title": "Chunk 2: add unified prompt envelope orchestrator path",
+    "summary": "Chunk 2: add unified prompt envelope orchestrator path",
+    "areas": [
+      "api"
+    ],
+    "commit": "aeb80576",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-01-e0e129f4",
     "date": "2026-06-01T21:07:08+08:00",
     "title": "Chunk 1: lock AI output contracts and validators",
