@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-9ae2ce52",
+    "date": "2026-06-01T09:41:23+08:00",
+    "title": "Improve mobile survey image annotation flow",
+    "summary": "Improve mobile survey image annotation flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "9ae2ce52",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-9a0798c4",
     "date": "2026-06-01T09:25:50+08:00",
     "title": "Constrain marker drops to visible image area",

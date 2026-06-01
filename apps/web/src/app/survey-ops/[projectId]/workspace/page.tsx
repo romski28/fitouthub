@@ -111,6 +111,8 @@ export default function SurveyWorkspacePage() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [activeMarkerIndex, setActiveMarkerIndex] = useState<number | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [mobileEditorView, setMobileEditorView] = useState<'image' | 'annotations'>('image');
+  const [mobileAnnotationSheetOpen, setMobileAnnotationSheetOpen] = useState(false);
   const [newPointColor, setNewPointColor] = useState('#ef4444');
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const markerNoteRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -519,6 +521,7 @@ export default function SurveyWorkspacePage() {
 
     const nextMarkerIndex = points.length;
     setActiveMarkerIndex(nextMarkerIndex);
+    setMobileAnnotationSheetOpen(true);
     updateActivePhoto((photo) => ({
       ...photo,
       markup: {
@@ -535,6 +538,33 @@ export default function SurveyWorkspacePage() {
     }));
   };
 
+  const updateMarkerNote = (markerIndex: number, note: string) => {
+    updateActivePhoto((photo) => ({
+      ...photo,
+      markup: {
+        points: (photo.markup?.points || []).map((current, currentIndex) =>
+          currentIndex === markerIndex ? { ...current, note } : current,
+        ),
+      },
+    }));
+  };
+
+  const removeMarkerAtIndex = (markerIndex: number) => {
+    setActiveMarkerIndex((current) => {
+      if (current === null) return null;
+      if (current === markerIndex) return null;
+      if (current > markerIndex) return current - 1;
+      return current;
+    });
+    updateActivePhoto((photo) => ({
+      ...photo,
+      markup: {
+        points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== markerIndex),
+      },
+    }));
+    setMobileAnnotationSheetOpen(false);
+  };
+
   const points = useMemo(() => activePhoto?.markup?.points || [], [activePhoto]);
 
   useEffect(() => {
@@ -549,6 +579,8 @@ export default function SurveyWorkspacePage() {
   const setActivePhotoAndOpenEditor = (photoIndex: number) => {
     setSelectedPhotoIndex(photoIndex);
     setActiveMarkerIndex(null);
+    setMobileEditorView('image');
+    setMobileAnnotationSheetOpen(false);
     setEditorOpen(true);
   };
 
@@ -891,7 +923,16 @@ export default function SurveyWorkspacePage() {
       {editorOpen && activePhoto ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm sm:p-6">
           <div className="w-full max-w-6xl rounded-3xl border border-white/40 bg-[#d8d1bc]/92 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4">
-            <h2 className="text-xl font-semibold text-[#1f2434]">Image annotator</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xl font-semibold text-[#1f2434]">Image annotator</h2>
+              <button
+                type="button"
+                onClick={() => setMobileEditorView((prev) => (prev === 'image' ? 'annotations' : 'image'))}
+                className="rounded-lg border border-[#d4c9b2] bg-[#f8f2e5] px-3 py-1.5 text-xs font-semibold text-[#1f2434] lg:hidden"
+              >
+                {mobileEditorView === 'image' ? 'Show annotations' : 'Show image'}
+              </button>
+            </div>
             <div className="mt-3 grid items-center gap-2 sm:grid-cols-[140px_1fr]">
               <label className="text-sm font-medium text-[#1f2434]">Image caption</label>
               <input
@@ -908,7 +949,7 @@ export default function SurveyWorkspacePage() {
             </div>
 
             <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-              <div className="relative h-[64vh] min-h-[420px] overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1">
+              <div className={`relative h-[64vh] min-h-[420px] overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1 ${mobileEditorView === 'image' ? 'block' : 'hidden'} lg:block`}>
                   <img
                     src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
                     alt="Active room photo"
@@ -921,7 +962,10 @@ export default function SurveyWorkspacePage() {
                       <button
                         key={`${point.x}-${point.y}-${index}`}
                         type="button"
-                        onClick={() => setActiveMarkerIndex(index)}
+                        onClick={() => {
+                          setActiveMarkerIndex(index);
+                          setMobileAnnotationSheetOpen(true);
+                        }}
                         className={`absolute grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border text-sm font-bold shadow ${markerActive ? 'ring-2 ring-[#2b4b64]/50 ring-offset-2 ring-offset-[#ece8de]' : ''}`}
                         style={{
                           left: `${toNumber(point.x)}%`,
@@ -949,7 +993,7 @@ export default function SurveyWorkspacePage() {
                   </div>
                 </div>
 
-              <div className="flex h-[64vh] min-h-[420px] flex-col rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-2">
+              <div className={`flex h-[64vh] min-h-[420px] flex-col rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-2 ${mobileEditorView === 'annotations' ? 'flex' : 'hidden'} lg:flex`}>
                 <div className="mb-2 px-1">
                   <p className="text-base font-semibold text-[#1f2434]">Annotations</p>
                 </div>
@@ -968,7 +1012,10 @@ export default function SurveyWorkspacePage() {
                       >
                         <button
                           type="button"
-                          onClick={() => setActiveMarkerIndex(index)}
+                          onClick={() => {
+                            setActiveMarkerIndex(index);
+                            setMobileAnnotationSheetOpen(true);
+                          }}
                           className="mb-2 flex w-full items-center gap-2 text-left"
                         >
                           <span
@@ -984,42 +1031,23 @@ export default function SurveyWorkspacePage() {
                         </button>
                         <input
                           value={point.note || ''}
-                          onFocus={() => setActiveMarkerIndex(index)}
-                          onChange={(e) =>
-                            updateActivePhoto((photo) => ({
-                              ...photo,
-                              markup: {
-                                points: (photo.markup?.points || []).map((current, currentIndex) =>
-                                  currentIndex === index ? { ...current, note: e.target.value } : current,
-                                ),
-                              },
-                            }))
-                          }
+                          onFocus={() => {
+                            setActiveMarkerIndex(index);
+                            setMobileAnnotationSheetOpen(true);
+                          }}
+                          onChange={(e) => updateMarkerNote(index, e.target.value)}
                           placeholder="Type your marker note"
                           className="w-full rounded-lg border border-[#d4c9b2] bg-[#fffaf0] px-2 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
                         />
                         <div className="mt-2 flex justify-end">
                           <button
                             type="button"
-                            onClick={() => {
-                              setActiveMarkerIndex((current) => {
-                                if (current === null) return null;
-                                if (current === index) return null;
-                                if (current > index) return current - 1;
-                                return current;
-                              });
-                              updateActivePhoto((photo) => ({
-                                ...photo,
-                                markup: {
-                                  points: (photo.markup?.points || []).filter((_, currentIndex) => currentIndex !== index),
-                                },
-                              }));
-                            }}
-                            className="text-xl"
+                            onClick={() => removeMarkerAtIndex(index)}
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white"
                             aria-label={`Remove marker ${index + 1}`}
                             title="Remove marker"
                           >
-                            🗑️
+                            x
                           </button>
                         </div>
                       </div>
@@ -1027,7 +1055,7 @@ export default function SurveyWorkspacePage() {
                   })}
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-3 pt-2">
+                <div className="mt-3 hidden grid-cols-2 gap-3 pt-2 lg:grid">
                   <button
                     type="button"
                     onClick={() => {
@@ -1048,6 +1076,73 @@ export default function SurveyWorkspacePage() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {mobileAnnotationSheetOpen && activeMarkerIndex !== null && points[activeMarkerIndex] ? (
+              <div className="fixed inset-0 z-[60] flex items-end bg-black/30 lg:hidden">
+                <div className="w-full rounded-t-2xl border border-[#d9ccaf] bg-[#f8f2e5] p-3 shadow-xl">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="inline-flex items-center gap-2">
+                      <span
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold"
+                        style={{
+                          backgroundColor: points[activeMarkerIndex].color || '#ff7f66',
+                          color: '#f8f2e5',
+                          borderColor: '#f8f2e5',
+                        }}
+                      >
+                        {activeMarkerIndex + 1}
+                      </span>
+                      <span className="text-sm font-medium text-[#1f2434]">Annotation</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMobileAnnotationSheetOpen(false)}
+                      className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                  <input
+                    value={points[activeMarkerIndex].note || ''}
+                    onChange={(e) => updateMarkerNote(activeMarkerIndex, e.target.value)}
+                    placeholder="Type your marker note"
+                    className="w-full rounded-lg border border-[#d4c9b2] bg-[#fffaf0] px-3 py-2 text-sm text-[#1f2434] outline-none focus:border-[#2b4b64]"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeMarkerAtIndex(activeMarkerIndex)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white"
+                      aria-label={`Remove marker ${activeMarkerIndex + 1}`}
+                    >
+                      x
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditorOpen(false);
+                  setActiveMarkerIndex(null);
+                  setMobileAnnotationSheetOpen(false);
+                }}
+                className="rounded-lg bg-amber-400 px-3 py-2 text-sm font-semibold text-[#f8f2e5]"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => void saveDraft()}
+                disabled={saving}
+                className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-[#f8f2e5] disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
             </div>
           </div>
         </div>
