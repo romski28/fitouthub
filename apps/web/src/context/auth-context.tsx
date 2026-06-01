@@ -106,6 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<string | null>(null);
   const [userLocation, setUserLocationState] = useState<CanonicalLocation>({} as CanonicalLocation);
   const refreshInFlightRef = useRef(false);
+  const lastRefreshAttemptAtRef = useRef(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -370,15 +371,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (typeof window === 'undefined') return;
     if (!isLoggedIn) return;
 
-    const tryRefresh = () => {
+    const TAB_RETURN_REFRESH_THROTTLE_MS = 2 * 60 * 1000;
+
+    const tryRefresh = (force = false) => {
       const storedRefreshToken = localStorage.getItem('refreshToken');
       if (!storedRefreshToken) return;
+      if (!force) {
+        const now = Date.now();
+        if (now - lastRefreshAttemptAtRef.current < TAB_RETURN_REFRESH_THROTTLE_MS) {
+          return;
+        }
+        lastRefreshAttemptAtRef.current = now;
+      }
       void refreshAccessToken();
     };
 
-    tryRefresh();
+    tryRefresh(true);
 
-    const intervalId = window.setInterval(tryRefresh, 5 * 60 * 1000);
+    const intervalId = window.setInterval(() => tryRefresh(true), 5 * 60 * 1000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -386,17 +396,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    const handleFocus = () => {
-      tryRefresh();
-    };
-
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleFocus);
 
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleFocus);
     };
   }, [isLoggedIn, refreshAccessToken]);
 
