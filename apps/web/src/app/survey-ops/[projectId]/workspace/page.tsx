@@ -269,9 +269,29 @@ export default function SurveyWorkspacePage() {
       const reportUpdatedAtMs = report?.updatedAt ? new Date(report.updatedAt).getTime() : 0;
       const localDraftSavedAtMs = localDraft?.__savedAt ? new Date(localDraft.__savedAt).getTime() : 0;
       const localDraftIsRecent = Number.isFinite(localDraftSavedAtMs) && localDraftSavedAtMs > Date.now() - 1000 * 60 * 60 * 12;
+      const reportHasMeaningfulRooms = coerceArray<WorkspaceRoom>(report.rooms).some(
+        (room) =>
+          String(room?.scanUrl || '').trim() ||
+          String(room?.summary || '').trim() ||
+          String(room?.accessNotes || '').trim() ||
+          String(room?.recommendations || '').trim() ||
+          (room?.photos || []).length > 0,
+      );
+      const localDraftHasMeaningfulRooms = coerceArray<WorkspaceRoom>(localDraft?.rooms).some(
+        (room) =>
+          String(room?.scanUrl || '').trim() ||
+          String(room?.summary || '').trim() ||
+          String(room?.accessNotes || '').trim() ||
+          String(room?.recommendations || '').trim() ||
+          (room?.photos || []).length > 0,
+      );
       const shouldApplyLocalDraft =
         Boolean(localDraft) &&
-        (Boolean(!report?.id) || (localDraftIsRecent && localDraftSavedAtMs > reportUpdatedAtMs));
+        (
+          Boolean(!report?.id) ||
+          (!reportHasMeaningfulRooms && localDraftHasMeaningfulRooms) ||
+          (localDraftIsRecent && localDraftSavedAtMs > reportUpdatedAtMs)
+        );
 
       const mergedReport: Partial<WorkspaceReport> = shouldApplyLocalDraft && localDraft
         ? {
