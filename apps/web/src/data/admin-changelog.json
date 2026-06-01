@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-58a90be6",
+    "date": "2026-06-01T12:57:13+08:00",
+    "title": "Open survey workspace on saved room",
+    "summary": "Open survey workspace on saved room",
+    "areas": [
+      "web"
+    ],
+    "commit": "58a90be6",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-c1844245",
     "date": "2026-06-01T12:47:25+08:00",
     "title": "Lock survey workspaces on approval submit",

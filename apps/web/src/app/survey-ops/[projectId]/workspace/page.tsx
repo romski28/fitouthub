@@ -130,6 +130,21 @@ const normalizeRooms = (rooms: unknown, fallbackPhotos: WorkspacePhoto[], fallba
 
 const flattenRoomPhotos = (rooms: WorkspaceRoom[]) => rooms.flatMap((room) => room.photos || []);
 
+const hasRoomContent = (room: WorkspaceRoom) =>
+  Boolean(
+    String(room.room || '').trim() ||
+      String(room.scanUrl || '').trim() ||
+      String(room.summary || '').trim() ||
+      String(room.accessNotes || '').trim() ||
+      String(room.recommendations || '').trim() ||
+      (room.photos || []).length > 0,
+  );
+
+const getInitialRoomIndex = (rooms: WorkspaceRoom[]) => {
+  const populatedIndex = rooms.findIndex((room) => hasRoomContent(room));
+  return populatedIndex >= 0 ? populatedIndex : 0;
+};
+
 const toNumber = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
 
 export default function SurveyWorkspacePage() {
@@ -162,6 +177,7 @@ export default function SurveyWorkspacePage() {
   const [mobileAnnotationSheetOpen, setMobileAnnotationSheetOpen] = useState(false);
   const [newPointColor, setNewPointColor] = useState('#ef4444');
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const markerNoteRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [form, setForm] = useState<WorkspaceReport>({
@@ -275,7 +291,7 @@ export default function SurveyWorkspacePage() {
         submittedAt: mergedReport.submittedAt || report.submittedAt || null,
         updatedAt: mergedReport.updatedAt || report.updatedAt || null,
       });
-      setSelectedRoomIndex(0);
+      setSelectedRoomIndex(getInitialRoomIndex(mergedRooms));
       setSelectedPhotoIndex(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load survey workspace');
@@ -891,6 +907,26 @@ export default function SurveyWorkspacePage() {
                         >
                           {uploading ? 'Uploading...' : 'Select images'}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => cameraInputRef.current?.click()}
+                          disabled={uploading}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60 sm:hidden"
+                        >
+                          Take photo
+                        </button>
+                        <input
+                          ref={cameraInputRef}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(event) => {
+                            const files = Array.from(event.target.files || []);
+                            handleFilesSelected(files);
+                            event.currentTarget.value = '';
+                          }}
+                        />
                         {pendingFiles.length > 0 ? (
                           <span className="text-xs text-slate-500">
                             {pendingFiles.length} image{pendingFiles.length === 1 ? '' : 's'} ready to upload
