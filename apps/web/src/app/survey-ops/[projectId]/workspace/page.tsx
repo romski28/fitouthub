@@ -254,46 +254,19 @@ export default function SurveyWorkspacePage() {
       setSurveyTaskStatus(String(payload?.surveyStatus || ''));
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
-      let localDraft: (Partial<WorkspaceReport> & { __savedAt?: string }) | null = null;
+      let localDraft: Partial<WorkspaceReport> | null = null;
       if (typeof window !== 'undefined') {
         const rawDraft = window.sessionStorage.getItem(localDraftKey);
         if (rawDraft) {
           try {
-            localDraft = JSON.parse(rawDraft) as Partial<WorkspaceReport> & { __savedAt?: string };
+            localDraft = JSON.parse(rawDraft) as Partial<WorkspaceReport>;
           } catch {
             window.sessionStorage.removeItem(localDraftKey);
           }
         }
       }
 
-      const reportUpdatedAtMs = report?.updatedAt ? new Date(report.updatedAt).getTime() : 0;
-      const localDraftSavedAtMs = localDraft?.__savedAt ? new Date(localDraft.__savedAt).getTime() : 0;
-      const localDraftIsRecent = Number.isFinite(localDraftSavedAtMs) && localDraftSavedAtMs > Date.now() - 1000 * 60 * 60 * 12;
-      const reportHasMeaningfulRooms = coerceArray<WorkspaceRoom>(report.rooms).some(
-        (room) =>
-          String(room?.scanUrl || '').trim() ||
-          String(room?.summary || '').trim() ||
-          String(room?.accessNotes || '').trim() ||
-          String(room?.recommendations || '').trim() ||
-          (room?.photos || []).length > 0,
-      );
-      const localDraftHasMeaningfulRooms = coerceArray<WorkspaceRoom>(localDraft?.rooms).some(
-        (room) =>
-          String(room?.scanUrl || '').trim() ||
-          String(room?.summary || '').trim() ||
-          String(room?.accessNotes || '').trim() ||
-          String(room?.recommendations || '').trim() ||
-          (room?.photos || []).length > 0,
-      );
-      const shouldApplyLocalDraft =
-        Boolean(localDraft) &&
-        (
-          Boolean(!report?.id) ||
-          (!reportHasMeaningfulRooms && localDraftHasMeaningfulRooms) ||
-          (localDraftIsRecent && localDraftSavedAtMs > reportUpdatedAtMs)
-        );
-
-      const mergedReport: Partial<WorkspaceReport> = shouldApplyLocalDraft && localDraft
+      const mergedReport: Partial<WorkspaceReport> = localDraft
         ? {
             ...report,
             ...localDraft,
@@ -344,7 +317,6 @@ export default function SurveyWorkspacePage() {
     if (!projectId || !surveyExtraId || typeof window === 'undefined') return;
 
     const draftToPersist = {
-      __savedAt: new Date().toISOString(),
       id: form.id,
       status: form.status,
       title: form.title,

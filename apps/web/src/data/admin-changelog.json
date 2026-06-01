@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-01-4a39f48e",
+    "date": "2026-06-01T13:27:46+08:00",
+    "title": "Rollback fragile survey room draft gating",
+    "summary": "Rollback fragile survey room draft gating",
+    "areas": [
+      "web"
+    ],
+    "commit": "4a39f48e",
+    "files": [
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-b5fecfaa",
     "date": "2026-06-01T13:18:18+08:00",
     "title": "Restore room drafts when server rooms are empty",
