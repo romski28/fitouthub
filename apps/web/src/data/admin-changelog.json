@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-01-e0e129f4",
+    "date": "2026-06-01T21:07:08+08:00",
+    "title": "Chunk 1: lock AI output contracts and validators",
+    "summary": "Chunk 1: lock AI output contracts and validators",
+    "areas": [
+      "api"
+    ],
+    "commit": "e0e129f4",
+    "files": [
+      "apps/api/src/ai/ai-contract.validator.spec.ts",
+      "apps/api/src/ai/ai-contract.validator.ts",
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-01-5a807d51",
     "date": "2026-06-01T13:48:33+08:00",
     "title": "Refine survey queue copy and workspace defaults",

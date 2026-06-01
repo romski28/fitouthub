@@ -11,6 +11,12 @@ import { LOCATIONS } from '../../../../packages/schemas/locations';
 import { PrismaService } from '../prisma.service';
 import { ActivityLogService } from '../activity-log.service';
 import { TradesService, type TradeView } from '../trades/trades.service';
+import {
+  AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
+  AI_INTAKE_TEXT_CONTRACT_VERSION,
+  validateAiOutputContract,
+  validateImageInsightsContract,
+} from './ai-contract.validator';
 
 type DeepSeekMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -136,6 +142,11 @@ export class AiService {
     const trimmed = sessionId?.trim();
     if (!trimmed) return undefined;
     return trimmed.slice(0, 128);
+  }
+
+  private shouldEnforceAiContract(): boolean {
+    const raw = (process.env.AI_CONTRACT_ENFORCE_STRICT || '').trim().toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'yes';
   }
 
   private resolveDeepSeekChatEndpoint() {
@@ -1244,6 +1255,10 @@ OUTPUT FORMAT (JSON only)
 
     return {
       ...result,
+      version:
+        typeof result.version === 'string' && result.version.trim().length > 0
+          ? result.version
+          : AI_INTAKE_TEXT_CONTRACT_VERSION,
       title,
       summary,
       scope,
@@ -1257,6 +1272,7 @@ OUTPUT FORMAT (JSON only)
       safetyAssessment,
       project,
       contractDocumentation: {
+        schemaVersion: AI_INTAKE_TEXT_CONTRACT_VERSION,
         title,
         summary,
         scope,
@@ -2078,6 +2094,12 @@ OUTPUT FORMAT (JSON only)
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
 
+    const askedQuestionsSummary = askedQuestions
+      .slice(0, 6)
+      .map((question) => this.truncateForPrompt(question, 120))
+      .filter((question) => question.length > 0)
+      .join(' | ');
+
     const summarizedOriginPrompt = this.truncateForPrompt(threadOriginSummary?.priorPrompt || threadSummary?.priorPrompt, 500);
     const summarizedPriorPrompt = this.truncateForPrompt(threadSummary?.priorPrompt, 450);
     const summarizedPriorTitle = this.truncateForPrompt(threadSummary?.title, 120) || 'unknown';
@@ -2086,11 +2108,6 @@ OUTPUT FORMAT (JSON only)
     const summarizedPriorBudget = this.truncateForPrompt(threadSummary?.budget, 80) || 'unknown';
     const summarizedPriorTimeline = this.truncateForPrompt(threadSummary?.timeline, 80) || 'unknown';
     const summarizedPriorReply = this.truncateForPrompt(threadSummary?.conversationalText, 220) || 'unknown';
-    const askedQuestionsSummary = askedQuestions
-      .slice(0, 6)
-      .map((question) => this.truncateForPrompt(question, 120))
-      .filter((question) => question.length > 0)
-      .join(' | ');
 
     const userMessage = threadSummary
       ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${threadSummary.trades.length > 0 ? threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
@@ -2163,6 +2180,7 @@ OUTPUT FORMAT (JSON only)
         error: null,
       };
       let imageInsightsRecord: {
+        schemaVersion: string;
         summary: string | null;
         conditionFindings: string[];
         safetyFlags: string[];
@@ -2203,6 +2221,15 @@ OUTPUT FORMAT (JSON only)
         try {
           const qwenVision = await this.analyzeImagesWithQwen(normalizedImageUrls, trimmedPrompt);
           const parsed = qwenVision.parsed;
+          const imageContractValidation = validateImageInsightsContract(parsed);
+          if (!imageContractValidation.valid) {
+            this.logger.warn(
+              `[${requestId}] Vision output contract mismatch schemaVersion=${imageContractValidation.schemaVersion} errors=${imageContractValidation.errors.join(' | ')}`,
+            );
+            if (this.shouldEnforceAiContract()) {
+              throw new InternalServerErrorException('AI image output failed contract validation');
+            }
+          }
           const suggestedTrades = Array.isArray(parsed.suggestedTrades)
             ? parsed.suggestedTrades.filter((trade): trade is string => typeof trade === 'string' && trade.trim().length > 0)
             : [];
@@ -2230,6 +2257,7 @@ OUTPUT FORMAT (JSON only)
                 : {};
 
             projectObject.imageInsights = {
+              schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
               summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
               conditionFindings,
               safetyFlags,
@@ -2243,6 +2271,7 @@ OUTPUT FORMAT (JSON only)
           }
 
           imageInsightsRecord = {
+            schemaVersion: AI_IMAGE_INSIGHTS_CONTRACT_VERSION,
             summary: typeof parsed.imageSummary === 'string' ? parsed.imageSummary : null,
             conditionFindings,
             safetyFlags,
@@ -2306,6 +2335,18 @@ OUTPUT FORMAT (JSON only)
         parsedObject.nextQuestions = proposedQuestions;
         parsedObject.followUpQuestions = proposedQuestions;
         parsedOutput = parsedObject;
+      }
+
+      if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        const aiContractValidation = validateAiOutputContract(parsedOutput, mode);
+        if (!aiContractValidation.valid) {
+          this.logger.warn(
+            `[${requestId}] AI output contract mismatch mode=${mode} schemaVersion=${aiContractValidation.schemaVersion} errors=${aiContractValidation.errors.join(' | ')}`,
+          );
+          if (this.shouldEnforceAiContract()) {
+            throw new InternalServerErrorException('AI output failed contract validation');
+          }
+        }
       }
 
       const normalizedContractDocumentation =
