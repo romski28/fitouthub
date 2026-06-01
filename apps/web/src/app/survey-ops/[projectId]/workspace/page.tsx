@@ -49,6 +49,30 @@ type WorkspaceReport = {
   updatedAt: string | null;
 };
 
+const formatStatusLabel = (value?: string | null) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '-';
+  return normalized
+    .split('_')
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+};
+
+const formatSavedAt = (value?: string | null) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return new Intl.DateTimeFormat('en-HK', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+};
+
 const createEmptyRoom = (index: number, photos: WorkspacePhoto[] = []): WorkspaceRoom => ({
   id: `room_${index + 1}`,
   room: index === 0 ? 'Room' : `Room ${index + 1}`,
@@ -124,6 +148,7 @@ export default function SurveyWorkspacePage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [workspaceHydrated, setWorkspaceHydrated] = useState(false);
+  const [surveyTaskStatus, setSurveyTaskStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -201,6 +226,8 @@ export default function SurveyWorkspacePage() {
       if (!response.ok) {
         throw new Error(payload?.message || 'Failed to load survey workspace');
       }
+
+      setSurveyTaskStatus(String(payload?.surveyStatus || ''));
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
       const reportPhotos = coerceArray<WorkspacePhoto>(report.photos);
@@ -633,7 +660,9 @@ export default function SurveyWorkspacePage() {
           </div>
           <div className="text-right text-xs text-slate-600">
             <p>Signed in as {user?.email || 'User'}</p>
-            <p className="mt-1">Status: <span className="font-semibold text-slate-900">{form.status}</span></p>
+            <p className="mt-1">Survey task: <span className="font-semibold text-slate-900">{formatStatusLabel(surveyTaskStatus)}</span></p>
+            <p className="mt-1">Workspace: <span className="font-semibold text-slate-900">{formatStatusLabel(form.status)}</span></p>
+            <p className="mt-1">Last saved: <span className="font-semibold text-slate-900">{formatSavedAt(form.updatedAt)}</span></p>
             <Link href="/survey-ops" className="mt-2 inline-block rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100">
               Back to queue
             </Link>

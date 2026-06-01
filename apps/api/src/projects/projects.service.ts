@@ -3813,7 +3813,7 @@ export class ProjectsService {
     actorUserId: string,
     actorRole: string,
   ) {
-    await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
+    const surveyAccess = await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
 
     try {
       const rows = await this.prisma.$queryRaw<
@@ -3856,6 +3856,7 @@ export class ProjectsService {
         success: true,
         projectId,
         surveyExtraId,
+        surveyStatus: surveyAccess.status,
         report: report
           ? {
               id: report.id,
