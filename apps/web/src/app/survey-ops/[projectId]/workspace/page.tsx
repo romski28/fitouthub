@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams, useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
@@ -182,7 +183,14 @@ export default function SurveyWorkspacePage() {
     () => `survey-workspace-draft:${projectId}:${surveyExtraId}`,
     [projectId, surveyExtraId],
   );
-  const workspaceHeading = workspaceMode === 'open' ? 'Continue Survey' : 'Start Survey';
+  const workspaceReadOnly = useMemo(
+    () =>
+      ['submitted_for_client_approval', 'awaiting_client_approval', 'approved', 'revision_requested', 'shared_to_professionals'].includes(
+        String(form.status || '').toLowerCase(),
+      ) || String(surveyTaskStatus || '').toLowerCase() === 'awaiting_client_approval',
+    [form.status, surveyTaskStatus],
+  );
+  const workspaceHeading = workspaceReadOnly ? 'Awaiting Client Approval' : workspaceMode === 'open' ? 'Continue Survey' : 'Start Survey';
 
   useEffect(() => {
     return () => {
@@ -230,8 +238,6 @@ export default function SurveyWorkspacePage() {
       setSurveyTaskStatus(String(payload?.surveyStatus || ''));
 
       const report = (payload?.report || {}) as Partial<WorkspaceReport> & { rooms?: unknown };
-      const reportPhotos = coerceArray<WorkspacePhoto>(report.photos);
-      const nextRooms = normalizeRooms(report.rooms, reportPhotos, initialRoomCount);
       let localDraft: Partial<WorkspaceReport> | null = null;
       if (typeof window !== 'undefined') {
         const rawDraft = window.sessionStorage.getItem(localDraftKey);
@@ -284,6 +290,13 @@ export default function SurveyWorkspacePage() {
   }, [loadWorkspace]);
 
   useEffect(() => {
+    if (!workspaceReadOnly) return;
+    setEditorOpen(false);
+    setMobileAnnotationSheetOpen(false);
+    setActiveMarkerIndex(null);
+  }, [workspaceReadOnly]);
+
+  useEffect(() => {
     if (!workspaceHydrated) return;
     if (!projectId || !surveyExtraId || typeof window === 'undefined') return;
 
@@ -304,7 +317,7 @@ export default function SurveyWorkspacePage() {
   }, [form, localDraftKey, projectId, surveyExtraId, workspaceHydrated]);
 
   const saveDraft = useCallback(async () => {
-    if (!accessToken || !projectId || !surveyExtraId) return;
+    if (!accessToken || !projectId || !surveyExtraId || workspaceReadOnly) return;
 
     setSaving(true);
     setError(null);
@@ -350,10 +363,10 @@ export default function SurveyWorkspacePage() {
     } finally {
       setSaving(false);
     }
-  }, [accessToken, form, localDraftKey, projectId, surveyExtraId]);
+  }, [accessToken, form, localDraftKey, projectId, surveyExtraId, workspaceReadOnly]);
 
   const submitForApproval = useCallback(async () => {
-    if (!accessToken || !projectId || !surveyExtraId) return;
+    if (!accessToken || !projectId || !surveyExtraId || workspaceReadOnly) return;
 
     setSubmitting(true);
     setError(null);
@@ -387,7 +400,7 @@ export default function SurveyWorkspacePage() {
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, localDraftKey, projectId, surveyExtraId]);
+  }, [accessToken, localDraftKey, projectId, surveyExtraId, workspaceReadOnly]);
 
   const handleFilesSelected = (files: File[]) => {
     pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -403,14 +416,14 @@ export default function SurveyWorkspacePage() {
     setPendingPreviewUrls(nextUrls);
   };
 
-  const clearPendingFiles = () => {
+  const clearPendingFiles = useCallback(() => {
     pendingPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     setPendingFiles([]);
     setPendingPreviewUrls([]);
     if (galleryInputRef.current) {
       galleryInputRef.current.value = '';
     }
-  };
+  }, [pendingPreviewUrls]);
 
   const uploadImages = useCallback(async () => {
     if (pendingFiles.length === 0 || !activeRoom) return;
@@ -668,6 +681,11 @@ export default function SurveyWorkspacePage() {
             </Link>
           </div>
         </div>
+        {workspaceReadOnly ? (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            This survey has been submitted and is locked while waiting for client approval.
+          </div>
+        ) : null}
       </div>
 
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
@@ -678,7 +696,7 @@ export default function SurveyWorkspacePage() {
       ) : (
         <>
           <div className="grid gap-5 lg:grid-cols-2">
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className={`space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${workspaceReadOnly ? 'pointer-events-none opacity-70' : ''}`}>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Survey Notes</h2>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Title</label>
@@ -719,7 +737,7 @@ export default function SurveyWorkspacePage() {
               </div>
             </div>
 
-            <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className={`space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${workspaceReadOnly ? 'pointer-events-none opacity-70' : ''}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Room Pages</h2>
@@ -885,9 +903,12 @@ export default function SurveyWorkspacePage() {
                           <div className="flex flex-wrap gap-2">
                             {pendingPreviewUrls.map((previewUrl, index) => (
                               <div key={`${previewUrl}-${index}`} className="relative overflow-hidden rounded-lg border border-slate-300 bg-white">
-                                <img
+                                <Image
                                   src={previewUrl}
                                   alt={pendingFiles[index]?.name || `Pending upload ${index + 1}`}
+                                  width={80}
+                                  height={80}
+                                  unoptimized
                                   className="h-20 w-20 object-cover"
                                 />
                                 <button
@@ -938,9 +959,12 @@ export default function SurveyWorkspacePage() {
                                 }}
                                 className="block"
                               >
-                                <img
+                                <Image
                                   src={resolveMediaAssetUrl(photo.imageUrl || photo.storageKey || '')}
                                   alt={`Room photo ${index + 1}`}
+                                  width={80}
+                                  height={80}
+                                  unoptimized
                                   className="h-20 w-20 object-cover"
                                 />
                               </button>
@@ -1005,10 +1029,12 @@ export default function SurveyWorkspacePage() {
 
             <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
               <div className={`relative h-[64vh] min-h-[420px] overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#ece8de] p-1 ${mobileEditorView === 'image' ? 'block' : 'hidden'} lg:block`}>
-                  <img
+                  <Image
                     src={resolveMediaAssetUrl(activePhoto.imageUrl || activePhoto.storageKey || '')}
                     alt="Active room photo"
-                    className="h-full w-full cursor-crosshair rounded-xl object-contain"
+                    fill
+                    unoptimized
+                    className="cursor-crosshair rounded-xl object-contain"
                     onClick={handleImageClick}
                   />
                   {points.map((point, index) => {
@@ -1203,27 +1229,27 @@ export default function SurveyWorkspacePage() {
         </div>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => void saveDraft()}
-            disabled={saving || submitting}
+              disabled={saving || submitting || workspaceReadOnly}
             className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60"
           >
             {saving ? 'Saving...' : 'Save Draft'}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (!window.confirm('Submit this survey report for client approval?')) return;
-              void submitForApproval();
-            }}
-            disabled={saving || submitting}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {submitting ? 'Submitting...' : 'Submit for Approval'}
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!window.confirm('Submit this survey report for client approval?')) return;
+                void submitForApproval();
+              }}
+              disabled={saving || submitting || workspaceReadOnly}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {submitting ? 'Submitting...' : workspaceReadOnly ? 'Submitted' : 'Submit for Approval'}
+            </button>
         </div>
       </div>
     </div>

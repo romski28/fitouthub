@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-01-c1844245",
+    "date": "2026-06-01T12:47:25+08:00",
+    "title": "Lock survey workspaces on approval submit",
+    "summary": "Lock survey workspaces on approval submit",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c1844245",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/survey-ops/[projectId]/workspace/page.tsx",
+      "apps/web/src/app/survey-ops/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-ae7510b3",
     "date": "2026-06-01T12:11:25+08:00",
     "title": "Clarify survey workspace status and save state",

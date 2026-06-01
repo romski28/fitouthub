@@ -449,7 +449,7 @@ export default function SurveyOpsPage() {
             const canAssign = ['requested', 'unassigned', 'pending', 'scheduled', 'assigned', 'in_progress'].includes(normalizedStatus);
             const canStart = ['assigned', 'scheduled'].includes(normalizedStatus) && Boolean(item.survey.assignedSurveyor?.id);
             const canCancel = ['assigned', 'scheduled', 'in_progress'].includes(normalizedStatus);
-            const canOpenWorkspace = ['in_progress'].includes(normalizedStatus);
+            const canOpenWorkspace = ['in_progress', 'awaiting_client_approval'].includes(normalizedStatus);
             const projectName = sanitizeDisplayText(item.projectName) || '-';
             const clientName = sanitizeDisplayText(item.clientName) || '-';
             const region = sanitizeDisplayText(item.region) || '-';

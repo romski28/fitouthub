@@ -3974,6 +3974,29 @@ export class ProjectsService {
   ) {
     await this.assertSurveyWorkspaceAccess(projectId, surveyExtraId, actorUserId, actorRole);
 
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        projectName: true,
+        clientName: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            surname: true,
+            mobile: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
     try {
       await this.prisma.$executeRaw`
         INSERT INTO mimo_survey_workspace_reports (
@@ -4001,6 +4024,44 @@ export class ProjectsService {
           "submittedAt" = now(),
           "updatedAt" = now()
       `;
+
+      await this.prisma.$executeRaw`
+        UPDATE mimo_project_extras
+        SET
+          status = 'awaiting_client_approval',
+          "updatedAt" = now()
+        WHERE id = ${surveyExtraId}
+          AND "projectId" = ${projectId}
+          AND "extraType" = 'survey'
+      `;
+
+      const clientMobile = String(project.user?.mobile || '').trim();
+      if (clientMobile) {
+        const clientLabel =
+          `${String(project.user?.firstName || '').trim()} ${String(project.user?.surname || '').trim()}`.trim() ||
+          project.clientName ||
+          'Client';
+        try {
+          await this.notificationService.send({
+            userId: project.userId || undefined,
+            phoneNumber: clientMobile,
+            eventType: 'survey_awaiting_client_approval',
+            message: `Your survey for ${project.projectName} is ready for client approval. Open Mimo to review the submitted findings.`,
+            metadata: {
+              projectId,
+              surveyExtraId,
+              projectName: project.projectName,
+              clientLabel,
+              surveyStatus: 'awaiting_client_approval',
+            },
+          });
+        } catch (notificationError) {
+          const err = notificationError as any;
+          console.warn('[ProjectsService.submitSurveyWorkspace] Client notification skipped:', err?.message || err);
+        }
+      } else {
+        console.warn('[ProjectsService.submitSurveyWorkspace] Client mobile missing; notification skipped for project', projectId);
+      }
     } catch (error) {
       const err = error as any;
       throw new ServiceUnavailableException(
@@ -4014,7 +4075,7 @@ export class ProjectsService {
       success: true,
       projectId,
       surveyExtraId,
-      status: 'submitted_for_client_approval',
+      status: 'awaiting_client_approval',
     };
   }
 
