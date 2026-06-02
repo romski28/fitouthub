@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 export interface SearchBoxProps {
   onSubmit: (query: string) => void;
@@ -8,11 +8,12 @@ export interface SearchBoxProps {
   onClear?: () => void;
   submitLabel?: string;
   clearKey?: number;
+  imageSection?: ReactNode;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -155,6 +156,11 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
               {submitLabel}
             </button>
           </div>
+          {imageSection && (
+            <div className="border-t border-slate-100 px-3 sm:px-4 py-2.5">
+              {imageSection}
+            </div>
+          )}
         </div>
       </form>
     </div>

@@ -1978,6 +1978,41 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           onClear={handleClearSearch}
           submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
           clearKey={searchBoxClearKey}
+          imageSection={
+            !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <ChatImageUploader
+                    compact
+                    onFilesSelected={setPromptImages}
+                    maxImages={promptImageLimit}
+                    disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+                    isUploading={aiLoading && promptImages.length > 0}
+                    uploadingCount={promptImages.length}
+                    clearKey={promptUploaderClearKey}
+                  />
+                  {!visionQuotaLoading && (
+                    <span className="text-[10px] text-slate-400">
+                      {visionQuota
+                        ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today`
+                        : 'max 1/prompt'}
+                    </span>
+                  )}
+                  {visionQuotaLoading && (
+                    <span className="text-[10px] text-slate-400">Checking quota…</span>
+                  )}
+                </div>
+                {visionQuotaError && (
+                  <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
+                )}
+                {visionQuota && !visionQuota.canUseVision && (
+                  <p className="text-[10px] text-amber-600">
+                    Daily quota reached. Text-only prompts still work.
+                  </p>
+                )}
+              </div>
+            ) : undefined
+          }
         />
 
         {deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
@@ -2004,33 +2039,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             >
               Reset conversation
             </button>
-          </div>
-        )}
-
-        {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
-          <div className="mt-3 rounded-lg shadow-lg border border-slate-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600">
-              <p>
-                {visionQuota
-                  ? `Image quota: ${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
-                  : 'Image quota: visitor 1/prompt, 3/day · client 3/prompt, 9/day'}
-              </p>
-              {visionQuotaLoading && <span className="text-slate-500">Checking quota...</span>}
-            </div>
-            {visionQuotaError && <p className="mb-2 text-xs text-rose-600">{visionQuotaError}</p>}
-            <ChatImageUploader
-              onFilesSelected={setPromptImages}
-              maxImages={promptImageLimit}
-              disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
-              isUploading={aiLoading && promptImages.length > 0}
-              uploadingCount={promptImages.length}
-              clearKey={promptUploaderClearKey}
-            />
-            {visionQuota && !visionQuota.canUseVision && (
-              <p className="mt-2 text-xs text-amber-700">
-                Daily image quota reached. You can still submit text-only prompts.
-              </p>
-            )}
           </div>
         )}
       </div>

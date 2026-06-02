@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-02-21cd930f",
+    "date": "2026-06-02T09:57:06+08:00",
+    "title": "Unify text+image prompt into single search card",
+    "summary": "Unify text+image prompt into single search card",
+    "areas": [
+      "web"
+    ],
+    "commit": "21cd930f",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-01-aeb80576",
     "date": "2026-06-01T21:08:32+08:00",
     "title": "Chunk 2: add unified prompt envelope orchestrator path",
