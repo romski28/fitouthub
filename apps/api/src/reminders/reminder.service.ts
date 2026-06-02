@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { NotificationService } from '../notifications/notification.service';
 import { EmailService } from '../email/email.service';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class ReminderService {
@@ -12,6 +13,7 @@ export class ReminderService {
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
     private readonly emailService: EmailService,
+    private readonly chatService: ChatService,
   ) {}
 
   /**
@@ -31,6 +33,7 @@ export class ReminderService {
     await Promise.all([
       this.processAcceptedVisits(tomorrowRange),
       this.processScheduledAccessRequests(tomorrowRange),
+      this.processScheduledMilestones(),
     ]);
 
     this.logger.log('Day-before reminder job complete');
@@ -311,6 +314,100 @@ export class ReminderService {
     } catch {
       // Unique constraint violation means it was already written by a concurrent run — safe to ignore
     }
+  }
+
+  // ─── Scheduled Milestones ─────────────────────────────────────────────────
+
+  private async processScheduledMilestones(): Promise<void> {
+    const tomorrowRange = this.getTomorrowRangeHKT();
+    const milestones = await this.prisma.projectMilestone.findMany({
+      where: {
+        status: { in: ['not_started', 'in_progress'] },
+        plannedStartDate: { gte: tomorrowRange.start, lt: tomorrowRange.end },
+        projectProfessionalId: { not: null },
+      },
+      include: {
+        project: { select: { id: true, projectName: true } },
+        projectProfessional: {
+          select: {
+            professionalId: true,
+            professional: {
+              select: { id: true, fullName: true, businessName: true, phone: true, email: true },
+            },
+          },
+        },
+      },
+    });
+
+    for (const milestone of milestones) {
+      const pro = milestone.projectProfessional?.professional;
+      if (!pro) continue;
+
+      const dateLabel = milestone.plannedStartDate
+        ? this.formatDateHKT(milestone.plannedStartDate)
+        : 'tomorrow';
+      const key = `milestone:${milestone.id}:dayBefore:${dateLabel}`;
+      if (await this.alreadySent(key)) continue;
+
+      const proName = pro.fullName || pro.businessName || 'Professional';
+      const projectName = milestone.project.projectName;
+
+      // Post to project chat thread
+      try {
+        const thread = await this.chatService.getOrCreateProjectThread(milestone.project.id);
+        const chatContent = [
+          `[[event]]`,
+          JSON.stringify({
+            type: 'generic',
+            icon: '📅',
+            title: `Reminder: ${milestone.title}`,
+            summary: [
+              `Project: ${projectName}`,
+              `Starts: ${dateLabel}${milestone.startTimeSlot ? ` (${milestone.startTimeSlot})` : ''}`,
+              milestone.siteAccessRequired ? 'Site access required.' : '',
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          }),
+        ].join('');
+        await this.chatService.addProjectMessage(
+          thread.id,
+          'system',
+          null,
+          pro.id,
+          chatContent,
+          [],
+        );
+      } catch (chatErr) {
+        this.logger.warn(`Milestone reminder chat post failed for ${milestone.id}: ${(chatErr as Error).message}`);
+      }
+
+      // SMS/WhatsApp via existing notification pipeline
+      const message = `Hi ${proName}, reminder: milestone "${milestone.title}" for project "${projectName}" starts ${dateLabel}. Log in to Mimo for details.`;
+      if (pro.phone) {
+        await this.notificationService.send({
+          professionalId: pro.id,
+          phoneNumber: pro.phone,
+          eventType: 'milestone_reminder',
+          message,
+        });
+      }
+
+      // Email fallback
+      if (pro.email) {
+        await this.sendReminderEmail({
+          to: pro.email,
+          subject: `Reminder: "${milestone.title}" starts ${dateLabel}`,
+          greeting: `Hi ${proName},`,
+          body: `Milestone <strong>${milestone.title}</strong> for project <strong>${projectName}</strong> starts <strong>${dateLabel}</strong>.`,
+          detail: milestone.siteAccessRequired ? 'Site access is required.' : 'Review your schedule and confirm readiness.',
+        });
+      }
+
+      await this.markSent(key);
+    }
+
+    this.logger.log(`Milestone reminders processed: ${milestones.length} milestones`);
   }
 
   // ─── Date helpers ──────────────────────────────────────────────────────────

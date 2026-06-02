@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-02-c2751ace",
+    "date": "2026-06-02T15:39:46+08:00",
+    "title": "Phase B: add milestone day-before reminders via chat and email",
+    "summary": "Phase B: add milestone day-before reminders via chat and email",
+    "areas": [
+      "api"
+    ],
+    "commit": "c2751ace",
+    "files": [
+      "apps/api/src/reminders/reminder.module.ts",
+      "apps/api/src/reminders/reminder.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-02-e9ae1bb3",
     "date": "2026-06-02T15:24:51+08:00",
     "title": "Expand availability grid to full width",
