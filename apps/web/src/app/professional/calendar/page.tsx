@@ -86,13 +86,13 @@ function TodayView({ grouped, sortedDates, router }: {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900">{m.title}</h3>
-                      {m.siteAccessRequired && <span title="Site access required">🔑</span>}
-                    </div>
-                    <p className="text-sm text-slate-500 mt-0.5">
-                      {m.projectProfessional.project.projectName} · {m.projectProfessional.project.clientName}
+                    <p className="text-sm font-medium text-slate-700">
+                      {m.projectProfessional.project.projectName}
                     </p>
+                    <h3 className="text-base font-semibold text-slate-900 mt-0.5">
+                      {m.title}
+                      {m.siteAccessRequired && <span className="ml-1.5" title="Site access required">🔑</span>}
+                    </h3>
                   </div>
                   {slot && (
                     <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -101,7 +101,7 @@ function TodayView({ grouped, sortedDates, router }: {
                   )}
                 </div>
                 {m.description && (
-                  <p className="text-sm text-slate-600 mt-2">{m.description}</p>
+                  <p className="text-sm text-slate-500 mt-2">{m.description}</p>
                 )}
               </div>
             );
@@ -117,12 +117,10 @@ function TodayView({ grouped, sortedDates, router }: {
             const nextDayLabel = `${DAYS[nextDay.getDay()]}, ${nextDay.getDate()} ${MONTHS[nextDay.getMonth()]}`;
             const slot = formatSlot(m.startTimeSlot);
             return (
-              <div key={m.id} className="flex items-center justify-between py-1">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{m.title}</p>
-                  <p className="text-xs text-slate-500">{nextDayLabel}{slot ? ` · ${slot}` : ''}</p>
-                </div>
-                <span className="text-xs text-slate-400">{m.projectProfessional.project.projectName}</span>
+              <div key={m.id} className="py-1.5">
+                <p className="text-xs text-slate-500">{nextDayLabel}{slot ? ` · ${slot}` : ''}</p>
+                <p className="text-sm font-medium text-slate-700">{m.projectProfessional.project.projectName}</p>
+                <p className="text-sm text-slate-900">{m.title}</p>
               </div>
             );
           })}
@@ -290,7 +288,7 @@ export default function ProfessionalCalendarPage() {
                 Today
               </button>
               <button
-                onClick={() => setViewMode("week")}
+                onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg transition ${
                   viewMode === "list"
                     ? "bg-blue-600 text-white"
@@ -307,7 +305,7 @@ export default function ProfessionalCalendarPage() {
                     ? "bg-blue-600 text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
-                title="Week View"
+                title="2-Week View"
               >
                 <Grid3x3 className="w-5 h-5" />
               </button>
@@ -357,54 +355,71 @@ export default function ProfessionalCalendarPage() {
             router={router}
           />
         ) : viewMode === "week" ? (
-          <div className="grid grid-cols-7 gap-2">
+          <div className="space-y-6">
             {(() => {
               const today = new Date();
               const dayOfWeek = today.getDay();
               const startOfWeek = new Date(today);
               startOfWeek.setDate(today.getDate() - dayOfWeek);
-              const weekDays = Array.from({ length: 7 }, (_, i) => {
-                const d = new Date(startOfWeek);
-                d.setDate(startOfWeek.getDate() + i);
-                return d;
+
+              const weeks = [0, 1].map((weekOffset) => {
+                const weekStart = new Date(startOfWeek);
+                weekStart.setDate(startOfWeek.getDate() + weekOffset * 7);
+                const weekDays = Array.from({ length: 7 }, (_, i) => {
+                  const d = new Date(weekStart);
+                  d.setDate(weekStart.getDate() + i);
+                  return d;
+                });
+                return { weekStart, weekDays };
               });
-              return weekDays.map((day) => {
-                const dateKey = day.toISOString().split("T")[0];
-                const dayMilestones = groupedMilestones[dateKey] || [];
-                const isToday = dateKey === today.toISOString().split("T")[0];
-                return (
-                  <div
-                    key={dateKey}
-                    className={`rounded-lg border p-2 min-h-[120px] ${
-                      isToday ? "border-blue-400 bg-blue-50/60" : "border-slate-200 bg-white"
-                    }`}
-                  >
-                    <div className={`text-xs font-semibold mb-1.5 ${isToday ? "text-blue-700" : "text-slate-500"}`}>
-                      {day.toLocaleDateString("en-US", { weekday: "short" })}
-                      <span className="ml-1 font-normal">{day.getDate()}</span>
-                    </div>
-                    <div className="space-y-1">
-                      {dayMilestones.length === 0 ? (
-                        <p className="text-[10px] text-slate-400">Open</p>
-                      ) : (
-                        dayMilestones.slice(0, 4).map((m) => (
-                          <div
-                            key={m.id}
-                            onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
-                            className="cursor-pointer rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-800 truncate hover:bg-blue-200"
-                            title={m.title}
-                          >
-                            {m.title}
+
+              return weeks.map(({ weekStart, weekDays }, wi) => (
+                <div key={wi}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                    Week of {MONTHS[weekStart.getMonth()]} {weekStart.getDate()}
+                  </p>
+                  <div className="grid grid-cols-7 gap-2">
+                    {weekDays.map((day) => {
+                      const dateKey = day.toISOString().split("T")[0];
+                      const dayMilestones = groupedMilestones[dateKey] || [];
+                      const isToday = dateKey === today.toISOString().split("T")[0];
+                      return (
+                        <div
+                          key={dateKey}
+                          className={`rounded-lg border p-2 min-h-[120px] ${
+                            isToday ? "border-blue-400 bg-blue-50/60" : "border-slate-200 bg-white"
+                          }`}
+                        >
+                          <div className={`text-xs font-semibold mb-1.5 ${isToday ? "text-blue-700" : "text-slate-500"}`}>
+                            {day.toLocaleDateString("en-US", { weekday: "short" })}
+                            <span className="ml-1 font-normal">{day.getDate()}</span>
                           </div>
-                        ))
-                      )}
-                      {dayMilestones.length > 4 && (
-                        <p className="text-[10px] text-slate-400">+{dayMilestones.length - 4} more</p>
-                      )}
-                    </div>
+                          <div className="space-y-1">
+                            {dayMilestones.length === 0 ? (
+                              <p className="text-[10px] text-slate-400">Open</p>
+                            ) : (
+                              dayMilestones.slice(0, 4).map((m) => (
+                                <div
+                                  key={m.id}
+                                  onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
+                                  className="cursor-pointer rounded bg-blue-100 px-1.5 py-0.5 text-[10px] leading-tight text-blue-800 truncate hover:bg-blue-200"
+                                  title={`${m.projectProfessional.project.projectName}: ${m.title}`}
+                                >
+                                  <span className="font-semibold">{m.projectProfessional.project.projectName}</span>
+                                  <span className="text-blue-600"> · {m.title}</span>
+                                </div>
+                              ))
+                            )}
+                            {dayMilestones.length > 4 && (
+                              <p className="text-[10px] text-slate-400">+{dayMilestones.length - 4} more</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              });
+                </div>
+              ));
             })()}
           </div>
         ) : (

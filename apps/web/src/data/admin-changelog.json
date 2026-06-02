@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-3f808a08",
+    "date": "2026-06-02T16:19:08+08:00",
+    "title": "Calendar: 2-week view, reorder cards to Date>Project>Milestone, fix List button",
+    "summary": "Calendar: 2-week view, reorder cards to Date>Project>Milestone, fix List button",
+    "areas": [
+      "web"
+    ],
+    "commit": "3f808a08",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-c7b247ca",
     "date": "2026-06-02T16:04:44+08:00",
     "title": "Calendar: add Today view as default with week/list toggles",
