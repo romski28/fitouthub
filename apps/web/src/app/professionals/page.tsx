@@ -560,6 +560,14 @@ function ProfessionalsPageInner() {
             </section>
           )}
 
+          {!emergencySource && aiEmergencyParam === '1' && (
+            <section className="relative -mx-6 px-6">
+              <div className="mx-auto max-w-6xl rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-slate-800">
+                <span className="font-bold">If this is an emergency,</span> pick a professional with <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">24/7 Emergency</span> availability &mdash; they may be able to reach you quicker, although an emergency call-out will be more expensive.
+              </div>
+            </section>
+          )}
+
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (

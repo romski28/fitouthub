@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-09563fe0",
+    "date": "2026-06-02T12:56:56+08:00",
+    "title": "Add emergency vs urgent notice on professionals picker",
+    "summary": "Add emergency vs urgent notice on professionals picker",
+    "areas": [
+      "web"
+    ],
+    "commit": "09563fe0",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-384b93d2",
     "date": "2026-06-02T11:03:55+08:00",
     "title": "Remove search icon and wire Enter-to-submit in prompt",
