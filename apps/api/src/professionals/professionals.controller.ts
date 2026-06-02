@@ -16,6 +16,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { ProfessionalsService } from './professionals.service';
 import {
   CreateProfessionalDto,
@@ -247,7 +248,7 @@ export class ProfessionalsController {
   }
 
   @Post(':id/availability')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async upsertAvailability(
     @Param('id') id: string,
     @Req() req: any,
@@ -264,7 +265,7 @@ export class ProfessionalsController {
     }>,
   ) {
     // Only the professional themselves or an admin can update availability
-    const actorId = req.user?.id ?? req.user?.professionalId;
+    const actorId = req.user?.professionalId || req.user?.id || req.user?.sub;
     if (req.user?.role !== 'admin' && actorId !== id) {
       throw new UnauthorizedException('You can only update your own availability');
     }
@@ -272,13 +273,13 @@ export class ProfessionalsController {
   }
 
   @Delete(':id/availability/:windowId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CombinedAuthGuard)
   async deleteAvailability(
     @Param('id') id: string,
     @Param('windowId') windowId: string,
     @Req() req: any,
   ) {
-    const actorId = req.user?.id ?? req.user?.professionalId;
+    const actorId = req.user?.professionalId || req.user?.id || req.user?.sub;
     if (req.user?.role !== 'admin' && actorId !== id) {
       throw new UnauthorizedException('You can only delete your own availability');
     }

@@ -71,6 +71,118 @@ const PROFESSION_TYPE_OPTIONS = [
   { value: 'reseller', label: 'Reseller' },
 ] as const;
 
+// ─── Availability Grid ────────────────────────────────────────────────────
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 6);
+
+const WorkingHoursPreset: Array<{ dayOfWeek: number; startTime: string; endTime: string; maxProjects: number; availableForEmergency: boolean }> = [
+  { dayOfWeek: 1, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+  { dayOfWeek: 2, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+  { dayOfWeek: 3, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+  { dayOfWeek: 4, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+  { dayOfWeek: 5, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+];
+
+type AvailabilityWindow = {
+  id?: string;
+  dayOfWeek?: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  maxProjects?: number;
+  availableForEmergency?: boolean;
+};
+
+function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]; onChange: (w: AvailabilityWindow[]) => void }) {
+  const [dragStart, setDragStart] = useState<{ day: number; hour: number } | null>(null);
+  const [dragMode, setDragMode] = useState<'add' | 'remove' | null>(null);
+
+  const grid = useMemo(() => {
+    const cells: boolean[][] = Array.from({ length: 7 }, () => Array(17).fill(false));
+    for (const w of windows) {
+      if (w.dayOfWeek == null || w.dayOfWeek < 0 || w.dayOfWeek > 6) continue;
+      const startH = w.startTime ? parseInt(w.startTime.split(':')[0], 10) : 6;
+      const endH = w.endTime ? parseInt(w.endTime.split(':')[0], 10) : 22;
+      for (let h = startH; h < endH; h++) {
+        const col = h - 6;
+        if (col >= 0 && col < 17) cells[w.dayOfWeek][col] = true;
+      }
+    }
+    return cells;
+  }, [windows]);
+
+  const handleMouseDown = (day: number, hour: number) => {
+    const col = hour - 6;
+    const cellOn = grid[day][col];
+    const hourStr = String(hour).padStart(2, '0');
+    const nhStr = String(hour + 1).padStart(2, '0');
+
+    setDragStart({ day, hour });
+    setDragMode(cellOn ? 'remove' : 'add');
+
+    if (cellOn) {
+      onChange(windows.filter((w) => !(w.dayOfWeek === day && w.startTime === `${hourStr}:00`)));
+    } else {
+      onChange([...windows, { dayOfWeek: day, startTime: `${hourStr}:00`, endTime: `${nhStr}:00`, maxProjects: 1, availableForEmergency: false }]);
+    }
+  };
+
+  const handleMouseEnter = (day: number, hour: number) => {
+    if (!dragStart || !dragMode) return;
+    if (day !== dragStart.day) return;
+    const minH = Math.min(dragStart.hour, hour);
+    const maxH = Math.max(dragStart.hour, hour);
+    const newWindows = windows.filter((w) => {
+      if (w.dayOfWeek !== day) return true;
+      const startH = w.startTime ? parseInt(w.startTime.split(':')[0], 10) : 0;
+      return startH < minH || startH >= maxH + 1;
+    });
+    if (dragMode === 'add') {
+      for (let h = minH; h <= maxH; h++) {
+        const hStr = String(h).padStart(2, '0');
+        const nhStr = String(h + 1).padStart(2, '0');
+        newWindows.push({ dayOfWeek: day, startTime: `${hStr}:00`, endTime: `${nhStr}:00`, maxProjects: 1, availableForEmergency: false });
+      }
+    }
+    onChange(newWindows);
+  };
+
+  const handleMouseUp = () => { setDragStart(null); setDragMode(null); };
+
+  return (
+    <div className="mt-2 overflow-x-auto" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+      <div className="inline-flex flex-col gap-px rounded-lg border border-[rgba(120,53,15,0.12)] bg-slate-200 p-px">
+        <div className="flex gap-px">
+          <div className="w-10 shrink-0" />
+          {HOURS.map((h) => (
+            <div key={h} className="w-7 text-center text-[9px] font-medium text-slate-500 leading-5">
+              {String(h).padStart(2, '0')}
+            </div>
+          ))}
+        </div>
+        {DAY_LABELS.map((label, day) => (
+          <div key={day} className="flex gap-px">
+            <div className="w-10 shrink-0 text-[10px] font-semibold text-slate-600 leading-5">{label}</div>
+            {HOURS.map((hour) => {
+              const col = hour - 6;
+              const active = grid[day][col];
+              return (
+                <div
+                  key={hour}
+                  onMouseDown={(e) => { e.preventDefault(); handleMouseDown(day, hour); }}
+                  onMouseEnter={() => handleMouseEnter(day, hour)}
+                  className={`h-5 w-7 cursor-pointer rounded-sm transition-colors ${active ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-white hover:bg-slate-100'}`}
+                  title={`${label} ${String(hour).padStart(2, '0')}:00`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const emptyProfile: ProfessionalProfile = {
   id: '',
   email: '',
@@ -145,17 +257,7 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
-  const [availabilityWindows, setAvailabilityWindows] = useState<Array<{
-    id?: string;
-    dayOfWeek?: number | null;
-    date?: string | null;
-    startTime?: string | null;
-    endTime?: string | null;
-    maxProjects?: number;
-    availableForEmergency?: boolean;
-    notes?: string | null;
-  }>>([]);
-  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindow[]>([]);
   const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
   const [tradeOptions, setTradeOptions] = useState<string[]>(() =>
     fallbackTradesmen.map((trade) => trade.title).filter(Boolean).sort(),
@@ -289,31 +391,26 @@ export default function ProfessionalProfilePage() {
     if (!accessToken || !professional?.id) return;
     let cancelled = false;
     const fetchAvailability = async () => {
-      setAvailabilityLoading(true);
       try {
         const res = await fetchWithRetry(`${API_BASE_URL}/professionals/${professional.id}/availability`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!res.ok) throw new Error('Failed to load availability');
-        const data = await res.json();
+        const data: Array<Record<string, unknown>> = await res.json();
         if (!cancelled) {
           setAvailabilityWindows(
-            (Array.isArray(data) ? data : []).map((w: any) => ({
-              id: w.id,
-              dayOfWeek: w.dayOfWeek,
-              date: w.date ? w.date.slice(0, 10) : null,
-              startTime: w.startTime,
-              endTime: w.endTime,
-              maxProjects: w.maxProjects ?? 1,
-              availableForEmergency: w.availableForEmergency ?? false,
-              notes: w.notes,
+            (Array.isArray(data) ? data : []).map((w) => ({
+              id: typeof w.id === 'string' ? w.id : undefined,
+              dayOfWeek: typeof w.dayOfWeek === 'number' ? w.dayOfWeek : null,
+              startTime: typeof w.startTime === 'string' ? w.startTime : null,
+              endTime: typeof w.endTime === 'string' ? w.endTime : null,
+              maxProjects: typeof w.maxProjects === 'number' ? w.maxProjects : 1,
+              availableForEmergency: w.availableForEmergency === true,
             })),
           );
         }
       } catch {
         if (!cancelled) setAvailabilityWindows([]);
-      } finally {
-        if (!cancelled) setAvailabilityLoading(false);
       }
     };
     void fetchAvailability();
@@ -567,92 +664,31 @@ export default function ProfessionalProfilePage() {
             )}
           </div>
 
-          {/* Availability windows */}
+          {/* Availability grid */}
           <div className="pt-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">Weekly Availability</h3>
-                <p className="text-xs text-slate-600">Set your regular working windows so clients can see when you're available.</p>
+                <p className="text-xs text-slate-600">Click cells to toggle. Drag to select ranges.</p>
               </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setAvailabilityWindows((prev) => [
-                    ...prev,
-                    { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', maxProjects: 1, availableForEmergency: false },
-                  ])
-                }
-                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
-              >
-                + Add window
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityWindows(WorkingHoursPreset.map((w) => ({ ...w })))}
+                  className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                >
+                  Working Hours
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityWindows([])}
+                  className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                >
+                  Clear All
+                </button>
+              </div>
             </div>
-
-            {availabilityLoading ? (
-              <p className="mt-2 text-xs text-slate-500">Loading availability...</p>
-            ) : availabilityWindows.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">No availability windows set. Add one to let clients know when you're typically free.</p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                {availabilityWindows.map((window, i) => {
-                  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                  return (
-                    <div key={window.id || i} className="flex flex-wrap items-center gap-2 rounded-lg border border-[rgba(120,53,15,0.10)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-xs">
-                      <select
-                        value={window.dayOfWeek ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setAvailabilityWindows((prev) =>
-                            prev.map((w, idx) => (idx === i ? { ...w, dayOfWeek: val === '' ? null : Number(val), date: null } : w)),
-                          );
-                        }}
-                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs"
-                      >
-                        <option value="">Date-specific</option>
-                        {dayLabels.map((label, d) => (
-                          <option key={d} value={d}>{label}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="time"
-                        value={window.startTime || ''}
-                        onChange={(e) =>
-                          setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, startTime: e.target.value || null } : w)))
-                        }
-                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs w-28"
-                      />
-                      <span className="text-slate-400">to</span>
-                      <input
-                        type="time"
-                        value={window.endTime || ''}
-                        onChange={(e) =>
-                          setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, endTime: e.target.value || null } : w)))
-                        }
-                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs w-28"
-                      />
-                      <label className="flex items-center gap-1 text-[10px] text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={window.availableForEmergency ?? false}
-                          onChange={(e) =>
-                            setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, availableForEmergency: e.target.checked } : w)))
-                          }
-                          className="h-3 w-3 rounded"
-                        />
-                        Emergency
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setAvailabilityWindows((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="ml-auto text-rose-500 hover:text-rose-700"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <AvailabilityGrid windows={availabilityWindows} onChange={setAvailabilityWindows} />
           </div>
 
           {(showPrimaryTrade || showProductsOffered || showTradesOffered) && (

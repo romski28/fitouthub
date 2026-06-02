@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-02-49e413f7",
+    "date": "2026-06-02T15:08:58+08:00",
+    "title": "Fix auth guard for availability endpoints and add grid-based availability picker",
+    "summary": "Fix auth guard for availability endpoints and add grid-based availability picker",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "49e413f7",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-2aef061b",
     "date": "2026-06-02T14:50:53+08:00",
     "title": "Add availability windows UI to professional profile",
