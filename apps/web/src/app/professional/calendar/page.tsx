@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Calendar, Clock, AlertCircle, ArrowLeft, List, Grid3x3, Plus } from "lucide-react";
+import { Calendar, Clock, AlertCircle, ArrowLeft, List, Grid3x3, Settings } from "lucide-react";
+import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
 import { useProfessionalAuth } from "@/context/professional-auth-context";
@@ -43,7 +44,7 @@ export default function ProfessionalCalendarPage() {
   const [milestones, setMilestones] = useState<CalendarMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "month">("list");
+  const [viewMode, setViewMode] = useState<"list" | "week">("list");
 
   useEffect(() => {
     loadCalendar();
@@ -193,28 +194,24 @@ export default function ProfessionalCalendarPage() {
                 <List className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setViewMode("month")}
+                onClick={() => setViewMode("week")}
                 className={`p-2 rounded-lg transition ${
-                  viewMode === "month"
+                  viewMode === "week"
                     ? "bg-blue-600 text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
-                disabled
-                title="Month View (Coming Soon)"
+                title="Week View"
               >
                 <Grid3x3 className="w-5 h-5" />
               </button>
               <div className="w-px h-6 bg-slate-200 mx-2" />
-              <button
-                onClick={() => {
-                  // TODO: Open add task modal/form
-                  alert("Add new task - feature coming soon");
-                }}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+              <Link
+                href="/professional/profile"
+                className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition flex items-center gap-2 text-sm font-medium"
               >
-                <Plus className="w-5 h-5" />
-                <span className="text-sm font-medium">Add Task</span>
-              </button>
+                <Settings className="w-4 h-4" />
+                Availability
+              </Link>
             </div>
           </div>
         </div>
@@ -245,6 +242,57 @@ export default function ProfessionalCalendarPage() {
             >
               View Projects
             </button>
+          </div>
+        ) : viewMode === "week" ? (
+          <div className="grid grid-cols-7 gap-2">
+            {(() => {
+              const today = new Date();
+              const dayOfWeek = today.getDay();
+              const startOfWeek = new Date(today);
+              startOfWeek.setDate(today.getDate() - dayOfWeek);
+              const weekDays = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(startOfWeek);
+                d.setDate(startOfWeek.getDate() + i);
+                return d;
+              });
+              return weekDays.map((day) => {
+                const dateKey = day.toISOString().split("T")[0];
+                const dayMilestones = groupedMilestones[dateKey] || [];
+                const isToday = dateKey === today.toISOString().split("T")[0];
+                return (
+                  <div
+                    key={dateKey}
+                    className={`rounded-lg border p-2 min-h-[120px] ${
+                      isToday ? "border-blue-400 bg-blue-50/60" : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className={`text-xs font-semibold mb-1.5 ${isToday ? "text-blue-700" : "text-slate-500"}`}>
+                      {day.toLocaleDateString("en-US", { weekday: "short" })}
+                      <span className="ml-1 font-normal">{day.getDate()}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {dayMilestones.length === 0 ? (
+                        <p className="text-[10px] text-slate-400">Open</p>
+                      ) : (
+                        dayMilestones.slice(0, 4).map((m) => (
+                          <div
+                            key={m.id}
+                            onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
+                            className="cursor-pointer rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-800 truncate hover:bg-blue-200"
+                            title={m.title}
+                          >
+                            {m.title}
+                          </div>
+                        ))
+                      )}
+                      {dayMilestones.length > 4 && (
+                        <p className="text-[10px] text-slate-400">+{dayMilestones.length - 4} more</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         ) : (
           <div className="space-y-2">

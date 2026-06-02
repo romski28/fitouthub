@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-2a534d22",
+    "date": "2026-06-02T15:50:04+08:00",
+    "title": "Phase C: add week view and availability link to calendar",
+    "summary": "Phase C: add week view and availability link to calendar",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a534d22",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-c2751ace",
     "date": "2026-06-02T15:39:46+08:00",
     "title": "Phase B: add milestone day-before reminders via chat and email",
