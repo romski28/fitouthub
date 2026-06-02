@@ -151,11 +151,11 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
 
   return (
     <div className="mt-2 overflow-x-auto" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
-      <div className="inline-flex flex-col gap-px rounded-lg border border-[rgba(120,53,15,0.12)] bg-slate-200 p-px">
+      <div className="flex w-full flex-col gap-px rounded-lg border border-[rgba(120,53,15,0.12)] bg-slate-200 p-px">
         <div className="flex gap-px">
           <div className="w-10 shrink-0" />
           {HOURS.map((h) => (
-            <div key={h} className="w-7 text-center text-[9px] font-medium text-slate-500 leading-5">
+            <div key={h} className="flex-1 text-center text-[9px] font-medium text-slate-500 leading-5">
               {String(h).padStart(2, '0')}
             </div>
           ))}
@@ -171,7 +171,7 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
                   key={hour}
                   onMouseDown={(e) => { e.preventDefault(); handleMouseDown(day, hour); }}
                   onMouseEnter={() => handleMouseEnter(day, hour)}
-                  className={`h-5 w-7 cursor-pointer rounded-sm transition-colors ${active ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-white hover:bg-slate-100'}`}
+                  className={`h-5 flex-1 cursor-pointer rounded-sm transition-colors ${active ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-white hover:bg-slate-100'}`}
                   title={`${label} ${String(hour).padStart(2, '0')}:00`}
                 />
               );

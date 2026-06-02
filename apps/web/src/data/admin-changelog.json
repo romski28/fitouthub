@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-e9ae1bb3",
+    "date": "2026-06-02T15:24:51+08:00",
+    "title": "Expand availability grid to full width",
+    "summary": "Expand availability grid to full width",
+    "areas": [
+      "web"
+    ],
+    "commit": "e9ae1bb3",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-49e413f7",
     "date": "2026-06-02T15:08:58+08:00",
     "title": "Fix auth guard for availability endpoints and add grid-based availability picker",
