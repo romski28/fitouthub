@@ -109,6 +109,15 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (query.trim()) {
+        onSubmit(query.trim());
+      }
+    }
+  };
+
   const isExpanded = isFocused || query.trim().length > 0;
   const characterCount = query.length;
 
@@ -121,19 +130,19 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
               {imageSection}
             </div>
           )}
-          <div className="flex items-start gap-0">
-            <span className="px-3 sm:px-4 pt-3 sm:pt-4 text-slate-400 flex-shrink-0">🔍</span>
+          <div className="px-3 sm:px-4 pt-3 sm:pt-4">
             <textarea
               ref={textareaRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
               rows={1}
               maxLength={MAX_QUERY_CHARS}
               style={{ height: isExpanded ? '9rem' : '3.25rem' }}
-              className="flex-1 px-3 sm:px-4 py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 min-w-0 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out"
+              className="w-full py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out"
             />
           </div>
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-384b93d2",
+    "date": "2026-06-02T11:03:55+08:00",
+    "title": "Remove search icon and wire Enter-to-submit in prompt",
+    "summary": "Remove search icon and wire Enter-to-submit in prompt",
+    "areas": [
+      "web"
+    ],
+    "commit": "384b93d2",
+    "files": [
+      "apps/web/src/components/search-box.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-d26f1c5d",
     "date": "2026-06-02T10:46:34+08:00",
     "title": "Move image upload above text input in unified prompt card",
