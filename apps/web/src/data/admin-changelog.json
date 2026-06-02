@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-02-d26f1c5d",
+    "date": "2026-06-02T10:46:34+08:00",
+    "title": "Move image upload above text input in unified prompt card",
+    "summary": "Move image upload above text input in unified prompt card",
+    "areas": [
+      "web"
+    ],
+    "commit": "d26f1c5d",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-21cd930f",
     "date": "2026-06-02T09:57:06+08:00",
     "title": "Unify text+image prompt into single search card",

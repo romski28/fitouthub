@@ -1981,27 +1981,24 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           imageSection={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <ChatImageUploader
-                    compact
-                    onFilesSelected={setPromptImages}
-                    maxImages={promptImageLimit}
-                    disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
-                    isUploading={aiLoading && promptImages.length > 0}
-                    uploadingCount={promptImages.length}
-                    clearKey={promptUploaderClearKey}
-                  />
-                  {!visionQuotaLoading && (
-                    <span className="text-[10px] text-slate-400">
-                      {visionQuota
-                        ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today`
-                        : 'max 1/prompt'}
-                    </span>
-                  )}
-                  {visionQuotaLoading && (
-                    <span className="text-[10px] text-slate-400">Checking quota…</span>
-                  )}
-                </div>
+                <ChatImageUploader
+                  onFilesSelected={setPromptImages}
+                  maxImages={promptImageLimit}
+                  disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+                  isUploading={aiLoading && promptImages.length > 0}
+                  uploadingCount={promptImages.length}
+                  clearKey={promptUploaderClearKey}
+                />
+                {!visionQuotaLoading && (
+                  <p className="text-[10px] text-slate-400">
+                    {visionQuota
+                      ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
+                      : `max ${promptImageLimit} per prompt`}
+                  </p>
+                )}
+                {visionQuotaLoading && (
+                  <p className="text-[10px] text-slate-400">Checking quota…</p>
+                )}
                 {visionQuotaError && (
                   <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
                 )}

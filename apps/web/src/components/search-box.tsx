@@ -9,11 +9,12 @@ export interface SearchBoxProps {
   submitLabel?: string;
   clearKey?: number;
   imageSection?: ReactNode;
+  imageActions?: ReactNode;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -115,6 +116,11 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
     <div className="relative w-full">
       <form onSubmit={handleSubmit} className="relative">
         <div className="bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
+          {imageSection && (
+            <div className="border-b border-slate-100 px-3 sm:px-4 py-2.5">
+              {imageSection}
+            </div>
+          )}
           <div className="flex items-start gap-0">
             <span className="px-3 sm:px-4 pt-3 sm:pt-4 text-slate-400 flex-shrink-0">🔍</span>
             <textarea
@@ -133,6 +139,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
 
           <div className="flex items-center justify-between px-3 sm:px-4 pb-3 sm:pb-4 pt-1">
             <div className="flex items-center gap-2">
+              {imageActions}
               <span className="text-xs text-slate-400">
                 {characterCount}/{MAX_QUERY_CHARS}
               </span>
@@ -156,11 +163,6 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
               {submitLabel}
             </button>
           </div>
-          {imageSection && (
-            <div className="border-t border-slate-100 px-3 sm:px-4 py-2.5">
-              {imageSection}
-            </div>
-          )}
         </div>
       </form>
     </div>
