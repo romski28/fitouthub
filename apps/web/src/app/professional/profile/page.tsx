@@ -93,6 +93,7 @@ const buildProfileChecklist = (
   profile: ProfessionalProfile,
   refProjects: ReferenceProject[],
   emergencyCalloutAvailable: boolean,
+  hasAvailability: boolean,
 ): ProfileChecklistItem[] => {
   const professionType = (profile.professionType || '').trim().toLowerCase();
   const serviceAreas = (profile.serviceArea || '')
@@ -114,7 +115,7 @@ const buildProfileChecklist = (
     { label: 'Primary location added', done: Boolean(profile.locationPrimary), weight: 10 },
     { label: 'At least 3 profile images uploaded', done: (profile.profileImages?.length || 0) >= 3, weight: 10 },
     { label: 'At least 2 reference projects added', done: refProjects.length >= 2, weight: 10 },
-    { label: 'Emergency availability set', done: true, weight: 5 },
+    { label: 'Availability windows set', done: hasAvailability, weight: 5 },
   ];
 };
 
@@ -144,6 +145,17 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const [availabilityWindows, setAvailabilityWindows] = useState<Array<{
+    id?: string;
+    dayOfWeek?: number | null;
+    date?: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    maxProjects?: number;
+    availableForEmergency?: boolean;
+    notes?: string | null;
+  }>>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
   const [tradeOptions, setTradeOptions] = useState<string[]>(() =>
     fallbackTradesmen.map((trade) => trade.title).filter(Boolean).sort(),
@@ -151,7 +163,7 @@ export default function ProfessionalProfilePage() {
   const hasLoadedRef = useRef(false);
   const hydratedProfessionalIdRef = useRef<string | null>(null);
 
-  const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable);
+  const profileChecklist = buildProfileChecklist(profile, refProjects, emergencyCalloutAvailable, availabilityWindows.length > 0);
   const completionScore = Math.round(
     profileChecklist.reduce((sum, item) => sum + (item.done ? item.weight : 0), 0),
   );
@@ -273,6 +285,41 @@ export default function ProfessionalProfilePage() {
     void fetchProfile();
   }, [isLoggedIn, accessToken, professional?.id, router]);
 
+  useEffect(() => {
+    if (!accessToken || !professional?.id) return;
+    let cancelled = false;
+    const fetchAvailability = async () => {
+      setAvailabilityLoading(true);
+      try {
+        const res = await fetchWithRetry(`${API_BASE_URL}/professionals/${professional.id}/availability`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) throw new Error('Failed to load availability');
+        const data = await res.json();
+        if (!cancelled) {
+          setAvailabilityWindows(
+            (Array.isArray(data) ? data : []).map((w: any) => ({
+              id: w.id,
+              dayOfWeek: w.dayOfWeek,
+              date: w.date ? w.date.slice(0, 10) : null,
+              startTime: w.startTime,
+              endTime: w.endTime,
+              maxProjects: w.maxProjects ?? 1,
+              availableForEmergency: w.availableForEmergency ?? false,
+              notes: w.notes,
+            })),
+          );
+        }
+      } catch {
+        if (!cancelled) setAvailabilityWindows([]);
+      } finally {
+        if (!cancelled) setAvailabilityLoading(false);
+      }
+    };
+    void fetchAvailability();
+    return () => { cancelled = true; };
+  }, [accessToken, professional?.id]);
+
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessToken) return;
@@ -318,6 +365,19 @@ export default function ProfessionalProfilePage() {
         }),
       });
       if (!prefRes.ok) throw new Error(await prefRes.text());
+
+      // Save availability windows
+      if (availabilityWindows.length > 0 && professional?.id) {
+        const availRes = await fetch(`${API_BASE_URL}/professionals/${professional.id}/availability`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(availabilityWindows),
+        });
+        if (!availRes.ok) throw new Error(await availRes.text());
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
@@ -503,6 +563,94 @@ export default function ProfessionalProfilePage() {
                     No
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Availability windows */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Weekly Availability</h3>
+                <p className="text-xs text-slate-600">Set your regular working windows so clients can see when you're available.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setAvailabilityWindows((prev) => [
+                    ...prev,
+                    { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', maxProjects: 1, availableForEmergency: false },
+                  ])
+                }
+                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+              >
+                + Add window
+              </button>
+            </div>
+
+            {availabilityLoading ? (
+              <p className="mt-2 text-xs text-slate-500">Loading availability...</p>
+            ) : availabilityWindows.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-500">No availability windows set. Add one to let clients know when you're typically free.</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {availabilityWindows.map((window, i) => {
+                  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                  return (
+                    <div key={window.id || i} className="flex flex-wrap items-center gap-2 rounded-lg border border-[rgba(120,53,15,0.10)] bg-[rgba(255,251,242,0.82)] px-3 py-2 text-xs">
+                      <select
+                        value={window.dayOfWeek ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAvailabilityWindows((prev) =>
+                            prev.map((w, idx) => (idx === i ? { ...w, dayOfWeek: val === '' ? null : Number(val), date: null } : w)),
+                          );
+                        }}
+                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs"
+                      >
+                        <option value="">Date-specific</option>
+                        {dayLabels.map((label, d) => (
+                          <option key={d} value={d}>{label}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="time"
+                        value={window.startTime || ''}
+                        onChange={(e) =>
+                          setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, startTime: e.target.value || null } : w)))
+                        }
+                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs w-28"
+                      />
+                      <span className="text-slate-400">to</span>
+                      <input
+                        type="time"
+                        value={window.endTime || ''}
+                        onChange={(e) =>
+                          setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, endTime: e.target.value || null } : w)))
+                        }
+                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs w-28"
+                      />
+                      <label className="flex items-center gap-1 text-[10px] text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={window.availableForEmergency ?? false}
+                          onChange={(e) =>
+                            setAvailabilityWindows((prev) => prev.map((w, idx) => (idx === i ? { ...w, availableForEmergency: e.target.checked } : w)))
+                          }
+                          className="h-3 w-3 rounded"
+                        />
+                        Emergency
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setAvailabilityWindows((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="ml-auto text-rose-500 hover:text-rose-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

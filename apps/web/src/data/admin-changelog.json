@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-2aef061b",
+    "date": "2026-06-02T14:50:53+08:00",
+    "title": "Add availability windows UI to professional profile",
+    "summary": "Add availability windows UI to professional profile",
+    "areas": [
+      "web"
+    ],
+    "commit": "2aef061b",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-30a6c471",
     "date": "2026-06-02T14:38:15+08:00",
     "title": "Phase A: add professional availability model, API, and spec",
