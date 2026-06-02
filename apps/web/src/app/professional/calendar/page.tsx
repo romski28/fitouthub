@@ -38,13 +38,110 @@ interface GroupedMilestones {
   [date: string]: CalendarMilestone[];
 }
 
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function TodayView({ grouped, sortedDates, router }: {
+  grouped: GroupedMilestones;
+  sortedDates: string[];
+  router: ReturnType<typeof useRouter>;
+}) {
+  const today = new Date();
+  const todayKey = today.toISOString().split("T")[0];
+  const todayMilestones = grouped[todayKey] || [];
+  const dayLabel = `${DAYS[today.getDay()]}, ${today.getDate()} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+
+  const nextIndex = sortedDates.findIndex((d) => d > todayKey);
+  const nextDate = nextIndex >= 0 ? sortedDates[nextIndex] : null;
+  const nextMilestones = nextDate ? grouped[nextDate] : [];
+
+  const formatSlot = (slot?: string | null) => {
+    if (!slot) return null;
+    if (slot === "ALL_DAY") return "All day";
+    if (slot === "AM") return "Morning";
+    if (slot === "PM") return "Afternoon";
+    return slot;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h2 className="text-lg font-bold text-slate-900">{dayLabel}</h2>
+      </div>
+
+      {todayMilestones.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+          <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-600">Nothing scheduled today.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {todayMilestones.map((m) => {
+            const slot = formatSlot(m.startTimeSlot);
+            return (
+              <div
+                key={m.id}
+                onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
+                className="bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition cursor-pointer p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-slate-900">{m.title}</h3>
+                      {m.siteAccessRequired && <span title="Site access required">🔑</span>}
+                    </div>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                      {m.projectProfessional.project.projectName} · {m.projectProfessional.project.clientName}
+                    </p>
+                  </div>
+                  {slot && (
+                    <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                      {slot}
+                    </span>
+                  )}
+                </div>
+                {m.description && (
+                  <p className="text-sm text-slate-600 mt-2">{m.description}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {nextDate && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Next</p>
+          {nextMilestones.slice(0, 2).map((m) => {
+            const nextDay = new Date(nextDate);
+            const nextDayLabel = `${DAYS[nextDay.getDay()]}, ${nextDay.getDate()} ${MONTHS[nextDay.getMonth()]}`;
+            const slot = formatSlot(m.startTimeSlot);
+            return (
+              <div key={m.id} className="flex items-center justify-between py-1">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-800 truncate">{m.title}</p>
+                  <p className="text-xs text-slate-500">{nextDayLabel}{slot ? ` · ${slot}` : ''}</p>
+                </div>
+                <span className="text-xs text-slate-400">{m.projectProfessional.project.projectName}</span>
+              </div>
+            );
+          })}
+          {nextMilestones.length > 2 && (
+            <p className="text-xs text-slate-400 mt-1">+{nextMilestones.length - 2} more on {DAYS[new Date(nextDate).getDay()]}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProfessionalCalendarPage() {
   const router = useRouter();
   const { professional, accessToken: contextToken, isLoggedIn } = useProfessionalAuth();
   const [milestones, setMilestones] = useState<CalendarMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "week">("list");
+  const [viewMode, setViewMode] = useState<"today" | "week" | "list">("today");
 
   useEffect(() => {
     loadCalendar();
@@ -183,7 +280,17 @@ export default function ProfessionalCalendarPage() {
 
             <div className="flex gap-2 items-center">
               <button
-                onClick={() => setViewMode("list")}
+                onClick={() => setViewMode("today")}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  viewMode === "today"
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setViewMode("week")}
                 className={`p-2 rounded-lg transition ${
                   viewMode === "list"
                     ? "bg-blue-600 text-white"
@@ -243,6 +350,12 @@ export default function ProfessionalCalendarPage() {
               View Projects
             </button>
           </div>
+        ) : viewMode === "today" ? (
+          <TodayView
+            grouped={groupedMilestones}
+            sortedDates={sortedDates}
+            router={router}
+          />
         ) : viewMode === "week" ? (
           <div className="grid grid-cols-7 gap-2">
             {(() => {

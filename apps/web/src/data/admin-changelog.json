@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-02-c7b247ca",
+    "date": "2026-06-02T16:04:44+08:00",
+    "title": "Calendar: add Today view as default with week/list toggles",
+    "summary": "Calendar: add Today view as default with week/list toggles",
+    "areas": [
+      "web"
+    ],
+    "commit": "c7b247ca",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-2a534d22",
     "date": "2026-06-02T15:50:04+08:00",
     "title": "Phase C: add week view and availability link to calendar",
