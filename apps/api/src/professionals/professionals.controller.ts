@@ -238,4 +238,50 @@ export class ProfessionalsController {
       throw new UnauthorizedException('Admin access required');
     }
   }
+
+  // ─── Professional Availability ──────────────────────────────────────────
+
+  @Get(':id/availability')
+  async getAvailability(@Param('id') id: string) {
+    return this.professionalsService.getAvailability(id);
+  }
+
+  @Post(':id/availability')
+  @UseGuards(AuthGuard('jwt'))
+  async upsertAvailability(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body()
+    body: Array<{
+      id?: string;
+      dayOfWeek?: number | null;
+      date?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+      maxProjects?: number;
+      availableForEmergency?: boolean;
+      notes?: string | null;
+    }>,
+  ) {
+    // Only the professional themselves or an admin can update availability
+    const actorId = req.user?.id ?? req.user?.professionalId;
+    if (req.user?.role !== 'admin' && actorId !== id) {
+      throw new UnauthorizedException('You can only update your own availability');
+    }
+    return this.professionalsService.upsertAvailability(id, body || []);
+  }
+
+  @Delete(':id/availability/:windowId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteAvailability(
+    @Param('id') id: string,
+    @Param('windowId') windowId: string,
+    @Req() req: any,
+  ) {
+    const actorId = req.user?.id ?? req.user?.professionalId;
+    if (req.user?.role !== 'admin' && actorId !== id) {
+      throw new UnauthorizedException('You can only delete your own availability');
+    }
+    return this.professionalsService.deleteAvailability(id, windowId);
+  }
 }

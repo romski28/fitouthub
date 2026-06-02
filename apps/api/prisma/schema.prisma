@@ -341,6 +341,27 @@ model Professional {
   sessionToken            String?
   regionCoverage          ProfessionalRegionCoverage[]
   acProjects              AcProject[]
+  availability            ProfessionalAvailability[]
+}
+
+model ProfessionalAvailability {
+  id                    String    @id @default(cuid())
+  professionalId        String
+  dayOfWeek             Int?      // 0=Sun..6=Sat, NULL means date-specific
+  date                  DateTime? @db.Date // NULL means recurring by dayOfWeek
+  startTime             String?   // "HH:mm" in HKT, NULL means all day
+  endTime               String?   // "HH:mm" in HKT, NULL means all day
+  maxProjects           Int       @default(1)
+  availableForEmergency Boolean   @default(false)
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@index([professionalId, dayOfWeek])
+  @@index([professionalId, date])
 }
 
 model RegionZone {

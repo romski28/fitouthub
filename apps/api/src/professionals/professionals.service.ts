@@ -15,6 +15,91 @@ type RegionBackfillActor = {
 export class ProfessionalsService {
   constructor(private prisma: PrismaService) {}
 
+  // ─── Professional Availability ────────────────────────────────────────────
+
+  async getAvailability(professionalId: string) {
+    return this.prisma.professionalAvailability.findMany({
+      where: { professionalId },
+      orderBy: [{ dayOfWeek: 'asc' }, { date: 'asc' }],
+    });
+  }
+
+  async upsertAvailability(
+    professionalId: string,
+    windows: Array<{
+      id?: string;
+      dayOfWeek?: number | null;
+      date?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+      maxProjects?: number;
+      availableForEmergency?: boolean;
+      notes?: string | null;
+    }>,
+  ) {
+    const incomingIds = windows
+      .map((w) => w.id)
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+
+    if (incomingIds.length > 0) {
+      await this.prisma.professionalAvailability.deleteMany({
+        where: { professionalId, id: { notIn: incomingIds } },
+      });
+    }
+
+    const results: Array<{
+      id: string;
+      professionalId: string;
+      dayOfWeek: number | null;
+      date: Date | null;
+      startTime: string | null;
+      endTime: string | null;
+      maxProjects: number;
+      availableForEmergency: boolean;
+      notes: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [];
+    for (const window of windows) {
+      const data = {
+        professionalId,
+        dayOfWeek:
+          typeof window.dayOfWeek === 'number' && window.dayOfWeek >= 0 && window.dayOfWeek <= 6
+            ? window.dayOfWeek
+            : null,
+        date: window.date ? new Date(window.date) : null,
+        startTime: window.startTime?.trim() || null,
+        endTime: window.endTime?.trim() || null,
+        maxProjects: window.maxProjects ?? 1,
+        availableForEmergency: window.availableForEmergency ?? false,
+        notes: window.notes?.trim() || null,
+      };
+
+      if (window.id) {
+        const updated = await this.prisma.professionalAvailability.update({
+          where: { id: window.id },
+          data,
+        });
+        results.push(updated);
+      } else {
+        const created = await this.prisma.professionalAvailability.create({ data });
+        results.push(created);
+      }
+    }
+
+    return results;
+  }
+
+  async deleteAvailability(professionalId: string, windowId: string) {
+    const existing = await this.prisma.professionalAvailability.findFirst({
+      where: { id: windowId, professionalId },
+    });
+    if (!existing) throw new BadRequestException('Availability window not found');
+
+    await this.prisma.professionalAvailability.delete({ where: { id: windowId } });
+    return { ok: true };
+  }
+
   private buildProfessionalCertificationPayload(certification: any) {
     if (!certification) return certification;
     return {
