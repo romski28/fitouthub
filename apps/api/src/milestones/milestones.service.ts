@@ -957,5 +957,129 @@ export class MilestonesService {
       clientName: m.projectProfessional?.project?.clientName ?? '',
     }));
   }
+
+  /**
+   * Check if a proposed date / time-slot fits within the professional's
+   * availability windows and doesn't exceed their maxProjects cap.
+   *
+   * Returns { available, warnings[], suggestions[] } so the UI can show
+   * an info banner.
+   */
+  async checkAvailability(params: {
+    professionalId: string;
+    date: string;             // ISO date "2026-06-15"
+    startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+  }) {
+    const { professionalId, date, startTimeSlot, endTimeSlot } = params;
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getDay(); // 0=Sun..6=Sat
+
+    const warnings: string[] = [];
+    const suggestions: string[] = [];
+
+    // 1. Fetch availability windows
+    const windows = await this.prisma.professionalAvailability.findMany({
+      where: {
+        professionalId,
+        OR: [
+          { dayOfWeek },                         // recurring for this weekday
+          { date: new Date(date) },              // date-specific override
+        ],
+      },
+    });
+
+    // Date-specific windows take priority over dayOfWeek ones
+    const dateSpecific = windows.filter((w) => w.date);
+    const relevantWindows = dateSpecific.length > 0
+      ? dateSpecific
+      : windows.filter((w) => w.dayOfWeek !== null);
+
+    if (relevantWindows.length === 0) {
+      // No availability window at all for this day
+      const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      warnings.push(`You don't have availability set for ${DAY_NAMES[dayOfWeek]}.`);
+
+      // Find the next available day
+      const allWindows = await this.prisma.professionalAvailability.findMany({
+        where: { professionalId },
+        orderBy: { dayOfWeek: 'asc' },
+      });
+      if (allWindows.length > 0) {
+        const nextDay = allWindows[0].dayOfWeek!;
+        // Calculate days until next available day
+        let daysUntil = nextDay - dayOfWeek;
+        if (daysUntil <= 0) daysUntil += 7;
+        const nextDate = new Date(targetDate);
+        nextDate.setDate(targetDate.getDate() + daysUntil);
+        suggestions.push(`Next available day: ${DAY_NAMES[nextDay]}, ${nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`);
+      }
+    } else {
+      // 2. Check time-slot fit
+      const slot = startTimeSlot || 'ALL_DAY';
+      const endSlot = endTimeSlot || startTimeSlot || 'ALL_DAY';
+
+      if (slot !== 'ALL_DAY' || endSlot !== 'ALL_DAY') {
+        const hasWindowCovering = relevantWindows.some((w) => {
+          if (!w.startTime || !w.endTime) return true; // window covers all day
+          const slotStartMin = slot === 'AM' ? 0 : 12 * 60;
+          const slotEndMin = endSlot === 'PM' || endSlot === 'ALL_DAY' ? 24 * 60 : 12 * 60;
+          const windowStartMin = parseInt(w.startTime.split(':')[0], 10) * 60 + parseInt(w.startTime.split(':')[1] || '0', 10);
+          const windowEndMin = parseInt(w.endTime.split(':')[0], 10) * 60 + parseInt(w.endTime.split(':')[1] || '0', 10);
+          return windowStartMin <= slotStartMin && windowEndMin >= slotEndMin;
+        });
+
+        if (!hasWindowCovering) {
+          const firstWindow = relevantWindows[0];
+          if (firstWindow?.startTime && firstWindow?.endTime) {
+            warnings.push(`Your availability on this day is ${firstWindow.startTime}–${firstWindow.endTime}. This ${slot === endSlot ? slot : `${slot}–${endSlot}`} slot may fall outside your working hours.`);
+          }
+        }
+      }
+
+      // 3. Check maxProjects cap
+      const maxProjects = Math.max(...relevantWindows.map((w) => w.maxProjects || 1), 1);
+
+      // Count distinct projects with milestones on this day
+      const assignments = await this.prisma.projectProfessional.findMany({
+        where: { professionalId, status: { in: ['accepted', 'awarded'] } },
+        select: { id: true },
+      });
+      const ppIds = assignments.map((a) => a.id);
+
+      if (ppIds.length > 0) {
+        const dayStart = new Date(`${date}T00:00:00Z`);
+        const dayEnd = new Date(`${date}T23:59:59Z`);
+
+        const dayMilestones = await this.prisma.projectMilestone.findMany({
+          where: {
+            projectProfessionalId: { in: ppIds },
+            status: { not: 'completed' },
+            plannedStartDate: { lte: dayEnd },
+            OR: [
+              { plannedEndDate: null },
+              { plannedEndDate: { gte: dayStart } },
+            ],
+          },
+          select: { projectProfessionalId: true },
+        });
+
+        const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId));
+        const currentCount = distinctProjects.size;
+
+        if (currentCount >= maxProjects) {
+          warnings.push(`You've reached your max of ${maxProjects} project${maxProjects > 1 ? 's' : ''} for this day.`);
+        } else if (currentCount > 0) {
+          warnings.push(`You have ${currentCount} project${currentCount > 1 ? 's' : ''} on this day (max: ${maxProjects}).`);
+        }
+      }
+    }
+
+    return {
+      available: warnings.length === 0,
+      warnings,
+      suggestions,
+    };
+  }
 }
 

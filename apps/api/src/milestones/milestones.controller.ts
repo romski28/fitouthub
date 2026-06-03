@@ -93,6 +93,23 @@ export class MilestonesController {
     return this.milestonesService.checkMilestoneConflicts(body);
   }
 
+  @Post('check-availability')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async checkAvailability(
+    @Body() body: {
+      professionalId: string;
+      date: string;
+      startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+      endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    },
+    @Req() req: any,
+  ) {
+    if (!body.professionalId || !body.date) {
+      throw new BadRequestException('professionalId and date are required');
+    }
+    return this.milestonesService.checkAvailability(body);
+  }
+
   @Get(':id')
   async getMilestoneById(@Param('id') id: string) {
     return this.milestonesService.getMilestoneById(id);

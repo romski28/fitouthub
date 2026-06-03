@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-03-acbaa97c",
+    "date": "2026-06-03T20:39:04+08:00",
+    "title": "Phase 2: availability-aware suggestions — check working hours, time slot fit, and maxProjects cap on milestone save",
+    "summary": "Phase 2: availability-aware suggestions — check working hours, time slot fit, and maxProjects cap on milestone save",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "acbaa97c",
+    "files": [
+      "apps/api/src/milestones/milestones.controller.ts",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-03-72966f11",
     "date": "2026-06-03T13:37:51+08:00",
     "title": "Fix: use Prisma AND for duplicate plannedStartDate where keys",

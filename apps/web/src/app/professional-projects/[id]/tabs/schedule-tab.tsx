@@ -119,6 +119,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     projectName: string;
   }> | null>(null);
   const [conflictChecking, setConflictChecking] = useState(false);
+  const [availabilityWarning, setAvailabilityWarning] = useState<{
+    warnings: string[];
+    suggestions: string[];
+  } | null>(null);
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
@@ -267,6 +271,36 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   };
 
   const dismissConflictWarning = () => setConflictWarning(null);
+
+  const checkAvailability = async (plannedStartDate?: string, startTimeSlot?: string, endTimeSlot?: string) => {
+    if (!plannedStartDate || !accessToken) return;
+    const professionalId = getProfessionalId();
+    if (!professionalId) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/milestones/check-availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          professionalId,
+          date: plannedStartDate.split('T')[0],
+          startTimeSlot: startTimeSlot || undefined,
+          endTimeSlot: endTimeSlot || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailabilityWarning(data.available ? null : data);
+      }
+    } catch {
+      setAvailabilityWarning(null);
+    }
+  };
+
+  const dismissAvailabilityWarning = () => setAvailabilityWarning(null);
 
   const fetchMilestones = React.useCallback(async (options?: { silent?: boolean }) => {
     if (!projectProfessionalId) return;
@@ -647,13 +681,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       setIsAddingNew(false);
       onMilestonesUpdate?.();
 
-      // Check for scheduling conflicts (non-blocking)
+      // Check for scheduling conflicts & availability (non-blocking)
       checkConflicts(
         savedMilestone.plannedStartDate ?? undefined,
         savedMilestone.plannedEndDate ?? undefined,
         savedMilestone.startTimeSlot ?? undefined,
         savedMilestone.endTimeSlot ?? undefined,
         savedMilestone.id,
+      );
+      checkAvailability(
+        savedMilestone.plannedStartDate ?? undefined,
+        savedMilestone.startTimeSlot ?? undefined,
+        savedMilestone.endTimeSlot ?? undefined,
       );
       
       if (typeof window !== 'undefined') {
@@ -733,13 +772,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       setEditingIndex(null);
       onMilestonesUpdate?.();
 
-      // Check for scheduling conflicts (non-blocking)
+      // Check for scheduling conflicts & availability (non-blocking)
       checkConflicts(
         updatedMilestone.plannedStartDate ?? undefined,
         updatedMilestone.plannedEndDate ?? undefined,
         updatedMilestone.startTimeSlot ?? undefined,
         updatedMilestone.endTimeSlot ?? undefined,
         updatedMilestone.id,
+      );
+      checkAvailability(
+        updatedMilestone.plannedStartDate ?? undefined,
+        updatedMilestone.startTimeSlot ?? undefined,
+        updatedMilestone.endTimeSlot ?? undefined,
       );
       
       if (typeof window !== 'undefined') {
@@ -1072,6 +1116,35 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 <button
                   onClick={dismissConflictWarning}
                   className="shrink-0 text-amber-500 hover:text-amber-700 transition"
+                  title="Dismiss"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
+          {availabilityWarning && (
+            <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-blue-900">
+                    💡 Availability note
+                  </p>
+                  {availabilityWarning.warnings.map((w, i) => (
+                    <p key={i} className="mt-1 text-xs text-blue-800">{w}</p>
+                  ))}
+                  {availabilityWarning.suggestions.map((s, i) => (
+                    <p key={`s-${i}`} className="mt-1 text-xs text-blue-700 font-medium">{s}</p>
+                  ))}
+                  <p className="mt-2 text-xs text-blue-600">
+                    You can still proceed. Set or update your{' '}
+                    <Link href="/professional/profile" className="underline font-medium">availability</Link>.
+                  </p>
+                </div>
+                <button
+                  onClick={dismissAvailabilityWarning}
+                  className="shrink-0 text-blue-400 hover:text-blue-600 transition"
                   title="Dismiss"
                 >
                   ✕
