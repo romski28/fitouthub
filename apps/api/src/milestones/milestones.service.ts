@@ -890,12 +890,16 @@ export class MilestonesService {
       where: {
         projectProfessionalId: { in: ppIds },
         status: { not: 'completed' },
-        plannedStartDate: { not: null },
-        // Overlap: existing.startDate <= newEnd AND existing.endDate >= newStart
-        plannedStartDate: { lte: new Date(`${newEnd}T23:59:59Z`) },
-        OR: [
-          { plannedEndDate: null },
-          { plannedEndDate: { gte: new Date(`${newStart}T00:00:00Z`) } },
+        AND: [
+          { plannedStartDate: { not: null } },
+          // Overlap: existing.startDate <= newEnd AND existing.endDate >= newStart
+          { plannedStartDate: { lte: new Date(`${newEnd}T23:59:59Z`) } },
+          {
+            OR: [
+              { plannedEndDate: null },
+              { plannedEndDate: { gte: new Date(`${newStart}T00:00:00Z`) } },
+            ],
+          },
         ],
         ...(excludeMilestoneId ? { id: { not: excludeMilestoneId } } : {}),
       },

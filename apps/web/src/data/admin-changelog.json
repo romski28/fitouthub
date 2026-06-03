@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-03-72966f11",
+    "date": "2026-06-03T13:37:51+08:00",
+    "title": "Fix: use Prisma AND for duplicate plannedStartDate where keys",
+    "summary": "Fix: use Prisma AND for duplicate plannedStartDate where keys",
+    "areas": [
+      "api"
+    ],
+    "commit": "72966f11",
+    "files": [
+      "apps/api/src/milestones/milestones.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-03-1c31abf7",
     "date": "2026-06-03T13:19:19+08:00",
     "title": "Phase 1: milestone conflict detection — check cross-project overlaps on save, show amber warning in Schedule tab",
