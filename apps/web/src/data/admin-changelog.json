@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-03-1c31abf7",
+    "date": "2026-06-03T13:19:19+08:00",
+    "title": "Phase 1: milestone conflict detection — check cross-project overlaps on save, show amber warning in Schedule tab",
+    "summary": "Phase 1: milestone conflict detection — check cross-project overlaps on save, show amber warning in Schedule tab",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1c31abf7",
+    "files": [
+      "apps/api/src/milestones/milestones.controller.ts",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-02-3f808a08",
     "date": "2026-06-02T16:19:08+08:00",
     "title": "Calendar: 2-week view, reorder cards to Date>Project>Milestone, fix List button",

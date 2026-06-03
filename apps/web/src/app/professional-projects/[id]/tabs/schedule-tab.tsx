@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { MilestoneEditor } from '@/components/milestone-editor';
 import { API_BASE_URL } from '@/config/api';
 import { Pencil, Trash2, GripVertical } from 'lucide-react';
@@ -108,6 +109,16 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   const [proposalFormInitialized, setProposalFormInitialized] = useState(false);
   const [prefilledFromQuote, setPrefilledFromQuote] = useState(false);
   const [percentDraftByMilestone, setPercentDraftByMilestone] = useState<Record<string, string>>({});
+  const [conflictWarning, setConflictWarning] = useState<Array<{
+    id: string;
+    title: string;
+    plannedStartDate: string | null;
+    plannedEndDate: string | null;
+    startTimeSlot?: string;
+    endTimeSlot?: string;
+    projectName: string;
+  }> | null>(null);
+  const [conflictChecking, setConflictChecking] = useState(false);
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
@@ -210,6 +221,52 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     if (status === "not_started") return 0;
     return percentComplete;
   };
+
+  const getProfessionalId = (): string | null => {
+    try {
+      const stored = localStorage.getItem("professional");
+      if (stored) {
+        const parsed = JSON.parse(stored) as { id?: string };
+        return parsed.id || null;
+      }
+    } catch { /* ignore */ }
+    return null;
+  };
+
+  const checkConflicts = async (plannedStartDate?: string, plannedEndDate?: string, startTimeSlot?: string, endTimeSlot?: string, excludeMilestoneId?: string) => {
+    if (!plannedStartDate || !accessToken) return;
+    const professionalId = getProfessionalId();
+    if (!professionalId) return;
+
+    setConflictChecking(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/milestones/check-conflicts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          professionalId,
+          plannedStartDate,
+          plannedEndDate: plannedEndDate || plannedStartDate,
+          startTimeSlot: startTimeSlot || undefined,
+          endTimeSlot: endTimeSlot || undefined,
+          excludeMilestoneId: excludeMilestoneId || undefined,
+        }),
+      });
+      if (res.ok) {
+        const conflicts = await res.json();
+        setConflictWarning(Array.isArray(conflicts) && conflicts.length > 0 ? conflicts : null);
+      }
+    } catch {
+      setConflictWarning(null); // non-blocking — if check fails, just don't warn
+    } finally {
+      setConflictChecking(false);
+    }
+  };
+
+  const dismissConflictWarning = () => setConflictWarning(null);
 
   const fetchMilestones = React.useCallback(async (options?: { silent?: boolean }) => {
     if (!projectProfessionalId) return;
@@ -589,6 +646,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       setMilestones([...milestones, savedMilestone]);
       setIsAddingNew(false);
       onMilestonesUpdate?.();
+
+      // Check for scheduling conflicts (non-blocking)
+      checkConflicts(
+        savedMilestone.plannedStartDate ?? undefined,
+        savedMilestone.plannedEndDate ?? undefined,
+        savedMilestone.startTimeSlot ?? undefined,
+        savedMilestone.endTimeSlot ?? undefined,
+        savedMilestone.id,
+      );
       
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('toast', {
@@ -666,6 +732,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       setMilestones(milestones.map(m => m.id === milestoneId ? updatedMilestone : m));
       setEditingIndex(null);
       onMilestonesUpdate?.();
+
+      // Check for scheduling conflicts (non-blocking)
+      checkConflicts(
+        updatedMilestone.plannedStartDate ?? undefined,
+        updatedMilestone.plannedEndDate ?? undefined,
+        updatedMilestone.startTimeSlot ?? undefined,
+        updatedMilestone.endTimeSlot ?? undefined,
+        updatedMilestone.id,
+      );
       
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('toast', {
@@ -967,6 +1042,41 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-sm font-medium text-rose-900">{error}</p>
+            </div>
+          )}
+
+          {conflictWarning && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-900">
+                    ⚠ Scheduling conflict{conflictWarning.length > 1 ? 's' : ''} detected
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {conflictWarning.map((c) => {
+                      const start = c.plannedStartDate ? new Date(c.plannedStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '?';
+                      const end = c.plannedEndDate ? new Date(c.plannedEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : start;
+                      const slot = c.startTimeSlot ? ` (${c.startTimeSlot})` : '';
+                      return (
+                        <li key={c.id} className="text-xs text-amber-800">
+                          <span className="font-medium">{c.title}</span> on <span className="font-medium">{c.projectName}</span> — {start}{end !== start ? ` – ${end}` : ''}{slot}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="mt-2 text-xs text-amber-700">
+                    This may overlap with your other commitments. You can still proceed, but check your{' '}
+                    <Link href="/professional/calendar" className="underline font-medium">calendar</Link>.
+                  </p>
+                </div>
+                <button
+                  onClick={dismissConflictWarning}
+                  className="shrink-0 text-amber-500 hover:text-amber-700 transition"
+                  title="Dismiss"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           )}
 

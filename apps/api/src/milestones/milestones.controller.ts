@@ -74,6 +74,25 @@ export class MilestonesController {
     return this.milestonesService.getProfessionalCalendar(professionalId);
   }
 
+  @Post('check-conflicts')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async checkMilestoneConflicts(
+    @Body() body: {
+      professionalId: string;
+      plannedStartDate: string;
+      plannedEndDate?: string;
+      startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+      endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+      excludeMilestoneId?: string;
+    },
+    @Req() req: any,
+  ) {
+    if (!body.professionalId || !body.plannedStartDate) {
+      throw new BadRequestException('professionalId and plannedStartDate are required');
+    }
+    return this.milestonesService.checkMilestoneConflicts(body);
+  }
+
   @Get(':id')
   async getMilestoneById(@Param('id') id: string) {
     return this.milestonesService.getMilestoneById(id);

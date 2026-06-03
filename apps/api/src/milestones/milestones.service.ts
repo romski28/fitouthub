@@ -844,5 +844,114 @@ export class MilestonesService {
       };
     });
   }
+
+  /**
+   * Check if a proposed date/time-slot range conflicts with any existing
+   * milestone for the same professional across ALL projects.
+   *
+   * Returns an array of conflicting milestones (if any) so the caller
+   * can surface a non-blocking warning.
+   */
+  async checkMilestoneConflicts(params: {
+    professionalId: string;
+    plannedStartDate: string; // ISO date or datetime
+    plannedEndDate?: string;  // ISO date or datetime
+    startTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    endTimeSlot?: 'AM' | 'PM' | 'ALL_DAY';
+    excludeMilestoneId?: string; // ignore the milestone being edited
+  }) {
+    const {
+      professionalId,
+      plannedStartDate,
+      plannedEndDate,
+      startTimeSlot,
+      endTimeSlot,
+      excludeMilestoneId,
+    } = params;
+
+    // Normalize to date-only strings for range comparison
+    const newStart = plannedStartDate.split('T')[0];
+    const newEnd = (plannedEndDate || plannedStartDate).split('T')[0];
+
+    // Find all project-professional assignments for this professional
+    const assignments = await this.prisma.projectProfessional.findMany({
+      where: {
+        professionalId,
+        status: { in: ['accepted', 'awarded'] },
+      },
+      select: { id: true },
+    });
+
+    const ppIds = assignments.map((a) => a.id);
+    if (ppIds.length === 0) return [];
+
+    // Query milestones that overlap in date range AND are not completed
+    const candidates = await this.prisma.projectMilestone.findMany({
+      where: {
+        projectProfessionalId: { in: ppIds },
+        status: { not: 'completed' },
+        plannedStartDate: { not: null },
+        // Overlap: existing.startDate <= newEnd AND existing.endDate >= newStart
+        plannedStartDate: { lte: new Date(`${newEnd}T23:59:59Z`) },
+        OR: [
+          { plannedEndDate: null },
+          { plannedEndDate: { gte: new Date(`${newStart}T00:00:00Z`) } },
+        ],
+        ...(excludeMilestoneId ? { id: { not: excludeMilestoneId } } : {}),
+      },
+      include: {
+        projectProfessional: {
+          include: {
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+                clientName: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { plannedStartDate: 'asc' },
+    });
+
+    // Further filter by time-slot overlap
+    const conflicts = candidates.filter((m) => {
+      // If either the candidate or the new milestone has no time slot
+      // (ALL_DAY or unspecified), treat as overlapping
+      const mSlot = m.startTimeSlot || 'ALL_DAY';
+      const mEndSlot = m.endTimeSlot || m.startTimeSlot || 'ALL_DAY';
+      const nSlot = startTimeSlot || 'ALL_DAY';
+      const nEndSlot = endTimeSlot || startTimeSlot || 'ALL_DAY';
+
+      // ALL_DAY overlaps with everything
+      if (mSlot === 'ALL_DAY' || mEndSlot === 'ALL_DAY' || nSlot === 'ALL_DAY' || nEndSlot === 'ALL_DAY') {
+        return true;
+      }
+
+      // Both have specific AM/PM — check for overlap
+      // AM=1, PM=2 — overlap if ranges intersect
+      const slotOrder = { AM: 1, PM: 2 };
+      const mStart = slotOrder[mSlot as keyof typeof slotOrder] || 1;
+      const mEnd = slotOrder[mEndSlot as keyof typeof slotOrder] || 2;
+      const nStart = slotOrder[nSlot as keyof typeof slotOrder] || 1;
+      const nEnd = slotOrder[nEndSlot as keyof typeof slotOrder] || 2;
+
+      return mStart <= nEnd && nStart <= mEnd;
+    });
+
+    return conflicts.map((m) => ({
+      id: m.id,
+      title: m.title,
+      plannedStartDate: m.plannedStartDate?.toISOString() ?? null,
+      plannedEndDate: m.plannedEndDate?.toISOString() ?? null,
+      startTimeSlot: m.startTimeSlot,
+      endTimeSlot: m.endTimeSlot,
+      status: m.status,
+      projectId: m.projectProfessional?.project?.id ?? '',
+      projectName: m.projectProfessional?.project?.projectName ?? 'Unknown project',
+      clientName: m.projectProfessional?.project?.clientName ?? '',
+    }));
+  }
 }
 
