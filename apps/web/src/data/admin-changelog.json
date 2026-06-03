@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-03-4930332d",
+    "date": "2026-06-03T20:48:23+08:00",
+    "title": "Phase 3: mini calendar embedded in Schedule tab — week strip with project-coloured dots and conflict bars",
+    "summary": "Phase 3: mini calendar embedded in Schedule tab — week strip with project-coloured dots and conflict bars",
+    "areas": [
+      "web"
+    ],
+    "commit": "4930332d",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-03-acbaa97c",
     "date": "2026-06-03T20:39:04+08:00",
     "title": "Phase 2: availability-aware suggestions — check working hours, time slot fit, and maxProjects cap on milestone save",

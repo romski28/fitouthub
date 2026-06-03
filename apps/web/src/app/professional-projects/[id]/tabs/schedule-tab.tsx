@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MilestoneEditor } from '@/components/milestone-editor';
 import { API_BASE_URL } from '@/config/api';
-import { Pencil, Trash2, GripVertical } from 'lucide-react';
+import { Pencil, Trash2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StartDateNegotiationPanel } from '@/components/start-date-negotiation-panel';
 import { fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
@@ -76,6 +76,133 @@ const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
   return undefined;
 };
 
+// ─── Mini Calendar (Phase 3) ────────────────────────────────────────────────
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  plannedStartDate: string | null;
+  projectProfessionalId: string;
+  projectId: string;
+  projectName: string;
+  status: string;
+}
+
+const MiniCalendar: React.FC<{
+  calendarEvents: CalendarEvent[];
+  currentProjectId: string;
+  currentPPId: string;
+  weekOffset: number;
+  onWeekOffsetChange: (delta: number) => void;
+}> = ({ calendarEvents, currentProjectId, currentPPId, weekOffset, onWeekOffsetChange }) => {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - dayOfWeek + weekOffset * 7);
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    return d;
+  });
+
+  const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Group events by date
+  const eventsByDate: Record<string, CalendarEvent[]> = {};
+  calendarEvents.forEach((e) => {
+    if (e.plannedStartDate) {
+      const key = e.plannedStartDate.split('T')[0];
+      if (!eventsByDate[key]) eventsByDate[key] = [];
+      eventsByDate[key].push(e);
+    }
+  });
+
+  const isCurrentWeek = weekOffset === 0;
+
+  return (
+    <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-white/60 px-3 py-2.5">
+      <div className="flex items-center justify-between mb-2">
+        <button
+          onClick={() => onWeekOffsetChange(-1)}
+          className="p-0.5 hover:bg-slate-100 rounded transition"
+          title="Previous week"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-500" />
+        </button>
+        <span className="text-xs font-semibold text-slate-700">
+          {isCurrentWeek ? 'This week' : weekOffset === -1 ? 'Last week' : `Week +${weekOffset}`}
+        </span>
+        <button
+          onClick={() => onWeekOffsetChange(1)}
+          className="p-0.5 hover:bg-slate-100 rounded transition"
+          title="Next week"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {weekDays.map((day) => {
+          const dateKey = day.toISOString().split('T')[0];
+          const isToday = dateKey === today.toISOString().split('T')[0];
+          const dayEvents = eventsByDate[dateKey] || [];
+          const thisProjectEvents = dayEvents.filter((e) => e.projectId === currentProjectId);
+          const otherProjectEvents = dayEvents.filter((e) => e.projectId !== currentProjectId);
+
+          return (
+            <div
+              key={dateKey}
+              className={`text-center rounded-lg py-1.5 px-0.5 ${
+                isToday ? 'bg-blue-100 ring-1 ring-blue-300' : 'bg-slate-50'
+              }`}
+            >
+              <div className={`text-[10px] font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
+                {DAY_LABELS[day.getDay()]}
+              </div>
+              <div className={`text-xs ${isToday ? 'text-blue-800 font-bold' : 'text-slate-600'}`}>
+                {day.getDate()}
+              </div>
+              <div className="mt-1 flex justify-center gap-0.5 flex-wrap">
+                {thisProjectEvents.slice(0, 3).map((e) => (
+                  <span
+                    key={e.id}
+                    className="block w-1.5 h-1.5 rounded-full bg-blue-500"
+                    title={`${e.title} (this project)`}
+                  />
+                ))}
+                {otherProjectEvents.slice(0, 3).map((e) => (
+                  <span
+                    key={e.id}
+                    className="block w-1.5 h-1.5 rounded-full bg-slate-400"
+                    title={`${e.title} (${e.projectName})`}
+                  />
+                ))}
+              </div>
+              {dayEvents.length > 6 && (
+                <div className="text-[9px] text-slate-400 mt-0.5">+{dayEvents.length - 6}</div>
+              )}
+              {thisProjectEvents.length > 0 && otherProjectEvents.length > 0 && (
+                <div className="mt-0.5 mx-auto w-5 h-[2px] rounded bg-red-400" title="Possible conflict" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-2 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> This project
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" /> Other projects
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-5 h-[2px] rounded bg-red-400" /> Conflict
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   projectId,
   projectProfessionalId,
@@ -123,6 +250,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     warnings: string[];
     suggestions: string[];
   } | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
@@ -302,6 +431,34 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
   const dismissAvailabilityWarning = () => setAvailabilityWarning(null);
 
+  const fetchCalendarData = async () => {
+    if (!accessToken) return;
+    const professionalId = getProfessionalId();
+    if (!professionalId) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/milestones/calendar/${professionalId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCalendarEvents(
+          (Array.isArray(data) ? data : []).map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            plannedStartDate: m.plannedStartDate,
+            projectProfessionalId: m.projectProfessional?.id ?? '',
+            projectId: m.projectProfessional?.project?.id ?? '',
+            projectName: m.projectProfessional?.project?.projectName ?? '',
+            status: m.status,
+          })),
+        );
+      }
+    } catch {
+      // non-blocking
+    }
+  };
+
   const fetchMilestones = React.useCallback(async (options?: { silent?: boolean }) => {
     if (!projectProfessionalId) return;
 
@@ -351,6 +508,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   // Fetch milestones
   useEffect(() => {
     fetchMilestones();
+    fetchCalendarData();
   }, [fetchMilestones]);
 
   useEffect(() => {
@@ -694,6 +852,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         savedMilestone.startTimeSlot ?? undefined,
         savedMilestone.endTimeSlot ?? undefined,
       );
+      fetchCalendarData();
       
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('toast', {
@@ -785,6 +944,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
         updatedMilestone.startTimeSlot ?? undefined,
         updatedMilestone.endTimeSlot ?? undefined,
       );
+      fetchCalendarData();
       
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('toast', {
@@ -1237,6 +1397,16 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                 </div>
               </div>
             )}
+
+          {calendarEvents.length > 0 && (
+            <MiniCalendar
+              calendarEvents={calendarEvents}
+              currentProjectId={projectId}
+              currentPPId={projectProfessionalId}
+              weekOffset={calendarWeekOffset}
+              onWeekOffsetChange={setCalendarWeekOffset}
+            />
+          )}
 
           {loading ? (
             <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-8 text-center">
