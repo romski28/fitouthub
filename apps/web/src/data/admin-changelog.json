@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-04-6c2b5d7c",
+    "date": "2026-06-04T16:58:37+08:00",
+    "title": "Calendar: full Mimo theme — translucent cream panels, warm brown/terracotta accents, rounded corners throughout",
+    "summary": "Calendar: full Mimo theme — translucent cream panels, warm brown/terracotta accents, rounded corners throughout",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c2b5d7c",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-04-c3683f4b",
     "date": "2026-06-04T16:42:06+08:00",
     "title": "Calendar list: compact Mimo-styled cards, auto-scroll to today, disable focus re-fetch",

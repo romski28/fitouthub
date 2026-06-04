@@ -65,14 +65,14 @@ function TodayView({ grouped, sortedDates, router }: {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h2 className="text-lg font-bold text-slate-900">{dayLabel}</h2>
+      <div className="bg-[rgba(239,231,207,0.76)] rounded-2xl border border-[rgba(120,53,15,0.14)] p-5">
+        <h2 className="text-lg font-bold text-[rgba(81,55,32,0.95)]">{dayLabel}</h2>
       </div>
 
       {todayMilestones.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-          <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600">Nothing scheduled today.</p>
+        <div className="bg-[rgba(239,231,207,0.76)] rounded-2xl border border-[rgba(120,53,15,0.14)] p-8 text-center">
+          <Calendar className="w-10 h-10 text-[rgba(120,53,15,0.3)] mx-auto mb-3" />
+          <p className="text-[rgba(81,55,32,0.7)]">Nothing scheduled today.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -82,26 +82,26 @@ function TodayView({ grouped, sortedDates, router }: {
               <div
                 key={m.id}
                 onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
-                className="bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition cursor-pointer p-4"
+                className="bg-[rgba(239,231,207,0.76)] rounded-2xl border border-[rgba(120,53,15,0.14)] hover:bg-[rgba(245,238,219,0.9)] transition cursor-pointer p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-[rgba(185,78,45,0.85)]">
                       {m.projectProfessional.project.projectName}
                     </p>
-                    <h3 className="text-base font-semibold text-slate-900 mt-0.5">
+                    <h3 className="text-base font-semibold text-[rgba(81,55,32,0.92)] mt-0.5">
                       {m.title}
                       {m.siteAccessRequired && <span className="ml-1.5" title="Site access required">🔑</span>}
                     </h3>
                   </div>
                   {slot && (
-                    <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                    <span className="shrink-0 rounded-full bg-[rgba(185,78,45,0.12)] px-3 py-1 text-xs font-semibold text-[rgba(185,78,45,0.85)]">
                       {slot}
                     </span>
                   )}
                 </div>
                 {m.description && (
-                  <p className="text-sm text-slate-500 mt-2">{m.description}</p>
+                  <p className="text-sm text-[rgba(81,55,32,0.6)] mt-2">{m.description}</p>
                 )}
               </div>
             );
@@ -110,22 +110,22 @@ function TodayView({ grouped, sortedDates, router }: {
       )}
 
       {nextDate && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Next</p>
+        <div className="bg-[rgba(239,231,207,0.76)] rounded-2xl border border-[rgba(120,53,15,0.14)] p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(120,53,15,0.5)] mb-2">Next</p>
           {nextMilestones.slice(0, 2).map((m) => {
             const nextDay = new Date(nextDate);
             const nextDayLabel = `${DAYS[nextDay.getDay()]}, ${nextDay.getDate()} ${MONTHS[nextDay.getMonth()]}`;
             const slot = formatSlot(m.startTimeSlot);
             return (
               <div key={m.id} className="py-1.5">
-                <p className="text-xs text-slate-500">{nextDayLabel}{slot ? ` · ${slot}` : ''}</p>
-                <p className="text-sm font-medium text-slate-700">{m.projectProfessional.project.projectName}</p>
-                <p className="text-sm text-slate-900">{m.title}</p>
+                <p className="text-xs text-[rgba(120,53,15,0.5)]">{nextDayLabel}{slot ? ` · ${slot}` : ''}</p>
+                <p className="text-sm font-medium text-[rgba(81,55,32,0.75)]">{m.projectProfessional.project.projectName}</p>
+                <p className="text-sm text-[rgba(81,55,32,0.9)]">{m.title}</p>
               </div>
             );
           })}
           {nextMilestones.length > 2 && (
-            <p className="text-xs text-slate-400 mt-1">+{nextMilestones.length - 2} more on {DAYS[new Date(nextDate).getDay()]}</p>
+            <p className="text-xs text-[rgba(120,53,15,0.4)] mt-1">+{nextMilestones.length - 2} more on {DAYS[new Date(nextDate).getDay()]}</p>
           )}
         </div>
       )}
@@ -225,12 +225,12 @@ export default function ProfessionalCalendarPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-[rgba(248,245,235,0.9)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <Calendar className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-pulse" />
-              <p className="text-slate-600">Loading your schedule...</p>
+              <Calendar className="w-12 h-12 text-[rgba(185,78,45,0.6)] mx-auto mb-4 animate-pulse" />
+              <p className="text-[rgba(81,55,32,0.6)]">Loading your schedule...</p>
             </div>
           </div>
         </div>
@@ -239,24 +239,24 @@ export default function ProfessionalCalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[rgba(248,245,235,0.9)]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <div className="bg-[rgba(239,231,207,0.92)] border-b border-[rgba(120,53,15,0.12)] sticky top-0 z-10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 hover:bg-slate-100 rounded-lg transition"
+                className="p-2 hover:bg-[rgba(120,53,15,0.06)] rounded-lg transition"
               >
-                <ArrowLeft className="w-5 h-5 text-slate-600" />
+                <ArrowLeft className="w-5 h-5 text-[rgba(120,53,15,0.7)]" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-7 h-7 text-blue-600" />
+                <h1 className="text-2xl font-bold text-[rgba(81,55,32,0.92)] flex items-center gap-2">
+                  <Calendar className="w-7 h-7 text-[rgba(185,78,45,0.85)]" />
                   My Schedule
                 </h1>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-[rgba(120,53,15,0.6)] mt-1">
                   {milestones.length} task{milestones.length !== 1 ? "s" : ""} across{" "}
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size} project
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size !== 1 ? "s" : ""}
@@ -269,8 +269,8 @@ export default function ProfessionalCalendarPage() {
                 onClick={() => setViewMode("today")}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                   viewMode === "today"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-[rgba(185,78,45,0.85)] text-white"
+                    : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
                 }`}
               >
                 Today
@@ -279,8 +279,8 @@ export default function ProfessionalCalendarPage() {
                 onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg transition ${
                   viewMode === "list"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-[rgba(185,78,45,0.85)] text-white"
+                    : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
                 }`}
                 title="List View"
               >
@@ -290,17 +290,17 @@ export default function ProfessionalCalendarPage() {
                 onClick={() => setViewMode("week")}
                 className={`p-2 rounded-lg transition ${
                   viewMode === "week"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-[rgba(185,78,45,0.85)] text-white"
+                    : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
                 }`}
                 title="2-Week View"
               >
                 <Grid3x3 className="w-5 h-5" />
               </button>
-              <div className="w-px h-6 bg-slate-200 mx-2" />
+              <div className="w-px h-6 bg-[rgba(120,53,15,0.15)] mx-2" />
               <Link
                 href="/professional/profile"
-                className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition flex items-center gap-2 text-sm font-medium"
+                className="px-3 py-2 bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.75)] rounded-lg hover:bg-[rgba(120,53,15,0.1)] transition flex items-center gap-2 text-sm font-medium"
               >
                 <Settings className="w-4 h-4" />
                 Availability
@@ -313,25 +313,25 @@ export default function ProfessionalCalendarPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="mb-6 p-4 bg-[rgba(239,231,207,0.76)] border border-[rgba(185,78,45,0.3)] rounded-2xl flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-[rgba(185,78,45,0.85)] flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-red-900">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <h3 className="font-medium text-[rgba(185,78,45,0.9)]">Error</h3>
+              <p className="text-sm text-[rgba(81,55,32,0.7)] mt-1">{error}</p>
             </div>
           </div>
         )}
 
         {milestones.length === 0 && !error ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-            <Calendar className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No scheduled tasks</h3>
-            <p className="text-slate-600 mb-4">
+          <div className="bg-[rgba(239,231,207,0.76)] rounded-3xl border border-[rgba(120,53,15,0.14)] p-12 text-center">
+            <Calendar className="w-16 h-16 text-[rgba(120,53,15,0.25)] mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-[rgba(81,55,32,0.9)] mb-2">No scheduled tasks</h3>
+            <p className="text-[rgba(81,55,32,0.6)] mb-4">
               Tasks with planned dates will appear here
             </p>
             <button
               onClick={() => router.push("/professional-projects")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="px-4 py-2 bg-[rgba(185,78,45,0.9)] text-white rounded-lg hover:bg-[rgba(185,78,45,1)] transition"
             >
               View Projects
             </button>
@@ -363,7 +363,7 @@ export default function ProfessionalCalendarPage() {
 
               return weeks.map(({ weekStart, weekDays }, wi) => (
                 <div key={wi}>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(120,53,15,0.5)] mb-2">
                     Week of {MONTHS[weekStart.getMonth()]} {weekStart.getDate()}
                   </p>
                   <div className="grid grid-cols-7 gap-2">
@@ -374,32 +374,32 @@ export default function ProfessionalCalendarPage() {
                       return (
                         <div
                           key={dateKey}
-                          className={`rounded-lg border p-2 min-h-[120px] ${
-                            isToday ? "border-blue-400 bg-blue-50/60" : "border-slate-200 bg-white"
+                          className={`rounded-xl border p-2 min-h-[120px] ${
+                            isToday ? "border-[rgba(185,78,45,0.3)] bg-[rgba(239,231,207,0.65)]" : "border-[rgba(120,53,15,0.08)] bg-[rgba(239,231,207,0.5)]"
                           }`}
                         >
-                          <div className={`text-xs font-semibold mb-1.5 ${isToday ? "text-blue-700" : "text-slate-500"}`}>
+                          <div className={`text-xs font-semibold mb-1.5 ${isToday ? "text-[rgba(185,78,45,0.9)]" : "text-[rgba(120,53,15,0.6)]"}`}>
                             {day.toLocaleDateString("en-US", { weekday: "short" })}
                             <span className="ml-1 font-normal">{day.getDate()}</span>
                           </div>
                           <div className="space-y-1">
                             {dayMilestones.length === 0 ? (
-                              <p className="text-[10px] text-slate-400">Open</p>
+                              <p className="text-[10px] text-[rgba(120,53,15,0.35)]">Open</p>
                             ) : (
                               dayMilestones.slice(0, 4).map((m) => (
                                 <div
                                   key={m.id}
                                   onClick={() => router.push(`/professional-projects/${m.projectProfessional.id}`)}
-                                  className="cursor-pointer rounded bg-blue-100 px-1.5 py-0.5 text-[10px] leading-tight text-blue-800 truncate hover:bg-blue-200"
+                                  className="cursor-pointer rounded bg-[rgba(185,78,45,0.1)] px-1.5 py-0.5 text-[10px] leading-tight text-[rgba(81,55,32,0.85)] truncate hover:bg-[rgba(185,78,45,0.18)]"
                                   title={`${m.projectProfessional.project.projectName}: ${m.title}`}
                                 >
                                   <span className="font-semibold">{m.projectProfessional.project.projectName}</span>
-                                  <span className="text-blue-600"> · {m.title}</span>
+                                  <span className="text-[rgba(185,78,45,0.65)]"> · {m.title}</span>
                                 </div>
                               ))
                             )}
                             {dayMilestones.length > 4 && (
-                              <p className="text-[10px] text-slate-400">+{dayMilestones.length - 4} more</p>
+                              <p className="text-[10px] text-[rgba(120,53,15,0.4)]">+{dayMilestones.length - 4} more</p>
                             )}
                           </div>
                         </div>
