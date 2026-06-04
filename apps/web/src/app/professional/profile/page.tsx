@@ -111,6 +111,33 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
     return cells;
   }, [windows]);
 
+  // Per-day summaries
+  const dayWindows = useMemo(() => {
+    return DAY_LABELS.map((_, day) => {
+      const dayWs = windows.filter((w) => w.dayOfWeek === day && w.startTime);
+      if (dayWs.length === 0) return null;
+      const times = dayWs.map((w) => parseInt(w.startTime!.split(':')[0], 10)).sort((a, b) => a - b);
+      const minH = times[0];
+      const maxH = times[times.length - 1] + 1;
+      return {
+        startTime: `${String(minH).padStart(2, '0')}:00`,
+        endTime: `${String(maxH).padStart(2, '0')}:00`,
+        maxProjects: dayWs[0].maxProjects ?? 1,
+        availableForEmergency: dayWs[0].availableForEmergency ?? false,
+      };
+    });
+  }, [windows]);
+
+  const setDayProp = (day: number, prop: 'maxProjects' | 'availableForEmergency', value: number | boolean) => {
+    const updated = windows.map((w) => {
+      if (w.dayOfWeek === day && w.startTime) {
+        return { ...w, [prop]: value };
+      }
+      return w;
+    });
+    onChange(updated);
+  };
+
   const handleMouseDown = (day: number, hour: number) => {
     const col = hour - 6;
     const cellOn = grid[day][col];
@@ -178,6 +205,46 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
             })}
           </div>
         ))}
+      </div>
+
+      {/* Per-day settings row */}
+      <div className="flex gap-px mt-1">
+        <div className="w-10 shrink-0" />
+        {DAY_LABELS.map((label, day) => {
+          const dw = dayWindows[day];
+          const hasHours = dw !== null;
+          return (
+            <div key={day} className="flex-1 px-1">
+              {hasHours ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500">Max</span>
+                    <select
+                      value={dw.maxProjects}
+                      onChange={(e) => setDayProp(day, 'maxProjects', parseInt(e.target.value, 10))}
+                      className="text-[10px] border border-slate-200 rounded px-1 py-0.5 bg-white"
+                    >
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={dw.availableForEmergency}
+                      onChange={(e) => setDayProp(day, 'availableForEmergency', e.target.checked)}
+                      className="w-3 h-3"
+                    />
+                    <span className="text-[9px] text-slate-500 leading-none">Emerg.</span>
+                  </label>
+                </div>
+              ) : (
+                <span className="text-[10px] text-slate-300">—</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
