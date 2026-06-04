@@ -225,12 +225,20 @@ export default function ProfessionalCalendarPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[rgba(248,245,235,0.9)] p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center py-12">
+      <div className="h-screen flex flex-col bg-[rgba(248,245,235,0.9)]">
+        <div className="flex-shrink-0 px-4 pt-4 pb-2 sm:px-6 sm:pt-5 sm:pb-3">
+          <div className="max-w-7xl mx-auto bg-[rgba(239,231,207,0.92)] border border-[rgba(120,53,15,0.12)] rounded-2xl px-4 py-3 sm:px-6 sm:py-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-6 h-6 text-[rgba(185,78,45,0.6)] animate-pulse" />
+              <span className="text-[rgba(81,55,32,0.5)] text-sm">Loading your schedule...</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 px-4 pb-4 sm:px-6 sm:pb-5">
+          <div className="max-w-7xl mx-auto h-full bg-[rgba(239,231,207,0.76)] border border-[rgba(120,53,15,0.14)] rounded-2xl flex items-center justify-center">
             <div className="text-center">
-              <Calendar className="w-12 h-12 text-[rgba(185,78,45,0.6)] mx-auto mb-4 animate-pulse" />
-              <p className="text-[rgba(81,55,32,0.6)]">Loading your schedule...</p>
+              <Calendar className="w-12 h-12 text-[rgba(185,78,45,0.25)] mx-auto mb-3 animate-pulse" />
+              <p className="text-[rgba(81,55,32,0.4)]">Loading your schedule...</p>
             </div>
           </div>
         </div>
@@ -239,12 +247,12 @@ export default function ProfessionalCalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgba(248,245,235,0.9)]">
+    <div className="h-screen flex flex-col bg-[rgba(248,245,235,0.9)]">
       {/* Header */}
-      <div className="bg-[rgba(239,231,207,0.92)] border-b border-[rgba(120,53,15,0.12)] sticky top-0 z-10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 sm:px-6 sm:pt-5 sm:pb-3">
+        <div className="max-w-7xl mx-auto bg-[rgba(239,231,207,0.92)] border border-[rgba(120,53,15,0.12)] rounded-2xl px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={() => router.back()}
                 className="p-2 hover:bg-[rgba(120,53,15,0.06)] rounded-lg transition"
@@ -252,11 +260,11 @@ export default function ProfessionalCalendarPage() {
                 <ArrowLeft className="w-5 h-5 text-[rgba(120,53,15,0.7)]" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-[rgba(81,55,32,0.92)] flex items-center gap-2">
-                  <Calendar className="w-7 h-7 text-[rgba(185,78,45,0.85)]" />
+                <h1 className="text-xl sm:text-2xl font-bold text-[rgba(81,55,32,0.92)] flex items-center gap-2">
+                  <Calendar className="w-6 h-6 sm:w-7 sm:h-7 text-[rgba(185,78,45,0.85)]" />
                   My Schedule
                 </h1>
-                <p className="text-sm text-[rgba(120,53,15,0.6)] mt-1">
+                <p className="text-xs sm:text-sm text-[rgba(120,53,15,0.5)] mt-0.5">
                   {milestones.length} task{milestones.length !== 1 ? "s" : ""} across{" "}
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size} project
                   {new Set(milestones.map(m => m.projectProfessional.project.id)).size !== 1 ? "s" : ""}
@@ -264,10 +272,10 @@ export default function ProfessionalCalendarPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-1.5 sm:gap-2 items-center">
               <button
                 onClick={() => setViewMode("today")}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
                   viewMode === "today"
                     ? "bg-[rgba(185,78,45,0.85)] text-white"
                     : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
@@ -277,43 +285,44 @@ export default function ProfessionalCalendarPage() {
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded-lg transition ${
+                className={`p-1.5 sm:p-2 rounded-lg transition ${
                   viewMode === "list"
                     ? "bg-[rgba(185,78,45,0.85)] text-white"
                     : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
                 }`}
                 title="List View"
               >
-                <List className="w-5 h-5" />
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={() => setViewMode("week")}
-                className={`p-2 rounded-lg transition ${
+                className={`p-1.5 sm:p-2 rounded-lg transition ${
                   viewMode === "week"
                     ? "bg-[rgba(185,78,45,0.85)] text-white"
                     : "bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.7)] hover:bg-[rgba(120,53,15,0.1)]"
                 }`}
                 title="2-Week View"
               >
-                <Grid3x3 className="w-5 h-5" />
+                <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
-              <div className="w-px h-6 bg-[rgba(120,53,15,0.15)] mx-2" />
+              <div className="w-px h-5 sm:h-6 bg-[rgba(120,53,15,0.15)] mx-1 sm:mx-2" />
               <Link
                 href="/professional/profile"
-                className="px-3 py-2 bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.75)] rounded-lg hover:bg-[rgba(120,53,15,0.1)] transition flex items-center gap-2 text-sm font-medium"
+                className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[rgba(120,53,15,0.06)] text-[rgba(120,53,15,0.75)] rounded-lg hover:bg-[rgba(120,53,15,0.1)] transition flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
               >
-                <Settings className="w-4 h-4" />
-                Availability
+                <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Availability</span>
               </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      {/* Content Panel — scrolls internally */}
+      <div className="flex-1 min-h-0 px-4 pb-4 sm:px-6 sm:pb-5">
+        <div className="max-w-7xl mx-auto h-full overflow-y-auto bg-[rgba(239,231,207,0.76)] border border-[rgba(120,53,15,0.14)] rounded-2xl p-4 sm:p-6">
         {error && (
-          <div className="mb-6 p-4 bg-[rgba(239,231,207,0.76)] border border-[rgba(185,78,45,0.3)] rounded-2xl flex items-start gap-3">
+          <div className="mb-4 p-4 bg-[rgba(239,231,207,0.76)] border border-[rgba(185,78,45,0.3)] rounded-2xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-[rgba(185,78,45,0.85)] flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-medium text-[rgba(185,78,45,0.9)]">Error</h3>
@@ -460,6 +469,7 @@ export default function ProfessionalCalendarPage() {
             })}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

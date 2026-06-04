@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-04-c63bee0d",
+    "date": "2026-06-04T17:06:32+08:00",
+    "title": "Calendar: fixed header with rounded card, scrollable content panel, full viewport layout",
+    "summary": "Calendar: fixed header with rounded card, scrollable content panel, full viewport layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "c63bee0d",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-04-6c2b5d7c",
     "date": "2026-06-04T16:58:37+08:00",
     "title": "Calendar: full Mimo theme — translucent cream panels, warm brown/terracotta accents, rounded corners throughout",
