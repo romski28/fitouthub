@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-04-384ac6d8",
+    "date": "2026-06-04T09:17:39+08:00",
+    "title": "Phase 4: SmartSlotPicker — coloured AM/PM/ALL_DAY week-grid with free/busy/off status",
+    "summary": "Phase 4: SmartSlotPicker — coloured AM/PM/ALL_DAY week-grid with free/busy/off status",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "384ac6d8",
+    "files": [
+      "apps/api/src/milestones/milestones.controller.ts",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/smart-slot-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-06-03-4930332d",
     "date": "2026-06-03T20:48:23+08:00",
     "title": "Phase 3: mini calendar embedded in Schedule tab — week strip with project-coloured dots and conflict bars",

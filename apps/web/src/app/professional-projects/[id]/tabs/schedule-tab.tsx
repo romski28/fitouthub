@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MilestoneEditor } from '@/components/milestone-editor';
+import { SmartSlotPicker } from '@/components/smart-slot-picker';
 import { API_BASE_URL } from '@/config/api';
 import { Pencil, Trash2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StartDateNegotiationPanel } from '@/components/start-date-negotiation-panel';
@@ -252,6 +253,8 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   } | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
+  const [smartPickDate, setSmartPickDate] = useState<string | undefined>();
+  const [smartPickSlot, setSmartPickSlot] = useState<'AM' | 'PM' | 'ALL_DAY' | undefined>();
   const [proposalResponseNotes, setProposalResponseNotes] = useState<Record<string, string>>({});
   const [updateDateByProposal, setUpdateDateByProposal] = useState<Record<string, string>>({});
   const [updateTimeByProposal, setUpdateTimeByProposal] = useState<Record<string, string>>({});
@@ -1415,13 +1418,27 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
           ) : isAddingNew || editingIndex !== null ? (
             // FORM VIEW: Add/Edit mode
             <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">
                   {isAddingNew ? 'Add New Task' : 'Edit Milestone'}
                 </h3>
               </div>
 
+              <SmartSlotPicker
+                professionalId={getProfessionalId() ?? undefined}
+                accessToken={accessToken}
+                currentProjectId={projectId}
+                selectedDate={smartPickDate}
+                selectedSlot={smartPickSlot}
+                onSelect={(date, slot) => {
+                  setSmartPickDate(date);
+                  setSmartPickSlot(slot);
+                }}
+              />
+
+              <div className="mt-4">
               <MilestoneEditor
+                key={`${smartPickDate}-${smartPickSlot}-${editingIndex}`}
                 tradeId={tradeId || ''}
                 showSavedList={false}
                 defaultMilestones={
@@ -1442,7 +1459,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           siteAccessNotes: combinedMilestones[editingIndex].siteAccessNotes,
                         },
                       ]
-                    : []
+                    : smartPickDate
+                      ? [{
+                          title: '',
+                          sequence: 0,
+                          status: 'not_started' as const,
+                          percentComplete: 0,
+                          plannedStartDate: smartPickDate,
+                          plannedEndDate: smartPickDate,
+                          startTimeSlot: smartPickSlot,
+                          endTimeSlot: smartPickSlot,
+                        }]
+                      : []
                 }
                 onMilestonesChange={(updated) => {
                   if (editingIndex !== null) {
@@ -1452,12 +1480,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                   }
                 }}
               />
+              </div>
 
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => {
                     setEditingIndex(null);
                     setIsAddingNew(false);
+                    setSmartPickDate(undefined);
+                    setSmartPickSlot(undefined);
                   }}
                   className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
                 >

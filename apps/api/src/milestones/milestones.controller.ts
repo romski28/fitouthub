@@ -110,6 +110,22 @@ export class MilestonesController {
     return this.milestonesService.checkAvailability(body);
   }
 
+  @Post('check-availability-batch')
+  @UseGuards(AuthGuard('jwt-professional'))
+  async checkAvailabilityBatch(
+    @Body() body: {
+      professionalId: string;
+      dates: string[];
+      currentProjectId?: string;
+    },
+    @Req() req: any,
+  ) {
+    if (!body.professionalId || !body.dates?.length) {
+      throw new BadRequestException('professionalId and dates are required');
+    }
+    return this.milestonesService.checkAvailabilityBatch(body);
+  }
+
   @Get(':id')
   async getMilestoneById(@Param('id') id: string) {
     return this.milestonesService.getMilestoneById(id);

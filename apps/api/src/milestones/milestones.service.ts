@@ -1081,5 +1081,125 @@ export class MilestonesService {
       suggestions,
     };
   }
+
+  /**
+   * Batch check availability across multiple days — returns a map of
+   * dateKey → { AM, PM, ALL_DAY } status for the smart slot picker.
+   */
+  async checkAvailabilityBatch(params: {
+    professionalId: string;
+    dates: string[]; // ISO date strings "2026-06-15"
+    currentProjectId?: string;
+  }) {
+    const { professionalId, dates, currentProjectId } = params;
+    const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    // Fetch all availability windows once
+    const allWindows = await this.prisma.professionalAvailability.findMany({
+      where: { professionalId },
+    });
+
+    // Fetch all active assignments and their milestone counts per day
+    const assignments = await this.prisma.projectProfessional.findMany({
+      where: { professionalId, status: { in: ['accepted', 'awarded'] } },
+      select: { id: true, projectId: true },
+    });
+    const ppIds = assignments.map((a) => a.id);
+
+    // Fetch all non-completed milestones across all dates
+    const allMilestones = ppIds.length > 0 ? await this.prisma.projectMilestone.findMany({
+      where: {
+        projectProfessionalId: { in: ppIds },
+        status: { not: 'completed' },
+        plannedStartDate: { not: null },
+      },
+      select: {
+        id: true,
+        plannedStartDate: true,
+        plannedEndDate: true,
+        startTimeSlot: true,
+        endTimeSlot: true,
+        projectProfessionalId: true,
+      },
+    }) : [];
+
+    // Build a map of ppId → projectId
+    const ppToProject = new Map(assignments.map((a) => [a.id, a.projectId]));
+
+    const result: Record<string, { AM: 'free' | 'busy' | 'unavailable'; PM: 'free' | 'busy' | 'unavailable'; ALL_DAY: 'free' | 'busy' | 'unavailable' }> = {};
+
+    for (const date of dates) {
+      const targetDate = new Date(date);
+      const dayOfWeek = targetDate.getDay();
+
+      // Find relevant windows
+      const dateSpecific = allWindows.filter((w) => w.date && w.date.toISOString().split('T')[0] === date);
+      const relevantWindows = dateSpecific.length > 0
+        ? dateSpecific
+        : allWindows.filter((w) => w.dayOfWeek === dayOfWeek);
+
+      if (relevantWindows.length === 0) {
+        result[date] = { AM: 'unavailable', PM: 'unavailable', ALL_DAY: 'unavailable' };
+        continue;
+      }
+
+      const maxProjects = Math.max(...relevantWindows.map((w) => w.maxProjects || 1), 1);
+      const firstWindow = relevantWindows[0];
+
+      // Count distinct projects with milestones on this day
+      const dayStart = new Date(`${date}T00:00:00Z`);
+      const dayEnd = new Date(`${date}T23:59:59Z`);
+
+      const dayMilestones = allMilestones.filter((m) => {
+        if (!m.plannedStartDate) return false;
+        const ms = new Date(m.plannedStartDate);
+        const me = m.plannedEndDate ? new Date(m.plannedEndDate) : ms;
+        return ms <= dayEnd && me >= dayStart;
+      });
+
+      const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId));
+      const currentCount = distinctProjects.size;
+
+      const getSlotStatus = (slot: 'AM' | 'PM' | 'ALL_DAY'): 'free' | 'busy' | 'unavailable' => {
+        // Check availability window coverage
+        if (firstWindow.startTime && firstWindow.endTime) {
+          const windowStartMin = parseInt(firstWindow.startTime.split(':')[0], 10) * 60 + parseInt(firstWindow.startTime.split(':')[1] || '0', 10);
+          const windowEndMin = parseInt(firstWindow.endTime.split(':')[0], 10) * 60 + parseInt(firstWindow.endTime.split(':')[1] || '0', 10);
+
+          if (slot === 'AM' && windowStartMin > 0) return 'unavailable';
+          if (slot === 'PM' && windowEndMin < 24 * 60) return 'unavailable';
+        }
+
+        // Check maxProjects
+        if (currentCount >= maxProjects) {
+          // Busy only if the existing projects aren't the current one
+          const otherProjects = [...distinctProjects].filter((ppId) => ppToProject.get(ppId) !== currentProjectId);
+          if (otherProjects.length >= maxProjects) return 'busy';
+        }
+
+        // Check if this specific slot already has a milestone
+        const slotBusy = dayMilestones.some((m) => {
+          const ms = m.startTimeSlot || 'ALL_DAY';
+          const me = m.endTimeSlot || m.startTimeSlot || 'ALL_DAY';
+          if (ms === 'ALL_DAY' || me === 'ALL_DAY' || slot === 'ALL_DAY') return true;
+          const slotOrder = { AM: 1, PM: 2 };
+          const mStart = slotOrder[ms as keyof typeof slotOrder] || 1;
+          const mEnd = slotOrder[me as keyof typeof slotOrder] || 2;
+          const sVal = slotOrder[slot];
+          return mStart <= sVal && sVal <= mEnd;
+        });
+
+        return slotBusy ? 'busy' : 'free';
+      };
+
+      result[date] = {
+        AM: getSlotStatus('AM'),
+        PM: getSlotStatus('PM'),
+        ALL_DAY: getSlotStatus('ALL_DAY'),
+      };
+    }
+
+    return result;
+  }
 }
 
