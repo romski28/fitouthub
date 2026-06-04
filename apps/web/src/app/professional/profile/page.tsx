@@ -76,12 +76,12 @@ const PROFESSION_TYPE_OPTIONS = [
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6);
 
-const WorkingHoursPreset: Array<{ dayOfWeek: number; startTime: string; endTime: string; maxProjects: number; availableForEmergency: boolean }> = [
-  { dayOfWeek: 1, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
-  { dayOfWeek: 2, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
-  { dayOfWeek: 3, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
-  { dayOfWeek: 4, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
-  { dayOfWeek: 5, startTime: '08:00', endTime: '18:00', maxProjects: 1, availableForEmergency: false },
+const WorkingHoursPreset: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [
+  { dayOfWeek: 1, startTime: '08:00', endTime: '18:00' },
+  { dayOfWeek: 2, startTime: '08:00', endTime: '18:00' },
+  { dayOfWeek: 3, startTime: '08:00', endTime: '18:00' },
+  { dayOfWeek: 4, startTime: '08:00', endTime: '18:00' },
+  { dayOfWeek: 5, startTime: '08:00', endTime: '18:00' },
 ];
 
 type AvailabilityWindow = {
@@ -111,33 +111,6 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
     return cells;
   }, [windows]);
 
-  // Per-day summaries
-  const dayWindows = useMemo(() => {
-    return DAY_LABELS.map((_, day) => {
-      const dayWs = windows.filter((w) => w.dayOfWeek === day && w.startTime);
-      if (dayWs.length === 0) return null;
-      const times = dayWs.map((w) => parseInt(w.startTime!.split(':')[0], 10)).sort((a, b) => a - b);
-      const minH = times[0];
-      const maxH = times[times.length - 1] + 1;
-      return {
-        startTime: `${String(minH).padStart(2, '0')}:00`,
-        endTime: `${String(maxH).padStart(2, '0')}:00`,
-        maxProjects: dayWs[0].maxProjects ?? 1,
-        availableForEmergency: dayWs[0].availableForEmergency ?? false,
-      };
-    });
-  }, [windows]);
-
-  const setDayProp = (day: number, prop: 'maxProjects' | 'availableForEmergency', value: number | boolean) => {
-    const updated = windows.map((w) => {
-      if (w.dayOfWeek === day && w.startTime) {
-        return { ...w, [prop]: value };
-      }
-      return w;
-    });
-    onChange(updated);
-  };
-
   const handleMouseDown = (day: number, hour: number) => {
     const col = hour - 6;
     const cellOn = grid[day][col];
@@ -150,7 +123,7 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
     if (cellOn) {
       onChange(windows.filter((w) => !(w.dayOfWeek === day && w.startTime === `${hourStr}:00`)));
     } else {
-      onChange([...windows, { dayOfWeek: day, startTime: `${hourStr}:00`, endTime: `${nhStr}:00`, maxProjects: 1, availableForEmergency: false }]);
+      onChange([...windows, { dayOfWeek: day, startTime: `${hourStr}:00`, endTime: `${nhStr}:00` }]);
     }
   };
 
@@ -168,7 +141,7 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
       for (let h = minH; h <= maxH; h++) {
         const hStr = String(h).padStart(2, '0');
         const nhStr = String(h + 1).padStart(2, '0');
-        newWindows.push({ dayOfWeek: day, startTime: `${hStr}:00`, endTime: `${nhStr}:00`, maxProjects: 1, availableForEmergency: false });
+        newWindows.push({ dayOfWeek: day, startTime: `${hStr}:00`, endTime: `${nhStr}:00` });
       }
     }
     onChange(newWindows);
@@ -207,45 +180,6 @@ function AvailabilityGrid({ windows, onChange }: { windows: AvailabilityWindow[]
         ))}
       </div>
 
-      {/* Per-day settings row */}
-      <div className="flex gap-px mt-1">
-        <div className="w-10 shrink-0" />
-        {DAY_LABELS.map((label, day) => {
-          const dw = dayWindows[day];
-          const hasHours = dw !== null;
-          return (
-            <div key={day} className="flex-1 px-1">
-              {hasHours ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-slate-500">Max</span>
-                    <select
-                      value={dw.maxProjects}
-                      onChange={(e) => setDayProp(day, 'maxProjects', parseInt(e.target.value, 10))}
-                      className="text-[10px] border border-slate-200 rounded px-1 py-0.5 bg-white"
-                    >
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <label className="flex items-center gap-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={dw.availableForEmergency}
-                      onChange={(e) => setDayProp(day, 'availableForEmergency', e.target.checked)}
-                      className="w-3 h-3"
-                    />
-                    <span className="text-[9px] text-slate-500 leading-none">Emerg.</span>
-                  </label>
-                </div>
-              ) : (
-                <span className="text-[10px] text-slate-300">—</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -324,6 +258,7 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const [maxProjects, setMaxProjects] = useState(1);
   const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindow[]>([]);
   const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
   const [tradeOptions, setTradeOptions] = useState<string[]>(() =>
@@ -465,16 +400,19 @@ export default function ProfessionalProfilePage() {
         if (!res.ok) throw new Error('Failed to load availability');
         const data: Array<Record<string, unknown>> = await res.json();
         if (!cancelled) {
-          setAvailabilityWindows(
-            (Array.isArray(data) ? data : []).map((w) => ({
-              id: typeof w.id === 'string' ? w.id : undefined,
-              dayOfWeek: typeof w.dayOfWeek === 'number' ? w.dayOfWeek : null,
-              startTime: typeof w.startTime === 'string' ? w.startTime : null,
-              endTime: typeof w.endTime === 'string' ? w.endTime : null,
-              maxProjects: typeof w.maxProjects === 'number' ? w.maxProjects : 1,
-              availableForEmergency: w.availableForEmergency === true,
-            })),
-          );
+          const mapped = (Array.isArray(data) ? data : []).map((w) => ({
+            id: typeof w.id === 'string' ? w.id : undefined,
+            dayOfWeek: typeof w.dayOfWeek === 'number' ? w.dayOfWeek : null,
+            startTime: typeof w.startTime === 'string' ? w.startTime : null,
+            endTime: typeof w.endTime === 'string' ? w.endTime : null,
+            maxProjects: typeof w.maxProjects === 'number' ? w.maxProjects : 1,
+            availableForEmergency: typeof w.availableForEmergency === 'boolean' ? w.availableForEmergency : false,
+          }));
+          setAvailabilityWindows(mapped);
+          // Pick up global maxProjects from first window if available
+          if (mapped.length > 0 && mapped[0].maxProjects) {
+            setMaxProjects(mapped[0].maxProjects);
+          }
         }
       } catch {
         if (!cancelled) setAvailabilityWindows([]);
@@ -532,13 +470,18 @@ export default function ProfessionalProfilePage() {
 
       // Save availability windows
       if (availabilityWindows.length > 0 && professional?.id) {
+        const windowsWithSettings = availabilityWindows.map((w) => ({
+          ...w,
+          maxProjects: maxProjects,
+          availableForEmergency: emergencyCalloutAvailable,
+        }));
         const availRes = await fetch(`${API_BASE_URL}/professionals/${professional.id}/availability`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(availabilityWindows),
+          body: JSON.stringify(windowsWithSettings),
         });
         if (!availRes.ok) throw new Error(await availRes.text());
       }
@@ -753,6 +696,20 @@ export default function ProfessionalProfilePage() {
                 >
                   Clear All
                 </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-600">Max concurrent projects</label>
+                <select
+                  value={maxProjects}
+                  onChange={(e) => setMaxProjects(parseInt(e.target.value, 10))}
+                  className="rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,251,242,0.82)] px-2 py-1 text-xs text-slate-800"
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
               </div>
             </div>
             <AvailabilityGrid windows={availabilityWindows} onChange={setAvailabilityWindows} />

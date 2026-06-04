@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-04-5945af6b",
+    "date": "2026-06-04T16:32:24+08:00",
+    "title": "Simplify: single global maxProjects + emergencyCalloutAvailable flags, remove per-day settings row",
+    "summary": "Simplify: single global maxProjects + emergencyCalloutAvailable flags, remove per-day settings row",
+    "areas": [
+      "web"
+    ],
+    "commit": "5945af6b",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-04-ed7a5b08",
     "date": "2026-06-04T16:17:30+08:00",
     "title": "Fix: add maxProjects dropdown and emergency toggle per day in AvailabilityGrid",
