@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Calendar, Clock, AlertCircle, ArrowLeft, List, Grid3x3, Settings } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Calendar, AlertCircle, ArrowLeft, List, Grid3x3, Settings } from "lucide-react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { useRouter } from "next/navigation";
@@ -140,8 +140,10 @@ export default function ProfessionalCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"today" | "week" | "list">("today");
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
+    if (hasLoadedRef.current) return;
     loadCalendar();
   }, [professional?.id, contextToken, isLoggedIn]);
 
@@ -182,6 +184,7 @@ export default function ProfessionalCalendarPage() {
 
       const data = await response.json();
       setMilestones(data);
+      hasLoadedRef.current = true;
     } catch (err) {
       console.error("Error loading calendar:", err);
       setError(err instanceof Error ? err.message : "Failed to load calendar");
@@ -206,34 +209,19 @@ export default function ProfessionalCalendarPage() {
     return grouped;
   };
 
-  const getStatusPercent = (status: string, percentComplete: number) => {
-    if (status === "completed") return 100;
-    if (status === "not_started") return 0;
-    return percentComplete;
-  };
-
-  const formatWeekday = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-    });
-  };
-
-  const formatDayMonth = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "short",
-    });
-  };
-
-  const isSameDate = (date1?: string | null, date2?: string | null) => {
-    if (!date1 || !date2) return true;
-    return date1.split("T")[0] === date2.split("T")[0];
-  };
-
   const groupedMilestones = groupByDate(milestones);
   const sortedDates = Object.keys(groupedMilestones).sort();
+
+  // Auto-scroll to today (or next milestone) when list view loads
+  useEffect(() => {
+    if (viewMode !== "list" || loading || sortedDates.length === 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    const scrollToDate = sortedDates.find((d) => d >= today) || sortedDates[0];
+    setTimeout(() => {
+      const el = document.getElementById(`list-date-${scrollToDate}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }, [viewMode, loading, sortedDates]);
 
   if (loading) {
     return (
@@ -423,137 +411,53 @@ export default function ProfessionalCalendarPage() {
             })()}
           </div>
         ) : (
-          <div className="space-y-2">
-            {sortedDates.map((date) =>
-              groupedMilestones[date].map((milestone) => {
-                const statusPercent = getStatusPercent(milestone.status, milestone.percentComplete);
-                const statusLabel =
-                  statusPercent === 100 ? "Complete" :
-                  statusPercent === 0 ? "Not Started" :
-                  `${statusPercent}% Complete`;
-                const showProgressBar = statusPercent > 0 && statusPercent < 100;
-                const sameDate = isSameDate(milestone.plannedStartDate, milestone.plannedEndDate);
-
-                return (
-                  <div
-                    key={milestone.id}
-                    className="bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition cursor-pointer overflow-hidden"
-                    onClick={() =>
-                      router.push(
-                        `/professional-projects/${milestone.projectProfessional.id}`
-                      )
-                    }
-                  >
-                    <div className="flex items-stretch min-h-[80px]">
-                      <div className="w-28 sm:w-32 bg-slate-900 text-white flex flex-col items-center justify-center px-2 py-3">
-                        {sameDate ? (
-                          <>
-                            <div className="text-xs font-semibold uppercase tracking-wide">
-                              {formatWeekday(date)}
-                            </div>
-                            <div className="text-sm font-semibold mt-1">
-                              {formatDayMonth(date)}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-[10px] font-semibold">
-                              {formatDayMonth(milestone.plannedStartDate!)}
-                            </div>
-                            <div className="text-[9px] font-medium my-0.5">thru</div>
-                            <div className="text-[10px] font-semibold">
-                              {formatDayMonth(milestone.plannedEndDate!)}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex-1 p-3">
-                        {/* Grid: Milestone Title, Key, Status */}
-                        <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-2 items-center mb-2">
-                          <h3 className="text-base font-semibold text-slate-900 col-span-1">
-                            {milestone.title}
-                          </h3>
-                          {milestone.siteAccessRequired && (
-                            <div className="text-lg" title="Site access required">
-                              🔑
-                            </div>
-                          )}
-                          {showProgressBar ? (
-                            <div className="w-32 sm:w-40">
-                              <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                                <div
-                                  className="absolute left-0 top-0 h-full bg-emerald-500"
-                                  style={{ width: `${statusPercent}%` }}
-                                />
-                                <span className="relative z-10 block text-[10px] font-semibold text-slate-800 text-center leading-4">
-                                  {statusPercent}%
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <span className={`text-xs font-semibold whitespace-nowrap ${
-                              statusPercent === 100 ? "text-emerald-600" : "text-slate-600"
-                            }`}>
-                              {statusLabel}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Line 2: Project for Client */}
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-xs font-medium text-blue-600">
-                            {milestone.projectProfessional.project.projectName}
-                          </span>
-                          <span className="text-xs text-slate-400">for</span>
-                          <span className="text-xs text-slate-600">
-                            {milestone.projectProfessional.project.clientName}
-                          </span>
-                        </div>
-
-                        {/* Description - Body Text */}
-                        {milestone.description && (
-                          <p className="text-sm text-slate-600 mt-3 mb-3 leading-relaxed">
-                            {milestone.description}
-                          </p>
-                        )}
-
-                        {/* Meta Info - Two columns */}
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          {/* Time Slot */}
-                          {milestone.startTimeSlot && (
-                            <div className="flex items-center gap-1.5 text-slate-600">
-                              <Clock className="w-4 h-4 flex-shrink-0" />
-                              <span className="text-xs">
-                                {milestone.startTimeSlot === "AM" ? "Morning" :
-                                 milestone.startTimeSlot === "PM" ? "Afternoon" :
-                                 milestone.startTimeSlot === "ALL_DAY" ? "All Day" :
-                                 milestone.startTimeSlot}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Estimated Hours */}
-                          {milestone.estimatedHours && (
-                            <div className="flex items-center gap-1.5 text-slate-600">
-                              <Clock className="w-4 h-4 flex-shrink-0" />
-                              <span className="text-xs">{milestone.estimatedHours}h estimated</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Site Access Notes - if applicable */}
-                        {milestone.siteAccessNotes && (
-                          <div className="mt-3 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
-                            <strong>Access Notes:</strong> {milestone.siteAccessNotes}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+          <div className="space-y-3">
+            {sortedDates.map((date) => {
+              const dateObj = new Date(date);
+              const dateLabel = `${DAYS[dateObj.getDay()]}, ${dateObj.getDate()} ${MONTHS[dateObj.getMonth()]}`;
+              const isToday = date === new Date().toISOString().split("T")[0];
+              return (
+                <div key={date} id={`list-date-${date}`}>
+                  <div className={`text-xs font-semibold mb-1.5 ${isToday ? 'text-amber-700' : 'text-[rgba(120,53,15,0.6)]'}`}>
+                    {dateLabel}
+                    {isToday && <span className="ml-2 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">Today</span>}
                   </div>
-                );
-              })
-            )}
+                  <div className="space-y-1.5">
+                    {groupedMilestones[date].map((milestone) => {
+                      const slot = milestone.startTimeSlot === 'AM' ? 'Morning' : milestone.startTimeSlot === 'PM' ? 'Afternoon' : milestone.startTimeSlot === 'ALL_DAY' ? 'All day' : null;
+                      return (
+                        <div
+                          key={milestone.id}
+                          onClick={() => router.push(`/professional-projects/${milestone.projectProfessional.id}`)}
+                          className="bg-[rgba(255,251,242,0.9)] rounded-lg border border-[rgba(120,53,15,0.1)] hover:bg-[rgba(255,246,230,0.95)] transition cursor-pointer px-3 py-2.5 flex items-center gap-3"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium text-[rgba(120,53,15,0.9)] truncate">
+                                {milestone.projectProfessional.project.projectName}
+                              </span>
+                              <span className="text-[10px] text-[rgba(120,53,15,0.4)]">·</span>
+                              <span className="text-xs text-[rgba(120,53,15,0.75)] truncate">
+                                {milestone.title}
+                              </span>
+                              {milestone.siteAccessRequired && <span className="text-[10px]" title="Site access required">🔑</span>}
+                            </div>
+                            {slot && (
+                              <p className="text-[11px] text-[rgba(120,53,15,0.5)] mt-0.5">{slot}</p>
+                            )}
+                          </div>
+                          {milestone.status === 'completed' ? (
+                            <span className="shrink-0 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Done</span>
+                          ) : milestone.status === 'in_progress' ? (
+                            <span className="shrink-0 text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{milestone.percentComplete}%</span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

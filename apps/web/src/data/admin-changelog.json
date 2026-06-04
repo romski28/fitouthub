@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-04-c3683f4b",
+    "date": "2026-06-04T16:42:06+08:00",
+    "title": "Calendar list: compact Mimo-styled cards, auto-scroll to today, disable focus re-fetch",
+    "summary": "Calendar list: compact Mimo-styled cards, auto-scroll to today, disable focus re-fetch",
+    "areas": [
+      "web"
+    ],
+    "commit": "c3683f4b",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-04-5945af6b",
     "date": "2026-06-04T16:32:24+08:00",
     "title": "Simplify: single global maxProjects + emergencyCalloutAvailable flags, remove per-day settings row",
