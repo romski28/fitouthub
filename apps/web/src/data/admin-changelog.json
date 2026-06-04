@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-04-9c37e7f5",
+    "date": "2026-06-04T17:17:38+08:00",
+    "title": "Calendar: charcoal/coral text palette, remove outer bg wrapper, unified subtle borders",
+    "summary": "Calendar: charcoal/coral text palette, remove outer bg wrapper, unified subtle borders",
+    "areas": [
+      "web"
+    ],
+    "commit": "9c37e7f5",
+    "files": [
+      "apps/web/src/app/professional/calendar/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-04-c63bee0d",
     "date": "2026-06-04T17:06:32+08:00",
     "title": "Calendar: fixed header with rounded card, scrollable content panel, full viewport layout",
