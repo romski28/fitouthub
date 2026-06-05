@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-05-6ff44617",
+    "date": "2026-06-05T09:56:30+08:00",
+    "title": "Fix: always auto-calculate next milestone sequence to avoid P2002 unique constraint collision",
+    "summary": "Fix: always auto-calculate next milestone sequence to avoid P2002 unique constraint collision",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ff44617",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-05-005e6194",
     "date": "2026-06-05T09:45:59+08:00",
     "title": "Conflict detection: fix broken image in agree-schedule modal, convert warnings to hard-to-miss modal dialogs",

@@ -793,9 +793,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
       }
 
       // Normalize milestone data
-      // Calculate next sequence if not provided
+      // Auto-calculate next sequence to avoid unique constraint collision
       const existingWorkMilestones = milestones.filter((item) => !item.isFinancial);
-      const nextSequence = milestone.sequence || Math.max(...existingWorkMilestones.map(m => m.sequence || 0), 0) + 1;
+      const nextSequence = Math.max(...existingWorkMilestones.map(m => m.sequence || 0), 0) + 1;
 
       const data: any = {
         projectId,
