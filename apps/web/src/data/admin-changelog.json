@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-05-1813bf90",
+    "date": "2026-06-05T10:13:13+08:00",
+    "title": "Fix: null safety on Map.get() comparison in checkAvailabilityBatch",
+    "summary": "Fix: null safety on Map.get() comparison in checkAvailabilityBatch",
+    "areas": [
+      "api"
+    ],
+    "commit": "1813bf90",
+    "files": [
+      "apps/api/src/milestones/milestones.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-05-6ff44617",
     "date": "2026-06-05T09:56:30+08:00",
     "title": "Fix: always auto-calculate next milestone sequence to avoid P2002 unique constraint collision",

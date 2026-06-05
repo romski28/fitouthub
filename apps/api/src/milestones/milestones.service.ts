@@ -1173,7 +1173,7 @@ export class MilestonesService {
         // Check maxProjects
         if (currentCount >= maxProjects) {
           // Busy only if the existing projects aren't the current one
-          const otherProjects = [...distinctProjects].filter((ppId) => ppToProject.get(ppId) !== currentProjectId);
+          const otherProjects = [...distinctProjects].filter((ppId) => (ppToProject.get(ppId) ?? '') !== (currentProjectId ?? ''));
           if (otherProjects.length >= maxProjects) return 'busy';
         }
 
