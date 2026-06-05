@@ -1064,7 +1064,7 @@ export class MilestonesService {
           select: { projectProfessionalId: true },
         });
 
-        const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId));
+        const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId).filter((id): id is string => id !== null));
         const currentCount = distinctProjects.size;
 
         if (currentCount >= maxProjects) {
@@ -1157,7 +1157,7 @@ export class MilestonesService {
         return ms <= dayEnd && me >= dayStart;
       });
 
-      const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId));
+      const distinctProjects = new Set(dayMilestones.map((m) => m.projectProfessionalId).filter((id): id is string => id !== null));
       const currentCount = distinctProjects.size;
 
       const getSlotStatus = (slot: 'AM' | 'PM' | 'ALL_DAY'): 'free' | 'busy' | 'unavailable' => {
