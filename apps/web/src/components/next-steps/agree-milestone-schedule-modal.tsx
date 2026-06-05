@@ -218,7 +218,6 @@ export function AgreeMilestoneScheduleModal({
       ? 'Review and finalize the milestone schedule before client funding.'
       : 'Review and confirm the milestone schedule before funding escrow.');
   const detailsBody = state.modalContent?.detailsBody;
-  const imageUrl = state.modalContent?.imageUrl;
   const hasDetails = Boolean(detailsBody);
 
   return (
@@ -247,8 +246,8 @@ export function AgreeMilestoneScheduleModal({
             <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
               <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
                 <div className="flex max-h-[80vh] flex-col">
-                  {/* Header with optional image */}
-                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5 space-y-3">
+                  {/* Header */}
+                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5">
                     {hasDetails && (
                       <button
                         type="button"
@@ -259,18 +258,8 @@ export function AgreeMilestoneScheduleModal({
                         i
                       </button>
                     )}
-                    {imageUrl && (
-                      <div className="relative h-48 w-full overflow-hidden rounded-lg mb-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={imageUrl}
-                          alt="Schedule agreement"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
                     <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-                    <p className="text-sm text-slate-200">{body}</p>
+                    <p className="text-sm text-slate-200 mt-1">{body}</p>
                   </div>
 
                   <div className="next-step-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">

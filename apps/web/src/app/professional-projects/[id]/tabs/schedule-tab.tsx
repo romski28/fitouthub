@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MilestoneEditor } from '@/components/milestone-editor';
 import { SmartSlotPicker } from '@/components/smart-slot-picker';
+import { ScheduleConflictModal } from '@/components/schedule-conflict-modal';
 import { API_BASE_URL } from '@/config/api';
 import { Pencil, Trash2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StartDateNegotiationPanel } from '@/components/start-date-negotiation-panel';
@@ -1252,69 +1253,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
             </div>
           )}
 
-          {conflictWarning && (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-900">
-                    ⚠ Scheduling conflict{conflictWarning.length > 1 ? 's' : ''} detected
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {conflictWarning.map((c) => {
-                      const start = c.plannedStartDate ? new Date(c.plannedStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '?';
-                      const end = c.plannedEndDate ? new Date(c.plannedEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : start;
-                      const slot = c.startTimeSlot ? ` (${c.startTimeSlot})` : '';
-                      return (
-                        <li key={c.id} className="text-xs text-amber-800">
-                          <span className="font-medium">{c.title}</span> on <span className="font-medium">{c.projectName}</span> — {start}{end !== start ? ` – ${end}` : ''}{slot}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <p className="mt-2 text-xs text-amber-700">
-                    This may overlap with your other commitments. You can still proceed, but check your{' '}
-                    <Link href="/professional/calendar" className="underline font-medium">calendar</Link>.
-                  </p>
-                </div>
-                <button
-                  onClick={dismissConflictWarning}
-                  className="shrink-0 text-amber-500 hover:text-amber-700 transition"
-                  title="Dismiss"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          )}
-
-          {availabilityWarning && (
-            <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-blue-900">
-                    💡 Availability note
-                  </p>
-                  {availabilityWarning.warnings.map((w, i) => (
-                    <p key={i} className="mt-1 text-xs text-blue-800">{w}</p>
-                  ))}
-                  {availabilityWarning.suggestions.map((s, i) => (
-                    <p key={`s-${i}`} className="mt-1 text-xs text-blue-700 font-medium">{s}</p>
-                  ))}
-                  <p className="mt-2 text-xs text-blue-600">
-                    You can still proceed. Set or update your{' '}
-                    <Link href="/professional/profile" className="underline font-medium">availability</Link>.
-                  </p>
-                </div>
-                <button
-                  onClick={dismissAvailabilityWarning}
-                  className="shrink-0 text-blue-400 hover:text-blue-600 transition"
-                  title="Dismiss"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          )}
+          <ScheduleConflictModal
+            isOpen={(conflictWarning !== null && conflictWarning.length > 0) || availabilityWarning !== null}
+            conflicts={conflictWarning}
+            availability={availabilityWarning}
+            onDismiss={() => { setConflictWarning(null); setAvailabilityWarning(null); }}
+          />
 
           {!hideStartNegotiationPanel ? (
             <StartDateNegotiationPanel
