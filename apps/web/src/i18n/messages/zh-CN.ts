@@ -1,0 +1,565 @@
+const zhCN = {
+
+    "common": {
+      "loading": "加载中...",
+      "error": "错误",
+      "success": "成功",
+      "save": "保存",
+      "cancel": "取消",
+      "submit": "提交",
+      "continue": "继续",
+      "back": "返回",
+      "next": "下一步",
+      "close": "关闭",
+      "confirm": "确认",
+      "delete": "删除",
+      "edit": "编辑",
+      "view": "查看",
+      "search": "搜索",
+      "filter": "筛选",
+      "clear": "清除",
+      "all": "全部",
+      "none": "無",
+      "yes": "是",
+      "no": "否",
+      "optional": "选填",
+      "required": "必填"
+    },
+    "nav": {
+      "home": "首页",
+      "projects": "我的项目",
+      "professionals": "专业人士",
+      "tradesmen": "技工",
+      "docs": "文档及工具",
+      "profile": "个人资料",
+      "logout": "退出",
+      "login": "登录",
+      "join": "加入",
+      "signup": "注册",
+      "admin": "管理员",
+      "adminPortal": "管理员入口",
+      "professional": "专业人士",
+      "editProfessional": "编辑专业人士資料",
+      "messaging": "消息"
+    },
+    "auth": {
+      "join": {
+        "title": "加入 Mimo",
+        "subtitle": "选择您想如何開始",
+        "clientTitle": "以客户身份加入",
+        "clientDescription": "为您的裝修项目尋找专业人士。发布项目並获取已认证承办商报价。",
+        "professionalTitle": "以专业人士身份加入",
+        "professionalDescription": "注册您的业务並連結客户。投標项目並扩展客户群。"
+      },
+      "login": {
+        "title": "登录",
+        "email": "电邮地址",
+        "password": "密码",
+        "submit": "登录",
+        "noAccount": "還未有帐户?",
+        "forgotPassword": "忘記密码?",
+        "success": "歡迎返回!",
+        "welcome": "歡迎來到 Mimo",
+        "clientLabel": "客户",
+        "professionalLabel": "专业人士",
+        "professionalText": "专业人士帐户？",
+        "homePage": "首页",
+        "contactUs": "聯絡我们"
+      },
+      "signup": {
+        "title": "创建帐户",
+        "intro": "開始您的裝修项目",
+        "username": "用戶名稱",
+        "firstName": "名字",
+        "lastName": "姓氏",
+        "surname": "姓氏",
+        "email": "电邮",
+        "mobile": "手機",
+        "password": "密码",
+        "confirmPassword": "确认密码",
+        "submit": "创建帐户",
+        "haveAccount": "已有帐户?",
+        "creating": "正在创建帐户..."
+      },
+      "modal": {
+        "login": "登录",
+        "join": "加入",
+        "signIn": "登录",
+        "loading": "正在登录...",
+        "closeModal": "关闭視窗",
+        "createAccount": "创建帐户",
+        "creatingAccount": "正在创建帐户...",
+        "client": "客户",
+        "professional": "专业人士",
+        "companyName": "公司名称",
+        "contactName": "聯絡人名稱",
+        "phone": "电话",
+        "passwordMismatch": "密码不相符",
+        "loginFailed": "登录失敗",
+        "registrationFailed": "注册失敗",
+        "optional": "可選",
+        "termsRequired": "您必須同意条款及细则才可继续",
+        "enterVerificationCode": "请輸入验证码",
+        "otpVerificationFailed": "验证码核實失敗",
+        "otpResendFailed": "重新发送验证码失敗",
+        "welcomeVerified": "歡迎！👋",
+        "verifiedLoggingIn": "您的帐户已完成验证，正在为您登录...",
+        "otpSentTo": "请輸入發送到 {email} 的 6 位數验证码",
+        "verificationCode": "验证码",
+        "verifyOtp": "验证 OTP",
+        "verifyingOtp": "正在验证...",
+        "resendCode": "重新发送验证码",
+        "primaryContactPreference": "主要联络方式偏好",
+        "preferredContactMethod": "偏好联络方式",
+        "preferredLanguage": "偏好語言",
+        "languageCantonese": "廣東話",
+        "languageEnglish": "英文",
+        "contactEmail": "电邮",
+        "contactWhatsapp": "WhatsApp",
+        "contactSmsComing": "SMS（即將推出）",
+        "contactWeChatDisabled": "WeChat（未啟用）",
+        "partnerOffers": "您是否希望接收來自已注册供应商及合作伙伴的精選资讯和優惠？",
+        "platformUpdates": "您是否希望接收有關 Mimo 平台及其合作伙伴的消息和更新？",
+        "agreePrefix": "我同意",
+        "agreeMiddle": "並确认已閱讀",
+        "termsAndConditions": "条款及细则",
+        "securityStatement": "安全声明",
+        "joinAs": "加入身份",
+        "joinAsCompany": "服务公司",
+        "joinAsCompanyDesc": "提供安装或装修服务的公司",
+        "joinAsContractor": "承办商",
+        "joinAsContractorDesc": "独立或个人承包服務专业人士",
+        "joinAsReseller": "轉售商",
+        "joinAsResellerDesc": "产品與物料供应商或轉售商",
+        "professionType": "专业类型",
+        "professionGeneral": "一般",
+        "professionElectrician": "電工",
+        "professionPlumber": "水喉匠",
+        "professionCarpenter": "木工",
+        "professionPainter": "油漆",
+        "professionContractor": "承办商",
+        "professionHvac": "冷气 / 通風",
+        "professionOther": "其他"
+      }
+    },
+    "project": {
+      "create": {
+          "title": "创建新项目",
+          "heading": "開始您的项目",
+          "description": "描述您的裝修项目及范围，然後邀请专业人士提交报价",
+          "backLink": "← 返回项目",
+          "submit": "创建",
+          "success": "创建成功!"
+        },
+        "form": {
+          "projectName": "项目名稱",
+          "projectNamePlaceholder": "例如：辦公室裝修、餐廳翻新",
+          "yourName": "您的名字",
+          "yourNamePlaceholder": "您的全名",
+          "email": "电邮",
+          "location": "地點",
+          "budget": "預算 (港幣)",
+          "description": "描述项目",
+          "descriptionPlaceholder": "描述您的项目范围、要求及特殊需求...",
+          "descriptionHint": "您可以在创建项目後新增相片和更多详情。",
+          "tradesRequired": "所需行业",
+          "isEmergency": "這是緊急情況",
+          "cancel": "取消",
+          "submit": "创建项目",
+          "submitWithFiles": "正在创建项目及上傳",
+          "askAdvice": "徵求建議",
+          "needHelp": "需要協助執行此项目嗎?",
+          "helpDescription": "徵求建議：获取來自 Mimo 專家的個性化指導。我们將幫助您界定项目范围、尋找合適的专业人士、協商报价，並从頭至尾管理整個過程。",
+          "removeFile": "移除"
+        },
+        "list": {
+          "title": "我的项目",
+          "createNew": "+ 创建新项目",
+          "defaultNickname": "项目",
+          "total": "總數",
+          "empty": "暫無项目",
+          "emptyHint": "開始您的下一個裝修项目",
+          "startProject": "做點偉大的事，立即開始项目！",
+          "stats": {
+            "pending": "待處理",
+            "awarded": "已授予",
+            "rejected": "已拒絕"
+          },
+          "status": {
+            "started": "進行中",
+            "completed": "已完成",
+            "rated": "已評分",
+            "counterRequested": "要求還價",
+            "withdrawn": "已撤回"
+          },
+          "search": "搜索项目",
+          "searchPlaceholder": "例如：客户名稱、地區、承办商",
+          "clearSearchAria": "清除搜索",
+          "manage": "管理",
+          "edit": "编辑",
+          "newCount": "{count}則新消息",
+          "unreadMessages": "{count}則未讀消息",
+          "invitedProfessionals": "已邀请专业人士（{count}）",
+          "quoted": "已报价",
+          "declined": "已拒絕",
+          "escrowAccount": "託管帐户",
+          "paid": "已付款",
+          "updated": "更新時間:",
+          "id": "編號:",
+          "assistRequestedAlt": "已要求 Mimo 協助",
+          "assistRequestedTitle": "已要求 Mimo 協助",
+          "noAssistAlt": "未要求協助",
+          "noAssistTitle": "未要求協助",
+          "labels": {
+            "budget": "預算:",
+            "created": "创建時間:",
+            "client": "客户:",
+            "contractor": "承办商:",
+            "projectBudget": "项目預算",
+            "projectCost": "项目成本",
+            "awarded": "已授予"
+          }
+        },
+        "edit": {
+          "tagline": "编辑项目",
+          "subtitle": "更新项目详情與備注。",
+          "saveChanges": "保存变更",
+          "deleting": "正在删除...",
+          "delete": "删除",
+          "deleteTitle": "删除项目？",
+          "deleteMessage": "這將移除项目及其已上傳档案，且無法復原。",
+          "updateFailed": "更新项目失敗",
+          "deleteFailed": "删除项目失敗"
+        },
+        "details": {
+          "withdrawProject": "撤回项目",
+          "withdrawing": "正在撤回...",
+          "quoteAwarded": "🎉 报价已授予!"
+      }
+    },
+    "professional": {
+      "dashboard": {
+        "title": "专业人士儀錶板",
+        "myProjects": "我的项目",
+        "pendingQuotes": "待處理报价"
+      },
+      "profile": {
+        "title": "专业人士資料",
+        "businessName": "公司名称"
+      }
+    },
+    "financial": {
+      "escrow": {
+        "title": "託管",
+        "amount": "金額 (港幣)"
+      },
+      "payment": {
+        "title": "付款",
+        "request": "付款要求",
+        "approved": "已批准",
+        "paid": "已付款"
+      }
+    },
+    "admin": {
+      "dashboard": "管理员儀錶板",
+      "messaging": {
+        "title": "消息"
+      }
+    },
+    "chat": {
+      "title": "消息",
+      "send": "傳送"
+    },
+    "tradesmen": {
+      "hero": {
+        "tagline": "浏览工種",
+        "title": "为任何工程尋找專業工匠",
+        "description": "探索多個類別的專業工匠，按技能與專長筛选。"
+      },
+      "search": {
+        "tagline": "搜索與筛选",
+        "title": "縮窄您的搜索",
+        "label": "誰可以幫我處理...",
+        "placeholder": "例如：水喉、冷气維修、電工",
+        "clearAria": "清除搜索"
+      },
+      "states": {
+        "loading": "正在加载工匠...",
+        "empty": "找不到符合的工種。"
+      },
+      "card": {
+        "featured": "精選",
+        "specialties": "專長",
+        "more": "+{count}項",
+        "viewDetails": "查看详情",
+        "seeInArea": "查看您附近的{trade}",
+        "joinToView": "立即加入，查看{trade}专业人士",
+        "joinCta": "免費注册 →"
+      },
+      "actions": {
+        "showAll": "顯示全部{count}個工種"
+      }
+    },
+    "professionalsPage": {
+      "hero": {
+        "tagline": "平台市場",
+        "title": "尋找可信賴的专业人士",
+        "description": "浏览經審核的承办商、公司及供应商，查看其已验证評分與專業實績。"
+      },
+      "states": {
+        "loading": "正在加载专业人士...",
+        "empty": "暫無专业人士。提交注册後即可在此显示。"
+      },
+      "list": {
+        "fallbackProfessional": "专业人士",
+        "contactAfterMatch": "配对成功後可查看聯絡資料。",
+        "areasServed": "服務地區",
+        "viewDetails": "查看详情",
+        "selected": "已选择",
+        "askForHelp": "徵求協助",
+        "moreCount": "+{count}項",
+        "labels": {
+          "email": "电邮:",
+          "phone": "电话:"
+        },
+        "tradeLabels": {
+          "trade": "工種",
+          "tradesOffered": "提供工種",
+          "supplies": "供应项目"
+        },
+        "filters": {
+          "professionalOrTrade": "专业人士或工種",
+          "professionalOrTradePlaceholder": "例如：陳大文、水喉、冷气維修",
+          "clearSearchAria": "清除搜索",
+          "location": "地點",
+          "locationPlaceholder": "例如：香港、中環",
+          "clearLocationAria": "清除地點",
+          "rating": "評分",
+          "anyRating": "任何評分",
+          "rating45": "4.5+ 星",
+          "rating4": "4+ 星",
+          "rating35": "3.5+ 星",
+          "rating3": "3+ 星",
+          "rating2": "2+ 星"
+        },
+        "actions": {
+          "shareProjectAria": "分享您的项目",
+          "inviteOne": "邀请 1 位专业人士",
+          "inviteMany": "邀请 {count} 位专业人士",
+          "recommendAtLeastThree": "建議至少邀请 3 位"
+        },
+        "defaults": {
+          "tradeInLocation": "{location} 的 {trade}",
+          "serviceRequestInLocation": "{location} 服務需求",
+          "serviceRequest": "服務需求"
+        },
+        "states": {
+          "empty": "沒有符合條件的专业人士。"
+        }
+      }
+    },
+    "home": {
+      "searchFlow": {
+        "anonMatchFound": "有{count}位{trade}专业人士可以協助您的项目。",
+        "anonMatchFoundInLocation": "{location}有{count}位{trade}专业人士可以協助您的项目。",
+        "anonMatchNone": "目前暫無完全符合的配对。加入 Mimo，我们的團隊將協助您尋找合適的专业人士。",
+        "anonRegisterPrompt": "如需了解更多，请在我们的平台上注册。",
+        "anonRegisterCta": "免費注册 →",
+        "readyToProceed": "準備好继续了嗎？",
+        "isThisRight": "這是您的意思嗎？",
+        "back": "返回",
+        "letsGo": "出發！",
+        "loading": "加载中..."
+      },
+      "hero": {
+        "tagline": "專業裝修管理平台",
+        "title": "使用 Mimo 改造您的空間",
+        "description": "連接信任的专业人士、管理项目、按時間和預算完成裝修"
+      },
+      "quickStart": {
+        "tagline": "3個步驟快速開始",
+        "title": "发布项目並获取报价",
+        "newProjectButton": "创建您的首個项目"
+      },
+      "features": {
+        "tabs": {
+          "why": "为什麼选择Mimo",
+          "how": "運作方式",
+          "who": "我们是誰",
+          "choose": "选择Mimo"
+        },
+        "why": {
+          "title": "为什麼选择Mimo？",
+          "description": "完整的裝修项目管理方案",
+          "secure": {
+            "title": "安全交易",
+            "description": "受保护的託管付款和认证承包商"
+          },
+          "contracts": {
+            "title": "智能合约",
+            "description": "自动化协议和里程碑付款"
+          },
+          "oversight": {
+            "title": "项目监督",
+            "description": "实时追踪和專業管理"
+          },
+          "collaboration": {
+            "title": "輕鬆协作",
+            "description": "集成通讯和文件共享"
+          }
+        },
+        "how": {
+          "title": "運作方式",
+          "description": "簡單步驟開始您的项目",
+          "plan": {
+            "title": "1. 规划项目",
+            "description": "描述您的裝修需求和預算要求"
+          },
+          "match": {
+            "title": "2. 配对专业人士",
+            "description": "从您所在地區的认证承包商获取报价"
+          },
+          "manage": {
+            "title": "3. 管理和完成",
+            "description": "追踪進度、管理付款、無縫沟通"
+          },
+          "complete": {
+            "title": "完成您的项目",
+            "description": "追踪進度，有信心地完成您的裝修"
+          }
+        },
+        "who": {
+          "title": "我们是誰",
+          "description": "用技术改造裝修行业",
+          "clients": {
+            "title": "客户",
+            "description": "輕鬆透明地管理您的裝修项目"
+          },
+          "contractors": {
+            "title": "承包商",
+            "description": "找到優質业务机会並扩展您的客户群"
+          },
+          "suppliers": {
+            "title": "供应商",
+            "description": "與项目联系並扩展您的商业范围"
+          },
+          "designers": {
+            "title": "设计师",
+            "description": "在裝修项目中無縫协作"
+          }
+        },
+        "choose": {
+          "title": "为什麼选择Mimo？",
+          "description": "加入數百名满意的客户和专业人士",
+          "pm": {
+            "title": "项目管理",
+            "description": "管理您裝修每個方面的综合工具"
+          },
+          "communication": {
+            "title": "清晰沟通",
+            "description": "與所有利益相关者实时保持联系"
+          },
+          "platform": {
+            "title": "一体化平台",
+            "description": "您所需的一切都在一個地方"
+          },
+          "risk": {
+            "title": "风险保护",
+            "description": "安全付款和认证专业人士"
+          }
+        }
+      }
+    },
+    "footer": {
+      "description": "連接信任的专业人士、管理项目、無縫完成裝修项目。",
+      "browse": "浏览",
+      "forClients": "客户",
+      "account": "帐户",
+      "professionals": "专业人士",
+      "tradesmen": "工種",
+      "getStarted": "開始使用",
+      "createProject": "创建项目",
+      "login": "登录",
+      "join": "加入",
+      "copyright": "© {year} Mimo。版权所有。",
+      "twitter": "Twitter",
+      "linkedin": "LinkedIn",
+      "instagram": "Instagram"
+    },
+    "errors": {
+      "generic": "发生错误",
+      "registrationFailed": "注册失敗"
+    },
+    "validation": {
+      "required": "此栏为必填",
+      "passwordMismatch": "密码不相符"
+    },
+    "profile": {
+      "client": {
+        "title": "我的档案",
+        "subtitle": "管理您的帐户详情和设置",
+        "accountInfo": "帐户资讯",
+        "email": "电邮",
+        "firstName": "名字",
+        "surname": "姓氏",
+        "newPassword": "新密码",
+        "passwordHint": "最少 6 個字元",
+        "passwordNote": "留空以保持您目前的密码",
+        "saveChanges": "保存变更",
+        "saving": "保存中...",
+        "defaultLocation": "预设位置",
+        "defaultLocationHint": "設定您的首選位置以預填裝修工人和专业人士的搜索。",
+        "saveDefaultLocation": "保存预设位置",
+        "locationSaved": "位置已保存。",
+        "accountDetails": "帐户详情",
+        "accountType": "帐户類型",
+        "userId": "用戶 ID",
+        "logout": "退出"
+      },
+      "professional": {
+        "title": "专业人士档案",
+        "subtitle": "管理您的业务资讯和设置",
+        "businessInfo": "业务资讯",
+        "businessName": "业务名稱",
+        "fullName": "全名",
+        "phone": "电话",
+        "professionType": "专业类型",
+        "email": "电邮",
+        "serviceArea": "服務范围",
+        "primaryLocation": "主要位置",
+        "secondaryLocation": "次要位置",
+        "tertiaryLocation": "第三位置",
+        "tradesOffered": "提供的行业",
+        "suppliesOffered": "提供的供应品",
+        "primaryTrade": "主要行业",
+        "referenceProjects": "參考项目",
+        "portfolioImages": "作品集图片",
+        "addReferenceProject": "新增參考项目",
+        "projectTitle": "项目名稱",
+        "projectDescription": "项目描述",
+        "projectImages": "项目圖片",
+        "saveProfile": "保存档案",
+        "saving": "保存中...",
+        "updateSuccess": "档案已成功更新",
+        "password": "密码",
+        "changePassword": "更改密码",
+        "confirmPassword": "确认密码",
+        "logout": "退出"
+      }
+    },
+    "professionType": {
+      "contractor": "獨資企業 / 个人承包商",
+      "contractorDesc": "以独立专业人士或獨資企業主身份登記",
+      "company": "服务公司",
+      "companyDesc": "登記您提供建築或装修服务的公司",
+      "reseller": "轉售商 / 供应商",
+      "resellerDesc": "將您的业务登記为供应商或轉售商",
+      "joinAsProfessional": "以专业人士身份加入",
+      "selectProfession": "选择最能描述您业务的專業档案類型。",
+      "continue": "继续",
+      "cancel": "取消"
+    }
+  
+} as const;
+
+export default zhCN;

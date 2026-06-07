@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-07-379764a3",
+    "date": "2026-06-07T15:53:33+08:00",
+    "title": "i18n: activate zh-CN in language switcher, add Simplified Chinese messages file",
+    "summary": "i18n: activate zh-CN in language switcher, add Simplified Chinese messages file",
+    "areas": [
+      "web"
+    ],
+    "commit": "379764a3",
+    "files": [
+      "apps/web/src/components/language-switcher.tsx",
+      "apps/web/src/i18n/messages/zh-CN.ts",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-59dc2f2f",
     "date": "2026-06-07T15:40:24+08:00",
     "title": "i18n: split request.ts into messages/en.ts + messages/zh-HK.ts, add language badge to AI panel",

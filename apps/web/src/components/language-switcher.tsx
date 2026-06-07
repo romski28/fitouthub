@@ -14,7 +14,7 @@ type LocaleOption = {
 const localeOptions: LocaleOption[] = [
   { value: 'en', shortLabel: 'EN', label: 'English', description: 'Default' },
   { value: 'zh-HK', shortLabel: 'CH', label: 'Cantonese', description: 'Traditional Chinese' },
-  { value: 'zh-CN', shortLabel: 'SC', label: 'Simplified', description: 'Coming soon' },
+  { value: 'zh-CN', shortLabel: 'SC', label: '简体中文', description: 'Simplified Chinese' },
 ];
 
 function persistLocaleCookie(locale: LocaleOption['value']) {

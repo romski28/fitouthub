@@ -2,8 +2,9 @@ import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import en from './messages/en';
 import zhHK from './messages/zh-HK';
+import zhCN from './messages/zh-CN';
 
-const messages = { en, 'zh-HK': zhHK } as const;
+const messages = { en, 'zh-HK': zhHK, 'zh-CN': zhCN } as const;
 
 // Original inline messages moved to messages/en.ts and messages/zh-HK.ts
 // Add new translations in those files, not here.
@@ -1149,14 +1150,13 @@ export default getRequestConfig(async () => {
   
   const localeCookie = cookieStore.get('NEXT_LOCALE')?.value;
   const acceptLanguage = headersList.get('accept-language');
-  const normalizedCookieLocale = localeCookie === 'zh-CN' ? 'zh-HK' : localeCookie;
   
-  // Default to English, support Cantonese/Traditional today and tolerate Simplified cookies.
-  let locale: 'en' | 'zh-HK' = 'en';
+  let locale: 'en' | 'zh-HK' | 'zh-CN' = 'en';
   
-  // Priority: cookie > accept-language header
-  if (normalizedCookieLocale && ['en', 'zh-HK'].includes(normalizedCookieLocale)) {
-    locale = normalizedCookieLocale as 'en' | 'zh-HK';
+  if (localeCookie && ['en', 'zh-HK', 'zh-CN'].includes(localeCookie)) {
+    locale = localeCookie as 'en' | 'zh-HK' | 'zh-CN';
+  } else if (acceptLanguage?.includes('zh-CN') || acceptLanguage?.includes('zh-Hans')) {
+    locale = 'zh-CN';
   } else if (acceptLanguage?.includes('zh')) {
     locale = 'zh-HK';
   }
