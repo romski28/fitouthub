@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-2ca36cb5",
+    "date": "2026-06-07T11:26:59+08:00",
+    "title": "Fix: run merged two-pass output through normalizeParsedOutput to nest safetyAssessment correctly",
+    "summary": "Fix: run merged two-pass output through normalizeParsedOutput to nest safetyAssessment correctly",
+    "areas": [
+      "api"
+    ],
+    "commit": "2ca36cb5",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-43be1786",
     "date": "2026-06-07T11:03:36+08:00",
     "title": "Fix: replace payload.model with model variable after two-pass pipeline refactor",

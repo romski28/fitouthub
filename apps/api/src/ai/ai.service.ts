@@ -2432,7 +2432,7 @@ OUTPUT FORMAT (JSON only)
     });
 
     // Merge Pass 1 facts + Pass 2 analysis
-    const merged: Record<string, unknown> = {
+    const rawMerged: Record<string, unknown> = {
       ...facts,
       ...pass2.parsedOutput,
       // Ensure trades from Pass 1 are preserved
@@ -2440,6 +2440,9 @@ OUTPUT FORMAT (JSON only)
       tradeDetails: facts.tradeDetails || [],
       unmappedNeeds: facts.unmappedNeeds || [],
     };
+
+    // Run through normalizer to move safetyAssessment into project.safetyAssessment etc.
+    const merged = this.normalizeParsedOutput(rawMerged) as Record<string, unknown>;
 
     const totalDurationMs = Date.now() - pass1Start;
     const totalUsage = {
