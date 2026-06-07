@@ -2429,11 +2429,12 @@ OUTPUT FORMAT (JSON only)
       requestId: `${requestId}_p2`,
       messages: pass2Messages,
       timeoutMs,
-      maxOutputTokens: Math.max(maxOutputTokens, 800),
+      maxOutputTokens: maxOutputTokens,
       label: 'Pass2-Analysis',
     });
 
-    this.logger.log(`[${requestId}] Pass2 raw (first 300): ${pass2.output.slice(0, 300)}`);
+    this.logger.log(`[${requestId}] Pass2 raw (first 500): ${pass2.output.slice(0, 500)}`);
+    this.logger.log(`[${requestId}] Pass2 full output length: ${pass2.output.length} chars`);
     this.logger.log(`[${requestId}] Pass2 parsed keys: ${Object.keys(pass2.parsedOutput).join(', ') || 'EMPTY'}`);
 
     // Merge Pass 1 facts + Pass 2 analysis
@@ -2515,7 +2516,7 @@ OUTPUT FORMAT (JSON only)
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
+    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
@@ -2782,6 +2783,10 @@ OUTPUT FORMAT (JSON only)
 
       // Extract structured fields for DB storage
       const p = parsedOutput as Record<string, unknown> | null;
+      const projectSafety = p?.project && typeof p.project === 'object'
+        ? !!(p.project as Record<string, unknown>).safetyAssessment
+        : false;
+      this.logger.log(`[${requestId}] Before DB save: project.safetyAssessment=${projectSafety} topLevelSafety=${!!(p as any)?.safetyAssessment}`);
       const locObj = p?.location && typeof p.location === 'object' ? (p.location as Record<string, unknown>) : null;
       const budgetObj = p?.budget && typeof p.budget === 'object' ? p.budget : null;
       const timelineObj = p?.timeline && typeof p.timeline === 'object' ? p.timeline : null;

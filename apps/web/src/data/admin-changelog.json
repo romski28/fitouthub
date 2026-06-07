@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-14a31957",
+    "date": "2026-06-07T12:37:00+08:00",
+    "title": "Fix: remove Pass2 token cap, increase default to 2000, log DB persistence state",
+    "summary": "Fix: remove Pass2 token cap, increase default to 2000, log DB persistence state",
+    "areas": [
+      "api"
+    ],
+    "commit": "14a31957",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-f03667f9",
     "date": "2026-06-07T12:24:33+08:00",
     "title": "Fix: increase Pass2 token limit to maxOutputTokens, log raw Pass2 output for debugging",
