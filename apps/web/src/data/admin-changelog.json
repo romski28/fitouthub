@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-5529e35b",
+    "date": "2026-06-07T11:45:09+08:00",
+    "title": "Fix: prevent legacy output re-parse from overwriting two-pass merged safetyAssessment",
+    "summary": "Fix: prevent legacy output re-parse from overwriting two-pass merged safetyAssessment",
+    "areas": [
+      "api"
+    ],
+    "commit": "5529e35b",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-2ca36cb5",
     "date": "2026-06-07T11:26:59+08:00",
     "title": "Fix: run merged two-pass output through normalizeParsedOutput to nest safetyAssessment correctly",

@@ -2640,7 +2640,8 @@ OUTPUT FORMAT (JSON only)
         model: string | null;
       } | null = null;
 
-      if (output) {
+      // Only parse output into parsedOutput if the two-pass pipeline didn't already set it
+      if (!parsedOutput && output) {
         try {
           parsedOutput = this.normalizeParsedOutput(JSON.parse(output));
         } catch {
