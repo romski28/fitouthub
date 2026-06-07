@@ -2824,6 +2824,11 @@ OUTPUT FORMAT (JSON only)
       };
 
       try {
+        // Debug: log what's in parsedOutput before saving
+        this.logger.log(
+          `[${requestId}] Saving rawOutput: hasNextQuestions=${Array.isArray((parsedOutput as any)?.nextQuestions)} count=${Array.isArray((parsedOutput as any)?.nextQuestions) ? (parsedOutput as any).nextQuestions.length : 0} hasSafety=${!!(parsedOutput as any)?.safetyAssessment} hasAssumptions=${Array.isArray((parsedOutput as any)?.assumptions)} topKeys=${parsedOutput && typeof parsedOutput === 'object' ? Object.keys(parsedOutput as object).slice(0, 20).join(',') : 'N/A'}`,
+        );
+
         const intake = await this.prisma.aiIntake.create({
           data: {
             requestId,

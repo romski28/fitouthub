@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-00ce356a",
+    "date": "2026-06-07T19:48:30+08:00",
+    "title": "Debug: log parsedOutput top-level keys and question count before DB save",
+    "summary": "Debug: log parsedOutput top-level keys and question count before DB save",
+    "areas": [
+      "api"
+    ],
+    "commit": "00ce356a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-efb0bfac",
     "date": "2026-06-07T18:30:38+08:00",
     "title": "Admin debug: add nextQuestions and followUpQuestions to AI intake JSON viewer",
