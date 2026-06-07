@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-07-4dfe68db",
+    "date": "2026-06-07T15:57:00+08:00",
+    "title": "Fix: remove as const from message files for Vercel server-component compatibility",
+    "summary": "Fix: remove as const from message files for Vercel server-component compatibility",
+    "areas": [
+      "web"
+    ],
+    "commit": "4dfe68db",
+    "files": [
+      "apps/web/src/i18n/messages/en.ts",
+      "apps/web/src/i18n/messages/zh-CN.ts",
+      "apps/web/src/i18n/messages/zh-HK.ts",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-379764a3",
     "date": "2026-06-07T15:53:33+08:00",
     "title": "i18n: activate zh-CN in language switcher, add Simplified Chinese messages file",

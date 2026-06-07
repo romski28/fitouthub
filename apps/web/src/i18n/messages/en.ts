@@ -562,6 +562,6 @@ const en = {
       "cancel": "Cancel"
     }
   }
-} as const;
+};
 
 export default en;

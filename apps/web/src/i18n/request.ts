@@ -4,7 +4,7 @@ import en from './messages/en';
 import zhHK from './messages/zh-HK';
 import zhCN from './messages/zh-CN';
 
-const messages = { en, 'zh-HK': zhHK, 'zh-CN': zhCN } as const;
+const messages: Record<string, Record<string, unknown>> = { en, 'zh-HK': zhHK, 'zh-CN': zhCN };
 
 // Original inline messages moved to messages/en.ts and messages/zh-HK.ts
 // Add new translations in those files, not here.

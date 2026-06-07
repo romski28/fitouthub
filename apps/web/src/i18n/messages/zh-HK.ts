@@ -560,6 +560,6 @@ const zhHK = {
       "cancel": "取消"
     }
   
-} as const;
+};
 
 export default zhHK;
