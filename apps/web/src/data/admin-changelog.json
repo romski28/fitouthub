@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-06-07-802890b8",
+    "date": "2026-06-07T15:19:31+08:00",
+    "title": "i18n: add zh-CN (Simplified Chinese) locale, home page greetings, AI language detection & response language enforcement",
+    "summary": "i18n: add zh-CN (Simplified Chinese) locale, home page greetings, AI language detection & response language enforcement",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "802890b8",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/context/professional-auth-context.tsx",
+      "apps/web/src/i18n/locales/zh-CN.json",
+      "apps/web/src/middleware.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-14a31957",
     "date": "2026-06-07T12:37:00+08:00",
     "title": "Fix: remove Pass2 token cap, increase default to 2000, log DB persistence state",

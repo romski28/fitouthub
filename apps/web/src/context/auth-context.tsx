@@ -32,6 +32,7 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   role: string | null;
+  preferredLanguage: string;
   userLocation: CanonicalLocation;
   setUserLocation: (loc: CanonicalLocation) => void;
   register: (data: {
@@ -411,6 +412,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         accessToken,
         role,
+        preferredLanguage: user?.preferredLanguage ?? 'en',
         userLocation,
         setUserLocation: persistLocation,
         register,

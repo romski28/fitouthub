@@ -762,7 +762,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [showAssistModal, setShowAssistModal] = useState(false);
   const [assistSubmitting, setAssistSubmitting] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
-  const { isLoggedIn, userLocation, user, accessToken } = useAuth();
+  const { isLoggedIn, userLocation, user, accessToken, preferredLanguage } = useAuth();
   const { openLoginModal, openJoinModal } = useAuthModalControl();
   const isAdminTester = user?.role === 'admin';
   const visionQuotaScopeKey = user?.role === 'client' && user?.id
@@ -1527,8 +1527,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         },
         body: JSON.stringify(
           isAdminTester
-            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls }
-            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls },
+            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls, preferredLanguage }
+            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls, preferredLanguage },
         ),
       });
       if (!response.ok) {

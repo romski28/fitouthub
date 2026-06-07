@@ -49,7 +49,7 @@ export class AiController {
 
   @Post('sandbox/requirements')
   @UseGuards(OptionalCombinedAuthGuard)
-  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; mode?: 'structured' | 'conversational'; imageUrls?: string[] }, @Request() req: any) {
+  async previewRequirements(@Body() body: { prompt?: string; sessionId?: string; intakeId?: string; mode?: 'structured' | 'conversational'; imageUrls?: string[]; preferredLanguage?: string }, @Request() req: any) {
     const userId: string | undefined = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub ?? undefined;
     const userRole: string | undefined = req?.user?.role;
     const ipAddress = ((req?.headers?.['x-forwarded-for'] as string) || req?.ip || '')
@@ -63,6 +63,7 @@ export class AiController {
       userRole,
       ipAddress,
       mode: body?.mode ?? 'structured',
+      preferredLanguage: body?.preferredLanguage,
     });
   }
 

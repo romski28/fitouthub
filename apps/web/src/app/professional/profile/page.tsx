@@ -861,6 +861,7 @@ export default function ProfessionalProfilePage() {
                 >
                   <option value="en">English</option>
                   <option value="zh-HK">Cantonese (Traditional Chinese)</option>
+                  <option value="zh-CN">Mandarin (Simplified Chinese)</option>
                 </select>
               </div>
 

@@ -77,8 +77,10 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   const refreshInFlightRef = useRef(false);
   const lastRefreshAttemptAtRef = useRef(0);
 
-  const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' => {
-    return language === 'zh-HK' ? 'zh-HK' : 'en';
+  const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' | 'zh-CN' => {
+    if (language === 'zh-HK') return 'zh-HK';
+    if (language === 'zh-CN') return 'zh-CN';
+    return 'en';
   };
 
   const applyPreferredLocale = (language?: string | null) => {

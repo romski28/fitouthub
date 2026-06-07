@@ -1,0 +1,113 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "取消",
+    "submit": "提交",
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步",
+    "close": "关闭",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "view": "查看",
+    "search": "搜索",
+    "filter": "筛选",
+    "clear": "清除",
+    "all": "全部",
+    "none": "无",
+    "yes": "是",
+    "no": "否",
+    "optional": "选填",
+    "required": "必填"
+  },
+  "nav": {
+    "home": "首页",
+    "projects": "项目",
+    "professionals": "专业人士",
+    "docs": "文档及工具",
+    "profile": "个人资料",
+    "logout": "退出",
+    "login": "登录",
+    "signup": "注册",
+    "admin": "管理员",
+    "messaging": "消息"
+  },
+  "auth": {
+    "login": {
+      "title": "登录",
+      "email": "电邮地址",
+      "password": "密码",
+      "submit": "登录",
+      "noAccount": "还没有帐户?",
+      "forgotPassword": "忘记密码?",
+      "success": "欢迎回来!"
+    },
+    "signup": {
+      "title": "创建帐户",
+      "firstName": "名字",
+      "email": "电邮",
+      "submit": "创建帐户",
+      "haveAccount": "已有帐户?"
+    }
+  },
+  "project": {
+    "create": {
+      "title": "创建项目",
+      "heading": "开始您的项目",
+      "projectName": "项目名称",
+      "location": "地点",
+      "budget": "预算 (人民币)",
+      "submit": "创建",
+      "success": "创建成功!"
+    },
+    "list": {
+      "title": "我的项目",
+      "empty": "暂无项目"
+    }
+  },
+  "professional": {
+    "dashboard": {
+      "title": "专业人士仪表板",
+      "myProjects": "我的项目",
+      "pendingQuotes": "待处理报价"
+    },
+    "profile": {
+      "title": "专业人士资料",
+      "businessName": "公司名称"
+    }
+  },
+  "financial": {
+    "escrow": {
+      "title": "托管",
+      "amount": "金额 (人民币)"
+    },
+    "payment": {
+      "title": "付款",
+      "request": "付款要求",
+      "approved": "已批准",
+      "paid": "已付款"
+    }
+  },
+  "admin": {
+    "dashboard": "管理员仪表板",
+    "messaging": {
+      "title": "消息"
+    }
+  },
+  "chat": {
+    "title": "消息",
+    "send": "发送"
+  },
+  "errors": {
+    "generic": "发生错误",
+    "registrationFailed": "注册失败"
+  },
+  "validation": {
+    "required": "此栏为必填",
+    "passwordMismatch": "密码不相符"
+  }
+}

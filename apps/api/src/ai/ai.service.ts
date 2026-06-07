@@ -966,7 +966,7 @@ OUTPUT SCHEMA
    * risks, recommendations, and next questions. Has context so it won't
    * repeat obvious facts (e.g., "call a plumber" when plumber already listed).
    */
-  private buildAnalysisPrompt(facts: Record<string, unknown>) {
+  private buildAnalysisPrompt(facts: Record<string, unknown>, preferredLanguage?: string) {
     const trades = Array.isArray(facts.trades) ? facts.trades : [];
     const scope = typeof facts.scope === 'string' ? facts.scope : (typeof facts.summary === 'string' ? facts.summary : '');
     const title = typeof facts.title === 'string' ? facts.title : '';
@@ -981,9 +981,13 @@ OUTPUT SCHEMA
     const modeLine = modeSuggested ? `\nProject mode: ${modeSuggested}` : '';
     const locationLine = locationPrimary ? `\nLocation: ${locationPrimary}` : '';
 
+    const langNote = preferredLanguage && preferredLanguage !== 'en'
+      ? `\n\nLANGUAGE: You MUST respond in ${preferredLanguage === 'zh-HK' ? 'Cantonese (Traditional Chinese, zh-HK)' : 'Mandarin (Simplified Chinese, zh-CN)'}. All analysis text (concerns, mitigations, recommendations, next questions) should be in this language.`
+      : '';
+
     const systemPrompt = `You are Mimo Safety & Risk Analyst.
 
-You have ALREADY extracted the core project facts. Your job is to provide ONLY the analysis layer — safety assessment, risks, assumptions, recommendations, and next questions.
+You have ALREADY extracted the core project facts. Your job is to provide ONLY the analysis layer — safety assessment, risks, assumptions, recommendations, and next questions.${langNote}
 
 DO NOT repeat or question the trades. DO NOT suggest calling a trade that is already listed. Instead, provide useful, specific guidance based on the known facts.
 
@@ -2396,13 +2400,20 @@ OUTPUT FORMAT (JSON only)
     timeoutMs: number;
     maxOutputTokens: number;
     factsPromptWrapper: { systemPrompt: string; allowedTradesCount: number; locationEntryCount: number };
+    preferredLanguage?: string;
   }) {
-    const { requestId, trimmedPrompt, timeoutMs, maxOutputTokens, factsPromptWrapper } = params;
+    const { requestId, trimmedPrompt, timeoutMs, maxOutputTokens, factsPromptWrapper, preferredLanguage } = params;
     const pass1Start = Date.now();
+
+    const langInstruction = preferredLanguage && preferredLanguage !== 'en'
+      ? `\n\nLANGUAGE: The user prefers ${preferredLanguage === 'zh-HK' ? 'Cantonese (Traditional Chinese)' : 'Mandarin (Simplified Chinese)'}. Detect the actual language of the input and set "language" accordingly.`
+      : '\n\nLANGUAGE: Detect the input language and set "language" to en, zh-HK, zh-CN, or mixed.';
+
+    const pass1SystemPrompt = factsPromptWrapper.systemPrompt + langInstruction;
 
     // Pass 1 — Facts extraction
     const pass1Messages: DeepSeekMessage[] = [
-      { role: 'system', content: factsPromptWrapper.systemPrompt },
+      { role: 'system', content: pass1SystemPrompt },
       { role: 'user', content: trimmedPrompt },
     ];
 
@@ -2418,7 +2429,7 @@ OUTPUT FORMAT (JSON only)
     this.logger.log(`[${requestId}] Pass1 facts: trades=${JSON.stringify(facts.trades)} mode=${facts.modeSuggested} hasProject=${!!facts.project}`);
 
     // Pass 2 — Analysis with context
-    const analysisPrompt = this.buildAnalysisPrompt(facts);
+    const analysisPrompt = this.buildAnalysisPrompt(facts, preferredLanguage);
     this.logger.log(`[${requestId}] Pass2 prompt length=${analysisPrompt.length}`);
     const pass2Messages: DeepSeekMessage[] = [
       { role: 'system', content: analysisPrompt },
@@ -2475,7 +2486,7 @@ OUTPUT FORMAT (JSON only)
     };
   }
 
-  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[]; mode?: 'structured' | 'conversational' }) {
+  async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[]; mode?: 'structured' | 'conversational'; preferredLanguage?: string }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       throw new BadRequestException('Prompt is required');
@@ -2581,6 +2592,7 @@ OUTPUT FORMAT (JSON only)
           timeoutMs,
           maxOutputTokens,
           factsPromptWrapper,
+          preferredLanguage: context?.preferredLanguage,
         });
         output = pipelineResult.output;
         durationMs = pipelineResult.durationMs;

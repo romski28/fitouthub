@@ -4,8 +4,24 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   // Parse locale from cookie or Accept-Language header
   const rawLocale = request.cookies.get('NEXT_LOCALE')?.value;
-  const locale = (rawLocale === 'zh-CN' ? 'zh-HK' : rawLocale) ||
-    (request.headers.get('accept-language')?.includes('zh') ? 'zh-HK' : 'en');
+  // Normalize: treat zh-HK / zh-TW / zh-Hant as zh-HK, zh-CN / zh-Hans as zh-CN
+  const normalizeLocale = (raw: string | undefined): string => {
+    if (!raw) return '';
+    if (raw === 'zh-HK' || raw === 'zh-TW' || raw === 'zh-Hant' || raw === 'zh') return 'zh-HK';
+    if (raw === 'zh-CN' || raw === 'zh-Hans') return 'zh-CN';
+    return raw;
+  };
+  
+  // Detect from Accept-Language header
+  const detectFromHeader = (header: string | null): string => {
+    if (!header) return 'en';
+    if (header.includes('zh-HK') || header.includes('zh-TW') || header.includes('zh-Hant')) return 'zh-HK';
+    if (header.includes('zh-CN') || header.includes('zh-Hans')) return 'zh-CN';
+    if (header.includes('zh')) return 'zh-HK'; // generic zh → default to HK
+    return 'en';
+  };
+  
+  const locale = normalizeLocale(rawLocale) || detectFromHeader(request.headers.get('accept-language'));
   
   // Set locale cookie if not already set
   const response = NextResponse.next();
