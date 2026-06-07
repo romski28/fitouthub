@@ -2797,7 +2797,7 @@ OUTPUT FORMAT (JSON only)
             rawPrompt: trimmedPrompt,
             userId: userId ?? null,
             sessionId: sessionId ?? null,
-            model: payload.model || model,
+            model,
             durationMs,
             promptTokens: usage.prompt_tokens ?? null,
             completionTokens: usage.completion_tokens ?? null,
@@ -2840,7 +2840,7 @@ OUTPUT FORMAT (JSON only)
       return {
         requestId,
         intakeId,
-        model: payload.model || model,
+        model,
         durationMs,
         usage: {
           promptTokens: usage.prompt_tokens ?? null,
