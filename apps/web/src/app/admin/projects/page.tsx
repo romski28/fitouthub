@@ -591,6 +591,14 @@ export default function AdminProjectsPage() {
 
       <div className="min-h-screen pb-16">
         <div className="mx-auto max-w-7xl space-y-5 px-3 py-6 sm:px-6 lg:px-8">
+          {/* Admin navbar fallback */}
+          <div className="flex items-center gap-3 text-sm bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+            <Link href="/admin" className="font-semibold text-slate-900 hover:text-slate-700">Admin Portal</Link>
+            <span className="text-slate-300">/</span>
+            <Link href="/admin?tab=data-control" className="text-slate-600 hover:text-slate-800">Data Control</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-500">Projects</span>
+          </div>
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">

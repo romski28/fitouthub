@@ -250,13 +250,18 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <Link href="/admin/projects" className="text-sm text-blue-600 hover:underline">
-          ← Back to admin projects
-        </Link>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-500">ID: {project.id}</span>
+      {/* Admin navbar fallback */}
+      <div className="flex items-center justify-between flex-wrap gap-3 bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+        <div className="flex items-center gap-3 text-sm">
+          <Link href="/admin" className="font-semibold text-slate-900 hover:text-slate-700">Admin Portal</Link>
+          <span className="text-slate-300">/</span>
+          <Link href="/admin?tab=data-control" className="text-slate-600 hover:text-slate-800">Data Control</Link>
+          <span className="text-slate-300">/</span>
+          <Link href="/admin/projects" className="text-slate-600 hover:text-slate-800">Projects</Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-500">{project?.projectName || '...'}</span>
         </div>
+        <span className="text-xs text-slate-400">ID: {project.id}</span>
       </div>
 
       <ProjectInfoCard
