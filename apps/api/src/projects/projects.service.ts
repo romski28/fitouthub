@@ -10144,7 +10144,7 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       return deletedProject;
-    });
+    }, { timeout: 30000, maxWait: 5000 });
 
     const filesCleanedUp = this.extractUploadFilepaths(fileCandidates).length;
     await this.deleteProjectFiles(fileCandidates);

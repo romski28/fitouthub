@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-8724fd19",
+    "date": "2026-06-07T09:47:06+08:00",
+    "title": "Fix: increase hardRemove transaction timeout to 30s to prevent P2028",
+    "summary": "Fix: increase hardRemove transaction timeout to 30s to prevent P2028",
+    "areas": [
+      "api"
+    ],
+    "commit": "8724fd19",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-ce289a6e",
     "date": "2026-06-07T09:08:22+08:00",
     "title": "Fix: calculate nextSequence across ALL milestones (financial + non-financial) for unique constraint",
