@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-07-dedf90d7",
+    "date": "2026-06-07T18:13:32+08:00",
+    "title": "Fix: allow up to 3 follow-up questions in Fast Track, suppress in emergency mode",
+    "summary": "Fix: allow up to 3 follow-up questions in Fast Track, suppress in emergency mode",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "dedf90d7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-07-06f027fe",
     "date": "2026-06-07T17:41:29+08:00",
     "title": "Fix: multi-path resolution for i18n messages directory on Render",

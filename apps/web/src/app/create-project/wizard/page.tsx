@@ -650,7 +650,8 @@ export default function CreateProjectWizardPage() {
         { kind: 'location' },
       ];
 
-      if (wizardMode !== 'classic') {
+      // Skip follow-up questions in emergency mode — go straight to scoping
+      if (wizardMode !== 'classic' && !isEmergency) {
         base.push({ kind: 'followups' });
       }
 
@@ -662,7 +663,7 @@ export default function CreateProjectWizardPage() {
 
       return base;
     },
-    [wizardMode],
+    [wizardMode, isEmergency],
   );
 
   const activeStep = steps[currentStep];

@@ -2756,13 +2756,14 @@ OUTPUT FORMAT (JSON only)
 
       if (parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const parsedObject = parsedOutput as Record<string, unknown>;
+        const maxQuestions = mode === 'structured' ? 3 : 1;
         const proposedQuestions = this.filterRepeatedQuestions(
           [
             ...this.toStringArray(parsedObject.nextQuestions),
             ...this.toStringArray(parsedObject.followUpQuestions),
           ],
           askedQuestions,
-        ).slice(0, 1);
+        ).slice(0, maxQuestions);
 
         parsedObject.nextQuestions = proposedQuestions;
         parsedObject.followUpQuestions = proposedQuestions;
