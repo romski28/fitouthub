@@ -277,12 +277,36 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
       />
 
       {project.aiIntake && (
+        <>
         <ProjectAiPanel
           aiIntake={project.aiIntake}
           mode="admin"
           onAcknowledgeSafety={handleAcknowledgeSafety}
           isAcknowledgingSafety={acknowledgingSafety}
         />
+        <details className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <summary className="px-5 py-3 cursor-pointer text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Raw AI Intake JSON (debug)
+          </summary>
+          <div className="px-5 py-3 border-t border-slate-100 overflow-auto max-h-96">
+            <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono">
+              {JSON.stringify({
+                id: project.aiIntake.id,
+                title: project.aiIntake.title,
+                trades: (project.aiIntake as any).trades,
+                summary: project.aiIntake.summary,
+                scope: project.aiIntake.scope,
+                overallConfidence: project.aiIntake.overallConfidence,
+                risks: (project.aiIntake as any).risks,
+                assumptions: (project.aiIntake as any).assumptions,
+                project: project.aiIntake.project,
+                topLevelSafety: (project.aiIntake as any).safetyAssessment,
+                rawOutput: project.aiIntake.rawOutput,
+              }, null, 2)}
+            </pre>
+          </div>
+        </details>
+        </>
       )}
 
       <ProjectAiScopePanel

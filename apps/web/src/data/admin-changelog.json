@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-07-4fbde420",
+    "date": "2026-06-07T11:53:50+08:00",
+    "title": "Debug: log Pass1/Pass2 outputs, add raw AI intake JSON viewer to admin project page",
+    "summary": "Debug: log Pass1/Pass2 outputs, add raw AI intake JSON viewer to admin project page",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "4fbde420",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/admin/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-07-5529e35b",
     "date": "2026-06-07T11:45:09+08:00",
     "title": "Fix: prevent legacy output re-parse from overwriting two-pass merged safetyAssessment",

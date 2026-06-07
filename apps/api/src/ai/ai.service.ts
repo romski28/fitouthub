@@ -2415,9 +2415,11 @@ OUTPUT FORMAT (JSON only)
     });
 
     const facts = pass1.parsedOutput;
+    this.logger.log(`[${requestId}] Pass1 facts: trades=${JSON.stringify(facts.trades)} mode=${facts.modeSuggested} hasProject=${!!facts.project}`);
 
     // Pass 2 — Analysis with context
     const analysisPrompt = this.buildAnalysisPrompt(facts);
+    this.logger.log(`[${requestId}] Pass2 prompt length=${analysisPrompt.length}`);
     const pass2Messages: DeepSeekMessage[] = [
       { role: 'system', content: analysisPrompt },
       { role: 'user', content: `Original request: ${trimmedPrompt}` },
@@ -2431,6 +2433,10 @@ OUTPUT FORMAT (JSON only)
       label: 'Pass2-Analysis',
     });
 
+    this.logger.log(
+      `[${requestId}] Pass2 analysis: safetyRisk=${pass2.parsedOutput.safetyAssessment?.riskLevel || 'MISSING'} hasRisks=${Array.isArray(pass2.parsedOutput.risks)} hasAssumptions=${Array.isArray(pass2.parsedOutput.assumptions)}`,
+    );
+
     // Merge Pass 1 facts + Pass 2 analysis
     const rawMerged: Record<string, unknown> = {
       ...facts,
@@ -2443,6 +2449,12 @@ OUTPUT FORMAT (JSON only)
 
     // Run through normalizer to move safetyAssessment into project.safetyAssessment etc.
     const merged = this.normalizeParsedOutput(rawMerged) as Record<string, unknown>;
+    const mergedSafety = merged.project && typeof merged.project === 'object'
+      ? (merged.project as Record<string, unknown>).safetyAssessment
+      : undefined;
+    this.logger.log(
+      `[${requestId}] Merged output: safetyInProject=${!!mergedSafety} topSafety=${!!(merged as Record<string, unknown>).safetyAssessment}`,
+    );
 
     const totalDurationMs = Date.now() - pass1Start;
     const totalUsage = {
