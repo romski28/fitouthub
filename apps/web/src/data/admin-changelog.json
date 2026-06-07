@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-ce289a6e",
+    "date": "2026-06-07T09:08:22+08:00",
+    "title": "Fix: calculate nextSequence across ALL milestones (financial + non-financial) for unique constraint",
+    "summary": "Fix: calculate nextSequence across ALL milestones (financial + non-financial) for unique constraint",
+    "areas": [
+      "web"
+    ],
+    "commit": "ce289a6e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-05-b8916892",
     "date": "2026-06-05T10:36:48+08:00",
     "title": "Fix: filter null projectProfessionalId from distinctProjects Set",
