@@ -2429,13 +2429,12 @@ OUTPUT FORMAT (JSON only)
       requestId: `${requestId}_p2`,
       messages: pass2Messages,
       timeoutMs,
-      maxOutputTokens: Math.floor(maxOutputTokens * 0.6),
+      maxOutputTokens: Math.max(maxOutputTokens, 800),
       label: 'Pass2-Analysis',
     });
 
-    this.logger.log(
-      `[${requestId}] Pass2 analysis: safetyRisk=${pass2.parsedOutput.safetyAssessment?.riskLevel || 'MISSING'} hasRisks=${Array.isArray(pass2.parsedOutput.risks)} hasAssumptions=${Array.isArray(pass2.parsedOutput.assumptions)}`,
-    );
+    this.logger.log(`[${requestId}] Pass2 raw (first 300): ${pass2.output.slice(0, 300)}`);
+    this.logger.log(`[${requestId}] Pass2 parsed keys: ${Object.keys(pass2.parsedOutput).join(', ') || 'EMPTY'}`);
 
     // Merge Pass 1 facts + Pass 2 analysis
     const rawMerged: Record<string, unknown> = {
