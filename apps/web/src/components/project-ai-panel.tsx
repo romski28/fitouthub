@@ -126,6 +126,13 @@ export function ProjectAiPanel({
   const keyFacts = toStringArray(rawOutput?.keyFacts).slice(0, 4);
   const missingInfo = toStringArray(rawOutput?.missingInfo).slice(0, 3);
   const overallConfidence = typeof aiIntake.overallConfidence === 'number' ? aiIntake.overallConfidence : null;
+  const detectedLanguage = typeof rawOutput?.language === 'string' ? rawOutput.language : null;
+  const languageLabel: Record<string, string> = {
+    en: 'English',
+    'zh-HK': '廣東話',
+    'zh-CN': '普通话',
+    mixed: 'English / 中文',
+  };
   const safety = parseSafetyAssessment(aiIntake);
   const normalizedRiskLevel = (safety?.riskLevel || '').toLowerCase();
   const safetyGuidance = buildSafetyGuidanceFromAssessment(safety);
@@ -170,7 +177,14 @@ export function ProjectAiPanel({
       <div className={`rounded-lg border border-violet-500/40 bg-violet-500/15 p-4 ${className}`}>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-bold text-violet-200">From AI (Full Intake)</h3>
-          {aiIntake.id && <span className="text-[11px] text-violet-300/70">Intake ID: {aiIntake.id}</span>}
+          <div className="flex items-center gap-2">
+            {detectedLanguage && detectedLanguage !== 'en' && (
+              <span className="text-[10px] bg-violet-500/20 text-violet-200 px-2 py-0.5 rounded-full">
+                {languageLabel[detectedLanguage] || detectedLanguage}
+              </span>
+            )}
+            {aiIntake.id && <span className="text-[11px] text-violet-300/70">Intake ID: {aiIntake.id}</span>}
+          </div>
         </div>
         {(title || summary) && (
           <div className="mb-3 rounded-lg border border-violet-500/25 bg-slate-950/25 p-3">

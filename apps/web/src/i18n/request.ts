@@ -1,8 +1,21 @@
 import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
+import en from './messages/en';
+import zhHK from './messages/zh-HK';
 
-// Define messages directly to avoid import issues
-const messages = {
+const messages = { en, 'zh-HK': zhHK } as const;
+
+// Original inline messages moved to messages/en.ts and messages/zh-HK.ts
+// Add new translations in those files, not here.
+/*
+  en: {
+    // see messages/en.ts
+  },
+  "zh-HK": {
+    // see messages/zh-HK.ts
+  }
+*/
+const _legacy = {
   en: {
     "common": {
       "loading": "Loading...",
@@ -1127,7 +1140,7 @@ const messages = {
       "cancel": "取消"
     }
   }
-} as const;
+} as const; // _legacy — kept only for reference; active messages come from imports above
 
 export default getRequestConfig(async () => {
   // Get locale from cookie first, then Accept-Language header

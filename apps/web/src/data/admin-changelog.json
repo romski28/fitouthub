@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-07-59dc2f2f",
+    "date": "2026-06-07T15:40:24+08:00",
+    "title": "i18n: split request.ts into messages/en.ts + messages/zh-HK.ts, add language badge to AI panel",
+    "summary": "i18n: split request.ts into messages/en.ts + messages/zh-HK.ts, add language badge to AI panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "59dc2f2f",
+    "files": [
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/i18n/messages/en.ts",
+      "apps/web/src/i18n/messages/zh-HK.ts",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-802890b8",
     "date": "2026-06-07T15:19:31+08:00",
     "title": "i18n: add zh-CN (Simplified Chinese) locale, home page greetings, AI language detection & response language enforcement",
