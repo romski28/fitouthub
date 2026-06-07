@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-07-48e016e3",
+    "date": "2026-06-07T16:09:51+08:00",
+    "title": "Fix: convert i18n messages from .ts to .json for Vercel Turbopack compatibility",
+    "summary": "Fix: convert i18n messages from .ts to .json for Vercel Turbopack compatibility",
+    "areas": [
+      "web"
+    ],
+    "commit": "48e016e3",
+    "files": [
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-4dfe68db",
     "date": "2026-06-07T15:57:00+08:00",
     "title": "Fix: remove as const from message files for Vercel server-component compatibility",

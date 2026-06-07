@@ -1,8 +1,8 @@
 import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
-import en from './messages/en';
-import zhHK from './messages/zh-HK';
-import zhCN from './messages/zh-CN';
+import en from './messages/en.json';
+import zhHK from './messages/zh-HK.json';
+import zhCN from './messages/zh-CN.json';
 
 const messages: Record<string, Record<string, unknown>> = { en, 'zh-HK': zhHK, 'zh-CN': zhCN };
 
