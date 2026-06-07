@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-06f027fe",
+    "date": "2026-06-07T17:41:29+08:00",
+    "title": "Fix: multi-path resolution for i18n messages directory on Render",
+    "summary": "Fix: multi-path resolution for i18n messages directory on Render",
+    "areas": [
+      "api"
+    ],
+    "commit": "06f027fe",
+    "files": [
+      "apps/api/src/admin/admin-i18n.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-e737f9b2",
     "date": "2026-06-07T17:20:09+08:00",
     "title": "Admin: add i18n editor page with live JSON editing for all three locales",
