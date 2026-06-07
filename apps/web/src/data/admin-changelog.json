@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-efb0bfac",
+    "date": "2026-06-07T18:30:38+08:00",
+    "title": "Admin debug: add nextQuestions and followUpQuestions to AI intake JSON viewer",
+    "summary": "Admin debug: add nextQuestions and followUpQuestions to AI intake JSON viewer",
+    "areas": [
+      "web"
+    ],
+    "commit": "efb0bfac",
+    "files": [
+      "apps/web/src/app/admin/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-07-91e7903f",
     "date": "2026-06-07T18:21:10+08:00",
     "title": "Fix: narrow question filters to avoid killing legitimate follow-ups, increase wizard cap to 3",

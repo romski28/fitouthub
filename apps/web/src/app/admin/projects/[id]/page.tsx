@@ -299,6 +299,8 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
                 overallConfidence: project.aiIntake.overallConfidence,
                 risks: (project.aiIntake as any).risks,
                 assumptions: (project.aiIntake as any).assumptions,
+                nextQuestions: (project.aiIntake as any).nextQuestions,
+                followUpQuestions: (project.aiIntake as any).followUpQuestions,
                 project: project.aiIntake.project,
                 topLevelSafety: (project.aiIntake as any).safetyAssessment,
                 rawOutput: project.aiIntake.rawOutput,
