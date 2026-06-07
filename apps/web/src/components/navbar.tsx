@@ -304,7 +304,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-md hover:bg-slate-100"
-              aria-label="Toggle menu"
+              aria-label={t('toggleMenu')}
             >
               <svg
                 className="w-6 h-6 text-slate-700"

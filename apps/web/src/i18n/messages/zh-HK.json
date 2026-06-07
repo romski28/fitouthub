@@ -39,7 +39,10 @@
     "adminPortal": "管理員入口",
     "professional": "專業人士",
     "editProfessional": "編輯專業人士資料",
-    "messaging": "訊息"
+    "messaging": "訊息",
+    "calendar": "日曆",
+    "toggleMenu": "切換選單",
+    "editProfessionalInfo": "編輯專業人士資料"
   },
   "auth": {
     "join": {
@@ -467,6 +470,28 @@
           "description": "安全付款和認證專業人士"
         }
       }
+    },
+    "welcome": {
+      "heading": "你好，歡迎",
+      "thinking": "Mimo 思考中...",
+      "tagline": "搬入、搬出，以及其間的一切。",
+      "loginCta": "已有帳戶？登入",
+      "joinCta": "準備預訂項目？加入",
+      "aiCta": "想試試我們的 AI？",
+      "aboutCta": "想了解更多關於 Mimo？"
+    },
+    "roles": {
+      "heading": "選擇你的路徑",
+      "clientLabel": "客戶",
+      "clientTitle": "規劃及掌控你的裝修",
+      "clientDesc": "比較報價、追蹤進度，並使用託管付款。",
+      "proLabel": "專業人士",
+      "proTitle": "贏取優質裝修項目",
+      "proDesc": "展示你的技能、管理里程碑，並減少行政工作。"
+    },
+    "emergency": {
+      "help": "緊急協助",
+      "title": "緊急 - 立即獲取幫助"
     }
   },
   "footer": {

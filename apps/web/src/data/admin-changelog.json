@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-06-07-e1ac7945",
+    "date": "2026-06-07T16:20:12+08:00",
+    "title": "i18n: fix language switcher labels, translate home page welcome/roles/emergency sections",
+    "summary": "i18n: fix language switcher labels, translate home page welcome/roles/emergency sections",
+    "areas": [
+      "web"
+    ],
+    "commit": "e1ac7945",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/language-switcher.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-06-07-48e016e3",
     "date": "2026-06-07T16:09:51+08:00",
     "title": "Fix: convert i18n messages from .ts to .json for Vercel Turbopack compatibility",

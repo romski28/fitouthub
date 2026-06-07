@@ -85,8 +85,8 @@ export default function Home() {
               <button
                 onClick={() => setEmergencyModalOpen(true)}
                 className="relative flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#DC143C] bg-[#FCF8EE] text-2xl text-[#DC143C] shadow-lg transition hover:bg-[#DC143C] hover:text-[#FCF8EE]"
-                aria-label="Emergency help"
-                title="Emergency - Get help now"
+                aria-label={t('emergency.help')}
+                title={t('emergency.title')}
               >
                 {"\u{1F6A8}"}
               </button>
@@ -111,7 +111,7 @@ export default function Home() {
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
                   <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    Hi and Welcome
+                    {t('welcome.heading')}
                   </p>
                   <h2 className="text-2xl font-bold text-slate-900">
                     <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
@@ -125,7 +125,7 @@ export default function Home() {
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
                       </span>
-                      <span>Mimo is thinking...</span>
+                      <span>{t('welcome.thinking')}</span>
                     </div>
                   )}
                 </div>
@@ -139,7 +139,7 @@ export default function Home() {
         <section className="-mx-6 px-6">
           <div className="mimo-panel mx-auto max-w-6xl p-6 sm:p-8">
             <div className="space-y-4">
-              <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
+              <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">{t('roles.heading')}</p>
               <div className="grid gap-4 md:grid-cols-2">
                 <Link
                   href="/get-started"
@@ -148,9 +148,9 @@ export default function Home() {
                   <div className="pointer-events-none absolute bottom-0 -left-6 w-28 select-none">
                     <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={112} height={160} className="object-contain" />
                   </div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
-                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Plan and control your renovation</p>
-                  <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-red-700">{t('roles.clientLabel')}</p>
+                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">{t('roles.clientTitle')}</p>
+                  <p className="mt-2 text-sm text-[#4E4A42]">{t('roles.clientDesc')}</p>
                 </Link>
 
                 <Link
@@ -160,9 +160,9 @@ export default function Home() {
                   <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
                     <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={112} height={160} className="object-contain" />
                   </div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
-                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Win premium renovation projects</p>
-                  <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-blue-700">{t('roles.proLabel')}</p>
+                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">{t('roles.proTitle')}</p>
+                  <p className="mt-2 text-sm text-[#4E4A42]">{t('roles.proDesc')}</p>
                 </Link>
               </div>
             </div>
@@ -186,14 +186,14 @@ export default function Home() {
               </div>
 
               <div className="relative z-10 space-y-4 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Hi and Welcome</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{t('welcome.heading')}</p>
                 <h2 className="min-h-[80px] text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
                   <span key={greetingIndex} className="inline-block animate-[welcomePop_420ms_ease-out]">
                     {WELCOME_GREETINGS[greetingIndex]}
                   </span>
                 </h2>
                 <p className="text-base font-semibold text-slate-700 sm:text-lg">
-                  Move In, Move Out, and everything in between.
+                  {t('welcome.tagline')}
                 </p>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -201,25 +201,25 @@ export default function Home() {
                     href="/login"
                     className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-slate-800"
                   >
-                    You got an account? Login
+                    {t('welcome.loginCta')}
                   </Link>
                   <Link
                     href="/get-started"
                     className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-[#F97362] bg-[#F97362] px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-[#e8624f]"
                   >
-                    Ready to book a project? Join
+                    {t('welcome.joinCta')}
                   </Link>
                   <a
                     href="#project-prompt"
                     className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-emerald-400 hover:text-emerald-700"
                   >
-                    Want to play with our AI?
+                    {t('welcome.aiCta')}
                   </a>
                   <a
                     href="#why-choose-us"
                     className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-500"
                   >
-                    Want to know more about Mimo?
+                    {t('welcome.aboutCta')}
                   </a>
                 </div>
               </div>

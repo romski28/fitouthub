@@ -39,7 +39,10 @@
     "adminPortal": "Admin Portal",
     "professional": "Professional",
     "editProfessional": "Edit Professional Info",
-    "messaging": "Messaging"
+    "messaging": "Messaging",
+    "calendar": "Calendar",
+    "toggleMenu": "Toggle menu",
+    "editProfessionalInfo": "Edit Professional Info"
   },
   "auth": {
     "join": {
@@ -469,6 +472,28 @@
           "description": "Secure payments and verified professionals"
         }
       }
+    },
+    "welcome": {
+      "heading": "Hi and Welcome",
+      "thinking": "Mimo is thinking...",
+      "tagline": "Move In, Move Out, and everything in between.",
+      "loginCta": "You got an account? Login",
+      "joinCta": "Ready to book a project? Join",
+      "aiCta": "Want to play with our AI?",
+      "aboutCta": "Want to know more about Mimo?"
+    },
+    "roles": {
+      "heading": "Choose your path",
+      "clientLabel": "Client",
+      "clientTitle": "Plan and control your renovation",
+      "clientDesc": "Compare quotes, track progress, and use escrow-backed payments.",
+      "proLabel": "Professional",
+      "proTitle": "Win premium renovation projects",
+      "proDesc": "Showcase your trade, manage milestones, and reduce admin overhead."
+    },
+    "emergency": {
+      "help": "Emergency help",
+      "title": "Emergency - Get help now"
     }
   },
   "footer": {

@@ -39,7 +39,10 @@
     "adminPortal": "管理员入口",
     "professional": "专业人士",
     "editProfessional": "编辑专业人士資料",
-    "messaging": "消息"
+    "messaging": "消息",
+    "calendar": "日历",
+    "toggleMenu": "切换菜单",
+    "editProfessionalInfo": "编辑专业人士资料"
   },
   "auth": {
     "join": {
@@ -467,6 +470,28 @@
           "description": "安全付款和认证专业人士"
         }
       }
+    },
+    "welcome": {
+      "heading": "你好，欢迎",
+      "thinking": "Mimo 思考中...",
+      "tagline": "搬入、搬出，以及其间的一切。",
+      "loginCta": "已有帐户？登录",
+      "joinCta": "准备预订项目？加入",
+      "aiCta": "想试试我们的 AI？",
+      "aboutCta": "想了解更多关于 Mimo？"
+    },
+    "roles": {
+      "heading": "选择你的路径",
+      "clientLabel": "客户",
+      "clientTitle": "规划及掌控你的装修",
+      "clientDesc": "比较报价、追踪进度，并使用托管付款。",
+      "proLabel": "专业人士",
+      "proTitle": "赢取优质装修项目",
+      "proDesc": "展示你的技能、管理里程碑，并减少行政工作。"
+    },
+    "emergency": {
+      "help": "紧急协助",
+      "title": "紧急 - 立即获取帮助"
     }
   },
   "footer": {
