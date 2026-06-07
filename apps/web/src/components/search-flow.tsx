@@ -108,7 +108,8 @@ const normalizeQuestionList = (value: unknown): string[] =>
 
 const isLocationFollowUpQuestion = (question: string): boolean => {
   const normalized = question.toLowerCase();
-  return /(location|district|area|region|neighbou?rhood|where\s+is|where\s+in|hong\s*kong|hk\b|kowloon|new\s*territories|island|address|postal|postcode|zip|estate|building)/i.test(normalized);
+  // Only filter questions actually asking for location — don't filter every mention of 'area' or 'building'
+  return /(which\s+(district|area|region|location)|what\s+(district|area|region|location)|where\s+(is|are|in)\s+(the|your|this)|what\s+is\s+the\s+address|postal\s*code|zip\s*code|neighbourhood|hong\s*kong\s+island|kowloon|new\s*territories)/i.test(normalized);
 };
 
 const sanitizeFollowUpQuestions = (questions: string[]): string[] =>

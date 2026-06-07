@@ -137,12 +137,12 @@ const normalizeQuestions = (input: unknown): string[] =>
 
 const isLocationFollowUpQuestion = (question: string): boolean => {
   const normalized = question.toLowerCase();
-  return /(location|district|area|region|neighbou?rhood|where\s+is|where\s+in|hong\s*kong|hk\b|kowloon|new\s*territories|island|address|postal|postcode|zip|estate|building)/i.test(normalized);
+  return /(which\s+(district|area|region|location)|what\s+(district|area|region|location)|where\s+(is|are|in)\s+(the|your|this)|what\s+is\s+the\s+address|postal\s*code|zip\s*code|neighbourhood|hong\s*kong\s+island|kowloon|new\s*territories)/i.test(normalized);
 };
 
 const isBudgetOrTimelineFollowUpQuestion = (question: string): boolean => {
   const normalized = question.toLowerCase();
-  return /(budget|price|cost|how\s+much|spend|timeline|when\s+do\s+you\s+need|completion\s+date|deadline|finish\s+by|site\s*inspection|inspection\s+date|target\s+date|due\s+date)/i.test(normalized);
+  return /(what\s+is\s+(your|the)\s+budget|how\s+much\s+(do|is|are|can|will).*(spend|budget|cost|pay)|when\s+do\s+you\s+need\s+(it|this)|completion\s+date|deadline|finish\s+by|target\s+date|due\s+date)/i.test(normalized);
 };
 
 const sanitizeFollowUpQuestions = (questions: string[]): string[] =>
@@ -554,7 +554,7 @@ export default function CreateProjectWizardPage() {
     }
   }, [wizardMode, currentStep]);
 
-  const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 2), [followUpQuestions]);
+  const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 3), [followUpQuestions]);
 
   const isOfferStillPending = (offerType: ServiceOfferType): boolean => {
     if (pendingServiceOffer !== offerType) return false;

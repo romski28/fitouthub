@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-07-91e7903f",
+    "date": "2026-06-07T18:21:10+08:00",
+    "title": "Fix: narrow question filters to avoid killing legitimate follow-ups, increase wizard cap to 3",
+    "summary": "Fix: narrow question filters to avoid killing legitimate follow-ups, increase wizard cap to 3",
+    "areas": [
+      "web"
+    ],
+    "commit": "91e7903f",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-07-dedf90d7",
     "date": "2026-06-07T18:13:32+08:00",
     "title": "Fix: allow up to 3 follow-up questions in Fast Track, suppress in emergency mode",
