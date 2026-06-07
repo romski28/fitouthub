@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-c2d51dad",
+    "date": "2026-06-07T20:06:23+08:00",
+    "title": "Debug: show ALL parsedOutput keys and actual questions in Render logs",
+    "summary": "Debug: show ALL parsedOutput keys and actual questions in Render logs",
+    "areas": [
+      "api"
+    ],
+    "commit": "c2d51dad",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-00ce356a",
     "date": "2026-06-07T19:48:30+08:00",
     "title": "Debug: log parsedOutput top-level keys and question count before DB save",

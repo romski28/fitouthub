@@ -2825,9 +2825,15 @@ OUTPUT FORMAT (JSON only)
 
       try {
         // Debug: log what's in parsedOutput before saving
+        const po = parsedOutput as Record<string, unknown> | null;
+        const allKeys = po ? Object.keys(po).join(',') : 'N/A';
+        const nq = Array.isArray(po?.nextQuestions) ? po!.nextQuestions as string[] : [];
+        const fuq = Array.isArray(po?.followUpQuestions) ? po!.followUpQuestions as string[] : [];
         this.logger.log(
-          `[${requestId}] Saving rawOutput: hasNextQuestions=${Array.isArray((parsedOutput as any)?.nextQuestions)} count=${Array.isArray((parsedOutput as any)?.nextQuestions) ? (parsedOutput as any).nextQuestions.length : 0} hasSafety=${!!(parsedOutput as any)?.safetyAssessment} hasAssumptions=${Array.isArray((parsedOutput as any)?.assumptions)} topKeys=${parsedOutput && typeof parsedOutput === 'object' ? Object.keys(parsedOutput as object).slice(0, 20).join(',') : 'N/A'}`,
+          `[${requestId}] Saving rawOutput: ALL keys=[${allKeys}]`,
         );
+        if (nq.length > 0) this.logger.log(`[${requestId}] nextQuestions: ${JSON.stringify(nq)}`);
+        if (fuq.length > 0) this.logger.log(`[${requestId}] followUpQuestions: ${JSON.stringify(fuq)}`);
 
         const intake = await this.prisma.aiIntake.create({
           data: {
