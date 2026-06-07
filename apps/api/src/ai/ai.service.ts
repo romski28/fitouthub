@@ -888,6 +888,139 @@ OUTPUT SCHEMA
     };
   }
 
+  /**
+   * Pass 1 — Facts Extraction Prompt
+   * Stripped down, focused only on structured data extraction.
+   * No safety assessment, risks, or recommendations — those come in Pass 2.
+   */
+  private async buildFactsExtractionPrompt() {
+    const allowedTrades = await this.getAllowedTrades();
+    const locationTaxonomy = this.buildCompactLocationTaxonomy();
+    const allowedTradeNames = allowedTrades.map((trade) => trade.name);
+
+    const systemPrompt = `You are Mimo Facts Extractor.
+
+Convert a Hong Kong renovation request into strict JSON. Extract ONLY the core facts — no safety advice, no recommendations.
+
+CRITICAL RULES
+1) Output JSON only.
+2) "trades" must contain exact values from ALLOWED_TRADES only.
+3) If no exact trade exists, add the need to "unmappedNeeds".
+4) Geography is Hong Kong by default.
+5) Unknown values must be null or empty arrays.
+6) Confidence values must be between 0 and 1.
+7) Prefer precision over completeness. Do not hallucinate.
+
+TRADE MINIMIZATION RULE
+- Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
+- Only include a trade if it is explicitly needed based on the user's description.
+- Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
+- EXAMPLE WRONG: "fixing shelves in shower" → Plumber, Tiler, Shower Fitter, Handyman
+- EXAMPLE RIGHT: "fixing shelves in shower" → Handyman ONLY
+
+ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
+HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
+
+OUTPUT SCHEMA
+{
+  "version": "1.0",
+  "language": "en|zh-HK|mixed|unknown",
+  "intent": "new_project|quote_request|advice|unknown",
+  "title": "string|null",
+  "summary": "string|null",
+  "scope": "string|null",
+  "projectScale": "SCALE_1|SCALE_2|SCALE_3|null",
+  "project": {
+    "scopeText": "string|null",
+    "propertyType": "string|null",
+    "scopeLevel": "room|floor|unit|shop|office|building|house|apartment|mixed|null",
+    "affectedAreas": ["string"],
+    "works": ["string"],
+    "deliverables": ["string"]
+  },
+  "size": { "value": number|null, "unit": "sqft|sqm|null", "rawText": "string|null", "confidence": number },
+  "budget": { "currency": "HKD|USD|CNY|unknown|null", "min": number|null, "max": number|null, "rawText": "string|null", "confidence": number },
+  "timeline": { "durationText": "string|null", "startText": "string|null", "deadlineText": "string|null", "confidence": number },
+  "location": { "country": "Hong Kong", "primary": "string|null", "secondary": "string|null", "tertiary": "string|null", "rawText": "string|null", "confidence": number },
+  "trades": ["string"],
+  "tradeDetails": [{ "trade": "string", "confidence": number }],
+  "unmappedNeeds": ["string"],
+  "keyFacts": ["string"],
+  "missingInfo": ["string"],
+  "overallConfidence": number,
+  "modeSuggested": "repair|refresh|design",
+  "modeConfidence": number,
+  "modeReasoning": "string"
+}`;
+
+    return {
+      systemPrompt,
+      allowedTradesCount: allowedTrades.length,
+      locationEntryCount: Object.keys(locationTaxonomy).length,
+    };
+  }
+
+  /**
+   * Pass 2 — Analysis Prompt
+   * Takes Pass 1's structured facts as input. Focused on safety assessment,
+   * risks, recommendations, and next questions. Has context so it won't
+   * repeat obvious facts (e.g., "call a plumber" when plumber already listed).
+   */
+  private buildAnalysisPrompt(facts: Record<string, unknown>) {
+    const trades = Array.isArray(facts.trades) ? facts.trades : [];
+    const scope = typeof facts.scope === 'string' ? facts.scope : (typeof facts.summary === 'string' ? facts.summary : '');
+    const title = typeof facts.title === 'string' ? facts.title : '';
+    const modeSuggested = typeof facts.modeSuggested === 'string' ? facts.modeSuggested : '';
+    const locationPrimary = facts.location && typeof facts.location === 'object'
+      ? (facts.location as Record<string, unknown>).primary
+      : null;
+
+    const tradesList = trades.length > 0 ? trades.join(', ') : 'unknown';
+    const scopeSummary = scope ? `\nScope: ${scope}` : '';
+    const titleLine = title ? `\nTitle: ${title}` : '';
+    const modeLine = modeSuggested ? `\nProject mode: ${modeSuggested}` : '';
+    const locationLine = locationPrimary ? `\nLocation: ${locationPrimary}` : '';
+
+    const systemPrompt = `You are Mimo Safety & Risk Analyst.
+
+You have ALREADY extracted the core project facts. Your job is to provide ONLY the analysis layer — safety assessment, risks, assumptions, recommendations, and next questions.
+
+DO NOT repeat or question the trades. DO NOT suggest calling a trade that is already listed. Instead, provide useful, specific guidance based on the known facts.
+
+KNOWN FACTS (already extracted — do NOT change or question these):
+Trades needed: ${tradesList}${scopeSummary}${titleLine}${modeLine}${locationLine}
+
+CRITICAL RULES
+1) Output JSON only.
+2) Do NOT suggest "call a plumber" if Plumber is already in the trades list. Instead provide specific advice relevant to that trade (e.g., "Ask plumber to check pipe condition behind cabinet").
+3) Safety concerns must be specific to the described work, not generic.
+4) Temporary mitigations must be practical, simple, and non-technical.
+5) If there is possible immediate danger, advise leaving the area / isolating use only if safe.
+6) Never suggest DIY repair steps for dangerous conditions.
+7) Keep arrays concise: assumptions/risks max 3 items, concerns max 3 items, temporaryMitigations max 4 items.
+8) nextQuestions should be intelligent follow-ups that the facts don't answer — not redundant questions about trades already identified.
+
+OUTPUT SCHEMA
+{
+  "assumptions": ["string"],
+  "risks": ["string"],
+  "nextQuestions": ["string"],
+  "followUpQuestions": ["string"],
+  "safetyAssessment": {
+    "riskLevel": "none|low|medium|high|critical",
+    "isDangerous": boolean,
+    "concerns": ["string"],
+    "temporaryMitigations": ["string"],
+    "shouldEscalateEmergency": boolean,
+    "emergencyReason": "string|null",
+    "requiresImmediateHumanContact": boolean,
+    "disclaimer": "string|null"
+  }
+}`;
+
+    return systemPrompt;
+  }
+
   private async buildConversationalPrompt() {
     const allowedTrades = await this.getAllowedTrades();
     const locationTaxonomy = this.buildCompactLocationTaxonomy();
@@ -2180,6 +2313,153 @@ OUTPUT FORMAT (JSON only)
     }
   }
 
+  /**
+   * Run a single DeepSeek pass with the given messages and return the parsed output.
+   */
+  private async runDeepSeekPass(params: {
+    requestId: string;
+    messages: DeepSeekMessage[];
+    timeoutMs: number;
+    maxOutputTokens: number;
+    label: string;
+  }): Promise<{ output: string; parsedOutput: Record<string, unknown>; durationMs: number; usage: Record<string, number> }> {
+    const { requestId, messages, timeoutMs, maxOutputTokens, label } = params;
+    const apiKey = process.env.DEEPSEEK_API_KEY!;
+    const endpoint = this.resolveDeepSeekChatEndpoint();
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+    const passStartedAt = Date.now();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      this.logger.log(`[${requestId}] ${label} started`);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.2,
+          max_tokens: maxOutputTokens,
+          response_format: { type: 'json_object' },
+        }),
+        signal: controller.signal,
+      });
+
+      const rawText = await response.text();
+      if (!response.ok) {
+        this.logger.error(`[${requestId}] ${label} failed status=${response.status}`);
+        throw new ServiceUnavailableException('DeepSeek request failed');
+      }
+
+      let payload: DeepSeekChatResponse;
+      try {
+        payload = JSON.parse(rawText) as DeepSeekChatResponse;
+      } catch {
+        this.logger.error(`[${requestId}] ${label} invalid JSON`);
+        throw new InternalServerErrorException('Invalid DeepSeek response');
+      }
+
+      const output = payload.choices?.[0]?.message?.content?.trim() || '';
+      const durationMs = Date.now() - passStartedAt;
+      const usage = (payload.usage || {}) as Record<string, number>;
+
+      let parsedOutput: Record<string, unknown> = {};
+      if (output) {
+        try {
+          parsedOutput = JSON.parse(output) as Record<string, unknown>;
+        } catch {
+          this.logger.warn(`[${requestId}] ${label} non-parseable JSON`);
+        }
+      }
+
+      this.logger.log(`[${requestId}] ${label} completed durationMs=${durationMs}`);
+      return { output, parsedOutput, durationMs, usage };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * Two-pass pipeline for structured mode:
+   * Pass 1: Extract facts (trades, scope, location, budget, timeline)
+   * Pass 2: Analyze with context (safety, risks, recommendations)
+   * Merges both outputs into a combined result.
+   */
+  private async runTwoPassPipeline(params: {
+    requestId: string;
+    trimmedPrompt: string;
+    timeoutMs: number;
+    maxOutputTokens: number;
+    factsPromptWrapper: { systemPrompt: string; allowedTradesCount: number; locationEntryCount: number };
+  }) {
+    const { requestId, trimmedPrompt, timeoutMs, maxOutputTokens, factsPromptWrapper } = params;
+    const pass1Start = Date.now();
+
+    // Pass 1 — Facts extraction
+    const pass1Messages: DeepSeekMessage[] = [
+      { role: 'system', content: factsPromptWrapper.systemPrompt },
+      { role: 'user', content: trimmedPrompt },
+    ];
+
+    const pass1 = await this.runDeepSeekPass({
+      requestId: `${requestId}_p1`,
+      messages: pass1Messages,
+      timeoutMs,
+      maxOutputTokens,
+      label: 'Pass1-Facts',
+    });
+
+    const facts = pass1.parsedOutput;
+
+    // Pass 2 — Analysis with context
+    const analysisPrompt = this.buildAnalysisPrompt(facts);
+    const pass2Messages: DeepSeekMessage[] = [
+      { role: 'system', content: analysisPrompt },
+      { role: 'user', content: `Original request: ${trimmedPrompt}` },
+    ];
+
+    const pass2 = await this.runDeepSeekPass({
+      requestId: `${requestId}_p2`,
+      messages: pass2Messages,
+      timeoutMs,
+      maxOutputTokens: Math.floor(maxOutputTokens * 0.6),
+      label: 'Pass2-Analysis',
+    });
+
+    // Merge Pass 1 facts + Pass 2 analysis
+    const merged: Record<string, unknown> = {
+      ...facts,
+      ...pass2.parsedOutput,
+      // Ensure trades from Pass 1 are preserved
+      trades: facts.trades || [],
+      tradeDetails: facts.tradeDetails || [],
+      unmappedNeeds: facts.unmappedNeeds || [],
+    };
+
+    const totalDurationMs = Date.now() - pass1Start;
+    const totalUsage = {
+      prompt_tokens: (pass1.usage.prompt_tokens || 0) + (pass2.usage.prompt_tokens || 0),
+      completion_tokens: (pass1.usage.completion_tokens || 0) + (pass2.usage.completion_tokens || 0),
+      total_tokens: (pass1.usage.total_tokens || 0) + (pass2.usage.total_tokens || 0),
+    };
+
+    this.logger.log(
+      `[${requestId}] Two-pass pipeline completed totalDurationMs=${totalDurationMs} p1DurationMs=${pass1.durationMs} p2DurationMs=${pass2.durationMs}`,
+    );
+
+    return {
+      output: pass1.output,  // Pass 1 output is the primary structured response
+      parsedOutput: merged,
+      durationMs: totalDurationMs,
+      usage: totalUsage,
+    };
+  }
+
   async previewRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[]; mode?: 'structured' | 'conversational' }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
@@ -2228,6 +2508,7 @@ OUTPUT FORMAT (JSON only)
     const mode = context?.mode ?? 'structured';
     const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
+    const factsPromptWrapper = mode === 'conversational' ? null : await this.buildFactsExtractionPrompt();
 
     const shouldResetMemory = this.isMemoryResetPrompt(trimmedPrompt);
     const activeThread = shouldResetMemory ? null : await this.findActiveAiThread(context);
@@ -2272,42 +2553,70 @@ OUTPUT FORMAT (JSON only)
         `[${requestId}] DeepSeek request started model=${model} timeoutMs=${timeoutMs} userPromptChars=${trimmedPrompt.length} userMessageChars=${envelope.userMessage.length} systemPromptChars=${promptWrapper.systemPrompt.length} totalMessageChars=${totalMessageChars} allowedTrades=${promptWrapper.allowedTradesCount} locationEntries=${promptWrapper.locationEntryCount}`,
       );
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.2,
-          max_tokens: maxOutputTokens,
-          response_format: { type: 'json_object' },
-        }),
-        signal: controller.signal,
-      });
-
-      const rawText = await response.text();
-      if (!response.ok) {
-        this.logger.error(
-          `[${requestId}] DeepSeek request failed status=${response.status} body=${rawText.slice(0, 800)}`,
-        );
-        throw new ServiceUnavailableException('DeepSeek request failed');
-      }
-
-      let payload: DeepSeekChatResponse;
-      try {
-        payload = JSON.parse(rawText) as DeepSeekChatResponse;
-      } catch {
-        this.logger.error(`[${requestId}] Invalid JSON from DeepSeek`);
-        throw new InternalServerErrorException('Invalid DeepSeek response');
-      }
-
-      const output = payload.choices?.[0]?.message?.content?.trim() || '';
-      const durationMs = Date.now() - startedAt;
-      const usage = payload.usage || {};
+      // ── Two-pass pipeline (structured mode) or single-pass (conversational) ──
+      let output: string;
+      let durationMs: number;
+      let usage: Record<string, number>;
       let parsedOutput: unknown = null;
+
+      if (mode === 'structured' && factsPromptWrapper) {
+        const pipelineResult = await this.runTwoPassPipeline({
+          requestId,
+          trimmedPrompt,
+          timeoutMs,
+          maxOutputTokens,
+          factsPromptWrapper,
+        });
+        output = pipelineResult.output;
+        durationMs = pipelineResult.durationMs;
+        usage = pipelineResult.usage;
+        parsedOutput = pipelineResult.parsedOutput;
+      } else {
+        // Single-pass fallback (conversational mode or when facts prompt not available)
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.2,
+            max_tokens: maxOutputTokens,
+            response_format: { type: 'json_object' },
+          }),
+          signal: controller.signal,
+        });
+
+        const rawText = await response.text();
+        if (!response.ok) {
+          this.logger.error(
+            `[${requestId}] DeepSeek request failed status=${response.status} body=${rawText.slice(0, 800)}`,
+          );
+          throw new ServiceUnavailableException('DeepSeek request failed');
+        }
+
+        let payload: DeepSeekChatResponse;
+        try {
+          payload = JSON.parse(rawText) as DeepSeekChatResponse;
+        } catch {
+          this.logger.error(`[${requestId}] Invalid JSON from DeepSeek`);
+          throw new InternalServerErrorException('Invalid DeepSeek response');
+        }
+
+        output = payload.choices?.[0]?.message?.content?.trim() || '';
+        durationMs = Date.now() - startedAt;
+        usage = (payload.usage || {}) as Record<string, number>;
+        if (output) {
+          try {
+            parsedOutput = this.normalizeParsedOutput(JSON.parse(output));
+          } catch {
+            const salvaged = this.extractPartialParsedOutput(output);
+            if (salvaged) parsedOutput = this.normalizeParsedOutput(salvaged);
+          }
+        }
+      }
       let visionUsageMeta: Record<string, unknown> = {
         requestedImageCount,
         processedImageCount: 0,

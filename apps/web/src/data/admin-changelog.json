@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-07-3f226112",
+    "date": "2026-06-07T10:58:30+08:00",
+    "title": "AI: two-pass pipeline - Pass1 extracts facts, Pass2 analyzes with context to avoid redundant advice",
+    "summary": "AI: two-pass pipeline - Pass1 extracts facts, Pass2 analyzes with context to avoid redundant advice",
+    "areas": [
+      "api"
+    ],
+    "commit": "3f226112",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-07-4a9f8304",
     "date": "2026-06-07T10:23:25+08:00",
     "title": "Admin: add breadcrumb navbar to projects list & detail pages",
