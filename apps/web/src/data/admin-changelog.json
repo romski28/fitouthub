@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-541e3c3d",
+    "date": "2026-06-08T21:07:54+08:00",
+    "title": "Add carpeting category: roomSize + materialPreference requirements",
+    "summary": "Add carpeting category: roomSize + materialPreference requirements",
+    "areas": [
+      "web"
+    ],
+    "commit": "541e3c3d",
+    "files": [
+      "apps/web/src/lib/requirement-matrix.ts"
+    ]
+  },
+  {
     "id": "2026-06-08-b478d557",
     "date": "2026-06-08T21:04:15+08:00",
     "title": "Add surface-area detection, requirement tracking, and subtle checklist widget to AI chat",

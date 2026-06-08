@@ -17,6 +17,7 @@ export type ProjectCategory =
   | 'plumbing'
   | 'electrical'
   | 'carpentry'
+  | 'carpeting'
   | 'general';
 
 /** A scoping requirement topic the AI tracks */
@@ -53,6 +54,7 @@ export const CATEGORY_TOPICS: Record<ProjectCategory, string[]> = {
   plumbing:    ['fixtureType', 'pipeAccess'],
   electrical:  ['existingWiring', 'fixtureType'],
   carpentry:   ['roomSize', 'materialPreference'],
+  carpeting:   ['roomSize', 'materialPreference'],
   general:     ['roomSize'],
 };
 
@@ -77,6 +79,7 @@ const TRADE_CATEGORY_MAP: Record<string, ProjectCategory> = {
   'Wallpaper Installer': 'wallpaper',
   'Plasterer': 'plastering',
   'Carpenter': 'carpentry',
+  'Carpet Fitter': 'carpeting',
   'Handyman': 'general',
 };
 
