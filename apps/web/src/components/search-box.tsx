@@ -10,11 +10,12 @@ export interface SearchBoxProps {
   clearKey?: number;
   imageSection?: ReactNode;
   imageActions?: ReactNode;
+  onHelpClick?: () => void;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -125,12 +126,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
     <div className="relative w-full">
       <form onSubmit={handleSubmit} className="relative">
         <div className="bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
-          {imageSection && (
-            <div className="border-b border-slate-100 px-3 sm:px-4 py-2.5">
-              {imageSection}
-            </div>
-          )}
-          <div className="px-3 sm:px-4 pt-3 sm:pt-4">
+          <div className="relative px-3 sm:px-4 pt-3 sm:pt-4">
             <textarea
               ref={textareaRef}
               value={query}
@@ -142,9 +138,26 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
               rows={1}
               maxLength={MAX_QUERY_CHARS}
               style={{ height: isExpanded ? '9rem' : '3.25rem' }}
-              className="w-full py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out"
+              className="w-full py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out pr-10"
             />
+            {onHelpClick && (
+              <button
+                type="button"
+                onClick={onHelpClick}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow-md border-2 border-white text-xs font-bold hover:bg-blue-600 transition"
+                title="Help getting started"
+                aria-label="Help getting started"
+              >
+                i
+              </button>
+            )}
           </div>
+
+          {imageSection && (
+            <div className="border-t border-slate-100 px-3 sm:px-4 py-2">
+              {imageSection}
+            </div>
+          )}
 
           <div className="flex items-center justify-between px-3 sm:px-4 pb-3 sm:pb-4 pt-1">
             <div className="flex items-center gap-2">
@@ -167,7 +180,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
             </div>
             <button
               type="submit"
-              className="rounded-md border border-[#F5EEDE] bg-[#F97362] px-3 py-2 text-sm font-semibold whitespace-nowrap text-[#F5EEDE] shadow-sm transition-colors duration-150 hover:bg-[#e8624f] active:bg-[#d75846] sm:px-6 sm:py-2.5 sm:text-base"
+              className="ml-3 rounded-md border border-[#F5EEDE] bg-[#F97362] px-3 py-2.5 text-sm font-semibold whitespace-nowrap text-[#F5EEDE] shadow-sm transition-colors duration-150 hover:bg-[#e8624f] active:bg-[#d75846] sm:px-6 sm:text-base"
             >
               {submitLabel}
             </button>

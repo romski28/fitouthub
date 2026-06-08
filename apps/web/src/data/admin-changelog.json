@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-08-05ed8973",
+    "date": "2026-06-08T21:23:49+08:00",
+    "title": "Move image uploader to bottom of prompt box, compact icon-only, add blue info circle, align with Ask Mimo",
+    "summary": "Move image uploader to bottom of prompt box, compact icon-only, add blue info circle, align with Ask Mimo",
+    "areas": [
+      "web"
+    ],
+    "commit": "05ed8973",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-541e3c3d",
     "date": "2026-06-08T21:07:54+08:00",
     "title": "Add carpeting category: roomSize + materialPreference requirements",

@@ -2033,39 +2033,44 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           onClear={handleClearSearch}
           submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
           clearKey={searchBoxClearKey}
-          imageSection={
+          onHelpClick={() => setShowHelp(true)}
+          imageActions={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
-              <div className="space-y-2">
-                <ChatImageUploader
-                  onFilesSelected={setPromptImages}
-                  maxImages={promptImageLimit}
-                  disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
-                  isUploading={aiLoading && promptImages.length > 0}
-                  uploadingCount={promptImages.length}
-                  clearKey={promptUploaderClearKey}
-                />
-                {!visionQuotaLoading && (
-                  <p className="text-[10px] text-slate-400">
-                    {visionQuota
-                      ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
-                      : `max ${promptImageLimit} per prompt`}
-                  </p>
-                )}
-                {visionQuotaLoading && (
-                  <p className="text-[10px] text-slate-400">Checking quota…</p>
-                )}
-                {visionQuotaError && (
-                  <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
-                )}
-                {visionQuota && !visionQuota.canUseVision && (
-                  <p className="text-[10px] text-amber-600">
-                    Daily quota reached. Text-only prompts still work.
-                  </p>
-                )}
-              </div>
+              <ChatImageUploader
+                onFilesSelected={setPromptImages}
+                maxImages={promptImageLimit}
+                disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+                isUploading={aiLoading && promptImages.length > 0}
+                uploadingCount={promptImages.length}
+                clearKey={promptUploaderClearKey}
+                compact
+              />
             ) : undefined
           }
         />
+
+        {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
+          <div className="mt-1 px-1">
+            {!visionQuotaLoading && (
+              <p className="text-[10px] text-slate-400">
+                {visionQuota
+                  ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
+                  : `max ${promptImageLimit} per prompt`}
+              </p>
+            )}
+            {visionQuotaLoading && (
+              <p className="text-[10px] text-slate-400">Checking quota…</p>
+            )}
+            {visionQuotaError && (
+              <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
+            )}
+            {visionQuota && !visionQuota.canUseVision && (
+              <p className="text-[10px] text-amber-600">
+                Daily quota reached. Text-only prompts still work.
+              </p>
+            )}
+          </div>
+        )}
 
         {deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
