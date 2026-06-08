@@ -1052,6 +1052,14 @@ You are Mimo, an expert assistant helping the user navigate a renovation project
 
 Focus on helping the user get to a clear scope, the right trade coverage, and the right Mimo services when needed.
 
+# Fact Tracking (MANDATORY)
+- Build a mental checklist of EXPLICIT FACTS the user has stated. These are LOCKED and must never be contradicted.
+- Examples of locked facts: "it is a bath" → the fixture is a bath, not a shower. "just the kitchen" → scope is kitchen only. "no tiling needed" → do not suggest a tiler.
+- When the user corrects you or clarifies ("no, it's just X"), immediately update your fact list and acknowledge the correction in your response. Do NOT repeat the incorrect assumption.
+- Before generating ANY response, silently review: "What has the user explicitly stated that I must not override or contradict?"
+- If the user says "not X" or "just Y" or "only Z" — those are EXCLUSIONS. Respect them absolutely.
+- If you are uncertain about a detail, ASK rather than assume. But never override a stated fact.
+
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence
@@ -1061,9 +1069,10 @@ CRITICAL RULES FOR DATA EXTRACTION
 6) Do NOT ask location-related follow-up questions in nextQuestions/followUpQuestions because location is collected separately in the wizard (avoid asking about district/area/region/address).
 7) Do NOT ask budget or timing follow-up questions in nextQuestions/followUpQuestions (budget, price, cost, completion date, deadline, timeline, site inspection) because these are collected in dedicated wizard steps.
 8) Avoid repeating previously asked questions. If prior context already answered a point, do not ask it again.
-9) Preserve the user's core project objective from earlier thread context. Treat new messages as refinements unless they explicitly replace the objective.
-10) Ask only ONE best next question each turn (highest-value missing field for matching/tender quality). Keep nextQuestions/followUpQuestions to max 1 item.
-11) Do NOT expand project scope from room-level (e.g., bathroom) to whole-property unless the latest user message explicitly requests expansion.
+9) The user's LATEST message is the source of truth. If it contradicts earlier extracted context, the user wins. Exclusions ("not X", "just Y", "only Z") are hard constraints.
+10) When the user corrects you, acknowledge the correction briefly in your conversationalText (e.g., "Got it, just the bath — not the shower.") then move forward. Never repeat the incorrect assumption.
+11) Ask only ONE best next question each turn (highest-value missing field for matching/tender quality). Keep nextQuestions/followUpQuestions to max 1 item.
+12) Do NOT expand project scope from room-level (e.g., bathroom) to whole-property unless the latest user message explicitly requests expansion.
 12) Always aim to surface rough site conditions and rough size early in the conversation. If those details are missing, make them the next question in plain spoken language.
 13) If the user's description suggests survey uncertainty, measurement gaps, access issues, or site-condition unknowns, mention that Mimo can help with a survey and keep the offer short and natural.
 
@@ -1469,7 +1478,7 @@ OUTPUT FORMAT (JSON only)
     const summarizedPriorReply = this.truncateForPrompt(input.threadSummary?.conversationalText, 220) || 'unknown';
 
     const userMessage = input.threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. Treat the new user message as an addition, clarification, or correction to the earlier request, not as a brand new unrelated request. Keep prior confirmed details unless the latest message clearly changes them.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT:\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request\n- Keep focus on the ORIGINAL_THREAD_OBJECTIVE unless the latest user update explicitly replaces it\n- Ask only one best next question and do not repeat previously asked topics`
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. The LATEST_USER_UPDATE is authoritative — if it contradicts any earlier extracted context, the user's latest words ALWAYS win. Treat negation words ("not", "just", "only", "no") as explicit exclusions that must be respected.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT (may be outdated — latest user update overrides):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (authoritative — overrides any conflicting prior context):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics`
       : `USER_PROMPT:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     return {
