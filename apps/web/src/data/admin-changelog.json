@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-08-b8689ec8",
+    "date": "2026-06-08T23:16:03+08:00",
+    "title": "Move RequirementChecklist from landing AI chat to wizard AI chat page",
+    "summary": "Move RequirementChecklist from landing AI chat to wizard AI chat page",
+    "areas": [
+      "web"
+    ],
+    "commit": "b8689ec8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-3ec3fae3",
     "date": "2026-06-08T23:13:16+08:00",
     "title": "Remove safety/assumptions/risks from AI chat view; they belong on project detail page only",

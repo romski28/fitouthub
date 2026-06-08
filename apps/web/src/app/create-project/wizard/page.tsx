@@ -20,6 +20,7 @@ import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
+import { RequirementChecklist } from '@/components/requirement-checklist';
 
 type WizardStep =
   | { kind: 'basics' }
@@ -331,6 +332,7 @@ export default function CreateProjectWizardPage() {
   const [endDate, setEndDate] = useState('');
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
@@ -506,6 +508,7 @@ export default function CreateProjectWizardPage() {
     setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
+    setWizardCoveredTopics([]);
     setCurrentStep(0);
     hasInitializedFromSeedRef.current = true;
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
@@ -920,6 +923,11 @@ export default function CreateProjectWizardPage() {
         ),
       );
 
+      const nextCoveredTopics = Array.isArray(parsed?.coveredTopics)
+        ? parsed.coveredTopics.filter((item): item is string => typeof item === 'string')
+        : [];
+      if (nextCoveredTopics.length > 0) setWizardCoveredTopics(nextCoveredTopics);
+
       const priorAssistantQuestions = [
         ...chatMessages
           .filter((message) => message.role === 'assistant')
@@ -1318,6 +1326,11 @@ export default function CreateProjectWizardPage() {
                       <div className="flex h-full min-h-0 flex-col gap-2.5 sm:gap-3">
                             <h3 className={panelTitleClass}><span>💬</span><span>Chat with Mimo</span></h3>
                             <p className={panelNoteClass}>Answer Mimo&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
+
+                            <RequirementChecklist
+                              trades={seedDraft?.initialData?.tradesRequired || seedDescription?.tradesRequired || []}
+                              coveredTopics={wizardCoveredTopics}
+                            />
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[150px] sm:min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (

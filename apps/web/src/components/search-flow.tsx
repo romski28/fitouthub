@@ -18,7 +18,6 @@ import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
 import { matchMultipleServices } from '@/lib/service-matcher';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
-import { RequirementChecklist } from '@/components/requirement-checklist';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -352,7 +351,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade, coveredTopics }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
@@ -364,7 +363,6 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   isComplexProject: boolean;
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
-  coveredTopics?: string[];
 }) {
   const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
@@ -521,10 +519,6 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
             ))}
           </div>
         </div>
-      )}
-
-      {showTradesBlock && trades.length > 0 && (
-        <RequirementChecklist trades={trades} coveredTopics={coveredTopics} />
       )}
 
       {showTradesBlock && mimoCountMsg && (
@@ -1975,7 +1969,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 showForgottenPrompt={aiRoundCount === 1}
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
-                coveredTopics={aiStructured.coveredTopics}
                 tradesLabel={
                   displayedTrades.length === 0
                     ? ''
