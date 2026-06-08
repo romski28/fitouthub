@@ -714,6 +714,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundCount, setAiRoundCount] = useState(0);
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
+  const [wizardAutoTimer, setWizardAutoTimer] = useState(10);
+  const wizardAutoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wizardAutoClickedRef = useRef(false);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -800,6 +803,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiRoundCount(0);
     setAiRoundNotice(null);
     setIsConversationSequenceComplete(false);
+    wizardAutoClickedRef.current = false;
     hasClearedForgottenPromptRef.current = false;
     setPromptImages([]);
     setPromptUploaderClearKey((key) => key + 1);
@@ -1852,6 +1856,37 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   }, [aiRoundCount]);
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
+
+  // Auto-transition timer: counts down from 10 when conversation is complete,
+  // auto-navigates to wizard when timer reaches 0
+  useEffect(() => {
+    if (!isConversationSequenceComplete || !hasAiResponse) return;
+    if (wizardAutoClickedRef.current) return;
+
+    setWizardAutoTimer(10);
+    wizardAutoTimerRef.current = setInterval(() => {
+      setWizardAutoTimer((prev) => {
+        if (prev <= 1) {
+          if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
+          wizardAutoClickedRef.current = true;
+          // Auto-navigate on next tick so state update completes
+          setTimeout(() => handleStartAiWizard(), 50);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
+    };
+  }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard]);
+
+  useEffect(() => {
+    return () => {
+      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
+    };
+  }, []);
   const showFollowUpComposer = hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
   const showPromptComposer = !deepSeekSandboxEnabled
     ? true
@@ -1861,14 +1896,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const showPromptHelperText = aiRoundCount === 0;
   const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
-  const repairSignalText = [
-    initialAiPrompt || '',
-    aiStructured?.title || '',
-    aiStructured?.summary || '',
-    aiStructured?.scope || '',
-  ].join(' ').toLowerCase();
-  const isLikelyRepairMode = /(repair|fix|broken|damage|damaged|leak|leaking|replace|urgent maintenance|maintenance)/i.test(repairSignalText);
-  const suggestedPath: 'ai' | 'fast-track' = isLikelyRepairMode ? 'fast-track' : 'ai';
   const isLargeProject = (() => {
     if (!aiStructured?.size || aiStructured.size.value === null) return false;
     const value = aiStructured.size.value;
@@ -2044,79 +2071,71 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       {hasAiResponse && (
         <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
-            <div className="text-center">
-              <p className="text-lg font-semibold text-slate-900">Choose your path</p>
-            </div>
-
             {isLoggedIn === true ? (
               <>
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-emerald-300 bg-white p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-slate-900">✨ AI chat</p>
-                      {suggestedPath === 'ai' && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Our AI works with you to complete your project narrative.</p>
-                    <button
-                      type="button"
-                      onClick={handleStartAiWizard}
-                      className="mt-4 w-full rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                    >
-                      AI chat
-                    </button>
-                  </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-slate-900">Ready to continue?</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {wizardAutoTimer > 0
+                      ? `Continuing to project wizard in ${wizardAutoTimer} second${wizardAutoTimer === 1 ? '' : 's'}...`
+                      : 'Opening wizard...'}
+                  </p>
+                </div>
 
-                  <div className="rounded-2xl border border-emerald-300 bg-white p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-slate-900">Fast track</p>
-                      {suggestedPath === 'fast-track' && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">Less questions. Fast to tender. More details later.</p>
-                    <button
-                      type="button"
-                      onClick={handleContinueToMatching}
-                      className="mt-4 w-full rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                    >
-                      Fast track
-                    </button>
-                  </div>
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      wizardAutoClickedRef.current = true;
+                      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
+                      handleStartAiWizard();
+                    }}
+                    className="relative w-full overflow-hidden rounded-lg border border-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1"
+                  >
+                    {/* Fill animation bar */}
+                    <span
+                      className="absolute inset-0 bg-emerald-600 transition-[width] duration-1000 ease-linear"
+                      style={{ width: `${(wizardAutoTimer / 10) * 100}%` }}
+                    />
+                    <span
+                      className="absolute inset-0 bg-emerald-200"
+                      style={{ width: `${100 - (wizardAutoTimer / 10) * 100}%`, left: `${(wizardAutoTimer / 10) * 100}%` }}
+                    />
+                    <span className="relative z-10">Continue with Mimo</span>
+                  </button>
                 </div>
 
                 <div className="mt-5 text-center">
-                  <p className="text-sm text-slate-700">You can talk to us directly at any time. Use the AI to get your ideas together first and then reach out when you have your basics set.</p>
+                  <p className="text-sm text-slate-700">Prefer to talk to a person? We are here to help.</p>
                   <button
                     type="button"
                     onClick={handleTalkToPersonNow}
-                    className="mt-3 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-700"
+                    className="mt-3 rounded-lg border border-emerald-600 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-50"
                   >
                     Book a chat
                   </button>
                 </div>
               </>
             ) : (
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleGuestJoin}
-                  className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                >
-                  Join to Continue
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGuestLogin}
-                  className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
-                >
-                  Login
-                </button>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-slate-900">Ready to continue?</p>
+                <p className="mt-1 text-sm text-slate-600">Create an account or log in to start your project.</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleGuestJoin}
+                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    Join to Continue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGuestLogin}
+                    className="rounded-lg border border-emerald-600 bg-white px-6 py-3 font-semibold text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-50"
+                  >
+                    Login
+                  </button>
+                </div>
               </div>
             )}
           </div>

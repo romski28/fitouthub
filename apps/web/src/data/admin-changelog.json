@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-7facce58",
+    "date": "2026-06-08T12:10:41+08:00",
+    "title": "Simplify search-flow fork: single CTA with 10s auto-transition timer and fill animation",
+    "summary": "Simplify search-flow fork: single CTA with 10s auto-transition timer and fill animation",
+    "areas": [
+      "web"
+    ],
+    "commit": "7facce58",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-aa96740e",
     "date": "2026-06-08T12:00:55+08:00",
     "title": "Simplify wizard: remove fork screen, single AI chat flow. Keep emergency short-circuit.",
