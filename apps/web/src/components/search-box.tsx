@@ -17,7 +17,6 @@ const MAX_QUERY_CHARS = 5000;
 
 export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick }: SearchBoxProps) {
   const [query, setQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
     () => [
@@ -119,7 +118,6 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
     }
   };
 
-  const isExpanded = isFocused || query.trim().length > 0;
   const characterCount = query.length;
 
   return (
@@ -132,13 +130,10 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
               rows={1}
               maxLength={MAX_QUERY_CHARS}
-              style={{ height: isExpanded ? '9rem' : '3.25rem' }}
-              className="w-full py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none overflow-y-auto transition-[height] duration-300 ease-in-out pr-10"
+              className="w-full py-3 sm:py-4 outline-none text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none overflow-y-auto h-36 sm:h-40 pr-10"
             />
             {onHelpClick && (
               <button

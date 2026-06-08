@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-7ecc8678",
+    "date": "2026-06-08T22:59:35+08:00",
+    "title": "Remove textarea height animation, always render at full size",
+    "summary": "Remove textarea height animation, always render at full size",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ecc8678",
+    "files": [
+      "apps/web/src/components/search-box.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-05ed8973",
     "date": "2026-06-08T21:23:49+08:00",
     "title": "Move image uploader to bottom of prompt box, compact icon-only, add blue info circle, align with Ask Mimo",
