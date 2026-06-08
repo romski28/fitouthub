@@ -3,8 +3,8 @@
 -- ============================================================
 CREATE TABLE IF NOT EXISTS ux_feedback (
     id          TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
-    project_id  TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    user_id     TEXT REFERENCES users(id),
+    project_id  TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
+    user_id     TEXT REFERENCES "User"(id),
     answers     JSONB NOT NULL DEFAULT '{}',
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

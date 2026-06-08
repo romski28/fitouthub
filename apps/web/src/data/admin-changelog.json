@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-08-fb33ef97",
+    "date": "2026-06-08T16:11:00+08:00",
+    "title": "Fix: remove broken auth guard import, fix SQL table references",
+    "summary": "Fix: remove broken auth guard import, fix SQL table references",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "fb33ef97",
+    "files": [
+      "MANUAL_SQL_ADD_UX_FEEDBACK.sql",
+      "apps/api/src/ux-feedback/ux-feedback.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-08-3f888fd8",
     "date": "2026-06-08T16:00:55+08:00",
     "title": "Add UX feedback survey: modal, API endpoint, DB table, configurable probability",
