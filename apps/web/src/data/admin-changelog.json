@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-72558d4c",
+    "date": "2026-06-08T12:55:59+08:00",
+    "title": "Fix: use DOM-ref CSS transition instead of @keyframes for reliable fill animation",
+    "summary": "Fix: use DOM-ref CSS transition instead of @keyframes for reliable fill animation",
+    "areas": [
+      "web"
+    ],
+    "commit": "72558d4c",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-2a191752",
     "date": "2026-06-08T12:49:21+08:00",
     "title": "Fix: remove inset-0 from fill bar so width animation actually runs",

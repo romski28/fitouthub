@@ -717,6 +717,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [wizardAutoTimer, setWizardAutoTimer] = useState(10);
   const wizardAutoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wizardAutoClickedRef = useRef(false);
+  const fillBarRef = useRef<HTMLSpanElement>(null);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -1882,6 +1883,22 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     };
   }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard]);
 
+  // Fill bar transition: trigger CSS width transition after mount so browser
+  // registers initial 0% width first, then animates to 100% over 10s
+  useEffect(() => {
+    if (!isConversationSequenceComplete || !hasAiResponse) return;
+    const bar = fillBarRef.current;
+    if (!bar) return;
+    // Reset to 0% immediately
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    // Force layout recalculation so browser sees the 0% starting point
+    void bar.offsetWidth;
+    // Trigger the 10s transition
+    bar.style.transition = 'width 10s linear';
+    bar.style.width = '100%';
+  }, [isConversationSequenceComplete, hasAiResponse]);
+
   useEffect(() => {
     return () => {
       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
@@ -2094,19 +2111,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                   >
                     {/* Light green base */}
                     <span className="absolute inset-0 rounded-lg bg-emerald-100" />
-                    {/* Dark green fill — pure CSS animation, sweeps left→right over 10s */}
+                    {/* Dark green fill — CSS transition triggered by effect, sweeps left→right over 10s */}
                     <span
+                      ref={fillBarRef}
                       className="absolute bottom-0 left-0 top-0 rounded-lg bg-emerald-600"
-                      style={{ animation: 'wizard-fill 10s linear forwards', width: '0%' }}
+                      style={{ width: '0%' }}
                     />
                     <span className="relative z-10">Continue with Mimo</span>
                   </button>
-                  <style>{`
-                    @keyframes wizard-fill {
-                      from { width: 0%; }
-                      to { width: 100%; }
-                    }
-                  `}</style>
                 </div>
 
                 <div className="mt-5 text-center">
