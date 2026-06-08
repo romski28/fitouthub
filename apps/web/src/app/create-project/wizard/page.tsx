@@ -473,6 +473,14 @@ export default function CreateProjectWizardPage() {
       ? seedDraft.initialData.requiresDesignService
       : null;
     const nextQuestions = mergeQuestions(seedDescription?.followUpQuestions, seedDraft?.followUpQuestions);
+    console.log('[WIZARD-INIT] Seed data received:', {
+      seedDescriptionFollowUp: seedDescription?.followUpQuestions,
+      seedDraftFollowUp: seedDraft?.followUpQuestions,
+      mergedNextQuestions: nextQuestions,
+      mergedLength: nextQuestions.length,
+      seedDraftKeys: seedDraft ? Object.keys(seedDraft) : null,
+      seedDescriptionKeys: seedDescription ? Object.keys(seedDescription) : null,
+    });
     const nextEndDate = seedDraft?.initialData?.endDate || '';
     const nextSiteInspection = seedDraft?.initialData?.siteInspectionAvailableOn || '';
     const seededPhotos = Array.isArray(seedDraft?.initialData?.photoUrls)

@@ -897,6 +897,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       ]),
     ));
 
+    console.log('[WIZARD-HANDOFF] followUpQuestions built:', {
+      aiStructuredNextQuestions: aiStructured?.nextQuestions,
+      followUpQuestions,
+      followUpQuestionsLength: followUpQuestions.length,
+    });
+
     const aiDraft = {
       initialData: {
         projectName: (aiStructured.title || aiStructured.summary || initialAiPrompt || 'AI project').slice(0, 180),
