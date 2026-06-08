@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-3ec3fae3",
+    "date": "2026-06-08T23:13:16+08:00",
+    "title": "Remove safety/assumptions/risks from AI chat view; they belong on project detail page only",
+    "summary": "Remove safety/assumptions/risks from AI chat view; they belong on project detail page only",
+    "areas": [
+      "web"
+    ],
+    "commit": "3ec3fae3",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-3f58f426",
     "date": "2026-06-08T23:04:08+08:00",
     "title": "Disable auto-transition timer and fill animation for non-logged-in users",

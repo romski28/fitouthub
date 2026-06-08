@@ -352,13 +352,12 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade, coveredTopics }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade, coveredTopics }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
   tradesLabel: string;
   trades: string[];
-  safetyAssessment: AiStructured['safetyAssessment'];
   fullCoverageCompanyCount: number;
   specialistCount: number;
   showForgottenPrompt: boolean;
@@ -521,32 +520,6 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
               </span>
             ))}
           </div>
-        </div>
-      )}
-
-      {safetyAssessment && (
-        safetyAssessment.isDangerous ||
-        safetyAssessment.concerns.length > 0 ||
-        safetyAssessment.riskLevel === 'medium' ||
-        safetyAssessment.riskLevel === 'high' ||
-        safetyAssessment.riskLevel === 'critical'
-      ) && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">Safety flag</p>
-          <p className="text-sm font-semibold text-amber-900 capitalize">Risk: {safetyAssessment.riskLevel}</p>
-          {safetyAssessment.emergencyReason && (
-            <p className="text-sm text-amber-900 mt-1">{safetyAssessment.emergencyReason}</p>
-          )}
-          {safetyAssessment.temporaryMitigations.length > 0 && (
-            <ul className="mt-2 space-y-1 text-sm text-amber-900">
-              {safetyAssessment.temporaryMitigations.slice(0, 3).map((item, index) => (
-                <li key={`conversational-mitigation-${index}`} className="flex gap-2"><span>•</span><span>{item}</span></li>
-              ))}
-            </ul>
-          )}
-          {safetyAssessment.disclaimer && (
-            <p className="text-xs text-amber-800 mt-2">{safetyAssessment.disclaimer}</p>
-          )}
         </div>
       )}
 
@@ -1997,7 +1970,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 matchLoading={aiCountLoading}
                 trades={displayedTrades}
                 isComplexProject={isComplexProject}
-                safetyAssessment={aiStructured.safetyAssessment}
                 fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                 specialistCount={aiSpecialistCount}
                 showForgottenPrompt={aiRoundCount === 1}
