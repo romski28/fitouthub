@@ -2002,6 +2002,22 @@ model AiIntakeImageInsight {
 }
 
 // ============================================================
+// UX Feedback — post-project-creation survey
+// ============================================================
+
+model UxFeedback {
+  id           String   @id @default(cuid())
+  projectId    String
+  userId       String?
+  answers      Json
+  submittedAt  DateTime @default(now())
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("ux_feedback")
+}
+
+// ============================================================
 // Case Management
 // ============================================================
 

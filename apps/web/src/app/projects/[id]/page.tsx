@@ -31,6 +31,7 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
+import { UxFeedbackModal } from '@/components/ux-feedback-modal';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
 
@@ -331,6 +332,23 @@ export default function ClientProjectDetailPage() {
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+
+  // UX feedback survey — shown once per project after professionals are invited
+  const [showUxFeedback, setShowUxFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!project || loading) return;
+    const hasProfessionals = (project.professionals?.length ?? 0) > 0;
+    if (!hasProfessionals) return;
+    // Check probability
+    const rate = parseFloat(process.env.NEXT_PUBLIC_UX_FEEDBACK_RATE || '1.0');
+    if (Math.random() > rate) return;
+    // Check session storage to avoid showing twice
+    const seenKey = `ux_feedback_seen_${project.id}`;
+    if (sessionStorage.getItem(seenKey)) return;
+    sessionStorage.setItem(seenKey, '1');
+    setShowUxFeedback(true);
+  }, [project, loading]);
 
   // Tracks whether the project has been successfully loaded at least once.
   // Prevents the full-page loading spinner from firing on background token-refresh
@@ -2929,6 +2947,14 @@ export default function ClientProjectDetailPage() {
         context="active"
         submitPrefix="Request"
       />
+
+      {showUxFeedback && (
+        <UxFeedbackModal
+          projectId={projectId}
+          accessToken={accessToken}
+          onClose={() => setShowUxFeedback(false)}
+        />
+      )}
     </div>
     </>
   );

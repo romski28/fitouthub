@@ -42,6 +42,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
+import { UxFeedbackModule } from './ux-feedback/ux-feedback.module';
 import { AcProjectsModule } from './ac-projects/ac-projects.module';
 import { ProgressReportsModule } from './progress-reports/progress-reports.module';
 import { ReminderModule } from './reminders/reminder.module';
@@ -66,6 +67,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     PoliciesModule,
     AnnouncementsModule,
     QuestionnairesModule,
+    UxFeedbackModule,
     RealtimeModule,
     ConversationModule,
     SupportRequestsModule,

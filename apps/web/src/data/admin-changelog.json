@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-06-08-3f888fd8",
+    "date": "2026-06-08T16:00:55+08:00",
+    "title": "Add UX feedback survey: modal, API endpoint, DB table, configurable probability",
+    "summary": "Add UX feedback survey: modal, API endpoint, DB table, configurable probability",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "3f888fd8",
+    "files": [
+      "MANUAL_SQL_ADD_UX_FEEDBACK.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/ux-feedback/ux-feedback.controller.ts",
+      "apps/api/src/ux-feedback/ux-feedback.module.ts",
+      "apps/api/src/ux-feedback/ux-feedback.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-415c1364",
     "date": "2026-06-08T15:12:45+08:00",
     "title": "Fix: add assumptions/risks/safetyAssessment to conversational prompt JSON schema + fix overview tab check",
