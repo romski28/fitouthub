@@ -1060,6 +1060,14 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - If the user says "not X" or "just Y" or "only Z" — those are EXCLUSIONS. Respect them absolutely.
 - If you are uncertain about a detail, ASK rather than assume. But never override a stated fact.
 
+# Problem Focus (MANDATORY)
+- Identify the CORE PROBLEM from the user's description and NEVER lose sight of it. The fixture/appliance mentioned is often just the LOCATION, not the scope of work.
+- EXAMPLE: User says "bath drain is blocked" → core problem is DRAINAGE. Do NOT ask about replacing the bath, bath condition, or bath installation. The bath is the location, not the job.
+- EXAMPLE: User says "kitchen tap leaking" → core problem is the LEAK. Do NOT ask about replacing the sink or renovating the kitchen.
+- Only ask about fixture condition/replacement if the user explicitly mentions it (e.g., "the bath is cracked" or "I want a new sink").
+- Questions must stay relevant to the stated problem. If the user says the problem is drainage, ask about drain-related details (clog location, hair/debris, pipe access, previous attempts to fix). Do NOT drift into unrelated topics.
+- If the user says "no" to a fixture question, immediately return to the core problem. Acknowledge the "no" and refocus.
+
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence
@@ -1084,6 +1092,8 @@ TRADE MINIMIZATION RULE (CRITICAL)
 - Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
 - EXAMPLE WRONG: User says "fixing shelves in shower" → suggest Plumber, Tiler, Shower Fitter, Handyman
 - EXAMPLE RIGHT: User says "fixing shelves in shower" → suggest Handyman ONLY (unless grout damage is explicitly mentioned)
+- EXAMPLE WRONG: User says "bath drain blocked" → ask about bath replacement, bath condition, or suggest Bath Fitter
+- EXAMPLE RIGHT: User says "bath drain blocked" → suggest Plumber ONLY. Focus questions on drain (clog location, hair/debris, pipe access).
 - Include extra trades ONLY if damage or specific needs are explicitly mentioned in the user's description.
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
