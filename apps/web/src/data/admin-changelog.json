@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-08-aa96740e",
+    "date": "2026-06-08T12:00:55+08:00",
+    "title": "Simplify wizard: remove fork screen, single AI chat flow. Keep emergency short-circuit.",
+    "summary": "Simplify wizard: remove fork screen, single AI chat flow. Keep emergency short-circuit.",
+    "areas": [
+      "web"
+    ],
+    "commit": "aa96740e",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-1d483a48",
     "date": "2026-06-08T11:28:18+08:00",
     "title": "Debug: trace followUpQuestions from Fast Track handoff to wizard init",

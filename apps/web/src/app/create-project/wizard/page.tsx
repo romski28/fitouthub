@@ -30,7 +30,6 @@ type WizardStep =
   | { kind: 'review' };
 
 type LocationInputMode = 'map' | 'list';
-type WizardMode = 'ai' | 'classic';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -298,7 +297,6 @@ export default function CreateProjectWizardPage() {
   const { isLoggedIn, userLocation, accessToken } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
-  const [wizardMode, setWizardMode] = useState<WizardMode | null>(null);
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
   const [seedDescription, setSeedDescription] = useState<ProjectDescriptionData | null>(null);
   const [seedLoaded, setSeedLoaded] = useState(false);
@@ -376,21 +374,6 @@ export default function CreateProjectWizardPage() {
     setDesignOfferPrompted(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
-
-    const requestedMode = (searchParams.get('wizard') || '').trim().toLowerCase();
-    const source = (searchParams.get('source') || '').trim().toLowerCase();
-
-    if (requestedMode === 'ai' || requestedMode === 'classic') {
-      setWizardMode(requestedMode);
-      return;
-    }
-
-    if (source === 'ai') {
-      setWizardMode('ai');
-      return;
-    }
-
-    setWizardMode(null);
   }, [hydrated, searchParams]);
 
   useEffect(() => {
@@ -473,14 +456,6 @@ export default function CreateProjectWizardPage() {
       ? seedDraft.initialData.requiresDesignService
       : null;
     const nextQuestions = mergeQuestions(seedDescription?.followUpQuestions, seedDraft?.followUpQuestions);
-    console.log('[WIZARD-INIT] Seed data received:', {
-      seedDescriptionFollowUp: seedDescription?.followUpQuestions,
-      seedDraftFollowUp: seedDraft?.followUpQuestions,
-      mergedNextQuestions: nextQuestions,
-      mergedLength: nextQuestions.length,
-      seedDraftKeys: seedDraft ? Object.keys(seedDraft) : null,
-      seedDescriptionKeys: seedDescription ? Object.keys(seedDescription) : null,
-    });
     const nextEndDate = seedDraft?.initialData?.endDate || '';
     const nextSiteInspection = seedDraft?.initialData?.siteInspectionAvailableOn || '';
     const seededPhotos = Array.isArray(seedDraft?.initialData?.photoUrls)
@@ -547,20 +522,6 @@ export default function CreateProjectWizardPage() {
       setExpandedServiceOffer(null);
     }
   }, [isEmergency]);
-
-  useEffect(() => {
-    if (wizardMode === null) return;
-    hasManualStepNavigationRef.current = false;
-    setCurrentStep(0);
-  }, [wizardMode]);
-
-  useEffect(() => {
-    if (wizardMode === null) return;
-    if (hasManualStepNavigationRef.current) return;
-    if (currentStep !== 0) {
-      setCurrentStep(0);
-    }
-  }, [wizardMode, currentStep]);
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 3), [followUpQuestions]);
 
@@ -659,7 +620,7 @@ export default function CreateProjectWizardPage() {
       ];
 
       // Skip follow-up questions in emergency mode — go straight to scoping
-      if (wizardMode !== 'classic' && !isEmergency) {
+      if (!isEmergency) {
         base.push({ kind: 'followups' });
       }
 
@@ -671,7 +632,7 @@ export default function CreateProjectWizardPage() {
 
       return base;
     },
-    [wizardMode, isEmergency],
+    [isEmergency],
   );
 
   const activeStep = steps[currentStep];
@@ -696,17 +657,13 @@ export default function CreateProjectWizardPage() {
   }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
 
   const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
-  const repairSignalText = [title, summary, seedDescription?.description || '', seedDescription?.title || ''].join(' ').toLowerCase();
-  const isLikelyRepairMode = /(repair|fix|broken|damage|damaged|leak|leaking|replace|urgent maintenance|maintenance)/i.test(repairSignalText);
-  const suggestedPath: 'ai' | 'fast-track' = isLikelyRepairMode ? 'fast-track' : 'ai';
 
   useEffect(() => {
-    if (wizardMode !== 'ai') return;
     if (activeStep?.kind !== 'followups') return;
     const node = chatContainerRef.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
-  }, [wizardMode, activeStep, chatMessages, chatBusy]);
+  }, [activeStep, chatMessages, chatBusy]);
 
   useEffect(() => {
     if (chatImageUploadBusy) return;
@@ -1236,97 +1193,13 @@ export default function CreateProjectWizardPage() {
       params.set('aiScale', nextDraft.initialData.projectScale);
     }
     params.set('aiEmergency', nextDraft.initialData?.isEmergency ? '1' : '0');
-    params.set('source', wizardMode === 'classic' ? 'classic-wizard' : 'ai-wizard');
+    params.set('source', 'ai-wizard');
 
     router.push(`/professionals?${params.toString()}`);
   };
 
-  const handleTalkToPersonNow = () => {
-    const initialMessage = [
-      'General enquiry',
-      title.trim() ? `Project title: ${title.trim()}` : '',
-      summary.trim() ? `Project scope: ${summary.trim()}` : '',
-    ].filter(Boolean).join('\n\n');
-
-    window.dispatchEvent(
-      new CustomEvent('foh-open-chat', {
-        detail: {
-          context: 'project_creation',
-          projectName: title.trim() || 'Project scoping help',
-          initialMessage,
-        },
-      }),
-    );
-  };
-
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen" />;
-  }
-
-  if (wizardMode === null) {
-    return (
-      <div className="min-h-screen pb-6 pt-6">
-        <section className="-mx-6 px-6">
-          <div className="mx-auto max-w-5xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
-            <div className="text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">Fork Screen</p>
-              <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Choose your path</h1>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setWizardMode('classic')}
-                className="rounded-2xl border border-slate-300 bg-white p-5 text-left transition hover:border-slate-400 hover:bg-slate-50"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-base font-semibold text-slate-900">Fast track</p>
-                  {suggestedPath === 'fast-track' && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">Less questions. Fast to tender. More details later.</p>
-                <span className="mt-4 inline-flex rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
-                  Fast track
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setWizardMode('ai')}
-                className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-left transition hover:border-emerald-400 hover:bg-emerald-100"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-base font-semibold text-emerald-900">✨ AI chat</p>
-                  {suggestedPath === 'ai' && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />Suggested
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-emerald-900">Our AI works with you to complete your project narrative.</p>
-                <span className="mt-4 inline-flex rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
-                  AI chat
-                </span>
-              </button>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-slate-700">You can talk to us directly at any time. Use the AI to get your ideas together first and then reach out when you have your basics set.</p>
-              <button
-                type="button"
-                onClick={handleTalkToPersonNow}
-                className="mt-3 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-700"
-              >
-                Book a chat
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
   }
 
   return (
@@ -1336,7 +1209,7 @@ export default function CreateProjectWizardPage() {
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
-                {wizardMode === 'classic' ? 'Project Wizard' : 'AI Project Wizard'} · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+                Mimo Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-slate-600 sm:text-xs">{currentMotivation}</p>
             </div>
@@ -1358,7 +1231,7 @@ export default function CreateProjectWizardPage() {
                   <div
                     key={`${step.kind}-${index}`}
                     className={`flex h-full w-full shrink-0 flex-col p-3 pb-16 sm:p-4 ${
-                      step.kind === 'followups' && wizardMode === 'ai' ? 'sm:pb-4' : 'sm:pb-16'
+                      step.kind === 'followups' ? 'sm:pb-4' : 'sm:pb-16'
                     } ${
                       step.kind === 'location' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
@@ -1443,10 +1316,8 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followups' && (
                       <div className="flex h-full min-h-0 flex-col gap-2.5 sm:gap-3">
-                        {wizardMode === 'ai' ? (
-                          <>
-                            <h3 className={panelTitleClass}><span>💬</span><span>AI chat</span></h3>
-                            <p className={panelNoteClass}>Friendly mode is on. I will keep this light while guiding us to a complete brief.</p>
+                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with Mimo</span></h3>
+                            <p className={panelNoteClass}>Answer Mimo&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[150px] sm:min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
@@ -1577,34 +1448,6 @@ export default function CreateProjectWizardPage() {
                                 )}
                               </div>
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <h3 className={panelTitleClass}><span>💡</span><span>Clarifications</span></h3>
-                            <p className={panelNoteClass}>Answer these quick questions so we can brief professionals properly.</p>
-                            <div className="space-y-3">
-                              {followUpStepQuestions.length === 0 ? (
-                                <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">No clarification questions at this time.</p>
-                              ) : (
-                                followUpStepQuestions.map((question, index) => {
-                                  const answerKey = `q-${index}`;
-                                  return (
-                                    <div key={answerKey} className="space-y-1.5">
-                                      <p className={panelNoteClass}>{question}</p>
-                                      <textarea
-                                        value={answers[answerKey] || ''}
-                                        onChange={(e) => setAnswers((prev) => ({ ...prev, [answerKey]: e.target.value }))}
-                                        rows={2}
-                                        placeholder="Type your answer..."
-                                        className="w-full min-h-[88px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                                      />
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </>
-                        )}
                       </div>
                     )}
 
@@ -1775,7 +1618,7 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            {activeStep?.kind !== 'followups' || wizardMode !== 'ai' ? (
+            {activeStep?.kind !== 'followups' ? (
               <div className="pointer-events-none absolute inset-x-3 bottom-2 flex items-center justify-between gap-2 sm:bottom-2.5 sm:gap-3">
                 <button
                   type="button"
