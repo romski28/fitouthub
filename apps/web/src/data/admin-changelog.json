@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-c8cc970c",
+    "date": "2026-06-08T12:18:58+08:00",
+    "title": "Smooth CSS animation for wizard timer: light→dark green fill over 10s",
+    "summary": "Smooth CSS animation for wizard timer: light→dark green fill over 10s",
+    "areas": [
+      "web"
+    ],
+    "commit": "c8cc970c",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-7facce58",
     "date": "2026-06-08T12:10:41+08:00",
     "title": "Simplify search-flow fork: single CTA with 10s auto-transition timer and fill animation",

@@ -2090,19 +2090,23 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
                       handleStartAiWizard();
                     }}
-                    className="relative w-full overflow-hidden rounded-lg border border-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1"
+                    className="relative w-full overflow-hidden rounded-lg border border-emerald-600 px-4 py-3 font-semibold text-emerald-800 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
                   >
-                    {/* Fill animation bar */}
+                    {/* Light green base */}
+                    <span className="absolute inset-0 bg-emerald-100" />
+                    {/* Dark green fill — pure CSS animation, 0→100% over 10s */}
                     <span
-                      className="absolute inset-0 bg-emerald-600 transition-[width] duration-1000 ease-linear"
-                      style={{ width: `${(wizardAutoTimer / 10) * 100}%` }}
-                    />
-                    <span
-                      className="absolute inset-0 bg-emerald-200"
-                      style={{ width: `${100 - (wizardAutoTimer / 10) * 100}%`, left: `${(wizardAutoTimer / 10) * 100}%` }}
+                      className="absolute inset-0 bg-emerald-600"
+                      style={{ animation: 'wizard-fill 10s linear forwards' }}
                     />
                     <span className="relative z-10">Continue with Mimo</span>
                   </button>
+                  <style>{`
+                    @keyframes wizard-fill {
+                      from { width: 0%; }
+                      to { width: 100%; }
+                    }
+                  `}</style>
                 </div>
 
                 <div className="mt-5 text-center">
