@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-2a191752",
+    "date": "2026-06-08T12:49:21+08:00",
+    "title": "Fix: remove inset-0 from fill bar so width animation actually runs",
+    "summary": "Fix: remove inset-0 from fill bar so width animation actually runs",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a191752",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-b8704cf4",
     "date": "2026-06-08T12:24:54+08:00",
     "title": "Add fact-tracking rules to conversational AI prompt to prevent contradicting user-stated facts",

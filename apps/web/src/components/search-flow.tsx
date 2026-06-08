@@ -2093,11 +2093,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                     className="relative w-full overflow-hidden rounded-lg border border-emerald-600 px-4 py-3 font-semibold text-emerald-800 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
                   >
                     {/* Light green base */}
-                    <span className="absolute inset-0 bg-emerald-100" />
-                    {/* Dark green fill — pure CSS animation, 0→100% over 10s */}
+                    <span className="absolute inset-0 rounded-lg bg-emerald-100" />
+                    {/* Dark green fill — pure CSS animation, sweeps left→right over 10s */}
                     <span
-                      className="absolute inset-0 bg-emerald-600"
-                      style={{ animation: 'wizard-fill 10s linear forwards' }}
+                      className="absolute bottom-0 left-0 top-0 rounded-lg bg-emerald-600"
+                      style={{ animation: 'wizard-fill 10s linear forwards', width: '0%' }}
                     />
                     <span className="relative z-10">Continue with Mimo</span>
                   </button>
