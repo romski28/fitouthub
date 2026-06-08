@@ -18,6 +18,7 @@ import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
 import { matchMultipleServices } from '@/lib/service-matcher';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
+import { RequirementChecklist } from '@/components/requirement-checklist';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -56,6 +57,7 @@ interface AiStructured {
     disclaimer: string | null;
   } | null;
   overallConfidence: number | null;
+  coveredTopics?: string[];
 }
 
 const normalizeTradeList = (...inputs: unknown[]): string[] => {
@@ -350,7 +352,7 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade }: {
+function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, safetyAssessment, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade, coveredTopics }: {
   conversationalText: string | null;
   matchCount: number | null;
   matchLoading: boolean;
@@ -363,6 +365,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   isComplexProject: boolean;
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
+  coveredTopics?: string[];
 }) {
   const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
@@ -545,6 +548,10 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
             <p className="text-xs text-amber-800 mt-2">{safetyAssessment.disclaimer}</p>
           )}
         </div>
+      )}
+
+      {showTradesBlock && trades.length > 0 && (
+        <RequirementChecklist trades={trades} coveredTopics={coveredTopics} />
       )}
 
       {showTradesBlock && mimoCountMsg && (
@@ -1587,6 +1594,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             disclaimer?: string | null;
           };
           overallConfidence?: number | null;
+          coveredTopics?: string[];
         } | null;
       } = await response.json();
 
@@ -1731,6 +1739,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           disclaimer: p.safetyAssessment.disclaimer ?? null,
         } : null,
         overallConfidence: p?.overallConfidence ?? null,
+        coveredTopics: Array.isArray(p?.coveredTopics) ? p.coveredTopics.filter((item): item is string => typeof item === 'string') : [],
       });
       setActiveTrades(parsedTrades);
 
@@ -1993,6 +2002,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 showForgottenPrompt={aiRoundCount === 1}
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
+                coveredTopics={aiStructured.coveredTopics}
                 tradesLabel={
                   displayedTrades.length === 0
                     ? ''

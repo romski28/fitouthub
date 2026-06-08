@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-08-b478d557",
+    "date": "2026-06-08T21:04:15+08:00",
+    "title": "Add surface-area detection, requirement tracking, and subtle checklist widget to AI chat",
+    "summary": "Add surface-area detection, requirement tracking, and subtle checklist widget to AI chat",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b478d557",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/requirement-checklist.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/requirement-matrix.ts"
+    ]
+  },
+  {
     "id": "2026-06-08-fb33ef97",
     "date": "2026-06-08T16:11:00+08:00",
     "title": "Fix: remove broken auth guard import, fix SQL table references",

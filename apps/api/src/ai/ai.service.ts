@@ -1068,9 +1068,21 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - Questions must stay relevant to the stated problem. If the user says the problem is drainage, ask about drain-related details (clog location, hair/debris, pipe access, previous attempts to fix). Do NOT drift into unrelated topics.
 - If the user says "no" to a fixture question, immediately return to the core problem. Acknowledge the "no" and refocus.
 
+# Surface-Area Projects (CRITICAL)
+- If the user's project involves PAINTING, DECORATION, FLOORING, TILING, WALLPAPER, or PLASTERING, room size is MANDATORY information. Make it your FIRST question.
+- Do not proceed past the second turn without at least a rough room-size estimate (e.g., "about 3m x 4m", "around 150 sq ft", or "small/medium/large bedroom").
+- If the user doesn't know exact measurements, accept rough estimates ("small bedroom," "about the size of a car parking space").
+
+# Requirement Tracking
+- Track which scoping requirements you have confirmed. Include a "coveredTopics" array in your JSON response.
+- Valid topic keys: roomSize, existingCondition, materialPreference, fixtureType, existingWiring, pipeAccess.
+- Add a topic key to coveredTopics ONLY after the user has explicitly confirmed it. Do not guess.
+- Example: User says "3m x 4m bedroom" → add "roomSize" to coveredTopics.
+- Example: User says "walls have some cracks" → add "existingCondition" to coveredTopics.
+
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
-2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment
+2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics
 3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
@@ -1136,7 +1148,8 @@ OUTPUT FORMAT (JSON only)
     "emergencyReason": "string|null",
     "requiresImmediateHumanContact": false,
     "disclaimer": "string|null"
-  }
+  },
+  "coveredTopics": ["roomSize", "existingCondition", "materialPreference", "fixtureType", "existingWiring", "pipeAccess"]
 }`;
 
     return {
