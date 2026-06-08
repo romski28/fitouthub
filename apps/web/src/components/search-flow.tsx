@@ -1868,10 +1868,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
 
   // Auto-transition timer: counts down from 10 when conversation is complete,
-  // auto-navigates to wizard when timer reaches 0
+  // auto-navigates to wizard when timer reaches 0. Disabled for guests.
   useEffect(() => {
     if (!isConversationSequenceComplete || !hasAiResponse) return;
     if (wizardAutoClickedRef.current) return;
+    if (isLoggedIn !== true) return;
 
     setWizardAutoTimer(10);
     wizardAutoTimerRef.current = setInterval(() => {
@@ -1890,12 +1891,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     return () => {
       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
     };
-  }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard]);
+  }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard, isLoggedIn]);
 
-  // Fill bar transition: trigger CSS width transition after mount so browser
-  // registers initial 0% width first, then animates to 100% over 10s
+  // Fill bar transition: only for logged-in users
   useEffect(() => {
     if (!isConversationSequenceComplete || !hasAiResponse) return;
+    if (isLoggedIn !== true) return;
     const bar = fillBarRef.current;
     if (!bar) return;
     // Reset to 0% immediately
@@ -1906,7 +1907,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     // Trigger the 10s transition
     bar.style.transition = 'width 10s linear';
     bar.style.width = '100%';
-  }, [isConversationSequenceComplete, hasAiResponse]);
+  }, [isConversationSequenceComplete, hasAiResponse, isLoggedIn]);
 
   useEffect(() => {
     return () => {

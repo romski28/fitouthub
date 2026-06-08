@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-3f58f426",
+    "date": "2026-06-08T23:04:08+08:00",
+    "title": "Disable auto-transition timer and fill animation for non-logged-in users",
+    "summary": "Disable auto-transition timer and fill animation for non-logged-in users",
+    "areas": [
+      "web"
+    ],
+    "commit": "3f58f426",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-7ecc8678",
     "date": "2026-06-08T22:59:35+08:00",
     "title": "Remove textarea height animation, always render at full size",
