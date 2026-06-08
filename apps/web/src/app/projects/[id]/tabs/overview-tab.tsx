@@ -308,7 +308,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectStatus = project.status ?? 'pending';
   const hasAiInsights = Boolean(
     project.aiIntake &&
-      (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project || project.aiIntake.safetyAssessment),
+      (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
   );
   const invitedCount = project.professionals?.length ?? 0;
   const quotedProfessionals =

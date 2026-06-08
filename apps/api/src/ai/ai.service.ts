@@ -1070,7 +1070,7 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
-2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence
+2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment
 3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs
 4) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
@@ -1124,7 +1124,19 @@ OUTPUT FORMAT (JSON only)
   "title": "string|null",
   "nextQuestions": ["string"],
   "followUpQuestions": ["string"],
-  "overallConfidence": number
+  "overallConfidence": number,
+  "assumptions": ["string"],
+  "risks": ["string"],
+  "safetyAssessment": {
+    "riskLevel": "none|low|medium|high|critical",
+    "isDangerous": false,
+    "concerns": ["string"],
+    "temporaryMitigations": ["string"],
+    "shouldEscalateEmergency": false,
+    "emergencyReason": "string|null",
+    "requiresImmediateHumanContact": false,
+    "disclaimer": "string|null"
+  }
 }`;
 
     return {

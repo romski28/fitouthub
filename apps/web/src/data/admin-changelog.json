@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-08-415c1364",
+    "date": "2026-06-08T15:12:45+08:00",
+    "title": "Fix: add assumptions/risks/safetyAssessment to conversational prompt JSON schema + fix overview tab check",
+    "summary": "Fix: add assumptions/risks/safetyAssessment to conversational prompt JSON schema + fix overview tab check",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "415c1364",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-08-c9778b98",
     "date": "2026-06-08T13:26:21+08:00",
     "title": "Add Problem Focus rules to keep AI on the stated problem, not the fixture",
