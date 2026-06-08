@@ -345,6 +345,47 @@ export class AiService {
     return Array.from(questionsByKey.values());
   }
 
+  /** Collect the full user→AI conversation from the thread chain for context */
+  private async collectThreadConversationHistory(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
+    if (!activeThread) return '';
+
+    const visited = new Set<string>();
+    const turns: Array<{ user: string; assistant: string }> = [];
+    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
+
+    for (let depth = 0; depth < 10; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+
+      const userPrompt = typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '';
+      const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
+        ? (cursor.rawOutput as Record<string, unknown>)
+        : null;
+      const assistantText = typeof rawOutput?.conversationalText === 'string'
+        ? rawOutput.conversationalText.trim().slice(0, 150)
+        : '';
+
+      if (userPrompt) {
+        turns.unshift({ user: userPrompt, assistant: assistantText });
+      }
+
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent
+        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
+        : null;
+    }
+
+    if (turns.length <= 1) return ''; // No history beyond the current turn
+
+    // Build a compact summary (exclude the latest turn — it's the LATEST_USER_UPDATE)
+    const historyTurns = turns.slice(0, -1);
+    return historyTurns
+      .map((t, i) => `Turn ${i + 1}: User said "${this.truncateForPrompt(t.user, 200)}" → Mimo asked about "${this.truncateForPrompt(t.assistant, 100)}"`)
+      .join('\n');
+  }
+
   private extractSourceIntakeIdFromProject(project: unknown): string | null {
     if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
     const projectRecord = project as Record<string, unknown>;
@@ -1499,6 +1540,7 @@ OUTPUT FORMAT (JSON only)
     threadSummary: ReturnType<AiService['buildAiThreadContextSummary']> | null;
     threadOriginSummary: ReturnType<AiService['buildAiThreadContextSummary']> | null;
     askedQuestionsSummary: string;
+    conversationHistory: string;
   }): UnifiedPromptEnvelope {
     const summarizedOriginPrompt = this.truncateForPrompt(
       input.threadOriginSummary?.priorPrompt || input.threadSummary?.priorPrompt,
@@ -1513,7 +1555,7 @@ OUTPUT FORMAT (JSON only)
     const summarizedPriorReply = this.truncateForPrompt(input.threadSummary?.conversationalText, 220) || 'unknown';
 
     const userMessage = input.threadSummary
-      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. The LATEST_USER_UPDATE is authoritative — if it contradicts any earlier extracted context, the user's latest words ALWAYS win. Treat negation words ("not", "just", "only", "no") as explicit exclusions that must be respected.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT (may be outdated — latest user update overrides):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (authoritative — overrides any conflicting prior context):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics`
+      ? `THREAD_MODE: This is a follow-up refinement within the same Mimo intake thread. The LATEST_USER_UPDATE is authoritative — if it contradicts any earlier extracted context, the user's latest words ALWAYS win. Treat negation words ("not", "just", "only", "no") as explicit exclusions that must be respected.\n\nORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conversationHistory ? `\nCONVERSATION SO FAR:\n${input.conversationHistory}\n` : ''}\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEARLIER_EXTRACTED_CONTEXT (may be outdated — latest user update overrides):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (authoritative — overrides any conflicting prior context):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the earlier request, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics`
       : `USER_PROMPT:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
 
     return {
@@ -2586,6 +2628,7 @@ OUTPUT FORMAT (JSON only)
     const threadOrigin = activeThread ? await this.resolveThreadOriginIntake(activeThread) : null;
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
+    const conversationHistory = await this.collectThreadConversationHistory(activeThread as any);
 
     const askedQuestionsSummary = askedQuestions
       .slice(0, 6)
@@ -2601,6 +2644,7 @@ OUTPUT FORMAT (JSON only)
       threadSummary,
       threadOriginSummary,
       askedQuestionsSummary,
+      conversationHistory,
     });
     envelope.imageUrls = normalizedImageUrls;
     envelope.imageCount = requestedImageCount;

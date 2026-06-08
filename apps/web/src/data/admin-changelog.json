@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-08-a80e66a2",
+    "date": "2026-06-08T23:26:46+08:00",
+    "title": "Add conversation history tracking so AI remembers user answers across turns",
+    "summary": "Add conversation history tracking so AI remembers user answers across turns",
+    "areas": [
+      "api"
+    ],
+    "commit": "a80e66a2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-08-b8689ec8",
     "date": "2026-06-08T23:16:03+08:00",
     "title": "Move RequirementChecklist from landing AI chat to wizard AI chat page",
