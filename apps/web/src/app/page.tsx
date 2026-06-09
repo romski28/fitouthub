@@ -107,29 +107,43 @@ export default function Home() {
           className="relative -mx-6 px-6"
         >
           <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-12">
-            <div className="px-4 sm:px-6 lg:px-12">
-              <div className="mx-auto max-w-2xl">
-                <div className="mb-8 text-center">
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    {t('welcome.heading')}
-                  </p>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
-                      {greetings[greetingIndex]}
-                    </span>
-                  </h2>
-                  {mimoThinking && (
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
-                      <span className="flex items-end gap-1" aria-hidden="true">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[140px_1fr]">
+              {/* Sarah — left side */}
+              <div className="hidden lg:flex lg:justify-center lg:pt-4">
+                <Image
+                  src="/assets/images/sarah-character-pack/sarah-800.webp"
+                  alt="Sarah"
+                  width={120}
+                  height={180}
+                  className="h-auto w-[100px] xl:w-[120px]"
+                  priority
+                />
+              </div>
+
+              <div className="px-4 sm:px-6 lg:px-4">
+                <div className="mx-auto max-w-2xl">
+                  <div className="mb-8 text-center">
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                      {t('welcome.heading')}
+                    </p>
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
+                        {greetings[greetingIndex]}
                       </span>
-                      <span>{t('welcome.thinking')}</span>
-                    </div>
-                  )}
+                    </h2>
+                    {mimoThinking && (
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
+                        <span className="flex items-end gap-1" aria-hidden="true">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+                        </span>
+                        <span>{t('welcome.thinking')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
                 </div>
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
               </div>
             </div>
           </div>

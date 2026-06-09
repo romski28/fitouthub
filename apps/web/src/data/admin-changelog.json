@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-a79adf9d",
+    "date": "2026-06-09T09:28:04+08:00",
+    "title": "Add Sarah character to left side of AI prompt panel on home page",
+    "summary": "Add Sarah character to left side of AI prompt panel on home page",
+    "areas": [
+      "web"
+    ],
+    "commit": "a79adf9d",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-514bb5bf",
     "date": "2026-06-09T09:17:13+08:00",
     "title": "Prompt change: conversationalText must not include questions; questions go in nextQuestions/followUpQuestions only",
