@@ -1,38 +1,56 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Query } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { TradesService } from '../trades/trades.service';
 
 @Controller('admin/trade-district-matrix')
 export class TradeDistrictMatrixController {
   private readonly logger = new Logger(TradeDistrictMatrixController.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tradesService: TradesService,
+  ) {}
 
   @Get()
   async getMatrix(@Query('featured') featured?: string) {
     try {
       const onlyFeatured = featured === '1' || featured === 'true';
 
-      const professionals = await this.prisma.professional.findMany({
-        where: {
-          status: onlyFeatured ? 'approved' : undefined,
-        },
-        select: {
-          locationPrimary: true,
-          locationSecondary: true,
-          servicePrimaries: true,
-          serviceSecondaries: true,
-          tradesOffered: true,
-        },
-      });
+      const [professionals, allTrades] = await Promise.all([
+        this.prisma.professional.findMany({
+          where: {
+            status: onlyFeatured ? 'approved' : undefined,
+          },
+          select: {
+            locationPrimary: true,
+            locationSecondary: true,
+            servicePrimaries: true,
+            serviceSecondaries: true,
+            tradesOffered: true,
+          },
+        }),
+        this.tradesService.findAll(),
+      ]);
+
+      // Build the full trade name list
+      const allTradeNames = new Set<string>();
+      for (const trade of allTrades) {
+        if (trade?.name?.trim()) allTradeNames.add(trade.name.trim());
+      }
+      // Also include any trades found in professional data
+      for (const pro of professionals) {
+        if (Array.isArray(pro.tradesOffered)) {
+          for (const t of pro.tradesOffered) {
+            if (t?.trim()) allTradeNames.add(t.trim());
+          }
+        }
+      }
 
       // Build matrix: district → trade → count
-      // A professional counts once per unique district they serve
       const matrix: Record<string, Record<string, number>> = {};
-      const allTrades = new Set<string>();
       const allDistricts = new Set<string>();
 
       for (const pro of professionals) {
-        // Collect all districts this professional serves
         const districts = new Set<string>();
         if (pro.locationPrimary?.trim()) districts.add(pro.locationPrimary.trim());
         if (pro.locationSecondary?.trim()) districts.add(pro.locationSecondary.trim());
@@ -57,15 +75,27 @@ export class TradeDistrictMatrixController {
           for (const trade of trades) {
             const t = trade.trim();
             if (!t) continue;
-            allTrades.add(t);
             matrix[district][t] = (matrix[district][t] || 0) + 1;
           }
         }
       }
 
+      // Ensure all trades appear in every district (with 0 if no coverage)
+      const sortedDistricts = Array.from(allDistricts).sort();
+      const sortedTrades = Array.from(allTradeNames).sort();
+
+      for (const district of sortedDistricts) {
+        if (!matrix[district]) matrix[district] = {};
+        for (const trade of sortedTrades) {
+          if (!(trade in matrix[district])) {
+            matrix[district][trade] = 0;
+          }
+        }
+      }
+
       return {
-        districts: Array.from(allDistricts).sort(),
-        trades: Array.from(allTrades).sort(),
+        districts: sortedDistricts,
+        trades: sortedTrades,
         matrix,
         totalProfessionals: professionals.length,
       };

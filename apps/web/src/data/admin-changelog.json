@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-6337948f",
+    "date": "2026-06-09T14:14:28+08:00",
+    "title": "Include ALL trades in matrix, even unserved ones (from trades table)",
+    "summary": "Include ALL trades in matrix, even unserved ones (from trades table)",
+    "areas": [
+      "api"
+    ],
+    "commit": "6337948f",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-09-8696523f",
     "date": "2026-06-09T13:37:21+08:00",
     "title": "Include servicePrimaries/serviceSecondaries/locationSecondary in matrix district coverage",
