@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-eb9fad70",
+    "date": "2026-06-09T13:07:26+08:00",
+    "title": "Add Trade District Matrix card to Admin Analytics tab",
+    "summary": "Add Trade District Matrix card to Admin Analytics tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "eb9fad70",
+    "files": [
+      "apps/web/src/app/admin/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-1a65738e",
     "date": "2026-06-09T13:02:40+08:00",
     "title": "Add admin trade×district matrix with heatmap and featured filter",

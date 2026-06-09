@@ -815,6 +815,12 @@ export default function AdminDashboardPage() {
       stat: "Primary analytics page",
     },
     {
+      title: "Trade × District Matrix",
+      description: "Heatmap grid showing professional coverage by district and trade. Spot coverage gaps.",
+      href: "/admin/trade-district-matrix",
+      stat: "Coverage heatmap",
+    },
+    {
       title: "Activity Log",
       description: "Audit stream available as a dedicated page for deeper review.",
       href: "/admin/activity-log",
