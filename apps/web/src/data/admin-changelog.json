@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-c7a28385",
+    "date": "2026-06-09T15:29:49+08:00",
+    "title": "Compact video teaser: text left, thumbnail right, session-only dismiss",
+    "summary": "Compact video teaser: text left, thumbnail right, session-only dismiss",
+    "areas": [
+      "web"
+    ],
+    "commit": "c7a28385",
+    "files": [
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-c3262f02",
     "date": "2026-06-09T15:24:12+08:00",
     "title": "Add inline video teaser for non-logged-in users in AI prompt panel",
