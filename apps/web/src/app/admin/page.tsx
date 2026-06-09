@@ -91,6 +91,7 @@ type DrawerMessage = {
   sender: string;
   content: string;
   createdAt: string;
+  attachments?: Array<{ url: string; filename: string }>;
 };
 
 const formatRelativeTime = (dateValue: string) => {
@@ -352,6 +353,7 @@ export default function AdminDashboardPage() {
             sender?: string;
             content?: string;
             createdAt?: string;
+            attachments?: Array<{ url: string; filename: string }>;
           }>;
 
           setThreadMessages(
@@ -360,6 +362,7 @@ export default function AdminDashboardPage() {
               sender: message.senderType || message.sender || "unknown",
               content: message.content || "",
               createdAt: message.createdAt || new Date().toISOString(),
+              attachments: message.attachments,
             })),
           );
           return;
@@ -384,6 +387,7 @@ export default function AdminDashboardPage() {
               senderType?: string;
               content?: string;
               createdAt?: string;
+              attachments?: Array<{ url: string; filename: string }>;
             }>;
           };
 
@@ -393,6 +397,7 @@ export default function AdminDashboardPage() {
               sender: message.senderType || "unknown",
               content: message.content || "",
               createdAt: message.createdAt || new Date().toISOString(),
+              attachments: message.attachments,
             })),
           );
           return;
@@ -1055,6 +1060,26 @@ export default function AdminDashboardPage() {
                           <span className="text-slate-400">{formatRelativeTime(message.createdAt)}</span>
                         </div>
                         <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {message.attachments.map((att, i) => (
+                              <a
+                                key={i}
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block max-w-[120px] overflow-hidden rounded border border-slate-500 hover:border-emerald-400 transition"
+                              >
+                                <img
+                                  src={att.url}
+                                  alt={att.filename || 'Attachment'}
+                                  className="h-16 w-full object-cover"
+                                />
+                                <span className="block truncate px-1 py-0.5 text-[10px] text-slate-300">{att.filename || 'View'}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

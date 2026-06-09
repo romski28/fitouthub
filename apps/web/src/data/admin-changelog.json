@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-160e5c54",
+    "date": "2026-06-09T21:33:27+08:00",
+    "title": "Show image attachments in admin message drawer",
+    "summary": "Show image attachments in admin message drawer",
+    "areas": [
+      "web"
+    ],
+    "commit": "160e5c54",
+    "files": [
+      "apps/web/src/app/admin/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-6faa8ad0",
     "date": "2026-06-09T21:16:48+08:00",
     "title": "Fix parse error: remove extra closing brace from paste handler",
