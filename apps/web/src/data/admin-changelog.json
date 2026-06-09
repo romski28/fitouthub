@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-fd1d9403",
+    "date": "2026-06-09T09:53:31+08:00",
+    "title": "Equal character sizes, cropped edges, Ben hidden on lg-only, mobile no images",
+    "summary": "Equal character sizes, cropped edges, Ben hidden on lg-only, mobile no images",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd1d9403",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-6d921c6a",
     "date": "2026-06-09T09:33:54+08:00",
     "title": "Sarah left, Ben right of prompt box; larger characters, narrower panel, tight padding",

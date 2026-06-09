@@ -106,24 +106,29 @@ export default function Home() {
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-8">
-            <div className="grid grid-cols-1 items-start gap-0 lg:grid-cols-[180px_1fr_150px] lg:gap-4">
-              {/* Sarah — left */}
-              <div className="hidden lg:flex lg:justify-end lg:pt-6">
-                <Image
-                  src="/assets/images/sarah-character-pack/sarah-800.webp"
-                  alt="Sarah"
-                  width={180}
-                  height={260}
-                  className="h-auto w-[150px] xl:w-[180px]"
-                  priority
-                />
+          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 lg:py-8">
+            {/* Sarah and Ben — hidden on mobile, visible on desktop */}
+            <div className="hidden lg:grid lg:grid-cols-[180px_1fr_180px] lg:items-start lg:gap-2 xl:grid-cols-[200px_1fr_180px] xl:gap-3">
+              {/* Sarah — left, 25% cropped each side */}
+              <div className="flex justify-end overflow-hidden pt-4">
+                <div className="w-[135px] overflow-hidden xl:w-[150px]">
+                  <div className="-ml-[45px] -mr-[45px] xl:-ml-[50px] xl:-mr-[50px]">
+                    <Image
+                      src="/assets/images/sarah-character-pack/sarah-800.webp"
+                      alt="Sarah"
+                      width={225}
+                      height={300}
+                      className="h-auto w-[225px] max-w-none xl:w-[250px]"
+                      priority
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Prompt box — center */}
-              <div className="px-0 sm:px-2 lg:px-2">
+              <div className="px-0 sm:px-1">
                 <div className="mx-auto max-w-xl">
-                  <div className="mb-6 text-center">
+                  <div className="mb-5 text-center">
                     <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
                       {t('welcome.heading')}
                     </p>
@@ -147,16 +152,47 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Builder — right */}
-              <div className="hidden lg:flex lg:justify-start lg:pt-6">
-                <Image
-                  src="/assets/images/tradesmen-character-pack/ben-800.webp"
-                  alt="Ben"
-                  width={150}
-                  height={220}
-                  className="h-auto w-[120px] xl:w-[150px]"
-                  priority
-                />
+              {/* Ben — right, 10% cropped each side, hidden on lg-only screens */}
+              <div className="hidden justify-start overflow-hidden pt-4 xl:flex">
+                <div className="w-[144px] overflow-hidden">
+                  <div className="-ml-[18px] -mr-[18px]">
+                    <Image
+                      src="/assets/images/tradesmen-character-pack/ben-800.webp"
+                      alt="Ben"
+                      width={180}
+                      height={260}
+                      className="h-auto w-[180px] max-w-none"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile / tablet: prompt box only, full width */}
+            <div className="lg:hidden px-4 sm:px-6">
+              <div className="mx-auto max-w-2xl">
+                <div className="mb-5 text-center">
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    {t('welcome.heading')}
+                  </p>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
+                      {greetings[greetingIndex]}
+                    </span>
+                  </h2>
+                  {mimoThinking && (
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
+                      <span className="flex items-end gap-1" aria-hidden="true">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+                      </span>
+                      <span>{t('welcome.thinking')}</span>
+                    </div>
+                  )}
+                </div>
+                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
               </div>
             </div>
           </div>
