@@ -1889,7 +1889,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     : aiLoading
       ? false
       : aiRoundCount === 0 || showFollowUpComposer;
-  const showPromptHelperText = aiRoundCount === 0;
   const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
   const isLargeProject = (() => {
@@ -1985,16 +1984,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       )}
 
       <div className={`origin-top transition-all duration-[900ms] ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
-        {showPromptHelperText && (
-          <div className="text-center space-y-2 mb-6">
-            <p className="text-sm text-slate-600">
-              {t('helpText')}{' '}
-              <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
-                {t('helpLink')}
-              </button>
-            </p>
-          </div>
-        )}
         <SearchBox
           onSubmit={handleSearch}
           autoFocus={autoFocusPrompt}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
@@ -10,56 +10,15 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { VideoTeaser } from '@/components/video-teaser';
 
-const WELCOME_GREETINGS = [
-  'Hi and welcome to your fitout adventure, MIMO',
-  'Big plans start with one smart move, MIMO',
-  'Ready to build your next space with confidence, MIMO',
-  'Your project co-pilot is ready when you are, MIMO',
-  "From idea to handover, let's do this together, MIMO",
-  'Great spaces begin right here and now, MIMO',
-];
-
-const WELCOME_GREETINGS_ZH_HK = [
-  '你好，歡迎開始你的裝修之旅，MIMO',
-  '大計劃從明智的一步開始，MIMO',
-  '準備好自信地打造你的下一個空間，MIMO',
-  '你的項目副駕駛已準備就緒，MIMO',
-  '從概念到交付，讓我們一齊完成，MIMO',
-  '優秀的空間從此時此地開始，MIMO',
-];
-
-const WELCOME_GREETINGS_ZH_CN = [
-  '你好，欢迎开始你的装修之旅，MIMO',
-  '大计划从明智的一步开始，MIMO',
-  '准备好自信地打造你的下一个空间，MIMO',
-  '你的项目副驾驶已准备就绪，MIMO',
-  '从概念到交付，让我们一起完成，MIMO',
-  '优秀的空间从此时此地开始，MIMO',
-];
-
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [greetingIndex, setGreetingIndex] = useState(0);
   const [mimoThinking, setMimoThinking] = useState(false);
   
   const t = useTranslations('home');
-  const locale = useLocale();
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
-
-  const greetings = locale === 'zh-HK' ? WELCOME_GREETINGS_ZH_HK
-    : locale === 'zh-CN' ? WELCOME_GREETINGS_ZH_CN
-    : WELCOME_GREETINGS;
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setGreetingIndex((current) => (current + 1) % greetings.length);
-    }, 3000);
-
-    return () => clearInterval(intervalId);
-  }, [greetings.length]);
 
   // Redirect professionals to their dashboard
   useEffect(() => {
@@ -89,13 +48,8 @@ export default function Home() {
             <div className="px-4 sm:px-6 lg:px-12">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    {t('welcome.heading')}
-                  </p>
                   <h2 className="text-2xl font-bold text-slate-900">
-                    <span key={`ai-${greetingIndex}`} className="inline-block animate-[welcomePop_420ms_ease-out]">
-                      {greetings[greetingIndex]}
-                    </span>
+                    <span className="text-[#F97362]">Move In Move Out</span>, Everything in Between. Welcome Home.
                   </h2>
                   {mimoThinking && (
                     <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">

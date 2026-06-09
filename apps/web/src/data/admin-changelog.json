@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-09-daaf6777",
+    "date": "2026-06-09T22:40:29+08:00",
+    "title": "Simplify home AI panel: static strap line, remove animated greetings and help text",
+    "summary": "Simplify home AI panel: static strap line, remove animated greetings and help text",
+    "areas": [
+      "web"
+    ],
+    "commit": "daaf6777",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-559b25fd",
     "date": "2026-06-09T22:24:14+08:00",
     "title": "Fix scroll: explicit calc max-height on both layers, 12px right padding for scrollbar",
