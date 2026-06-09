@@ -1015,7 +1015,6 @@ export default function FloatingChat() {
                     setPendingFiles((prev) => [...prev, ...imageFiles]);
                     setPendingPreviewUrls((prev) => [...prev, ...imageFiles.map((f) => URL.createObjectURL(f))]);
                   }
-                  }
                 }}
                 placeholder="Type your message..."
                 disabled={sending || loading || !threadId}
