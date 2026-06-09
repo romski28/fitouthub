@@ -18,28 +18,48 @@ export class TradeDistrictMatrixController {
         },
         select: {
           locationPrimary: true,
+          locationSecondary: true,
+          servicePrimaries: true,
+          serviceSecondaries: true,
           tradesOffered: true,
         },
       });
 
       // Build matrix: district → trade → count
+      // A professional counts once per unique district they serve
       const matrix: Record<string, Record<string, number>> = {};
       const allTrades = new Set<string>();
       const allDistricts = new Set<string>();
 
       for (const pro of professionals) {
-        const district = pro.locationPrimary?.trim() || 'Unknown';
+        // Collect all districts this professional serves
+        const districts = new Set<string>();
+        if (pro.locationPrimary?.trim()) districts.add(pro.locationPrimary.trim());
+        if (pro.locationSecondary?.trim()) districts.add(pro.locationSecondary.trim());
+        if (Array.isArray(pro.servicePrimaries)) {
+          for (const d of pro.servicePrimaries) {
+            if (d?.trim()) districts.add(d.trim());
+          }
+        }
+        if (Array.isArray(pro.serviceSecondaries)) {
+          for (const d of pro.serviceSecondaries) {
+            if (d?.trim()) districts.add(d.trim());
+          }
+        }
+        if (districts.size === 0) districts.add('Unknown');
+
         const trades: string[] = Array.isArray(pro.tradesOffered) ? pro.tradesOffered : [];
 
-        allDistricts.add(district);
+        for (const district of districts) {
+          allDistricts.add(district);
+          if (!matrix[district]) matrix[district] = {};
 
-        if (!matrix[district]) matrix[district] = {};
-
-        for (const trade of trades) {
-          const t = trade.trim();
-          if (!t) continue;
-          allTrades.add(t);
-          matrix[district][t] = (matrix[district][t] || 0) + 1;
+          for (const trade of trades) {
+            const t = trade.trim();
+            if (!t) continue;
+            allTrades.add(t);
+            matrix[district][t] = (matrix[district][t] || 0) + 1;
+          }
         }
       }
 

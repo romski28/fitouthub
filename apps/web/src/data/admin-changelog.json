@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-8696523f",
+    "date": "2026-06-09T13:37:21+08:00",
+    "title": "Include servicePrimaries/serviceSecondaries/locationSecondary in matrix district coverage",
+    "summary": "Include servicePrimaries/serviceSecondaries/locationSecondary in matrix district coverage",
+    "areas": [
+      "api"
+    ],
+    "commit": "8696523f",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-09-210db1ab",
     "date": "2026-06-09T13:33:28+08:00",
     "title": "Swap matrix axes: districts as columns, trades as rows. Rename Approved to Featured toggle.",
