@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-210db1ab",
+    "date": "2026-06-09T13:33:28+08:00",
+    "title": "Swap matrix axes: districts as columns, trades as rows. Rename Approved to Featured toggle.",
+    "summary": "Swap matrix axes: districts as columns, trades as rows. Rename Approved to Featured toggle.",
+    "areas": [
+      "web"
+    ],
+    "commit": "210db1ab",
+    "files": [
+      "apps/web/src/app/admin/trade-district-matrix/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-485f7428",
     "date": "2026-06-09T13:27:53+08:00",
     "title": "Improve matrix page: add auth header, better error messages, API error logging",

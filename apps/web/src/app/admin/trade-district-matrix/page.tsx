@@ -106,17 +106,17 @@ export default function TradeDistrictMatrixPage() {
             <h1 className="text-2xl font-bold text-slate-900">Trade × District Matrix</h1>
             <p className="mt-1 text-sm text-slate-600">
               {data.totalProfessionals} professional{data.totalProfessionals !== 1 ? 's' : ''} ·
-              {data.districts.length} districts · {data.trades.length} trades
+              {data.trades.length} trades · {data.districts.length} districts
             </p>
           </div>
-          <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+          <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer">
             <input
               type="checkbox"
               checked={featuredOnly}
               onChange={(e) => setFeaturedOnly(e.target.checked)}
               className="rounded border-slate-300 text-emerald-600"
             />
-            Approved only
+            Featured only
           </label>
         </div>
 
@@ -158,35 +158,35 @@ export default function TradeDistrictMatrixPage() {
             <thead>
               <tr className="bg-slate-100">
                 <th className="sticky left-0 z-10 bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 whitespace-nowrap border-r border-slate-200">
-                  District ↓ / Trade →
+                  Trade ↓ / District →
                 </th>
-                {filteredTrades.map((trade) => (
+                {filteredDistricts.map((district) => (
                   <th
-                    key={trade}
+                    key={district}
                     className="px-2 py-2 text-center font-medium text-slate-600 whitespace-nowrap cursor-pointer hover:bg-slate-200"
-                    onClick={() => setSelectedTrade(selectedTrade === trade ? null : trade)}
+                    onClick={() => setSelectedDistrict(selectedDistrict === district ? null : district)}
                   >
-                    {trade}
+                    {district}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filteredDistricts.map((district) => (
-                <tr key={district} className="border-t border-slate-100 hover:bg-slate-50/50">
+              {filteredTrades.map((trade) => (
+                <tr key={trade} className="border-t border-slate-100 hover:bg-slate-50/50">
                   <td
                     className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700 whitespace-nowrap border-r border-slate-200 cursor-pointer hover:bg-slate-50"
-                    onClick={() => setSelectedDistrict(selectedDistrict === district ? null : district)}
+                    onClick={() => setSelectedTrade(selectedTrade === trade ? null : trade)}
                   >
-                    {district}
+                    {trade}
                   </td>
-                  {filteredTrades.map((trade) => {
+                  {filteredDistricts.map((district) => {
                     const count = data.matrix[district]?.[trade] || 0;
                     return (
                       <td
-                        key={trade}
+                        key={district}
                         className={`px-2 py-2 text-center font-mono transition-colors ${getHeatColor(count)} ${getTextColor(count)}`}
-                        title={`${district} × ${trade}: ${count} professional${count !== 1 ? 's' : ''}`}
+                        title={`${trade} × ${district}: ${count} professional${count !== 1 ? 's' : ''}`}
                       >
                         {count || '·'}
                       </td>
