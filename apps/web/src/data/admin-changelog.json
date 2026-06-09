@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-2f93d53e",
+    "date": "2026-06-09T10:08:11+08:00",
+    "title": "Align characters vertically centered, Sarah right Ben left toward prompt box",
+    "summary": "Align characters vertically centered, Sarah right Ben left toward prompt box",
+    "areas": [
+      "web"
+    ],
+    "commit": "2f93d53e",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-dffc46e7",
     "date": "2026-06-09T10:03:56+08:00",
     "title": "Simplify character layout: uniform 3-col grid, identical sizes, progressive column drop",

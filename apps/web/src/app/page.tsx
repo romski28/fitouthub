@@ -109,8 +109,8 @@ export default function Home() {
           <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 lg:py-8">
             <div className="grid grid-cols-1 items-start gap-1 lg:grid-cols-[180px_1fr] xl:grid-cols-[180px_1fr_180px] lg:gap-3">
 
-              {/* Sarah — left, drops on mobile */}
-              <div className="hidden lg:flex lg:justify-center lg:pt-4">
+              {/* Sarah — left, vertically centered, right-aligned */}
+              <div className="hidden lg:flex lg:items-center lg:justify-end">
                 <Image
                   src="/assets/images/sarah-character-pack/sarah-800.webp"
                   alt="Sarah"
@@ -148,8 +148,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Ben — right, drops on lg, visible xl only */}
-              <div className="hidden xl:flex xl:justify-center xl:pt-4">
+              {/* Ben — right, vertically centered, left-aligned */}
+              <div className="hidden xl:flex xl:items-center xl:justify-start">
                 <Image
                   src="/assets/images/tradesmen-character-pack/ben-800.webp"
                   alt="Ben"
