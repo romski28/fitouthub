@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-6d921c6a",
+    "date": "2026-06-09T09:33:54+08:00",
+    "title": "Sarah left, Ben right of prompt box; larger characters, narrower panel, tight padding",
+    "summary": "Sarah left, Ben right of prompt box; larger characters, narrower panel, tight padding",
+    "areas": [
+      "web"
+    ],
+    "commit": "6d921c6a",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-a79adf9d",
     "date": "2026-06-09T09:28:04+08:00",
     "title": "Add Sarah character to left side of AI prompt panel on home page",

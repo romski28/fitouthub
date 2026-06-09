@@ -106,23 +106,24 @@ export default function Home() {
           id="project-prompt"
           className="relative -mx-6 px-6"
         >
-          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-12">
-            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[140px_1fr]">
-              {/* Sarah — left side */}
-              <div className="hidden lg:flex lg:justify-center lg:pt-4">
+          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-8">
+            <div className="grid grid-cols-1 items-start gap-0 lg:grid-cols-[180px_1fr_150px] lg:gap-4">
+              {/* Sarah — left */}
+              <div className="hidden lg:flex lg:justify-end lg:pt-6">
                 <Image
                   src="/assets/images/sarah-character-pack/sarah-800.webp"
                   alt="Sarah"
-                  width={120}
-                  height={180}
-                  className="h-auto w-[100px] xl:w-[120px]"
+                  width={180}
+                  height={260}
+                  className="h-auto w-[150px] xl:w-[180px]"
                   priority
                 />
               </div>
 
-              <div className="px-4 sm:px-6 lg:px-4">
-                <div className="mx-auto max-w-2xl">
-                  <div className="mb-8 text-center">
+              {/* Prompt box — center */}
+              <div className="px-0 sm:px-2 lg:px-2">
+                <div className="mx-auto max-w-xl">
+                  <div className="mb-6 text-center">
                     <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
                       {t('welcome.heading')}
                     </p>
@@ -144,6 +145,18 @@ export default function Home() {
                   </div>
                   <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
                 </div>
+              </div>
+
+              {/* Builder — right */}
+              <div className="hidden lg:flex lg:justify-start lg:pt-6">
+                <Image
+                  src="/assets/images/tradesmen-character-pack/ben-800.webp"
+                  alt="Ben"
+                  width={150}
+                  height={220}
+                  className="h-auto w-[120px] xl:w-[150px]"
+                  priority
+                />
               </div>
             </div>
           </div>
