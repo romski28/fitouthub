@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-aad1a524",
+    "date": "2026-06-09T12:23:55+08:00",
+    "title": "Archive home page panels 2-4 for potential reuse",
+    "summary": "Archive home page panels 2-4 for potential reuse",
+    "areas": [
+      "web"
+    ],
+    "commit": "aad1a524",
+    "files": [
+      "apps/web/src/app/archive/home-panels/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-f0cbc3c7",
     "date": "2026-06-09T12:15:14+08:00",
     "title": "Remove Login or Join now for best experience text from AI prompt panel",
