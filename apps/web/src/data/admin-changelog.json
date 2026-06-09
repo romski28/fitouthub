@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-8bda8077",
+    "date": "2026-06-09T22:10:05+08:00",
+    "title": "Fix emergency modal: scroll on cream container, not backdrop overlay",
+    "summary": "Fix emergency modal: scroll on cream container, not backdrop overlay",
+    "areas": [
+      "web"
+    ],
+    "commit": "8bda8077",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-b70e34b1",
     "date": "2026-06-09T22:03:34+08:00",
     "title": "Constrain emergency modal within screen with 5rem padding and scroll",

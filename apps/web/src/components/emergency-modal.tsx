@@ -168,10 +168,10 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
   };
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto py-20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-20">
       <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative mx-4 w-full max-w-md shrink-0 rounded-2xl border border-white/45 bg-[#F5EEDE]/95 p-6 shadow-2xl"
+        className="relative mx-4 w-full max-w-md max-h-full overflow-y-auto rounded-2xl border border-white/45 bg-[#F5EEDE]/95 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {showPhotoPrompt && (
