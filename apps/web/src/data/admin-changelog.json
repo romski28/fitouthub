@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-514bb5bf",
+    "date": "2026-06-09T09:17:13+08:00",
+    "title": "Prompt change: conversationalText must not include questions; questions go in nextQuestions/followUpQuestions only",
+    "summary": "Prompt change: conversationalText must not include questions; questions go in nextQuestions/followUpQuestions only",
+    "areas": [
+      "api"
+    ],
+    "commit": "514bb5bf",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-09-d55d1e25",
     "date": "2026-06-09T09:10:39+08:00",
     "title": "i18n: translate help text, Ask Mimo button, image quota text to zh-HK and zh-CN",
