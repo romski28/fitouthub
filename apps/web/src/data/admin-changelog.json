@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-09-1a65738e",
+    "date": "2026-06-09T13:02:40+08:00",
+    "title": "Add admin trade×district matrix with heatmap and featured filter",
+    "summary": "Add admin trade×district matrix with heatmap and featured filter",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1a65738e",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts",
+      "apps/api/src/app.module.ts",
+      "apps/web/src/app/admin/trade-district-matrix/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-18bbe48a",
     "date": "2026-06-09T12:37:30+08:00",
     "title": "Remove panels 2-4 from home page: role selection, welcome, card rail",

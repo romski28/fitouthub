@@ -8,6 +8,7 @@ import { ProjectsService } from './projects/projects.service';
 import { NextStepService } from './projects/next-step.service';
 import { NextStepConfigController } from './projects/next-step-config.controller';
 import { AdminI18nController } from './admin/admin-i18n.controller';
+import { TradeDistrictMatrixController } from './admin/trade-district-matrix.controller';
 import { AdminActionService } from './projects/admin-action.service';
 import { ProjectStageService } from './projects/project-stage.service';
 import { ContractService } from './projects/contract.service';
@@ -92,6 +93,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     ActivityLogController,
     NextStepConfigController,
     AdminI18nController,
+    TradeDistrictMatrixController,
   ],
   providers: [
     AppService,
