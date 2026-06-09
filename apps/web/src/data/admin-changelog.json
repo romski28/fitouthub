@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-6b3df603",
+    "date": "2026-06-09T10:21:49+08:00",
+    "title": "Tighten grid: stretch cells, max-w-full images, constrain center to 36rem, justify-center",
+    "summary": "Tighten grid: stretch cells, max-w-full images, constrain center to 36rem, justify-center",
+    "areas": [
+      "web"
+    ],
+    "commit": "6b3df603",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-2f93d53e",
     "date": "2026-06-09T10:08:11+08:00",
     "title": "Align characters vertically centered, Sarah right Ben left toward prompt box",

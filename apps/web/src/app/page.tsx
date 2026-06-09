@@ -107,23 +107,23 @@ export default function Home() {
           className="relative -mx-6 px-6"
         >
           <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 lg:py-8">
-            <div className="grid grid-cols-1 items-start gap-1 lg:grid-cols-[180px_1fr] xl:grid-cols-[180px_1fr_180px] lg:gap-3">
+            <div className="grid grid-cols-1 justify-center gap-1 lg:grid-cols-[160px_minmax(0,36rem)] xl:grid-cols-[160px_minmax(0,36rem)_160px] lg:gap-3 items-stretch">
 
-              {/* Sarah — left, vertically centered, right-aligned */}
-              <div className="hidden lg:flex lg:items-center lg:justify-end">
+              {/* Sarah — left */}
+              <div className="hidden lg:flex lg:justify-end">
                 <Image
                   src="/assets/images/sarah-character-pack/sarah-800.webp"
                   alt="Sarah"
                   width={180}
                   height={260}
-                  className="h-auto w-[160px]"
+                  className="h-auto max-w-full"
                   priority
                 />
               </div>
 
-              {/* Prompt box — center, always visible */}
+              {/* Prompt box — center */}
               <div className="px-0 sm:px-2 lg:px-0">
-                <div className="mx-auto max-w-xl">
+                <div className="mx-auto w-full">
                   <div className="mb-5 text-center">
                     <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-700">
                       {t('welcome.heading')}
@@ -148,14 +148,14 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Ben — right, vertically centered, left-aligned */}
-              <div className="hidden xl:flex xl:items-center xl:justify-start">
+              {/* Ben — right */}
+              <div className="hidden xl:flex xl:justify-start">
                 <Image
                   src="/assets/images/tradesmen-character-pack/ben-800.webp"
                   alt="Ben"
                   width={180}
                   height={260}
-                  className="h-auto w-[160px]"
+                  className="h-auto max-w-full"
                   priority
                 />
               </div>
