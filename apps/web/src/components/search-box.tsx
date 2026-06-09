@@ -154,12 +154,9 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
             </div>
           )}
 
-          <div className="flex items-center justify-between px-3 sm:px-4 pb-3 sm:pb-4 pt-1">
+          <div className="flex items-center justify-between px-3 sm:px-4 pb-1 pt-1">
             <div className="flex items-center gap-2">
               {imageActions}
-              <span className="text-xs text-slate-400">
-                {characterCount}/{MAX_QUERY_CHARS}
-              </span>
               {query.trim().length > 0 && (
                 <button
                   type="button"
@@ -179,6 +176,11 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
             >
               {submitLabel}
             </button>
+          </div>
+          <div className="flex justify-end px-3 sm:px-4 pb-3 sm:pb-4">
+            <span className="text-[10px] text-slate-400">
+              {characterCount}/{MAX_QUERY_CHARS}
+            </span>
           </div>
         </div>
       </form>

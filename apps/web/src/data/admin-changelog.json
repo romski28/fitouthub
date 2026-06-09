@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-a77a8a3c",
+    "date": "2026-06-09T12:03:39+08:00",
+    "title": "Move character count below prompt box, right-aligned",
+    "summary": "Move character count below prompt box, right-aligned",
+    "areas": [
+      "web"
+    ],
+    "commit": "a77a8a3c",
+    "files": [
+      "apps/web/src/components/search-box.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-893845e0",
     "date": "2026-06-09T10:37:19+08:00",
     "title": "Revert character images from AI prompt panel",
