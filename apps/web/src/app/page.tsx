@@ -1,8 +1,6 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
@@ -10,7 +8,6 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
-import { HomeCardRail } from '@/components/home-card-rail';
 import { EmergencyModal } from '@/components/emergency-modal';
 
 const WELCOME_GREETINGS = [
@@ -134,118 +131,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Role Selection Panels (from join flow style) */}
-        <section className="-mx-6 px-6">
-          <div className="mimo-panel mx-auto max-w-6xl p-6 sm:p-8">
-            <div className="space-y-4">
-              <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">{t('roles.heading')}</p>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Link
-                  href="/get-started"
-                  className="group relative rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 pb-5 pl-28 pr-5 pt-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
-                >
-                  <div className="pointer-events-none absolute bottom-0 -left-6 w-28 select-none">
-                    <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={112} height={160} className="object-contain" />
-                  </div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-red-700">{t('roles.clientLabel')}</p>
-                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">{t('roles.clientTitle')}</p>
-                  <p className="mt-2 text-sm text-[#4E4A42]">{t('roles.clientDesc')}</p>
-                </Link>
-
-                <Link
-                  href="/get-started"
-                  className="group relative rounded-2xl border border-[#0E7C3A]/40 bg-gradient-to-br from-[#0E7C3A]/10 to-[#0E7C3A]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#0E7C3A]/50"
-                >
-                  <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
-                    <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={112} height={160} className="object-contain" />
-                  </div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-blue-700">{t('roles.proLabel')}</p>
-                  <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">{t('roles.proTitle')}</p>
-                  <p className="mt-2 text-sm text-[#4E4A42]">{t('roles.proDesc')}</p>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Welcome Panel */}
-        <section className="-mx-6 px-6">
-          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden px-4 py-6 sm:px-6 lg:px-12">
-            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_25%,rgba(16,185,129,0.13),transparent_35%),radial-gradient(circle_at_82%_82%,rgba(15,23,42,0.08),transparent_38%)]" />
-            <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[200px_1fr_200px]">
-              <div className="hidden lg:flex lg:justify-start">
-                <Image
-                  src="/assets/images/sarah-character-pack/sarah-800.webp"
-                  alt="Sarah"
-                  width={180}
-                  height={280}
-                  className="h-auto w-[150px] xl:w-[180px]"
-                  priority
-                />
-              </div>
-
-              <div className="relative z-10 space-y-4 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{t('welcome.heading')}</p>
-                <h2 className="min-h-[80px] text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
-                  <span key={greetingIndex} className="inline-block animate-[welcomePop_420ms_ease-out]">
-                    {WELCOME_GREETINGS[greetingIndex]}
-                  </span>
-                </h2>
-                <p className="text-base font-semibold text-slate-700 sm:text-lg">
-                  {t('welcome.tagline')}
-                </p>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/login"
-                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-slate-800"
-                  >
-                    {t('welcome.loginCta')}
-                  </Link>
-                  <Link
-                    href="/get-started"
-                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-[#F97362] bg-[#F97362] px-4 py-3 text-center text-sm font-semibold text-[#F5EEDE] transition hover:-translate-y-0.5 hover:bg-[#e8624f]"
-                  >
-                    {t('welcome.joinCta')}
-                  </Link>
-                  <a
-                    href="#project-prompt"
-                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-emerald-400 hover:text-emerald-700"
-                  >
-                    {t('welcome.aiCta')}
-                  </a>
-                  <a
-                    href="#why-choose-us"
-                    className="flex min-h-[72px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-500"
-                  >
-                    {t('welcome.aboutCta')}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex justify-center lg:justify-end">
-                <Image
-                  src="/assets/images/tradesmen-character-pack/leo-800.webp"
-                  alt="Leo"
-                  width={180}
-                  height={280}
-                  className="h-auto w-[130px] sm:w-[150px] xl:w-[180px]"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <style jsx>{`
-          @keyframes welcomePop {
-            0% { opacity: 0; transform: translateY(8px) scale(0.98); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-          }
-        `}</style>
-
-        <HomeCardRail />
 
         {/* Video Panel */}
         <section className="-mx-6 px-6">

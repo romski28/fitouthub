@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-18bbe48a",
+    "date": "2026-06-09T12:37:30+08:00",
+    "title": "Remove panels 2-4 from home page: role selection, welcome, card rail",
+    "summary": "Remove panels 2-4 from home page: role selection, welcome, card rail",
+    "areas": [
+      "web"
+    ],
+    "commit": "18bbe48a",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-80ffa759",
     "date": "2026-06-09T12:30:04+08:00",
     "title": "Clear HomeCardRail dismiss key on archive page so rail always visible",
