@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-485f7428",
+    "date": "2026-06-09T13:27:53+08:00",
+    "title": "Improve matrix page: add auth header, better error messages, API error logging",
+    "summary": "Improve matrix page: add auth header, better error messages, API error logging",
+    "areas": [
+      "web"
+    ],
+    "commit": "485f7428",
+    "files": [
+      "apps/web/src/app/admin/trade-district-matrix/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-80ef59c0",
     "date": "2026-06-09T13:10:29+08:00",
     "title": "Fix: add error handling and logging to trade-district matrix controller",

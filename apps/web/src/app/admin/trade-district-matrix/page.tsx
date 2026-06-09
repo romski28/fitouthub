@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/auth-context';
 
 interface MatrixData {
   districts: string[];
@@ -11,6 +12,7 @@ interface MatrixData {
 }
 
 export default function TradeDistrictMatrixPage() {
+  const { accessToken } = useAuth();
   const [data, setData] = useState<MatrixData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +27,13 @@ export default function TradeDistrictMatrixPage() {
       const url = featured
         ? `${API_BASE_URL}/admin/trade-district-matrix?featured=1`
         : `${API_BASE_URL}/admin/trade-district-matrix`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to load');
+      const res = await fetch(url, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as any)?.message || `HTTP ${res.status}`);
+      }
       setData(await res.json());
     } catch (e) {
       setError((e as Error).message);
