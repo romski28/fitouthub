@@ -75,20 +75,16 @@ export default function Home() {
 
   return (
       <div className="space-y-6 pb-8 pt-2">
-        {/* Emergency FAB — top of active area, same right column as other FABs */}
+        {/* Emergency SOS — navbar position for clients only */}
         {isLoggedIn && user?.role === 'client' && (
-          <div className="fixed right-6 top-[90px] z-30">
-            <div className="relative h-14 w-14">
-              <span className="absolute inset-0 rounded-full bg-[#DC143C]/40 animate-ping" />
-              <button
-                onClick={() => setEmergencyModalOpen(true)}
-                className="relative flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#DC143C] bg-[#FCF8EE] text-2xl text-[#DC143C] shadow-lg transition hover:bg-[#DC143C] hover:text-[#FCF8EE]"
-                aria-label={t('emergency.help')}
-                title={t('emergency.title')}
-              >
-                {"\u{1F6A8}"}
-              </button>
-            </div>
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <button
+              onClick={() => setEmergencyModalOpen(true)}
+              className="text-sm font-black tracking-[0.3em] text-[#DC143C] uppercase hover:text-[#b01030] transition"
+              title={t('emergency.title')}
+            >
+              SOS
+            </button>
           </div>
         )}
 

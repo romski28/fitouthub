@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-a23b54ef",
+    "date": "2026-06-09T21:41:47+08:00",
+    "title": "Replace pulsing emergency FAB with subtle SOS text link in navbar area",
+    "summary": "Replace pulsing emergency FAB with subtle SOS text link in navbar area",
+    "areas": [
+      "web"
+    ],
+    "commit": "a23b54ef",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-160e5c54",
     "date": "2026-06-09T21:33:27+08:00",
     "title": "Show image attachments in admin message drawer",
