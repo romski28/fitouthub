@@ -2363,18 +2363,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         </div>
       ); return portalEl ? createPortal(_panel, portalEl) : _panel; })()} 
 
-      {/* Auth nudge for non-logged-in users */}
-      {isLoggedIn === false && !isAdminTester && !aiConversationalText && (
-        <div className="text-center pt-2">
-          <p className="text-xs text-slate-500">
-            <button onClick={handleGuestLogin} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Login</button>
-            {' or '}
-            <button onClick={handleGuestJoin} className="text-emerald-600 hover:text-emerald-700 font-semibold bg-transparent border-none cursor-pointer p-0">Join Now</button>
-            {' for the best experience'}
-          </p>
-        </div>
-      )}
-
       <IntentModal
         intent={intent}
         onClose={() => setIntent(null)}

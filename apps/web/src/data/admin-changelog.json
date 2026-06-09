@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-f0cbc3c7",
+    "date": "2026-06-09T12:15:14+08:00",
+    "title": "Remove Login or Join now for best experience text from AI prompt panel",
+    "summary": "Remove Login or Join now for best experience text from AI prompt panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "f0cbc3c7",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-8db3885d",
     "date": "2026-06-09T12:07:42+08:00",
     "title": "Move character count outside prompt box, opposite image quota on same row",
