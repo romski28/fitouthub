@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-559b25fd",
+    "date": "2026-06-09T22:24:14+08:00",
+    "title": "Fix scroll: explicit calc max-height on both layers, 12px right padding for scrollbar",
+    "summary": "Fix scroll: explicit calc max-height on both layers, 12px right padding for scrollbar",
+    "areas": [
+      "web"
+    ],
+    "commit": "559b25fd",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-e1d8fb6a",
     "date": "2026-06-09T22:19:50+08:00",
     "title": "Fix scrollbar over rounded corners: split into outer wrapper + inner scrollable div",
