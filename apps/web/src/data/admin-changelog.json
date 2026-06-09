@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-c2449f8b",
+    "date": "2026-06-09T22:15:00+08:00",
+    "title": "Adjust modal: 2rem top/bottom padding, 10px inner right padding for scrollbar clearance",
+    "summary": "Adjust modal: 2rem top/bottom padding, 10px inner right padding for scrollbar clearance",
+    "areas": [
+      "web"
+    ],
+    "commit": "c2449f8b",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-8bda8077",
     "date": "2026-06-09T22:10:05+08:00",
     "title": "Fix emergency modal: scroll on cream container, not backdrop overlay",
