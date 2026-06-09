@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-b07749c2",
+    "date": "2026-06-09T22:45:03+08:00",
+    "title": "MIMO caps only first letters coral, line break before Welcome Home",
+    "summary": "MIMO caps only first letters coral, line break before Welcome Home",
+    "areas": [
+      "web"
+    ],
+    "commit": "b07749c2",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-daaf6777",
     "date": "2026-06-09T22:40:29+08:00",
     "title": "Simplify home AI panel: static strap line, remove animated greetings and help text",

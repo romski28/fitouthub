@@ -49,7 +49,7 @@ export default function Home() {
               <div className="mx-auto max-w-2xl">
                 <div className="mb-8 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
-                    <span className="text-[#F97362]">Move In Move Out</span>, Everything in Between. Welcome Home.
+                    <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.<br />Welcome Home.
                   </h2>
                   {mimoThinking && (
                     <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
