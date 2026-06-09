@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-80ef59c0",
+    "date": "2026-06-09T13:10:29+08:00",
+    "title": "Fix: add error handling and logging to trade-district matrix controller",
+    "summary": "Fix: add error handling and logging to trade-district matrix controller",
+    "areas": [
+      "api"
+    ],
+    "commit": "80ef59c0",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-09-eb9fad70",
     "date": "2026-06-09T13:07:26+08:00",
     "title": "Add Trade District Matrix card to Admin Analytics tab",
