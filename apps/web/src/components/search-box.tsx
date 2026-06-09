@@ -12,11 +12,12 @@ export interface SearchBoxProps {
   imageActions?: ReactNode;
   onHelpClick?: () => void;
   onCharCountChange?: (count: number) => void;
+  onImagePaste?: (files: File[]) => void;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
@@ -116,6 +117,25 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
       if (query.trim()) {
         onSubmit(query.trim());
       }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items || !onImagePaste) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault(); // Don't paste raw binary into textarea
+      onImagePaste(imageFiles);
     }
   };
 

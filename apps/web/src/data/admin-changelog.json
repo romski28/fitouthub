@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-09-48d10a14",
+    "date": "2026-06-09T21:00:07+08:00",
+    "title": "Add paste-to-attach: Ctrl+V screenshots directly into floating chat and prompt box",
+    "summary": "Add paste-to-attach: Ctrl+V screenshots directly into floating chat and prompt box",
+    "areas": [
+      "web"
+    ],
+    "commit": "48d10a14",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx",
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-c7a28385",
     "date": "2026-06-09T15:29:49+08:00",
     "title": "Compact video teaser: text left, thumbnail right, session-only dismiss",

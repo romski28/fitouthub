@@ -2002,6 +2002,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           submitLabel={showFollowUpComposer ? t('updateMimo') : t('askMimo')}
           clearKey={searchBoxClearKey}
           onHelpClick={() => setShowHelp(true)}
+          onImagePaste={(files) => setPromptImages((prev) => [...prev, ...files])}
           onCharCountChange={setPromptCharCount}
           imageActions={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (

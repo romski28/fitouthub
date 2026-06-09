@@ -1000,6 +1000,21 @@ export default function FloatingChat() {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onPaste={(e) => {
+                  const items = e.clipboardData?.items;
+                  if (!items) return;
+                  const imageFiles: File[] = [];
+                  for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.startsWith('image/')) {
+                      const file = items[i].getAsFile();
+                      if (file) imageFiles.push(file);
+                    }
+                  }
+                  if (imageFiles.length > 0) {
+                    e.preventDefault();
+                    setPendingFiles((prev) => [...prev, ...imageFiles]);
+                  }
+                }}
                 placeholder="Type your message..."
                 disabled={sending || loading || !threadId}
                 className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-100"
