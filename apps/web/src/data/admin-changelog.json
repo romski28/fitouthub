@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-09-8db3885d",
+    "date": "2026-06-09T12:07:42+08:00",
+    "title": "Move character count outside prompt box, opposite image quota on same row",
+    "summary": "Move character count outside prompt box, opposite image quota on same row",
+    "areas": [
+      "web"
+    ],
+    "commit": "8db3885d",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-a77a8a3c",
     "date": "2026-06-09T12:03:39+08:00",
     "title": "Move character count below prompt box, right-aligned",

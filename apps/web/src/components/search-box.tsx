@@ -11,11 +11,12 @@ export interface SearchBoxProps {
   imageSection?: ReactNode;
   imageActions?: ReactNode;
   onHelpClick?: () => void;
+  onCharCountChange?: (count: number) => void;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
@@ -120,6 +121,10 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
 
   const characterCount = query.length;
 
+  useEffect(() => {
+    onCharCountChange?.(characterCount);
+  }, [characterCount, onCharCountChange]);
+
   return (
     <div className="relative w-full">
       <form onSubmit={handleSubmit} className="relative">
@@ -176,11 +181,6 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
             >
               {submitLabel}
             </button>
-          </div>
-          <div className="flex justify-end px-3 sm:px-4 pb-3 sm:pb-4">
-            <span className="text-[10px] text-slate-400">
-              {characterCount}/{MAX_QUERY_CHARS}
-            </span>
           </div>
         </div>
       </form>

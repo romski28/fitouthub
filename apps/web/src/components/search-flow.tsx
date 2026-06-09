@@ -690,6 +690,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
   const [wizardAutoTimer, setWizardAutoTimer] = useState(10);
+  const [promptCharCount, setPromptCharCount] = useState(0);
   const wizardAutoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wizardAutoClickedRef = useRef(false);
   const fillBarRef = useRef<HTMLSpanElement>(null);
@@ -2001,6 +2002,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           submitLabel={showFollowUpComposer ? t('updateMimo') : t('askMimo')}
           clearKey={searchBoxClearKey}
           onHelpClick={() => setShowHelp(true)}
+          onCharCountChange={setPromptCharCount}
           imageActions={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
               <ChatImageUploader
@@ -2017,25 +2019,28 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         />
 
         {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
-          <div className="mt-1 px-1">
-            {!visionQuotaLoading && (
-              <p className="text-[10px] text-slate-400">
-                {visionQuota
-                  ? t('imageQuota', { remaining: visionQuota.remainingToday, max: visionQuota.maxImagesPerDay, perPrompt: visionQuota.maxImagesPerPrompt })
-                  : t('imageQuotaMax', { max: promptImageLimit })}
-              </p>
-            )}
-            {visionQuotaLoading && (
-              <p className="text-[10px] text-slate-400">{t('checkingQuota')}</p>
-            )}
-            {visionQuotaError && (
-              <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
-            )}
-            {visionQuota && !visionQuota.canUseVision && (
-              <p className="text-[10px] text-amber-600">
-                {t('dailyQuotaReached')}
-              </p>
-            )}
+          <div className="mt-1 flex items-center justify-between px-1">
+            <div>
+              {!visionQuotaLoading && (
+                <p className="text-[10px] text-slate-400">
+                  {visionQuota
+                    ? t('imageQuota', { remaining: visionQuota.remainingToday, max: visionQuota.maxImagesPerDay, perPrompt: visionQuota.maxImagesPerPrompt })
+                    : t('imageQuotaMax', { max: promptImageLimit })}
+                </p>
+              )}
+              {visionQuotaLoading && (
+                <p className="text-[10px] text-slate-400">{t('checkingQuota')}</p>
+              )}
+              {visionQuotaError && (
+                <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
+              )}
+              {visionQuota && !visionQuota.canUseVision && (
+                <p className="text-[10px] text-amber-600">
+                  {t('dailyQuotaReached')}
+                </p>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-400">{promptCharCount}/5000</p>
           </div>
         )}
 
