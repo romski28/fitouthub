@@ -1013,6 +1013,8 @@ export default function FloatingChat() {
                   if (imageFiles.length > 0) {
                     e.preventDefault();
                     setPendingFiles((prev) => [...prev, ...imageFiles]);
+                    setPendingPreviewUrls((prev) => [...prev, ...imageFiles.map((f) => URL.createObjectURL(f))]);
+                  }
                   }
                 }}
                 placeholder="Type your message..."
