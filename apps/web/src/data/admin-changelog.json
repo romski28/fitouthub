@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-09-c3262f02",
+    "date": "2026-06-09T15:24:12+08:00",
+    "title": "Add inline video teaser for non-logged-in users in AI prompt panel",
+    "summary": "Add inline video teaser for non-logged-in users in AI prompt panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "c3262f02",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-05d10d15",
     "date": "2026-06-09T14:29:26+08:00",
     "title": "Query tradesman table directly for all trades including disabled ones",

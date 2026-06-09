@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { EmergencyModal } from '@/components/emergency-modal';
+import { VideoTeaser } from '@/components/video-teaser';
 
 const WELCOME_GREETINGS = [
   'Hi and welcome to your fitout adventure, Mimo',
@@ -126,6 +127,7 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+                <VideoTeaser />
                 <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
               </div>
             </div>
