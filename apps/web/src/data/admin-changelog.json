@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-caf85543",
+    "date": "2026-06-09T12:26:00+08:00",
+    "title": "Fix HomeCardRail import to named export",
+    "summary": "Fix HomeCardRail import to named export",
+    "areas": [
+      "web"
+    ],
+    "commit": "caf85543",
+    "files": [
+      "apps/web/src/app/archive/home-panels/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-aad1a524",
     "date": "2026-06-09T12:23:55+08:00",
     "title": "Archive home page panels 2-4 for potential reuse",

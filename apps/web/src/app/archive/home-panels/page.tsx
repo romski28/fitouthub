@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import HomeCardRail from '@/components/home-card-rail';
+import { HomeCardRail } from '@/components/home-card-rail';
 
 const WELCOME_GREETINGS = [
   'Hi, welcome to Mimo! Let\'s get your project started.',
