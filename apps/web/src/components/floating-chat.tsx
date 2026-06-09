@@ -851,7 +851,7 @@ export default function FloatingChat() {
           {/* Header */}
           <div className="flex items-center justify-between bg-[#ff6b5b] text-white px-4 py-3 rounded-t-lg">
             <div>
-              <h3 className="text-lg font-semibold leading-tight">Chat with Mimo</h3>
+              <h3 className="text-lg font-semibold leading-tight">Chat with MIMO</h3>
               <p className="text-sm text-white/85">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
             </div>
             <button
@@ -870,7 +870,7 @@ export default function FloatingChat() {
             {(threadStatus === 'closure_pending' || threadStatus === 'closed') && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-base leading-relaxed text-sky-900">
                 {threadStatus === 'closure_pending'
-                  ? `Mimo marked this conversation as pending closure${threadClosureDueAt ? ` until ${new Date(threadClosureDueAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here if you still need help.`
+                  ? `MIMO marked this conversation as pending closure${threadClosureDueAt ? ` until ${new Date(threadClosureDueAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here if you still need help.`
                   : `This conversation was closed${threadResolvedAt ? ` on ${new Date(threadResolvedAt).toLocaleString()}` : ''}.${threadResolutionReason ? ` ${threadResolutionReason}.` : ''} Reply here to reopen it.`}
               </div>
             )}
@@ -890,7 +890,7 @@ export default function FloatingChat() {
               <div className="text-center text-slate-500 text-base mt-8">Loading chat...</div>
             ) : messages.length === 0 ? (
               <div className="text-center text-slate-500 text-base mt-8 leading-relaxed">
-                <p>Welcome to Mimo support!</p>
+                <p>Welcome to MIMO support!</p>
                 <p className="mt-2">Ask questions, get help, or report issues.</p>
                 <p className="mt-1 text-sm text-slate-400">Start a conversation below</p>
               </div>
@@ -915,7 +915,7 @@ export default function FloatingChat() {
                     >
                       {!isUser && (
                         <div className="text-sm font-semibold mb-1 opacity-75">
-                          {isFoh ? 'Mimo' : 'Support'}
+                          {isFoh ? 'MIMO' : 'Support'}
                         </div>
                       )}
                       
@@ -1066,7 +1066,7 @@ export default function FloatingChat() {
           onClick={() => setIsOpen(true)}
           className="fixed bottom-[180px] right-6 z-40 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group attention-wiggle overflow-hidden"
           aria-label="Open chat"
-          title="Chat with Mimo support"
+          title="Chat with MIMO support"
         >
           <Image
             src="/assets/images/chatbot-avatar-icon.webp"
@@ -1084,7 +1084,7 @@ export default function FloatingChat() {
           
           {/* Tooltip on hover */}
           <span className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-slate-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Chat with Mimo support
+            Chat with MIMO support
             <span className="absolute top-full right-4 -mt-1 border-4 border-transparent border-t-slate-900"></span>
           </span>
         </button>

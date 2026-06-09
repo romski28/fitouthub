@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-36c80d3f",
+    "date": "2026-06-09T21:04:23+08:00",
+    "title": "Update chat box branding: Mimo -> MIMO in all-caps",
+    "summary": "Update chat box branding: Mimo -> MIMO in all-caps",
+    "areas": [
+      "web"
+    ],
+    "commit": "36c80d3f",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-48d10a14",
     "date": "2026-06-09T21:00:07+08:00",
     "title": "Add paste-to-attach: Ctrl+V screenshots directly into floating chat and prompt box",
