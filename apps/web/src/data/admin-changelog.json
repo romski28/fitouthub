@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-dffc46e7",
+    "date": "2026-06-09T10:03:56+08:00",
+    "title": "Simplify character layout: uniform 3-col grid, identical sizes, progressive column drop",
+    "summary": "Simplify character layout: uniform 3-col grid, identical sizes, progressive column drop",
+    "areas": [
+      "web"
+    ],
+    "commit": "dffc46e7",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-fd1d9403",
     "date": "2026-06-09T09:53:31+08:00",
     "title": "Equal character sizes, cropped edges, Ben hidden on lg-only, mobile no images",
