@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-b70e34b1",
+    "date": "2026-06-09T22:03:34+08:00",
+    "title": "Constrain emergency modal within screen with 5rem padding and scroll",
+    "summary": "Constrain emergency modal within screen with 5rem padding and scroll",
+    "areas": [
+      "web"
+    ],
+    "commit": "b70e34b1",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-3858a027",
     "date": "2026-06-09T21:58:35+08:00",
     "title": "Move SOS to navbar, resize logo 30% smaller on mobile, remove emergency from home page",
