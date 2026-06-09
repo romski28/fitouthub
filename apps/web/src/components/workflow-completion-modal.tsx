@@ -41,7 +41,7 @@ interface WorkflowCompletionModalProps {
 const waitingCopy: Record<WaitingParty, string> = {
   professional: 'The professional will be notified and needs to act next.',
   client: 'The client will be notified and needs to act next.',
-  platform: 'Mimo has been notified and will process this shortly.',
+  platform: 'MIMO has been notified and will process this shortly.',
 };
 
 const weightedCelebrations: Array<{ variant: CelebrationVariant; weight: number }> = [

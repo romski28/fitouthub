@@ -12,30 +12,30 @@ import { EmergencyModal } from '@/components/emergency-modal';
 import { VideoTeaser } from '@/components/video-teaser';
 
 const WELCOME_GREETINGS = [
-  'Hi and welcome to your fitout adventure, Mimo',
-  'Big plans start with one smart move, Mimo',
-  'Ready to build your next space with confidence, Mimo',
-  'Your project co-pilot is ready when you are, Mimo',
-  'From idea to handover, let\'s do this together, Mimo',
-  'Great spaces begin right here and now, Mimo',
+  'Hi and welcome to your fitout adventure, MIMO',
+  'Big plans start with one smart move, MIMO',
+  'Ready to build your next space with confidence, MIMO',
+  'Your project co-pilot is ready when you are, MIMO',
+  "From idea to handover, let's do this together, MIMO",
+  'Great spaces begin right here and now, MIMO',
 ];
 
 const WELCOME_GREETINGS_ZH_HK = [
-  '你好，歡迎開始你的裝修之旅，Mimo',
-  '大計劃從明智的一步開始，Mimo',
-  '準備好自信地打造你的下一個空間，Mimo',
-  '你的項目副駕駛已準備就緒，Mimo',
-  '從概念到交付，讓我們一齊完成，Mimo',
-  '優秀的空間從此時此地開始，Mimo',
+  '你好，歡迎開始你的裝修之旅，MIMO',
+  '大計劃從明智的一步開始，MIMO',
+  '準備好自信地打造你的下一個空間，MIMO',
+  '你的項目副駕駛已準備就緒，MIMO',
+  '從概念到交付，讓我們一齊完成，MIMO',
+  '優秀的空間從此時此地開始，MIMO',
 ];
 
 const WELCOME_GREETINGS_ZH_CN = [
-  '你好，欢迎开始你的装修之旅，Mimo',
-  '大计划从明智的一步开始，Mimo',
-  '准备好自信地打造你的下一个空间，Mimo',
-  '你的项目副驾驶已准备就绪，Mimo',
-  '从概念到交付，让我们一起完成，Mimo',
-  '优秀的空间从此时此地开始，Mimo',
+  '你好，欢迎开始你的装修之旅，MIMO',
+  '大计划从明智的一步开始，MIMO',
+  '准备好自信地打造你的下一个空间，MIMO',
+  '你的项目副驾驶已准备就绪，MIMO',
+  '从概念到交付，让我们一起完成，MIMO',
+  '优秀的空间从此时此地开始，MIMO',
 ];
 
 export default function Home() {
@@ -148,7 +148,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="mt-3 text-sm text-slate-700">
-                  What is Mimo and why you should use it – see Sarah&rsquo;s story.
+                  What is MIMO and why you should use it – see Sarah&rsquo;s story.
                 </div>
               </div>
             </div>

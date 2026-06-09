@@ -440,9 +440,9 @@ export default function CreateProjectPage() {
 
       toast.success(
         assistConfig.contactMethod === 'call'
-          ? 'Project created and call request sent to Mimo.'
+          ? 'Project created and call request sent to MIMO.'
           : assistConfig.contactMethod === 'whatsapp'
-            ? 'Project created and WhatsApp request sent to Mimo.'
+            ? 'Project created and WhatsApp request sent to MIMO.'
             : 'Project created and chat assistance requested.',
       );
 

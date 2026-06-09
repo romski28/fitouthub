@@ -222,7 +222,7 @@ const stripSummaryPrefix = (value: string): string => {
   return value;
 };
 
-const SUMMARY_CONFIRMATION_PREFIX = 'Mimo summary for confirmation:';
+const SUMMARY_CONFIRMATION_PREFIX = 'MIMO summary for confirmation:';
 
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
@@ -264,9 +264,9 @@ const extractServiceOfferFromMessage = (text: string): { body: string; offerType
 
 const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
   survey: {
-    title: 'Mimo Surveying+',
-    hint: "If you're unsure on the size, Mimo can provide a Surveying+ service.",
-    modalIntro: 'Mimo can handle the site survey before the brief is locked, so you do not need to guess the room size or site conditions.',
+    title: 'MIMO Surveying+',
+    hint: "If you're unsure on the size, MIMO can provide a Surveying+ service.",
+    modalIntro: 'MIMO can handle the site survey before the brief is locked, so you do not need to guess the room size or site conditions.',
     details: [
       'Full digital measured 360 photo survey',
       'Assessment of structure',
@@ -276,19 +276,19 @@ const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
       'Environmental factors review',
     ],
     price: 'From HK$500',
-    selectedMessage: 'Mimo survey service selected.',
+    selectedMessage: 'MIMO survey service selected.',
   },
   design: {
-    title: 'Mimo Interior Design',
-    hint: 'If you want help shaping the look and feel, Mimo can provide interior design support.',
-    modalIntro: 'Mimo can take on the design layer before quoting so the brief has a clearer direction and professionals are pricing against the same intent.',
+    title: 'MIMO Interior Design',
+    hint: 'If you want help shaping the look and feel, MIMO can provide interior design support.',
+    modalIntro: 'MIMO can take on the design layer before quoting so the brief has a clearer direction and professionals are pricing against the same intent.',
     details: [
       'Layout and space-planning direction',
       'Look and feel development',
       'Style and finish guidance',
       'Concept alignment before professionals quote',
     ],
-    selectedMessage: 'Mimo interior design service selected.',
+    selectedMessage: 'MIMO interior design service selected.',
   },
 };
 
@@ -1032,7 +1032,7 @@ export default function CreateProjectWizardPage() {
           ? `\n\nOne more thing: ${appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)}`
           : '';
         const summaryForConfirmation = [
-          'Mimo summary for confirmation:',
+          'MIMO summary for confirmation:',
           '',
           `Title: ${nextTitle || title || 'Not set'}`,
           `Project: ${nextTitle || title || 'Not set'}`,
@@ -1217,7 +1217,7 @@ export default function CreateProjectWizardPage() {
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
-                Mimo Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-slate-600 sm:text-xs">{currentMotivation}</p>
             </div>
@@ -1324,8 +1324,8 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followups' && (
                       <div className="flex h-full min-h-0 flex-col gap-2.5 sm:gap-3">
-                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with Mimo</span></h3>
-                            <p className={panelNoteClass}>Answer Mimo&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
+                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with MIMO</span></h3>
+                            <p className={panelNoteClass}>Answer MIMO&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
 
                             <RequirementChecklist
                               trades={seedDraft?.initialData?.tradesRequired || seedDescription?.tradesRequired || []}
@@ -1339,7 +1339,7 @@ export default function CreateProjectWizardPage() {
                                 </div>
                               ))}
                               {chatBusy && (
-                                <p className="text-xs text-slate-500">Mimo is thinking...</p>
+                                <p className="text-xs text-slate-500">MIMO is thinking...</p>
                               )}
                             </div>
 
@@ -1372,7 +1372,7 @@ export default function CreateProjectWizardPage() {
                                         }
                                       }}
                                       rows={2}
-                                      placeholder="Reply to Mimo... (Enter to send, Shift+Enter for new line)"
+                                      placeholder="Reply to MIMO... (Enter to send, Shift+Enter for new line)"
                                       className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
                                     />
                                     <div className="flex flex-col gap-1.5">
@@ -1696,7 +1696,7 @@ export default function CreateProjectWizardPage() {
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-                <Image src="/assets/mimo.webp" alt="Mimo" width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
+                <Image src="/assets/mimo.webp" alt="MIMO" width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-lg font-semibold text-slate-900">{SERVICE_OFFER_COPY[expandedServiceOffer].title}</p>

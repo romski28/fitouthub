@@ -10,7 +10,7 @@ type Question = {
 };
 
 const QUESTIONS: Question[] = [
-  { key: 'mimo_understanding', label: 'How well did Mimo understand your project needs?', type: 'rating' },
+  { key: 'mimo_understanding', label: 'How well did MIMO understand your project needs?', type: 'rating' },
   { key: 'pro_selection', label: 'Was selecting professionals easy and clear?', type: 'rating' },
   { key: 'confusing', label: 'Did anything feel confusing or difficult?', type: 'text' },
   { key: 'improvement', label: 'What one thing would make this experience better?', type: 'text' },
@@ -72,7 +72,7 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
         <div>
           <p className="text-lg font-semibold text-slate-900">Quick feedback</p>
           <p className="mt-1 text-sm text-slate-600">
-            Help us improve Mimo. This takes 30 seconds and helps us make the experience better for everyone.
+            Help us improve MIMO. This takes 30 seconds and helps us make the experience better for everyone.
           </p>
         </div>
 

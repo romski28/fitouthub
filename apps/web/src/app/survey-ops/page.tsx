@@ -381,7 +381,7 @@ export default function SurveyOpsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300">Survey Ops</p>
             <h1 className="mt-1 text-2xl font-bold">Surveyor Queue</h1>
             <p className="mt-2 text-sm text-slate-200">
-              Shared queue for Admin, Mimo BoH, and Surveyor teams.
+              Shared queue for Admin, MIMO BoH, and Surveyor teams.
             </p>
           </div>
         </div>

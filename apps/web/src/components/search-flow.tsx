@@ -193,7 +193,7 @@ function ThinkingIndicator() {
         </div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-emerald-800">Mimo is thinking...</p>
+            <p className="text-sm font-semibold text-emerald-800">MIMO is thinking...</p>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
               {elapsedSeconds}s
             </span>
@@ -400,7 +400,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 
   const mimoCountMsg = (() => {
     if (trades.length === 0) {
-      const base = 'We have not found the right professional to sort your problem out, but get your project registered and Mimo will find you the right person to get things done.';
+      const base = 'We have not found the right professional to sort your problem out, but get your project registered and MIMO will find you the right person to get things done.';
       return isLoggedIn === true
         ? base
         : `${base} Sign in or join to get this project logged and a professional on the case today.`;
@@ -415,8 +415,8 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
     }
     if (matchCount === 0) {
       const base = tradesLabel
-        ? `Mimo will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
-        : 'Mimo will widen the search to find the right professionals across Hong Kong.';
+        ? `MIMO will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
+        : 'MIMO will widen the search to find the right professionals across Hong Kong.';
       return isLoggedIn === true
         ? `${base} We can still get your project moving quickly.`
         : `${base} Sign in or join to get this project logged and a professional on the case today.`;
@@ -425,9 +425,9 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
     const tradeText = tradesLabel || 'professionals';
     const base = trades.length > 1
       ? fullCoverageCompanyCount > 0
-        ? `Luckily, Mimo has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} companies in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
-        : `Luckily, Mimo has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
-      : `Luckily, Mimo has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
+        ? `Luckily, MIMO has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} companies in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
+        : `Luckily, MIMO has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
+      : `Luckily, MIMO has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
     
     return isLoggedIn === true
       ? base
@@ -538,7 +538,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 
       {showForgottenPrompt && isSequenceComplete && (
         <p id="ai-forgotten-prompt" className="text-sm font-semibold text-emerald-700">
-          Anything you have forgotten? Let Mimo know now.
+          Anything you have forgotten? Let MIMO know now.
         </p>
       )}
     </div>
@@ -1138,7 +1138,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       || aiResponseSource.split('\n').map((part) => part.trim()).find(Boolean)
       || '';
     const cardSummary = [
-      'Mimo was asked...',
+      'MIMO was asked...',
       prompt,
       aiFirstParagraph ? `AI response: ${aiFirstParagraph}` : '',
     ].filter(Boolean).join('\n\n');
@@ -2105,7 +2105,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                       className="absolute bottom-0 left-0 top-0 rounded-lg bg-emerald-600"
                       style={{ width: '0%' }}
                     />
-                    <span className="relative z-10">Continue with Mimo</span>
+                    <span className="relative z-10">Continue with MIMO</span>
                   </button>
                 </div>
 

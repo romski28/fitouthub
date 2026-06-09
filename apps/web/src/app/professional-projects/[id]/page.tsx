@@ -1571,7 +1571,7 @@ export default function ProjectDetailPage() {
       const data = await res.json().catch(() => ({}));
       if (!data?.caseNumber) {
         setAssistOpen(false);
-        toast.success('Support request sent to Mimo.');
+        toast.success('Support request sent to MIMO.');
       }
       return { caseNumber: data?.caseNumber };
     } catch (err) {

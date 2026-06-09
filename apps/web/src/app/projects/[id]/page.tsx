@@ -2118,10 +2118,10 @@ export default function ClientProjectDetailPage() {
           setAssistOpen(false);
           toast.success(
             assistConfig.contactMethod === 'call'
-              ? 'Call request sent to Mimo.'
+              ? 'Call request sent to MIMO.'
               : assistConfig.contactMethod === 'whatsapp'
-                ? 'WhatsApp request sent to Mimo.'
-                : 'Chat assistance request sent to Mimo.',
+                ? 'WhatsApp request sent to MIMO.'
+                : 'Chat assistance request sent to MIMO.',
           );
         }
 
@@ -2641,13 +2641,13 @@ export default function ClientProjectDetailPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-slate-900">
-                      {viewingAssistChat ? 'Mimo Assistance' : (selectedProfessional
+                      {viewingAssistChat ? 'MIMO Assistance' : (selectedProfessional
                         ? `Chat with ${selectedProfessional?.professional?.fullName || selectedProfessional?.professional?.businessName || selectedProfessional?.professional?.email}`
                         : 'Select a professional to chat')}
                     </h3>
                     {viewingAssistChat && (
                       <p className="text-xs text-slate-600 mt-1">
-                        Get help from Mimo experts
+                        Get help from MIMO experts
                       </p>
                     )}
                     {!viewingAssistChat && selectedProfessional && (
@@ -2661,7 +2661,7 @@ export default function ClientProjectDetailPage() {
                       onClick={() => setViewingAssistChat(!viewingAssistChat)}
                       className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
                     >
-                      {viewingAssistChat ? 'View Professional Chat' : 'Mimo Assistance'}
+                      {viewingAssistChat ? 'View Professional Chat' : 'MIMO Assistance'}
                     </button>
                   )}
                 </div>
@@ -2681,7 +2681,7 @@ export default function ClientProjectDetailPage() {
                       <div className="text-center text-sm text-slate-500">Loading messages...</div>
                     ) : assistMessages.length === 0 ? (
                       <div className="text-center text-sm text-slate-500">
-                        No messages yet. Reach out to Mimo for assistance!
+                        No messages yet. Reach out to MIMO for assistance!
                       </div>
                     ) : (
                       assistMessages.map((msg) => (
@@ -2717,7 +2717,7 @@ export default function ClientProjectDetailPage() {
                           handleSendAssistMessage();
                         }
                       }}
-                      placeholder="Ask Mimo for help..."
+                      placeholder="Ask MIMO for help..."
                       className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
                       disabled={assistSending}
                     />

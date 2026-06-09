@@ -50,7 +50,7 @@ export function VideoTeaser() {
         >
           {/* Text */}
           <div className="flex flex-col justify-center px-4 py-3 sm:flex-1">
-            <p className="text-sm font-semibold text-slate-900">See how Mimo works</p>
+            <p className="text-sm font-semibold text-slate-900">See how MIMO works</p>
             <p className="mt-1 text-xs text-slate-500">Watch a quick 30-second intro to the platform.</p>
           </div>
           {/* Video thumbnail */}

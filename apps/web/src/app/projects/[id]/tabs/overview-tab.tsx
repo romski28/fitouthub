@@ -151,9 +151,9 @@ const formatProjectClass = (value?: string) => {
 
 const formatExtraTypeLabel = (value?: string) => {
   const normalized = String(value || '').toLowerCase();
-  if (normalized === 'survey') return 'Mimo Surveying+';
-  if (normalized === 'design') return 'Mimo Interior Design';
-  return value || 'Mimo service';
+  if (normalized === 'survey') return 'MIMO Surveying+';
+  if (normalized === 'design') return 'MIMO Interior Design';
+  return value || 'MIMO service';
 };
 
 const formatExtraStatusLabel = (value?: string) => {
@@ -717,7 +717,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Mimo Added Services</h2>
+              <h2 className="text-lg font-bold text-slate-900">MIMO Added Services</h2>
               <p className="mt-1 text-sm text-slate-600">
                 Track requested Surveying+ and Design services for this project.
               </p>

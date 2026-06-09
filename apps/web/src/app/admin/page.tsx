@@ -765,7 +765,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: "Survey Ops Queue",
-      description: "Unified survey pipeline for admin, Mimo BoH, and surveyor coordination.",
+      description: "Unified survey pipeline for admin, MIMO BoH, and surveyor coordination.",
       href: "/survey-ops",
       stat: "Survey scheduling",
     },

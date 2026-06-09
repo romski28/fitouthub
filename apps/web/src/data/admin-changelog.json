@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-06-09-55c942ed",
+    "date": "2026-06-09T21:07:43+08:00",
+    "title": "Branding: replace user-facing Mimo with MIMO across entire codebase",
+    "summary": "Branding: replace user-facing Mimo with MIMO across entire codebase",
+    "areas": [
+      "web"
+    ],
+    "commit": "55c942ed",
+    "files": [
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/survey-ops/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx",
+      "apps/web/src/components/video-teaser.tsx",
+      "apps/web/src/components/workflow-completion-modal.tsx",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-06-09-36c80d3f",
     "date": "2026-06-09T21:04:23+08:00",
     "title": "Update chat box branding: Mimo -> MIMO in all-caps",
