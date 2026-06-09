@@ -171,8 +171,7 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center py-8 px-4">
       <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative mx-4 w-full max-w-md max-h-full overflow-y-auto rounded-2xl border border-white/45 bg-[#F5EEDE]/95 pt-6 pb-6 pl-6 pr-[10px] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className="relative mx-4 w-full max-w-md max-h-full rounded-2xl border border-white/45 bg-[#F5EEDE]/95 shadow-2xl overflow-hidden"
       >
         {showPhotoPrompt && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-slate-950/55 p-4">
@@ -203,6 +202,10 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
             </div>
           </div>
         )}
+        <div
+          className="max-h-full overflow-y-auto p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="mb-5 text-center">
           <p className="text-3xl mb-1">&#x1F6A8;</p>
           <h2 className="text-lg font-bold text-slate-900">Emergency help needed</h2>
@@ -277,6 +280,7 @@ export function EmergencyModal({ isOpen, onClose }: Props) {
           >
             {uploadingPhotos ? 'Uploading photos...' : 'Find help now'}
           </button>
+        </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-e1d8fb6a",
+    "date": "2026-06-09T22:19:50+08:00",
+    "title": "Fix scrollbar over rounded corners: split into outer wrapper + inner scrollable div",
+    "summary": "Fix scrollbar over rounded corners: split into outer wrapper + inner scrollable div",
+    "areas": [
+      "web"
+    ],
+    "commit": "e1d8fb6a",
+    "files": [
+      "apps/web/src/components/emergency-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-c2449f8b",
     "date": "2026-06-09T22:15:00+08:00",
     "title": "Adjust modal: 2rem top/bottom padding, 10px inner right padding for scrollbar clearance",
