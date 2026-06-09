@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-893845e0",
+    "date": "2026-06-09T10:37:19+08:00",
+    "title": "Revert character images from AI prompt panel",
+    "summary": "Revert character images from AI prompt panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "893845e0",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-6b3df603",
     "date": "2026-06-09T10:21:49+08:00",
     "title": "Tighten grid: stretch cells, max-w-full images, constrain center to 36rem, justify-center",
