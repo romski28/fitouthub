@@ -1,22 +1,18 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Query } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { TradesService } from '../trades/trades.service';
 
 @Controller('admin/trade-district-matrix')
 export class TradeDistrictMatrixController {
   private readonly logger = new Logger(TradeDistrictMatrixController.name);
 
-  constructor(
-    private prisma: PrismaService,
-    private tradesService: TradesService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   @Get()
   async getMatrix(@Query('featured') featured?: string) {
     try {
       const onlyFeatured = featured === '1' || featured === 'true';
 
-      const [professionals, allTrades] = await Promise.all([
+      const [professionals, tradesmen] = await Promise.all([
         this.prisma.professional.findMany({
           where: {
             status: onlyFeatured ? 'approved' : undefined,
@@ -29,13 +25,17 @@ export class TradeDistrictMatrixController {
             tradesOffered: true,
           },
         }),
-        this.tradesService.findAll(),
+        // Fetch ALL trades directly from DB, including disabled ones
+        (this.prisma as any).tradesman.findMany({
+          orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+          select: { title: true },
+        }) as Promise<Array<{ title: string }>>,
       ]);
 
-      // Build the full trade name list
+      // Build the full trade name list from the tradesman table
       const allTradeNames = new Set<string>();
-      for (const trade of allTrades) {
-        if (trade?.name?.trim()) allTradeNames.add(trade.name.trim());
+      for (const trade of tradesmen) {
+        if (trade?.title?.trim()) allTradeNames.add(trade.title.trim());
       }
       // Also include any trades found in professional data
       for (const pro of professionals) {

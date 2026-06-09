@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-05d10d15",
+    "date": "2026-06-09T14:29:26+08:00",
+    "title": "Query tradesman table directly for all trades including disabled ones",
+    "summary": "Query tradesman table directly for all trades including disabled ones",
+    "areas": [
+      "api"
+    ],
+    "commit": "05d10d15",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-09-6337948f",
     "date": "2026-06-09T14:14:28+08:00",
     "title": "Include ALL trades in matrix, even unserved ones (from trades table)",
