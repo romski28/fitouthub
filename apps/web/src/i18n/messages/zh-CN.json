@@ -371,7 +371,15 @@
       "isThisRight": "這是您的意思嗎？",
       "back": "返回",
       "letsGo": "出發！",
-      "loading": "加载中..."
+      "loading": "加载中...",
+      "helpText": "简单描述您需要什么。",
+      "helpLink": "我们帮您开始。",
+      "askMimo": "问 Mimo",
+      "updateMimo": "更新 Mimo",
+      "imageQuota": "今日剩余 {remaining}/{max} · 每次最多 {perPrompt} 张",
+      "imageQuotaMax": "每次最多 {max} 张",
+      "checkingQuota": "检查配额中…",
+      "dailyQuotaReached": "每日配额已用完。仍可使用纯文本提示。"
     },
     "hero": {
       "tagline": "專業裝修管理平台",

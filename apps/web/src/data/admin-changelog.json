@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-09-d55d1e25",
+    "date": "2026-06-09T09:10:39+08:00",
+    "title": "i18n: translate help text, Ask Mimo button, image quota text to zh-HK and zh-CN",
+    "summary": "i18n: translate help text, Ask Mimo button, image quota text to zh-HK and zh-CN",
+    "areas": [
+      "web"
+    ],
+    "commit": "d55d1e25",
+    "files": [
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-06-08-a80e66a2",
     "date": "2026-06-08T23:26:46+08:00",
     "title": "Add conversation history tracking so AI remembers user answers across turns",

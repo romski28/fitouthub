@@ -374,7 +374,15 @@
       "isThisRight": "Is this what you meant?",
       "back": "Back",
       "letsGo": "Let's go",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "helpText": "Describe what you need in a few words.",
+      "helpLink": "We'll help you get started.",
+      "askMimo": "Ask Mimo",
+      "updateMimo": "Update Mimo",
+      "imageQuota": "{remaining}/{max} left today · max {perPrompt} per prompt",
+      "imageQuotaMax": "max {max} per prompt",
+      "checkingQuota": "Checking quota…",
+      "dailyQuotaReached": "Daily quota reached. Text-only prompts still work."
     },
     "hero": {
       "tagline": "Professional Fitout Management Platform",

@@ -655,6 +655,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const AI_KEEP_CONVERSATION_PREF_KEY = 'aiKeepConversationOnRefresh';
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
+  const t = useTranslations('home.searchFlow');
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [keepConversationOnRefresh, setKeepConversationOnRefresh] = useState(true);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>(deepSeekSandboxEnabled ? 'ai' : 'legacy');
@@ -1986,9 +1987,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         {showPromptHelperText && (
           <div className="text-center space-y-2 mb-6">
             <p className="text-sm text-slate-600">
-              Describe what you need in a few words.{' '}
+              {t('helpText')}{' '}
               <button onClick={() => setShowHelp(true)} className="text-emerald-600 hover:text-emerald-700 font-semibold underline transition">
-                We&rsquo;ll help you get started.
+                {t('helpLink')}
               </button>
             </p>
           </div>
@@ -1997,7 +1998,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           onSubmit={handleSearch}
           autoFocus={autoFocusPrompt}
           onClear={handleClearSearch}
-          submitLabel={showFollowUpComposer ? 'Update Mimo' : 'Ask Mimo'}
+          submitLabel={showFollowUpComposer ? t('updateMimo') : t('askMimo')}
           clearKey={searchBoxClearKey}
           onHelpClick={() => setShowHelp(true)}
           imageActions={
@@ -2020,19 +2021,19 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             {!visionQuotaLoading && (
               <p className="text-[10px] text-slate-400">
                 {visionQuota
-                  ? `${visionQuota.remainingToday}/${visionQuota.maxImagesPerDay} left today · max ${visionQuota.maxImagesPerPrompt} per prompt`
-                  : `max ${promptImageLimit} per prompt`}
+                  ? t('imageQuota', { remaining: visionQuota.remainingToday, max: visionQuota.maxImagesPerDay, perPrompt: visionQuota.maxImagesPerPrompt })
+                  : t('imageQuotaMax', { max: promptImageLimit })}
               </p>
             )}
             {visionQuotaLoading && (
-              <p className="text-[10px] text-slate-400">Checking quota…</p>
+              <p className="text-[10px] text-slate-400">{t('checkingQuota')}</p>
             )}
             {visionQuotaError && (
               <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
             )}
             {visionQuota && !visionQuota.canUseVision && (
               <p className="text-[10px] text-amber-600">
-                Daily quota reached. Text-only prompts still work.
+                {t('dailyQuotaReached')}
               </p>
             )}
           </div>
