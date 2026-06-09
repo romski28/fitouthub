@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-09-80ffa759",
+    "date": "2026-06-09T12:30:04+08:00",
+    "title": "Clear HomeCardRail dismiss key on archive page so rail always visible",
+    "summary": "Clear HomeCardRail dismiss key on archive page so rail always visible",
+    "areas": [
+      "web"
+    ],
+    "commit": "80ffa759",
+    "files": [
+      "apps/web/src/app/archive/home-panels/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-caf85543",
     "date": "2026-06-09T12:26:00+08:00",
     "title": "Fix HomeCardRail import to named export",

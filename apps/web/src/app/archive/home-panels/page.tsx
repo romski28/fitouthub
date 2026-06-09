@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { HomeCardRail } from '@/components/home-card-rail';
@@ -12,6 +13,11 @@ const WELCOME_GREETINGS = [
 
 export default function ArchiveHomePanelsPage() {
   const greetingIndex = 0;
+
+  // Reset the HomeCardRail dismiss toggle so it always shows on this page
+  useEffect(() => {
+    localStorage.removeItem('home-card-rail-dismissed-version');
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FCF8EE] py-8">
