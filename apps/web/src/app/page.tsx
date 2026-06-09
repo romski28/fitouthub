@@ -8,7 +8,6 @@ import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
-import { EmergencyModal } from '@/components/emergency-modal';
 import { VideoTeaser } from '@/components/video-teaser';
 
 const WELCOME_GREETINGS = [
@@ -44,7 +43,6 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [greetingIndex, setGreetingIndex] = useState(0);
-  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [mimoThinking, setMimoThinking] = useState(false);
   
   const t = useTranslations('home');
@@ -75,19 +73,6 @@ export default function Home() {
 
   return (
       <div className="space-y-6 pb-8 pt-2">
-        {/* Emergency SOS — navbar position for clients only */}
-        {isLoggedIn && user?.role === 'client' && (
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <button
-              onClick={() => setEmergencyModalOpen(true)}
-              className="text-sm font-black tracking-[0.3em] text-[#DC143C] uppercase hover:text-[#b01030] transition"
-              title={t('emergency.title')}
-            >
-              SOS
-            </button>
-          </div>
-        )}
-
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -186,10 +171,6 @@ export default function Home() {
           </div>
         </section>
 
-      <EmergencyModal
-        isOpen={emergencyModalOpen}
-        onClose={() => setEmergencyModalOpen(false)}
-      />
       </div>
   );
 }

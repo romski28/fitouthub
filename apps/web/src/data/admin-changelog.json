@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-09-3858a027",
+    "date": "2026-06-09T21:58:35+08:00",
+    "title": "Move SOS to navbar, resize logo 30% smaller on mobile, remove emergency from home page",
+    "summary": "Move SOS to navbar, resize logo 30% smaller on mobile, remove emergency from home page",
+    "areas": [
+      "web"
+    ],
+    "commit": "3858a027",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-a23b54ef",
     "date": "2026-06-09T21:41:47+08:00",
     "title": "Replace pulsing emergency FAB with subtle SOS text link in navbar area",

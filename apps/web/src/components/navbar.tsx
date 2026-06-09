@@ -10,6 +10,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { clearAiClientState } from '@/lib/client-session';
 import { LanguageSwitcher } from './language-switcher';
+import { EmergencyModal } from './emergency-modal';
 
 export const Navbar: React.FC = () => {
   const t = useTranslations('nav');
@@ -27,6 +28,7 @@ export const Navbar: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setHydrated(true));
@@ -104,7 +106,7 @@ export const Navbar: React.FC = () => {
               alt="Mimo"
               width={172}
               height={44}
-              className="object-contain"
+              className="h-7 sm:h-[44px] w-auto object-contain"
             />
           </Link>
 
@@ -138,6 +140,17 @@ export const Navbar: React.FC = () => {
 
             {/* Language Switcher */}
             <LanguageSwitcher />
+
+            {/* SOS — emergency for clients */}
+            {showAuthed && user?.role === 'client' && (
+              <button
+                onClick={() => setEmergencyOpen(true)}
+                className="text-sm font-black tracking-[0.25em] text-[#DC143C] uppercase hover:text-[#b01030] transition"
+                title="Emergency help"
+              >
+                SOS
+              </button>
+            )}
 
             {/* Desktop Auth buttons */}
             <div className="ml-4 flex min-w-[220px] items-center justify-end gap-3 border-l border-slate-200 pl-6">
@@ -336,6 +349,15 @@ export const Navbar: React.FC = () => {
         {mobileMenuOpen && (
           <div className="min-[820px]:hidden border-t border-slate-200 bg-slate-50">
             <nav className="flex flex-col px-4 py-3 space-y-2 text-sm font-medium text-slate-700">
+              {/* SOS — mobile emergency */}
+              {showAuthed && user?.role === 'client' && (
+                <button
+                  onClick={() => { setEmergencyOpen(true); setMobileMenuOpen(false); }}
+                  className="px-3 py-2 rounded text-left text-[#DC143C] font-black tracking-[0.25em] uppercase hover:bg-red-50"
+                >
+                  SOS
+                </button>
+              )}
               {showPublicLinks ? (
                 <>
                   <Link
@@ -547,6 +569,7 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </header>
+      <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
     </>
   );
 };
