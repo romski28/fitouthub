@@ -222,8 +222,6 @@ const stripSummaryPrefix = (value: string): string => {
   return value;
 };
 
-const SUMMARY_CONFIRMATION_PREFIX = 'MIMO summary for confirmation:';
-
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
   'You\'re on fire, one quick step at a time.',
@@ -317,7 +315,6 @@ export default function CreateProjectWizardPage() {
   const [isChatSendFinalizing, setIsChatSendFinalizing] = useState(false);
   const [chatImageError, setChatImageError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
-  const [aiSummaryForConfirmation, setAiSummaryForConfirmation] = useState<string | null>(null);
   const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
   const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
   const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
@@ -476,7 +473,6 @@ export default function CreateProjectWizardPage() {
     setChatError(null);
     setChatImageError(null);
     setAiChatCanContinue(false);
-    setAiSummaryForConfirmation(null);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
     setExpandedServiceOffer(null);
 
@@ -531,72 +527,20 @@ export default function CreateProjectWizardPage() {
   const renderChatMessageBody = (message: WizardChatMessage) => {
     const { body, offerType } = extractServiceOfferFromMessage(message.text);
 
-    if (message.role !== 'assistant' || !body.startsWith(SUMMARY_CONFIRMATION_PREFIX)) {
-      if (!offerType) {
-        return body;
-      }
-
-      return (
-        <div className="space-y-2">
-          <p className="whitespace-pre-wrap">{body}</p>
-          <button
-            type="button"
-            onClick={() => setExpandedServiceOffer(offerType)}
-            className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E95E51]"
-          >
-            Find out more
-          </button>
-        </div>
-      );
+    if (!offerType) {
+      return body;
     }
-
-    const [summaryBlock, continuationRaw] = body.split('\n\nIf this looks right,');
-    const summaryLines = summaryBlock
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    const heading = summaryLines[0] || SUMMARY_CONFIRMATION_PREFIX;
-    const fieldRows = summaryLines
-      .slice(1)
-      .map((line) => {
-        const separatorIndex = line.indexOf(':');
-        if (separatorIndex < 0) {
-          return { label: 'Note', value: line };
-        }
-
-        return {
-          label: line.slice(0, separatorIndex).trim(),
-          value: line.slice(separatorIndex + 1).trim(),
-        };
-      })
-      .filter((row) => row.value.length > 0);
-
-    const continuationText = continuationRaw
-      ? `If this looks right,${continuationRaw}`.trim()
-      : '';
 
     return (
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-slate-900">{heading}</p>
-        <div className="space-y-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
-          {fieldRows.map((row, rowIndex) => (
-            <div key={`${row.label}-${rowIndex}`} className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-slate-700">{row.label}</span>
-              <span className="text-slate-800">{row.value}</span>
-            </div>
-          ))}
-        </div>
-        {continuationText && <p className="text-xs text-slate-600">{continuationText}</p>}
-        {offerType && (
-          <button
-            type="button"
-            onClick={() => setExpandedServiceOffer(offerType)}
-            className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E95E51]"
-          >
-            Find out more
-          </button>
-        )}
+        <p className="whitespace-pre-wrap">{body}</p>
+        <button
+          type="button"
+          onClick={() => setExpandedServiceOffer(offerType)}
+          className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E95E51]"
+        >
+          Find out more
+        </button>
       </div>
     );
   };
@@ -825,7 +769,6 @@ export default function CreateProjectWizardPage() {
     setChatBusy(true);
     setChatError(null);
     setAiChatCanContinue(false);
-    setAiSummaryForConfirmation(null);
     setChatMessages((prev) => [...prev, { role: 'user', text: prompt }]);
 
     try {
@@ -1027,23 +970,15 @@ export default function CreateProjectWizardPage() {
         const summaryQuestion = nextUnaskedQuestion
           ? `\n\nOne more thing: ${appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)}`
           : '';
-        const summaryForConfirmation = [
-          'MIMO summary for confirmation:',
-          '',
-          `Title: ${nextTitle || title || 'Not set'}`,
-          `Project: ${nextTitle || title || 'Not set'}`,
-          '',
-          `Scope: ${nextSummary || summary || 'Not set'}`,
-          '',
-          `Suggested trades: ${mergedTrades.length > 0 ? mergedTrades.join(', ') : 'Not set'}`,
-          `Urgency: ${(typeof isEmergency === 'boolean' ? isEmergency : null) === true ? 'Urgent' : 'Standard'}`,
-          '',
-          `Summary: ${nextSummary || summary || 'Not set'}`,
-        ].join('\n');
+        const summaryForConfirmation = `OK, we have enough project information to proceed. ${summaryQuestion ? 'One more thing — see below. ' : ''}If you have time, please continue answering questions, or just send with no text to move on.`;
 
-        setAiSummaryForConfirmation(summaryForConfirmation);
         setAiChatCanContinue(true);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: `${summaryForConfirmation}${summaryQuestion}\n\nIf this looks right, continue and we will finalize the remaining details.` }]);
+        const msgParts = [summaryForConfirmation];
+        if (summaryQuestion) {
+          msgParts.push(summaryQuestion);
+        }
+        msgParts.push('Tap send when ready to move forward.');
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: msgParts.join('\n\n') }]);
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
         setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer) }]);
@@ -1366,77 +1301,84 @@ export default function CreateProjectWizardPage() {
                               <div className={`flex gap-2 ${chatImageUrls.length > 0 ? 'flex-col sm:flex-row' : 'flex-col'}`}>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-end gap-2">
+                                    {/* Image upload — left of textarea */}
+                                    <label
+                                      className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-white transition ${
+                                        chatImageUploadBusy
+                                          ? 'cursor-progress border-emerald-700 bg-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
+                                          : 'cursor-pointer border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700'
+                                      }`}
+                                      title={chatImageUploadBusy ? 'Uploading images' : 'Add images'}
+                                    >
+                                      {chatImageUploadBusy ? (
+                                        <>
+                                          <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                          </svg>
+                                          <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-emerald-700">
+                                            {Math.max(1, chatPendingUploadCount)}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                                          <circle cx="8.5" cy="10.5" r="1.5" />
+                                          <path d="M21 15l-5-5L5 21" />
+                                        </svg>
+                                      )}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        className="hidden"
+                                        onChange={(e) => uploadChatImages(e.target.files)}
+                                        disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                      />
+                                    </label>
+
                                     <textarea
                                       value={chatInput}
                                       onChange={(e) => setChatInput(e.target.value)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                           e.preventDefault();
-                                          sendWizardAiTurn();
+                                          if (chatInput.trim()) {
+                                            void sendWizardAiTurn();
+                                          } else if (aiChatCanContinue) {
+                                            handleAiContinue();
+                                          }
                                         }
                                       }}
                                       rows={2}
-                                      placeholder="Reply to MIMO... (Enter to send, Shift+Enter for new line)"
+                                      placeholder={aiChatCanContinue ? 'Type to keep refining, or send empty to move on…' : 'Reply to MIMO... (Enter to send, Shift+Enter for new line)'}
                                       className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
                                     />
-                                    <div className="flex flex-col gap-1.5">
-                                      <label
-                                        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg border text-white transition ${
-                                          chatImageUploadBusy
-                                            ? 'cursor-progress border-emerald-700 bg-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
-                                            : 'cursor-pointer border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700'
-                                        }`}
-                                        title={chatImageUploadBusy ? 'Uploading images' : 'Add images'}
-                                      >
-                                        {chatImageUploadBusy ? (
-                                          <>
-                                            <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                            </svg>
-                                            <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-emerald-700">
-                                              {Math.max(1, chatPendingUploadCount)}
-                                            </span>
-                                          </>
-                                        ) : (
-                                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
-                                            <circle cx="8.5" cy="10.5" r="1.5" />
-                                            <path d="M21 15l-5-5L5 21" />
-                                          </svg>
-                                        )}
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          multiple
-                                          className="hidden"
-                                          onChange={(e) => uploadChatImages(e.target.files)}
-                                          disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
-                                        />
-                                      </label>
 
-                                      <button
-                                        type="button"
-                                        onClick={() => { void sendWizardAiTurn(); }}
-                                        disabled={chatBusy || chatImageUploadBusy || chatInput.trim().length === 0}
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                                        title={chatImageUploadBusy ? 'Wait for image upload to finish' : 'Send'}
-                                      >
+                                    {/* Dual-mode send button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (chatInput.trim()) {
+                                          void sendWizardAiTurn();
+                                        } else if (aiChatCanContinue) {
+                                          handleAiContinue();
+                                        }
+                                      }}
+                                      disabled={chatBusy || chatImageUploadBusy || (!chatInput.trim() && !aiChatCanContinue)}
+                                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                                      title={aiChatCanContinue && !chatInput.trim() ? 'Continue to next step' : 'Send'}
+                                    >
+                                      {aiChatCanContinue && !chatInput.trim() ? (
+                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M5 12h14M12 5l7 7-7 7" />
+                                        </svg>
+                                      ) : (
                                         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                           <path d="M22 2L11 13" />
                                           <path d="M22 2l-7 20-4-9-9-4z" />
                                         </svg>
-                                      </button>
-
-                                      {aiChatCanContinue && !chatBusy && (
-                                        <button
-                                          type="button"
-                                          onClick={handleAiContinue}
-                                          className="rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-emerald-700 sm:text-xs"
-                                        >
-                                          {aiSummaryForConfirmation ? 'Use summary' : 'Continue'}
-                                        </button>
                                       )}
-                                    </div>
+                                    </button>
                                   </div>
                                 </div>
 
