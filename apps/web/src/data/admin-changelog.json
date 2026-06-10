@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-9d593c34",
+    "date": "2026-06-10T11:13:39+08:00",
+    "title": "Help Me Describe card opens the SearchHelpModal (blue info button modal)",
+    "summary": "Help Me Describe card opens the SearchHelpModal (blue info button modal)",
+    "areas": [
+      "web"
+    ],
+    "commit": "9d593c34",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-e5008200",
     "date": "2026-06-10T11:05:45+08:00",
     "title": "Force hard navigation for Help Me Describe card, clean up unused router",

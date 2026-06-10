@@ -11,6 +11,7 @@ import { parseChatEvent } from '@/lib/chat-event-parser';
 import ChatEventCard from './chat-event-card';
 import ChatImageAttachment from './chat-image-attachment';
 import { EmergencyModal } from './emergency-modal';
+import { SearchHelpModal } from './search-help-modal';
 import { AssistRequestModal, type AssistRequestModalSubmit } from './assist-request-modal';
 
 interface ChatMessage {
@@ -155,6 +156,7 @@ export default function FloatingChat() {
   const [endingAnonChat, setEndingAnonChat] = useState(false);
   const [forceThreadBootstrap, setForceThreadBootstrap] = useState(0);
   const [consultationOpen, setConsultationOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   const bypassCardTriageRef = useRef(false);
   const autoSendInFlightRef = useRef(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -990,7 +992,7 @@ export default function FloatingChat() {
                     setIsOpen(false);
                     setShowAnonCards(false);
                     bypassCardTriageRef.current = false;
-                    window.location.href = '/?focusPrompt=1';
+                    setHelpModalOpen(true);
                   }}
                   className="w-full rounded-xl border border-sky-200 bg-white p-4 text-left hover:border-sky-400 hover:shadow-sm transition group"
                 >
@@ -1260,6 +1262,9 @@ export default function FloatingChat() {
 
       {/* ── Emergency Modal ── */}
       <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
+
+      {/* ── Search Help Modal ── */}
+      <SearchHelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
 
       {/* ── Consultation Modal ── */}
       <AssistRequestModal
