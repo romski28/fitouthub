@@ -1286,7 +1286,7 @@ export default function FloatingChat() {
             <button
               onClick={() => {
                 setEmergencyAnonPromptOpen(false);
-                window.location.href = '/get-started?role=client&step=1';
+                window.location.href = '/get-started?role=client';
               }}
               className="w-full rounded-lg bg-[#F97362] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e8624f] transition"
             >

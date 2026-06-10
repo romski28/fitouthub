@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-1bac5832",
+    "date": "2026-06-10T16:47:00+08:00",
+    "title": "Join Now goes to get-started step 0 with client role pre-set",
+    "summary": "Join Now goes to get-started step 0 with client role pre-set",
+    "areas": [
+      "web"
+    ],
+    "commit": "1bac5832",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-7aa94390",
     "date": "2026-06-10T16:39:17+08:00",
     "title": "Emergency anon prompt: Join Now bypasses step 0 of get-started wizard",
