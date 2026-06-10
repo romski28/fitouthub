@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/auth-context';
@@ -129,7 +128,6 @@ const getContextLabel = (context: ChatContext) => {
 
 export default function FloatingChat() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isLoggedIn: clientLoggedIn, accessToken: clientToken } = useAuth();
   const { isLoggedIn: proLoggedIn, accessToken: proToken } = useProfessionalAuth();
   
@@ -992,7 +990,7 @@ export default function FloatingChat() {
                     setIsOpen(false);
                     setShowAnonCards(false);
                     bypassCardTriageRef.current = false;
-                    router.push('/?focusPrompt=1');
+                    window.location.href = '/?focusPrompt=1';
                   }}
                   className="w-full rounded-xl border border-sky-200 bg-white p-4 text-left hover:border-sky-400 hover:shadow-sm transition group"
                 >
