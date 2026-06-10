@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-10-4e3c6c21",
+    "date": "2026-06-10T13:09:25+08:00",
+    "title": "Center contact buttons, rename label, fix modal scrollbar on rounded corners",
+    "summary": "Center contact buttons, rename label, fix modal scrollbar on rounded corners",
+    "areas": [
+      "web"
+    ],
+    "commit": "4e3c6c21",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx",
+      "apps/web/src/components/modal-overlay.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-5b6f98f0",
     "date": "2026-06-10T12:55:55+08:00",
     "title": "Drop subtitle descriptions from pre-project contact method buttons",

@@ -312,7 +312,7 @@ export function AssistRequestModal({
                       disabled={isWhatsappDisabled}
                       title={isWhatsappDisabled ? "Add a mobile number to use WhatsApp" : undefined}
                       onClick={() => !isWhatsappDisabled && setPreProjectChoice(option.value as PreProjectContactChoice)}
-                      className={`rounded-xl border p-4 text-left transition ${
+                      className={`rounded-xl border p-4 text-center transition ${
                         isWhatsappDisabled
                           ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-50"
                           : active
@@ -370,7 +370,7 @@ export function AssistRequestModal({
           )}
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-900">
-              {isActive ? "Describe the issue" : "Initial request"}
+              {isActive ? "Describe the issue" : "Start the conversation here..."}
             </label>
             <textarea
               value={notes}

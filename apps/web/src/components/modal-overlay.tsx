@@ -20,9 +20,9 @@ export function ModalOverlay({ isOpen, onClose, children, maxWidth = 'max-w-2xl'
 
       {/* Modal Content */}
       <div 
-        className={`relative ${maxWidth} w-full mx-4 max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl`}
-        onClick={(e) => e.stopPropagation()}
+        className={`relative ${maxWidth} w-full mx-4 max-h-[90vh] rounded-xl bg-white shadow-xl overflow-hidden`}
       >
+        <div className="max-h-[90vh] overflow-y-auto pr-3" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
         <button
           onClick={(e) => {
@@ -39,6 +39,7 @@ export function ModalOverlay({ isOpen, onClose, children, maxWidth = 'max-w-2xl'
 
         {/* Content */}
         <div className="p-6 sm:p-8">{children}</div>
+        </div>
       </div>
     </div>
   );
