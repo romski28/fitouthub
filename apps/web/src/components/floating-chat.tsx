@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/auth-context';
@@ -127,6 +128,7 @@ const getContextLabel = (context: ChatContext) => {
 
 export default function FloatingChat() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isLoggedIn: clientLoggedIn, accessToken: clientToken } = useAuth();
   const { isLoggedIn: proLoggedIn, accessToken: proToken } = useProfessionalAuth();
   
@@ -153,6 +155,7 @@ export default function FloatingChat() {
   const [showAnonCards, setShowAnonCards] = useState(false);
   const [endingAnonChat, setEndingAnonChat] = useState(false);
   const [forceThreadBootstrap, setForceThreadBootstrap] = useState(0);
+  const bypassCardTriageRef = useRef(false);
   const autoSendInFlightRef = useRef(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const suppressNextAutoScrollRef = useRef(false);
@@ -459,8 +462,8 @@ export default function FloatingChat() {
     };
 
     if (isOpen && !threadId) {
-      // Anonymous with no stored thread → show card triage, don't create thread
-      if (!isLoggedIn) {
+      // Anonymous with no stored thread → show card triage, unless user explicitly chose to start chat
+      if (!isLoggedIn && !bypassCardTriageRef.current) {
         const stored = readStoredThreadId(chatContext);
         if (!stored) {
           setShowAnonCards(true);
@@ -621,12 +624,14 @@ export default function FloatingChat() {
     setThreadId(null);
     setShowAnonCards(true);
     setEndingAnonChat(false);
+    bypassCardTriageRef.current = false;
     storeThreadId(chatContext, null);
     toast.success('Chat ended. Your conversation has been saved.');
   }, [threadId, chatContext]);
 
   // ── Start chat from card triage with pre-filled message ──
   const handleStartAnonChat = useCallback((prefillMessage?: string) => {
+    bypassCardTriageRef.current = true;
     setShowAnonCards(false);
     setThreadId(null);
     setMessages([]);
@@ -921,7 +926,7 @@ export default function FloatingChat() {
                 </button>
               )}
               <button
-                onClick={() => { setIsOpen(false); setShowAnonCards(false); }}
+                onClick={() => { setIsOpen(false); setShowAnonCards(false); bypassCardTriageRef.current = false; }}
                 className="text-white hover:text-slate-200 transition"
                 aria-label="Close chat"
               >
@@ -947,7 +952,7 @@ export default function FloatingChat() {
                   <div className="text-sm text-slate-500 mt-0.5">Speak with a renovation expert at a time that suits you</div>
                 </button>
                 <button
-                  onClick={() => { setIsOpen(false); setEmergencyOpen(true); }}
+                  onClick={() => { setIsOpen(false); setEmergencyOpen(true); bypassCardTriageRef.current = false; }}
                   className="w-full rounded-xl border border-rose-200 bg-white p-4 text-left hover:border-rose-400 hover:shadow-sm transition group"
                 >
                   <div className="font-semibold text-slate-900 group-hover:text-rose-700 transition">🚨 I have an emergency</div>
@@ -957,8 +962,15 @@ export default function FloatingChat() {
                   onClick={() => {
                     setIsOpen(false);
                     setShowAnonCards(false);
-                    const el = document.getElementById('project-prompt');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    bypassCardTriageRef.current = false;
+                    if (pathname === '/') {
+                      const el = document.getElementById('project-prompt');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      // Also trigger the search box autofocus
+                      window.dispatchEvent(new CustomEvent('focus-search-prompt'));
+                    } else {
+                      router.push('/?focusPrompt=1');
+                    }
                   }}
                   className="w-full rounded-xl border border-sky-200 bg-white p-4 text-left hover:border-sky-400 hover:shadow-sm transition group"
                 >
