@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-1081167f",
+    "date": "2026-06-10T16:29:35+08:00",
+    "title": "Change pre-project submit button to 'OK, book me in!'",
+    "summary": "Change pre-project submit button to 'OK, book me in!'",
+    "areas": [
+      "web"
+    ],
+    "commit": "1081167f",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-dc33baeb",
     "date": "2026-06-10T16:07:42+08:00",
     "title": "Change contact image border to outset style",

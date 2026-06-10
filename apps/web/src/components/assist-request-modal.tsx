@@ -468,11 +468,7 @@ export function AssistRequestModal({
                   : contactMethod === "call"
                     ? `${submitPrefix} - book call`
                     : `${submitPrefix} via WhatsApp`
-                : preProjectChoice === "callback"
-                  ? `${submitPrefix} - let us call you`
-                  : preProjectChoice === "video"
-                    ? `${submitPrefix} - book video call`
-                    : `${submitPrefix} via WhatsApp`}
+                : "OK, book me in!"}
           </button>
         </div>
       </div>
