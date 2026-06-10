@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-856ae498",
+    "date": "2026-06-10T17:13:01+08:00",
+    "title": "Replace countdown timer with simple green Continue with MIMO button",
+    "summary": "Replace countdown timer with simple green Continue with MIMO button",
+    "areas": [
+      "web"
+    ],
+    "commit": "856ae498",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-0f7f855b",
     "date": "2026-06-10T17:05:46+08:00",
     "title": "Fix: saveClientSession now respects postLoginRedirect for Join flow",

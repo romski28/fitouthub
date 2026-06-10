@@ -676,11 +676,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundCount, setAiRoundCount] = useState(0);
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
-  const [wizardAutoTimer, setWizardAutoTimer] = useState(10);
+  const [, setWizardAutoTimer] = useState(10);
   const [promptCharCount, setPromptCharCount] = useState(0);
   const wizardAutoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wizardAutoClickedRef = useRef(false);
-  const fillBarRef = useRef<HTMLSpanElement>(null);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -1852,22 +1851,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     };
   }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard, isLoggedIn]);
 
-  // Fill bar transition: only for logged-in users
-  useEffect(() => {
-    if (!isConversationSequenceComplete || !hasAiResponse) return;
-    if (isLoggedIn !== true) return;
-    const bar = fillBarRef.current;
-    if (!bar) return;
-    // Reset to 0% immediately
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-    // Force layout recalculation so browser sees the 0% starting point
-    void bar.offsetWidth;
-    // Trigger the 10s transition
-    bar.style.transition = 'width 10s linear';
-    bar.style.width = '100%';
-  }, [isConversationSequenceComplete, hasAiResponse, isLoggedIn]);
-
   useEffect(() => {
     return () => {
       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
@@ -2059,11 +2042,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               <>
                 <div className="text-center">
                   <p className="text-lg font-semibold text-slate-900">Ready to continue?</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {wizardAutoTimer > 0
-                      ? `Continuing to project wizard in ${wizardAutoTimer} second${wizardAutoTimer === 1 ? '' : 's'}...`
-                      : 'Opening wizard...'}
-                  </p>
                 </div>
 
                 <div className="mt-5">
@@ -2074,17 +2052,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
                       handleStartAiWizard();
                     }}
-                    className="relative w-full overflow-hidden rounded-lg border border-emerald-600 px-4 py-3 font-semibold text-emerald-800 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-lg"
                   >
-                    {/* Light green base */}
-                    <span className="absolute inset-0 rounded-lg bg-emerald-100" />
-                    {/* Dark green fill — CSS transition triggered by effect, sweeps left→right over 10s */}
-                    <span
-                      ref={fillBarRef}
-                      className="absolute bottom-0 left-0 top-0 rounded-lg bg-emerald-600"
-                      style={{ width: '0%' }}
-                    />
-                    <span className="relative z-10">Continue with MIMO</span>
+                    Continue with MIMO
                   </button>
                 </div>
 
