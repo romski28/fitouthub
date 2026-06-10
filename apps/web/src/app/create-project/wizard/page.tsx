@@ -528,13 +528,6 @@ export default function CreateProjectWizardPage() {
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 3), [followUpQuestions]);
 
-  const getServiceSelectionPrompt = (offerType: ServiceOfferType): string => {
-    if (offerType === 'survey') {
-      return 'I\'ve added the MIMO Surveying+ service to this project. The room size and site conditions will be confirmed by a survey — please continue helping me scope the rest of the project based on what we\'ve already discussed.';
-    }
-    return 'I\'ve added the MIMO Interior Design service to this project. A designer will work out the details — please continue helping me scope the rest based on what we\'ve already discussed.';
-  };
-
   const renderChatMessageBody = (message: WizardChatMessage) => {
     const { body, offerType } = extractServiceOfferFromMessage(message.text);
 
@@ -698,13 +691,20 @@ export default function CreateProjectWizardPage() {
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
 
-    setChatError(null);
-    const message = accepted
-      ? getServiceSelectionPrompt(offerType)
-      : offerType === 'survey'
-        ? 'I\'ll estimate the room size myself — let\'s continue working on the rest of the project based on what we\'ve already discussed.'
-        : 'I\'ll skip the design service for now — let\'s continue with the rest of the project scope.';
-    void sendWizardAiTurn(message, { includeAttachedImages: false });
+    if (accepted) {
+      // Add a confirmation message to chat — NOT sent to AI
+      const confirmMsg = offerType === 'survey'
+        ? 'OK, thanks — we\'ll reach out to arrange the MIMO Surveying+ shortly.'
+        : 'OK, thanks — we\'ll reach out to arrange the MIMO Interior Design service shortly.';
+      setChatMessages((prev) => [...prev, { role: 'user' as const, text: confirmMsg }]);
+
+      // Prompt AI to continue scoping — tells it the survey/design will handle that part
+      const aiPrompt = offerType === 'survey'
+        ? 'The room size and site conditions will be confirmed by the MIMO survey team. Based on everything we\'ve discussed so far, what should we figure out next to keep this project moving forward?'
+        : 'The design details will be worked out by the MIMO design team. Based on everything we\'ve discussed so far, what should we figure out next to keep this project moving forward?';
+      void sendWizardAiTurn(aiPrompt, { includeAttachedImages: false });
+    }
+    // Decline: just close the modal — user continues typing naturally
   };
 
   const handleLocationInputMode = (nextMode: LocationInputMode) => {

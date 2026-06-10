@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-6497b875",
+    "date": "2026-06-10T21:41:52+08:00",
+    "title": "Service offer choices no longer sent as AI conversation turns",
+    "summary": "Service offer choices no longer sent as AI conversation turns",
+    "areas": [
+      "web"
+    ],
+    "commit": "6497b875",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-3aff95c3",
     "date": "2026-06-10T21:29:57+08:00",
     "title": "Send continuation message to AI when user declines service offer too",
