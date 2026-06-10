@@ -222,17 +222,15 @@ export function AssistRequestModal({
             Mimo {isActive ? "project management" : "consultation"}
           </p>
           <h2 className="text-2xl font-bold text-slate-900">
-            {isActive ? "Request a project manager" : "Choose how you want FoH to help"}
+            {isActive ? "Request a project manager" : "How can we reach you?"}
           </h2>
-          <p className="text-sm text-slate-600">
-            {projectName
-              ? isActive
+          {isActive && (
+            <p className="text-sm text-slate-600">
+              {projectName
                 ? `Raise a support case for ${projectName}. A coordinator will respond within 1 hour.`
-                : `For ${projectName} — choose whether you would like to chat, request a call, or ask FoH to WhatsApp you.`
-              : isActive
-                ? "A FoH coordinator will be assigned and will respond within 1 hour."
-                : "Choose whether you would like to chat in-platform, request a call, or ask FoH to WhatsApp you."}
-          </p>
+                : "A FoH coordinator will be assigned and will respond within 1 hour."}
+            </p>
+          )}
         </div>
 
         {/* Category picker — active context only */}
@@ -301,8 +299,8 @@ export function AssistRequestModal({
             <div className="space-y-3">
               <div className="grid gap-3 md:grid-cols-3">
                 {[
-                  { value: "callback", title: "Let us call you", description: "Book a callback with a coordinator.", emoji: "\u{1F4DE}" },
-                  { value: "video", title: "Book a video call", description: "Schedule a video consultation.", emoji: "\u{1F4F9}" },
+                  { value: "callback", title: "By phone", description: "Book a callback with a coordinator.", emoji: "\u{1F4DE}" },
+                  { value: "video", title: "Online VC", description: "Schedule a video consultation.", emoji: "\u{1F4F9}" },
                   { value: "whatsapp", title: "WhatsApp me", description: "We will follow up on WhatsApp.", emoji: "\u{1F7E2}" },
                 ].map((option) => {
                   const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
@@ -332,13 +330,9 @@ export function AssistRequestModal({
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => onChatNow?.({ notes: notes.trim(), projectName })}
-                className="w-full rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition"
-              >
-                Chat now
-              </button>
+              <p className="text-center text-sm text-slate-500 mt-1">
+                Just want to chat? Sarah is ready to hook you up.
+              </p>
             </div>
           )}
         </div>

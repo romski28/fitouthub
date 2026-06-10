@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-efbd035e",
+    "date": "2026-06-10T12:52:28+08:00",
+    "title": "Simplify consultation modal: new title, shorter labels, text instead of chat button",
+    "summary": "Simplify consultation modal: new title, shorter labels, text instead of chat button",
+    "areas": [
+      "web"
+    ],
+    "commit": "efbd035e",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-0b74d8d2",
     "date": "2026-06-10T12:10:09+08:00",
     "title": "Fix TS error: PreProjectContactChoice never equals chat",
