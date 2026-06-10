@@ -117,7 +117,7 @@ export function AssistRequestModal({
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'zh-HK' | 'zh-CN'>('en');
 
   const isActive = context === "active";
-  const needsContactInfo = !isActive && preProjectChoice !== 'chat';
+  const needsContactInfo = !isActive;
   const contactLabel =
     preProjectChoice === 'video' ? 'Email address' : 'Mobile No.';
   const contactPlaceholder =

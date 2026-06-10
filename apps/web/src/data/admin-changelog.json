@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-0b74d8d2",
+    "date": "2026-06-10T12:10:09+08:00",
+    "title": "Fix TS error: PreProjectContactChoice never equals chat",
+    "summary": "Fix TS error: PreProjectContactChoice never equals chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "0b74d8d2",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-6d7a82de",
     "date": "2026-06-10T12:06:27+08:00",
     "title": "Add contact info input and preferred language selector to consultation modal",
