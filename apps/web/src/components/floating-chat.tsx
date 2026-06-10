@@ -152,6 +152,7 @@ export default function FloatingChat() {
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
   const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [emergencyAnonPromptOpen, setEmergencyAnonPromptOpen] = useState(false);
   const [showAnonCards, setShowAnonCards] = useState(false);
   const [endingAnonChat, setEndingAnonChat] = useState(false);
   const [forceThreadBootstrap, setForceThreadBootstrap] = useState(0);
@@ -981,7 +982,15 @@ export default function FloatingChat() {
                   <div className="text-sm text-slate-500 mt-0.5">Speak with a renovation expert at a time that suits you</div>
                 </button>
                 <button
-                  onClick={() => { setIsOpen(false); setEmergencyOpen(true); bypassCardTriageRef.current = false; }}
+                  onClick={() => {
+                    setIsOpen(false);
+                    bypassCardTriageRef.current = false;
+                    if (isLoggedIn) {
+                      setEmergencyOpen(true);
+                    } else {
+                      setEmergencyAnonPromptOpen(true);
+                    }
+                  }}
                   className="w-full rounded-xl border border-rose-200 bg-white p-4 text-left hover:border-rose-400 hover:shadow-sm transition group"
                 >
                   <div className="font-semibold text-slate-900 group-hover:text-rose-700 transition">🚨 I have an emergency</div>
@@ -1262,6 +1271,36 @@ export default function FloatingChat() {
 
       {/* ── Emergency Modal ── */}
       <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
+
+      {/* ── Emergency Anon Prompt ── */}
+      {emergencyAnonPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={() => setEmergencyAnonPromptOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-white/45 bg-[#FCF8EE] p-6 shadow-2xl text-center space-y-4">
+            <p className="text-4xl">🚨</p>
+            <h2 className="text-xl font-bold text-slate-900">Emergency help available</h2>
+            <p className="text-sm leading-relaxed text-slate-600">
+              We have professionals that work 24/7/365 to keep your home running and safe.
+              If you have a real emergency, sign up in 1 minute and book the professional you need.
+            </p>
+            <button
+              onClick={() => {
+                setEmergencyAnonPromptOpen(false);
+                window.location.href = '/get-started?role=client&step=1';
+              }}
+              className="w-full rounded-lg bg-[#F97362] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e8624f] transition"
+            >
+              Join Now!
+            </button>
+            <button
+              onClick={() => setEmergencyAnonPromptOpen(false)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Search Help Modal ── */}
       <SearchHelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />

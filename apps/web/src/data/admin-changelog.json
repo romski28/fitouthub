@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-10-7aa94390",
+    "date": "2026-06-10T16:39:17+08:00",
+    "title": "Emergency anon prompt: Join Now bypasses step 0 of get-started wizard",
+    "summary": "Emergency anon prompt: Join Now bypasses step 0 of get-started wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "7aa94390",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-1081167f",
     "date": "2026-06-10T16:29:35+08:00",
     "title": "Change pre-project submit button to 'OK, book me in!'",

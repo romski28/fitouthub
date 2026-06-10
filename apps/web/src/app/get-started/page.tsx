@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
@@ -118,6 +118,23 @@ export default function GetStartedPage() {
     agreeToTerms: false,
     agreeToSecurity: false,
   });
+
+  // Pre-set role and step from URL params (e.g. ?role=client&step=1)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    const stepParam = params.get('step');
+    if (roleParam === 'client' || roleParam === 'professional') {
+      setRole(roleParam);
+    }
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        setStep(parsed);
+      }
+    }
+  }, []);
 
   const consumePostLoginRedirect = () => {
     if (typeof window === 'undefined') return null;
