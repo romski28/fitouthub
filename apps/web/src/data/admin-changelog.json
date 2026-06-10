@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-8b93b507",
+    "date": "2026-06-10T10:05:50+08:00",
+    "title": "Gate forgotten prompt behind same follow-up composer flag",
+    "summary": "Gate forgotten prompt behind same follow-up composer flag",
+    "areas": [
+      "web"
+    ],
+    "commit": "8b93b507",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-680c8604",
     "date": "2026-06-10T09:57:11+08:00",
     "title": "Gate follow-up composer, remove challenging panel, remove sign-in prompts, add Sarah help message",

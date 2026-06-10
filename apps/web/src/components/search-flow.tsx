@@ -1957,7 +1957,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 isComplexProject={isComplexProject}
                 fullCoverageCompanyCount={aiFullCoverageCompanyCount}
                 specialistCount={aiSpecialistCount}
-                showForgottenPrompt={aiRoundCount === 1}
+                showForgottenPrompt={ENABLE_FOLLOW_UP_COMPOSER && aiRoundCount === 1}
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
                 tradesLabel={
