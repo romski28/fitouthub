@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-10-bc3671af",
+    "date": "2026-06-10T15:57:22+08:00",
+    "title": "Use Sarah images instead of emoji for consultation contact buttons",
+    "summary": "Use Sarah images instead of emoji for consultation contact buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "bc3671af",
+    "files": [
+      "apps/web/public/assets/images/sarah-phone-240SQ.webp",
+      "apps/web/public/assets/images/sarah-video-240SQ.webp",
+      "apps/web/public/assets/images/sarah-whatsapp-240SQ.webp",
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-4e3c6c21",
     "date": "2026-06-10T13:09:25+08:00",
     "title": "Center contact buttons, rename label, fix modal scrollbar on rounded corners",

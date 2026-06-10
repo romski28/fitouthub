@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { ModalOverlay } from "./modal-overlay";
 
 export type AssistContactMethod = "chat" | "call" | "whatsapp";
@@ -299,9 +300,9 @@ export function AssistRequestModal({
             <div className="space-y-3">
               <div className="grid gap-3 md:grid-cols-3">
                 {[
-                  { value: "callback", title: "By phone", emoji: "\u{1F4DE}" },
-                  { value: "video", title: "Online VC", emoji: "\u{1F4F9}" },
-                  { value: "whatsapp", title: "WhatsApp me", emoji: "\u{1F7E2}" },
+                  { value: "callback", title: "By phone", img: "/assets/images/sarah-phone-240SQ.webp" },
+                  { value: "video", title: "Online VC", img: "/assets/images/sarah-video-240SQ.webp" },
+                  { value: "whatsapp", title: "WhatsApp me", img: "/assets/images/sarah-whatsapp-240SQ.webp" },
                 ].map((option) => {
                   const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
                   const active = preProjectChoice === option.value;
@@ -320,7 +321,13 @@ export function AssistRequestModal({
                             : "border-slate-200 bg-white hover:border-slate-300"
                       }`}
                     >
-                      <div className="mb-3 text-2xl">{option.emoji}</div>
+                      <Image
+                        src={option.img}
+                        alt={option.title}
+                        width={240}
+                        height={240}
+                        className="mx-auto mb-2 w-full max-w-[120px] h-auto"
+                      />
                       <div className="text-sm font-semibold text-slate-900">{option.title}</div>
                       {isWhatsappDisabled && (
                         <p className="mt-1 text-xs leading-relaxed text-slate-600">
