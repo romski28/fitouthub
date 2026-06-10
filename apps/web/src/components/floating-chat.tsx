@@ -12,6 +12,7 @@ import { parseChatEvent } from '@/lib/chat-event-parser';
 import ChatEventCard from './chat-event-card';
 import ChatImageAttachment from './chat-image-attachment';
 import { EmergencyModal } from './emergency-modal';
+import { AssistRequestModal, type AssistRequestModalSubmit } from './assist-request-modal';
 
 interface ChatMessage {
   id: string;
@@ -155,6 +156,7 @@ export default function FloatingChat() {
   const [showAnonCards, setShowAnonCards] = useState(false);
   const [endingAnonChat, setEndingAnonChat] = useState(false);
   const [forceThreadBootstrap, setForceThreadBootstrap] = useState(0);
+  const [consultationOpen, setConsultationOpen] = useState(false);
   const bypassCardTriageRef = useRef(false);
   const autoSendInFlightRef = useRef(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -641,6 +643,33 @@ export default function FloatingChat() {
     setForceThreadBootstrap((n) => n + 1);
   }, []);
 
+  // ── Consultation submit handler ──
+  const handleConsultationSubmit = useCallback(async (payload: AssistRequestModalSubmit) => {
+    const res = await fetch(`${API_BASE_URL}/assist-requests/ai-consultation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lead: {
+          name: 'Website Visitor',
+        },
+        project: {
+          projectName: 'Consultation request from Sarah chat',
+        },
+        assist: {
+          notes: payload.notes,
+          contactMethod: payload.contactMethod,
+          requestedCallAt: payload.requestedCallAt,
+          requestedCallTimezone: payload.requestedCallTimezone,
+        },
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as any)?.message || 'Failed to submit consultation request');
+    }
+    return res.json() as Promise<{ caseNumber?: string }>;
+  }, []);
+
   const doSend = async (
     text: string,
     attachmentsToSend: { url: string; filename: string }[],
@@ -945,7 +974,7 @@ export default function FloatingChat() {
               </p>
               <div className="grid gap-3">
                 <button
-                  onClick={() => handleStartAnonChat("I'd like to book a free consultation.")}
+                  onClick={() => { setIsOpen(false); setConsultationOpen(true); }}
                   className="w-full rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-400 hover:shadow-sm transition group"
                 >
                   <div className="font-semibold text-slate-900 group-hover:text-emerald-700 transition">📋 Book a free consultation</div>
@@ -963,14 +992,7 @@ export default function FloatingChat() {
                     setIsOpen(false);
                     setShowAnonCards(false);
                     bypassCardTriageRef.current = false;
-                    if (pathname === '/') {
-                      const el = document.getElementById('project-prompt');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                      // Also trigger the search box autofocus
-                      window.dispatchEvent(new CustomEvent('focus-search-prompt'));
-                    } else {
-                      router.push('/?focusPrompt=1');
-                    }
+                    router.push('/?focusPrompt=1');
                   }}
                   className="w-full rounded-xl border border-sky-200 bg-white p-4 text-left hover:border-sky-400 hover:shadow-sm transition group"
                 >
@@ -1100,9 +1122,8 @@ export default function FloatingChat() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => doSend('📋 I would like to book a free consultation.', [])}
-                  disabled={sending || loading || !threadId}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  onClick={() => { setIsOpen(false); setConsultationOpen(true); }}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 transition"
                 >
                   📋 Book consultation
                 </button>
@@ -1241,6 +1262,15 @@ export default function FloatingChat() {
 
       {/* ── Emergency Modal ── */}
       <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
+
+      {/* ── Consultation Modal ── */}
+      <AssistRequestModal
+        isOpen={consultationOpen}
+        onClose={() => setConsultationOpen(false)}
+        onSubmit={handleConsultationSubmit}
+        context="pre-project"
+        submitPrefix="Book consultation"
+      />
     </>
   );
 }

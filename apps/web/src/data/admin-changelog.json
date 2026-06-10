@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-fd8c8ce6",
+    "date": "2026-06-10T11:00:19+08:00",
+    "title": "Consultation card opens AssistRequestModal, Help Me Describe navigates to home with focusPrompt",
+    "summary": "Consultation card opens AssistRequestModal, Help Me Describe navigates to home with focusPrompt",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd8c8ce6",
+    "files": [
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-c013c417",
     "date": "2026-06-10T10:48:26+08:00",
     "title": "Fix card triage: bypass re-showing cards, navigate to home for prompt, reset refs on close",
