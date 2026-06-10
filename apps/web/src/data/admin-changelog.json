@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-f13199b8",
+    "date": "2026-06-10T21:14:27+08:00",
+    "title": "Fix service acceptance prompt to carry project continuity instead of resetting",
+    "summary": "Fix service acceptance prompt to carry project continuity instead of resetting",
+    "areas": [
+      "web"
+    ],
+    "commit": "f13199b8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-b98b9494",
     "date": "2026-06-10T21:01:23+08:00",
     "title": "Survey pricing: add 'per room' to From HK",

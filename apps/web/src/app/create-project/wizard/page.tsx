@@ -530,9 +530,9 @@ export default function CreateProjectWizardPage() {
 
   const getServiceSelectionPrompt = (offerType: ServiceOfferType): string => {
     if (offerType === 'survey') {
-      return 'Size of room to be confirmed by survey.';
+      return 'I\'ve added the MIMO Surveying+ service to this project. The room size and site conditions will be confirmed by a survey — please continue helping me scope the rest of the project based on what we\'ve already discussed.';
     }
-    return 'A designer will be engaged to work out the details of the design.';
+    return 'I\'ve added the MIMO Interior Design service to this project. A designer will work out the details — please continue helping me scope the rest based on what we\'ve already discussed.';
   };
 
   const renderChatMessageBody = (message: WizardChatMessage) => {
