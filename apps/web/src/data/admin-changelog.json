@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-0f7f855b",
+    "date": "2026-06-10T17:05:46+08:00",
+    "title": "Fix: saveClientSession now respects postLoginRedirect for Join flow",
+    "summary": "Fix: saveClientSession now respects postLoginRedirect for Join flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f7f855b",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-f7b95292",
     "date": "2026-06-10T16:53:17+08:00",
     "title": "Join to Continue opens client join directly via get-started?role=client",

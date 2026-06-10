@@ -159,7 +159,7 @@ export default function GetStartedPage() {
     localStorage.setItem('accessToken', result.accessToken);
     localStorage.setItem('refreshToken', result.refreshToken);
     localStorage.setItem('user', JSON.stringify(result.user));
-    window.location.href = '/projects';
+    window.location.href = consumePostLoginRedirect() || '/projects';
   };
 
   const saveProfessionalSession = (result: ProfessionalSessionResult) => {
