@@ -1009,7 +1009,7 @@ export default function CreateProjectWizardPage() {
           setAiChatCanContinue(false);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer) }]);
         } else {
-          const completionText = 'Great, this is clear enough to move forward. Continue when you are ready and we will finalize details for professionals.';
+          const completionText = 'OK, we have enough project information to proceed. Send with no text to move on.';
           setAiChatCanContinue(true);
           setChatMessages((prev) => {
             const lastMessage = prev[prev.length - 1];

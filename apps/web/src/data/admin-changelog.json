@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-9d493447",
+    "date": "2026-06-10T22:47:54+08:00",
+    "title": "Update fallback completion text to match new UX tone",
+    "summary": "Update fallback completion text to match new UX tone",
+    "areas": [
+      "web"
+    ],
+    "commit": "9d493447",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-bc8c605e",
     "date": "2026-06-10T22:29:03+08:00",
     "title": "Simplify wizard: drop summary panel, dual-mode send button, image left of input",
