@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-479e8e04",
+    "date": "2026-06-10T15:58:06+08:00",
+    "title": "Add gold 6px border around Sarah consultation images",
+    "summary": "Add gold 6px border around Sarah consultation images",
+    "areas": [
+      "web"
+    ],
+    "commit": "479e8e04",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-bc3671af",
     "date": "2026-06-10T15:57:22+08:00",
     "title": "Use Sarah images instead of emoji for consultation contact buttons",
