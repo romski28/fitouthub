@@ -275,7 +275,7 @@ const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
       'Condition and defects assessment',
       'Environmental factors review',
     ],
-    price: 'From HK$500',
+    price: 'From HK$500 per room',
     selectedMessage: 'MIMO survey service selected.',
   },
   design: {

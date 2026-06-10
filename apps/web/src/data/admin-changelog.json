@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-b98b9494",
+    "date": "2026-06-10T21:01:23+08:00",
+    "title": "Survey pricing: add 'per room' to From HK",
+    "summary": "Survey pricing: add 'per room' to From HK",
+    "areas": [
+      "web"
+    ],
+    "commit": "b98b9494",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-dfefd85d",
     "date": "2026-06-10T20:54:16+08:00",
     "title": "Remove isOfferStillPending gate so Find out more button always shows when service offer marker present",
