@@ -1261,8 +1261,16 @@ export default function CreateProjectWizardPage() {
                             onChange={(e) => setIsEmergency(e.target.checked)}
                             className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                           />
-                          <span className="text-sm font-medium text-slate-900 sm:text-base">This is an urgent request</span>
+                          <span className="text-sm font-medium text-slate-900 sm:text-base">This is an emergency</span>
                         </label>
+
+                        {isEmergency === true && (
+                          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm text-amber-900">
+                            <p>⚠️ Emergency callouts normally carry a specific callout charge, particularly if outside normal working hours — from <strong>HK$500</strong> up.</p>
+                            <p>⚠️ Works undertaken outside of standard working hours will normally be charged at <strong>1.5 or 2 times</strong> normal rate or more.</p>
+                            <p>⚠️ Please be sure that this is an emergency that warrants the extra money before you continue.</p>
+                          </div>
+                        )}
                       </div>
                     )}
 

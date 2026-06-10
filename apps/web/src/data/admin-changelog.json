@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-e2227efa",
+    "date": "2026-06-10T17:27:11+08:00",
+    "title": "Change urgent checkbox to emergency with cost warning sub-panel",
+    "summary": "Change urgent checkbox to emergency with cost warning sub-panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "e2227efa",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-a19c4246",
     "date": "2026-06-10T17:15:22+08:00",
     "title": "Remove auto-transition timer entirely — just a clickable button to wizard",
