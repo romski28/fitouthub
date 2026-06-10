@@ -299,9 +299,9 @@ export function AssistRequestModal({
             <div className="space-y-3">
               <div className="grid gap-3 md:grid-cols-3">
                 {[
-                  { value: "callback", title: "By phone", description: "Book a callback with a coordinator.", emoji: "\u{1F4DE}" },
-                  { value: "video", title: "Online VC", description: "Schedule a video consultation.", emoji: "\u{1F4F9}" },
-                  { value: "whatsapp", title: "WhatsApp me", description: "We will follow up on WhatsApp.", emoji: "\u{1F7E2}" },
+                  { value: "callback", title: "By phone", emoji: "\u{1F4DE}" },
+                  { value: "video", title: "Online VC", emoji: "\u{1F4F9}" },
+                  { value: "whatsapp", title: "WhatsApp me", emoji: "\u{1F7E2}" },
                 ].map((option) => {
                   const isWhatsappDisabled = option.value === "whatsapp" && disableWhatsapp;
                   const active = preProjectChoice === option.value;
@@ -322,9 +322,11 @@ export function AssistRequestModal({
                     >
                       <div className="mb-3 text-2xl">{option.emoji}</div>
                       <div className="text-sm font-semibold text-slate-900">{option.title}</div>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                        {isWhatsappDisabled ? "Add a mobile number to enable WhatsApp." : option.description}
-                      </p>
+                      {isWhatsappDisabled && (
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                          Add a mobile number to enable WhatsApp.
+                        </p>
+                      )}
                     </button>
                   );
                 })}
