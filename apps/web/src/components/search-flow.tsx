@@ -952,8 +952,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     } catch {
       // Ignore storage failures
     }
-    openJoinModal();
-  }, [openJoinModal, persistAiWizardHandoffForAuth]);
+    window.location.href = '/get-started?role=client';
+  }, [persistAiWizardHandoffForAuth]);
 
   const handleGuestLogin = useCallback(() => {
     persistAiWizardHandoffForAuth();

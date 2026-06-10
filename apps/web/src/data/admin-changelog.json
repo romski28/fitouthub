@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-f7b95292",
+    "date": "2026-06-10T16:53:17+08:00",
+    "title": "Join to Continue opens client join directly via get-started?role=client",
+    "summary": "Join to Continue opens client join directly via get-started?role=client",
+    "areas": [
+      "web"
+    ],
+    "commit": "f7b95292",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-1bac5832",
     "date": "2026-06-10T16:47:00+08:00",
     "title": "Join Now goes to get-started step 0 with client role pre-set",
