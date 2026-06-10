@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-dc33baeb",
+    "date": "2026-06-10T16:07:42+08:00",
+    "title": "Change contact image border to outset style",
+    "summary": "Change contact image border to outset style",
+    "areas": [
+      "web"
+    ],
+    "commit": "dc33baeb",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-479e8e04",
     "date": "2026-06-10T15:58:06+08:00",
     "title": "Add gold 6px border around Sarah consultation images",

@@ -326,7 +326,7 @@ export function AssistRequestModal({
                         alt={option.title}
                         width={240}
                         height={240}
-                        className="mx-auto mb-2 w-full max-w-[120px] h-auto rounded-xl border-[6px] border-amber-300/70"
+                        className="mx-auto mb-2 w-full max-w-[120px] h-auto rounded-xl border-[6px] border-amber-300/70 [border-style:outset]"
                       />
                       <div className="text-sm font-semibold text-slate-900">{option.title}</div>
                       {isWhatsappDisabled && (
