@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-adf0fdcb",
+    "date": "2026-06-10T21:54:17+08:00",
+    "title": "Strengthen AI thread continuity: explicit guard against project subject drift",
+    "summary": "Strengthen AI thread continuity: explicit guard against project subject drift",
+    "areas": [
+      "api"
+    ],
+    "commit": "adf0fdcb",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-10-6497b875",
     "date": "2026-06-10T21:41:52+08:00",
     "title": "Service offer choices no longer sent as AI conversation turns",
