@@ -364,7 +364,6 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
 }) {
-  const { isLoggedIn } = useAuth();
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
   const [visibleWordCount, setVisibleWordCount] = useState(0);
   const [visibleMimoWordCount, setVisibleMimoWordCount] = useState(0);
@@ -400,38 +399,25 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 
   const mimoCountMsg = (() => {
     if (trades.length === 0) {
-      const base = 'We have not found the right professional to sort your problem out, but get your project registered and MIMO will find you the right person to get things done.';
-      return isLoggedIn === true
-        ? base
-        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
+      return 'We have not found the right professional to sort your problem out, but get your project registered and MIMO will find you the right person to get things done.';
     }
 
     // While loading trades count, show a generic message
     if (matchCount === null || matchLoading) {
-      const base = 'Searching for the right professionals in Hong Kong to match your project...';
-      return isLoggedIn === true
-        ? base
-        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
+      return 'Searching for the right professionals in Hong Kong to match your project...';
     }
     if (matchCount === 0) {
-      const base = tradesLabel
+      return tradesLabel
         ? `MIMO will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
         : 'MIMO will widen the search to find the right professionals across Hong Kong.';
-      return isLoggedIn === true
-        ? `${base} We can still get your project moving quickly.`
-        : `${base} Sign in or join to get this project logged and a professional on the case today.`;
     }
 
     const tradeText = tradesLabel || 'professionals';
-    const base = trades.length > 1
+    return trades.length > 1
       ? fullCoverageCompanyCount > 0
         ? `Luckily, MIMO has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} companies in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
         : `Luckily, MIMO has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
       : `Luckily, MIMO has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
-    
-    return isLoggedIn === true
-      ? base
-      : `${base} Sign in or join to get this project logged and a professional on the case today.`;
   })();
 
   const showTradesBlock = words.length === 0 || visibleWordCount >= words.length;
@@ -530,15 +516,15 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
         </p>
       )}
 
-      {showTradesBlock && isSequenceComplete && isComplexProject && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-          Nice project, but could be challenging. Book a free chat to better understand your needs and best define it to the marketplace.
-        </p>
-      )}
-
       {showForgottenPrompt && isSequenceComplete && (
         <p id="ai-forgotten-prompt" className="text-sm font-semibold text-emerald-700">
           Anything you have forgotten? Let MIMO know now.
+        </p>
+      )}
+
+      {showTradesBlock && isSequenceComplete && trades.length > 0 && (
+        <p className="text-sm text-slate-600">
+          Need help? Chat with Sarah at any time, she is just over to the right or ask her to book a free consultation.
         </p>
       )}
     </div>
@@ -653,6 +639,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const MAX_AI_ROUNDS = 2;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
   const AI_KEEP_CONVERSATION_PREF_KEY = 'aiKeepConversationOnRefresh';
+  const ENABLE_FOLLOW_UP_COMPOSER = false; // gated — set to true to re-enable
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
   const router = useRouter();
   const t = useTranslations('home.searchFlow');
@@ -1886,7 +1873,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
     };
   }, []);
-  const showFollowUpComposer = hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
+  const showFollowUpComposer = ENABLE_FOLLOW_UP_COMPOSER && hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
   const showPromptComposer = !deepSeekSandboxEnabled
     ? true
     : aiLoading
