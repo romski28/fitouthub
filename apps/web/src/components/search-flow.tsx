@@ -657,7 +657,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const router = useRouter();
   const t = useTranslations('home.searchFlow');
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
-  const [keepConversationOnRefresh, setKeepConversationOnRefresh] = useState(true);
+  const [keepConversationOnRefresh, setKeepConversationOnRefresh] = useState(false);
   const [searchMode, setSearchMode] = useState<'legacy' | 'ai'>(deepSeekSandboxEnabled ? 'ai' : 'legacy');
   const [aiViewMode, setAiViewMode] = useState<'human' | 'json'>('human');
   const [intent, setIntent] = useState<IntentResult | null>(null);
@@ -1265,14 +1265,17 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     if (typeof window === 'undefined') return;
     try {
       const stored = window.localStorage.getItem(AI_KEEP_CONVERSATION_PREF_KEY);
-      if (stored === '0') {
-        setKeepConversationOnRefresh(false);
+      if (isAdminTester) {
+        // Admin: respect stored preference
+        setKeepConversationOnRefresh(stored !== '0');
       } else {
-        setKeepConversationOnRefresh(true);
+        // Non-admin: always reset on refresh
+        setKeepConversationOnRefresh(false);
       }
     } catch {
-      setKeepConversationOnRefresh(true);
+      setKeepConversationOnRefresh(isAdminTester);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -2034,7 +2037,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           </div>
         )}
 
-        {deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
+        {isAdminTester && deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <label className="inline-flex items-center gap-2 text-xs text-slate-700">
               <input

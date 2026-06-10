@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-dc96cce9",
+    "date": "2026-06-10T09:33:51+08:00",
+    "title": "Default reset conversation for all users, keep/reset controls admin-only",
+    "summary": "Default reset conversation for all users, keep/reset controls admin-only",
+    "areas": [
+      "web"
+    ],
+    "commit": "dc96cce9",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-87cb5ab6",
     "date": "2026-06-10T09:23:57+08:00",
     "title": "Update search help modal: remove professionals section, add client prompts, update tips",
