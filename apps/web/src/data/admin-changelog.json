@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-6d7a82de",
+    "date": "2026-06-10T12:06:27+08:00",
+    "title": "Add contact info input and preferred language selector to consultation modal",
+    "summary": "Add contact info input and preferred language selector to consultation modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "6d7a82de",
+    "files": [
+      "apps/web/src/components/assist-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-9d593c34",
     "date": "2026-06-10T11:13:39+08:00",
     "title": "Help Me Describe card opens the SearchHelpModal (blue info button modal)",

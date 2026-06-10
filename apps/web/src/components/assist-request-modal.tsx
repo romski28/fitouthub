@@ -113,8 +113,15 @@ export function AssistRequestModal({
   const [requestedTime, setRequestedTime] = useState("09:00");
   const [localError, setLocalError] = useState<string | null>(null);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
+  const [contactInfo, setContactInfo] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'zh-HK' | 'zh-CN'>('en');
 
   const isActive = context === "active";
+  const needsContactInfo = !isActive && preProjectChoice !== 'chat';
+  const contactLabel =
+    preProjectChoice === 'video' ? 'Email address' : 'Mobile No.';
+  const contactPlaceholder =
+    preProjectChoice === 'video' ? 'your@email.com' : '9123 4567';
   const availableTimes = useMemo(() => getAllowedTimes(requestedDate), [requestedDate]);
 
   const handleDateChange = (value: string) => {
@@ -127,6 +134,10 @@ export function AssistRequestModal({
     setLocalError(null);
     if (!notes.trim()) {
       setLocalError("Please describe what you need help with.");
+      return;
+    }
+    if (needsContactInfo && !contactInfo.trim()) {
+      setLocalError(`Please provide your ${contactLabel.toLowerCase()}.`);
       return;
     }
     const effectiveContactMethod: AssistContactMethod = isActive
@@ -148,10 +159,12 @@ export function AssistRequestModal({
 
     const normalizedNotes = !isActive
       ? preProjectChoice === "video"
-        ? `[Video call requested]\n${notes.trim()}`
+        ? `[Video call requested]${contactInfo.trim() ? `\nContact: ${contactInfo.trim()}` : ''}\nLanguage: ${preferredLanguage === 'zh-HK' ? 'Cantonese' : preferredLanguage === 'zh-CN' ? 'Mandarin' : 'English'}\n${notes.trim()}`
         : preProjectChoice === "callback"
-          ? `[Phone callback requested]\n${notes.trim()}`
-          : notes.trim()
+          ? `[Phone callback requested]${contactInfo.trim() ? `\nContact: ${contactInfo.trim()}` : ''}\nLanguage: ${preferredLanguage === 'zh-HK' ? 'Cantonese' : preferredLanguage === 'zh-CN' ? 'Mandarin' : 'English'}\n${notes.trim()}`
+          : preProjectChoice === "whatsapp"
+            ? `[WhatsApp requested]${contactInfo.trim() ? `\nMobile: ${contactInfo.trim()}` : ''}\nLanguage: ${preferredLanguage === 'zh-HK' ? 'Cantonese' : preferredLanguage === 'zh-CN' ? 'Mandarin' : 'English'}\n${notes.trim()}`
+            : notes.trim()
       : notes.trim();
 
     const result = await onSubmit({
@@ -332,6 +345,33 @@ export function AssistRequestModal({
 
         {/* Notes + optional call slot */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-4">
+          {/* Language & contact for pre-project */}
+          {needsContactInfo && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">Preferred language</label>
+                <select
+                  value={preferredLanguage}
+                  onChange={(e) => setPreferredLanguage(e.target.value as 'en' | 'zh-HK' | 'zh-CN')}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="en">English</option>
+                  <option value="zh-HK">廣東話 (Cantonese)</option>
+                  <option value="zh-CN">普通話 (Mandarin)</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-900">{contactLabel}</label>
+                <input
+                  type={preProjectChoice === 'video' ? 'email' : 'tel'}
+                  value={contactInfo}
+                  onChange={(e) => setContactInfo(e.target.value)}
+                  placeholder={contactPlaceholder}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          )}
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-900">
               {isActive ? "Describe the issue" : "Initial request"}
