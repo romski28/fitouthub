@@ -16,15 +16,9 @@ export function SearchHelpModal({ isOpen, onClose }: SearchHelpModalProps) {
         '"Rewire my entire apartment in Mong Kok"',
         '"Interior design for my living room"',
         '"Paint my bedroom walls and ceiling"',
-      ],
-    },
-    {
-      title: 'For Professionals',
-      items: [
-        '"Join as a plumber"',
-        '"Register as an electrician"',
-        '"I want to offer my services as a contractor"',
-        '"Join as a designer"',
+        '"Replace all floor tiles in my 500sqft flat in Tai Po"',
+        '"Install new kitchen cabinets and countertops – U-shaped layout"',
+        '"Full bathroom renovation with tiling and waterproofing"',
       ],
     },
   ];
@@ -73,7 +67,7 @@ export function SearchHelpModal({ isOpen, onClose }: SearchHelpModalProps) {
           <ul className="space-y-1 text-sm text-emerald-800">
             <li>• Include what you need done</li>
             <li>• Mention your location if relevant</li>
-            <li>• Be specific about your profession if joining</li>
+            <li>• Share the room(s) affected with sizes if possible</li>
           </ul>
         </div>
 

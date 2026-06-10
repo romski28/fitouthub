@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-87cb5ab6",
+    "date": "2026-06-10T09:23:57+08:00",
+    "title": "Update search help modal: remove professionals section, add client prompts, update tips",
+    "summary": "Update search help modal: remove professionals section, add client prompts, update tips",
+    "areas": [
+      "web"
+    ],
+    "commit": "87cb5ab6",
+    "files": [
+      "apps/web/src/components/search-help-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-09-b07749c2",
     "date": "2026-06-09T22:45:03+08:00",
     "title": "MIMO caps only first letters coral, line break before Welcome Home",
