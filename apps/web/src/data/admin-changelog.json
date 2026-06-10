@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-3aff95c3",
+    "date": "2026-06-10T21:29:57+08:00",
+    "title": "Send continuation message to AI when user declines service offer too",
+    "summary": "Send continuation message to AI when user declines service offer too",
+    "areas": [
+      "web"
+    ],
+    "commit": "3aff95c3",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-f13199b8",
     "date": "2026-06-10T21:14:27+08:00",
     "title": "Fix service acceptance prompt to carry project continuity instead of resetting",

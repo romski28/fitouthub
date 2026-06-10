@@ -698,10 +698,13 @@ export default function CreateProjectWizardPage() {
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
 
-    if (!accepted) return;
-
     setChatError(null);
-    void sendWizardAiTurn(getServiceSelectionPrompt(offerType), { includeAttachedImages: false });
+    const message = accepted
+      ? getServiceSelectionPrompt(offerType)
+      : offerType === 'survey'
+        ? 'I\'ll estimate the room size myself — let\'s continue working on the rest of the project based on what we\'ve already discussed.'
+        : 'I\'ll skip the design service for now — let\'s continue with the rest of the project scope.';
+    void sendWizardAiTurn(message, { includeAttachedImages: false });
   };
 
   const handleLocationInputMode = (nextMode: LocationInputMode) => {
