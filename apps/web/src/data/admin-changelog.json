@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-a19c4246",
+    "date": "2026-06-10T17:15:22+08:00",
+    "title": "Remove auto-transition timer entirely — just a clickable button to wizard",
+    "summary": "Remove auto-transition timer entirely — just a clickable button to wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "a19c4246",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-856ae498",
     "date": "2026-06-10T17:13:01+08:00",
     "title": "Replace countdown timer with simple green Continue with MIMO button",

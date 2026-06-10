@@ -676,10 +676,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundCount, setAiRoundCount] = useState(0);
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
-  const [, setWizardAutoTimer] = useState(10);
   const [promptCharCount, setPromptCharCount] = useState(0);
-  const wizardAutoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const wizardAutoClickedRef = useRef(false);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -766,7 +763,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiRoundCount(0);
     setAiRoundNotice(null);
     setIsConversationSequenceComplete(false);
-    wizardAutoClickedRef.current = false;
     hasClearedForgottenPromptRef.current = false;
     setPromptImages([]);
     setPromptUploaderClearKey((key) => key + 1);
@@ -1825,37 +1821,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
 
-  // Auto-transition timer: counts down from 10 when conversation is complete,
-  // auto-navigates to wizard when timer reaches 0. Disabled for guests.
-  useEffect(() => {
-    if (!isConversationSequenceComplete || !hasAiResponse) return;
-    if (wizardAutoClickedRef.current) return;
-    if (isLoggedIn !== true) return;
-
-    setWizardAutoTimer(10);
-    wizardAutoTimerRef.current = setInterval(() => {
-      setWizardAutoTimer((prev) => {
-        if (prev <= 1) {
-          if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
-          wizardAutoClickedRef.current = true;
-          // Auto-navigate on next tick so state update completes
-          setTimeout(() => handleStartAiWizard(), 50);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
-    };
-  }, [isConversationSequenceComplete, hasAiResponse, handleStartAiWizard, isLoggedIn]);
-
-  useEffect(() => {
-    return () => {
-      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
-    };
-  }, []);
   const showFollowUpComposer = ENABLE_FOLLOW_UP_COMPOSER && hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
   const showPromptComposer = !deepSeekSandboxEnabled
     ? true
@@ -2047,11 +2012,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 <div className="mt-5">
                   <button
                     type="button"
-                    onClick={() => {
-                      wizardAutoClickedRef.current = true;
-                      if (wizardAutoTimerRef.current) clearInterval(wizardAutoTimerRef.current);
-                      handleStartAiWizard();
-                    }}
+                    onClick={handleStartAiWizard}
                     className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-lg"
                   >
                     Continue with MIMO
