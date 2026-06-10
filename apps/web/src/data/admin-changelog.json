@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-10-dfefd85d",
+    "date": "2026-06-10T20:54:16+08:00",
+    "title": "Remove isOfferStillPending gate so Find out more button always shows when service offer marker present",
+    "summary": "Remove isOfferStillPending gate so Find out more button always shows when service offer marker present",
+    "areas": [
+      "web"
+    ],
+    "commit": "dfefd85d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-e2227efa",
     "date": "2026-06-10T17:27:11+08:00",
     "title": "Change urgent checkbox to emergency with cost warning sub-panel",

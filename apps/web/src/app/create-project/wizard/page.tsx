@@ -528,12 +528,6 @@ export default function CreateProjectWizardPage() {
 
   const followUpStepQuestions = useMemo(() => followUpQuestions.slice(0, 3), [followUpQuestions]);
 
-  const isOfferStillPending = (offerType: ServiceOfferType): boolean => {
-    if (pendingServiceOffer !== offerType) return false;
-    if (offerType === 'survey') return requiresSurveyService === null;
-    return requiresDesignService === null;
-  };
-
   const getServiceSelectionPrompt = (offerType: ServiceOfferType): string => {
     if (offerType === 'survey') {
       return 'Size of room to be confirmed by survey.';
@@ -543,10 +537,9 @@ export default function CreateProjectWizardPage() {
 
   const renderChatMessageBody = (message: WizardChatMessage) => {
     const { body, offerType } = extractServiceOfferFromMessage(message.text);
-    const shouldShowOfferAction = Boolean(offerType && message.role === 'assistant' && isOfferStillPending(offerType));
 
     if (message.role !== 'assistant' || !body.startsWith(SUMMARY_CONFIRMATION_PREFIX)) {
-      if (!shouldShowOfferAction) {
+      if (!offerType) {
         return body;
       }
 
@@ -602,7 +595,7 @@ export default function CreateProjectWizardPage() {
           ))}
         </div>
         {continuationText && <p className="text-xs text-slate-600">{continuationText}</p>}
-        {shouldShowOfferAction && offerType && (
+        {offerType && (
           <button
             type="button"
             onClick={() => setExpandedServiceOffer(offerType)}
