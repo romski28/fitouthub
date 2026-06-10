@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-10-157d1579",
+    "date": "2026-06-10T10:36:50+08:00",
+    "title": "Sarah Phase 1: card triage for new anon users, End Chat, consultation quick-action, backend end-thread endpoint",
+    "summary": "Sarah Phase 1: card triage for new anon users, End Chat, consultation quick-action, backend end-thread endpoint",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "157d1579",
+    "files": [
+      "apps/api/src/chat/chat.controller.ts",
+      "apps/api/src/chat/chat.service.ts",
+      "apps/web/src/components/floating-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-8b93b507",
     "date": "2026-06-10T10:05:50+08:00",
     "title": "Gate forgotten prompt behind same follow-up composer flag",

@@ -830,6 +830,64 @@ export class ChatService {
     });
   }
 
+  /**
+   * End an anonymous thread (user-initiated, no auth).
+   * Sets status to closed directly and appends a system message.
+   */
+  async endAnonymousThread(
+    threadId: string,
+    reason?: string,
+  ): Promise<void> {
+    const thread = await (this.prisma as any).anonymousChatThread.findUnique({
+      where: { id: threadId },
+      select: { id: true, statusTimeline: true },
+    });
+    if (!thread) {
+      throw new NotFoundException('Anonymous chat thread not found');
+    }
+
+    const now = new Date();
+    const closureReason = reason || 'User ended chat session';
+
+    // Add a system message marking the end
+    await this.prisma.anonymousChatMessage.create({
+      data: {
+        threadId,
+        senderType: 'foh',
+        content: `Chat ended by user. Reason: ${closureReason}`,
+        attachments: [],
+      },
+    });
+
+    await (this.prisma as any).anonymousChatThread.update({
+      where: { id: threadId },
+      data: {
+        status: 'closed',
+        updatedAt: now,
+        resolvedAt: now,
+        resolutionReason: closureReason,
+        resolutionMode: 'user_confirmed',
+        statusTimeline: this.appendTimelineEvent(thread.statusTimeline, {
+          action: 'closed',
+          status: 'closed',
+          actorId: null,
+          reason: closureReason,
+          mode: 'user_confirmed',
+          metadata: {},
+        }),
+      },
+    });
+
+    void this.realtime.emitToAdmins({
+      type: 'thread.status.changed',
+      payload: {
+        sourceType: 'anonymous',
+        threadId,
+        status: 'closed',
+      },
+    });
+  }
+
   // ===== PROJECT CHAT (Post-Award Team Chat) =====
 
   /**

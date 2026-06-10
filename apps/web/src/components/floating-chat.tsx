@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import { API_BASE_URL } from '@/config/api';
 import { parseChatEvent } from '@/lib/chat-event-parser';
 import ChatEventCard from './chat-event-card';
 import ChatImageAttachment from './chat-image-attachment';
+import { EmergencyModal } from './emergency-modal';
 
 interface ChatMessage {
   id: string;
@@ -148,6 +149,10 @@ export default function FloatingChat() {
   const [pendingAutoMessage, setPendingAutoMessage] = useState<string | null>(null);
   const [contextOverride, setContextOverride] = useState<ChatContext | null>(null);
   const [projectNameHint, setProjectNameHint] = useState<string | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [showAnonCards, setShowAnonCards] = useState(false);
+  const [endingAnonChat, setEndingAnonChat] = useState(false);
+  const [forceThreadBootstrap, setForceThreadBootstrap] = useState(0);
   const autoSendInFlightRef = useRef(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const suppressNextAutoScrollRef = useRef(false);
@@ -454,10 +459,20 @@ export default function FloatingChat() {
     };
 
     if (isOpen && !threadId) {
+      // Anonymous with no stored thread → show card triage, don't create thread
+      if (!isLoggedIn) {
+        const stored = readStoredThreadId(chatContext);
+        if (!stored) {
+          setShowAnonCards(true);
+          setLoading(false);
+          return;
+        }
+        setShowAnonCards(false);
+      }
       console.log('[FloatingChat] Opening chat, loading thread...');
       loadThread();
     }
-  }, [isOpen, isLoggedIn, accessToken, userRole, chatContext, threadId]);
+  }, [isOpen, isLoggedIn, accessToken, userRole, chatContext, threadId, forceThreadBootstrap]);
 
   const loadOlderMessages = async () => {
     if (!threadId || threadId.startsWith('stub-') || loadingOlderMessages || !hasOlderMessages) return;
@@ -580,6 +595,46 @@ export default function FloatingChat() {
       eventSource.close();
     };
   }, [isOpen, threadId, isLoggedIn, accessToken, messages.length]);
+
+  // ── Anonymous "End Chat" ──
+  const handleEndAnonChat = useCallback(async () => {
+    if (!threadId || threadId.startsWith('stub-')) {
+      // No real thread — just flush local state
+      setMessages([]);
+      setThreadId(null);
+      setShowAnonCards(false);
+      setIsOpen(false);
+      storeThreadId(chatContext, null);
+      return;
+    }
+    setEndingAnonChat(true);
+    try {
+      await fetch(`${API_BASE_URL}/chat/anonymous/${threadId}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'User ended chat session' }),
+      });
+    } catch {
+      // Best-effort — still clear locally
+    }
+    setMessages([]);
+    setThreadId(null);
+    setShowAnonCards(true);
+    setEndingAnonChat(false);
+    storeThreadId(chatContext, null);
+    toast.success('Chat ended. Your conversation has been saved.');
+  }, [threadId, chatContext]);
+
+  // ── Start chat from card triage with pre-filled message ──
+  const handleStartAnonChat = useCallback((prefillMessage?: string) => {
+    setShowAnonCards(false);
+    setThreadId(null);
+    setMessages([]);
+    if (prefillMessage) {
+      setPendingAutoMessage(prefillMessage);
+    }
+    setForceThreadBootstrap((n) => n + 1);
+  }, []);
 
   const doSend = async (
     text: string,
@@ -852,19 +907,75 @@ export default function FloatingChat() {
           <div className="flex items-center justify-between bg-[#ff6b5b] text-white px-4 py-3 rounded-t-lg">
             <div>
               <h3 className="text-lg font-semibold leading-tight">Chat with MIMO</h3>
-              <p className="text-sm text-white/85">{isLoggedIn ? contextLabel : 'Anonymous support chat'}</p>
+              <p className="text-sm text-white/85">{isLoggedIn ? contextLabel : showAnonCards ? 'How can we help?' : 'Anonymous support chat'}</p>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:text-slate-200 transition"
-              aria-label="Close chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {!isLoggedIn && !showAnonCards && threadId && (
+                <button
+                  onClick={handleEndAnonChat}
+                  disabled={endingAnonChat}
+                  className="text-white/80 hover:text-white text-xs font-semibold px-2 py-1 rounded border border-white/30 hover:border-white/60 transition disabled:opacity-50"
+                  aria-label="End chat"
+                >
+                  {endingAnonChat ? 'Ending…' : 'End Chat'}
+                </button>
+              )}
+              <button
+                onClick={() => { setIsOpen(false); setShowAnonCards(false); }}
+                className="text-white hover:text-slate-200 transition"
+                aria-label="Close chat"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
+          {showAnonCards ? (
+            /* ── Card Triage for new anonymous users ── */
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-center">
+              <p className="text-center text-slate-600 text-sm mb-5">
+                👋 Welcome! How can we help you today?
+              </p>
+              <div className="grid gap-3">
+                <button
+                  onClick={() => handleStartAnonChat("I'd like to book a free consultation.")}
+                  className="w-full rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-400 hover:shadow-sm transition group"
+                >
+                  <div className="font-semibold text-slate-900 group-hover:text-emerald-700 transition">📋 Book a free consultation</div>
+                  <div className="text-sm text-slate-500 mt-0.5">Speak with a renovation expert at a time that suits you</div>
+                </button>
+                <button
+                  onClick={() => { setIsOpen(false); setEmergencyOpen(true); }}
+                  className="w-full rounded-xl border border-rose-200 bg-white p-4 text-left hover:border-rose-400 hover:shadow-sm transition group"
+                >
+                  <div className="font-semibold text-slate-900 group-hover:text-rose-700 transition">🚨 I have an emergency</div>
+                  <div className="text-sm text-slate-500 mt-0.5">Urgent repairs — we'll connect you with available professionals fast</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setShowAnonCards(false);
+                    const el = document.getElementById('project-prompt');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full rounded-xl border border-sky-200 bg-white p-4 text-left hover:border-sky-400 hover:shadow-sm transition group"
+                >
+                  <div className="font-semibold text-slate-900 group-hover:text-sky-700 transition">🏠 Help me describe my project</div>
+                  <div className="text-sm text-slate-500 mt-0.5">Use our AI assistant to scope your renovation or repair</div>
+                </button>
+                <button
+                  onClick={() => handleStartAnonChat()}
+                  className="w-full rounded-xl border border-amber-200 bg-white p-4 text-left hover:border-amber-400 hover:shadow-sm transition group"
+                >
+                  <div className="font-semibold text-slate-900 group-hover:text-amber-700 transition">💬 Talk to a real person</div>
+                  <div className="text-sm text-slate-500 mt-0.5">Start a conversation with the MIMO support team</div>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
           {/* Messages */}
           <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {(threadStatus === 'closure_pending' || threadStatus === 'closed') && (
@@ -975,6 +1086,14 @@ export default function FloatingChat() {
                 >
                   📞 Call me
                 </button>
+                <button
+                  type="button"
+                  onClick={() => doSend('📋 I would like to book a free consultation.', [])}
+                  disabled={sending || loading || !threadId}
+                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  📋 Book consultation
+                </button>
               </div>
             )}
 
@@ -1058,6 +1177,8 @@ export default function FloatingChat() {
               </div>
             )}
           </form>
+          </>
+        )}
         </div>
       )}
 
@@ -1105,6 +1226,9 @@ export default function FloatingChat() {
           animation-play-state: paused;
         }
       `}</style>
+
+      {/* ── Emergency Modal ── */}
+      <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
     </>
   );
 }

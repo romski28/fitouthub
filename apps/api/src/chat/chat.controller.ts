@@ -224,6 +224,20 @@ export class ChatController {
     return { success: true };
   }
 
+  /**
+   * POST /chat/anonymous/:threadId/end - End an anonymous chat (no auth)
+   * Called by the anonymous user when they click "End Chat".
+   * Marks the thread as closed and preserves message history.
+   */
+  @Post('anonymous/:threadId/end')
+  async endAnonymousThread(
+    @Param('threadId') threadId: string,
+    @Body() body?: { reason?: string },
+  ) {
+    await this.chatService.endAnonymousThread(threadId, body?.reason);
+    return { success: true };
+  }
+
   // ===== ADMIN ENDPOINTS =====
 
   /**
