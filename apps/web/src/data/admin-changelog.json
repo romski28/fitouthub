@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-11-c382d5e7",
+    "date": "2026-06-11T15:57:36+08:00",
+    "title": "Branding: Mimo → MIMO in Why Choose panel and footer copyright (all languages)",
+    "summary": "Branding: Mimo → MIMO in Why Choose panel and footer copyright (all languages)",
+    "areas": [
+      "web"
+    ],
+    "commit": "c382d5e7",
+    "files": [
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-06-11-1488d205",
     "date": "2026-06-11T15:54:17+08:00",
     "title": "Move Hero Section from home page to archive/home-panels",

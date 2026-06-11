@@ -393,13 +393,13 @@
     },
     "features": {
       "tabs": {
-        "why": "為什麼選擇Mimo",
+        "why": "為什麼選擇MIMO",
         "how": "運作方式",
         "who": "我們是誰",
-        "choose": "選擇Mimo"
+        "choose": "選擇MIMO"
       },
       "why": {
-        "title": "為什麼選擇Mimo？",
+        "title": "為什麼選擇MIMO？",
         "description": "完整的裝修項目管理方案",
         "secure": {
           "title": "安全交易",
@@ -459,7 +459,7 @@
         }
       },
       "choose": {
-        "title": "為什麼選擇Mimo？",
+        "title": "為什麼選擇MIMO？",
         "description": "加入數百名滿意的客戶和專業人士",
         "pm": {
           "title": "項目管理",
@@ -513,7 +513,7 @@
     "createProject": "建立項目",
     "login": "登入",
     "join": "加入",
-    "copyright": "© {year} Mimo。版權所有。",
+    "copyright": "© {year} MIMO。版權所有。",
     "twitter": "Twitter",
     "linkedin": "LinkedIn",
     "instagram": "Instagram"

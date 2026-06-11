@@ -402,7 +402,7 @@
         "choose": "Why We Stand Out"
       },
       "why": {
-        "title": "Why Choose Mimo",
+        "title": "Why Choose MIMO",
         "description": "The complete platform for renovation projects",
         "secure": {
           "title": "Secure Payments",
@@ -462,7 +462,7 @@
       },
       "choose": {
         "title": "Why We Stand Out",
-        "description": "Features that make Mimo the best choice",
+        "description": "Features that make MIMO the best choice",
         "pm": {
           "title": "Project Management",
           "description": "Comprehensive tools to manage every aspect of your renovation"
@@ -515,7 +515,7 @@
     "createProject": "Create Project",
     "login": "Login",
     "join": "Join",
-    "copyright": "© {year} Mimo. All rights reserved.",
+    "copyright": "© {year} MIMO. All rights reserved.",
     "twitter": "Twitter",
     "linkedin": "LinkedIn",
     "instagram": "Instagram"
