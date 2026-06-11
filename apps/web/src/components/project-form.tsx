@@ -584,14 +584,16 @@ export function ProjectForm({
         {/* File Upload */}
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-800">Photos (optional but recommended)</label>
-          <FileUploader
-            maxFiles={MAX_FILES}
-            maxFileSize={MAX_FILE_SIZE}
-            onFilesChange={handleFilesChange}
-            showUploadAction={false}
-            darkMode={usesDarkCreateSurface}
-          />
-          {pendingFiles.length > 0 && (
+          {!confirmationMode && (
+            <FileUploader
+              maxFiles={MAX_FILES}
+              maxFileSize={MAX_FILE_SIZE}
+              onFilesChange={handleFilesChange}
+              showUploadAction={false}
+              darkMode={usesDarkCreateSurface}
+            />
+          )}
+          {!confirmationMode && pendingFiles.length > 0 && (
             <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
               📁 {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} ready to upload (will be uploaded when you click Create)
             </div>

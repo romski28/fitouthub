@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-11-5a5bed01",
+    "date": "2026-06-11T23:28:54+08:00",
+    "title": "Summary screen: Return to selection button, gallery-only photos, Request Quotes label",
+    "summary": "Summary screen: Return to selection button, gallery-only photos, Request Quotes label",
+    "areas": [
+      "web"
+    ],
+    "commit": "5a5bed01",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-96ec84fe",
     "date": "2026-06-11T23:13:39+08:00",
     "title": "Skip review step: images step shows Continue to Invite Professionals, progress shows 5 steps",

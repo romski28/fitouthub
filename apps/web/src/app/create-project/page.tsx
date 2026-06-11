@@ -522,16 +522,25 @@ export default function CreateProjectPage() {
             </div>
 
             {invitedCount > 0 ? (
-              <div className="flex max-w-2xl flex-wrap gap-2 lg:justify-end">
-                {selectedProfessionalNames.map((name, index) => (
-                  <span
-                    key={`${name}-${index}`}
-                    className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
+              <>
+                <div className="flex max-w-2xl flex-wrap gap-2 lg:justify-end">
+                  {selectedProfessionalNames.map((name, index) => (
+                    <span
+                      key={`${name}-${index}`}
+                      className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push('/professionals')}
+                  className="shrink-0 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                >
+                  Return to selection →
+                </button>
+              </>
             ) : (
               <button
                 type="button"
@@ -582,7 +591,7 @@ export default function CreateProjectPage() {
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={true}
-              submitLabel={selectedProfessionals.length > 0 ? 'Open Bidding' : 'Save Project'}
+              submitLabel={selectedProfessionals.length > 0 ? 'Request Quotes' : 'Save Project'}
               showBudget={false}
               showService={true}
               showClientName={false}
@@ -597,7 +606,7 @@ export default function CreateProjectPage() {
           <div className="mx-4 w-full max-w-md rounded-2xl border border-white/20 bg-slate-900/90 px-6 py-6 text-center text-white shadow-2xl">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" aria-hidden="true" />
             <p className="text-base font-semibold">
-              {selectedProfessionals.length > 0 ? 'Opening bidding...' : 'Saving project...'}
+              {selectedProfessionals.length > 0 ? 'Requesting quotes...' : 'Saving project...'}
             </p>
             <p className="mt-1 text-sm text-slate-300">
               {selectedProfessionals.length > 0
