@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-21c6b4ba",
+    "date": "2026-06-11T16:40:02+08:00",
+    "title": "Reduce panel padding, equal character heights at 240px, narrower columns",
+    "summary": "Reduce panel padding, equal character heights at 240px, narrower columns",
+    "areas": [
+      "web"
+    ],
+    "commit": "21c6b4ba",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-0225a2a9",
     "date": "2026-06-11T16:34:00+08:00",
     "title": "Narrower character columns, remove justify-center — prompt box flex-fills",

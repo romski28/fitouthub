@@ -43,12 +43,11 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="relative -mx-6 px-6"
+          className="relative -mx-4 px-4 sm:-mx-6 sm:px-6"
         >
-          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-12">
-            <div className="px-4 sm:px-6 lg:px-12">
-              <div className="mx-auto max-w-2xl">
-                <div className="mb-8 text-center">
+          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 sm:py-8">
+            <div className="px-2 sm:px-4 lg:px-6">
+              <div className="mb-4 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
                     <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.<br />Welcome Home.
                   </h2>
@@ -65,15 +64,15 @@ export default function Home() {
                 </div>
 
                 {/* 3-col: Sarah | Prompt | Mike */}
-                <div className="flex items-end gap-0">
+                <div className="flex items-end gap-2">
                   {/* Sarah — left, hidden below md */}
-                  <div className="hidden md:flex items-end justify-end w-[100px] lg:w-[130px] shrink-0">
+                  <div className="hidden md:flex items-end justify-end w-[90px] lg:w-[120px] shrink-0">
                     <Image
                       src="/assets/images/sarah-800_cropped.webp"
                       alt="Sarah"
-                      width={130}
-                      height={320}
-                      className="w-full max-w-[130px] max-h-[320px] h-auto object-contain object-bottom"
+                      width={120}
+                      height={240}
+                      className="w-full max-h-[240px] h-auto object-contain object-bottom"
                       priority
                     />
                   </div>
@@ -85,19 +84,18 @@ export default function Home() {
                   </div>
 
                   {/* Mike — right, hidden below lg */}
-                  <div className="hidden lg:flex items-end justify-start w-[100px] xl:w-[130px] shrink-0">
+                  <div className="hidden lg:flex items-end justify-start w-[90px] xl:w-[120px] shrink-0">
                     <Image
                       src="/assets/images/mike-800_cropped.webp"
                       alt="Mike"
-                      width={130}
-                      height={320}
-                      className="w-full max-w-[130px] max-h-[320px] h-auto object-contain object-bottom"
+                      width={120}
+                      height={240}
+                      className="w-full max-h-[240px] h-auto object-contain object-bottom"
                       priority
                     />
                   </div>
                 </div>
               </div>
-            </div>
           </div>
         </section>
 
