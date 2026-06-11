@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-12-c3ad88a1",
+    "date": "2026-06-12T00:33:20+08:00",
+    "title": "Return to selection: set source=create-project, populate trades in prefilled data",
+    "summary": "Return to selection: set source=create-project, populate trades in prefilled data",
+    "areas": [
+      "web"
+    ],
+    "commit": "c3ad88a1",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-56c7b60a",
     "date": "2026-06-12T00:08:55+08:00",
     "title": "Disable Continue to Invite Professionals while images are uploading",

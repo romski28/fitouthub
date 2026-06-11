@@ -403,8 +403,12 @@ function ProfessionalsPageInner() {
     () => ({
       ...aiPrefill,
       ...projectPrefill,
+      // When returning from create-project summary, populate trades from URL
+      ...(sourceParam === 'create-project' && requestedTradesFromQuery.length > 0
+        ? { tradesRequired: requestedTradesFromQuery, projectName: 'New Project' }
+        : {}),
     }),
-    [aiPrefill, projectPrefill],
+    [aiPrefill, projectPrefill, sourceParam, requestedTradesFromQuery],
   );
 
   const initialRequiredTrades = useMemo(() => {

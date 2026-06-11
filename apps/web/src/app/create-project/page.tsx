@@ -545,6 +545,7 @@ export default function CreateProjectPage() {
                     const loc = initialFormData.location || descriptionData?.location || userLocation;
                     const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
                     if (locStr) params.set('location', locStr);
+                    params.set('source', 'create-project');
                     router.push(`/professionals?${params.toString()}`);
                   }}
                   className="inline-flex items-center gap-1 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
