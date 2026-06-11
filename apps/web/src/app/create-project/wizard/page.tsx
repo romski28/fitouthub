@@ -590,7 +590,7 @@ export default function CreateProjectWizardPage() {
     return true;
   }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
 
-  const progress = steps.length > 0 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
+  const progress = steps.length > 1 ? Math.round(((currentStep + 1) / (steps.length - 1)) * 100) : 0;
 
   useEffect(() => {
     if (activeStep?.kind !== 'followups') return;
@@ -1161,7 +1161,7 @@ export default function CreateProjectWizardPage() {
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
-                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
+                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length - 1)} of {steps.length - 1}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-slate-600 sm:text-xs">{currentMotivation}</p>
             </div>
@@ -1605,7 +1605,15 @@ export default function CreateProjectWizardPage() {
                   Back
                 </button>
 
-                {currentStep < steps.length - 1 ? (
+                {activeStep?.kind === 'images' ? (
+                  <button
+                    type="button"
+                    onClick={submitWizard}
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                  >
+                    Continue to Invite Professionals
+                  </button>
+                ) : currentStep < steps.length - 1 ? (
                   <button
                     type="button"
                     onClick={goNext}
