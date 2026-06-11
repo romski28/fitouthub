@@ -374,7 +374,7 @@ export default function CreateProjectPage() {
       toast.success(
         selectedProfessionals.length > 0
           ? 'Project created and bidding is now open to your selected professionals.'
-          : 'Project saved. You can open bidding when you are ready.',
+          : 'Project saved. You can request quotes when you are ready.',
       );
       const shouldLaunchSurveyStep = payload.requiresSurveyService === true;
       router.push(
@@ -500,7 +500,7 @@ export default function CreateProjectPage() {
                 {emergencySummary ? '🚨 ' : ''}
                 {initialFormData.projectName || descriptionData?.title || 'New Project'}
               </h1>
-              <p className="mimo-panel-body max-w-2xl">Review the final brief, confirm your recipients, and make sure your images are ready before you open bidding.</p>
+              <p className="mimo-panel-body max-w-2xl">Review the final brief, confirm your recipients, and make sure your images are ready before you request quotes.</p>
             </div>
           </div>
         </section>
@@ -516,14 +516,14 @@ export default function CreateProjectPage() {
               </h2>
               <p className="mimo-panel-body max-w-2xl">
                 {invitedCount > 0
-                  ? 'These professionals will be linked to the project immediately and bidding will open as soon as you confirm the final form.'
+                  ? 'These professionals will be linked to the project immediately and quotes will be requested as soon as you confirm.'
                   : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
               </p>
             </div>
 
             {invitedCount > 0 ? (
-              <>
-                <div className="flex max-w-2xl flex-wrap gap-2 lg:justify-end">
+              <div className="space-y-3">
+                <div className="flex max-w-2xl flex-wrap gap-2">
                   {selectedProfessionalNames.map((name, index) => (
                     <span
                       key={`${name}-${index}`}
@@ -535,12 +535,12 @@ export default function CreateProjectPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => router.push('/professionals')}
-                  className="shrink-0 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                  onClick={() => router.push(`/professionals?selectedIds=${selectedProfessionals.map(p => p.id).join(',')}`)}
+                  className="inline-flex items-center gap-1 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
                 >
-                  Return to selection →
+                  ← Return to selection
                 </button>
-              </>
+              </div>
             ) : (
               <button
                 type="button"

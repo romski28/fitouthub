@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-11-35bd3a01",
+    "date": "2026-06-11T23:44:52+08:00",
+    "title": "Fix: revert uploader, restructure recipients panel, text bidding→quotes, selectedIds in return URL",
+    "summary": "Fix: revert uploader, restructure recipients panel, text bidding→quotes, selectedIds in return URL",
+    "areas": [
+      "web"
+    ],
+    "commit": "35bd3a01",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-5a5bed01",
     "date": "2026-06-11T23:28:54+08:00",
     "title": "Summary screen: Return to selection button, gallery-only photos, Request Quotes label",
