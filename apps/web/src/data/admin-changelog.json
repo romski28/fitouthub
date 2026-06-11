@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-11-342506c4",
+    "date": "2026-06-11T16:12:50+08:00",
+    "title": "Add Sarah (left) and Mike (right) characters flanking home page AI prompt box",
+    "summary": "Add Sarah (left) and Mike (right) characters flanking home page AI prompt box",
+    "areas": [
+      "web"
+    ],
+    "commit": "342506c4",
+    "files": [
+      "apps/web/public/assets/images/mike-800_cropped.webp",
+      "apps/web/public/assets/images/sarah-800_cropped.webp",
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-c382d5e7",
     "date": "2026-06-11T15:57:36+08:00",
     "title": "Branding: Mimo → MIMO in Why Choose panel and footer copyright (all languages)",

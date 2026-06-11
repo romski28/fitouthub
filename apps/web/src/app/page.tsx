@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
 import InformationSection from '@/components/information-section';
@@ -62,8 +63,39 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <VideoTeaser />
-                <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+
+                {/* 3-col: Sarah | Prompt | Mike */}
+                <div className="flex items-end justify-center gap-0">
+                  {/* Sarah — left, hidden below md */}
+                  <div className="hidden md:flex items-end justify-end w-[140px] lg:w-[160px] shrink-0">
+                    <Image
+                      src="/assets/images/sarah-800_cropped.webp"
+                      alt="Sarah"
+                      width={160}
+                      height={320}
+                      className="w-full max-w-[160px] h-auto object-contain object-bottom"
+                      priority
+                    />
+                  </div>
+
+                  {/* Prompt box — center */}
+                  <div className="min-w-0 flex-1 max-w-[800px]">
+                    <VideoTeaser />
+                    <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+                  </div>
+
+                  {/* Mike — right, hidden below lg */}
+                  <div className="hidden lg:flex items-end justify-start w-[140px] xl:w-[160px] shrink-0">
+                    <Image
+                      src="/assets/images/mike-800_cropped.webp"
+                      alt="Mike"
+                      width={160}
+                      height={320}
+                      className="w-full max-w-[160px] h-auto object-contain object-bottom"
+                      priority
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
