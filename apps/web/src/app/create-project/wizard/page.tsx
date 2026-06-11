@@ -341,6 +341,7 @@ export default function CreateProjectWizardPage() {
       return 'map';
     }
   });
+  const [skipPrompt, setSkipPrompt] = useState<'site' | 'end' | null>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
   const hasInitializedFromSeedRef = useRef(false);
@@ -607,6 +608,19 @@ export default function CreateProjectWizardPage() {
 
   const goNext = () => {
     if (!canGoNext) return;
+
+    // Scope & Dates validation
+    if (activeStep?.kind === 'scopeDates') {
+      if (!siteInspectionAvailableOn) {
+        setSkipPrompt('site');
+        return;
+      }
+      if (!endDate) {
+        setSkipPrompt('end');
+        return;
+      }
+    }
+
     hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
@@ -1426,6 +1440,7 @@ export default function CreateProjectWizardPage() {
                             <input
                               type="date"
                               value={siteInspectionAvailableOn}
+                              min={new Date().toISOString().split('T')[0]}
                               onChange={(e) => setSiteInspectionAvailableOn(e.target.value)}
                               className="rounded-md border border-slate-300 px-3 py-3 text-base"
                             />
@@ -1435,6 +1450,9 @@ export default function CreateProjectWizardPage() {
                             <input
                               type="date"
                               value={endDate}
+                              min={siteInspectionAvailableOn
+                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000).toISOString().split('T')[0]
+                                : new Date().toISOString().split('T')[0]}
                               onChange={(e) => setEndDate(e.target.value)}
                               className="rounded-md border border-slate-300 px-3 py-3 text-base"
                             />
@@ -1682,6 +1700,56 @@ export default function CreateProjectWizardPage() {
                 className="rounded-lg border border-[#E95E51] bg-[#F26F63] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E95E51]"
               >
                 Add Service
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Skip Date Prompt Modal ── */}
+      {skipPrompt && (
+        <div className="fixed inset-0 z-[73] flex items-center justify-center bg-slate-950/45 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/45 bg-[#FCF8EE] p-6 shadow-2xl text-center space-y-4">
+            <p className="text-2xl">📅</p>
+            <h3 className="text-lg font-bold text-slate-900">
+              {skipPrompt === 'site'
+                ? 'Site inspection recommended'
+                : 'Completion date recommended'}
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-600">
+              {skipPrompt === 'site'
+                ? 'We highly recommend allowing site inspection when time allows. It leads to more accurate quotes and fewer surprises.'
+                : "It's good to let the professional have a timeline for completion. This helps them plan and give you a realistic quote."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setSkipPrompt(null)}
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Set date
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (skipPrompt === 'site') {
+                    setSkipPrompt('end');
+                    if (!endDate) {
+                      // No end date either — chain to end prompt
+                      return;
+                    }
+                    setSkipPrompt(null);
+                    hasManualStepNavigationRef.current = true;
+                    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+                  } else {
+                    setSkipPrompt(null);
+                    hasManualStepNavigationRef.current = true;
+                    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+                  }
+                }}
+                className="flex-1 rounded-lg bg-[#F97362] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e8624f]"
+              >
+                Skip date
               </button>
             </div>
           </div>
