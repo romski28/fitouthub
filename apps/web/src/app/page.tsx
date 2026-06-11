@@ -69,27 +69,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Video Panel */}
-        <section className="-mx-6 px-6">
-          <div className="mimo-panel mx-auto max-w-6xl overflow-hidden py-8">
-            <div className="px-4 sm:px-6 lg:px-12">
-              <div className="mx-auto max-w-4xl rounded-2xl p-2">
-                <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
-                  <video
-                    className="h-full w-full"
-                    src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4"
-                    controls
-                    preload="metadata"
-                  />
-                </div>
-                <div className="mt-3 text-sm text-slate-700">
-                  What is MIMO and why you should use it – see Sarah&rsquo;s story.
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Hero Section */}
         <section className="-mx-6 px-6">
           <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden">

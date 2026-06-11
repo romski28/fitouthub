@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-cf5d5988",
+    "date": "2026-06-11T15:43:24+08:00",
+    "title": "Remove big video panel from home page — VideoTeaser is enough",
+    "summary": "Remove big video panel from home page — VideoTeaser is enough",
+    "areas": [
+      "web"
+    ],
+    "commit": "cf5d5988",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-10-9d493447",
     "date": "2026-06-10T22:47:54+08:00",
     "title": "Update fallback completion text to match new UX tone",
