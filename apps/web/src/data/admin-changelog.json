@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-550f93f8",
+    "date": "2026-06-11T22:46:49+08:00",
+    "title": "Trim verbose 'enough info' message — drop One more thing and Tap send cruft",
+    "summary": "Trim verbose 'enough info' message — drop One more thing and Tap send cruft",
+    "areas": [
+      "web"
+    ],
+    "commit": "550f93f8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-cec9b9f3",
     "date": "2026-06-11T16:43:57+08:00",
     "title": "Fix character column widths at fixed 120px, prevent shrinking",

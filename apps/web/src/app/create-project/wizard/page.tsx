@@ -967,17 +967,16 @@ export default function CreateProjectWizardPage() {
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
       if (shouldOfferSummaryConfirmation) {
-        const summaryQuestion = nextUnaskedQuestion
-          ? `\n\nOne more thing: ${appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)}`
-          : '';
-        const summaryForConfirmation = `OK, we have enough project information to proceed. ${summaryQuestion ? 'One more thing — see below. ' : ''}If you have time, please continue answering questions, or just send with no text to move on.`;
+        const nextQuestion = nextUnaskedQuestion
+          ? appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)
+          : null;
+        const summaryForConfirmation = 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
 
         setAiChatCanContinue(true);
         const msgParts = [summaryForConfirmation];
-        if (summaryQuestion) {
-          msgParts.push(summaryQuestion);
+        if (nextQuestion) {
+          msgParts.push(nextQuestion);
         }
-        msgParts.push('Tap send when ready to move forward.');
         setChatMessages((prev) => [...prev, { role: 'assistant', text: msgParts.join('\n\n') }]);
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
