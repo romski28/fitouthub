@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-0f979846",
+    "date": "2026-06-11T16:21:11+08:00",
+    "title": "Constrain character heights, remove 800px clamp on prompt box",
+    "summary": "Constrain character heights, remove 800px clamp on prompt box",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f979846",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-342506c4",
     "date": "2026-06-11T16:12:50+08:00",
     "title": "Add Sarah (left) and Mike (right) characters flanking home page AI prompt box",

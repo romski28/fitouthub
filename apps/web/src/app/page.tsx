@@ -67,31 +67,31 @@ export default function Home() {
                 {/* 3-col: Sarah | Prompt | Mike */}
                 <div className="flex items-end justify-center gap-0">
                   {/* Sarah — left, hidden below md */}
-                  <div className="hidden md:flex items-end justify-end w-[140px] lg:w-[160px] shrink-0">
+                  <div className="hidden md:flex items-end justify-end w-[120px] lg:w-[150px] shrink-0">
                     <Image
                       src="/assets/images/sarah-800_cropped.webp"
                       alt="Sarah"
-                      width={160}
+                      width={150}
                       height={320}
-                      className="w-full max-w-[160px] h-auto object-contain object-bottom"
+                      className="w-full max-w-[150px] max-h-[320px] h-auto object-contain object-bottom"
                       priority
                     />
                   </div>
 
-                  {/* Prompt box — center */}
-                  <div className="min-w-0 flex-1 max-w-[800px]">
+                  {/* Prompt box — center, flexes to fill */}
+                  <div className="min-w-0 flex-1">
                     <VideoTeaser />
                     <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
                   </div>
 
                   {/* Mike — right, hidden below lg */}
-                  <div className="hidden lg:flex items-end justify-start w-[140px] xl:w-[160px] shrink-0">
+                  <div className="hidden lg:flex items-end justify-start w-[120px] xl:w-[150px] shrink-0">
                     <Image
                       src="/assets/images/mike-800_cropped.webp"
                       alt="Mike"
-                      width={160}
+                      width={150}
                       height={320}
-                      className="w-full max-w-[160px] h-auto object-contain object-bottom"
+                      className="w-full max-w-[150px] max-h-[320px] h-auto object-contain object-bottom"
                       priority
                     />
                   </div>
