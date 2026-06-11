@@ -482,7 +482,9 @@ export default function CreateProjectWizardPage() {
       ? `Great start. I can help shape this into a clear project brief without making it feel like homework. ${openingSummary}`
       : 'Nice, let\'s make this easy. I\'ll help you build a clear brief step by step so pros can quote with fewer surprises.';
     const firstQuestionRaw = sanitizeFollowUpQuestions(normalizeQuestions(nextQuestions))[0] || null;
-    const firstQuestionOfferType = firstQuestionRaw
+    const seedTrades = seedDraft?.initialData?.tradesRequired || seedDescription?.tradesRequired || [];
+    const isRepairOrEmergency = nextEmergency === true || seedTrades.length <= 1;
+    const firstQuestionOfferType = firstQuestionRaw && !isRepairOrEmergency
       ? (nextSurveyToggle === null && shouldPromptSurveyService(firstQuestionRaw)
           ? 'survey'
           : nextDesignToggle === null && shouldPromptDesignService(firstQuestionRaw)
@@ -957,7 +959,8 @@ export default function CreateProjectWizardPage() {
 
       let nextPendingOffer: ServiceOfferType | null = null;
 
-      if (isEmergency === true) {
+      if (isEmergency === true || mergedTrades.length <= 1) {
+        // Don't offer survey/design for emergencies or single-trade repairs
         setPendingServiceOffer(null);
       } else {
         const candidateOfferText = [

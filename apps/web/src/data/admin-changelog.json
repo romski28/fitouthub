@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-75731446",
+    "date": "2026-06-12T00:04:31+08:00",
+    "title": "Gate survey/design service offers for emergencies and single-trade repair jobs",
+    "summary": "Gate survey/design service offers for emergencies and single-trade repair jobs",
+    "areas": [
+      "web"
+    ],
+    "commit": "75731446",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-bdf0184f",
     "date": "2026-06-11T23:54:47+08:00",
     "title": "Return to selection now pre-selects professionals and preserves trade/location filters",
