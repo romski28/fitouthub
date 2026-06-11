@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-cec9b9f3",
+    "date": "2026-06-11T16:43:57+08:00",
+    "title": "Fix character column widths at fixed 120px, prevent shrinking",
+    "summary": "Fix character column widths at fixed 120px, prevent shrinking",
+    "areas": [
+      "web"
+    ],
+    "commit": "cec9b9f3",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-21c6b4ba",
     "date": "2026-06-11T16:40:02+08:00",
     "title": "Reduce panel padding, equal character heights at 240px, narrower columns",
