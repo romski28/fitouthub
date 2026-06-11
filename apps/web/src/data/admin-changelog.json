@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-11-0225a2a9",
+    "date": "2026-06-11T16:34:00+08:00",
+    "title": "Narrower character columns, remove justify-center — prompt box flex-fills",
+    "summary": "Narrower character columns, remove justify-center — prompt box flex-fills",
+    "areas": [
+      "web"
+    ],
+    "commit": "0225a2a9",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-11-0f979846",
     "date": "2026-06-11T16:21:11+08:00",
     "title": "Constrain character heights, remove 800px clamp on prompt box",
