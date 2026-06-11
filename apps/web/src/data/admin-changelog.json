@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-12-806fdba4",
+    "date": "2026-06-12T00:06:22+08:00",
+    "title": "Fix pre-selection: URL-decode selectedIds and sync via useEffect",
+    "summary": "Fix pre-selection: URL-decode selectedIds and sync via useEffect",
+    "areas": [
+      "web"
+    ],
+    "commit": "806fdba4",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-75731446",
     "date": "2026-06-12T00:04:31+08:00",
     "title": "Gate survey/design service offers for emergencies and single-trade repair jobs",

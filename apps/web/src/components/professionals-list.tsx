@@ -1373,6 +1373,12 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(initialSelectedIds?.filter((id): id is string => typeof id === 'string' && id.length > 0) ?? []),
   );
+
+  // Sync initialSelectedIds into state when navigating back with pre-selected IDs
+  useEffect(() => {
+    if (!initialSelectedIds || initialSelectedIds.length === 0) return;
+    setSelectedIds(new Set(initialSelectedIds));
+  }, [initialSelectedIds?.join(',')]);
   const selectedTradeCoverageKeys = useMemo(() => {
     const requiredTradesLower = activeRequiredTrades.map((trade) => trade.toLowerCase());
     const covered = new Set<string>();

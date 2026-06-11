@@ -647,7 +647,7 @@ function ProfessionalsPageInner() {
               initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
               initialRequiredTrades={initialRequiredTrades}
               initialProjectData={mergedPrefill}
-              initialSelectedIds={selectedIdsParam ? selectedIdsParam.split(',').filter(Boolean) : undefined}
+              initialSelectedIds={selectedIdsParam ? decodeURIComponent(selectedIdsParam).split(',').filter(Boolean) : undefined}
               requireLocation={shouldShowRegionNotice}
               defaultFiltersOpen={sourceParam !== 'ai-wizard'}
             />
