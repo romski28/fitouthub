@@ -1612,9 +1612,10 @@ export default function CreateProjectWizardPage() {
                   <button
                     type="button"
                     onClick={submitWizard}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                    disabled={isUploadingImages}
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    Continue to Invite Professionals
+                    {isUploadingImages ? 'Uploading…' : 'Continue to Invite Professionals'}
                   </button>
                 ) : currentStep < steps.length - 1 ? (
                   <button

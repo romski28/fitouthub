@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-56c7b60a",
+    "date": "2026-06-12T00:08:55+08:00",
+    "title": "Disable Continue to Invite Professionals while images are uploading",
+    "summary": "Disable Continue to Invite Professionals while images are uploading",
+    "areas": [
+      "web"
+    ],
+    "commit": "56c7b60a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-806fdba4",
     "date": "2026-06-12T00:06:22+08:00",
     "title": "Fix pre-selection: URL-decode selectedIds and sync via useEffect",
