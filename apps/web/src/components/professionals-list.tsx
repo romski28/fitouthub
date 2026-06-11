@@ -850,11 +850,12 @@ interface Props {
   initialSearchTerm?: string;
   initialRequiredTrades?: string[];
   initialProjectData?: Partial<ProjectFormData>;
+  initialSelectedIds?: string[];
   requireLocation?: boolean;
   defaultFiltersOpen?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, requireLocation = false, defaultFiltersOpen = true }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, initialSelectedIds, requireLocation = false, defaultFiltersOpen = true }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -1368,8 +1369,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const canShowExpand = locationIsActive && !regionExpanded && filteredBaseCount <= 2;
 
   const maxSelect = activeRequiredTrades.length > 1 ? Math.max(3, activeRequiredTrades.length * 2) : 3;
-  // Always start with empty selection - no persistence
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Initialize selection from URL param if provided
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(initialSelectedIds?.filter((id): id is string => typeof id === 'string' && id.length > 0) ?? []),
+  );
   const selectedTradeCoverageKeys = useMemo(() => {
     const requiredTradesLower = activeRequiredTrades.map((trade) => trade.toLowerCase());
     const covered = new Set<string>();

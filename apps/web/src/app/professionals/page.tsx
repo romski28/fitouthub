@@ -135,6 +135,7 @@ function ProfessionalsPageInner() {
   const emergencyTradeParam = searchParams.get('trade') || undefined;
   const emergencyLocationParam = searchParams.get('location') || undefined;
   const emergencyPhotoKey = searchParams.get('photoKey');
+  const selectedIdsParam = searchParams.get('selectedIds');
   const [projectRegion, setProjectRegion] = useState<string | undefined>(undefined);
   const [projectName, setProjectName] = useState<string | undefined>(undefined);
   const [projectPrefill, setProjectPrefill] = useState<Partial<ProjectFormData>>({});
@@ -646,6 +647,7 @@ function ProfessionalsPageInner() {
               initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
               initialRequiredTrades={initialRequiredTrades}
               initialProjectData={mergedPrefill}
+              initialSelectedIds={selectedIdsParam ? selectedIdsParam.split(',').filter(Boolean) : undefined}
               requireLocation={shouldShowRegionNotice}
               defaultFiltersOpen={sourceParam !== 'ai-wizard'}
             />
