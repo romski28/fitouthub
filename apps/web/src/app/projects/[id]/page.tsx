@@ -31,7 +31,7 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
-import { UxFeedbackModal } from '@/components/ux-feedback-modal';
+import { PostProjectSurveyModal } from '@/components/post-project-survey-modal';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
 
@@ -2949,7 +2949,7 @@ export default function ClientProjectDetailPage() {
       />
 
       {showUxFeedback && (
-        <UxFeedbackModal
+        <PostProjectSurveyModal
           projectId={projectId}
           accessToken={accessToken}
           onClose={() => setShowUxFeedback(false)}

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-12-455fe0f1",
+    "date": "2026-06-12T19:22:13+08:00",
+    "title": "Replace mini UX survey with full 6-section post-project questionnaire",
+    "summary": "Replace mini UX survey with full 6-section post-project questionnaire",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "455fe0f1",
+    "files": [
+      "MANUAL_SQL_ADD_SURVEY_VERSION.sql",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/post-project-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-ae76988d",
     "date": "2026-06-12T14:16:03+08:00",
     "title": "Flow safety/risk notes from home page AI through handoff to wizard basics step",
