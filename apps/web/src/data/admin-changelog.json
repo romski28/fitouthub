@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-3bd4b869",
+    "date": "2026-06-12T19:28:06+08:00",
+    "title": "Fix TS error: section.optional not on union type, use key check",
+    "summary": "Fix TS error: section.optional not on union type, use key check",
+    "areas": [
+      "web"
+    ],
+    "commit": "3bd4b869",
+    "files": [
+      "apps/web/src/components/post-project-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-455fe0f1",
     "date": "2026-06-12T19:22:13+08:00",
     "title": "Replace mini UX survey with full 6-section post-project questionnaire",

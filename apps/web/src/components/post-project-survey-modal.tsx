@@ -577,7 +577,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
         {/* Section header */}
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{section.title}</p>
-          {section.optional && <p className="text-xs text-slate-400 mt-0.5">All questions in this section are optional.</p>}
+          {section.key === 'about_you' && <p className="text-xs text-slate-400 mt-0.5">All questions in this section are optional.</p>}
         </div>
 
         {/* Questions */}
