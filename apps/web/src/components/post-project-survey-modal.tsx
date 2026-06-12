@@ -609,7 +609,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
               onClick={() => setSectionIndex((prev) => prev + 1)}
               className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
             >
-              {section.optional ? 'Next (or skip)' : 'Next'}
+              {section.key === 'about_you' ? 'Next (or skip)' : 'Next'}
             </button>
           )}
         </div>
