@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { ModalOverlay } from './modal-overlay';
 
@@ -186,6 +186,10 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
   const [answers, setAnswers] = useState<SurveyAnswers>(EMPTY_ANSWERS);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
+  const [completedMessage, setCompletedMessage] = useState<string | null>(null);
+  const questionsRef = useRef<HTMLDivElement>(null);
+  const lastSectionCompleteRef = useRef(false);
 
   const section = SECTIONS[sectionIndex];
   const isLast = sectionIndex === SECTIONS.length - 1;
@@ -214,6 +218,118 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
     } catch {
       onClose();
     }
+  };
+
+  // Scroll to top on section change
+  useEffect(() => {
+    questionsRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [sectionIndex]);
+
+  // Clear completion message after 5s
+  useEffect(() => {
+    if (completedMessage) {
+      const t = setTimeout(() => setCompletedMessage(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [completedMessage]);
+
+  // ── Unanswered count per section ──
+  const unansweredCount = useMemo(() => {
+    const a = answers;
+    switch (section.key) {
+      case 'first_impressions':
+        return (
+          (a.feeling.trim() ? 0 : 1) +
+          (Object.values(a.clarity).every((v) => v !== null) ? 0 : 1) +
+          (a.uncertain_moment.trim() ? 0 : 1) +
+          (a.missing_info.trim() ? 0 : 1)
+        );
+      case 'competition': {
+        let c = a.current_methods.length > 0 ? 0 : 1;
+        if (a.current_methods.includes('other') && !a.other_method.trim()) c += 1;
+        if (a.mimo_comparison === null) c += 1;
+        if (!a.mimo_better.trim()) c += 1;
+        if (!a.alternatives_better.trim()) c += 1;
+        return c;
+      }
+      case 'would_you_use':
+        return (
+          (a.return_likelihood === null ? 1 : 0) +
+          (a.return_reason.trim() ? 0 : 1) +
+          (a.recommend_likelihood === null ? 1 : 0)
+        );
+      case 'ideas':
+        return (
+          (a.change_one_thing.trim() ? 0 : 1) +
+          (a.feature_wish.trim() ? 0 : 1) +
+          (a.biggest_worry.trim() ? 0 : 1)
+        );
+      case 'about_you':
+        return 0; // always optional
+      case 'looking_forward':
+        return (
+          (a.escrow_comfortable === null ? 1 : 0) +
+          (a.escrow_reason.trim() ? 0 : 1) +
+          (a.escrow_concern.trim() ? 0 : 1)
+        );
+    }
+  }, [answers, section.key]);
+
+  const sectionComplete = unansweredCount === 0;
+
+  // Nudge messages
+  const nudgeMessages = [
+    "We know forms aren't anyone's idea of a good time, but answering everything really helps us keep things moving smoothly.",
+    "We promise this form won't bite. If you can fill in all the questions, you'll be our hero of the day.",
+    "Let's be real: forms are about as fun as watching paint dry. But completing all the questions genuinely helps us help you.",
+    "We know… forms. Yawn. But if you can power through all the questions, we can work our magic much faster.",
+    "Think of this form like a mini-workout: a little effort now saves a lot of pain later. Every question you answer helps.",
+    "We get it — forms aren't fun. But by filling in every question, you're basically making our day. Thank you for being awesome.",
+  ];
+
+  const [nudgeMessage] = useState(() => nudgeMessages[Math.floor(Math.random() * nudgeMessages.length)]);
+
+  // Positive completion messages
+  const completionMessages = [
+    'Section done. Confetti everywhere. Next one\u2019s waving at you.',
+    'Toot-toot. You nailed that bit. Onward to the next.',
+    'You just tamed that section like a wizard. Ready for another spell.',
+    'Drumroll please\u2026 you smashed it. Next section awaits your greatness.',
+    'Boom. Fist bump. Let\u2019s bounce into the next part.',
+    'Psst\u2026 you crushed that. Let\u2019s sneak into the next section like pros.',
+  ];
+
+  const pickCompletionMessage = () => completionMessages[Math.floor(Math.random() * completionMessages.length)];
+
+  // ── Next handler ──
+  const handleNext = () => {
+    if (section.key === 'about_you') {
+      // Optional section — always allow skipping
+      lastSectionCompleteRef.current = sectionComplete;
+      setSectionIndex((prev) => prev + 1);
+      if (sectionComplete) setCompletedMessage(pickCompletionMessage());
+      return;
+    }
+
+    if (!sectionComplete) {
+      setShowNudge(true);
+      return;
+    }
+
+    lastSectionCompleteRef.current = true;
+    setSectionIndex((prev) => prev + 1);
+    setCompletedMessage(pickCompletionMessage());
+  };
+
+  const dismissNudge = () => {
+    setShowNudge(false);
+  };
+
+  const acceptNudge = () => {
+    setShowNudge(false);
+    lastSectionCompleteRef.current = sectionComplete;
+    setSectionIndex((prev) => prev + 1);
+    if (sectionComplete) setCompletedMessage(pickCompletionMessage());
   };
 
   // ── Thank-you ──
@@ -349,7 +465,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
 
             <div>
               <p className="text-sm font-semibold text-slate-900">Compared to your normal method, MIMO feels…</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 grid grid-cols-5 gap-1.5">
                 {([
                   { key: 'much_better' as ComparisonFeeling, label: 'Much better' },
                   { key: 'somewhat_better' as ComparisonFeeling, label: 'Somewhat better' },
@@ -361,7 +477,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
                     key={opt.key}
                     type="button"
                     onClick={() => update('mimo_comparison', opt.key)}
-                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                    className={`rounded-lg border px-2 py-2 text-xs font-medium text-center whitespace-normal leading-tight transition ${
                       answers.mimo_comparison === opt.key
                         ? 'border-emerald-600 bg-emerald-600 text-white'
                         : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400'
@@ -578,10 +694,13 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{section.title}</p>
           {section.key === 'about_you' && <p className="text-xs text-slate-400 mt-0.5">All questions in this section are optional.</p>}
+          {completedMessage && (
+            <p className="mt-1.5 text-xs font-medium text-emerald-600 italic">{completedMessage}</p>
+          )}
         </div>
 
         {/* Questions */}
-        <div className="max-h-[55vh] overflow-y-auto pr-2">{renderSection()}</div>
+        <div ref={questionsRef} className="max-h-[55vh] overflow-y-auto pr-2">{renderSection()}</div>
 
         {/* Navigation */}
         <div className="flex gap-3 pt-2">
@@ -606,7 +725,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
           ) : (
             <button
               type="button"
-              onClick={() => setSectionIndex((prev) => prev + 1)}
+              onClick={handleNext}
               className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               {section.key === 'about_you' ? 'Next (or skip)' : 'Next'}
@@ -625,6 +744,33 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
           </button>
         )}
       </div>
+
+      {/* Nudge modal */}
+      {showNudge && (
+        <ModalOverlay isOpen onClose={dismissNudge} maxWidth="max-w-md">
+          <div className="space-y-5 text-center py-2">
+            <p className="text-4xl">📝</p>
+            <p className="text-sm leading-relaxed text-slate-700">{nudgeMessage}</p>
+            <p className="text-xs text-slate-400">{unansweredCount} question{unansweredCount !== 1 ? 's' : ''} to go</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={dismissNudge}
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={acceptNudge}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
     </ModalOverlay>
   );
 }
