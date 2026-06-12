@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-177eb82a",
+    "date": "2026-06-12T13:28:19+08:00",
+    "title": "Force ProfessionalsList remount with key when returning with pre-selected IDs",
+    "summary": "Force ProfessionalsList remount with key when returning with pre-selected IDs",
+    "areas": [
+      "web"
+    ],
+    "commit": "177eb82a",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-1ece68ed",
     "date": "2026-06-12T12:57:16+08:00",
     "title": "Add source prop to force selection mode when returning from create-project",

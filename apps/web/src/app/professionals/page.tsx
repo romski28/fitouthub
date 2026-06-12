@@ -645,6 +645,7 @@ function ProfessionalsPageInner() {
             </div>
           ) : (
             <ProfessionalsList
+              key={selectedIdsParam || 'default'}
               professionals={emergencySource ? filteredProfessionals : professionals}
               initialLocation={defaultLocation}
               projectId={projectId || (sourceParam === 'create-project' ? 'new' : undefined)}
