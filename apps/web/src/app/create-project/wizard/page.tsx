@@ -323,6 +323,9 @@ export default function CreateProjectWizardPage() {
   const [designOfferPrompted, setDesignOfferPrompted] = useState(false);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
+  const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
+  const [aiRiskNotes, setAiRiskNotes] = useState<string[]>([]);
+  const [aiRiskLevel, setAiRiskLevel] = useState<string | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -374,6 +377,9 @@ export default function CreateProjectWizardPage() {
     setDesignOfferPrompted(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
+    setAiSafetyNotes([]);
+    setAiRiskNotes([]);
+    setAiRiskLevel(null);
   }, [hydrated, searchParams]);
 
   useEffect(() => {
@@ -835,6 +841,27 @@ export default function CreateProjectWizardPage() {
         payload?.vision?.usage && typeof payload.vision.usage === 'object' && typeof payload.vision.usage.processedImageCount === 'number'
           ? payload.vision.usage.processedImageCount
           : turnImageUrls.length;
+
+      // Extract safety & risk notes from AI response
+      const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
+        ? (parsed.safetyAssessment as Record<string, unknown>)
+        : null;
+      const parsedRiskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel.toLowerCase() : null;
+      const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
+      const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
+      const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
+
+      const safetyNotes: string[] = [
+        ...parsedConcerns,
+        ...parsedMitigations,
+      ];
+      if (safetyNotes.length > 0) {
+        setAiSafetyNotes(safetyNotes);
+        setAiRiskLevel(parsedRiskLevel);
+      }
+      if (parsedRisks.length > 0) {
+        setAiRiskNotes(parsedRisks);
+      }
       const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null;
@@ -1216,6 +1243,27 @@ export default function CreateProjectWizardPage() {
                             <p>⚠️ Emergency callouts normally carry a specific callout charge, particularly if outside normal working hours — from <strong>HK$500</strong> up.</p>
                             <p>⚠️ Works undertaken outside of standard working hours will normally be charged at <strong>1.5 or 2 times</strong> normal rate or more.</p>
                             <p>⚠️ Please be sure that this is an emergency that warrants the extra money before you continue.</p>
+                          </div>
+                        )}
+
+                        {/* AI Safety & Risk Advisory */}
+                        {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) && (
+                          <div className="rounded-lg border border-sky-300 bg-sky-50 p-4 space-y-3 text-sm text-sky-900">
+                            {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
+                              <p className="font-semibold text-sky-950">⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected — please review the notes below.</p>
+                            )}
+                            {aiSafetyNotes.map((note, i) => (
+                              <p key={`safety-${i}`} className="flex gap-2">
+                                <span className="shrink-0 mt-0.5">🛡️</span>
+                                <span>{note}</span>
+                              </p>
+                            ))}
+                            {aiRiskNotes.map((note, i) => (
+                              <p key={`risk-${i}`} className="flex gap-2">
+                                <span className="shrink-0 mt-0.5">⚠️</span>
+                                <span>{note}</span>
+                              </p>
+                            ))}
                           </div>
                         )}
                       </div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-e7c8944c",
+    "date": "2026-06-12T14:01:33+08:00",
+    "title": "Surface AI safety advisory and risk notes on wizard basics step",
+    "summary": "Surface AI safety advisory and risk notes on wizard basics step",
+    "areas": [
+      "web"
+    ],
+    "commit": "e7c8944c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-177eb82a",
     "date": "2026-06-12T13:28:19+08:00",
     "title": "Force ProfessionalsList remount with key when returning with pre-selected IDs",
