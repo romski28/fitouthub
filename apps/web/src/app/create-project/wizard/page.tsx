@@ -850,17 +850,19 @@ export default function CreateProjectWizardPage() {
       const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
       const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
       const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
+      const parsedDisclaimer = typeof safetyAssessment?.disclaimer === 'string' && safetyAssessment.disclaimer.trim().length > 0 ? safetyAssessment.disclaimer.trim() : null;
 
       const safetyNotes: string[] = [
         ...parsedConcerns,
         ...parsedMitigations,
+        ...(parsedDisclaimer ? [parsedDisclaimer] : []),
       ];
-      if (safetyNotes.length > 0) {
-        setAiSafetyNotes(safetyNotes);
+      // Surface safety data whenever there are notes, risks, or a non-trivial risk level
+      const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
+      if (hasSafetyData) {
+        if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
+        if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
         setAiRiskLevel(parsedRiskLevel);
-      }
-      if (parsedRisks.length > 0) {
-        setAiRiskNotes(parsedRisks);
       }
       const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
@@ -1247,10 +1249,13 @@ export default function CreateProjectWizardPage() {
                         )}
 
                         {/* AI Safety & Risk Advisory */}
-                        {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) && (
+                        {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
                           <div className="rounded-lg border border-sky-300 bg-sky-50 p-4 space-y-3 text-sm text-sky-900">
                             {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
-                              <p className="font-semibold text-sky-950">⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected — please review the notes below.</p>
+                              <p className="font-semibold text-sky-950">
+                                ⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected
+                                {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) ? ' — please review the notes below.' : ' — proceed with caution.'}
+                              </p>
                             )}
                             {aiSafetyNotes.map((note, i) => (
                               <p key={`safety-${i}`} className="flex gap-2">

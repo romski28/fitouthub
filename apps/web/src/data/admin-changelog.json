@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-d259f24a",
+    "date": "2026-06-12T14:09:54+08:00",
+    "title": "Broaden safety advisory gate: include risk level, disclaimer, show panel on medium+ risk",
+    "summary": "Broaden safety advisory gate: include risk level, disclaimer, show panel on medium+ risk",
+    "areas": [
+      "web"
+    ],
+    "commit": "d259f24a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-e7c8944c",
     "date": "2026-06-12T14:01:33+08:00",
     "title": "Surface AI safety advisory and risk notes on wizard basics step",
