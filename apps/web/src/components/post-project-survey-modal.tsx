@@ -680,6 +680,13 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
   return (
     <ModalOverlay isOpen onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-4">
+        {/* Completion celebration — top of form */}
+        {completedMessage && (
+          <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-center">
+            <p className="text-sm font-bold text-emerald-700">{completedMessage}</p>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
@@ -694,9 +701,6 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{section.title}</p>
           {section.key === 'about_you' && <p className="text-xs text-slate-400 mt-0.5">All questions in this section are optional.</p>}
-          {completedMessage && (
-            <p className="mt-1.5 text-xs font-medium text-emerald-600 italic">{completedMessage}</p>
-          )}
         </div>
 
         {/* Questions */}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-12-7b8dcfa4",
+    "date": "2026-06-12T22:31:30+08:00",
+    "title": "Move completion celebration to top with bold banner styling",
+    "summary": "Move completion celebration to top with bold banner styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "7b8dcfa4",
+    "files": [
+      "apps/web/src/components/post-project-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-b20ad728",
     "date": "2026-06-12T22:19:07+08:00",
     "title": "Survey UX: scroll-to-top, two-line comparison btns, nudge modal for skipped Qs, completion msg",
