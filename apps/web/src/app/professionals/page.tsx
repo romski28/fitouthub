@@ -647,11 +647,12 @@ function ProfessionalsPageInner() {
             <ProfessionalsList
               professionals={emergencySource ? filteredProfessionals : professionals}
               initialLocation={defaultLocation}
-              projectId={projectId}
+              projectId={projectId || (sourceParam === 'create-project' ? 'new' : undefined)}
               initialSearchTerm={tradeParam || initialRequiredTrades[0] || projectName}
               initialRequiredTrades={initialRequiredTrades}
               initialProjectData={mergedPrefill}
               initialSelectedIds={selectedIdsParam ? decodeURIComponent(selectedIdsParam).split(',').filter(Boolean) : undefined}
+              source={sourceParam}
               requireLocation={shouldShowRegionNotice}
               defaultFiltersOpen={sourceParam !== 'ai-wizard'}
             />

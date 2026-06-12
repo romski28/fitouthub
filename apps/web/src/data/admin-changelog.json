@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-12-1ece68ed",
+    "date": "2026-06-12T12:57:16+08:00",
+    "title": "Add source prop to force selection mode when returning from create-project",
+    "summary": "Add source prop to force selection mode when returning from create-project",
+    "areas": [
+      "web"
+    ],
+    "commit": "1ece68ed",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-c3ad88a1",
     "date": "2026-06-12T00:33:20+08:00",
     "title": "Return to selection: set source=create-project, populate trades in prefilled data",

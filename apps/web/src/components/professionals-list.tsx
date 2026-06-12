@@ -851,11 +851,12 @@ interface Props {
   initialRequiredTrades?: string[];
   initialProjectData?: Partial<ProjectFormData>;
   initialSelectedIds?: string[];
+  source?: string;
   requireLocation?: boolean;
   defaultFiltersOpen?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, initialSelectedIds, requireLocation = false, defaultFiltersOpen = true }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, initialSelectedIds, source, requireLocation = false, defaultFiltersOpen = true }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -900,7 +901,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // The filter will naturally radiate outward from tertiary -> secondary -> primary
   const initialLocationDisplay = baseLoc.tertiary || baseLoc.secondary || baseLoc.primary || '';
   const [locationDisplay, setLocationDisplay] = useState<string>(initialLocationDisplay);
-  const hasProjectDefinition = Boolean(
+  const hasProjectDefinition = source === 'create-project' || Boolean(
     projectId ||
     initialProjectData?.projectName?.trim() ||
     initialProjectData?.notes?.trim() ||
