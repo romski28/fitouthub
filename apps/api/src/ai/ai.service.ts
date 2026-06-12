@@ -1121,6 +1121,24 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - Example: User says "3m x 4m bedroom" → add "roomSize" to coveredTopics.
 - Example: User says "walls have some cracks" → add "existingCondition" to coveredTopics.
 
+# Temporary Mitigations (MANDATORY — populate for EVERY project)
+- ALWAYS include practical, actionable steps the user can take BEFORE a professional arrives.
+- These are NOT emergency/safety instructions — they are helpful interim measures to prevent things from getting worse, save money, or prepare the site.
+- EXAMPLES for non-dangerous repairs:
+  - "Place a bucket under the leak to catch drips and prevent floor damage."
+  - "Clear the area around the sink so the plumber has easy access."
+  - "Take photos of the cracked tile from different angles before it gets worse."
+  - "Turn off the water supply to that fixture if you know where the stop valve is."
+  - "Keep the room well-ventilated to prevent mould while waiting for the repair."
+- EXAMPLES for renovations:
+  - "Clear furniture away from the walls that will be worked on."
+  - "Take 'before' photos of the space for your own records."
+  - "Let your neighbours know about upcoming noisy work."
+- If the project IS dangerous (riskLevel medium+): include BOTH practical advice AND safety warnings.
+- If the project is NOT dangerous (riskLevel none/low): STILL include 2-3 practical tips in temporaryMitigations.
+- Put these in the safetyAssessment.temporaryMitigations array. NEVER leave it empty.
+- Each tip should be one clear, actionable sentence. Use plain language the user will understand.
+
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics

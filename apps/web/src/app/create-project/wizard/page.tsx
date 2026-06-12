@@ -41,6 +41,9 @@ interface ProjectDescriptionData {
   location?: CanonicalLocation;
   tradesRequired?: string[];
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 }
 
 interface CreateProjectDraft {
@@ -477,6 +480,9 @@ export default function CreateProjectWizardPage() {
     setSurveyOfferPrompted(nextSurveyToggle !== null);
     setDesignOfferPrompted(nextDesignToggle !== null);
     setFollowUpQuestions(nextQuestions);
+    setAiSafetyNotes(Array.isArray(seedDescription?.safetyNotes) ? seedDescription.safetyNotes : []);
+    setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
+    setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
     setChatError(null);
     setChatImageError(null);
     setAiChatCanContinue(false);

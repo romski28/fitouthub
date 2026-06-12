@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-12-ae76988d",
+    "date": "2026-06-12T14:16:03+08:00",
+    "title": "Flow safety/risk notes from home page AI through handoff to wizard basics step",
+    "summary": "Flow safety/risk notes from home page AI through handoff to wizard basics step",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ae76988d",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/create-project-handoff.ts"
+    ]
+  },
+  {
     "id": "2026-06-12-d259f24a",
     "date": "2026-06-12T14:09:54+08:00",
     "title": "Broaden safety advisory gate: include risk level, disclaimer, show panel on medium+ risk",

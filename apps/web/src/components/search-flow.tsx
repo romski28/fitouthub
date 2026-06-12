@@ -891,6 +891,16 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
       followUpQuestions,
+      safetyNotes: [
+        ...(Array.isArray(aiStructured.safetyAssessment?.concerns)
+          ? aiStructured.safetyAssessment.concerns.filter(Boolean) : []),
+        ...(Array.isArray(aiStructured.safetyAssessment?.temporaryMitigations)
+          ? aiStructured.safetyAssessment.temporaryMitigations.filter(Boolean) : []),
+        ...(typeof aiStructured.safetyAssessment?.disclaimer === 'string' && aiStructured.safetyAssessment.disclaimer.trim()
+          ? [aiStructured.safetyAssessment.disclaimer.trim()] : []),
+      ],
+      riskNotes: Array.isArray(aiStructured.risks) ? aiStructured.risks.filter(Boolean) : [],
+      riskLevel: aiStructured.safetyAssessment?.riskLevel ?? null,
     };
 
     console.log('[PERSIST-HANDOFF] Storing AI wizard handoff:', {
