@@ -2006,12 +2006,12 @@ model AiIntakeImageInsight {
 // ============================================================
 
 model UxFeedback {
-  id             String   @id @default(cuid())
-  projectId      String
-  userId         String?
-  surveyVersion  String?
-  answers        Json
-  submittedAt    DateTime @default(now())
+  id             String    @id @default(cuid())
+  projectId      String    @map("project_id")
+  userId         String?   @map("user_id")
+  surveyVersion  String?   @map("survey_version")
+  answers        Json      @map("answers")
+  submittedAt    DateTime  @default(now()) @map("submitted_at")
 
   @@index([projectId])
   @@index([userId])

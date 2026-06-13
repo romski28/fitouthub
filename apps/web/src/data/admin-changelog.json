@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-13-186738d8",
+    "date": "2026-06-13T19:13:10+08:00",
+    "title": "Fix UxFeedback Prisma schema: add @map annotations for snake_case columns",
+    "summary": "Fix UxFeedback Prisma schema: add @map annotations for snake_case columns",
+    "areas": [
+      "api"
+    ],
+    "commit": "186738d8",
+    "files": [
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-06-13-387b5c36",
     "date": "2026-06-13T19:02:23+08:00",
     "title": "Admin survey results: API endpoint + page with stats, filters, expandable detail rows",
