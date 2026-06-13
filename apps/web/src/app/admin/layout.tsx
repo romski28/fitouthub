@@ -75,6 +75,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   Changelog
                 </Link>
+                <Link
+                  href="/admin/survey-results"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Surveys
+                </Link>
               </div>
               <div className="relative border-l border-slate-200 pl-6">
                 <button
@@ -183,6 +189,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Changelog
+              </Link>
+              <Link
+                href="/admin/survey-results"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Surveys
               </Link>
               <Link
                 href="/admin/profile"

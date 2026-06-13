@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-06-13-387b5c36",
+    "date": "2026-06-13T19:02:23+08:00",
+    "title": "Admin survey results: API endpoint + page with stats, filters, expandable detail rows",
+    "summary": "Admin survey results: API endpoint + page with stats, filters, expandable detail rows",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "387b5c36",
+    "files": [
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/ux-feedback/ux-feedback.controller.ts",
+      "apps/api/src/ux-feedback/ux-feedback.service.ts",
+      "apps/web/src/app/admin/layout.tsx",
+      "apps/web/src/app/admin/survey-results/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-12-7b8dcfa4",
     "date": "2026-06-12T22:31:30+08:00",
     "title": "Move completion celebration to top with bold banner styling",

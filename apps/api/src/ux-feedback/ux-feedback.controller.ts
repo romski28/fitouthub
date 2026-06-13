@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import { UxFeedbackService } from './ux-feedback.service';
 
 @Controller('ux-feedback')
@@ -7,7 +7,7 @@ export class UxFeedbackController {
 
   @Post()
   async submit(
-    @Body() body: { projectId: string; answers: Record<string, unknown> },
+    @Body() body: { projectId: string; answers: Record<string, unknown>; surveyVersion?: string },
     @Req() req: any,
   ) {
     const userId: string | undefined =
@@ -16,6 +16,22 @@ export class UxFeedbackController {
       projectId: body.projectId,
       userId,
       answers: body.answers,
+      surveyVersion: body.surveyVersion,
+    });
+  }
+
+  @Get('admin')
+  async listAll(
+    @Query('surveyVersion') surveyVersion?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+    const parsedOffset = offset ? parseInt(offset, 10) : undefined;
+    return this.service.listAll({
+      surveyVersion,
+      limit: parsedLimit,
+      offset: parsedOffset,
     });
   }
 }
