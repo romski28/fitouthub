@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-da15a207",
+    "date": "2026-06-14T10:59:03+08:00",
+    "title": "Remove 'All' toggle option, put toggle + chips on same row, add 'All trades' clear button",
+    "summary": "Remove 'All' toggle option, put toggle + chips on same row, add 'All trades' clear button",
+    "areas": [
+      "web"
+    ],
+    "commit": "da15a207",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-6668db18",
     "date": "2026-06-14T10:54:18+08:00",
     "title": "Trade tabs: emerald fill for covered trades, coral × hover, no layout-shifting tick",

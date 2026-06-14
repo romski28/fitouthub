@@ -929,7 +929,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [includeMimoSurveyService, setIncludeMimoSurveyService] = useState(Boolean(initialProjectData?.requiresSurveyService));
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('all');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
-  const [coverageViewMode, setCoverageViewMode] = useState<'all' | 'one-covers-all' | 'individual'>('all');
+  const [coverageViewMode, setCoverageViewMode] = useState<'one-covers-all' | 'individual'>('one-covers-all');
 
   useEffect(() => {
     setActiveRequiredTrades(requiredTrades);
@@ -1926,13 +1926,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {activeRequiredTrades.length > 0 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
           <p className="mb-2 text-center text-sm font-semibold text-slate-700">Select your team</p>
-          {activeRequiredTrades.length > 1 && (
-            <div className="mb-2.5 flex justify-center">
-              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {activeRequiredTrades.length > 1 && (
+              <div className="inline-flex h-10 rounded-lg border border-slate-200 bg-white p-0.5">
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('one-covers-all')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`h-full rounded-md px-3 text-xs font-semibold transition flex items-center ${
                     coverageViewMode === 'one-covers-all'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
@@ -1942,19 +1942,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCoverageViewMode('all')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                    coverageViewMode === 'all'
-                      ? 'bg-slate-700 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
                   onClick={() => setCoverageViewMode('individual')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`h-full rounded-md px-3 text-xs font-semibold transition flex items-center ${
                     coverageViewMode === 'individual'
                       ? 'bg-orange-500 text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
@@ -1963,9 +1952,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                   Individual trades
                 </button>
               </div>
-            </div>
-          )}
-          <div className="flex flex-wrap justify-center gap-2">
+            )}
             {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
@@ -2014,6 +2001,15 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </div>
               );
             })}
+            {tradeAutoFilterMode !== 'all' && (
+              <button
+                type="button"
+                onClick={() => { setTradeAutoFilterMode('all'); setSearchTerm(''); }}
+                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
+              >
+                All trades ×
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -2158,7 +2154,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ) : (
         groupedTradeDisplay.isEnabled ? (
           <div className="space-y-5" suppressHydrationWarning>
-            {(coverageViewMode === 'all' || coverageViewMode === 'one-covers-all') && groupedTradeDisplay.fullCoverageCompanies.length > 0 && (
+            {coverageViewMode === 'one-covers-all' && groupedTradeDisplay.fullCoverageCompanies.length > 0 && (
               <section className="space-y-3">
                 <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700">Covers all required trades</p>
@@ -2187,7 +2183,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               </section>
             )}
 
-            {(coverageViewMode === 'all' || coverageViewMode === 'individual') && groupedTradeDisplay.specialistSections.map((section) => {
+            {coverageViewMode === 'individual' && groupedTradeDisplay.specialistSections.map((section) => {
               const hasMatches = section.professionals.length > 0;
               return (
                 <section key={`specialists-${section.trade}`} className="space-y-3">
