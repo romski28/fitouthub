@@ -3137,7 +3137,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       ...baseResponse,
       conversationalText,
       parsedOutput: responseParsedOutput,
-      trades,
+      trades: finalTrades,
     };
   }
 

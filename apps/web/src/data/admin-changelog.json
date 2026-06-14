@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-40659c6a",
+    "date": "2026-06-14T18:27:07+08:00",
+    "title": "Fix return to use finalTrades (confidence-filtered) instead of raw trades",
+    "summary": "Fix return to use finalTrades (confidence-filtered) instead of raw trades",
+    "areas": [
+      "api"
+    ],
+    "commit": "40659c6a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-f50f3137",
     "date": "2026-06-14T18:17:42+08:00",
     "title": "Add confidence-based trade filtering (<0.5 dropped) + prompt rule against irrelevant trades",
