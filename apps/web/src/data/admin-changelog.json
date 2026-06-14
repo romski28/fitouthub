@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-14-e636a411",
+    "date": "2026-06-14T16:51:33+08:00",
+    "title": "Phase 1: populate servicePrimaries from coverage, add primaryTrade to matrix, Phase 2 reconciliation plan",
+    "summary": "Phase 1: populate servicePrimaries from coverage, add primaryTrade to matrix, Phase 2 reconciliation plan",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "e636a411",
+    "files": [
+      "PHASE_2_DATA_RECONCILIATION.md",
+      "apps/api/src/admin/trade-district-matrix.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-47c8955e",
     "date": "2026-06-14T16:24:35+08:00",
     "title": "Option A: hide team panel for single trade, jump straight to cream header + results",

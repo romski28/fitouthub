@@ -66,7 +66,10 @@ export class TradeDistrictMatrixController {
         }
         if (districts.size === 0) districts.add('Unknown');
 
-        const trades: string[] = Array.isArray(pro.tradesOffered) ? pro.tradesOffered : [];
+        const trades: string[] = [
+          ...(Array.isArray(pro.tradesOffered) ? pro.tradesOffered : []),
+          ...(pro.primaryTrade?.trim() ? [pro.primaryTrade.trim()] : []),
+        ];
 
         for (const district of districts) {
           allDistricts.add(district);

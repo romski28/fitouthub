@@ -269,6 +269,8 @@ export class ProfessionalsService {
       locationPrimary,
       locationSecondary: uniqueAreaNames.length === 1 ? uniqueAreaNames[0] : null,
       locationTertiary: null,
+      servicePrimaries: uniqueZoneLabels,
+      serviceSecondaries: [],
     };
   }
 
@@ -704,6 +706,8 @@ export class ProfessionalsService {
       data.locationPrimary = mirroredLegacy.locationPrimary;
       data.locationSecondary = mirroredLegacy.locationSecondary;
       data.locationTertiary = mirroredLegacy.locationTertiary;
+      data.servicePrimaries = mirroredLegacy.servicePrimaries;
+      data.serviceSecondaries = mirroredLegacy.serviceSecondaries;
 
       return this.prisma.$transaction(async (tx) => {
         const updated = await (tx as any).professional.update({
