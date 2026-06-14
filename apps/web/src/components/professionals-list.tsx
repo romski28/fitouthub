@@ -1973,14 +1973,14 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
       {activeRequiredTrades.length > 0 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
-          <p className="mb-2 text-center text-sm font-semibold text-slate-700">
+          <p className="mb-2 flex items-center justify-center gap-1.5 h-10 text-sm font-semibold text-slate-700">
             Select your team as{' '}
             {activeRequiredTrades.length > 1 ? (
-              <span className="inline-flex gap-1">
+              <>
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('one-covers-all')}
-                  className={`rounded-md px-2 py-0.5 text-xs font-semibold transition ${
+                  className={`rounded-md px-3 py-1 text-sm font-semibold transition ${
                     coverageViewMode === 'one-covers-all'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
@@ -1992,7 +1992,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('individual')}
-                  className={`rounded-md px-2 py-0.5 text-xs font-semibold transition ${
+                  className={`rounded-md px-3 py-1 text-sm font-semibold transition ${
                     coverageViewMode === 'individual'
                       ? 'bg-orange-500 text-white'
                       : 'bg-white border border-slate-300 text-slate-600 hover:border-orange-400'
@@ -2000,7 +2000,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 >
                   individual trades working together
                 </button>
-              </span>
+              </>
             ) : (
               <span className="text-slate-500">individual trades</span>
             )}
