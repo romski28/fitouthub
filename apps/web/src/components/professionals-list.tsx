@@ -2064,15 +2064,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </div>
               );
             })}
-            {tradeAutoFilterMode !== 'all' && coverageViewMode === 'one-covers-all' && (
-              <button
-                type="button"
-                onClick={() => { setTradeAutoFilterMode('all'); setSearchTerm(''); }}
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
-              >
-                All trades ×
-              </button>
-            )}
           </div>
           )}
         </div>
