@@ -32,6 +32,9 @@ export type Professional = {
   profileImages?: string[];
   referenceProjects?: ReferenceProject[];
   emergencyCalloutAvailable?: boolean;
+  completedProjectsCount?: number;
+  avgResponseHours?: number | null;
+  awardRate?: number | null;
   regionCoverage?: Array<{
     zone?: {
       id: string;

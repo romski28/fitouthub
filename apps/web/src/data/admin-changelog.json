@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-06-14-2f5e3369",
+    "date": "2026-06-14T11:29:43+08:00",
+    "title": "Add professional sort metrics (completedProjects, avgResponse, awardRate) + 7-key sort bar UI",
+    "summary": "Add professional sort metrics (completedProjects, avgResponse, awardRate) + 7-key sort bar UI",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "2f5e3369",
+    "files": [
+      "MANUAL_SQL_ADD_PROFESSIONAL_SORT_METRICS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/web/src/components/professionals-list.tsx",
+      "apps/web/src/lib/types.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-da15a207",
     "date": "2026-06-14T10:59:03+08:00",
     "title": "Remove 'All' toggle option, put toggle + chips on same row, add 'All trades' clear button",

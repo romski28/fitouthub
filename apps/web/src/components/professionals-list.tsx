@@ -930,6 +930,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('all');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
   const [coverageViewMode, setCoverageViewMode] = useState<'one-covers-all' | 'individual'>('one-covers-all');
+  const [sortKey, setSortKey] = useState<'best-match' | 'rating' | 'completed' | 'award-rate' | 'response-time' | 'recent' | 'name'>('best-match');
 
   useEffect(() => {
     setActiveRequiredTrades(requiredTrades);
@@ -1264,7 +1265,42 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     };
 
     const sorted = items.slice().sort((a, b) => {
-      // Primary sort: match strength (3 = trade+location+rating, 2 = trade+one, 1 = trade only)
+      // ── User-selected sort keys (non-default) ──
+      if (sortKey !== 'best-match') {
+        const nameA = (a.fullName || a.businessName || '').toLowerCase();
+        const nameB = (b.fullName || b.businessName || '').toLowerCase();
+        const ratingA = typeof a.rating === 'number' ? a.rating : 0;
+        const ratingB = typeof b.rating === 'number' ? b.rating : 0;
+
+        switch (sortKey) {
+          case 'rating':
+            return ratingB - ratingA || nameA.localeCompare(nameB);
+          case 'completed':
+            return ((b.completedProjectsCount ?? 0) - (a.completedProjectsCount ?? 0))
+              || (ratingB - ratingA)
+              || nameA.localeCompare(nameB);
+          case 'award-rate': {
+            const arA = a.awardRate ?? -1;
+            const arB = b.awardRate ?? -1;
+            return arB - arA || (ratingB - ratingA) || nameA.localeCompare(nameB);
+          }
+          case 'response-time': {
+            const rtA = a.avgResponseHours ?? Infinity;
+            const rtB = b.avgResponseHours ?? Infinity;
+            return rtA - rtB || (ratingB - ratingA) || nameA.localeCompare(nameB);
+          }
+          case 'recent':
+            return (new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
+              || (ratingB - ratingA)
+              || nameA.localeCompare(nameB);
+          case 'name':
+            return nameA.localeCompare(nameB);
+          default:
+            break;
+        }
+      }
+
+      // ── Best match (default multi-tier) ──
       const strengthA = getMatchStrength(a, locationParts, selectedZoneCode, minRating);
       const strengthB = getMatchStrength(b, locationParts, selectedZoneCode, minRating);
       if (strengthB !== strengthA) return strengthB - strengthA;
@@ -1294,7 +1330,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades, tradeAutoFilterMode]);
+  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades, tradeAutoFilterMode, sortKey]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
@@ -1305,6 +1341,23 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
 
     const sortByTradePipeline = (a: Professional, b: Professional) => {
+      // If user selected a non-default sort, use that instead of trade coverage
+      if (sortKey !== 'best-match') {
+        const nameA = (a.fullName || a.businessName || '').toLowerCase();
+        const nameB = (b.fullName || b.businessName || '').toLowerCase();
+        const rA = typeof a.rating === 'number' ? a.rating : 0;
+        const rB = typeof b.rating === 'number' ? b.rating : 0;
+        switch (sortKey) {
+          case 'rating': return rB - rA || nameA.localeCompare(nameB);
+          case 'completed': return ((b.completedProjectsCount ?? 0) - (a.completedProjectsCount ?? 0)) || (rB - rA) || nameA.localeCompare(nameB);
+          case 'award-rate': { const aA = a.awardRate ?? -1; const aB = b.awardRate ?? -1; return aB - aA || (rB - rA) || nameA.localeCompare(nameB); }
+          case 'response-time': { const tA = a.avgResponseHours ?? Infinity; const tB = b.avgResponseHours ?? Infinity; return tA - tB || (rB - rA) || nameA.localeCompare(nameB); }
+          case 'recent': return (new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()) || (rB - rA) || nameA.localeCompare(nameB);
+          case 'name': return nameA.localeCompare(nameB);
+          default: break;
+        }
+      }
+
       const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
       const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
@@ -1346,7 +1399,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     }
 
     return filteredBase;
-  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, locationSearch, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades, tradeAutoFilterMode]);
+  }, [filteredBase, professionals, loc.primary, loc.secondary, loc.tertiary, locationSearch, searchTerm, professionHint, minRating, regionExpanded, enforcedRequiredTrades, tradeAutoFilterMode, sortKey]);
 
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
@@ -2143,6 +2196,35 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {blockInviteForMissingLocation && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Please choose your project location first. We can&apos;t continue to professional selection without a location.
+        </div>
+      )}
+
+      {/* Sort bar */}
+      {filtered.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-medium text-slate-400 mr-1">Sort:</span>
+          {([
+            { key: 'best-match' as const, label: 'Best match' },
+            { key: 'rating' as const, label: 'Rating' },
+            { key: 'completed' as const, label: 'Most projects' },
+            { key: 'award-rate' as const, label: 'Award rate' },
+            { key: 'response-time' as const, label: 'Response time' },
+            { key: 'recent' as const, label: 'Recently active' },
+            { key: 'name' as const, label: 'Name' },
+          ]).map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setSortKey(opt.key)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                sortKey === opt.key
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-800'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       )}
 

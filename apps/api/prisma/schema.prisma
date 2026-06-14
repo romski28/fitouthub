@@ -314,6 +314,9 @@ model Professional {
   suppliesOffered         String[]                       @default([])
   tradesOffered           String[]                       @default([])
   emergencyCalloutAvailable Boolean                      @default(false)
+  completedProjectsCount   Int                          @default(0)  @map("completedProjectsCount")
+  avgResponseHours         Float?                       @map("avgResponseHours")
+  awardRate                Float?                       @map("awardRate")
   passwordHash            String?
   emailTokens             EmailToken[]
   user                    User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
