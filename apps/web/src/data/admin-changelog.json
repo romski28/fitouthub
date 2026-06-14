@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-c1c9d508",
+    "date": "2026-06-14T21:28:14+08:00",
+    "title": "Matrix: use only servicePrimaries for regions, validate trades against Tradesman table",
+    "summary": "Matrix: use only servicePrimaries for regions, validate trades against Tradesman table",
+    "areas": [
+      "api"
+    ],
+    "commit": "c1c9d508",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-70f53f6c",
     "date": "2026-06-14T18:36:43+08:00",
     "title": "Fix service matcher: use canonical trade names, suppress inferredTrades when AI returns trades",
