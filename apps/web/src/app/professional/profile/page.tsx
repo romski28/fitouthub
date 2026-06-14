@@ -222,7 +222,7 @@ const buildProfileChecklist = (
     { label: 'Business or full name added', done: Boolean(profile.businessName || profile.fullName), weight: 10 },
     { label: 'Phone number added', done: Boolean(profile.phone), weight: 10 },
     { label: 'Profession type selected', done: Boolean(profile.professionType), weight: 10 },
-    { label: 'Primary trade defined', done: professionType !== 'contractor' || Boolean(profile.primaryTrade), weight: 15 },
+    { label: 'Primary trade defined', done: professionType !== 'contractor' || (profile.tradesOffered?.length || 0) > 0, weight: 15 },
     { label: 'Trades or products listed', done: tradesOrProductsListed, weight: 10 },
     { label: 'Service area described', done: serviceAreas.length > 0, weight: 10 },
     { label: 'Primary location added', done: Boolean(profile.locationPrimary), weight: 10 },
@@ -238,8 +238,8 @@ const buildClientFacingHighlights = (
   emergencyCalloutAvailable: boolean,
 ) => {
   const highlights: string[] = [];
-  if ((profile.professionType || '').trim().toLowerCase() === 'contractor' && profile.primaryTrade) {
-    highlights.push(`Primary trade: ${profile.primaryTrade}`);
+  if ((profile.professionType || '').trim().toLowerCase() === 'contractor' && (profile.tradesOffered?.length || 0) > 0) {
+    highlights.push(`Primary trade: ${profile.tradesOffered?.[0] ?? profile.primaryTrade}`);
   }
   if (emergencyCalloutAvailable) highlights.push('24/7 emergency callout available');
   return highlights.slice(0, 4);
@@ -278,7 +278,7 @@ export default function ProfessionalProfilePage() {
     [selectedCoverageAreaCodes],
   );
   const normalizedProfessionType = (profile.professionType || '').trim().toLowerCase();
-  const showPrimaryTrade = normalizedProfessionType === 'contractor';
+  const showPrimaryTrade = false; // Contractors now use tradesOffered (multi-trade) like companies
   const showProductsOffered = normalizedProfessionType === 'reseller';
   const showTradesOffered = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
   const showEmergencyAvailability = normalizedProfessionType === 'company' || normalizedProfessionType === 'contractor';
@@ -367,7 +367,12 @@ export default function ProfessionalProfilePage() {
         if (!res.ok) throw new Error('Failed to load profile');
         const data = await res.json();
         if (shouldHydrate) {
-          setProfile({ ...emptyProfile, ...data });
+          // Backward compat: merge legacy primaryTrade into tradesOffered for contractors
+          const mergedData = { ...data };
+          if (data.professionType === 'contractor' && data.primaryTrade && (!data.tradesOffered || data.tradesOffered.length === 0)) {
+            mergedData.tradesOffered = [data.primaryTrade];
+          }
+          setProfile({ ...emptyProfile, ...mergedData });
           setSelectedCoverageAreaCodes(deriveAreaCodesFromCoveragePayload(data));
           setRefProjects(data.referenceProjects || []);
           setAllowPartnerOffers(data.notificationPreferences?.allowPartnerOffers ?? false);
@@ -447,7 +452,7 @@ export default function ProfessionalProfilePage() {
           coverageAreaCodes: selectedCoverageAreaCodes,
           suppliesOffered: showProductsOffered ? profile.suppliesOffered || [] : [],
           tradesOffered: showTradesOffered ? profile.tradesOffered || [] : [],
-          primaryTrade: showPrimaryTrade ? profile.primaryTrade || undefined : undefined,
+          primaryTrade: showTradesOffered ? (profile.tradesOffered?.[0] || profile.primaryTrade || undefined) : undefined,
           emergencyCalloutAvailable: showEmergencyAvailability ? emergencyCalloutAvailable : false,
         }),
       });
@@ -631,7 +636,7 @@ export default function ProfessionalProfilePage() {
                   setProfile((prev) => ({
                     ...prev,
                     professionType: nextProfessionType,
-                    primaryTrade: nextProfessionType === 'contractor' ? prev.primaryTrade : '',
+                    primaryTrade: undefined,
                     suppliesOffered: nextProfessionType === 'reseller' ? prev.suppliesOffered : [],
                     tradesOffered:
                       nextProfessionType === 'company' || nextProfessionType === 'contractor'

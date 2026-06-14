@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-14-cb95d1cc",
+    "date": "2026-06-14T22:37:48+08:00",
+    "title": "Cache TTL to 1min+clearCache, contractors use multi-trade tradesOffered like companies",
+    "summary": "Cache TTL to 1min+clearCache, contractors use multi-trade tradesOffered like companies",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "cb95d1cc",
+    "files": [
+      "apps/api/src/trades/trades.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-adfaf53e",
     "date": "2026-06-14T21:28:57+08:00",
     "title": "Extend Phase 2 MD: contractor primary location, Phase 1 lessons learned",

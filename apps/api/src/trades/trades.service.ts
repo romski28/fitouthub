@@ -36,7 +36,7 @@ interface TradesCache {
 @Injectable()
 export class TradesService {
   private cache: TradesCache | null = null;
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_TTL = 1 * 60 * 1000; // 1 minute (reduced from 5 min for faster trade updates)
   private readonly DEFAULT_LOCALE = 'en';
 
   private readonly ZH_HK_TITLE_DRAFTS: Record<string, string> = {
@@ -219,6 +219,11 @@ export class TradesService {
       await this.refreshCache();
     }
     return this.cache!;
+  }
+
+  /** Force-refresh the trades cache — call after updating trades in the DB */
+  async clearCache(): Promise<void> {
+    await this.refreshCache();
   }
 
   async findAll() {
