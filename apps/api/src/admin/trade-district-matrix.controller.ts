@@ -23,6 +23,7 @@ export class TradeDistrictMatrixController {
             servicePrimaries: true,
             serviceSecondaries: true,
             tradesOffered: true,
+            primaryTrade: true,
           },
         }),
         // Fetch ALL trades directly from DB, including disabled ones

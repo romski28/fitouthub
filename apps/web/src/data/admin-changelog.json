@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-56c15dfc",
+    "date": "2026-06-14T16:55:25+08:00",
+    "title": "Add primaryTrade to Prisma select in trade-district matrix query",
+    "summary": "Add primaryTrade to Prisma select in trade-district matrix query",
+    "areas": [
+      "api"
+    ],
+    "commit": "56c15dfc",
+    "files": [
+      "apps/api/src/admin/trade-district-matrix.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-e636a411",
     "date": "2026-06-14T16:51:33+08:00",
     "title": "Phase 1: populate servicePrimaries from coverage, add primaryTrade to matrix, Phase 2 reconciliation plan",
