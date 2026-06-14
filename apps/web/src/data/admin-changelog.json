@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-485a6fb2",
+    "date": "2026-06-14T12:27:28+08:00",
+    "title": "Set team toggle buttons to explicit h-10 matching trade chip height",
+    "summary": "Set team toggle buttons to explicit h-10 matching trade chip height",
+    "areas": [
+      "web"
+    ],
+    "commit": "485a6fb2",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-2d7e40cb",
     "date": "2026-06-14T12:13:14+08:00",
     "title": "Match team toggle height and text size to trade chips (h-10, text-sm)",

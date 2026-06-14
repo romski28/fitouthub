@@ -1980,7 +1980,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('one-covers-all')}
-                  className={`rounded-md px-3 py-1 text-sm font-semibold transition ${
+                  className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
                     coverageViewMode === 'one-covers-all'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
@@ -1992,7 +1992,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('individual')}
-                  className={`rounded-md px-3 py-1 text-sm font-semibold transition ${
+                  className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
                     coverageViewMode === 'individual'
                       ? 'bg-orange-500 text-white'
                       : 'bg-white border border-slate-300 text-slate-600 hover:border-orange-400'
