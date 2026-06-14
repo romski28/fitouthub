@@ -2308,6 +2308,29 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           </div>
         ) : (
           <div className="space-y-3" suppressHydrationWarning>
+            <div className="flex items-center justify-between rounded-lg border border-white/45 bg-[#F5EEDE]/90 px-4 py-2.5">
+              <div>
+                <p className="text-sm font-bold text-slate-800">
+                  {enforcedRequiredTrades.length === 1 ? enforcedRequiredTrades[0] : 'All trades'} ({filtered.length})
+                </p>
+              </div>
+              <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                Sorted by
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
+                >
+                  <option value="best-match">Best match</option>
+                  <option value="rating">Rating</option>
+                  <option value="completed">Most projects</option>
+                  <option value="award-rate">Award rate</option>
+                  <option value="response-time">Response time</option>
+                  <option value="recent">Recently active</option>
+                  <option value="name">Name</option>
+                </select>
+              </label>
+            </div>
             {filtered.map((pro) => (
               <ProfessionalRowItem
                 key={pro.id}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-5d246a49",
+    "date": "2026-06-14T13:51:51+08:00",
+    "title": "Add permanent cream header with sort dropdown to single-trade flat list view",
+    "summary": "Add permanent cream header with sort dropdown to single-trade flat list view",
+    "areas": [
+      "web"
+    ],
+    "commit": "5d246a49",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-7a3b8a1e",
     "date": "2026-06-14T13:32:03+08:00",
     "title": "Remove dead 'All trades' button — unreachable inside individual coverage mode",
