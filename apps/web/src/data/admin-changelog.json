@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-adfaf53e",
+    "date": "2026-06-14T21:28:57+08:00",
+    "title": "Extend Phase 2 MD: contractor primary location, Phase 1 lessons learned",
+    "summary": "Extend Phase 2 MD: contractor primary location, Phase 1 lessons learned",
+    "areas": [
+      "infra"
+    ],
+    "commit": "adfaf53e",
+    "files": [
+      "PHASE_2_DATA_RECONCILIATION.md"
+    ]
+  },
+  {
     "id": "2026-06-14-c1c9d508",
     "date": "2026-06-14T21:28:14+08:00",
     "title": "Matrix: use only servicePrimaries for regions, validate trades against Tradesman table",
