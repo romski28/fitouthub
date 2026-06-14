@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-6b31e332",
+    "date": "2026-06-14T10:42:39+08:00",
+    "title": "Add 'One covers all' / 'Individual trades' view toggle to team panel",
+    "summary": "Add 'One covers all' / 'Individual trades' view toggle to team panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "6b31e332",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-2aa0df93",
     "date": "2026-06-14T10:31:53+08:00",
     "title": "Drop Teams tier: always group 2+ trades, open Full Coverage to contractors, dedup invite trades",
