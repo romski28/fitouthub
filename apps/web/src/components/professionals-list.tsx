@@ -1973,34 +1973,39 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
       {activeRequiredTrades.length > 0 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
-          <p className="mb-2 text-center text-sm font-semibold text-slate-700">Select your team</p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {activeRequiredTrades.length > 1 && (
-              <div className="inline-flex h-10 rounded-lg border border-slate-200 bg-white p-0.5">
+          <p className="mb-2 text-center text-sm font-semibold text-slate-700">
+            Select your team as{' '}
+            {activeRequiredTrades.length > 1 ? (
+              <span className="inline-flex gap-1">
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('one-covers-all')}
-                  className={`h-full rounded-md px-3 text-xs font-semibold transition flex items-center ${
+                  className={`rounded-md px-2 py-0.5 text-xs font-semibold transition ${
                     coverageViewMode === 'one-covers-all'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
                   }`}
                 >
-                  One covers all
+                  one pro covers all
                 </button>
+                {' or '}
                 <button
                   type="button"
                   onClick={() => setCoverageViewMode('individual')}
-                  className={`h-full rounded-md px-3 text-xs font-semibold transition flex items-center ${
+                  className={`rounded-md px-2 py-0.5 text-xs font-semibold transition ${
                     coverageViewMode === 'individual'
-                      ? 'bg-orange-500 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-white border border-slate-300 text-slate-600 hover:border-orange-400'
                   }`}
                 >
-                  Individual trades
+                  individual trades working together
                 </button>
-              </div>
+              </span>
+            ) : (
+              <span className="text-slate-500">individual trades</span>
             )}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
             {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;

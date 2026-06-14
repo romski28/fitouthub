@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-d6826bbf",
+    "date": "2026-06-14T12:08:55+08:00",
+    "title": "Inline team toggle: 'Select your team as [one pro covers all] or [individual trades working together]'",
+    "summary": "Inline team toggle: 'Select your team as [one pro covers all] or [individual trades working together]'",
+    "areas": [
+      "web"
+    ],
+    "commit": "d6826bbf",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-aeaba51e",
     "date": "2026-06-14T11:47:26+08:00",
     "title": "Trade matching: pros in all sections, sort pills inside team panel emerald, compact filters with icon toggle",
