@@ -1971,7 +1971,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
               const hasSelectedTrade = selectedTradeCoverageKeys.has(trade.toLowerCase());
               return (
-                <div key={`autofilter-${trade}`} className="group flex h-10 items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+                <div key={`autofilter-${trade}`} className={`group flex h-10 items-center overflow-hidden rounded-md border transition ${
+                  hasSelectedTrade
+                    ? 'border-emerald-400 bg-emerald-600'
+                    : 'border-slate-300 bg-white'
+                }`}>
                   <button
                     type="button"
                     onClick={() => {
@@ -1980,19 +1984,26 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     }}
                     className={`h-10 px-4 text-sm font-semibold transition ${
                       tradeAutoFilterMode === key
-                        ? 'bg-sky-600 text-white shadow-sm'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? hasSelectedTrade
+                          ? 'bg-emerald-700 text-[#F5EEDE] shadow-sm'
+                          : 'bg-sky-600 text-white shadow-sm'
+                        : hasSelectedTrade
+                          ? 'text-[#F5EEDE] hover:bg-emerald-700'
+                          : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {`${count} x ${trade}`}
-                    {hasSelectedTrade && <span className="ml-2">✓</span>}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setActiveRequiredTrades((prev) => prev.filter((item) => item.toLowerCase() !== trade.toLowerCase()));
                     }}
-                    className="h-10 border-l border-slate-200 px-2.5 text-slate-500 transition hover:bg-rose-50 hover:text-rose-700"
+                    className={`h-10 border-l px-2.5 transition ${
+                      hasSelectedTrade
+                        ? 'border-emerald-400 text-[#F5EEDE]/70 hover:bg-[#F97362] hover:text-white'
+                        : 'border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-700'
+                    }`}
                     aria-label={`Remove ${trade}`}
                     title={`Remove ${trade}`}
                   >
