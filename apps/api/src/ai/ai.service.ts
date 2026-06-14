@@ -4439,7 +4439,8 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
       const fullCoverageCompanyCount = normalizedTrades.length > 0
         ? matchedProfessionals.filter((professional: any) => {
-            if ((professional?.professionType || '').toLowerCase() !== 'company') return false;
+            const pt = (professional?.professionType || '').toLowerCase();
+            if (pt !== 'company' && pt !== 'contractor') return false;
             const tradeSet = getProfessionalTradeSet(professional);
             return normalizedTrades.every((trade) => tradeSet.has(trade));
           }).length

@@ -415,8 +415,8 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
     const tradeText = tradesLabel || 'professionals';
     return trades.length > 1
       ? fullCoverageCompanyCount > 0
-        ? `Luckily, MIMO has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} companies in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
-        : `Luckily, MIMO has this covered. While a single all-trades company is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
+        ? `Luckily, MIMO has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} pros in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
+        : `Luckily, MIMO has this covered. While a single all-trades pro is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
       : `Luckily, MIMO has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
   })();
 

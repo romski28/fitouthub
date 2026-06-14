@@ -194,15 +194,14 @@ const getProfessionalTradeTokens = (pro: Professional): string[] => {
   return tradeTokens.map((value) => value.toLowerCase());
 };
 
-type TradeAutoFilterMode = 'teams' | `single:${string}`;
+type TradeAutoFilterMode = 'all' | `single:${string}`;
 
 const getTradeCoverageMeta = (pro: Professional, requiredTradesLower: string[]) => {
   const tradeTokens = getProfessionalTradeTokens(pro);
-  const isCompany = pro.professionType === 'company';
   const isTeamCandidate = pro.professionType === 'company' || pro.professionType === 'contractor';
 
   if (requiredTradesLower.length === 0) {
-    return { matchedCount: 0, coversAllRequiredTrades: false, isCompany, isTeamCandidate };
+    return { matchedCount: 0, coversAllRequiredTrades: false, isTeamCandidate };
   }
 
   const matchedCount = requiredTradesLower.filter((trade) =>
@@ -212,7 +211,6 @@ const getTradeCoverageMeta = (pro: Professional, requiredTradesLower: string[]) 
   return {
     matchedCount,
     coversAllRequiredTrades: matchedCount === requiredTradesLower.length,
-    isCompany,
     isTeamCandidate,
   };
 };
@@ -220,15 +218,10 @@ const getTradeCoverageMeta = (pro: Professional, requiredTradesLower: string[]) 
 const matchesTradeAutoFilterMode = (
   pro: Professional,
   requiredTradesLower: string[],
-  tradeAutoFilterMode: TradeAutoFilterMode,
+  _tradeAutoFilterMode: TradeAutoFilterMode,
 ) => {
   const tradeCoverage = getTradeCoverageMeta(pro, requiredTradesLower);
-
   if (requiredTradesLower.length === 0) return true;
-  if (tradeAutoFilterMode === 'teams') {
-    return tradeCoverage.isTeamCandidate && tradeCoverage.matchedCount > 1;
-  }
-
   return tradeCoverage.matchedCount > 0;
 };
 
@@ -934,7 +927,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [activeRequiredTrades, setActiveRequiredTrades] = useState<string[]>(requiredTrades);
   const [includeMimoDesignService, setIncludeMimoDesignService] = useState(false);
   const [includeMimoSurveyService, setIncludeMimoSurveyService] = useState(Boolean(initialProjectData?.requiresSurveyService));
-  const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('teams');
+  const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('all');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
 
   useEffect(() => {
@@ -944,25 +937,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   useEffect(() => {
     if (hasInitializedTradeAutoFilter) return;
 
-    if (activeRequiredTrades.length > 1) {
-      setTradeAutoFilterMode('teams');
-      setHasInitializedTradeAutoFilter(true);
-      return;
-    }
-
     if (activeRequiredTrades.length === 1) {
       setTradeAutoFilterMode(`single:${activeRequiredTrades[0]!.toLowerCase()}`);
-      setHasInitializedTradeAutoFilter(true);
-      return;
+    } else {
+      setTradeAutoFilterMode('all');
     }
-
-    setTradeAutoFilterMode('teams');
     setHasInitializedTradeAutoFilter(true);
   }, [activeRequiredTrades, hasInitializedTradeAutoFilter]);
 
   useEffect(() => {
     if (activeRequiredTrades.length === 0) {
-      if (tradeAutoFilterMode !== 'teams') setTradeAutoFilterMode('teams');
+      if (tradeAutoFilterMode !== 'all') setTradeAutoFilterMode('all');
       return;
     }
 
@@ -972,16 +957,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     if (tradeAutoFilterMode.startsWith('single:')) {
       const selectedTrade = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
       if (!activeLower.has(selectedTrade)) {
-        if (activeRequiredTrades.length > 1) {
-          setTradeAutoFilterMode('teams');
-        } else if (firstActive) {
+        if (activeRequiredTrades.length === 1 && firstActive) {
           setTradeAutoFilterMode(`single:${firstActive}`);
+        } else {
+          setTradeAutoFilterMode('all');
         }
       }
       return;
     }
 
-    if (tradeAutoFilterMode === 'teams' && activeRequiredTrades.length === 1 && firstActive) {
+    if (tradeAutoFilterMode === 'all' && activeRequiredTrades.length === 1 && firstActive) {
       setTradeAutoFilterMode(`single:${firstActive}`);
     }
   }, [activeRequiredTrades, tradeAutoFilterMode]);
@@ -1065,7 +1050,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return {
-      teams: countWithMode('teams', activeRequiredTrades),
       single,
     };
   }, [professionals, activeRequiredTrades]);
@@ -1077,11 +1061,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   useEffect(() => {
     if (activeRequiredTrades.length <= 1) return;
-    if (tradeAutoFilterMode !== 'teams') return;
-    if (tradeAutoFilterCounts.teams > 0) return;
+    if (tradeAutoFilterMode !== 'all') return;
+    if (tradeAutoFilterCounts.single && Object.values(tradeAutoFilterCounts.single).some((c) => c > 0)) return;
 
     const firstTradeWithMatches = activeRequiredTrades.find(
-      (trade) => (tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0) > 0,
+      (trade) => (tradeAutoFilterCounts.single?.[trade.toLowerCase()] ?? 0) > 0,
     );
 
     if (firstTradeWithMatches) {
@@ -1287,8 +1271,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
       const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
-      const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
-      const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
+      const aPrimaryTier = tradeA.coversAllRequiredTrades ? 3 : 0;
+      const bPrimaryTier = tradeB.coversAllRequiredTrades ? 3 : 0;
       if (bPrimaryTier !== aPrimaryTier) return bPrimaryTier - aPrimaryTier;
 
       const aSecondaryTier = tradeA.coversAllRequiredTrades ? 2 : 0;
@@ -1323,8 +1307,8 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       const tradeA = getTradeCoverageMeta(a, requiredTradesLower);
       const tradeB = getTradeCoverageMeta(b, requiredTradesLower);
 
-      const aPrimaryTier = tradeA.isCompany && tradeA.coversAllRequiredTrades ? 3 : 0;
-      const bPrimaryTier = tradeB.isCompany && tradeB.coversAllRequiredTrades ? 3 : 0;
+      const aPrimaryTier = tradeA.coversAllRequiredTrades ? 3 : 0;
+      const bPrimaryTier = tradeB.coversAllRequiredTrades ? 3 : 0;
       if (bPrimaryTier !== aPrimaryTier) return bPrimaryTier - aPrimaryTier;
 
       const aSecondaryTier = tradeA.coversAllRequiredTrades ? 2 : 0;
@@ -1482,7 +1466,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const groupedTradeDisplay = useMemo(() => {
     const requiredTradesLower = enforcedRequiredTrades.map((trade) => trade.toLowerCase());
-    if (requiredTradesLower.length < 2 || tradeAutoFilterMode === 'teams') {
+    if (requiredTradesLower.length < 2) {
       console.log('[ProfessionalsList] Grouping disabled - not enough trades:', { requiredTrades: enforcedRequiredTrades, requiredTradesLower });
       return {
         isEnabled: false,
@@ -1501,7 +1485,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       requiredTradesLower.every((trade) => matchesTrade(pro, trade));
 
     const fullCoverageCompanies = filtered.filter(
-      (pro) => pro.professionType === 'company' && coversAllRequired(pro),
+      (pro) => (pro.professionType === 'company' || pro.professionType === 'contractor') && coversAllRequired(pro),
     );
 
     const usedIds = new Set(fullCoverageCompanies.map((pro) => pro.id));
@@ -1541,7 +1525,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
   const activeFilterLabel = useMemo(() => {
     if (activeRequiredTrades.length === 0) return null;
-    if (tradeAutoFilterMode === 'teams') return 'Teams';
+    if (tradeAutoFilterMode === 'all') return null;
     if (tradeAutoFilterMode.startsWith('single:')) {
       const selectedTrade = tradeAutoFilterMode.slice('single:'.length).trim().toLowerCase();
       return activeRequiredTrades.find((trade) => trade.toLowerCase() === selectedTrade) || enforcedRequiredTrades[0] || 'Trade';
@@ -1769,7 +1753,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       requestedTrades: deriveRequestedTradesForProfessional(
         professional,
         resolvedTradesRequired,
-        tradeAutoFilterMode,
+        'all',
       ),
     }));
 
@@ -1942,22 +1926,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
           <p className="mb-2 text-center text-sm font-semibold text-slate-700">Select your team</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {activeRequiredTrades.length > 1 && tradeAutoFilterCounts.teams > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setTradeAutoFilterMode('teams');
-                  setSearchTerm('');
-                }}
-                className={`h-10 rounded-md px-5 text-sm font-semibold transition ${
-                  tradeAutoFilterMode === 'teams'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                {`${tradeAutoFilterCounts.teams} x Teams`}
-              </button>
-            )}
             {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
               const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
@@ -2144,7 +2112,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700">Covers all required trades</p>
                   <p className="text-sm text-emerald-900">
-                    {groupedTradeDisplay.fullCoverageCompanies.length} compan{groupedTradeDisplay.fullCoverageCompanies.length === 1 ? 'y' : 'ies'} can handle this scope end-to-end.
+                    {groupedTradeDisplay.fullCoverageCompanies.length} pros can handle this scope end-to-end.
                   </p>
                 </div>
                 <div className="space-y-3">
