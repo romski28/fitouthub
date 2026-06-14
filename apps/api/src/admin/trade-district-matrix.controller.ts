@@ -47,58 +47,59 @@ export class TradeDistrictMatrixController {
         }
       }
 
-      // Build matrix: district → trade → count
+      // Build matrix: region → trade → count
       const matrix: Record<string, Record<string, number>> = {};
-      const allDistricts = new Set<string>();
+      const allRegions = new Set<string>();
 
       for (const pro of professionals) {
-        const districts = new Set<string>();
-        if (pro.locationPrimary?.trim()) districts.add(pro.locationPrimary.trim());
-        if (pro.locationSecondary?.trim()) districts.add(pro.locationSecondary.trim());
+        const regions = new Set<string>();
+        // Split locationPrimary — it may be comma-joined zones for All-HK coverage
+        if (pro.locationPrimary?.trim()) {
+          pro.locationPrimary.split(',').forEach((z) => {
+            const trimmed = z.trim();
+            if (trimmed) regions.add(trimmed);
+          });
+        }
+        // servicePrimaries now contains individual zone labels
         if (Array.isArray(pro.servicePrimaries)) {
-          for (const d of pro.servicePrimaries) {
-            if (d?.trim()) districts.add(d.trim());
+          for (const z of pro.servicePrimaries) {
+            if (z?.trim()) regions.add(z.trim());
           }
         }
-        if (Array.isArray(pro.serviceSecondaries)) {
-          for (const d of pro.serviceSecondaries) {
-            if (d?.trim()) districts.add(d.trim());
-          }
-        }
-        if (districts.size === 0) districts.add('Unknown');
+        // locationSecondary is district-level (too granular) — skip for region matrix
+        if (regions.size === 0) regions.add('Unknown');
 
         const trades: string[] = [
           ...(Array.isArray(pro.tradesOffered) ? pro.tradesOffered : []),
           ...(pro.primaryTrade?.trim() ? [pro.primaryTrade.trim()] : []),
         ];
 
-        for (const district of districts) {
-          allDistricts.add(district);
-          if (!matrix[district]) matrix[district] = {};
+        for (const region of regions) {
+          allRegions.add(region);
+          if (!matrix[region]) matrix[region] = {};
 
           for (const trade of trades) {
             const t = trade.trim();
             if (!t) continue;
-            matrix[district][t] = (matrix[district][t] || 0) + 1;
+            matrix[region][t] = (matrix[region][t] || 0) + 1;
           }
         }
       }
 
-      // Ensure all trades appear in every district (with 0 if no coverage)
-      const sortedDistricts = Array.from(allDistricts).sort();
+      const sortedRegions = Array.from(allRegions).sort();
       const sortedTrades = Array.from(allTradeNames).sort();
 
-      for (const district of sortedDistricts) {
-        if (!matrix[district]) matrix[district] = {};
+      for (const region of sortedRegions) {
+        if (!matrix[region]) matrix[region] = {};
         for (const trade of sortedTrades) {
-          if (!(trade in matrix[district])) {
-            matrix[district][trade] = 0;
+          if (!(trade in matrix[region])) {
+            matrix[region][trade] = 0;
           }
         }
       }
 
       return {
-        districts: sortedDistricts,
+        regions: sortedRegions,
         trades: sortedTrades,
         matrix,
         totalProfessionals: professionals.length,

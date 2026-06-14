@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 
 interface MatrixData {
-  districts: string[];
+  regions: string[];
   trades: string[];
   matrix: Record<string, Record<string, number>>;
   totalProfessionals: number;
@@ -17,7 +17,7 @@ export default function TradeDistrictMatrixPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [featuredOnly, setFeaturedOnly] = useState(false);
-  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedTrade, setSelectedTrade] = useState<string | null>(null);
 
   const fetchData = async (featured: boolean) => {
@@ -49,7 +49,7 @@ export default function TradeDistrictMatrixPage() {
   const maxCount = useMemo(() => {
     if (!data) return 1;
     let max = 0;
-    for (const d of data.districts) {
+    for (const d of data.regions) {
       for (const t of data.trades) {
         max = Math.max(max, data.matrix[d]?.[t] || 0);
       }
@@ -91,9 +91,9 @@ export default function TradeDistrictMatrixPage() {
 
   if (!data) return null;
 
-  const filteredDistricts = selectedDistrict
-    ? [selectedDistrict]
-    : data.districts;
+  const filteredRegions = selectedRegion
+    ? [selectedRegion]
+    : data.regions;
   const filteredTrades = selectedTrade
     ? [selectedTrade]
     : data.trades;
@@ -103,10 +103,10 @@ export default function TradeDistrictMatrixPage() {
       <div className="mx-auto max-w-full">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Trade × District Matrix</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Trade × Region Matrix</h1>
             <p className="mt-1 text-sm text-slate-600">
               {data.totalProfessionals} professional{data.totalProfessionals !== 1 ? 's' : ''} ·
-              {data.trades.length} trades · {data.districts.length} districts
+              {data.trades.length} trades · {data.regions.length} regions
             </p>
           </div>
           <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer">
@@ -123,12 +123,12 @@ export default function TradeDistrictMatrixPage() {
         {/* Quick filter selects */}
         <div className="mb-4 flex flex-wrap gap-2">
           <select
-            value={selectedDistrict || ''}
-            onChange={(e) => setSelectedDistrict(e.target.value || null)}
+            value={selectedRegion || ''}
+            onChange={(e) => setSelectedRegion(e.target.value || null)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
           >
-            <option value="">All districts</option>
-            {data.districts.map((d) => (
+            <option value="">All regions</option>
+            {data.regions.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
@@ -142,9 +142,9 @@ export default function TradeDistrictMatrixPage() {
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
-          {(selectedDistrict || selectedTrade) && (
+          {(selectedRegion || selectedTrade) && (
             <button
-              onClick={() => { setSelectedDistrict(null); setSelectedTrade(null); }}
+              onClick={() => { setSelectedRegion(null); setSelectedTrade(null); }}
               className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
             >
               Clear filters
@@ -158,15 +158,15 @@ export default function TradeDistrictMatrixPage() {
             <thead>
               <tr className="bg-slate-100">
                 <th className="sticky left-0 z-10 bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 whitespace-nowrap border-r border-slate-200">
-                  Trade ↓ / District →
+                  Trade ↓ / Region →
                 </th>
-                {filteredDistricts.map((district) => (
+                {filteredRegions.map((region) => (
                   <th
-                    key={district}
+                    key={region}
                     className="px-2 py-2 text-center font-medium text-slate-600 whitespace-nowrap cursor-pointer hover:bg-slate-200"
-                    onClick={() => setSelectedDistrict(selectedDistrict === district ? null : district)}
+                    onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
                   >
-                    {district}
+                    {region}
                   </th>
                 ))}
               </tr>
@@ -180,13 +180,13 @@ export default function TradeDistrictMatrixPage() {
                   >
                     {trade}
                   </td>
-                  {filteredDistricts.map((district) => {
-                    const count = data.matrix[district]?.[trade] || 0;
+                  {filteredRegions.map((region) => {
+                    const count = data.matrix[region]?.[trade] || 0;
                     return (
                       <td
-                        key={district}
+                        key={region}
                         className={`px-2 py-2 text-center font-mono transition-colors ${getHeatColor(count)} ${getTextColor(count)}`}
-                        title={`${trade} × ${district}: ${count} professional${count !== 1 ? 's' : ''}`}
+                        title={`${trade} × ${region}: ${count} professional${count !== 1 ? 's' : ''}`}
                       >
                         {count || '·'}
                       </td>
