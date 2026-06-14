@@ -930,6 +930,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   const [tradeAutoFilterMode, setTradeAutoFilterMode] = useState<TradeAutoFilterMode>('all');
   const [hasInitializedTradeAutoFilter, setHasInitializedTradeAutoFilter] = useState(false);
   const [coverageViewMode, setCoverageViewMode] = useState<'one-covers-all' | 'individual'>('one-covers-all');
+
+  // Auto-set trade filter when coverage mode changes
+  useEffect(() => {
+    if (activeRequiredTrades.length <= 1) return;
+    if (coverageViewMode === 'one-covers-all') {
+      setTradeAutoFilterMode('all');
+    } else {
+      setTradeAutoFilterMode(`single:${activeRequiredTrades[0]!.toLowerCase()}`);
+    }
+  }, [coverageViewMode]);
   const [sortKey, setSortKey] = useState<'best-match' | 'rating' | 'completed' | 'award-rate' | 'response-time' | 'recent' | 'name'>('best-match');
 
   useEffect(() => {
@@ -2032,7 +2042,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                           : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    {`${count} x ${trade}`}
+                    {`${trade}`}
                   </button>
                   <button
                     type="button"
@@ -2054,7 +2064,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </div>
               );
             })}
-            {tradeAutoFilterMode !== 'all' && (
+            {tradeAutoFilterMode !== 'all' && coverageViewMode === 'one-covers-all' && (
               <button
                 type="button"
                 onClick={() => { setTradeAutoFilterMode('all'); setSearchTerm(''); }}
@@ -2063,32 +2073,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 All trades ×
               </button>
             )}
-          </div>
-          {/* Sort pills — inside team panel */}
-          <div className="mt-2.5 flex items-center gap-1.5 flex-wrap justify-center border-t border-slate-200/60 pt-2.5">
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mr-1">Sort</span>
-            {([
-              { key: 'best-match' as const, label: 'Best match' },
-              { key: 'rating' as const, label: 'Rating' },
-              { key: 'completed' as const, label: 'Most projects' },
-              { key: 'award-rate' as const, label: 'Award rate' },
-              { key: 'response-time' as const, label: 'Response time' },
-              { key: 'recent' as const, label: 'Active' },
-              { key: 'name' as const, label: 'Name' },
-            ]).map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setSortKey(opt.key)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-                  sortKey === opt.key
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-white/80 border border-slate-200 text-slate-500 hover:border-emerald-300 hover:text-slate-700'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
           </div>
         </div>
       )}
@@ -2235,11 +2219,24 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           <div className="space-y-5" suppressHydrationWarning>
             {coverageViewMode === 'one-covers-all' && groupedTradeDisplay.fullCoverageCompanies.length > 0 && (
               <section className="space-y-3">
-                <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700">Covers all required trades</p>
-                  <p className="text-sm text-emerald-900">
-                    {groupedTradeDisplay.fullCoverageCompanies.length} pros can handle this scope end-to-end.
-                  </p>
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-[#F5EEDE] px-4 py-2.5">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Cover all trades</p>
+                    <p className="text-sm text-slate-600">{groupedTradeDisplay.fullCoverageCompanies.length} pros</p>
+                  </div>
+                  <select
+                    value={sortKey}
+                    onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                    className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
+                  >
+                    <option value="best-match">Best match</option>
+                    <option value="rating">Rating</option>
+                    <option value="completed">Most projects</option>
+                    <option value="award-rate">Award rate</option>
+                    <option value="response-time">Response time</option>
+                    <option value="recent">Recently active</option>
+                    <option value="name">Name</option>
+                  </select>
                 </div>
                 <div className="space-y-3">
                   {groupedTradeDisplay.fullCoverageCompanies.map((pro) => (
@@ -2266,13 +2263,28 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               const hasMatches = section.professionals.length > 0;
               return (
                 <section key={`specialists-${section.trade}`} className="space-y-3">
-                  <div className={`rounded-lg px-4 py-2.5 ${hasMatches ? 'border border-orange-200 bg-orange-50' : 'border border-amber-200 bg-amber-50'}`}>
-                    <p className={`text-xs font-semibold uppercase tracking-[0.1em] ${hasMatches ? 'text-orange-700' : 'text-amber-800'}`}>Specialists for {section.trade}</p>
-                    <p className={`text-sm ${hasMatches ? 'text-orange-900' : 'text-amber-900'}`}>
-                      {hasMatches
-                        ? `${section.professionals.length} match${section.professionals.length === 1 ? '' : 'es'} available for this trade.`
-                        : 'No current professionals matched this trade. Keep it in review so Mimo can source or widen it later.'}
-                    </p>
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-[#F5EEDE] px-4 py-2.5">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Specialists for {section.trade}</p>
+                      <p className="text-sm text-slate-600">
+                        {hasMatches
+                          ? `${section.professionals.length} match${section.professionals.length === 1 ? '' : 'es'}`
+                          : 'No matches — we\'ll source more'}
+                      </p>
+                    </div>
+                    <select
+                      value={sortKey}
+                      onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                      className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
+                    >
+                      <option value="best-match">Best match</option>
+                      <option value="rating">Rating</option>
+                      <option value="completed">Most projects</option>
+                      <option value="award-rate">Award rate</option>
+                      <option value="response-time">Response time</option>
+                      <option value="recent">Recently active</option>
+                      <option value="name">Name</option>
+                    </select>
                   </div>
                   {hasMatches ? (
                     <div className="space-y-3">
@@ -2302,85 +2314,25 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               );
             })}
 
-            {groupedTradeDisplay.uncategorized.length > 0 && (
-              <section className="space-y-3">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Additional matches</p>
-                </div>
-                <div className="space-y-3">
-                  {groupedTradeDisplay.uncategorized.map((pro) => (
-                    <ProfessionalRowItem
-                      key={pro.id}
-                      pro={pro}
-                      requiredTrades={enforcedRequiredTrades}
-                      locationParts={locationPartsForRender}
-                      selectedZoneCode={selectedZoneCodeForRender}
-                      minRating={minRating}
-                      isSelected={selectedIds.has(pro.id)}
-                      onToggle={toggleSelection}
-                      onViewDetails={openDetails}
-                      disableSelection={blockInviteForMissingLocation}
-                      showSelectionAction={canInviteProfessionals}
-                      displayAllTrades={!canInviteProfessionals}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
         ) : (
           <div className="space-y-3" suppressHydrationWarning>
-            {activeFilterLabel && (
-              <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/70 px-4 py-3 shadow-sm">
-                <p className="text-lg font-semibold text-slate-900">{`${activeFilterLabel} (${filtered.length})`}</p>
-              </div>
-            )}
-            {(() => {
-              // Group by match strength and insert tier headers when strength drops.
-              const tiers = [3, 2, 1] as const;
-              const tierLabels: Record<number, string> = {
-                3: 'Best match — trade, location & rating',
-                2: 'Partial match',
-                1: 'Trade match only',
-              };
-              const hasMultipleTiers = tiers.some((t) =>
-                filtered.some((p) => getMatchStrength(p, locationPartsForRender, selectedZoneCodeForRender, minRating) === t)
-              ) && tiers.filter((t) =>
-                filtered.some((p) => getMatchStrength(p, locationPartsForRender, selectedZoneCodeForRender, minRating) === t)
-              ).length > 1;
-
-              const elements: React.ReactNode[] = [];
-              let lastStrength: number | null = null;
-
-              for (const pro of filtered) {
-                const strength = getMatchStrength(pro, locationPartsForRender, selectedZoneCodeForRender, minRating);
-                if (hasMultipleTiers && strength !== lastStrength) {
-                  elements.push(
-                    <div key={`tier-${strength}`} className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide ${strength === 3 ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : strength === 2 ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-slate-200 bg-slate-50 text-slate-600'}`}>
-                      {tierLabels[strength]}
-                    </div>
-                  );
-                  lastStrength = strength;
-                }
-                elements.push(
-                  <ProfessionalRowItem
-                    key={pro.id}
-                    pro={pro}
-                    requiredTrades={enforcedRequiredTrades}
-                    locationParts={locationPartsForRender}
-                    selectedZoneCode={selectedZoneCodeForRender}
-                    minRating={minRating}
-                    isSelected={selectedIds.has(pro.id)}
-                    onToggle={toggleSelection}
-                    onViewDetails={openDetails}
-                    disableSelection={blockInviteForMissingLocation}
-                    showSelectionAction={canInviteProfessionals}
-                    displayAllTrades={!canInviteProfessionals}
-                  />
-                );
-              }
-              return elements;
-            })()}
+            {filtered.map((pro) => (
+              <ProfessionalRowItem
+                key={pro.id}
+                pro={pro}
+                requiredTrades={enforcedRequiredTrades}
+                locationParts={locationPartsForRender}
+                selectedZoneCode={selectedZoneCodeForRender}
+                minRating={minRating}
+                isSelected={selectedIds.has(pro.id)}
+                onToggle={toggleSelection}
+                onViewDetails={openDetails}
+                disableSelection={blockInviteForMissingLocation}
+                showSelectionAction={canInviteProfessionals}
+                displayAllTrades={!canInviteProfessionals}
+              />
+            ))}
           </div>
         )
       )}
