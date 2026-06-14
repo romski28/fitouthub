@@ -832,6 +832,8 @@ TRADE MINIMIZATION RULE (CRITICAL)
 - Prefer single-trade solutions when possible.
 - In Hong Kong, \"Handyman\" typically handles: shelf fixing, basic repairs, minor carpentry, general maintenance.
 - Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
+- Do NOT include trades that are clearly unrelated to the user's request (e.g., no Glazier for AC cleaning, no Electrician for painting).
+- Assign confidence < 0.5 to any trade you are unsure about. These will be filtered out.
 - EXAMPLE WRONG: User says \"fixing shelves in shower\" → Plumber, Tiler, Shower Fitter, Handyman
 - EXAMPLE RIGHT: User says \"fixing shelves in shower\" → Handyman ONLY (unless grout damage is explicitly mentioned)
 - Include extra trades ONLY if damage is explicitly stated in the user's description.
@@ -3096,10 +3098,31 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       this.logger.warn(`Discarded invalid AI trades: ${discarded.join(', ')}`);
     }
 
+    // Filter by confidence from tradeDetails — drop low-confidence trades
+    const tradeDetails = Array.isArray(parsedObject?.tradeDetails)
+      ? (parsedObject!.tradeDetails as Array<{ trade?: string; confidence?: number }>)
+      : [];
+    const confidenceMap = new Map<string, number>();
+    for (const td of tradeDetails) {
+      if (td.trade?.trim()) {
+        confidenceMap.set(td.trade.trim().toLowerCase(), typeof td.confidence === 'number' ? td.confidence : 0.5);
+      }
+    }
+
+    const finalTrades = trades.filter((trade) => {
+      const conf = confidenceMap.get(trade.toLowerCase());
+      return conf === undefined ? true : conf >= 0.5;
+    });
+
+    if (trades.length > finalTrades.length) {
+      const lowConf = trades.filter((t) => !finalTrades.includes(t));
+      this.logger.warn(`Dropped low-confidence trades (<0.5): ${lowConf.join(', ')}`);
+    }
+
     const responseParsedOutput = {
       ...(parsedObject || {}),
       conversationalText,
-      trades,
+      trades: finalTrades,
       nextQuestions: this.filterRepeatedQuestions(
         this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
         [],
