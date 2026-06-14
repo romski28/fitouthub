@@ -136,22 +136,24 @@ export const SERVICE_TO_PROFESSION: Record<string, string> = {
   'design consultation': 'architect',
   'interior design': 'architect',
 
-  // HVAC
-  'air conditioning': 'hvac',
-  'ac repair': 'hvac',
-  'heating': 'hvac',
-  'ventilation': 'hvac',
-  'climate control': 'hvac',
-  'thermostat': 'hvac',
+  // HVAC / Air Conditioning
+  'air conditioning': 'Air Conditioning Technician',
+  'ac repair': 'Air Conditioning Technician',
+  'ac cleaning': 'Air Conditioning Technician',
+  'aircon': 'Air Conditioning Technician',
+  'heating': 'Air Conditioning Technician',
+  'ventilation': 'Air Conditioning Technician',
+  'climate control': 'Air Conditioning Technician',
+  'thermostat': 'Air Conditioning Technician',
 
   // GLAZING/WINDOWS
-  'window': 'glazier',
-  'glass': 'glazier',
-  'glazing': 'glazier',
-  'mirror': 'glazier',
-  'glass door': 'glazier',
-  'window repair': 'glazier',
-  'double glazing': 'glazier',
+  'window': 'Glazier',
+  'glass': 'Glazier',
+  'glazing': 'Glazier',
+  'mirror': 'Glazier',
+  'glass door': 'Glazier',
+  'window repair': 'Glazier',
+  'double glazing': 'Glazier',
 
   // FLOORING
   'flooring': 'flooring',

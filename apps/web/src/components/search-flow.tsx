@@ -1640,8 +1640,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           : [];
       const parsedTrades = normalizeTradeList(
         p?.trades,
+        p?.trades && p.trades.length > 0 ? [] : inferredTradesFromText,
         projectTradesRequired,
-        inferredTradesFromText,
       );
       const projectScaleFromProject =
         p?.project &&
