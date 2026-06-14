@@ -13,7 +13,7 @@ FROM (
   SELECT prc."professionalId",
     ARRAY_AGG(DISTINCT z.label ORDER BY z.label) AS zones
   FROM "ProfessionalRegionCoverage" prc
-  JOIN "Zone" z ON z.id = prc."zoneId"
+  JOIN "RegionZone" z ON z.id = prc."zoneId"
   WHERE z.label IS NOT NULL
   GROUP BY prc."professionalId"
 ) sub

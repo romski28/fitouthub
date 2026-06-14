@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-b72d586c",
+    "date": "2026-06-14T17:29:45+08:00",
+    "title": "Fix SQL: Zone -> RegionZone table name",
+    "summary": "Fix SQL: Zone -> RegionZone table name",
+    "areas": [
+      "infra"
+    ],
+    "commit": "b72d586c",
+    "files": [
+      "MANUAL_SQL_BACKFILL_SERVICE_PRIMARIES.sql"
+    ]
+  },
+  {
     "id": "2026-06-14-8c7da52b",
     "date": "2026-06-14T17:28:20+08:00",
     "title": "Remove NT collapse from locationPrimary + backfill SQL for servicePrimaries from canonical Zone labels",
