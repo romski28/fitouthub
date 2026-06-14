@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-aeaba51e",
+    "date": "2026-06-14T11:47:26+08:00",
+    "title": "Trade matching: pros in all sections, sort pills inside team panel emerald, compact filters with icon toggle",
+    "summary": "Trade matching: pros in all sections, sort pills inside team panel emerald, compact filters with icon toggle",
+    "areas": [
+      "web"
+    ],
+    "commit": "aeaba51e",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-2f5e3369",
     "date": "2026-06-14T11:29:43+08:00",
     "title": "Add professional sort metrics (completedProjects, avgResponse, awardRate) + 7-key sort bar UI",

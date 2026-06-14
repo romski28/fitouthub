@@ -1542,14 +1542,10 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       (pro) => (pro.professionType === 'company' || pro.professionType === 'contractor') && coversAllRequired(pro),
     );
 
-    const usedIds = new Set(fullCoverageCompanies.map((pro) => pro.id));
-
     const specialistSections = enforcedRequiredTrades.map((trade, index) => {
       const tradeLower = requiredTradesLower[index];
       const professionalsForTrade = filtered.filter((pro) => {
-        if (usedIds.has(pro.id)) return false;
         if (!matchesTrade(pro, tradeLower)) return false;
-        usedIds.add(pro.id);
         return true;
       });
 
@@ -1559,7 +1555,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       };
     });
 
-    const uncategorized = filtered.filter((pro) => !usedIds.has(pro.id));
+    const uncategorized: Professional[] = [];
 
     console.log('[ProfessionalsList] Grouping enabled:', {
       requiredTrades: enforcedRequiredTrades,
@@ -1840,21 +1836,20 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Filters */}
       <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 shadow-sm">
         {/* Collapsible header */}
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between py-2">
           <span className="text-sm font-semibold text-slate-700">Filters</span>
           <button
             type="button"
             onClick={() => setFiltersOpen((prev) => !prev)}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition"
-            aria-label={filtersOpen ? 'Collapse filters' : 'Expand filters'}
+            className="flex items-center gap-1 rounded-lg p-1 text-slate-500 hover:bg-slate-200/60 hover:text-slate-700 transition"
+            aria-label={filtersOpen ? 'Hide filters' : 'Show filters'}
           >
-            {filtersOpen ? 'Hide' : 'Show'}
             <svg className={`h-4 w-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
           </button>
         </div>
@@ -2064,6 +2059,32 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               </button>
             )}
           </div>
+          {/* Sort pills — inside team panel */}
+          <div className="mt-2.5 flex items-center gap-1.5 flex-wrap justify-center border-t border-slate-200/60 pt-2.5">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mr-1">Sort</span>
+            {([
+              { key: 'best-match' as const, label: 'Best match' },
+              { key: 'rating' as const, label: 'Rating' },
+              { key: 'completed' as const, label: 'Most projects' },
+              { key: 'award-rate' as const, label: 'Award rate' },
+              { key: 'response-time' as const, label: 'Response time' },
+              { key: 'recent' as const, label: 'Active' },
+              { key: 'name' as const, label: 'Name' },
+            ]).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSortKey(opt.key)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                  sortKey === opt.key
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-white/80 border border-slate-200 text-slate-500 hover:border-emerald-300 hover:text-slate-700'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -2196,35 +2217,6 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {blockInviteForMissingLocation && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Please choose your project location first. We can&apos;t continue to professional selection without a location.
-        </div>
-      )}
-
-      {/* Sort bar */}
-      {filtered.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-medium text-slate-400 mr-1">Sort:</span>
-          {([
-            { key: 'best-match' as const, label: 'Best match' },
-            { key: 'rating' as const, label: 'Rating' },
-            { key: 'completed' as const, label: 'Most projects' },
-            { key: 'award-rate' as const, label: 'Award rate' },
-            { key: 'response-time' as const, label: 'Response time' },
-            { key: 'recent' as const, label: 'Recently active' },
-            { key: 'name' as const, label: 'Name' },
-          ]).map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setSortKey(opt.key)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                sortKey === opt.key
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-800'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
         </div>
       )}
 
