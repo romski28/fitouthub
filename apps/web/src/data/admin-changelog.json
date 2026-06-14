@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-14-34a819a1",
+    "date": "2026-06-14T13:29:16+08:00",
+    "title": "Pill chips, hide in one-pro mode, unified cream headers with 'Sorted by', single-trade title, remove count+hasMatches",
+    "summary": "Pill chips, hide in one-pro mode, unified cream headers with 'Sorted by', single-trade title, remove count+hasMatches",
+    "areas": [
+      "web"
+    ],
+    "commit": "34a819a1",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-2526f9f0",
     "date": "2026-06-14T13:01:16+08:00",
     "title": "Simplify: remove counts from chips, cream headers with sort dropdown, auto-filter by coverage mode, remove tier labels",

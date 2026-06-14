@@ -2012,16 +2012,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </button>
               </>
             ) : (
-              <span className="text-slate-500">individual trades</span>
+              <>Select your {activeRequiredTrades[0]}</>
             )}
           </p>
+          {activeRequiredTrades.length > 1 && coverageViewMode === 'individual' && (
           <div className="flex flex-wrap items-center justify-center gap-2">
             {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
-              const count = tradeAutoFilterCounts.single[trade.toLowerCase()] ?? 0;
               const hasSelectedTrade = selectedTradeCoverageKeys.has(trade.toLowerCase());
               return (
-                <div key={`autofilter-${trade}`} className={`group flex h-10 items-center overflow-hidden rounded-md border transition ${
+                <div key={`autofilter-${trade}`} className={`group flex h-10 items-center overflow-hidden rounded-full border transition ${
                   hasSelectedTrade
                     ? 'border-emerald-400 bg-emerald-600'
                     : 'border-slate-300 bg-white'
@@ -2074,6 +2074,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               </button>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -2219,16 +2220,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
           <div className="space-y-5" suppressHydrationWarning>
             {coverageViewMode === 'one-covers-all' && groupedTradeDisplay.fullCoverageCompanies.length > 0 && (
               <section className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-[#F5EEDE] px-4 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-white/45 bg-[#F5EEDE]/90 px-4 py-2.5">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Cover all trades</p>
-                    <p className="text-sm text-slate-600">{groupedTradeDisplay.fullCoverageCompanies.length} pros</p>
+                    <p className="text-sm font-bold text-slate-800">Covers all trades ({groupedTradeDisplay.fullCoverageCompanies.length})</p>
                   </div>
-                  <select
-                    value={sortKey}
-                    onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-                    className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
-                  >
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                    Sorted by
+                    <select
+                      value={sortKey}
+                      onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                      className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
+                    >
                     <option value="best-match">Best match</option>
                     <option value="rating">Rating</option>
                     <option value="completed">Most projects</option>
@@ -2237,6 +2239,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                     <option value="recent">Recently active</option>
                     <option value="name">Name</option>
                   </select>
+                  </label>
                 </div>
                 <div className="space-y-3">
                   {groupedTradeDisplay.fullCoverageCompanies.map((pro) => (
@@ -2260,33 +2263,30 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             )}
 
             {coverageViewMode === 'individual' && groupedTradeDisplay.specialistSections.map((section) => {
-              const hasMatches = section.professionals.length > 0;
               return (
                 <section key={`specialists-${section.trade}`} className="space-y-3">
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-[#F5EEDE] px-4 py-2.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/45 bg-[#F5EEDE]/90 px-4 py-2.5">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700">Specialists for {section.trade}</p>
-                      <p className="text-sm text-slate-600">
-                        {hasMatches
-                          ? `${section.professionals.length} match${section.professionals.length === 1 ? '' : 'es'}`
-                          : 'No matches — we\'ll source more'}
-                      </p>
+                      <p className="text-sm font-bold text-slate-800">{section.trade} ({section.professionals.length})</p>
                     </div>
-                    <select
-                      value={sortKey}
-                      onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-                      className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
-                    >
-                      <option value="best-match">Best match</option>
-                      <option value="rating">Rating</option>
-                      <option value="completed">Most projects</option>
-                      <option value="award-rate">Award rate</option>
-                      <option value="response-time">Response time</option>
-                      <option value="recent">Recently active</option>
-                      <option value="name">Name</option>
-                    </select>
+                    <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                      Sorted by
+                      <select
+                        value={sortKey}
+                        onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                        className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700"
+                      >
+                        <option value="best-match">Best match</option>
+                        <option value="rating">Rating</option>
+                        <option value="completed">Most projects</option>
+                        <option value="award-rate">Award rate</option>
+                        <option value="response-time">Response time</option>
+                        <option value="recent">Recently active</option>
+                        <option value="name">Name</option>
+                      </select>
+                    </label>
                   </div>
-                  {hasMatches ? (
+                  {section.professionals.length > 0 ? (
                     <div className="space-y-3">
                       {section.professionals.map((pro) => (
                         <ProfessionalRowItem
