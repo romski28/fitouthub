@@ -255,14 +255,7 @@ export class ProfessionalsService {
           .filter(Boolean),
       ),
     );
-    const normalizedZoneSet = new Set(uniqueZoneLabels.map((zone) => zone.toLowerCase()));
-
-    const locationPrimary =
-      normalizedZoneSet.has('new territories east') && normalizedZoneSet.has('new territories west')
-        ? uniqueZoneLabels.filter((zone) => zone.toLowerCase() !== 'new territories east' && zone.toLowerCase() !== 'new territories west').length === 0
-          ? 'New Territories'
-          : uniqueZoneLabels.join(', ')
-        : uniqueZoneLabels.join(', ');
+    const locationPrimary = uniqueZoneLabels.join(', ');
 
     return {
       serviceArea: uniqueAreaNames.join(', '),

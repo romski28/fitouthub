@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-14-8c7da52b",
+    "date": "2026-06-14T17:28:20+08:00",
+    "title": "Remove NT collapse from locationPrimary + backfill SQL for servicePrimaries from canonical Zone labels",
+    "summary": "Remove NT collapse from locationPrimary + backfill SQL for servicePrimaries from canonical Zone labels",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "8c7da52b",
+    "files": [
+      "MANUAL_SQL_BACKFILL_SERVICE_PRIMARIES.sql",
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-14-703785e6",
     "date": "2026-06-14T17:12:20+08:00",
     "title": "Switch trade-district matrix to region-level aggregation, read servicePrimaries + split locationPrimary",
