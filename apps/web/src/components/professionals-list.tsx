@@ -1981,41 +1981,35 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         )}
       </div>
 
-      {activeRequiredTrades.length > 0 && (
+      {activeRequiredTrades.length > 1 && (
         <div className="rounded-2xl border border-white/45 bg-[#F5EEDE]/90 px-4 py-3 shadow-sm">
           <p className="mb-2 flex items-center justify-center gap-1.5 h-10 text-sm font-semibold text-slate-700">
             Select your team as{' '}
-            {activeRequiredTrades.length > 1 ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setCoverageViewMode('one-covers-all')}
-                  className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
-                    coverageViewMode === 'one-covers-all'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
-                  }`}
-                >
-                  one pro covers all
-                </button>
-                {' or '}
-                <button
-                  type="button"
-                  onClick={() => setCoverageViewMode('individual')}
-                  className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
-                    coverageViewMode === 'individual'
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-white border border-slate-300 text-slate-600 hover:border-orange-400'
-                  }`}
-                >
-                  individual trades working together
-                </button>
-              </>
-            ) : (
-              <>Select your {activeRequiredTrades[0]}</>
-            )}
+            <button
+              type="button"
+              onClick={() => setCoverageViewMode('one-covers-all')}
+              className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
+                coverageViewMode === 'one-covers-all'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
+              }`}
+            >
+              one pro covers all
+            </button>
+            {' or '}
+            <button
+              type="button"
+              onClick={() => setCoverageViewMode('individual')}
+              className={`h-10 rounded-md px-3 text-sm font-semibold transition flex items-center ${
+                coverageViewMode === 'individual'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white border border-slate-300 text-slate-600 hover:border-orange-400'
+              }`}
+            >
+              individual trades working together
+            </button>
           </p>
-          {activeRequiredTrades.length > 1 && coverageViewMode === 'individual' && (
+          {coverageViewMode === 'individual' && (
           <div className="flex flex-wrap items-center justify-center gap-2">
             {activeRequiredTrades.map((trade) => {
               const key = `single:${trade.toLowerCase()}` as const;
