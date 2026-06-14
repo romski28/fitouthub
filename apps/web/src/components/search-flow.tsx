@@ -504,6 +504,9 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
               </span>
             ))}
           </div>
+          {trades.length > 1 && onRemoveTrade && (
+            <p className="text-xs text-slate-400 mt-1">These are the trades we suggest — you can reduce the list by removing trades not required.</p>
+          )}
         </div>
       )}
 

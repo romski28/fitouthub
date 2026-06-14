@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-14-e80db966",
+    "date": "2026-06-14T09:55:43+08:00",
+    "title": "Validate AI trades against DB list + add removal hint under trade suggestions",
+    "summary": "Validate AI trades against DB list + add removal hint under trade suggestions",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e80db966",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-13-186738d8",
     "date": "2026-06-13T19:13:10+08:00",
     "title": "Fix UxFeedback Prisma schema: add @map annotations for snake_case columns",

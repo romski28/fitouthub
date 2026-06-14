@@ -3082,9 +3082,19 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const conversationalText = existingConversationalText || fallbackConversationalText ||
       'Thanks for sharing your project. We can help you understand the next steps and connect you with the right professionals.';
 
-    const trades = parsedObject && Array.isArray(parsedObject.trades)
-      ? parsedObject.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    const rawTrades: string[] = parsedObject && Array.isArray(parsedObject.trades)
+      ? (parsedObject.trades as unknown[]).filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [];
+
+    // Validate against DB trade list — discard AI hallucinations like "Flooring"
+    const allowedTrades = await this.getAllowedTrades();
+    const allowedNames = new Set(allowedTrades.map((t) => t.name.toLowerCase()));
+    const trades = rawTrades.filter((trade) => allowedNames.has(trade.toLowerCase()));
+
+    if (rawTrades.length > trades.length) {
+      const discarded = rawTrades.filter((t) => !allowedNames.has(t.toLowerCase()));
+      this.logger.warn(`Discarded invalid AI trades: ${discarded.join(', ')}`);
+    }
 
     const responseParsedOutput = {
       ...(parsedObject || {}),
