@@ -639,39 +639,46 @@ export default function CreateProjectPage() {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 items-start">
-                <button
-                  type="button"
-                  onClick={() => router.push('/professionals')}
-                  className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
-                >
-                  Go back to professionals → 
-                </button>
-                {openTenderCount !== null && openTenderCount > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-500">
-                      Or send to {openTenderCount} matching {openTenderCount === 1 ? 'professional' : 'professionals'} automatically
-                    </span>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setOpenTenderLoading(true);
-                        try {
-                          await handleOpenTender();
-                        } finally {
-                          setOpenTenderLoading(false);
-                        }
-                      }}
-                      disabled={openTenderLoading || isSubmitting}
-                      className="shrink-0 rounded-2xl border-2 border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                    >
-                      {openTenderLoading ? 'Starting...' : `🚀 Start Open Tender (${openTenderCount})`}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => router.push('/professionals')}
+                className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
+              >
+                Go back to professionals → 
+              </button>
             )}
           </div>
+
+          {/* Open tender — always visible as an alternative */}
+          {openTenderCount !== null && openTenderCount > 0 && (
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">
+                    Or open to all matching professionals
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {openTenderCount} {openTenderCount === 1 ? 'professional' : 'professionals'} match your trade and location — invite them all at once.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setOpenTenderLoading(true);
+                    try {
+                      await handleOpenTender();
+                    } finally {
+                      setOpenTenderLoading(false);
+                    }
+                  }}
+                  disabled={openTenderLoading || isSubmitting}
+                  className="shrink-0 rounded-2xl border-2 border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                >
+                  {openTenderLoading ? 'Starting...' : `🚀 Start Open Tender (${openTenderCount})`}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {!showDescriptionModal && (

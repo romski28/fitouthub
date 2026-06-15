@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-41664852",
+    "date": "2026-06-15T19:54:48+08:00",
+    "title": "Show Start Open Tender always, not only when no professionals selected",
+    "summary": "Show Start Open Tender always, not only when no professionals selected",
+    "areas": [
+      "web"
+    ],
+    "commit": "41664852",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-15-abfcdec0",
     "date": "2026-06-15T16:38:55+08:00",
     "title": "Fix Project field names: use region instead of locationPrimary/locationSecondary",
