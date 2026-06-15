@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-0de5a2a8",
+    "date": "2026-06-15T20:09:41+08:00",
+    "title": "Fix route order: static 'professionals' route before ':id/professionals' wildcard",
+    "summary": "Fix route order: static 'professionals' route before ':id/professionals' wildcard",
+    "areas": [
+      "api"
+    ],
+    "commit": "0de5a2a8",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-15-41664852",
     "date": "2026-06-15T19:54:48+08:00",
     "title": "Show Start Open Tender always, not only when no professionals selected",

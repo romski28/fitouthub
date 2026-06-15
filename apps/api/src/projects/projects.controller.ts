@@ -516,11 +516,6 @@ export class ProjectsController {
     return this.projectsService.getEmailTokens(projectId);
   }
 
-  @Get(':id/professionals')
-  async getProjectProfessionals(@Param('id') projectId: string) {
-    return this.projectsService.getProjectProfessionals(projectId);
-  }
-
   @Get('professionals')
   async getProfessionalsCount(
     @Query('trades') trades?: string,
@@ -532,6 +527,11 @@ export class ProjectsController {
       location,
       isEmergency: isEmergency === '1' || isEmergency === 'true',
     });
+  }
+
+  @Get(':id/professionals')
+  async getProjectProfessionals(@Param('id') projectId: string) {
+    return this.projectsService.getProjectProfessionals(projectId);
   }
 
   @Post(':id/open-tender')
