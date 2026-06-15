@@ -261,7 +261,9 @@ export default function CreateProjectPage() {
         params.set('trades', trades.join(','));
         if (locStr) params.set('location', locStr);
         if (isEmergency) params.set('isEmergency', '1');
-        const res = await fetch(`${API_BASE_URL}/projects/professionals?${params.toString()}`);
+        const res = await fetch(`${API_BASE_URL}/projects/professionals?${params.toString()}`, {
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        });
         if (res.ok) {
           const data = await res.json();
           setOpenTenderCount(data.count || 0);
@@ -280,6 +282,7 @@ export default function CreateProjectPage() {
     descriptionData?.location,
     descriptionData?.isEmergency,
     selectedProfessionals,
+    accessToken,
   ]);
 
   if (!hydrated || isLoggedIn === undefined) {

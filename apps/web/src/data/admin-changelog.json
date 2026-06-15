@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-0d748800",
+    "date": "2026-06-15T20:39:39+08:00",
+    "title": "Add auth header to open tender count fetch",
+    "summary": "Add auth header to open tender count fetch",
+    "areas": [
+      "web"
+    ],
+    "commit": "0d748800",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-15-8690e4c2",
     "date": "2026-06-15T20:19:54+08:00",
     "title": "Simplify open tender: always-visible full-width button 'Start open tender to N professionals'",
