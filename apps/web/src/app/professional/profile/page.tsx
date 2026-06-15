@@ -258,6 +258,8 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [yearsInBusiness, setYearsInBusiness] = useState<number | ''>('');
   const [maxProjects, setMaxProjects] = useState(1);
   const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindow[]>([]);
   const [selectedCoverageAreaCodes, setSelectedCoverageAreaCodes] = useState<string[]>([]);
@@ -380,6 +382,8 @@ export default function ProfessionalProfilePage() {
           setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
           setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
           setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
+          setLanguages(Array.isArray(data.languages) ? data.languages : []);
+          setYearsInBusiness(typeof data.yearsInBusiness === 'number' ? data.yearsInBusiness : '');
           hydratedProfessionalIdRef.current = activeProfessionalId || data.id || null;
         }
         setError(null);
@@ -454,6 +458,8 @@ export default function ProfessionalProfilePage() {
           tradesOffered: showTradesOffered ? profile.tradesOffered || [] : [],
           primaryTrade: showTradesOffered ? (profile.tradesOffered?.[0] || profile.primaryTrade || undefined) : undefined,
           emergencyCalloutAvailable: showEmergencyAvailability ? emergencyCalloutAvailable : false,
+          languages,
+          yearsInBusiness: yearsInBusiness === '' ? null : yearsInBusiness,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -677,6 +683,42 @@ export default function ProfessionalProfilePage() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Languages & Experience */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-800">Languages spoken</label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(['English', 'Cantonese', 'Mandarin'] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => setLanguages((prev) => prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang])}
+                    className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+                      languages.includes(lang)
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-white border border-slate-300 text-slate-600 hover:border-emerald-400'
+                    }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-800">Years in business</label>
+              <input
+                type="number"
+                min={0}
+                max={99}
+                value={yearsInBusiness}
+                onChange={(e) => setYearsInBusiness(e.target.value === '' ? '' : Math.max(0, Math.min(99, parseInt(e.target.value, 10) || 0)))}
+                placeholder="e.g. 5"
+                className={paperInputClassName}
+              />
+              <p className="mt-1 text-xs text-slate-600">How long have you been operating?</p>
+            </div>
           </div>
 
           {/* Availability grid */}

@@ -48,4 +48,6 @@ export class UpdateProfessionalDto {
   trades_offered?: string[];
   supplies_offered?: string[];
   emergencyCalloutAvailable?: boolean;
+  languages?: string[];
+  years_in_business?: number;
 }

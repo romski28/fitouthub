@@ -32,6 +32,8 @@ export type Professional = {
   profileImages?: string[];
   referenceProjects?: ReferenceProject[];
   emergencyCalloutAvailable?: boolean;
+  languages?: string[];
+  yearsInBusiness?: number | null;
   completedProjectsCount?: number;
   avgResponseHours?: number | null;
   awardRate?: number | null;

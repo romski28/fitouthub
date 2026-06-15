@@ -314,6 +314,8 @@ model Professional {
   suppliesOffered         String[]                       @default([])
   tradesOffered           String[]                       @default([])
   emergencyCalloutAvailable Boolean                      @default(false)
+  languages                String[]                       @default([])  @map("languages")
+  yearsInBusiness          Int?                           @map("yearsInBusiness")
   completedProjectsCount   Int                          @default(0)  @map("completedProjectsCount")
   avgResponseHours         Float?                       @map("avgResponseHours")
   awardRate                Float?                       @map("awardRate")

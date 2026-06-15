@@ -730,6 +730,14 @@ export class ProfessionalsService {
       data.emergencyCalloutAvailable = updateProfessionalDto.emergencyCalloutAvailable;
     }
 
+    if (updateProfessionalDto.languages !== undefined) {
+      data.languages = updateProfessionalDto.languages;
+    }
+
+    if (updateProfessionalDto.years_in_business !== undefined) {
+      data.yearsInBusiness = updateProfessionalDto.years_in_business;
+    }
+
     // Check if we have any fields to update
     if (Object.keys(data).length === 0) {
       return (this.prisma as any).professional.findUnique({
