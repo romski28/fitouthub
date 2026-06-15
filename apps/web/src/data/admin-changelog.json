@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-340974ef",
+    "date": "2026-06-15T15:53:38+08:00",
+    "title": "Admin panel: contractors use multi-trade TagInput like companies, derive primary_trade from tradesOffered",
+    "summary": "Admin panel: contractors use multi-trade TagInput like companies, derive primary_trade from tradesOffered",
+    "areas": [
+      "web"
+    ],
+    "commit": "340974ef",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-14-cb95d1cc",
     "date": "2026-06-14T22:37:48+08:00",
     "title": "Cache TTL to 1min+clearCache, contractors use multi-trade tradesOffered like companies",

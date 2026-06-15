@@ -387,7 +387,7 @@ export default function AdminProfessionalsPage() {
       coverage_area_codes: Array.isArray(formData.coverageAreaCodes)
         ? formData.coverageAreaCodes
         : [],
-      primary_trade: formData.primaryTrade || null,
+      primary_trade: formData.primaryTrade || (Array.isArray(formData.tradesOffered) && formData.tradesOffered.length > 0 ? formData.tradesOffered[0] : null),
       trades_offered: Array.isArray(formData.tradesOffered)
         ? formData.tradesOffered
         : [],
@@ -1047,8 +1047,7 @@ export default function AdminProfessionalsPage() {
               {pro.primaryTrade || (pro.tradesOffered && pro.tradesOffered.length > 0) || (pro.suppliesOffered && pro.suppliesOffered.length > 0) ? (
                 <div>
                   <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                    {pro.professionType === 'contractor' && 'Trade'}
-                    {pro.professionType === 'company' && 'Trades'}
+                    {(pro.professionType === 'contractor' || pro.professionType === 'company') && 'Trades'}
                     {pro.professionType === 'reseller' && 'Supplies'}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -1219,27 +1218,8 @@ export default function AdminProfessionalsPage() {
                   </div>
                 </div>
 
-                {/* Conditional trade field for contractors */}
-                {formData.professionType === "contractor" && (
-                  <TagInput
-                    label="Primary Trade"
-                    placeholder="Select trade..."
-                    tags={
-                      typeof formData.primaryTrade === "string" && formData.primaryTrade
-                        ? [formData.primaryTrade]
-                        : []
-                    }
-                    onTagsChange={(tags) =>
-                      setFormData((prev) => ({ ...prev, primaryTrade: tags[0] || "" }))
-                    }
-                    suggestions={tradeOptions}
-                    multiple={false}
-                    allowCustom={false}
-                  />
-                )}
-
-                {/* Conditional trades field for companies */}
-                {formData.professionType === "company" && (
+                {/* Multi-trade field for contractors and companies */}
+                {(formData.professionType === "contractor" || formData.professionType === "company") && (
                   <TagInput
                     label="Trades Offered"
                     placeholder="Add trades..."
