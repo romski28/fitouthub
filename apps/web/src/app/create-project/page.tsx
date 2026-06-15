@@ -243,7 +243,9 @@ export default function CreateProjectPage() {
   useEffect(() => {
     const trades = initialFormData.tradesRequired?.length
       ? initialFormData.tradesRequired
-      : descriptionData?.tradesRequired || [];
+      : descriptionData?.tradesRequired?.length
+        ? descriptionData.tradesRequired
+        : selectedProfessionals.flatMap(p => p.requestedTrades || []).filter(Boolean);
     const loc = initialFormData.location || descriptionData?.location;
     const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
     const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
@@ -277,6 +279,7 @@ export default function CreateProjectPage() {
     descriptionData?.tradesRequired,
     descriptionData?.location,
     descriptionData?.isEmergency,
+    selectedProfessionals,
   ]);
 
   if (!hydrated || isLoggedIn === undefined) {
@@ -649,36 +652,35 @@ export default function CreateProjectPage() {
             )}
           </div>
 
-          {/* Open tender — always visible as an alternative */}
-          {openTenderCount !== null && openTenderCount > 0 && (
-            <div className="mt-4 border-t border-slate-200 pt-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    Or open to all matching professionals
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {openTenderCount} {openTenderCount === 1 ? 'professional' : 'professionals'} match your trade and location — invite them all at once.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setOpenTenderLoading(true);
-                    try {
-                      await handleOpenTender();
-                    } finally {
-                      setOpenTenderLoading(false);
-                    }
-                  }}
-                  disabled={openTenderLoading || isSubmitting}
-                  className="shrink-0 rounded-2xl border-2 border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                >
-                  {openTenderLoading ? 'Starting...' : `🚀 Start Open Tender (${openTenderCount})`}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Open tender button — always visible, always fetching count */}
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <button
+              type="button"
+              onClick={async () => {
+                setOpenTenderLoading(true);
+                try {
+                  await handleOpenTender();
+                } finally {
+                  setOpenTenderLoading(false);
+                }
+              }}
+              disabled={openTenderLoading || isSubmitting || !openTenderCount || openTenderCount === 0}
+              className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+            >
+              {openTenderLoading
+                ? 'Starting open tender...'
+                : openTenderCount && openTenderCount > 0
+                  ? `Start open tender to ${openTenderCount} professionals`
+                  : openTenderCount === 0
+                    ? 'No matching professionals found'
+                    : 'Loading...'}
+            </button>
+            {openTenderCount !== null && openTenderCount > 0 && (
+              <p className="mt-2 text-center text-xs text-slate-500">
+                All {openTenderCount} matching professionals will be invited to quote on your project.
+              </p>
+            )}
+          </div>
         </section>
 
         {!showDescriptionModal && (
