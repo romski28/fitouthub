@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-15-aff3ec61",
+    "date": "2026-06-15T16:24:36+08:00",
+    "title": "Filter professionals by 24/7 callout when project isEmergency + show emergency badge",
+    "summary": "Filter professionals by 24/7 callout when project isEmergency + show emergency badge",
+    "areas": [
+      "web"
+    ],
+    "commit": "aff3ec61",
+    "files": [
+      "apps/web/src/app/professionals/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-15-b1b43062",
     "date": "2026-06-15T16:14:13+08:00",
     "title": "Add languages spoken + years in business to professional profile, API, and DB schema",

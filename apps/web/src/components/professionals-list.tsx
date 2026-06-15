@@ -847,9 +847,10 @@ interface Props {
   source?: string;
   requireLocation?: boolean;
   defaultFiltersOpen?: boolean;
+  isEmergency?: boolean;
 }
 
-export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, initialSelectedIds, source, requireLocation = false, defaultFiltersOpen = true }: Props) {
+export default function ProfessionalsList({ professionals, initialLocation, projectId, initialSearchTerm, initialRequiredTrades = [], initialProjectData, initialSelectedIds, source, requireLocation = false, defaultFiltersOpen = true, isEmergency = false }: Props) {
   const t = useTranslations('professionalsPage.list');
   const router = useRouter();
   const { role } = useAuth();
@@ -1241,6 +1242,11 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         return false;
       }
 
+      // Emergency projects require 24/7 cover
+      if (isEmergency && !pro.emergencyCalloutAvailable) {
+        return false;
+      }
+
       // Trade must match — location and rating are soft-ranked, not hard-filtered.
       return true;
     });
@@ -1340,7 +1346,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     return sorted;
-  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades, tradeAutoFilterMode, sortKey]);
+  }, [professionals, searchTerm, professionHint, loc.primary, loc.secondary, loc.tertiary, locationSearch, minRating, enforcedRequiredTrades, tradeAutoFilterMode, sortKey, isEmergency]);
 
   const [regionExpanded, setRegionExpanded] = useState(false);
   // Reset expansion whenever the location filter itself changes
@@ -2192,6 +2198,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {blockInviteForMissingLocation && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Please choose your project location first. We can&apos;t continue to professional selection without a location.
+        </div>
+      )}
+
+      {isEmergency && (
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center gap-2">
+          <span className="text-base">🚨</span>
+          <span>Emergency project — only showing professionals with 24/7 callout availability.</span>
         </div>
       )}
 

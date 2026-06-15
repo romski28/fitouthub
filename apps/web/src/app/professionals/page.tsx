@@ -656,6 +656,7 @@ function ProfessionalsPageInner() {
               source={sourceParam}
               requireLocation={shouldShowRegionNotice}
               defaultFiltersOpen={sourceParam !== 'ai-wizard'}
+              isEmergency={aiPrefill.isEmergency || false}
             />
           )}
 
