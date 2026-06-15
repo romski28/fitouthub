@@ -1051,7 +1051,7 @@ export default function AdminProfessionalsPage() {
                     {pro.professionType === 'reseller' && 'Supplies'}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {pro.primaryTrade && (
+                    {pro.primaryTrade && (!pro.tradesOffered || pro.tradesOffered.length === 0) && (
                       <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
                         {pro.primaryTrade}
                       </span>
