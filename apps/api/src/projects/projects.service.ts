@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
@@ -4326,6 +4326,96 @@ export class ProjectsService {
       },
     });
     return this.dedupeProfessionals(pros);
+  }
+
+  async countMatchingProfessionals(params: {
+    trades: string[];
+    location?: string;
+    isEmergency?: boolean;
+  }) {
+    const { trades, location, isEmergency } = params;
+    const where: any = {
+      professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+      status: 'approved',
+    };
+
+    if (isEmergency) {
+      where.emergencyCalloutAvailable = true;
+    }
+
+    if (trades.length > 0) {
+      where.OR = [
+        { primaryTrade: { in: trades, mode: 'insensitive' } },
+        { tradesOffered: { hasSome: trades } },
+      ];
+    }
+
+    if (location) {
+      where.OR = [
+        ...(where.OR || []),
+        { locationPrimary: { contains: location, mode: 'insensitive' } },
+        { locationSecondary: { contains: location, mode: 'insensitive' } },
+        { servicePrimaries: { hasSome: [location] } },
+      ];
+    }
+
+    const count = await (this.prisma as any).professional.count({ where });
+    return { count };
+  }
+
+  async inviteAllMatchingProfessionals(projectId: string, userId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        tradesRequired: true,
+        locationPrimary: true,
+        locationSecondary: true,
+        isEmergency: true,
+      },
+    });
+
+    if (!project) throw new NotFoundException('Project not found');
+
+    const where: any = {
+      professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+      status: 'approved',
+    };
+
+    if (project.isEmergency) {
+      where.emergencyCalloutAvailable = true;
+    }
+
+    const projectTrades = (project.tradesRequired || []) as string[];
+    if (projectTrades.length > 0) {
+      where.OR = [
+        { primaryTrade: { in: projectTrades, mode: 'insensitive' } },
+        { tradesOffered: { hasSome: projectTrades } },
+      ];
+    }
+
+    const loc = project.locationPrimary || project.locationSecondary;
+    if (loc) {
+      where.OR = [
+        ...(where.OR || []),
+        { locationPrimary: { contains: loc, mode: 'insensitive' } },
+        { locationSecondary: { contains: loc, mode: 'insensitive' } },
+        { servicePrimaries: { hasSome: [loc] } },
+      ];
+    }
+
+    const professionals = await (this.prisma as any).professional.findMany({
+      where,
+      select: { id: true },
+    });
+
+    const professionalIds: string[] = professionals.map((p: any) => p.id);
+
+    if (professionalIds.length === 0) {
+      throw new BadRequestException('No matching professionals found for open tender');
+    }
+
+    return this.inviteProfessionals(projectId, professionalIds);
   }
 
   async inviteProfessionals(projectId: string, professionalIds: string[]) {

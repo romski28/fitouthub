@@ -521,6 +521,30 @@ export class ProjectsController {
     return this.projectsService.getProjectProfessionals(projectId);
   }
 
+  @Get('professionals')
+  async getProfessionalsCount(
+    @Query('trades') trades?: string,
+    @Query('location') location?: string,
+    @Query('isEmergency') isEmergency?: string,
+  ) {
+    return this.projectsService.countMatchingProfessionals({
+      trades: trades ? trades.split(',').filter(Boolean) : [],
+      location,
+      isEmergency: isEmergency === '1' || isEmergency === 'true',
+    });
+  }
+
+  @Post(':id/open-tender')
+  @UseGuards(CombinedAuthGuard)
+  async openTender(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.projectsService.inviteAllMatchingProfessionals(projectId, userId);
+  }
+
   @Post()
   @UseGuards(CombinedAuthGuard)
   async create(@Body() createProjectDto: CreateProjectDto, @Request() req: any) {

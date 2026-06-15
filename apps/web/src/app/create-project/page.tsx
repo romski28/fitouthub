@@ -96,6 +96,8 @@ export default function CreateProjectPage() {
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
   const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
   const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
+  const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
+  const [openTenderLoading, setOpenTenderLoading] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -236,6 +238,46 @@ export default function CreateProjectPage() {
       // Do not auto-open the description modal when handoff data is absent.
     }
   }, [hydrated, isLoggedIn]);
+
+  // Fetch open tender count when trades/location change
+  useEffect(() => {
+    const trades = initialFormData.tradesRequired?.length
+      ? initialFormData.tradesRequired
+      : descriptionData?.tradesRequired || [];
+    const loc = initialFormData.location || descriptionData?.location;
+    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+    const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
+
+    if (trades.length === 0) {
+      setOpenTenderCount(null);
+      return;
+    }
+
+    const fetchCount = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('trades', trades.join(','));
+        if (locStr) params.set('location', locStr);
+        if (isEmergency) params.set('isEmergency', '1');
+        const res = await fetch(`${API_BASE_URL}/projects/professionals?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOpenTenderCount(data.count || 0);
+        }
+      } catch {
+        setOpenTenderCount(null);
+      }
+    };
+
+    fetchCount();
+  }, [
+    initialFormData.tradesRequired,
+    initialFormData.location,
+    initialFormData.isEmergency,
+    descriptionData?.tradesRequired,
+    descriptionData?.location,
+    descriptionData?.isEmergency,
+  ]);
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
@@ -398,6 +440,49 @@ export default function CreateProjectPage() {
     setShowAssistModal(true);
   };
 
+  const handleOpenTender = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      // Create project without pre-selected professionals
+      const emptyFormData = {
+        ...(initialFormData as ProjectFormData),
+        projectName: initialFormData.projectName || descriptionData?.title || 'New Project',
+        notes: initialFormData.notes || descriptionData?.description || '',
+        isEmergency: initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false,
+        tradesRequired: initialFormData.tradesRequired?.length
+          ? initialFormData.tradesRequired
+          : (descriptionData?.tradesRequired || []),
+        location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+      };
+      const payload = buildProjectPayload(emptyFormData, [], [], []);
+      const project = await createProject(payload);
+
+      // Open tender to all matching professionals
+      const res = await fetch(`${API_BASE_URL}/projects/${project.id}/open-tender`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: 'Failed to start open tender' }));
+        throw new Error(data.message || `Server error: ${res.status}`);
+      }
+
+      toast.success(`Open tender started — ${openTenderCount} professionals invited.`);
+      router.push(`/projects/${project.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to start open tender';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const submitAssistRequest = async (assistConfig: AssistRequestModalSubmit) => {
     if (!assistDraft) return;
 
@@ -554,13 +639,37 @@ export default function CreateProjectPage() {
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => router.push('/professionals')}
-                className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
-              >
-                Go back to professionals → 
-              </button>
+              <div className="flex flex-col gap-3 items-start">
+                <button
+                  type="button"
+                  onClick={() => router.push('/professionals')}
+                  className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
+                >
+                  Go back to professionals → 
+                </button>
+                {openTenderCount !== null && openTenderCount > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-500">
+                      Or send to {openTenderCount} matching {openTenderCount === 1 ? 'professional' : 'professionals'} automatically
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setOpenTenderLoading(true);
+                        try {
+                          await handleOpenTender();
+                        } finally {
+                          setOpenTenderLoading(false);
+                        }
+                      }}
+                      disabled={openTenderLoading || isSubmitting}
+                      className="shrink-0 rounded-2xl border-2 border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      {openTenderLoading ? 'Starting...' : `🚀 Start Open Tender (${openTenderCount})`}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </section>

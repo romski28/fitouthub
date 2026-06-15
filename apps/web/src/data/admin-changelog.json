@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-15-a84e1a01",
+    "date": "2026-06-15T16:33:12+08:00",
+    "title": "Add Start Open Tender: invite all matching pros + live count on project summary page",
+    "summary": "Add Start Open Tender: invite all matching pros + live count on project summary page",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a84e1a01",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-15-aff3ec61",
     "date": "2026-06-15T16:24:36+08:00",
     "title": "Filter professionals by 24/7 callout when project isEmergency + show emergency badge",
