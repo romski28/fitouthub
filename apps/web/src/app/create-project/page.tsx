@@ -98,6 +98,7 @@ export default function CreateProjectPage() {
   const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
   const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
   const [openTenderLoading, setOpenTenderLoading] = useState(false);
+  const [openTenderError, setOpenTenderError] = useState<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -257,6 +258,7 @@ export default function CreateProjectPage() {
 
     const fetchCount = async () => {
       try {
+        setOpenTenderError(null);
         const params = new URLSearchParams();
         params.set('trades', trades.join(','));
         if (locStr) params.set('location', locStr);
@@ -266,9 +268,14 @@ export default function CreateProjectPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          setOpenTenderCount(data.count || 0);
+          setOpenTenderCount(data.count ?? 0);
+        } else {
+          console.error('[openTender] fetch failed:', res.status, await res.text());
+          setOpenTenderError(`Server error: ${res.status}`);
         }
-      } catch {
+      } catch (err) {
+        console.error('[openTender] fetch error:', err);
+        setOpenTenderError('Could not reach server');
         setOpenTenderCount(null);
       }
     };
@@ -672,11 +679,13 @@ export default function CreateProjectPage() {
             >
               {openTenderLoading
                 ? 'Starting open tender...'
-                : openTenderCount && openTenderCount > 0
-                  ? `Start open tender to ${openTenderCount} professionals`
-                  : openTenderCount === 0
-                    ? 'No matching professionals found'
-                    : 'Loading...'}
+                : openTenderError
+                  ? `⚠ ${openTenderError}`
+                  : openTenderCount !== null && openTenderCount > 0
+                    ? `Start open tender to ${openTenderCount} professionals`
+                    : openTenderCount === 0
+                      ? 'No matching professionals found'
+                      : 'Loading...'}
             </button>
             {openTenderCount !== null && openTenderCount > 0 && (
               <p className="mt-2 text-center text-xs text-slate-500">

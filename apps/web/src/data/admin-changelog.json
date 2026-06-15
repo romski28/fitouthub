@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-d735016d",
+    "date": "2026-06-15T23:14:17+08:00",
+    "title": "Add error state to open tender button for debugging",
+    "summary": "Add error state to open tender button for debugging",
+    "areas": [
+      "web"
+    ],
+    "commit": "d735016d",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-15-0d748800",
     "date": "2026-06-15T20:39:39+08:00",
     "title": "Add auth header to open tender count fetch",
