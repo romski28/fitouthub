@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-15-abfcdec0",
+    "date": "2026-06-15T16:38:55+08:00",
+    "title": "Fix Project field names: use region instead of locationPrimary/locationSecondary",
+    "summary": "Fix Project field names: use region instead of locationPrimary/locationSecondary",
+    "areas": [
+      "api"
+    ],
+    "commit": "abfcdec0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-15-a84e1a01",
     "date": "2026-06-15T16:33:12+08:00",
     "title": "Add Start Open Tender: invite all matching pros + live count on project summary page",

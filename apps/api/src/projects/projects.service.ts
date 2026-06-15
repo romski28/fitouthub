@@ -4369,8 +4369,7 @@ export class ProjectsService {
       select: {
         id: true,
         tradesRequired: true,
-        locationPrimary: true,
-        locationSecondary: true,
+        region: true,
         isEmergency: true,
       },
     });
@@ -4394,7 +4393,7 @@ export class ProjectsService {
       ];
     }
 
-    const loc = project.locationPrimary || project.locationSecondary;
+    const loc = project.region;
     if (loc) {
       where.OR = [
         ...(where.OR || []),
