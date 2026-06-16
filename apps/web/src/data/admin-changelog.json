@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-db4dc22c",
+    "date": "2026-06-16T11:35:17+08:00",
+    "title": "Remove second scroll to forgotten prompt, keep only trade suggestions scroll",
+    "summary": "Remove second scroll to forgotten prompt, keep only trade suggestions scroll",
+    "areas": [
+      "web"
+    ],
+    "commit": "db4dc22c",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-97487938",
     "date": "2026-06-16T11:29:09+08:00",
     "title": "Scroll to 'Looks like you need...' trade suggestions instead of far-down results portal",

@@ -1786,7 +1786,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       // Scroll to trade suggestions after AI response
       setTimeout(() => {
         document.getElementById('ai-trade-suggestions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 120);
+      }, 100);
       return;
     }
     setAiOutput(null);
@@ -1821,13 +1821,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     if (aiRoundCount !== 1 || !complete || hasClearedForgottenPromptRef.current) return;
     hasClearedForgottenPromptRef.current = true;
     setSearchBoxClearKey((k) => k + 1);
-
-    // Keep the follow-up prompt visible without forcing manual scrolling.
-    window.setTimeout(() => {
-      const forgottenPromptEl = document.getElementById('ai-forgotten-prompt');
-      const pathForkEl = document.getElementById('ai-path-fork');
-      (forgottenPromptEl || pathForkEl)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 120);
   }, [aiRoundCount]);
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
