@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-16-303a3a63",
+    "date": "2026-06-16T19:02:43+08:00",
+    "title": "Fix count mismatch: filter professionals list by approved status to match countMatching",
+    "summary": "Fix count mismatch: filter professionals list by approved status to match countMatching",
+    "areas": [
+      "web"
+    ],
+    "commit": "303a3a63",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-5b095ae3",
     "date": "2026-06-16T18:43:24+08:00",
     "title": "Rewrite countMatching: fetch+filter in JS same as client; add loading animation on count button",

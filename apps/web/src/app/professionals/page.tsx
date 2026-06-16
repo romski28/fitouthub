@@ -23,7 +23,10 @@ import { type EmergencyAiBrief, normalizeEmergencyAiBrief } from '@/lib/emergenc
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
 function filterProjectSelectableProfessionals(list: Professional[]): Professional[] {
-  return list.filter((professional) => PROJECT_SELECTABLE_TYPES.has(professional.professionType));
+  return list.filter((professional) =>
+    PROJECT_SELECTABLE_TYPES.has(professional.professionType) &&
+    professional.status === 'approved'
+  );
 }
 
 function extractPhotoUrls(notes?: string): string[] {

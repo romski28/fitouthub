@@ -59,7 +59,10 @@ const normalizeProjectScale = (value?: string | null): 'SCALE_1' | 'SCALE_2' | '
 const PROJECT_SELECTABLE_TYPES = new Set<Professional['professionType']>(['contractor', 'company']);
 
 const filterProjectSelectableProfessionals = (professionals: Professional[]) => {
-  return professionals.filter((professional) => PROJECT_SELECTABLE_TYPES.has(professional.professionType));
+  return professionals.filter((professional) =>
+    PROJECT_SELECTABLE_TYPES.has(professional.professionType) &&
+    professional.status === 'approved'
+  );
 };
 
 const normalizeUniqueStringList = (...inputs: unknown[]): string[] => {
