@@ -28,6 +28,25 @@ import { BulkApproveDto } from './dto/bulk-approve.dto';
 export class ProfessionalsController {
   constructor(private readonly professionalsService: ProfessionalsService) {}
 
+  @Get('matching-count')
+  async matchingCount(
+    @Query('trades') trades?: string,
+    @Query('location') location?: string,
+    @Query('isEmergency') isEmergency?: string,
+  ) {
+    try {
+      const count = await this.professionalsService.countMatching({
+        trades: trades ? trades.split(',').filter(Boolean) : [],
+        location,
+        isEmergency: isEmergency === '1' || isEmergency === 'true',
+      });
+      return { count };
+    } catch (error) {
+      console.error('[matchingCount] Error:', error?.message || error);
+      return { count: 0 };
+    }
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createProfessionalDto: CreateProfessionalDto) {

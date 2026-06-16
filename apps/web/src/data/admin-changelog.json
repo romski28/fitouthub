@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-16-22836416",
+    "date": "2026-06-16T11:08:46+08:00",
+    "title": "Add matching-count endpoint + count on button + progress animation during open tender",
+    "summary": "Add matching-count endpoint + count on button + progress animation during open tender",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "22836416",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-1732e714",
     "date": "2026-06-16T10:31:35+08:00",
     "title": "Fix missing clientName in open tender form data",

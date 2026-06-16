@@ -97,6 +97,8 @@ export default function CreateProjectPage() {
   const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
   const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
   const [openTenderLoading, setOpenTenderLoading] = useState(false);
+  const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
+  const [openTenderProgress, setOpenTenderProgress] = useState('');
 
   useEffect(() => {
     setHydrated(true);
@@ -237,6 +239,29 @@ export default function CreateProjectPage() {
       // Do not auto-open the description modal when handoff data is absent.
     }
   }, [hydrated, isLoggedIn]);
+
+  // Fetch open tender count
+  useEffect(() => {
+    const trades = initialFormData.tradesRequired?.length
+      ? initialFormData.tradesRequired
+      : descriptionData?.tradesRequired || [];
+    const loc = initialFormData.location || descriptionData?.location;
+    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+    const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
+
+    if (trades.length === 0) { setOpenTenderCount(null); return; }
+
+    fetch(`${API_BASE_URL}/professionals/matching-count?${new URLSearchParams({
+      trades: trades.join(','),
+      ...(locStr ? { location: locStr } : {}),
+      ...(isEmergency ? { isEmergency: '1' } : {}),
+    }).toString()}`, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => setOpenTenderCount(d.count ?? 0))
+      .catch(() => setOpenTenderCount(null));
+  }, [initialFormData.tradesRequired, initialFormData.location, initialFormData.isEmergency, descriptionData, accessToken]);
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
@@ -428,12 +453,14 @@ export default function CreateProjectPage() {
         },
       });
 
+      setOpenTenderProgress('Sending invitations...');
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: 'Failed to start open tender' }));
         throw new Error(data.message || `Server error: ${res.status}`);
       }
 
-      toast.success('Open tender started — invitations sent to all matching professionals.');
+      setOpenTenderProgress('Done! Redirecting...');
+      toast.success('Open tender started!');
       router.push(`/projects/${project.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start open tender';
@@ -625,11 +652,24 @@ export default function CreateProjectPage() {
               disabled={openTenderLoading || isSubmitting}
               className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
             >
-              {openTenderLoading ? 'Starting open tender...' : 'Start open tender to all matching professionals'}
+              {openTenderLoading
+                ? openTenderProgress || 'Starting...'
+                : openTenderCount !== null && openTenderCount > 0
+                  ? `Start open tender to ${openTenderCount} professionals`
+                  : openTenderCount === 0
+                    ? 'No matching professionals found'
+                    : 'Start open tender to all matching professionals'}
             </button>
-            <p className="mt-2 text-center text-xs text-slate-500">
-              All professionals matching your trade and location will be invited to quote.
-            </p>
+            {openTenderCount !== null && openTenderCount > 0 && (
+              <p className="mt-2 text-center text-xs text-slate-500">
+                All {openTenderCount} matching professionals will be invited to quote.
+              </p>
+            )}
+            {openTenderLoading && openTenderProgress && (
+              <p className="mt-2 text-center text-xs font-medium text-emerald-700 animate-pulse">
+                {openTenderProgress}
+              </p>
+            )}
           </div>
         </section>
 

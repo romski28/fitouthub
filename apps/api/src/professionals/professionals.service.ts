@@ -316,6 +316,38 @@ export class ProfessionalsService {
     }
   }
 
+  async countMatching(params: { trades: string[]; location?: string; isEmergency?: boolean }) {
+    const { trades, location, isEmergency } = params;
+    try {
+      const where: any = {
+        status: 'approved',
+        professionType: { in: ['contractor', 'company'] },
+      };
+      if (isEmergency) where.emergencyCalloutAvailable = true;
+      if (trades.length > 0) {
+        where.OR = [
+          { primaryTrade: { in: trades, mode: 'insensitive' } },
+          { tradesOffered: { hasSome: trades } },
+        ];
+      }
+      if (location) {
+        where.AND = [
+          ...(where.AND || []),
+          {
+            OR: [
+              { locationPrimary: { contains: location, mode: 'insensitive' } },
+              { locationSecondary: { contains: location, mode: 'insensitive' } },
+              { servicePrimaries: { has: location } },
+            ],
+          },
+        ];
+      }
+      return await (this.prisma as any).professional.count({ where });
+    } catch {
+      return 0;
+    }
+  }
+
   async findAll() {
     try {
       console.log('findAll: Attempting to fetch professionals');
