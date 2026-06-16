@@ -516,8 +516,26 @@ export class ProjectsController {
     return this.projectsService.getEmailTokens(projectId);
   }
 
-  @Get('professionals')
+  @Get('open-tender-count')
   async getProfessionalsCount(
+    @Query('trades') trades?: string,
+    @Query('location') location?: string,
+    @Query('isEmergency') isEmergency?: string,
+  ) {
+    try {
+      return await this.projectsService.countMatchingProfessionals({
+        trades: trades ? trades.split(',').filter(Boolean) : [],
+        location,
+        isEmergency: isEmergency === '1' || isEmergency === 'true',
+      });
+    } catch (error) {
+      console.error('[getProfessionalsCount] Error:', error?.message || error);
+      return { count: 0 };
+    }
+  }
+
+  @Get('professionals')
+  async getProfessionalsCountLegacy(
     @Query('trades') trades?: string,
     @Query('location') location?: string,
     @Query('isEmergency') isEmergency?: string,

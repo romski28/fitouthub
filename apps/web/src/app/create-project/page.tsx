@@ -263,7 +263,7 @@ export default function CreateProjectPage() {
         params.set('trades', trades.join(','));
         if (locStr) params.set('location', locStr);
         if (isEmergency) params.set('isEmergency', '1');
-        const res = await fetch(`${API_BASE_URL}/projects/professionals?${params.toString()}`, {
+        const res = await fetch(`${API_BASE_URL}/projects/open-tender-count?${params.toString()}`, {
           headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
         });
         if (res.ok) {
