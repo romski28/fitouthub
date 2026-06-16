@@ -485,7 +485,7 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
       )}
 
       {trades.length > 0 && (
-        <div className={`space-y-2 text-center transition-all duration-500 ${showTradesBlock ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+        <div id="ai-trade-suggestions" className={`space-y-2 text-center transition-all duration-500 ${showTradesBlock ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <p className="text-base font-semibold text-slate-700">Looks like you need...</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {trades.map((trade) => (
@@ -1783,12 +1783,10 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         setAiPromptHistory((current) => [...current, trimmed]);
       }
       runSandbox(trimmed, imageUrls);
-      // Scroll to the results panel after a short delay to allow state to update
-      if (resultsPortalId) {
-        setTimeout(() => {
-          document.getElementById(resultsPortalId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 120);
-      }
+      // Scroll to trade suggestions after AI response
+      setTimeout(() => {
+        document.getElementById('ai-trade-suggestions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
       return;
     }
     setAiOutput(null);
