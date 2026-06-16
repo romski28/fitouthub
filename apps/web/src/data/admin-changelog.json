@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-dd5c57a1",
+    "date": "2026-06-16T11:39:37+08:00",
+    "title": "Remove auto-scroll entirely",
+    "summary": "Remove auto-scroll entirely",
+    "areas": [
+      "web"
+    ],
+    "commit": "dd5c57a1",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-db4dc22c",
     "date": "2026-06-16T11:35:17+08:00",
     "title": "Remove second scroll to forgotten prompt, keep only trade suggestions scroll",

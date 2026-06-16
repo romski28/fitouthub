@@ -1783,10 +1783,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         setAiPromptHistory((current) => [...current, trimmed]);
       }
       runSandbox(trimmed, imageUrls);
-      // Scroll to trade suggestions after AI response
-      setTimeout(() => {
-        document.getElementById('ai-trade-suggestions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
       return;
     }
     setAiOutput(null);
