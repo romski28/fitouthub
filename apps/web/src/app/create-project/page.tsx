@@ -96,9 +96,7 @@ export default function CreateProjectPage() {
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
   const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
   const [aiIntakeId, setAiIntakeId] = useState<string | null>(null);
-  const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
   const [openTenderLoading, setOpenTenderLoading] = useState(false);
-  const [openTenderError, setOpenTenderError] = useState<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -239,58 +237,6 @@ export default function CreateProjectPage() {
       // Do not auto-open the description modal when handoff data is absent.
     }
   }, [hydrated, isLoggedIn]);
-
-  // Fetch open tender count when trades/location change
-  useEffect(() => {
-    const trades = initialFormData.tradesRequired?.length
-      ? initialFormData.tradesRequired
-      : descriptionData?.tradesRequired?.length
-        ? descriptionData.tradesRequired
-        : selectedProfessionals.flatMap(p => p.requestedTrades || []).filter(Boolean);
-    const loc = initialFormData.location || descriptionData?.location;
-    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-    const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
-
-    if (trades.length === 0) {
-      setOpenTenderCount(null);
-      return;
-    }
-
-    const fetchCount = async () => {
-      try {
-        setOpenTenderError(null);
-        const params = new URLSearchParams();
-        params.set('trades', trades.join(','));
-        if (locStr) params.set('location', locStr);
-        if (isEmergency) params.set('isEmergency', '1');
-        const res = await fetch(`${API_BASE_URL}/projects/open-tender-count?${params.toString()}`, {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setOpenTenderCount(data.count ?? 0);
-        } else {
-          console.error('[openTender] fetch failed:', res.status, await res.text());
-          setOpenTenderError(`Server error: ${res.status}`);
-        }
-      } catch (err) {
-        console.error('[openTender] fetch error:', err);
-        setOpenTenderError('Could not reach server');
-        setOpenTenderCount(null);
-      }
-    };
-
-    fetchCount();
-  }, [
-    initialFormData.tradesRequired,
-    initialFormData.location,
-    initialFormData.isEmergency,
-    descriptionData?.tradesRequired,
-    descriptionData?.location,
-    descriptionData?.isEmergency,
-    selectedProfessionals,
-    accessToken,
-  ]);
 
   if (!hydrated || isLoggedIn === undefined) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />;
@@ -485,7 +431,7 @@ export default function CreateProjectPage() {
         throw new Error(data.message || `Server error: ${res.status}`);
       }
 
-      toast.success(`Open tender started — ${openTenderCount} professionals invited.`);
+      toast.success('Open tender started — invitations sent to all matching professionals.');
       router.push(`/projects/${project.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start open tender';
@@ -662,7 +608,7 @@ export default function CreateProjectPage() {
             )}
           </div>
 
-          {/* Open tender button — always visible, always fetching count */}
+          {/* Open tender button */}
           <div className="mt-4 border-t border-slate-200 pt-4">
             <button
               type="button"
@@ -674,24 +620,14 @@ export default function CreateProjectPage() {
                   setOpenTenderLoading(false);
                 }
               }}
-              disabled={openTenderLoading || isSubmitting || !openTenderCount || openTenderCount === 0}
+              disabled={openTenderLoading || isSubmitting}
               className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
             >
-              {openTenderLoading
-                ? 'Starting open tender...'
-                : openTenderError
-                  ? `⚠ ${openTenderError}`
-                  : openTenderCount !== null && openTenderCount > 0
-                    ? `Start open tender to ${openTenderCount} professionals`
-                    : openTenderCount === 0
-                      ? 'No matching professionals found'
-                      : 'Loading...'}
+              {openTenderLoading ? 'Starting open tender...' : 'Start open tender to all matching professionals'}
             </button>
-            {openTenderCount !== null && openTenderCount > 0 && (
-              <p className="mt-2 text-center text-xs text-slate-500">
-                All {openTenderCount} matching professionals will be invited to quote on your project.
-              </p>
-            )}
+            <p className="mt-2 text-center text-xs text-slate-500">
+              All professionals matching your trade and location will be invited to quote.
+            </p>
           </div>
         </section>
 

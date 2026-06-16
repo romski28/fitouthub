@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-298ba254",
+    "date": "2026-06-16T10:13:49+08:00",
+    "title": "Remove count endpoint dependency: always show 'Start open tender to all matching professionals' button",
+    "summary": "Remove count endpoint dependency: always show 'Start open tender to all matching professionals' button",
+    "areas": [
+      "web"
+    ],
+    "commit": "298ba254",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-524c660c",
     "date": "2026-06-16T10:04:21+08:00",
     "title": "Move count endpoint to /projects/open-tender-count to avoid :id wildcard conflict",
