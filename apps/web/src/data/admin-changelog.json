@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-1732e714",
+    "date": "2026-06-16T10:31:35+08:00",
+    "title": "Fix missing clientName in open tender form data",
+    "summary": "Fix missing clientName in open tender form data",
+    "areas": [
+      "web"
+    ],
+    "commit": "1732e714",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-63e98d07",
     "date": "2026-06-16T10:20:44+08:00",
     "title": "Fix open tender: set onlySelectedProfessionalsCanBid to false for open tender",

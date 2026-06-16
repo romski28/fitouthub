@@ -413,6 +413,7 @@ export default function CreateProjectPage() {
           ? initialFormData.tradesRequired
           : (descriptionData?.tradesRequired || []),
         location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+        clientName: initialFormData.clientName || (user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : ''),
         onlySelectedProfessionalsCanBid: false,
       };
       const payload = buildProjectPayload(emptyFormData, [], [], []);
