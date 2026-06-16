@@ -318,7 +318,75 @@ export class ProfessionalsService {
 
   async countMatching(params: { trades: string[]; location?: string; isEmergency?: boolean }) {
     const { trades, location, isEmergency } = params;
+    const prisma = this.prisma as any;
     try {
+      // Step-by-step debug: count at each filter level
+      const baseCount = await prisma.professional.count({
+        where: { status: 'approved', professionType: { in: ['contractor', 'company'] } },
+      });
+      console.log('[countMatching] base (approved + contractor/company):', baseCount);
+
+      if (trades.length > 0) {
+        const tradeCount = await prisma.professional.count({
+          where: {
+            status: 'approved',
+            professionType: { in: ['contractor', 'company'] },
+            OR: [
+              { primaryTrade: { in: trades, mode: 'insensitive' } },
+              { tradesOffered: { hasSome: trades } },
+            ],
+          },
+        });
+        console.log('[countMatching] after trade filter:', tradeCount, 'trades:', trades);
+      }
+
+      if (location) {
+        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
+        console.log('[countMatching] location parts:', parts);
+
+        for (const part of parts) {
+          const locCount = await prisma.professional.count({
+            where: {
+              status: 'approved',
+              professionType: { in: ['contractor', 'company'] },
+              ...(trades.length > 0 ? {
+                OR: [
+                  { primaryTrade: { in: trades, mode: 'insensitive' } },
+                  { tradesOffered: { hasSome: trades } },
+                ],
+              } : {}),
+              OR: [
+                { locationPrimary: { contains: part, mode: 'insensitive' } },
+                { locationSecondary: { contains: part, mode: 'insensitive' } },
+                { locationTertiary: { contains: part, mode: 'insensitive' } },
+                { servicePrimaries: { hasSome: [part] } },
+                { serviceSecondaries: { hasSome: [part] } },
+              ],
+            },
+          });
+          console.log(`[countMatching] with location part "${part}" (trades + location):`, locCount);
+        }
+
+        // Count with just location (no trade filter)
+        const locOnlyCount = await prisma.professional.count({
+          where: {
+            status: 'approved',
+            professionType: { in: ['contractor', 'company'] },
+            OR: [
+              ...parts.flatMap(part => [
+                { locationPrimary: { contains: part, mode: 'insensitive' } },
+                { locationSecondary: { contains: part, mode: 'insensitive' } },
+                { locationTertiary: { contains: part, mode: 'insensitive' } },
+              ]),
+              { servicePrimaries: { hasSome: parts } },
+              { serviceSecondaries: { hasSome: parts } },
+            ],
+          },
+        });
+        console.log('[countMatching] location only (no trade):', locOnlyCount);
+      }
+
+      // Final combined count
       const conditions: any[] = [
         { status: 'approved' },
         { professionType: { in: ['contractor', 'company'] } },
@@ -349,9 +417,8 @@ export class ProfessionalsService {
         });
       }
 
-      console.log('[countMatching] conditions:', JSON.stringify(conditions, null, 2));
-      const result = await (this.prisma as any).professional.count({ where: { AND: conditions } });
-      console.log('[countMatching] result:', result);
+      const result = await prisma.professional.count({ where: { AND: conditions } });
+      console.log('[countMatching] final result:', result);
       return result;
     } catch (err) {
       console.error('[countMatching] error:', err?.message || err);

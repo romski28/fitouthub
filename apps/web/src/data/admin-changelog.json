@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-3431b5fa",
+    "date": "2026-06-16T13:31:23+08:00",
+    "title": "Add step-by-step debug logging to countMatching to isolate filter gap",
+    "summary": "Add step-by-step debug logging to countMatching to isolate filter gap",
+    "areas": [
+      "api"
+    ],
+    "commit": "3431b5fa",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-16-7177160d",
     "date": "2026-06-16T13:13:49+08:00",
     "title": "Fix countMatching: use AND-only where, add locationTertiary+serviceSecondaries, revert to full location string",
