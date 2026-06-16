@@ -361,6 +361,8 @@ export class ProfessionalsService {
                 { locationTertiary: { contains: part, mode: 'insensitive' } },
                 { servicePrimaries: { hasSome: [part] } },
                 { serviceSecondaries: { hasSome: [part] } },
+                { regionCoverage: { some: { zone: { label: { contains: part, mode: 'insensitive' } } } } },
+                { regionCoverage: { some: { area: { name: { contains: part, mode: 'insensitive' } } } } },
               ],
             },
           });
@@ -380,6 +382,8 @@ export class ProfessionalsService {
               ]),
               { servicePrimaries: { hasSome: parts } },
               { serviceSecondaries: { hasSome: parts } },
+              { regionCoverage: { some: { zone: { label: { in: parts, mode: 'insensitive' } } } } },
+              { regionCoverage: { some: { area: { name: { in: parts, mode: 'insensitive' } } } } },
             ],
           },
         });
@@ -413,6 +417,9 @@ export class ProfessionalsService {
             ]),
             { servicePrimaries: { hasSome: parts } },
             { serviceSecondaries: { hasSome: parts } },
+            // Also check regionCoverage relation — this is what the client-side reads from
+            { regionCoverage: { some: { zone: { label: { in: parts, mode: 'insensitive' } } } } },
+            { regionCoverage: { some: { area: { name: { in: parts, mode: 'insensitive' } } } } },
           ],
         });
       }

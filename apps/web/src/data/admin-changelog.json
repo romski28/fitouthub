@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-68af4457",
+    "date": "2026-06-16T13:32:35+08:00",
+    "title": "Add regionCoverage relation checks to countMatching — matches client-side getProfessionalCoverageTokens logic",
+    "summary": "Add regionCoverage relation checks to countMatching — matches client-side getProfessionalCoverageTokens logic",
+    "areas": [
+      "api"
+    ],
+    "commit": "68af4457",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-16-3431b5fa",
     "date": "2026-06-16T13:31:23+08:00",
     "title": "Add step-by-step debug logging to countMatching to isolate filter gap",
