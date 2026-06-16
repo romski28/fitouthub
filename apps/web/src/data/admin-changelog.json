@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-16-c1bf88bb",
+    "date": "2026-06-16T12:58:39+08:00",
+    "title": "Fix count zone-level matching, persist draft before navigating to professionals, hide non-local when >=3 local pros",
+    "summary": "Fix count zone-level matching, persist draft before navigating to professionals, hide non-local when >=3 local pros",
+    "areas": [
+      "web"
+    ],
+    "commit": "c1bf88bb",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-bc9eec9a",
     "date": "2026-06-16T12:38:55+08:00",
     "title": "Fix professionals back-to-summary flow: skip share modal for new projects, relabel button, add debug logging for count",

@@ -18,6 +18,7 @@ import {
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
 } from '@/lib/create-project-handoff';
+import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { getUploadResponseKeys } from '@/lib/media-assets';
 
 interface ProjectDescriptionData {
@@ -246,7 +247,8 @@ export default function CreateProjectPage() {
       ? initialFormData.tradesRequired
       : descriptionData?.tradesRequired || [];
     const loc = initialFormData.location || descriptionData?.location;
-    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+    // Use primary (zone) level only — professionals cover zones, not districts
+    const locStr = loc?.primary || '';
     const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
 
     console.log('[openTenderCount] params:', { trades, locStr, isEmergency, initialFormDataKeys: Object.keys(initialFormData) });
@@ -614,6 +616,11 @@ export default function CreateProjectPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    // Persist current state so the professionals page can read full project info
+                    writeCreateProjectDraftSafely({
+                      initialData: initialFormData,
+                      selectedProfessionals: selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })),
+                    });
                     const params = new URLSearchParams();
                     params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
                     const trades = initialFormData.tradesRequired?.length
@@ -635,6 +642,11 @@ export default function CreateProjectPage() {
               <button
                 type="button"
                 onClick={() => {
+                  // Persist current state so the professionals page can read full project info
+                  writeCreateProjectDraftSafely({
+                    initialData: initialFormData,
+                    selectedProfessionals: [],
+                  });
                   const params = new URLSearchParams();
                   const trades = initialFormData.tradesRequired?.length
                     ? initialFormData.tradesRequired

@@ -1420,8 +1420,49 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
   // Narrowly-scoped count: how many matched with location+trade+rating (before any widening)
   const filteredBaseCount = filteredBase.length;
   const locationIsActive = Boolean(loc.primary || loc.secondary || loc.tertiary);
-  // Show expand nudge when a region is active, not yet expanded, and local results are thin (≤2)
-  const canShowExpand = locationIsActive && !regionExpanded && filteredBaseCount <= 2;
+
+  // Split filteredBase into local (location score > 0) and non-local
+  const { localPros, nonLocalPros, localCount } = useMemo(() => {
+    if (!locationIsActive) return { localPros: filteredBase, nonLocalPros: [] as Professional[], localCount: filteredBase.length };
+
+    const locationParts = [
+      loc.primary, loc.secondary, loc.tertiary,
+    ].filter((p): p is string => Boolean(p)).map(p => p.toLowerCase());
+
+    const locals: Professional[] = [];
+    const nonLocals: Professional[] = [];
+
+    for (const pro of filteredBase) {
+      const areas = getProfessionalCoverageTokens(pro);
+      if (areas.length === 0) {
+        // No coverage data — treat as "unknown", put in local by default
+        locals.push(pro);
+        continue;
+      }
+      const hasMatch = locationParts.some(locPart =>
+        areas.some(area => area.includes(locPart) || locPart.includes(area))
+      );
+      if (hasMatch) {
+        locals.push(pro);
+      } else {
+        nonLocals.push(pro);
+      }
+    }
+
+    return { localPros: locals, nonLocalPros: nonLocals, localCount: locals.length };
+  }, [filteredBase, loc.primary, loc.secondary, loc.tertiary, locationIsActive]);
+
+  // Show expand nudge when a region is active, not yet expanded, and local results are thin (< 3)
+  const canShowExpand = locationIsActive && !regionExpanded && localCount < 3;
+  // Hide non-local professionals when we have enough (≥3) local results and not expanded
+  const showNonLocal = !locationIsActive || regionExpanded || localCount < 3;
+
+  // Apply non-local filter to the final display list
+  const displayFiltered = useMemo(() => {
+    if (showNonLocal) return filtered;
+    const localIds = new Set(localPros.map(p => p.id));
+    return filtered.filter(p => localIds.has(p.id));
+  }, [filtered, showNonLocal, localPros]);
 
   const maxSelect = activeRequiredTrades.length > 1 ? Math.max(3, activeRequiredTrades.length * 2) : 3;
   // Initialize selection from URL param if provided
@@ -1495,16 +1536,16 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     });
 
     const hasRequiredLocation = !requireLocation || Boolean(loc.primary || loc.secondary || loc.tertiary);
-    if (next.size === 0 && filtered.length > 0 && initialFromIntent.profession && hasRequiredLocation && canInviteProfessionals) {
-      for (let i = 0; i < Math.min(3, filtered.length); i++) {
-        next.add(filtered[i].id);
+    if (next.size === 0 && displayFiltered.length > 0 && initialFromIntent.profession && hasRequiredLocation && canInviteProfessionals) {
+      for (let i = 0; i < Math.min(3, displayFiltered.length); i++) {
+        next.add(displayFiltered[i].id);
       }
     }
 
     if (Array.from(next).sort().join(',') !== Array.from(selectedIds).sort().join(',')) {
       setSelectedIds(next);
     }
-  }, [professionals, filtered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary, canInviteProfessionals]);
+  }, [professionals, displayFiltered, initialFromIntent.profession, requireLocation, loc.primary, loc.secondary, loc.tertiary, canInviteProfessionals]);
 
   useEffect(() => {
     if (!canInviteProfessionals && selectedIds.size > 0) {
@@ -1554,13 +1595,13 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     const coversAllRequired = (pro: Professional) =>
       requiredTradesLower.every((trade) => matchesTrade(pro, trade));
 
-    const fullCoverageCompanies = filtered.filter(
+    const fullCoverageCompanies = displayFiltered.filter(
       (pro) => (pro.professionType === 'company' || pro.professionType === 'contractor') && coversAllRequired(pro),
     );
 
     const specialistSections = enforcedRequiredTrades.map((trade, index) => {
       const tradeLower = requiredTradesLower[index];
-      const professionalsForTrade = filtered.filter((pro) => {
+      const professionalsForTrade = displayFiltered.filter((pro) => {
         if (!matchesTrade(pro, tradeLower)) return false;
         return true;
       });
@@ -1578,7 +1619,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       fullCoverageCompanyCount: fullCoverageCompanies.length,
       specialistSections: specialistSections.map((s) => ({ trade: s.trade, count: s.professionals.length })),
       uncategorizedCount: uncategorized.length,
-      filteredTotal: filtered.length,
+      filteredTotal: displayFiltered.length,
     });
 
     return {
@@ -1587,7 +1628,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       specialistSections,
       uncategorized,
     };
-  }, [filtered, enforcedRequiredTrades, tradeAutoFilterMode]);
+  }, [displayFiltered, enforcedRequiredTrades, tradeAutoFilterMode]);
 
   const activeFilterLabel = useMemo(() => {
     if (activeRequiredTrades.length === 0) return null;
@@ -2211,7 +2252,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       )}
 
       {/* List */}
-      {filtered.length === 0 ? (
+      {displayFiltered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
           {t('states.empty')}
         </div>
@@ -2320,7 +2361,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
             <div className="flex items-center justify-between rounded-lg border border-white/45 bg-[#F5EEDE]/90 px-4 py-2.5">
               <div>
                 <p className="text-sm font-bold text-slate-800">
-                  {enforcedRequiredTrades.length === 1 ? enforcedRequiredTrades[0] : 'All trades'} ({filtered.length})
+                  {enforcedRequiredTrades.length === 1 ? enforcedRequiredTrades[0] : 'All trades'} ({displayFiltered.length})
                 </p>
               </div>
               <label className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -2340,7 +2381,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
                 </select>
               </label>
             </div>
-            {filtered.map((pro) => (
+            {displayFiltered.map((pro) => (
               <ProfessionalRowItem
                 key={pro.id}
                 pro={pro}
@@ -2364,9 +2405,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       {canShowExpand && (
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm">
           <p className="text-sm font-semibold text-slate-800">
-            {filteredBaseCount === 0
+            {localCount === 0
               ? 'No professionals found in your selected area.'
-              : `Only ${filteredBaseCount} professional${filteredBaseCount === 1 ? '' : 's'} found in your selected area.`}
+              : `Only ${localCount} professional${localCount === 1 ? '' : 's'} found in your selected area.`}
           </p>
           <p className="mt-1 text-sm text-slate-500">
             Expanding the search can surface professionals from other regions who may be available to travel.
