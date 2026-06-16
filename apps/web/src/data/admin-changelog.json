@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-16-442d6ea5",
+    "date": "2026-06-16T12:20:28+08:00",
+    "title": "Fix open tender count and select-my-own filtering: split comma location, pass trades+location params",
+    "summary": "Fix open tender count and select-my-own filtering: split comma location, pass trades+location params",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "442d6ea5",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-a9e73b4f",
     "date": "2026-06-16T12:07:44+08:00",
     "title": "Restructure flow: wizard goes directly to summary page, not professionals",

@@ -629,7 +629,18 @@ export default function CreateProjectPage() {
             ) : (
               <button
                 type="button"
-                onClick={() => router.push('/professionals')}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  const trades = initialFormData.tradesRequired?.length
+                    ? initialFormData.tradesRequired
+                    : descriptionData?.tradesRequired;
+                  if (trades?.length) params.set('trades', trades.join(','));
+                  const loc = initialFormData.location || descriptionData?.location || userLocation;
+                  const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                  if (locStr) params.set('location', locStr);
+                  params.set('source', 'create-project');
+                  router.push(`/professionals?${params.toString()}`);
+                }}
                 className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
               >
                 Select my own professionals → 

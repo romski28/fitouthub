@@ -331,13 +331,16 @@ export class ProfessionalsService {
         ];
       }
       if (location) {
+        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
         where.AND = [
           ...(where.AND || []),
           {
             OR: [
-              { locationPrimary: { contains: location, mode: 'insensitive' } },
-              { locationSecondary: { contains: location, mode: 'insensitive' } },
-              { servicePrimaries: { has: location } },
+              ...parts.flatMap(part => [
+                { locationPrimary: { contains: part, mode: 'insensitive' } },
+                { locationSecondary: { contains: part, mode: 'insensitive' } },
+              ]),
+              { servicePrimaries: { hasSome: parts } },
             ],
           },
         ];
