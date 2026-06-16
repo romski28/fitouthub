@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-16-7177160d",
+    "date": "2026-06-16T13:13:49+08:00",
+    "title": "Fix countMatching: use AND-only where, add locationTertiary+serviceSecondaries, revert to full location string",
+    "summary": "Fix countMatching: use AND-only where, add locationTertiary+serviceSecondaries, revert to full location string",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7177160d",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-c1bf88bb",
     "date": "2026-06-16T12:58:39+08:00",
     "title": "Fix count zone-level matching, persist draft before navigating to professionals, hide non-local when >=3 local pros",

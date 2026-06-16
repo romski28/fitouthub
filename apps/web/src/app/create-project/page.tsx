@@ -247,8 +247,8 @@ export default function CreateProjectPage() {
       ? initialFormData.tradesRequired
       : descriptionData?.tradesRequired || [];
     const loc = initialFormData.location || descriptionData?.location;
-    // Use primary (zone) level only — professionals cover zones, not districts
-    const locStr = loc?.primary || '';
+    // Use full location string (district + zone) so API can match at both levels
+    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
     const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
 
     console.log('[openTenderCount] params:', { trades, locStr, isEmergency, initialFormDataKeys: Object.keys(initialFormData) });

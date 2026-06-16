@@ -319,34 +319,38 @@ export class ProfessionalsService {
   async countMatching(params: { trades: string[]; location?: string; isEmergency?: boolean }) {
     const { trades, location, isEmergency } = params;
     try {
-      const where: any = {
-        status: 'approved',
-        professionType: { in: ['contractor', 'company'] },
-      };
-      if (isEmergency) where.emergencyCalloutAvailable = true;
+      const conditions: any[] = [
+        { status: 'approved' },
+        { professionType: { in: ['contractor', 'company'] } },
+      ];
+      if (isEmergency) conditions.push({ emergencyCalloutAvailable: true });
+
       if (trades.length > 0) {
-        where.OR = [
-          { primaryTrade: { in: trades, mode: 'insensitive' } },
-          { tradesOffered: { hasSome: trades } },
-        ];
+        conditions.push({
+          OR: [
+            { primaryTrade: { in: trades, mode: 'insensitive' } },
+            { tradesOffered: { hasSome: trades } },
+          ],
+        });
       }
+
       if (location) {
         const parts = location.split(',').map(s => s.trim()).filter(Boolean);
-        where.AND = [
-          ...(where.AND || []),
-          {
-            OR: [
-              ...parts.flatMap(part => [
-                { locationPrimary: { contains: part, mode: 'insensitive' } },
-                { locationSecondary: { contains: part, mode: 'insensitive' } },
-              ]),
-              { servicePrimaries: { hasSome: parts } },
-            ],
-          },
-        ];
+        conditions.push({
+          OR: [
+            ...parts.flatMap(part => [
+              { locationPrimary: { contains: part, mode: 'insensitive' } },
+              { locationSecondary: { contains: part, mode: 'insensitive' } },
+              { locationTertiary: { contains: part, mode: 'insensitive' } },
+            ]),
+            { servicePrimaries: { hasSome: parts } },
+            { serviceSecondaries: { hasSome: parts } },
+          ],
+        });
       }
-      console.log('[countMatching] where:', JSON.stringify(where, null, 2));
-      const result = await (this.prisma as any).professional.count({ where });
+
+      console.log('[countMatching] conditions:', JSON.stringify(conditions, null, 2));
+      const result = await (this.prisma as any).professional.count({ where: { AND: conditions } });
       console.log('[countMatching] result:', result);
       return result;
     } catch (err) {
