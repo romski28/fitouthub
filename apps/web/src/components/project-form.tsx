@@ -101,6 +101,9 @@ interface ProjectFormProps {
 
   /** Slot rendered between Photos and Need Help sections */
   recipientsSlot?: React.ReactNode;
+
+  /** Slot rendered in the button row alongside Cancel/Submit */
+  actionsSlot?: React.ReactNode;
 }
 
 const MAX_FILES = 5;
@@ -218,6 +221,7 @@ export function ProjectForm({
   showAiOverview = false,
   confirmationMode = false,
   recipientsSlot,
+  actionsSlot,
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
@@ -1307,25 +1311,22 @@ export function ProjectForm({
       )}
 
       {/* Buttons */}
-      <div
-        className={`grid gap-3 pt-2 ${
-          onCancel ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'
-        }`}
-      >
+      <div className="flex flex-wrap items-center gap-3 pt-2">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className={`w-full ${solidCrimsonButtonClassName}`}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition disabled:opacity-50"
           >
             Cancel
           </button>
         )}
+        {actionsSlot}
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full ${solidGreenButtonClassName}`}
+          className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 flex-1 min-w-[140px] ${solidGreenButtonClassName}`}
         >
           {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
         </button>

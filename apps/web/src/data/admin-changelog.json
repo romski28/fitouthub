@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-16-6cc98a57",
+    "date": "2026-06-16T23:42:43+08:00",
+    "title": "Move open tender and select buttons into button row alongside Cancel/Save; compact layout",
+    "summary": "Move open tender and select buttons into button row alongside Cancel/Save; compact layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "6cc98a57",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-23e989fe",
     "date": "2026-06-16T23:34:58+08:00",
     "title": "Move bidding recipients into ProjectForm as slot, add no-photos note, move Need Help below buttons",

@@ -649,7 +649,7 @@ export default function CreateProjectPage() {
                       </p>
                     </div>
 
-                    {invitedCount > 0 ? (
+                    {invitedCount > 0 && (
                       <div className="space-y-3">
                         <div className="flex max-w-2xl flex-wrap gap-2">
                           {selectedProfessionalNames.map((name, index) => (
@@ -661,93 +661,87 @@ export default function CreateProjectPage() {
                             </span>
                           ))}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            writeCreateProjectDraftSafely({
-                              initialData: initialFormData,
-                              selectedProfessionals: selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })),
-                            });
-                            const params = new URLSearchParams();
-                            params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
-                            const trades = initialFormData.tradesRequired?.length
-                              ? initialFormData.tradesRequired
-                              : descriptionData?.tradesRequired;
-                            if (trades?.length) params.set('trades', trades.join(','));
-                            const loc = initialFormData.location || descriptionData?.location || userLocation;
-                            const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                            if (locStr) params.set('location', locStr);
-                            params.set('source', 'create-project');
-                            router.push(`/professionals?${params.toString()}`);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
-                        >
-                          ← Return to selection
-                        </button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          writeCreateProjectDraftSafely({
-                            initialData: initialFormData,
-                            selectedProfessionals: [],
-                          });
-                          const params = new URLSearchParams();
-                          const trades = initialFormData.tradesRequired?.length
-                            ? initialFormData.tradesRequired
-                            : descriptionData?.tradesRequired;
-                          if (trades?.length) params.set('trades', trades.join(','));
-                          const loc = initialFormData.location || descriptionData?.location || userLocation;
-                          const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                          if (locStr) params.set('location', locStr);
-                          params.set('source', 'create-project');
-                          router.push(`/professionals?${params.toString()}`);
-                        }}
-                        className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
-                      >
-                        Select my own professionals → 
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Open tender button */}
-                  <div className="mt-4 border-t border-slate-200 pt-4">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setOpenTenderLoading(true);
-                        try {
-                          await handleOpenTender();
-                        } finally {
-                          setOpenTenderLoading(false);
-                        }
-                      }}
-                      disabled={openTenderLoading || isSubmitting}
-                      className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
-                    >
-                      {countLoading
-                        ? <span className="inline-flex items-center gap-1.5">Finding matching professionals<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
-                        : openTenderLoading
-                        ? openTenderProgress || 'Starting...'
-                        : openTenderCount !== null && openTenderCount > 0
-                          ? `Start open tender to ${openTenderCount} professionals`
-                          : openTenderCount === 0
-                            ? 'No matching professionals found'
-                            : 'Start open tender to all matching professionals'}
-                    </button>
-                    {!countLoading && openTenderCount !== null && openTenderCount > 0 && (
-                      <p className="mt-2 text-center text-xs text-slate-500">
-                        All {openTenderCount} matching professionals will be invited to quote.
-                      </p>
-                    )}
-                    {openTenderLoading && openTenderProgress && (
-                      <p className="mt-2 text-center text-xs font-medium text-emerald-700 animate-pulse">
-                        {openTenderProgress}
-                      </p>
                     )}
                   </div>
                 </div>
+              }
+              actionsSlot={
+                <>
+                  {/* Open tender button */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setOpenTenderLoading(true);
+                      try {
+                        await handleOpenTender();
+                      } finally {
+                        setOpenTenderLoading(false);
+                      }
+                    }}
+                    disabled={openTenderLoading || isSubmitting}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40 flex-1 min-w-[160px]"
+                  >
+                    {countLoading
+                      ? <span className="inline-flex items-center gap-1">Finding<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
+                      : openTenderLoading
+                      ? openTenderProgress || 'Starting...'
+                      : openTenderCount !== null && openTenderCount > 0
+                        ? `Start open tender to ${openTenderCount}`
+                        : openTenderCount === 0
+                          ? 'No professionals found'
+                          : 'Start open tender'}
+                  </button>
+                  {invitedCount === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        writeCreateProjectDraftSafely({
+                          initialData: initialFormData,
+                          selectedProfessionals: [],
+                        });
+                        const params = new URLSearchParams();
+                        const trades = initialFormData.tradesRequired?.length
+                          ? initialFormData.tradesRequired
+                          : descriptionData?.tradesRequired;
+                        if (trades?.length) params.set('trades', trades.join(','));
+                        const loc = initialFormData.location || descriptionData?.location || userLocation;
+                        const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                        if (locStr) params.set('location', locStr);
+                        params.set('source', 'create-project');
+                        router.push(`/professionals?${params.toString()}`);
+                      }}
+                      className="rounded-lg border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                    >
+                      Select my own
+                    </button>
+                  )}
+                  {invitedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        writeCreateProjectDraftSafely({
+                          initialData: initialFormData,
+                          selectedProfessionals: selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })),
+                        });
+                        const params = new URLSearchParams();
+                        params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
+                        const trades = initialFormData.tradesRequired?.length
+                          ? initialFormData.tradesRequired
+                          : descriptionData?.tradesRequired;
+                        if (trades?.length) params.set('trades', trades.join(','));
+                        const loc = initialFormData.location || descriptionData?.location || userLocation;
+                        const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                        if (locStr) params.set('location', locStr);
+                        params.set('source', 'create-project');
+                        router.push(`/professionals?${params.toString()}`);
+                      }}
+                      className="rounded-lg border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                    >
+                      ← Return to selection
+                    </button>
+                  )}
+                </>
               }
             />
           </div>
