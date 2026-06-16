@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-16-bc9eec9a",
+    "date": "2026-06-16T12:38:55+08:00",
+    "title": "Fix professionals back-to-summary flow: skip share modal for new projects, relabel button, add debug logging for count",
+    "summary": "Fix professionals back-to-summary flow: skip share modal for new projects, relabel button, add debug logging for count",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bc9eec9a",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-442d6ea5",
     "date": "2026-06-16T12:20:28+08:00",
     "title": "Fix open tender count and select-my-own filtering: split comma location, pass trades+location params",

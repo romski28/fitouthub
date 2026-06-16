@@ -345,8 +345,12 @@ export class ProfessionalsService {
           },
         ];
       }
-      return await (this.prisma as any).professional.count({ where });
-    } catch {
+      console.log('[countMatching] where:', JSON.stringify(where, null, 2));
+      const result = await (this.prisma as any).professional.count({ where });
+      console.log('[countMatching] result:', result);
+      return result;
+    } catch (err) {
+      console.error('[countMatching] error:', err?.message || err);
       return 0;
     }
   }

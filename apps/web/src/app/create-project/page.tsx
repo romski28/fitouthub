@@ -249,13 +249,18 @@ export default function CreateProjectPage() {
     const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
     const isEmergency = initialFormData.isEmergency ?? descriptionData?.isEmergency ?? false;
 
+    console.log('[openTenderCount] params:', { trades, locStr, isEmergency, initialFormDataKeys: Object.keys(initialFormData) });
+
     if (trades.length === 0) { setOpenTenderCount(null); return; }
 
-    fetch(`${API_BASE_URL}/professionals/matching-count?${new URLSearchParams({
+    const url = `${API_BASE_URL}/professionals/matching-count?${new URLSearchParams({
       trades: trades.join(','),
       ...(locStr ? { location: locStr } : {}),
       ...(isEmergency ? { isEmergency: '1' } : {}),
-    }).toString()}`, {
+    }).toString()}`;
+    console.log('[openTenderCount] fetching:', url);
+
+    fetch(url, {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     })
       .then(r => r.ok ? r.json() : Promise.reject())

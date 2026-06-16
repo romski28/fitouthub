@@ -1637,7 +1637,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       return;
     }
 
-    if (projectId) {
+    // When coming from create-project flow (no real project yet),
+    // save the selection and go back to the summary page.
+    if (projectId && projectId !== 'new') {
       setIsModalOpen(true);
       return;
     }
@@ -2466,7 +2468,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               className="rounded-lg bg-[#DC143C] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#b01030] disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={t('actions.shareProjectAria')}
             >
-              Finish creating your project →
+              {source === 'create-project' ? 'Back to project summary' : 'Finish creating your project →'}
             </button>
           </div>
         </div>
