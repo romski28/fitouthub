@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-16-63e98d07",
+    "date": "2026-06-16T10:20:44+08:00",
+    "title": "Fix open tender: set onlySelectedProfessionalsCanBid to false for open tender",
+    "summary": "Fix open tender: set onlySelectedProfessionalsCanBid to false for open tender",
+    "areas": [
+      "web"
+    ],
+    "commit": "63e98d07",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-298ba254",
     "date": "2026-06-16T10:13:49+08:00",
     "title": "Remove count endpoint dependency: always show 'Start open tender to all matching professionals' button",

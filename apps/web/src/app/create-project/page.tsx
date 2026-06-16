@@ -413,6 +413,7 @@ export default function CreateProjectPage() {
           ? initialFormData.tradesRequired
           : (descriptionData?.tradesRequired || []),
         location: initialFormData.location || descriptionData?.location || userLocation || undefined,
+        onlySelectedProfessionalsCanBid: false,
       };
       const payload = buildProjectPayload(emptyFormData, [], [], []);
       const project = await createProject(payload);
