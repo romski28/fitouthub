@@ -100,6 +100,7 @@ export default function CreateProjectPage() {
   const [openTenderLoading, setOpenTenderLoading] = useState(false);
   const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
   const [openTenderProgress, setOpenTenderProgress] = useState('');
+  const [countLoading, setCountLoading] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -253,8 +254,9 @@ export default function CreateProjectPage() {
 
     console.log('[openTenderCount] params:', { trades, locStr, isEmergency, initialFormDataKeys: Object.keys(initialFormData) });
 
-    if (trades.length === 0) { setOpenTenderCount(null); return; }
+    if (trades.length === 0) { setOpenTenderCount(null); setCountLoading(false); return; }
 
+    setCountLoading(true);
     const url = `${API_BASE_URL}/professionals/matching-count?${new URLSearchParams({
       trades: trades.join(','),
       ...(locStr ? { location: locStr } : {}),
@@ -266,8 +268,8 @@ export default function CreateProjectPage() {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => setOpenTenderCount(d.count ?? 0))
-      .catch(() => setOpenTenderCount(null));
+      .then(d => { setOpenTenderCount(d.count ?? 0); setCountLoading(false); })
+      .catch(() => { setOpenTenderCount(null); setCountLoading(false); });
   }, [initialFormData.tradesRequired, initialFormData.location, initialFormData.isEmergency, descriptionData, accessToken]);
 
   if (!hydrated || isLoggedIn === undefined) {
@@ -680,7 +682,9 @@ export default function CreateProjectPage() {
               disabled={openTenderLoading || isSubmitting}
               className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
             >
-              {openTenderLoading
+              {countLoading
+                ? <span className="inline-flex items-center gap-1.5">Finding matching professionals<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
+                : openTenderLoading
                 ? openTenderProgress || 'Starting...'
                 : openTenderCount !== null && openTenderCount > 0
                   ? `Start open tender to ${openTenderCount} professionals`
@@ -688,7 +692,7 @@ export default function CreateProjectPage() {
                     ? 'No matching professionals found'
                     : 'Start open tender to all matching professionals'}
             </button>
-            {openTenderCount !== null && openTenderCount > 0 && (
+            {!countLoading && openTenderCount !== null && openTenderCount > 0 && (
               <p className="mt-2 text-center text-xs text-slate-500">
                 All {openTenderCount} matching professionals will be invited to quote.
               </p>

@@ -320,113 +320,88 @@ export class ProfessionalsService {
     const { trades, location, isEmergency } = params;
     const prisma = this.prisma as any;
     try {
-      // Step-by-step debug: count at each filter level
-      const baseCount = await prisma.professional.count({
-        where: { status: 'approved', professionType: { in: ['contractor', 'company'] } },
-      });
-      console.log('[countMatching] base (approved + contractor/company):', baseCount);
-
+      // Build a simple trade + status query — same base as findAll
+      const where: any = {
+        status: 'approved',
+        professionType: { in: ['contractor', 'company'] },
+      };
+      if (isEmergency) where.emergencyCalloutAvailable = true;
       if (trades.length > 0) {
-        const tradeCount = await prisma.professional.count({
-          where: {
-            status: 'approved',
-            professionType: { in: ['contractor', 'company'] },
-            OR: [
-              { primaryTrade: { in: trades, mode: 'insensitive' } },
-              { tradesOffered: { hasSome: trades } },
-            ],
-          },
-        });
-        console.log('[countMatching] after trade filter:', tradeCount, 'trades:', trades);
+        where.OR = [
+          { primaryTrade: { in: trades, mode: 'insensitive' } },
+          { tradesOffered: { hasSome: trades } },
+        ];
       }
 
-      if (location) {
-        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
-        console.log('[countMatching] location parts:', parts);
-
-        for (const part of parts) {
-          const locCount = await prisma.professional.count({
-            where: {
-              status: 'approved',
-              professionType: { in: ['contractor', 'company'] },
-              ...(trades.length > 0 ? {
-                OR: [
-                  { primaryTrade: { in: trades, mode: 'insensitive' } },
-                  { tradesOffered: { hasSome: trades } },
-                ],
-              } : {}),
-              OR: [
-                { locationPrimary: { contains: part, mode: 'insensitive' } },
-                { locationSecondary: { contains: part, mode: 'insensitive' } },
-                { locationTertiary: { contains: part, mode: 'insensitive' } },
-                { servicePrimaries: { hasSome: [part] } },
-                { serviceSecondaries: { hasSome: [part] } },
-                { regionCoverage: { some: { zone: { label: { contains: part, mode: 'insensitive' } } } } },
-                { regionCoverage: { some: { area: { name: { contains: part, mode: 'insensitive' } } } } },
-              ],
+      // Fetch with regionCoverage so we can filter in JS — same as client-side
+      const pros = await prisma.professional.findMany({
+        where,
+        select: {
+          id: true,
+          locationPrimary: true,
+          locationSecondary: true,
+          locationTertiary: true,
+          servicePrimaries: true,
+          serviceSecondaries: true,
+          regionCoverage: {
+            select: {
+              zone: { select: { label: true, code: true } },
+              area: { select: { name: true, code: true } },
             },
-          });
-          console.log(`[countMatching] with location part "${part}" (trades + location):`, locCount);
+          },
+        },
+      });
+
+      console.log('[countMatching] trade-matched:', pros.length, 'trades:', trades);
+
+      if (!location) {
+        console.log('[countMatching] no location filter, returning:', pros.length);
+        return pros.length;
+      }
+
+      // Filter by location using same token-extraction logic as client-side getProfessionalCoverageTokens
+      const parts = location.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      console.log('[countMatching] location parts:', parts);
+
+      const matching = pros.filter((pro: any) => {
+        const tokens = new Set<string>();
+
+        // From regionCoverage
+        for (const cov of pro.regionCoverage || []) {
+          const zoneLabel = cov?.zone?.label?.trim().toLowerCase();
+          const zoneCode = cov?.zone?.code?.trim().toLowerCase();
+          const areaName = cov?.area?.name?.trim().toLowerCase();
+          const areaCode = cov?.area?.code?.trim().toLowerCase();
+          if (zoneLabel) tokens.add(zoneLabel);
+          if (zoneCode) tokens.add(zoneCode);
+          if (areaName) tokens.add(areaName);
+          if (areaCode) tokens.add(areaCode);
         }
 
-        // Count with just location (no trade filter)
-        const locOnlyCount = await prisma.professional.count({
-          where: {
-            status: 'approved',
-            professionType: { in: ['contractor', 'company'] },
-            OR: [
-              ...parts.flatMap(part => [
-                { locationPrimary: { contains: part, mode: 'insensitive' } },
-                { locationSecondary: { contains: part, mode: 'insensitive' } },
-                { locationTertiary: { contains: part, mode: 'insensitive' } },
-              ]),
-              { servicePrimaries: { hasSome: parts } },
-              { serviceSecondaries: { hasSome: parts } },
-              { regionCoverage: { some: { zone: { label: { in: parts, mode: 'insensitive' } } } } },
-              { regionCoverage: { some: { area: { name: { in: parts, mode: 'insensitive' } } } } },
-            ],
-          },
-        });
-        console.log('[countMatching] location only (no trade):', locOnlyCount);
-      }
+        // From string columns
+        for (const field of [pro.locationPrimary, pro.locationSecondary, pro.locationTertiary]) {
+          if (typeof field === 'string') {
+            field.split(',').forEach(s => tokens.add(s.trim().toLowerCase()));
+          }
+        }
 
-      // Final combined count
-      const conditions: any[] = [
-        { status: 'approved' },
-        { professionType: { in: ['contractor', 'company'] } },
-      ];
-      if (isEmergency) conditions.push({ emergencyCalloutAvailable: true });
+        // From array columns
+        for (const arr of [pro.servicePrimaries, pro.serviceSecondaries]) {
+          if (Array.isArray(arr)) {
+            arr.forEach((s: string) => tokens.add(s.trim().toLowerCase()));
+          }
+        }
 
-      if (trades.length > 0) {
-        conditions.push({
-          OR: [
-            { primaryTrade: { in: trades, mode: 'insensitive' } },
-            { tradesOffered: { hasSome: trades } },
-          ],
-        });
-      }
+        // Match: any token contains any part, or any part contains any token
+        return parts.some(part =>
+          Array.from(tokens).some(token =>
+            token.includes(part) || part.includes(token)
+          )
+        );
+      });
 
-      if (location) {
-        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
-        conditions.push({
-          OR: [
-            ...parts.flatMap(part => [
-              { locationPrimary: { contains: part, mode: 'insensitive' } },
-              { locationSecondary: { contains: part, mode: 'insensitive' } },
-              { locationTertiary: { contains: part, mode: 'insensitive' } },
-            ]),
-            { servicePrimaries: { hasSome: parts } },
-            { serviceSecondaries: { hasSome: parts } },
-            // Also check regionCoverage relation — this is what the client-side reads from
-            { regionCoverage: { some: { zone: { label: { in: parts, mode: 'insensitive' } } } } },
-            { regionCoverage: { some: { area: { name: { in: parts, mode: 'insensitive' } } } } },
-          ],
-        });
-      }
-
-      const result = await prisma.professional.count({ where: { AND: conditions } });
-      console.log('[countMatching] final result:', result);
-      return result;
+      console.log('[countMatching] after location filter:', matching.length);
+      return matching.length;
     } catch (err) {
       console.error('[countMatching] error:', err?.message || err);
       return 0;

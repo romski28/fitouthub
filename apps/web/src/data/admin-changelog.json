@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-16-5b095ae3",
+    "date": "2026-06-16T18:43:24+08:00",
+    "title": "Rewrite countMatching: fetch+filter in JS same as client; add loading animation on count button",
+    "summary": "Rewrite countMatching: fetch+filter in JS same as client; add loading animation on count button",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5b095ae3",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-68af4457",
     "date": "2026-06-16T13:32:35+08:00",
     "title": "Add regionCoverage relation checks to countMatching — matches client-side getProfessionalCoverageTokens logic",
