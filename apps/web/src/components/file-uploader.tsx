@@ -17,7 +17,7 @@ export type FileUploaderProps = {
 export default function FileUploader({
   maxFiles = 5,
   maxFileSize = 10 * 1024 * 1024,
-  accept = "image/*",
+  accept = "image/*,.pdf",
   onFilesChange,
   onUpload,
   defaultFiles = [],
@@ -80,7 +80,7 @@ export default function FileUploader({
       <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted">
-            <span className="font-semibold text-strong">Add photos</span>
+            <span className="font-semibold text-strong">Add photos or PDFs</span>
             <span className="ml-2">(max {maxFiles}, {Math.round(maxFileSize / (1024 * 1024))}MB each)</span>
           </div>
           <>

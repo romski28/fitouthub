@@ -621,6 +621,9 @@ export function ProjectForm({
               </div>
             </div>
           )}
+          {pendingFiles.length === 0 && existingPhotos.length === 0 && (
+            <p className="text-xs text-slate-500 italic">Please share any images, documents or other information that can help our professionals support you better.</p>
+          )}
         </div>
 
         {/* Error */}
@@ -737,13 +740,6 @@ export function ProjectForm({
           <div className={`space-y-2 text-sm ${
             usesDarkCreateSurface ? 'text-slate-200' : 'text-slate-700'
           }`}>
-            {formData.projectName?.trim() && (
-              <p>
-                <span className={`font-semibold ${
-                  usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
-                }`}>Project:</span> {formData.projectName}
-              </p>
-            )}
             {(locationSummary || formData.region?.trim()) && (
               <p>
                 <span className={`font-semibold ${
@@ -759,12 +755,11 @@ export function ProjectForm({
               </p>
             )}
             {formData.notes?.trim() && (
-              <div>
-                <p className={`font-semibold ${
+              <p>
+                <span className={`font-semibold ${
                   usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
-                }`}>Scope</p>
-                <p className="mt-1 whitespace-pre-wrap">{formData.notes}</p>
-              </div>
+                }`}>Scope:</span> {formData.notes}
+              </p>
             )}
             {confirmationMode && (
               <p>

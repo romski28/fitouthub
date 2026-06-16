@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-16-7683dbd8",
+    "date": "2026-06-16T23:22:12+08:00",
+    "title": "Refactor project summary: reorder panels, remove repeated title, fix scope colon, add PDF+no-photos, merge bidding into review",
+    "summary": "Refactor project summary: reorder panels, remove repeated title, fix scope colon, add PDF+no-photos, merge bidding into review",
+    "areas": [
+      "web"
+    ],
+    "commit": "7683dbd8",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/file-uploader.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-303a3a63",
     "date": "2026-06-16T19:02:43+08:00",
     "title": "Fix count mismatch: filter professionals list by approved status to match countMatching",

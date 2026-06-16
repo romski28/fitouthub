@@ -590,132 +590,130 @@ export default function CreateProjectPage() {
           </div>
         </section>
 
-        <section className="mimo-panel mimo-panel-padding mt-6 text-slate-900">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-2">
-              <p className="mimo-panel-eyebrow">Bidding recipients</p>
-              <h2 className="mimo-panel-title-lg">
-                {invitedCount > 0
-                  ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
-                  : 'No professionals selected yet'}
-              </h2>
-              <p className="mimo-panel-body max-w-2xl">
-                {invitedCount > 0
-                  ? 'These professionals will be linked to the project immediately and quotes will be requested as soon as you confirm.'
-                  : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
-              </p>
-            </div>
-
-            {invitedCount > 0 ? (
-              <div className="space-y-3">
-                <div className="flex max-w-2xl flex-wrap gap-2">
-                  {selectedProfessionalNames.map((name, index) => (
-                    <span
-                      key={`${name}-${index}`}
-                      className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Persist current state so the professionals page can read full project info
-                    writeCreateProjectDraftSafely({
-                      initialData: initialFormData,
-                      selectedProfessionals: selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })),
-                    });
-                    const params = new URLSearchParams();
-                    params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
-                    const trades = initialFormData.tradesRequired?.length
-                      ? initialFormData.tradesRequired
-                      : descriptionData?.tradesRequired;
-                    if (trades?.length) params.set('trades', trades.join(','));
-                    const loc = initialFormData.location || descriptionData?.location || userLocation;
-                    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                    if (locStr) params.set('location', locStr);
-                    params.set('source', 'create-project');
-                    router.push(`/professionals?${params.toString()}`);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
-                >
-                  ← Return to selection
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  // Persist current state so the professionals page can read full project info
-                  writeCreateProjectDraftSafely({
-                    initialData: initialFormData,
-                    selectedProfessionals: [],
-                  });
-                  const params = new URLSearchParams();
-                  const trades = initialFormData.tradesRequired?.length
-                    ? initialFormData.tradesRequired
-                    : descriptionData?.tradesRequired;
-                  if (trades?.length) params.set('trades', trades.join(','));
-                  const loc = initialFormData.location || descriptionData?.location || userLocation;
-                  const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                  if (locStr) params.set('location', locStr);
-                  params.set('source', 'create-project');
-                  router.push(`/professionals?${params.toString()}`);
-                }}
-                className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
-              >
-                Select my own professionals → 
-              </button>
-            )}
-          </div>
-
-          {/* Open tender button */}
-          <div className="mt-4 border-t border-slate-200 pt-4">
-            <button
-              type="button"
-              onClick={async () => {
-                setOpenTenderLoading(true);
-                try {
-                  await handleOpenTender();
-                } finally {
-                  setOpenTenderLoading(false);
-                }
-              }}
-              disabled={openTenderLoading || isSubmitting}
-              className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
-            >
-              {countLoading
-                ? <span className="inline-flex items-center gap-1.5">Finding matching professionals<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
-                : openTenderLoading
-                ? openTenderProgress || 'Starting...'
-                : openTenderCount !== null && openTenderCount > 0
-                  ? `Start open tender to ${openTenderCount} professionals`
-                  : openTenderCount === 0
-                    ? 'No matching professionals found'
-                    : 'Start open tender to all matching professionals'}
-            </button>
-            {!countLoading && openTenderCount !== null && openTenderCount > 0 && (
-              <p className="mt-2 text-center text-xs text-slate-500">
-                All {openTenderCount} matching professionals will be invited to quote.
-              </p>
-            )}
-            {openTenderLoading && openTenderProgress && (
-              <p className="mt-2 text-center text-xs font-medium text-emerald-700 animate-pulse">
-                {openTenderProgress}
-              </p>
-            )}
-          </div>
-        </section>
-
         {!showDescriptionModal && (
-          <div className="mimo-panel mimo-panel-padding mt-8 text-slate-900">
+          <div className="mimo-panel mimo-panel-padding mt-6 text-slate-900">
             <div className="px-1 pb-4">
               <p className="mimo-panel-eyebrow">Project review</p>
-              <h2 className="mimo-panel-title-lg">Review project brief</h2>
               <p className="mimo-panel-body mt-1">
                 Confirm the brief, attachments, and final bidding setup before you submit.
               </p>
+            </div>
+
+            {/* Bidding recipients — moved inside review panel */}
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white px-5 py-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-2">
+                  <p className="mimo-panel-eyebrow">Bidding recipients</p>
+                  <h2 className="mimo-panel-title-lg">
+                    {invitedCount > 0
+                      ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
+                      : 'No professionals selected yet'}
+                  </h2>
+                  <p className="mimo-panel-body max-w-2xl">
+                    {invitedCount > 0
+                      ? 'These professionals will be linked to the project immediately and quotes will be requested as soon as you confirm.'
+                      : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
+                  </p>
+                </div>
+
+                {invitedCount > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex max-w-2xl flex-wrap gap-2">
+                      {selectedProfessionalNames.map((name, index) => (
+                        <span
+                          key={`${name}-${index}`}
+                          className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        writeCreateProjectDraftSafely({
+                          initialData: initialFormData,
+                          selectedProfessionals: selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })),
+                        });
+                        const params = new URLSearchParams();
+                        params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
+                        const trades = initialFormData.tradesRequired?.length
+                          ? initialFormData.tradesRequired
+                          : descriptionData?.tradesRequired;
+                        if (trades?.length) params.set('trades', trades.join(','));
+                        const loc = initialFormData.location || descriptionData?.location || userLocation;
+                        const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                        if (locStr) params.set('location', locStr);
+                        params.set('source', 'create-project');
+                        router.push(`/professionals?${params.toString()}`);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-2xl border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                    >
+                      ← Return to selection
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      writeCreateProjectDraftSafely({
+                        initialData: initialFormData,
+                        selectedProfessionals: [],
+                      });
+                      const params = new URLSearchParams();
+                      const trades = initialFormData.tradesRequired?.length
+                        ? initialFormData.tradesRequired
+                        : descriptionData?.tradesRequired;
+                      if (trades?.length) params.set('trades', trades.join(','));
+                      const loc = initialFormData.location || descriptionData?.location || userLocation;
+                      const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                      if (locStr) params.set('location', locStr);
+                      params.set('source', 'create-project');
+                      router.push(`/professionals?${params.toString()}`);
+                    }}
+                    className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
+                  >
+                    Select my own professionals → 
+                  </button>
+                )}
+              </div>
+
+              {/* Open tender button */}
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setOpenTenderLoading(true);
+                    try {
+                      await handleOpenTender();
+                    } finally {
+                      setOpenTenderLoading(false);
+                    }
+                  }}
+                  disabled={openTenderLoading || isSubmitting}
+                  className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+                >
+                  {countLoading
+                    ? <span className="inline-flex items-center gap-1.5">Finding matching professionals<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
+                    : openTenderLoading
+                    ? openTenderProgress || 'Starting...'
+                    : openTenderCount !== null && openTenderCount > 0
+                      ? `Start open tender to ${openTenderCount} professionals`
+                      : openTenderCount === 0
+                        ? 'No matching professionals found'
+                        : 'Start open tender to all matching professionals'}
+                </button>
+                {!countLoading && openTenderCount !== null && openTenderCount > 0 && (
+                  <p className="mt-2 text-center text-xs text-slate-500">
+                    All {openTenderCount} matching professionals will be invited to quote.
+                  </p>
+                )}
+                {openTenderLoading && openTenderProgress && (
+                  <p className="mt-2 text-center text-xs font-medium text-emerald-700 animate-pulse">
+                    {openTenderProgress}
+                  </p>
+                )}
+              </div>
             </div>
 
             <ProjectForm
