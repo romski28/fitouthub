@@ -522,11 +522,16 @@ export class ProjectsController {
     @Query('location') location?: string,
     @Query('isEmergency') isEmergency?: string,
   ) {
-    return this.projectsService.countMatchingProfessionals({
-      trades: trades ? trades.split(',').filter(Boolean) : [],
-      location,
-      isEmergency: isEmergency === '1' || isEmergency === 'true',
-    });
+    try {
+      return await this.projectsService.countMatchingProfessionals({
+        trades: trades ? trades.split(',').filter(Boolean) : [],
+        location,
+        isEmergency: isEmergency === '1' || isEmergency === 'true',
+      });
+    } catch (error) {
+      console.error('[getProfessionalsCount] Error:', error?.message || error);
+      return { count: 0 };
+    }
   }
 
   @Get(':id/professionals')

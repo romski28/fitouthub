@@ -4334,33 +4334,51 @@ export class ProjectsService {
     isEmergency?: boolean;
   }) {
     const { trades, location, isEmergency } = params;
-    const where: any = {
-      professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
-      status: 'approved',
-    };
+    try {
+      const where: any = {
+        professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+        status: 'approved',
+      };
 
-    if (isEmergency) {
-      where.emergencyCalloutAvailable = true;
+      if (isEmergency) {
+        where.emergencyCalloutAvailable = true;
+      }
+
+      if (trades.length > 0) {
+        where.OR = trades.flatMap((trade) => [
+          { primaryTrade: { equals: trade, mode: 'insensitive' } },
+          { tradesOffered: { has: trade } },
+        ]);
+      }
+
+      if (location) {
+        const locFilters = [
+          { locationPrimary: { contains: location, mode: 'insensitive' } },
+          { locationSecondary: { contains: location, mode: 'insensitive' } },
+          { servicePrimaries: { has: location } },
+        ];
+        where.AND = [...(where.AND || []), { OR: locFilters }];
+      }
+
+      const count = await (this.prisma as any).professional.count({ where });
+      return { count };
+    } catch (error) {
+      console.error('[countMatchingProfessionals] Query failed:', error?.message || error);
+      // Fallback: count by simple trade match only
+      try {
+        const simpleWhere: any = {
+          professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
+          status: 'approved',
+        };
+        if (trades.length > 0) {
+          simpleWhere.primaryTrade = { in: trades, mode: 'insensitive' };
+        }
+        const count = await (this.prisma as any).professional.count({ where: simpleWhere });
+        return { count };
+      } catch {
+        return { count: 0 };
+      }
     }
-
-    if (trades.length > 0) {
-      where.OR = [
-        { primaryTrade: { in: trades, mode: 'insensitive' } },
-        { tradesOffered: { hasSome: trades } },
-      ];
-    }
-
-    if (location) {
-      where.OR = [
-        ...(where.OR || []),
-        { locationPrimary: { contains: location, mode: 'insensitive' } },
-        { locationSecondary: { contains: location, mode: 'insensitive' } },
-        { servicePrimaries: { hasSome: [location] } },
-      ];
-    }
-
-    const count = await (this.prisma as any).professional.count({ where });
-    return { count };
   }
 
   async inviteAllMatchingProfessionals(projectId: string, userId: string) {
