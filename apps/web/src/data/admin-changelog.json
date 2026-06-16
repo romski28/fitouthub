@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-16-a9e73b4f",
+    "date": "2026-06-16T12:07:44+08:00",
+    "title": "Restructure flow: wizard goes directly to summary page, not professionals",
+    "summary": "Restructure flow: wizard goes directly to summary page, not professionals",
+    "areas": [
+      "web"
+    ],
+    "commit": "a9e73b4f",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-dd5c57a1",
     "date": "2026-06-16T11:39:37+08:00",
     "title": "Remove auto-scroll entirely",

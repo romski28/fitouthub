@@ -632,7 +632,7 @@ export default function CreateProjectPage() {
                 onClick={() => router.push('/professionals')}
                 className="shrink-0 rounded-2xl bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a84426]"
               >
-                Go back to professionals → 
+                Select my own professionals → 
               </button>
             )}
           </div>

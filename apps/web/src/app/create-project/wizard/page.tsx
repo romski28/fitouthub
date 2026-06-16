@@ -1185,7 +1185,7 @@ export default function CreateProjectWizardPage() {
     params.set('aiEmergency', nextDraft.initialData?.isEmergency ? '1' : '0');
     params.set('source', 'ai-wizard');
 
-    router.push(`/professionals?${params.toString()}`);
+    router.push(`/create-project?${params.toString()}`);
   };
 
   if (!hydrated || isLoggedIn === undefined) {
