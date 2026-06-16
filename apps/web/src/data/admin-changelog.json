@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-16-23e989fe",
+    "date": "2026-06-16T23:34:58+08:00",
+    "title": "Move bidding recipients into ProjectForm as slot, add no-photos note, move Need Help below buttons",
+    "summary": "Move bidding recipients into ProjectForm as slot, add no-photos note, move Need Help below buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "23e989fe",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-7683dbd8",
     "date": "2026-06-16T23:22:12+08:00",
     "title": "Refactor project summary: reorder panels, remove repeated title, fix scope colon, add PDF+no-photos, merge bidding into review",

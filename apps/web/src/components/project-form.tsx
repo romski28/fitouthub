@@ -98,6 +98,9 @@ interface ProjectFormProps {
 
   /** Render as confirmation-first screen when AI context exists */
   confirmationMode?: boolean;
+
+  /** Slot rendered between Photos and Need Help sections */
+  recipientsSlot?: React.ReactNode;
 }
 
 const MAX_FILES = 5;
@@ -214,6 +217,7 @@ export function ProjectForm({
   showClientName = true,
   showAiOverview = false,
   confirmationMode = false,
+  recipientsSlot,
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
@@ -1260,7 +1264,6 @@ export function ProjectForm({
               }`}>Existing photos</div>
               <div className="flex flex-wrap gap-2">
                 {existingPhotos.map((photo) => {
-                  // Keep existing photo styling consistent
                   return (
                     <div
                       key={photo.id || photo.url}
@@ -1283,8 +1286,14 @@ export function ProjectForm({
               </div>
             </div>
           )}
+          {pendingFiles.length === 0 && pendingFilePreviews.length === 0 && existingPhotos.length === 0 && (
+            <p className="text-xs text-slate-500 italic">Please share any images, documents or other information that can help our professionals support you better.</p>
+          )}
         </div>
       )}
+
+      {/* Bidding recipients slot */}
+      {recipientsSlot}
 
       {/* Error */}
       {error && (
@@ -1296,6 +1305,31 @@ export function ProjectForm({
           {error}
         </div>
       )}
+
+      {/* Buttons */}
+      <div
+        className={`grid gap-3 pt-2 ${
+          onCancel ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'
+        }`}
+      >
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting || isReadOnly}
+            className={`w-full ${solidCrimsonButtonClassName}`}
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`w-full ${solidGreenButtonClassName}`}
+        >
+          {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
+        </button>
+      </div>
 
       {/* Assistance Explanation */}
       {onAssistRequest && !isReadOnly && (
@@ -1320,60 +1354,9 @@ export function ProjectForm({
           <p className={`text-sm ${usesDarkCreateSurface ? 'text-blue-100' : 'text-blue-800'}`}>
             Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
           </p>
-
-          <div className={`mt-4 grid gap-3 ${onCancel ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                disabled={isSubmitting || isReadOnly}
-                className={`w-full ${solidCrimsonButtonClassName}`}
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full ${solidGreenButtonClassName}`}
-            >
-              {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
-            </button>
-          </div>
         </div>
       )}
-
-      {/* Buttons */}
-      {(!onAssistRequest || isReadOnly) && (
-        <div
-          className={`grid gap-3 pt-4 ${
-            onCancel ? 'grid-cols-2' : 'grid-cols-1'
-          }`}
-        >
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting || isReadOnly}
-              className={`w-full ${solidCrimsonButtonClassName}`}
-            >
-              Cancel
-            </button>
-          )}
-          {!isReadOnly && (
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full ${solidGreenButtonClassName}`}
-            >
-              {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
-            </button>
-          )}
-        </div>
-      )}
-
-    </form>
-  );
-}
-
+      </form>
+    );
+  }
 
