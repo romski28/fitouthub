@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-57c89e5e",
+    "date": "2026-06-17T12:57:49+08:00",
+    "title": "Add session guard to accumulated scope + hallucination prevention rule",
+    "summary": "Add session guard to accumulated scope + hallucination prevention rule",
+    "areas": [
+      "api"
+    ],
+    "commit": "57c89e5e",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-17-d8a6f9a6",
     "date": "2026-06-17T12:47:30+08:00",
     "title": "Add accumulated scope across thread turns — scope grows, never shrinks",

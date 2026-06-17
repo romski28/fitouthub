@@ -496,16 +496,23 @@ export class AiService {
   }
 
   /** Build an accumulated project scope by merging summaries from the entire thread chain */
-  private async buildAccumulatedScope(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
+  private async buildAccumulatedScope(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null; sessionId?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
 
     const visited = new Set<string>();
     const scopeParts: string[] = [];
-    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
+    const sessionId = activeThread.sessionId || undefined;
+    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null } | null = activeThread;
 
     for (let depth = 0; depth < 10; depth += 1) {
       if (!cursor || visited.has(cursor.id)) break;
       visited.add(cursor.id);
+
+      // Guard: only pull from intakes in the same session (prevent cross-conversation contamination)
+      if (sessionId && cursor.sessionId && cursor.sessionId !== sessionId) {
+        this.logger.warn(`[buildAccumulatedScope] Skipping intake ${cursor.id} — session mismatch`);
+        break;
+      }
 
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
@@ -516,7 +523,6 @@ export class AiService {
         const title = typeof rawOutput.title === 'string' ? rawOutput.title.trim() : '';
         const scope = typeof rawOutput.scope === 'string' ? rawOutput.scope.trim() : '';
 
-        // Collect in reverse order (oldest first) by unshifting
         const combined = [summary, scope, title].filter(s => s.length > 0);
         for (const part of combined.reverse()) {
           if (!scopeParts.includes(part)) {
@@ -529,7 +535,7 @@ export class AiService {
       if (!sourceIntakeId) break;
       const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
       cursor = parent
-        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
+        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput, sessionId: parent.sessionId }
         : null;
     }
 
@@ -1286,6 +1292,7 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - Your "summary" field MUST include ALL details from the ACCUMULATED PROJECT SCOPE PLUS any new details from the latest user message.
 - NEVER drop or shorten previously established scope details. The summary should GROW each turn, not shrink.
 - If the accumulated scope says "Leak under kitchen sink, pipe is copper, access is tight" and the user adds "the tap is dripping too", your new summary must be "Leak under kitchen sink with dripping tap, copper pipes, tight access".
+- CRITICAL: Do NOT invent or hallucinate details that were never mentioned by the user or in the accumulated scope. If the accumulated scope says "Leak under kitchen sink" and the user says "the water is spreading", do NOT add "dripping tap" or any other unmentioned detail.
 - Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
 
 # Temporary Mitigations (MANDATORY — populate for EVERY project)
@@ -2827,7 +2834,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
     const conversationHistory = await this.collectThreadConversationHistory(activeThread as any);
     const establishedFacts = await this.buildEstablishedFacts(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
-    const accumulatedScope = await this.buildAccumulatedScope(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
+    const accumulatedScope = await this.buildAccumulatedScope(
+      activeThread ? { ...activeThread, sessionId: context?.sessionId || (activeThread as any).sessionId } : null
+    );
 
     const askedQuestionsSummary = askedQuestions
       .slice(0, 6)
