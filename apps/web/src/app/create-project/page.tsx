@@ -333,7 +333,7 @@ export default function CreateProjectPage() {
       throw new Error('Please select at least one required trade before opening bidding.');
     }
 
-    return {
+    const payload = {
       projectName: formData.projectName,
       clientName: formData.clientName,
       region,

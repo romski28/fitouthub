@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-3c589044",
+    "date": "2026-06-17T13:36:06+08:00",
+    "title": "Fix payload variable reference in buildProjectPayload",
+    "summary": "Fix payload variable reference in buildProjectPayload",
+    "areas": [
+      "web"
+    ],
+    "commit": "3c589044",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-3406f495",
     "date": "2026-06-17T13:33:20+08:00",
     "title": "Fix missing closing brace on buildProjectPayload",
