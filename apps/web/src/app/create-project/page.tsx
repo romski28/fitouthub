@@ -96,6 +96,7 @@ export default function CreateProjectPage() {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
+  const [showTenderInfoModal, setShowTenderInfoModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
   const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
@@ -576,6 +577,50 @@ export default function CreateProjectPage() {
         projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
+      {/* Tender Info Modal */}
+      {showTenderInfoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-[1px]">
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-white/20 bg-white px-6 py-6 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <h2 className="text-lg font-bold text-slate-900">How tendering works</h2>
+              <button
+                type="button"
+                onClick={() => setShowTenderInfoModal(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-700">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <p className="font-semibold text-emerald-900">🔓 Open tender</p>
+                <p className="mt-1 text-emerald-800">
+                  Your project is shared with <strong>all matched professionals</strong> in your area. They can review your brief and submit quotations through the platform. No private contact information is shared until you choose to engage.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="font-semibold text-amber-900">🔒 Closed tender</p>
+                <p className="mt-1 text-amber-800">
+                  You <strong>hand-pick which professionals</strong> can view and tender for your project. Use &ldquo;Select my own professionals&rdquo; to choose who you&rsquo;d like to invite. Your privacy is paramount &mdash; no information is shared until absolutely necessary.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTenderInfoModal(false)}
+              className="mt-5 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-6 lg:px-8">
         <section className="mimo-panel overflow-hidden text-slate-900">
           <div className="space-y-6 px-6 py-6">
@@ -635,7 +680,15 @@ export default function CreateProjectPage() {
               showClientName={false}
               confirmationMode={true}
               recipientsSlot={
-                <div className="rounded-xl border border-slate-200 bg-white px-5 py-5">
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowTenderInfoModal(true)}
+                    className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white hover:bg-blue-700 transition"
+                    title="About tendering methods"
+                  >
+                    i
+                  </button>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <p className="mimo-panel-eyebrow">Bidding recipients</p>
