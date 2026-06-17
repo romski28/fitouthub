@@ -672,7 +672,7 @@ export default function CreateProjectPage() {
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={true}
-              submitLabel={invitedCount > 0 ? 'LIMITED TENDER' : 'Invite selected (0) professionals'}
+              submitLabel={invitedCount > 0 ? 'START LIMITED TENDER' : 'Invite selected (0) professionals'}
               submitVariant="green"
               hideSubmit={invitedCount === 0}
               showBudget={false}
@@ -680,28 +680,27 @@ export default function CreateProjectPage() {
               showClientName={false}
               confirmationMode={true}
               recipientsSlot={
-                <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTenderInfoModal(true)}
-                    className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white hover:bg-blue-700 transition"
-                    title="About tendering methods"
-                  >
-                    i
-                  </button>
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <p className="mimo-panel-eyebrow">BIDDING TYPES</p>
                       <div className="space-y-1.5 text-sm text-slate-600">
                         <p>
-                          <span className="font-semibold text-emerald-700">OPEN TENDER:</span> You will invite all {openTenderCount ?? '...'} matched professionals to submit pricing for your project.
+                          <span className="font-semibold text-slate-800">OPEN TENDER:</span> You will invite all {openTenderCount ?? '...'} matched professionals to submit pricing for your project.
                         </p>
                         <p>
-                          <span className="font-semibold text-amber-700">LIMITED TENDER:</span>{' '}
+                          <span className="font-semibold text-slate-800">LIMITED TENDER:</span>{' '}
                           {invitedCount > 0
                             ? `You will invite only the ${invitedCount} professional${invitedCount === 1 ? '' : 's'} you have selected to price your project.`
                             : 'You can select from the matched professionals who you want to price for your project.'}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowTenderInfoModal(true)}
+                          className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
+                        >
+                          Learn more
+                        </button>
                       </div>
                     </div>
 
@@ -766,10 +765,10 @@ export default function CreateProjectPage() {
                     : openTenderLoading
                     ? openTenderProgress || 'Starting...'
                     : openTenderCount !== null && openTenderCount > 0
-                      ? 'OPEN TENDER'
+                      ? 'START OPEN TENDER'
                       : openTenderCount === 0
                         ? 'No professionals found'
-                        : 'OPEN TENDER'}
+                        : 'START OPEN TENDER'}
                 </button>
               }
             />

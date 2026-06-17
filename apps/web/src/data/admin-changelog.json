@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-c510d678",
+    "date": "2026-06-17T11:52:35+08:00",
+    "title": "START OPEN/LIMITED TENDER labels, replace info circle with Learn more button, neutral text colors",
+    "summary": "START OPEN/LIMITED TENDER labels, replace info circle with Learn more button, neutral text colors",
+    "areas": [
+      "web"
+    ],
+    "commit": "c510d678",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-3d7204d4",
     "date": "2026-06-17T11:44:22+08:00",
     "title": "Relabel: BIDDING TYPES panel, OPEN/LIMITED TENDER buttons, Reselect, info text lines",
