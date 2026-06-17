@@ -104,7 +104,7 @@ export function GeneralActionModal({
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
-        isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
+        isOpen ? 'visible bg-black/40 backdrop-blur-sm' : 'invisible bg-black/0'
       }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) handleModalClose();
@@ -112,23 +112,23 @@ export function GeneralActionModal({
     >
       <div className="w-full max-w-md max-h-[80vh] [perspective:1600px]">
         {isLoading ? (
-          <div className="relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
             <div className="flex flex-col items-center justify-center px-6 py-14">
-              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-              <p className="text-slate-300">Loading...</p>
+              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[#D4C8A0] border-t-emerald-600" />
+              <p className="text-slate-700">Loading...</p>
             </div>
           </div>
         ) : (
           <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
             <div
-              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl [backface-visibility:hidden]"
               aria-hidden={showDetails}
             >
               {hasDetails && (
                 <button
                   type="button"
                   onClick={() => setShowDetails(true)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  className="absolute right-4 top-4 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700"
                   aria-label="Show details"
                 >
                   i
@@ -140,21 +140,21 @@ export function GeneralActionModal({
                   <img
                     src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
                     alt="Step illustration"
-                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                    className="h-20 w-20 rounded-full border border-[#D4C8A0] object-cover"
                   />
                 </div>
 
-                {title && <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>}
+                {title && <h2 className="text-2xl font-bold text-emerald-800">{title}</h2>}
 
-                {body && <p className="mt-3 text-base leading-relaxed text-slate-100">{body}</p>}
+                {body && <p className="mt-3 text-base leading-relaxed text-slate-700">{body}</p>}
               </div>
 
-              <div className="mt-auto flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+              <div className="mt-auto flex items-center justify-end gap-3 border-t border-[#D4C8A0] px-5 py-4">
                 {!secondaryClosesModal && (
                   <button
                     type="button"
                     onClick={handleModalClose}
-                    className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                    className="min-w-[110px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Close
                   </button>
@@ -163,7 +163,7 @@ export function GeneralActionModal({
                   <button
                     type="button"
                     onClick={handleProjectButtonClick}
-                    className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                    className="min-w-[110px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     {projectButtonLabel}
                   </button>
@@ -174,7 +174,7 @@ export function GeneralActionModal({
                     className={
                       secondaryIsDanger
                         ? 'min-w-[110px] rounded-lg bg-rose-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-rose-700'
-                        : 'min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800'
+                        : 'min-w-[110px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-50'
                     }
                   >
                     {secondaryButtonLabel}

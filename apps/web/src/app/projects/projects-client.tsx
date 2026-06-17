@@ -905,19 +905,30 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                     );
                                   }
 
+                                  // When waiting for quotes, show info modal instead of disabled button
+                                  const effectiveAction = shouldWaitForQuotes
+                                    ? {
+                                        ...action,
+                                        actionKey: 'WAIT_FOR_QUOTES',
+                                        actionLabel: 'Wait for quotes',
+                                        requiresAction: false,
+                                        modalContent: {
+                                          title: 'Waiting for quotes',
+                                          body: 'Professionals have been invited to submit pricing for your project. You\'ll be notified when quotes start coming in — no action needed right now.',
+                                          detailsBody: 'Once quotes are received, you\'ll be able to compare pricing, timelines, and choose the best professional for your project.',
+                                          primaryButtonLabel: 'Got it',
+                                          primaryActionType: 'close_modal',
+                                        },
+                                      }
+                                    : action;
+
                                   return (
                                     <NextStepModalButton
                                       key={`${project.id}-${action.actionKey}`}
-                                      action={action}
+                                      action={effectiveAction}
                                       projectId={project.id}
                                       variant={action.actionKey === 'SITE_STARTED' ? 'status' : 'primary'}
-                                      disabled={shouldWaitForQuotes}
-                                      labelOverride={shouldWaitForQuotes ? 'Wait for quotes' : undefined}
-                                      disabledTitle={
-                                        shouldWaitForQuotes
-                                          ? 'This step unlocks once at least one quote is received.'
-                                          : undefined
-                                      }
+                                      disabled={false}
                                       onCompleted={() => refreshProjectNextStep(project.id)}
                                     />
                                   );

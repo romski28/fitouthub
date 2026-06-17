@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-17-43bc1f8b",
+    "date": "2026-06-17T20:57:35+08:00",
+    "title": "Gray Wait for quotes opens info modal; recolor GeneralActionModal to Mimo cream scheme",
+    "summary": "Gray Wait for quotes opens info modal; recolor GeneralActionModal to Mimo cream scheme",
+    "areas": [
+      "web"
+    ],
+    "commit": "43bc1f8b",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-2af41dd5",
     "date": "2026-06-17T18:08:07+08:00",
     "title": "Transition open tender project to BIDDING_ACTIVE after inviting professionals",
