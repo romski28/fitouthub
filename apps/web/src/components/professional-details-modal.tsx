@@ -38,8 +38,7 @@ const buildPersuasiveHighlights = (professional: Professional) => {
   const tradeCount = professional.tradesOffered?.length || 0;
   const supplyCount = professional.suppliesOffered?.length || 0;
 
-  if (professional.primaryTrade) bullets.push(`Focused on ${professional.primaryTrade} work.`);
-  if (professional.serviceArea) bullets.push(`Actively covers ${professional.serviceArea}.`);
+  if (professional.yearsInBusiness) bullets.push(`Trading for ${professional.yearsInBusiness} year${professional.yearsInBusiness === 1 ? '' : 's'}.`);
   if (referenceCount > 0) bullets.push(`Shows ${referenceCount} completed reference project${referenceCount === 1 ? '' : 's'}.`);
   if (photoCount > 0) bullets.push(`Includes ${photoCount} portfolio photo${photoCount === 1 ? '' : 's'} as visual proof.`);
   if (professional.emergencyCalloutAvailable) bullets.push('Offers emergency callout availability for urgent jobs.');
@@ -125,19 +124,12 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
           <div className="grid gap-3 sm:grid-cols-4">
             <StatCard
-              label="Trade Focus"
-              value={professional.primaryTrade || 'Not set'}
-              helperText={
-                professional.professionType === 'company'
-                  ? 'Multiple trades may be available'
-                  : professional.professionType === 'contractor'
-                    ? 'Single trade specialist'
-                    : undefined
-              }
+              label="Years Trading"
+              value={professional.yearsInBusiness || '—'}
             />
             <StatCard label="Projects Completed" value={referenceProjectCount} />
-            <StatCard label="Coverage Areas" value={serviceAreas.length || '—'} />
-            <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? '24/7 available' : 'Standard'} />
+            <StatCard label="MIMO Certified" value={professional.status === 'approved' ? 'Yes' : '—'} />
+            <StatCard label="Emergency" value={professional.emergencyCalloutAvailable ? 'Yes' : 'No'} />
           </div>
 
           {persuasiveHighlights.length > 0 && (
@@ -155,8 +147,8 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Detail label="Status" value={professional.status} />
             <Detail label="Registration Date" value={formatRegistrationDate(professional.registrationDate)} />
+            <Detail label="Response Time" value={professional.avgResponseHours != null ? `${professional.avgResponseHours}h avg` : '—'} />
           </div>
 
           {serviceAreas.length > 0 && (
