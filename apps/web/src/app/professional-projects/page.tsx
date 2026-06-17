@@ -21,6 +21,7 @@ import {
 } from '@/lib/next-steps';
 import { getProfessionalShowMeHref } from '@/lib/professional-workflow';
 import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
+import toast from 'react-hot-toast';
 import type { UpdatesSummary } from '@/lib/updates-cache';
 
 interface ProjectProfessional {
