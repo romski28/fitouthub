@@ -4,8 +4,11 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
+import { API_BASE_URL } from '@/config/api';
+import type { Professional } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 interface ProjectDetail {
@@ -237,6 +240,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   });
   const [primaryNextStep, setPrimaryNextStep] = useState<NextStepAction | null>(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
+  const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const handleOpenProDetails = async (professionalId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/professionals/${professionalId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const pro = await res.json();
+        setDetailsPro(pro);
+        setDetailsOpen(true);
+      }
+    } catch { /* silently fail */ }
+  };
   const timelineContainerRef = useRef<HTMLDivElement | null>(null);
   const timelineCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -338,6 +356,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       return {
         id: pp?.id || professionalName,
+        professionalId: pp?.professional?.id || '',
         professionalName,
         bidDateLabel: bidAt ? formatDate(bidAt) : 'No bid',
         totalQuoteLabel: pp?.quoteAmount ? formatHKD(pp.quoteAmount) : 'HK$ —',
@@ -630,7 +649,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="divide-y divide-[rgba(120,53,15,0.10)]">
                 {biddingRows.map((row) => (
                   <div key={row.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm text-slate-700">
-                    <span className="col-span-6 font-medium text-slate-800">{row.professionalName}</span>
+                    <button
+                      type="button"
+                      className="col-span-6 text-left font-medium text-slate-800 hover:text-[#b94e2d] hover:underline transition"
+                      onClick={() => handleOpenProDetails(row.professionalId)}
+                    >
+                      {row.professionalName}
+                    </button>
                     <span className="col-span-3">{row.bidDateLabel}</span>
                     <span className="col-span-3 text-right font-semibold text-slate-900">{row.totalQuoteLabel}</span>
                   </div>
@@ -967,6 +992,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </AccordionItem>
       </AccordionGroup>
+
+      <ProfessionalDetailsModal
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        professional={detailsPro}
+      />
     </div>
   );
 };

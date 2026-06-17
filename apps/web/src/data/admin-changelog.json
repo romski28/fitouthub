@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-17-bb368889",
+    "date": "2026-06-17T13:12:06+08:00",
+    "title": "Make professional names clickable in overview and professionals tabs, open details modal on click",
+    "summary": "Make professional names clickable in overview and professionals tabs, open details modal on click",
+    "areas": [
+      "web"
+    ],
+    "commit": "bb368889",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/professionals-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-bc31b76d",
     "date": "2026-06-17T13:01:00+08:00",
     "title": "Clear AI session state on project creation to start fresh next time",

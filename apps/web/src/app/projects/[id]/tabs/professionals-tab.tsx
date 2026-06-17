@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
+import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { API_BASE_URL } from '@/config/api';
+import type { Professional } from '@/lib/types';
 import toast from 'react-hot-toast';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
@@ -197,6 +199,21 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const handleOpenProDetails = async (professionalId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/professionals/${professionalId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const pro = await res.json();
+        setDetailsPro(pro);
+        setDetailsOpen(true);
+      }
+    } catch { /* silently fail */ }
+  };
 
   const openWorkflowModal = async (completedLabel: string) => {
     if (!accessToken) return;
@@ -395,7 +412,13 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
                   >
                     <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">{displayName}</p>
+                        <button
+                          type="button"
+                          className="truncate text-left font-semibold text-slate-900 hover:text-[#b94e2d] hover:underline transition"
+                          onClick={() => handleOpenProDetails(pp.professional.id)}
+                        >
+                          {displayName}
+                        </button>
                       </div>
 
                       <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -752,6 +775,12 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
             : undefined
         }
         onClose={() => setWorkflowModalOpen(false)}
+      />
+
+      <ProfessionalDetailsModal
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        professional={detailsPro}
       />
     </div>
   );
