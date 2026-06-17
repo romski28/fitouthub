@@ -133,6 +133,8 @@ export default function ProfessionalProjectsPage() {
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
+  const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
+  const [decliningIds, setDecliningIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(
     () => projects.filter((p) => !p.accessRestricted).map((p) => p.project.id),
@@ -204,6 +206,46 @@ export default function ProfessionalProjectsPage() {
     },
     [accessToken, nextStepCacheScope, openModal, professional?.id, router],
   );
+
+  const handleQuickAccept = async (projectProf: ProjectProfessional) => {
+    const ppId = projectProf.id;
+    setAcceptingIds(prev => new Set(prev).add(ppId));
+    try {
+      const res = await fetch(`${API_BASE_URL}/professional/projects/${ppId}/accept`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to accept');
+      toast.success('Project accepted! You can now submit your quote.');
+      setProjects(prev => prev.map(p => p.id === ppId ? { ...p, status: 'accepted' } : p));
+      const actions = await fetchPrimaryNextStep(projectProf.project.id, accessToken!, { cacheScope: nextStepCacheScope, forceRefresh: true });
+      if (actions) setNextStepMap(prev => ({ ...prev, [projectProf.project.id]: [actions] }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to accept project');
+    } finally {
+      setAcceptingIds(prev => { const next = new Set(prev); next.delete(ppId); return next; });
+    }
+  };
+
+  const handleQuickDecline = async (projectProf: ProjectProfessional) => {
+    const confirmed = window.confirm('Decline this project? This cannot be undone.');
+    if (!confirmed) return;
+    const ppId = projectProf.id;
+    setDecliningIds(prev => new Set(prev).add(ppId));
+    try {
+      const res = await fetch(`${API_BASE_URL}/professional/projects/${ppId}/reject`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to decline');
+      toast.success('Project declined.');
+      setProjects(prev => prev.filter(p => p.id !== ppId));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to decline project');
+    } finally {
+      setDecliningIds(prev => { const next = new Set(prev); next.delete(ppId); return next; });
+    }
+  };
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -561,6 +603,26 @@ export default function ProfessionalProjectsPage() {
                                       {action.actionLabel}
                                     </button>
                                   ))}
+                                  {projectProf.status === 'pending' && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuickAccept(projectProf)}
+                                        disabled={acceptingIds.has(projectProf.id) || decliningIds.has(projectProf.id)}
+                                        className="rounded-lg bg-[rgba(126,58,33,0.92)] hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      >
+                                        {acceptingIds.has(projectProf.id) ? 'Accepting...' : 'Tentatively accept'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuickDecline(projectProf)}
+                                        disabled={acceptingIds.has(projectProf.id) || decliningIds.has(projectProf.id)}
+                                        className="rounded-lg border border-rose-300 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      >
+                                        {decliningIds.has(projectProf.id) ? 'Declining...' : 'Decline'}
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               ) : (
                                 <Link
