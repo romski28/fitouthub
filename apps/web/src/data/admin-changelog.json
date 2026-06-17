@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-e1eaaa98",
+    "date": "2026-06-17T21:24:21+08:00",
+    "title": "Recolor Request site access button to solid blue bg-white text",
+    "summary": "Recolor Request site access button to solid blue bg-white text",
+    "areas": [
+      "web"
+    ],
+    "commit": "e1eaaa98",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-a1b09a1b",
     "date": "2026-06-17T21:20:01+08:00",
     "title": "Add missing toast import",

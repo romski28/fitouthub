@@ -599,7 +599,7 @@ export default function ProfessionalProjectsPage() {
                                           projectProf.id,
                                         )
                                       }
-                                      className="rounded-lg border border-sky-400/60 bg-sky-500/20 hover:bg-sky-500/30 text-sky-100 px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                                     >
                                       {action.actionLabel}
                                     </button>
