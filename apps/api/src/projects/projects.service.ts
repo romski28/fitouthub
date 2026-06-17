@@ -4439,7 +4439,15 @@ export class ProjectsService {
       throw new BadRequestException('No matching professionals found for open tender');
     }
 
-    return this.inviteProfessionals(projectId, professionalIds);
+    const result = await this.inviteProfessionals(projectId, professionalIds);
+
+    // Transition project to BIDDING_ACTIVE now that professionals are invited
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { currentStage: ProjectStage.BIDDING_ACTIVE },
+    });
+
+    return result;
   }
 
   async inviteProfessionals(projectId: string, professionalIds: string[]) {
