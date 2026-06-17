@@ -104,6 +104,12 @@ interface ProjectFormProps {
 
   /** Slot rendered in the button row alongside Cancel/Submit */
   actionsSlot?: React.ReactNode;
+
+  /** Submit button color variant */
+  submitVariant?: 'green' | 'amber';
+
+  /** Hide the submit button entirely */
+  hideSubmit?: boolean;
 }
 
 const MAX_FILES = 5;
@@ -222,6 +228,8 @@ export function ProjectForm({
   confirmationMode = false,
   recipientsSlot,
   actionsSlot,
+  submitVariant = 'green',
+  hideSubmit = false,
 }: ProjectFormProps) {
     const t = useTranslations('project');
     const commonT = useTranslations('common');
@@ -1312,24 +1320,32 @@ export function ProjectForm({
 
       {/* Buttons */}
       <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          {actionsSlot}
+          {!hideSubmit && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 min-w-[140px] ${
+                submitVariant === 'amber'
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
+            >
+              {isSubmitting ? 'Submitting...' : submitLabel || 'Save Project'}
+            </button>
+          )}
+        </div>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isSubmitting || isReadOnly}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition disabled:opacity-50"
+            className="ml-auto shrink-0 rounded-lg bg-[#DC143C] px-3 py-2 text-xs font-semibold text-white hover:bg-[#b01030] transition disabled:opacity-50"
           >
             Cancel
           </button>
         )}
-        {actionsSlot}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 flex-1 min-w-[140px] ${solidGreenButtonClassName}`}
-        >
-          {isSubmitting ? `${submitLabel || 'Creating Project'}${pendingFiles.length > 0 ? ' & uploading' : ''}...` : submitLabel || 'Create Project'}
-        </button>
       </div>
 
       {/* Assistance Explanation */}

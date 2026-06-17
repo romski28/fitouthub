@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-17-2b4d7827",
+    "date": "2026-06-17T10:11:47+08:00",
+    "title": "Restyle button row: crimson Cancel rightmost, amber Reselect when selected>0, equal-width last 3, hide submit when 0",
+    "summary": "Restyle button row: crimson Cancel rightmost, amber Reselect when selected>0, equal-width last 3, hide submit when 0",
+    "areas": [
+      "web"
+    ],
+    "commit": "2b4d7827",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-16-6cc98a57",
     "date": "2026-06-16T23:42:43+08:00",
     "title": "Move open tender and select buttons into button row alongside Cancel/Save; compact layout",
