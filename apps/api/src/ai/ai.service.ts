@@ -495,6 +495,47 @@ export class AiService {
     return lines.length > 0 ? `\nESTABLISHED FACTS (do NOT ask about these again — they are locked):\n${lines.join('\n')}\n` : '';
   }
 
+  /** Build an accumulated project scope by merging summaries from the entire thread chain */
+  private async buildAccumulatedScope(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
+    if (!activeThread) return '';
+
+    const visited = new Set<string>();
+    const scopeParts: string[] = [];
+    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
+
+    for (let depth = 0; depth < 10; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+
+      const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
+        ? (cursor.rawOutput as Record<string, unknown>)
+        : null;
+
+      if (rawOutput) {
+        const summary = typeof rawOutput.summary === 'string' ? rawOutput.summary.trim() : '';
+        const title = typeof rawOutput.title === 'string' ? rawOutput.title.trim() : '';
+        const scope = typeof rawOutput.scope === 'string' ? rawOutput.scope.trim() : '';
+
+        // Collect in reverse order (oldest first) by unshifting
+        const combined = [summary, scope, title].filter(s => s.length > 0);
+        for (const part of combined.reverse()) {
+          if (!scopeParts.includes(part)) {
+            scopeParts.unshift(part);
+          }
+        }
+      }
+
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent
+        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
+        : null;
+    }
+
+    return scopeParts.join('. ').trim();
+  }
+
   private extractSourceIntakeIdFromProject(project: unknown): string | null {
     if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
     const projectRecord = project as Record<string, unknown>;
@@ -1240,6 +1281,13 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - Example: User says "3m x 4m bedroom" → add "roomSize" to coveredTopics.
 - Example: User says "walls have some cracks" → add "existingCondition" to coveredTopics.
 
+# Scope Accumulation (MANDATORY)
+- The ACCUMULATED PROJECT SCOPE in the user message contains the GROWING project brief from ALL previous turns.
+- Your "summary" field MUST include ALL details from the ACCUMULATED PROJECT SCOPE PLUS any new details from the latest user message.
+- NEVER drop or shorten previously established scope details. The summary should GROW each turn, not shrink.
+- If the accumulated scope says "Leak under kitchen sink, pipe is copper, access is tight" and the user adds "the tap is dripping too", your new summary must be "Leak under kitchen sink with dripping tap, copper pipes, tight access".
+- Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
+
 # Temporary Mitigations (MANDATORY — populate for EVERY project)
 - ALWAYS include practical, actionable steps the user can take BEFORE a professional arrives.
 - These are NOT emergency/safety instructions — they are helpful interim measures to prevent things from getting worse, save money, or prepare the site.
@@ -1686,6 +1734,7 @@ OUTPUT FORMAT (JSON only)
     askedQuestionsSummary: string;
     conversationHistory: string;
     establishedFacts: string;
+    accumulatedScope: string;
   }): UnifiedPromptEnvelope {
     const summarizedOriginPrompt = this.truncateForPrompt(
       input.threadOriginSummary?.priorPrompt || input.threadSummary?.priorPrompt,
@@ -1700,7 +1749,7 @@ OUTPUT FORMAT (JSON only)
     const summarizedPriorReply = this.truncateForPrompt(input.threadSummary?.conversationalText, 220) || 'unknown';
 
     const userMessage = input.threadSummary
-      ? `THREAD_MODE: You are CONTINUING an existing project conversation. The core project subject, trades, and scope from prior context remain valid unless the user explicitly changes them. Do NOT restart, change the subject, or treat this as a new project.${input.establishedFacts}
+      ? `THREAD_MODE: You are CONTINUING an existing project conversation. The core project subject, trades, and scope from prior context remain valid unless the user explicitly changes them. Do NOT restart, change the subject, or treat this as a new project.${input.establishedFacts}${input.accumulatedScope ? `\nACCUMULATED PROJECT SCOPE (growing summary — ADD new details, never remove existing ones):\n${input.accumulatedScope}\n` : ''}
 The LATEST_USER_UPDATE is the user's answer to your last question — integrate it into the existing project. If it contradicts any earlier context, the user's latest words win. Treat negation words ("not", "just", "only", "no") as explicit exclusions.
 
 ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conversationHistory ? `\nCONVERSATION SO FAR:\n${input.conversationHistory}\n` : ''}\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEXISTING PROJECT CONTEXT (this is the SAME project — do not reset):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (the user's answer — integrate this into the existing project):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the existing project, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics\n- The prior assistant reply is what YOU said — the user is answering IT. Stay on that thread.`
@@ -2778,6 +2827,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
     const conversationHistory = await this.collectThreadConversationHistory(activeThread as any);
     const establishedFacts = await this.buildEstablishedFacts(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
+    const accumulatedScope = await this.buildAccumulatedScope(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
 
     const askedQuestionsSummary = askedQuestions
       .slice(0, 6)
@@ -2795,6 +2845,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       askedQuestionsSummary,
       conversationHistory,
       establishedFacts,
+      accumulatedScope,
     });
     envelope.imageUrls = normalizedImageUrls;
     envelope.imageCount = requestedImageCount;

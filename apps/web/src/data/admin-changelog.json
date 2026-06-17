@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-d8a6f9a6",
+    "date": "2026-06-17T12:47:30+08:00",
+    "title": "Add accumulated scope across thread turns — scope grows, never shrinks",
+    "summary": "Add accumulated scope across thread turns — scope grows, never shrinks",
+    "areas": [
+      "api"
+    ],
+    "commit": "d8a6f9a6",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-17-a6aa569d",
     "date": "2026-06-17T12:35:01+08:00",
     "title": "Distinguish geographic vs physical location in AI prompts and established facts tracking",
