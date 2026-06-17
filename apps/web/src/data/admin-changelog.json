@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-ae7f0310",
+    "date": "2026-06-17T15:16:12+08:00",
+    "title": "Replace coverage pills with HkZoneMap showing zonal coverage in professional details",
+    "summary": "Replace coverage pills with HkZoneMap showing zonal coverage in professional details",
+    "areas": [
+      "web"
+    ],
+    "commit": "ae7f0310",
+    "files": [
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-d731b976",
     "date": "2026-06-17T14:45:26+08:00",
     "title": "Replace Trade Focus with Years Trading, Coverage with MIMO Certified, Emergency Yes/No, Status with Response Time",

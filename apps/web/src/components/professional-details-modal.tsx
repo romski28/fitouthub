@@ -2,7 +2,8 @@
 
 import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { HkZoneMap } from '@/components/hk-zone-map';
+import { useState, useEffect, useMemo } from 'react';
 import { SYSTEM_EMAILS } from '@/config/system-emails';
 import { resolveMediaAssetUrls } from '@/lib/media-assets';
 import ImageLightbox from '@/components/image-lightbox';
@@ -66,12 +67,15 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
   const normalizedProfileImages = resolveMediaAssetUrls(professional.profileImages || []);
   const name = professional.fullName || professional.businessName || professional.email || 'Professional';
   const referenceProjectCount = professional.referenceProjects?.length || 0;
-  const serviceAreas = (professional.serviceArea || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
   const persuasiveHighlights = buildPersuasiveHighlights(professional);
   const roleIcon = professional.professionType === 'company' ? '🏢' : professional.professionType === 'reseller' ? '📦' : '👷';
+  const zoneCodes = useMemo(() => {
+    const codes = new Set<string>();
+    for (const cov of professional.regionCoverage || []) {
+      if (cov?.zone?.code) codes.add(cov.zone.code.toUpperCase());
+    }
+    return Array.from(codes);
+  }, [professional.regionCoverage]);
 
   return (
     <>
@@ -151,16 +155,14 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
             <Detail label="Response Time" value={professional.avgResponseHours != null ? `${professional.avgResponseHours}h avg` : '—'} />
           </div>
 
-          {serviceAreas.length > 0 && (
+          {zoneCodes.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Coverage</p>
-              <div className="flex flex-wrap gap-2">
-                {serviceAreas.map((area) => (
-                  <span key={area} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                    {area}
-                  </span>
-                ))}
-              </div>
+              <HkZoneMap
+                highlightedCodes={zoneCodes}
+                compact
+                svgClassName="h-24 w-full"
+              />
             </div>
           )}
 
