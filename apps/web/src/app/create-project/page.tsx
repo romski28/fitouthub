@@ -734,6 +734,7 @@ export default function CreateProjectPage() {
                     writeCreateProjectDraftSafely({
                       initialData: initialFormData,
                       selectedProfessionals: invitedCount > 0 ? selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })) : [],
+                      ...(aiIntakeId ? { aiIntakeId } : {}),
                     });
                     const params = new URLSearchParams();
                     if (invitedCount > 0) params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));

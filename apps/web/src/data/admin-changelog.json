@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-32f87a91",
+    "date": "2026-06-17T13:44:27+08:00",
+    "title": "Preserve aiIntakeId when saving draft for professionals selection round-trip",
+    "summary": "Preserve aiIntakeId when saving draft for professionals selection round-trip",
+    "areas": [
+      "web"
+    ],
+    "commit": "32f87a91",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-3c589044",
     "date": "2026-06-17T13:36:06+08:00",
     "title": "Fix payload variable reference in buildProjectPayload",
