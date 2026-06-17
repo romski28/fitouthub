@@ -391,10 +391,13 @@ export class AiService {
     if (!activeThread) return '';
 
     const visited = new Set<string>();
-    const facts: { primaryLocation?: string; secondaryLocation?: string; coreProblem?: string; exclusions: string[]; trades: string[] } = {
+    const facts: { geographicLocation?: string; physicalLocation?: string; coreProblem?: string; exclusions: string[]; trades: string[] } = {
       exclusions: [],
       trades: [],
     };
+
+    // Physical location keywords — rooms, fixtures, areas inside a property
+    const physicalLocationKeywords = /\b(kitchen|bathroom|bedroom|living\s*room|toilet|shower|balcony|roof|ceiling|wall|floor|window|door|sink|basin|tap|pipe|drain|cabinet|counter|cupboard|under\s+\w+|behind\s+\w+|inside\s+\w+)\b/i;
 
     let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
 
@@ -411,19 +414,29 @@ export class AiService {
         const location = rawOutput.location && typeof rawOutput.location === 'object' && !Array.isArray(rawOutput.location)
           ? (rawOutput.location as Record<string, unknown>)
           : null;
-        if (location) {
-          if (!facts.primaryLocation && typeof location.primary === 'string' && location.primary.trim()) {
-            facts.primaryLocation = location.primary.trim();
-          }
-          if (!facts.secondaryLocation && typeof location.secondary === 'string' && location.secondary.trim()) {
-            facts.secondaryLocation = location.secondary.trim();
+        // Geographic location — HK districts/zones only (for professional matching)
+        if (location && !facts.geographicLocation) {
+          const parts = [location.tertiary, location.secondary, location.primary]
+            .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+          if (parts.length > 0) {
+            facts.geographicLocation = parts.join(', ');
           }
         }
 
+        const summary = typeof rawOutput.summary === 'string' ? rawOutput.summary.trim() : '';
+        const title = typeof rawOutput.title === 'string' ? rawOutput.title.trim() : '';
+
         if (!facts.coreProblem) {
-          const summary = typeof rawOutput.summary === 'string' ? rawOutput.summary.trim() : '';
-          const title = typeof rawOutput.title === 'string' ? rawOutput.title.trim() : '';
           facts.coreProblem = summary || title || undefined;
+        }
+
+        // Extract physical location (room/fixture) from summary/title
+        if (!facts.physicalLocation) {
+          const combined = `${title} ${summary}`;
+          const match = combined.match(physicalLocationKeywords);
+          if (match) {
+            facts.physicalLocation = match[0].replace(/\s+/g, ' ').trim();
+          }
         }
 
         const outputTrades = Array.isArray(rawOutput.trades) ? rawOutput.trades.filter((t): t is string => typeof t === 'string' && t.trim().length > 0) : [];
@@ -432,9 +445,19 @@ export class AiService {
         }
       }
 
-      // Extract exclusions from user prompts
+      // Extract physical location and exclusions from user prompts
       if (cursor.rawPrompt) {
-        const prompt = cursor.rawPrompt.toLowerCase();
+        const prompt = cursor.rawPrompt;
+
+        // Extract physical location from user's own words
+        if (!facts.physicalLocation) {
+          const match = prompt.match(physicalLocationKeywords);
+          if (match) {
+            facts.physicalLocation = match[0].replace(/\s+/g, ' ').trim();
+          }
+        }
+
+        const promptLower = prompt.toLowerCase();
         const exclusionPatterns = [
           /\bnot\s+(?:the\s+)?(\w+(?:\s+\w+)?)\b/gi,
           /\bjust\s+(?:the\s+)?(\w+(?:\s+\w+)?)\b/gi,
@@ -463,8 +486,8 @@ export class AiService {
     }
 
     const lines: string[] = [];
-    if (facts.primaryLocation) lines.push(`- Primary location: ${facts.primaryLocation}`);
-    if (facts.secondaryLocation) lines.push(`- Secondary location: ${facts.secondaryLocation}`);
+    if (facts.geographicLocation) lines.push(`- Geographic location (for matching): ${facts.geographicLocation}`);
+    if (facts.physicalLocation) lines.push(`- Physical location / problem area (inside property): ${facts.physicalLocation}`);
     if (facts.coreProblem) lines.push(`- Core problem: ${this.truncateForPrompt(facts.coreProblem, 150)}`);
     if (facts.trades.length > 0) lines.push(`- Trades identified: ${facts.trades.slice(0, 5).join(', ')}`);
     if (facts.exclusions.length > 0) lines.push(`- User exclusions: ${facts.exclusions.slice(0, 8).join(', ')}`);
@@ -895,7 +918,7 @@ CRITICAL RULES
 2) \"trades\" must contain exact values from ALLOWED_TRADES only.
 3) If no exact trade exists, add the need to \"unmappedNeeds\".
 4) Geography is Hong Kong by default.
-5) Use location.primary, location.secondary, location.tertiary.
+5) Use location.primary, location.secondary, location.tertiary for GEOGRAPHIC location only (HK districts/zones). Do NOT put physical room/fixture names (kitchen, bathroom, sink) in these fields — those belong in summary/title.
 6) Unknown values must be null or empty arrays.
 7) Confidence values must be between 0 and 1.
 8) Prefer precision over completeness. Do not hallucinate.
@@ -1267,14 +1290,21 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
 
 HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
 
+# Location Handling (GEOGRAPHIC vs PHYSICAL)
+- \"location\" in the JSON output refers to GEOGRAPHIC location ONLY (Hong Kong districts/zones like \"Wan Chai\", \"Hong Kong Island\"). This is for matching professionals near the property.
+- Do NOT put physical locations (rooms, fixtures, areas inside the property) into the location fields. \"kitchen\", \"bathroom\", \"under the sink\", \"bedroom\" are NOT geographic locations.
+- Physical locations belong in the \"summary\" and \"title\" fields — they describe WHERE the problem is within the property.
+- If the user says \"kitchen sink\" or \"bathroom ceiling\", the room/fixture is a physical location — leave location fields null unless the user explicitly mentions a HK district/area.
+- The ESTABLISHED FACTS block will track both geographic and physical locations separately — do not confuse them.
+
 OUTPUT FORMAT (JSON only)
 {
   "conversationalText": "Warm, friendly narrative response here. Acknowledge the project, validate their needs, and express optimism about connecting them with professionals.",
   "trades": ["Trade1", "Trade2"],
   "location": {
-    "primary": "string|null",
-    "secondary": "string|null",
-    "tertiary": "string|null"
+    "primary": "string|null (GEOGRAPHIC only — HK district/zone, NOT room/fixture)",
+    "secondary": "string|null (GEOGRAPHIC only — HK district, NOT room/fixture)",
+    "tertiary": "string|null (GEOGRAPHIC only — HK area, NOT room/fixture)"
   },
   "budget": {
     "rawText": "string|null",
