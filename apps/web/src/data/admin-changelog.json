@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-a9addfc9",
+    "date": "2026-06-17T13:28:22+08:00",
+    "title": "Add debug log for aiIntakeId in buildProjectPayload",
+    "summary": "Add debug log for aiIntakeId in buildProjectPayload",
+    "areas": [
+      "web"
+    ],
+    "commit": "a9addfc9",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-bb368889",
     "date": "2026-06-17T13:12:06+08:00",
     "title": "Make professional names clickable in overview and professionals tabs, open details modal on click",
