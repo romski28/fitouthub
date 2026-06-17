@@ -4413,11 +4413,18 @@ export class ProjectsService {
 
     const loc = project.region;
     if (loc) {
-      where.OR = [
-        ...(where.OR || []),
-        { locationPrimary: { contains: loc, mode: 'insensitive' } },
-        { locationSecondary: { contains: loc, mode: 'insensitive' } },
-        { servicePrimaries: { hasSome: [loc] } },
+      const parts = loc.split(',').map(s => s.trim()).filter(Boolean);
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            ...parts.flatMap(part => [
+              { locationPrimary: { contains: part, mode: 'insensitive' } },
+              { locationSecondary: { contains: part, mode: 'insensitive' } },
+            ]),
+            { servicePrimaries: { hasSome: parts } },
+          ],
+        },
       ];
     }
 
