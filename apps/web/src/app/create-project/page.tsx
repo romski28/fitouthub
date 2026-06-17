@@ -20,6 +20,7 @@ import {
 } from '@/lib/create-project-handoff';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { getUploadResponseKeys } from '@/lib/media-assets';
+import { clearAiClientState } from '@/lib/client-session';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -410,6 +411,7 @@ export default function CreateProjectPage() {
 
       const project = await createProject(payload);
       console.log('[create-project] Project created successfully:', project);
+      clearAiClientState();
       toast.success(
         selectedProfessionals.length > 0
           ? 'Project created and bidding is now open to your selected professionals.'
@@ -473,6 +475,7 @@ export default function CreateProjectPage() {
       }
 
       setOpenTenderProgress('Done! Redirecting...');
+      clearAiClientState();
       toast.success('Open tender started!');
       router.push(`/projects/${project.id}`);
     } catch (err) {
@@ -523,6 +526,7 @@ export default function CreateProjectPage() {
 
       setShowAssistModal(false);
       setAssistDraft(null);
+      clearAiClientState();
 
       toast.success(
         assistConfig.contactMethod === 'call'

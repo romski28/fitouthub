@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-bc31b76d",
+    "date": "2026-06-17T13:01:00+08:00",
+    "title": "Clear AI session state on project creation to start fresh next time",
+    "summary": "Clear AI session state on project creation to start fresh next time",
+    "areas": [
+      "web"
+    ],
+    "commit": "bc31b76d",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-57c89e5e",
     "date": "2026-06-17T12:57:49+08:00",
     "title": "Add session guard to accumulated scope + hallucination prevention rule",
