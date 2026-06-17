@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-84fc6d2e",
+    "date": "2026-06-17T13:59:22+08:00",
+    "title": "Fix wizard to reuse home page AI session ID so thread chain is preserved",
+    "summary": "Fix wizard to reuse home page AI session ID so thread chain is preserved",
+    "areas": [
+      "web"
+    ],
+    "commit": "84fc6d2e",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-32f87a91",
     "date": "2026-06-17T13:44:27+08:00",
     "title": "Preserve aiIntakeId when saving draft for professionals selection round-trip",

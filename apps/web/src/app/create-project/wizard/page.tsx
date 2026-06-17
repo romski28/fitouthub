@@ -527,7 +527,13 @@ export default function CreateProjectWizardPage() {
   useEffect(() => {
     if (!hydrated) return;
     if (aiSessionId) return;
-    setAiSessionId(createAiSessionId());
+    // Reuse the home page AI session ID so the thread chain is preserved
+    const existing = sessionStorage.getItem('aiSandboxSessionId');
+    if (existing) {
+      setAiSessionId(existing);
+    } else {
+      setAiSessionId(createAiSessionId());
+    }
   }, [hydrated, aiSessionId]);
 
   useEffect(() => {
