@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-3d7204d4",
+    "date": "2026-06-17T11:44:22+08:00",
+    "title": "Relabel: BIDDING TYPES panel, OPEN/LIMITED TENDER buttons, Reselect, info text lines",
+    "summary": "Relabel: BIDDING TYPES panel, OPEN/LIMITED TENDER buttons, Reselect, info text lines",
+    "areas": [
+      "web"
+    ],
+    "commit": "3d7204d4",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-32cfdd3f",
     "date": "2026-06-17T11:27:48+08:00",
     "title": "Update button labels: Request pricing from all N matched / from selected professionals, both green",

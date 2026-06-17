@@ -672,7 +672,7 @@ export default function CreateProjectPage() {
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={true}
-              submitLabel={invitedCount > 0 ? 'Request pricing from selected professionals' : 'Invite selected (0) professionals'}
+              submitLabel={invitedCount > 0 ? 'LIMITED TENDER' : 'Invite selected (0) professionals'}
               submitVariant="green"
               hideSubmit={invitedCount === 0}
               showBudget={false}
@@ -691,17 +691,18 @@ export default function CreateProjectPage() {
                   </button>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
-                      <p className="mimo-panel-eyebrow">Bidding recipients</p>
-                      <h2 className="mimo-panel-title-lg">
-                        {invitedCount > 0
-                          ? `${invitedCount} selected professional${invitedCount === 1 ? '' : 's'} will be invited when you submit`
-                          : 'No professionals selected yet'}
-                      </h2>
-                      <p className="mimo-panel-body max-w-2xl">
-                        {invitedCount > 0
-                          ? 'These professionals will be linked to the project immediately and quotes will be requested as soon as you confirm.'
-                          : 'This project will be saved without invitations. You can still invite professionals later from the project list or details page.'}
-                      </p>
+                      <p className="mimo-panel-eyebrow">BIDDING TYPES</p>
+                      <div className="space-y-1.5 text-sm text-slate-600">
+                        <p>
+                          <span className="font-semibold text-emerald-700">OPEN TENDER:</span> You will invite all {openTenderCount ?? '...'} matched professionals to submit pricing for your project.
+                        </p>
+                        <p>
+                          <span className="font-semibold text-amber-700">LIMITED TENDER:</span>{' '}
+                          {invitedCount > 0
+                            ? `You will invite only the ${invitedCount} professional${invitedCount === 1 ? '' : 's'} you have selected to price your project.`
+                            : 'You can select from the matched professionals who you want to price for your project.'}
+                        </p>
+                      </div>
                     </div>
 
                     {invitedCount > 0 && (
@@ -743,7 +744,7 @@ export default function CreateProjectPage() {
                   }}
                   className="rounded-lg border border-[#b94e2d] bg-white px-3 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
                 >
-                  Select my own professionals
+                  {invitedCount > 0 ? 'Reselect my professionals' : 'Select my own professionals'}
                 </button>
               }
               actionsSlot={
@@ -765,10 +766,10 @@ export default function CreateProjectPage() {
                     : openTenderLoading
                     ? openTenderProgress || 'Starting...'
                     : openTenderCount !== null && openTenderCount > 0
-                      ? `Request pricing from all ${openTenderCount} matched professionals`
+                      ? 'OPEN TENDER'
                       : openTenderCount === 0
                         ? 'No professionals found'
-                        : 'Request pricing from all matched professionals'}
+                        : 'OPEN TENDER'}
                 </button>
               }
             />
