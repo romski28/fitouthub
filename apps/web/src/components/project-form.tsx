@@ -105,6 +105,9 @@ interface ProjectFormProps {
   /** Slot rendered in the button row alongside Cancel/Submit */
   actionsSlot?: React.ReactNode;
 
+  /** Narrow select-professionals button slot — rendered between Cancel and actions */
+  selectSlot?: React.ReactNode;
+
   /** Submit button color variant */
   submitVariant?: 'green' | 'amber';
 
@@ -228,6 +231,7 @@ export function ProjectForm({
   confirmationMode = false,
   recipientsSlot,
   actionsSlot,
+  selectSlot,
   submitVariant = 'green',
   hideSubmit = false,
 }: ProjectFormProps) {
@@ -1320,6 +1324,17 @@ export function ProjectForm({
 
       {/* Buttons */}
       <div className="flex flex-wrap items-center gap-3 pt-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting || isReadOnly}
+            className="shrink-0 rounded-lg bg-[#DC143C] px-3 py-2 text-xs font-semibold text-white hover:bg-[#b01030] transition disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        )}
+        {selectSlot}
         <div className="flex flex-1 flex-wrap items-center gap-3">
           {actionsSlot}
           {!hideSubmit && (
@@ -1336,16 +1351,6 @@ export function ProjectForm({
             </button>
           )}
         </div>
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSubmitting || isReadOnly}
-            className="ml-auto shrink-0 rounded-lg bg-[#DC143C] px-3 py-2 text-xs font-semibold text-white hover:bg-[#b01030] transition disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        )}
       </div>
 
       {/* Assistance Explanation */}

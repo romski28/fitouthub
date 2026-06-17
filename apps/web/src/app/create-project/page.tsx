@@ -668,56 +668,55 @@ export default function CreateProjectPage() {
                   </div>
                 </div>
               }
+              selectSlot={
+                <button
+                  type="button"
+                  onClick={() => {
+                    writeCreateProjectDraftSafely({
+                      initialData: initialFormData,
+                      selectedProfessionals: invitedCount > 0 ? selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })) : [],
+                    });
+                    const params = new URLSearchParams();
+                    if (invitedCount > 0) params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
+                    const trades = initialFormData.tradesRequired?.length
+                      ? initialFormData.tradesRequired
+                      : descriptionData?.tradesRequired;
+                    if (trades?.length) params.set('trades', trades.join(','));
+                    const loc = initialFormData.location || descriptionData?.location || userLocation;
+                    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                    if (locStr) params.set('location', locStr);
+                    params.set('source', 'create-project');
+                    router.push(`/professionals?${params.toString()}`);
+                  }}
+                  className="rounded-lg border border-[#b94e2d] bg-white px-3 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                >
+                  Select my own professionals
+                </button>
+              }
               actionsSlot={
-                <>
-                  {/* Open tender button */}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setOpenTenderLoading(true);
-                      try {
-                        await handleOpenTender();
-                      } finally {
-                        setOpenTenderLoading(false);
-                      }
-                    }}
-                    disabled={openTenderLoading || isSubmitting}
-                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40 min-w-[140px]"
-                  >
-                    {countLoading
-                      ? <span className="inline-flex items-center gap-1">Finding<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
-                      : openTenderLoading
-                      ? openTenderProgress || 'Starting...'
-                      : openTenderCount !== null && openTenderCount > 0
-                        ? `Start open tender to ${openTenderCount}`
-                        : openTenderCount === 0
-                          ? 'No professionals found'
-                          : 'Start open tender'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      writeCreateProjectDraftSafely({
-                        initialData: initialFormData,
-                        selectedProfessionals: invitedCount > 0 ? selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })) : [],
-                      });
-                      const params = new URLSearchParams();
-                      if (invitedCount > 0) params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
-                      const trades = initialFormData.tradesRequired?.length
-                        ? initialFormData.tradesRequired
-                        : descriptionData?.tradesRequired;
-                      if (trades?.length) params.set('trades', trades.join(','));
-                      const loc = initialFormData.location || descriptionData?.location || userLocation;
-                      const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                      if (locStr) params.set('location', locStr);
-                      params.set('source', 'create-project');
-                      router.push(`/professionals?${params.toString()}`);
-                    }}
-                    className="flex-1 rounded-lg border border-[#b94e2d] bg-white px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50 min-w-[140px]"
-                  >
-                    Select my own professionals
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setOpenTenderLoading(true);
+                    try {
+                      await handleOpenTender();
+                    } finally {
+                      setOpenTenderLoading(false);
+                    }
+                  }}
+                  disabled={openTenderLoading || isSubmitting}
+                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40 min-w-[140px]"
+                >
+                  {countLoading
+                    ? <span className="inline-flex items-center gap-1">Finding<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
+                    : openTenderLoading
+                    ? openTenderProgress || 'Starting...'
+                    : openTenderCount !== null && openTenderCount > 0
+                      ? `Start open tender to ${openTenderCount}`
+                      : openTenderCount === 0
+                        ? 'No professionals found'
+                        : 'Start open tender'}
+                </button>
               }
             />
           </div>

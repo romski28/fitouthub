@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-17-0d010bdd",
+    "date": "2026-06-17T10:20:03+08:00",
+    "title": "Reorder: Cancel left, Select narrow, Open tender + Reselect equal-width remaining",
+    "summary": "Reorder: Cancel left, Select narrow, Open tender + Reselect equal-width remaining",
+    "areas": [
+      "web"
+    ],
+    "commit": "0d010bdd",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-2b4d7827",
     "date": "2026-06-17T10:11:47+08:00",
     "title": "Restyle button row: crimson Cancel rightmost, amber Reselect when selected>0, equal-width last 3, hide submit when 0",
