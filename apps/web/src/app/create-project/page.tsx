@@ -357,6 +357,7 @@ export default function CreateProjectPage() {
     };
     console.log('[buildProjectPayload] aiIntakeId:', aiIntakeId, 'payload keys:', Object.keys(payload));
     return payload;
+  };
 
   const getPersistedPhotoUrls = (formData: ProjectFormData, newlyUploadedPhotoUrls: string[]) => {
     const existingFromForm = (formData.existingPhotos || [])
