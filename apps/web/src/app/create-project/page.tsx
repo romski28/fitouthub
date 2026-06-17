@@ -672,8 +672,8 @@ export default function CreateProjectPage() {
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={true}
-              submitLabel={invitedCount > 0 ? 'Reselect professionals' : 'Invite selected (0) professionals'}
-              submitVariant={invitedCount > 0 ? 'amber' : 'green'}
+              submitLabel={invitedCount > 0 ? 'Request pricing from selected professionals' : 'Invite selected (0) professionals'}
+              submitVariant="green"
               hideSubmit={invitedCount === 0}
               showBudget={false}
               showService={true}
@@ -765,10 +765,10 @@ export default function CreateProjectPage() {
                     : openTenderLoading
                     ? openTenderProgress || 'Starting...'
                     : openTenderCount !== null && openTenderCount > 0
-                      ? `Start open tender to ${openTenderCount}`
+                      ? `Request pricing from all ${openTenderCount} matched professionals`
                       : openTenderCount === 0
                         ? 'No professionals found'
-                        : 'Start open tender'}
+                        : 'Request pricing from all matched professionals'}
                 </button>
               }
             />

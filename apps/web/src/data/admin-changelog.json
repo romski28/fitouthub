@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-32cfdd3f",
+    "date": "2026-06-17T11:27:48+08:00",
+    "title": "Update button labels: Request pricing from all N matched / from selected professionals, both green",
+    "summary": "Update button labels: Request pricing from all N matched / from selected professionals, both green",
+    "areas": [
+      "web"
+    ],
+    "commit": "32cfdd3f",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-17-a970306c",
     "date": "2026-06-17T10:28:08+08:00",
     "title": "Add tender info modal with blue info button on bidding recipients panel",
