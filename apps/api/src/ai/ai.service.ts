@@ -386,6 +386,92 @@ export class AiService {
       .join('\n');
   }
 
+  /** Extract locked facts from the entire thread chain — prevents redundant questions */
+  private async buildEstablishedFacts(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
+    if (!activeThread) return '';
+
+    const visited = new Set<string>();
+    const facts: { primaryLocation?: string; secondaryLocation?: string; coreProblem?: string; exclusions: string[]; trades: string[] } = {
+      exclusions: [],
+      trades: [],
+    };
+
+    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
+
+    for (let depth = 0; depth < 10; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+
+      // Extract from parsed output
+      const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
+        ? (cursor.rawOutput as Record<string, unknown>)
+        : null;
+
+      if (rawOutput) {
+        const location = rawOutput.location && typeof rawOutput.location === 'object' && !Array.isArray(rawOutput.location)
+          ? (rawOutput.location as Record<string, unknown>)
+          : null;
+        if (location) {
+          if (!facts.primaryLocation && typeof location.primary === 'string' && location.primary.trim()) {
+            facts.primaryLocation = location.primary.trim();
+          }
+          if (!facts.secondaryLocation && typeof location.secondary === 'string' && location.secondary.trim()) {
+            facts.secondaryLocation = location.secondary.trim();
+          }
+        }
+
+        if (!facts.coreProblem) {
+          const summary = typeof rawOutput.summary === 'string' ? rawOutput.summary.trim() : '';
+          const title = typeof rawOutput.title === 'string' ? rawOutput.title.trim() : '';
+          facts.coreProblem = summary || title || undefined;
+        }
+
+        const outputTrades = Array.isArray(rawOutput.trades) ? rawOutput.trades.filter((t): t is string => typeof t === 'string' && t.trim().length > 0) : [];
+        for (const t of outputTrades) {
+          if (!facts.trades.includes(t)) facts.trades.push(t);
+        }
+      }
+
+      // Extract exclusions from user prompts
+      if (cursor.rawPrompt) {
+        const prompt = cursor.rawPrompt.toLowerCase();
+        const exclusionPatterns = [
+          /\bnot\s+(?:the\s+)?(\w+(?:\s+\w+)?)\b/gi,
+          /\bjust\s+(?:the\s+)?(\w+(?:\s+\w+)?)\b/gi,
+          /\bonly\s+(?:the\s+)?(\w+(?:\s+\w+)?)\b/gi,
+          /\bno\s+(\w+(?:\s+\w+)?)\b/gi,
+        ];
+        for (const pattern of exclusionPatterns) {
+          let match;
+          while ((match = pattern.exec(prompt)) !== null) {
+            const excluded = match[1].trim();
+            if (excluded.length > 2 && !['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for'].includes(excluded)) {
+              if (!facts.exclusions.includes(excluded)) {
+                facts.exclusions.push(excluded);
+              }
+            }
+          }
+        }
+      }
+
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent
+        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
+        : null;
+    }
+
+    const lines: string[] = [];
+    if (facts.primaryLocation) lines.push(`- Primary location: ${facts.primaryLocation}`);
+    if (facts.secondaryLocation) lines.push(`- Secondary location: ${facts.secondaryLocation}`);
+    if (facts.coreProblem) lines.push(`- Core problem: ${this.truncateForPrompt(facts.coreProblem, 150)}`);
+    if (facts.trades.length > 0) lines.push(`- Trades identified: ${facts.trades.slice(0, 5).join(', ')}`);
+    if (facts.exclusions.length > 0) lines.push(`- User exclusions: ${facts.exclusions.slice(0, 8).join(', ')}`);
+
+    return lines.length > 0 ? `\nESTABLISHED FACTS (do NOT ask about these again — they are locked):\n${lines.join('\n')}\n` : '';
+  }
+
   private extractSourceIntakeIdFromProject(project: unknown): string | null {
     if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
     const projectRecord = project as Record<string, unknown>;
@@ -1103,6 +1189,14 @@ Focus on helping the user get to a clear scope, the right trade coverage, and th
 - If the user says "not X" or "just Y" or "only Z" — those are EXCLUSIONS. Respect them absolutely.
 - If you are uncertain about a detail, ASK rather than assume. But never override a stated fact.
 
+# Redundant Question Prevention (MANDATORY)
+- The ESTABLISHED FACTS block in the user message contains facts the user has already confirmed. These are LOCKED.
+- If you are about to ask a question about primary location, secondary location, core problem, or any trade listed in ESTABLISHED FACTS — STOP. Do NOT ask it.
+- If you are about to ask a question listed in "Already asked questions" — STOP. Do NOT ask it.
+- If the user's LATEST message already answers one of your planned questions — remove that question.
+- Every question you ask MUST advance the conversation into NEW territory not covered by established facts, already-asked questions, or the user's latest message.
+- If you cannot think of a truly new question, ask about site conditions, access, materials, or timing — these are almost always safe.
+
 # Problem Focus (MANDATORY)
 - Identify the CORE PROBLEM from the user's description and NEVER lose sight of it. The fixture/appliance mentioned is often just the LOCATION, not the scope of work.
 - EXAMPLE: User says "bath drain is blocked" → core problem is DRAINAGE. Do NOT ask about replacing the bath, bath condition, or bath installation. The bath is the location, not the job.
@@ -1561,6 +1655,7 @@ OUTPUT FORMAT (JSON only)
     threadOriginSummary: ReturnType<AiService['buildAiThreadContextSummary']> | null;
     askedQuestionsSummary: string;
     conversationHistory: string;
+    establishedFacts: string;
   }): UnifiedPromptEnvelope {
     const summarizedOriginPrompt = this.truncateForPrompt(
       input.threadOriginSummary?.priorPrompt || input.threadSummary?.priorPrompt,
@@ -1575,8 +1670,7 @@ OUTPUT FORMAT (JSON only)
     const summarizedPriorReply = this.truncateForPrompt(input.threadSummary?.conversationalText, 220) || 'unknown';
 
     const userMessage = input.threadSummary
-      ? `THREAD_MODE: You are CONTINUING an existing project conversation. The core project subject, trades, and scope from prior context remain valid unless the user explicitly changes them. Do NOT restart, change the subject, or treat this as a new project.
-
+      ? `THREAD_MODE: You are CONTINUING an existing project conversation. The core project subject, trades, and scope from prior context remain valid unless the user explicitly changes them. Do NOT restart, change the subject, or treat this as a new project.${input.establishedFacts}
 The LATEST_USER_UPDATE is the user's answer to your last question — integrate it into the existing project. If it contradicts any earlier context, the user's latest words win. Treat negation words ("not", "just", "only", "no") as explicit exclusions.
 
 ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conversationHistory ? `\nCONVERSATION SO FAR:\n${input.conversationHistory}\n` : ''}\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEXISTING PROJECT CONTEXT (this is the SAME project — do not reset):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (the user's answer — integrate this into the existing project):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the existing project, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics\n- The prior assistant reply is what YOU said — the user is answering IT. Stay on that thread.`
@@ -2653,6 +2747,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
     const conversationHistory = await this.collectThreadConversationHistory(activeThread as any);
+    const establishedFacts = await this.buildEstablishedFacts(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
 
     const askedQuestionsSummary = askedQuestions
       .slice(0, 6)
@@ -2669,6 +2764,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       threadOriginSummary,
       askedQuestionsSummary,
       conversationHistory,
+      establishedFacts,
     });
     envelope.imageUrls = normalizedImageUrls;
     envelope.imageCount = requestedImageCount;

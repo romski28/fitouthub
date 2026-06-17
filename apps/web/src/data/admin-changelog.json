@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-17-c5ea4e49",
+    "date": "2026-06-17T12:20:22+08:00",
+    "title": "Add ESTABLISHED FACTS tracking to prevent redundant AI questions across conversational turns",
+    "summary": "Add ESTABLISHED FACTS tracking to prevent redundant AI questions across conversational turns",
+    "areas": [
+      "api"
+    ],
+    "commit": "c5ea4e49",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-17-e2c72612",
     "date": "2026-06-17T11:57:20+08:00",
     "title": "Learn more button: blue bg white text info style",
