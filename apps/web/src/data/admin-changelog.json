@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-06-18-38739076",
+    "date": "2026-06-18T15:11:40+08:00",
+    "title": "Add PWA support: manifest, service worker, push notifications infrastructure",
+    "summary": "Add PWA support: manifest, service worker, push notifications infrastructure",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "38739076",
+    "files": [
+      "MANUAL_SQL_ADD_PUSH_SUBSCRIPTIONS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/notifications/notification.module.ts",
+      "apps/api/src/notifications/push-notification.controller.ts",
+      "apps/api/src/notifications/push-notification.service.ts",
+      "apps/web/public/manifest.json",
+      "apps/web/public/sw.js",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-34f9f6b5",
     "date": "2026-06-18T11:57:12+08:00",
     "title": "Fix alignment: title+trade chips left, sentiment badge right",

@@ -17,6 +17,7 @@ import FloatingChat from "@/components/floating-chat";
 import { MainWrapper } from "@/components/main-wrapper";
 import { AdminFab } from "@/components/admin-fab";
 import { SiteWallpaperShell } from "@/components/site-wallpaper-shell";
+import { PwaProvider } from "@/components/pwa-provider";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -30,6 +31,16 @@ const geistMono = GeistMono;
 export const metadata: Metadata = {
   title: "Mimo",
   description: "Find tradesmen, professionals, and manage fitout projects",
+  manifest: "/manifest.json",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5EEDE" },
+    { media: "(prefers-color-scheme: dark)", color: "#1E293B" },
+  ],
+  appleWebApp: {
+    capable: true,
+    title: "Mimo",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
       { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
@@ -56,6 +67,7 @@ export default async function RootLayout({
             <ProfessionalAuthProvider>
               <AuthModalControlProvider>
                 <NextStepModalProvider>
+                <PwaProvider />
                 <Toaster position="top-right" />
                 <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">
                   <SiteWallpaperShell />
