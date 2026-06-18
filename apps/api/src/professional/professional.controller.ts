@@ -1963,6 +1963,14 @@ export class ProfessionalController {
           },
         });
 
+        // Transition project to BIDDING_ACTIVE if still in CREATED
+        if (projectProfessional.project?.currentStage === 'CREATED') {
+          await tx.project.update({
+            where: { id: projectProfessional.projectId },
+            data: { currentStage: 'BIDDING_ACTIVE' },
+          });
+        }
+
         // Create financial transactions for quotation acceptance
         const quoteAmount = projectProfessional.quoteAmount 
           ? new Decimal(projectProfessional.quoteAmount.toString()) 
