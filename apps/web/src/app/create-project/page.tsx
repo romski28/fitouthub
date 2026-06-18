@@ -239,8 +239,8 @@ export default function CreateProjectPage() {
         });
       }
 
-      clearCreateProjectDraftHandoff();
-      clearProjectDescriptionHandoff();
+      // Don't clear handoffs here — they're needed for round-trips (e.g. summary → professionals → summary).
+      // They get cleared on successful project submission below.
 
       // Keep create-project as a stable review page on refresh.
       // Do not auto-open the description modal when handoff data is absent.
@@ -413,6 +413,8 @@ export default function CreateProjectPage() {
 
       const project = await createProject(payload);
       console.log('[create-project] Project created successfully:', project);
+      clearCreateProjectDraftHandoff();
+      clearProjectDescriptionHandoff();
       clearAiClientState();
       toast.success(
         selectedProfessionals.length > 0
@@ -477,6 +479,8 @@ export default function CreateProjectPage() {
       }
 
       setOpenTenderProgress('Done! Redirecting...');
+      clearCreateProjectDraftHandoff();
+      clearProjectDescriptionHandoff();
       clearAiClientState();
       toast.success('Open tender started!');
       router.push(`/projects/${project.id}`);

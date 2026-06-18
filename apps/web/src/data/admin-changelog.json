@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-d0577b47",
+    "date": "2026-06-18T23:16:18+08:00",
+    "title": "Fix: clear handoff data on project submit, not on page mount — preserves data for round-trip",
+    "summary": "Fix: clear handoff data on project submit, not on page mount — preserves data for round-trip",
+    "areas": [
+      "web"
+    ],
+    "commit": "d0577b47",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-8c110948",
     "date": "2026-06-18T23:05:18+08:00",
     "title": "Simplify: just clear aiPendingAssistDraft on home page mount, nothing else",
