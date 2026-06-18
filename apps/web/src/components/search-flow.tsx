@@ -828,59 +828,27 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     writeStorageSafe(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
   }, [aiStructured, buildAiAssistProjectPayload]);
 
-  // ── Quota-safe sessionStorage helpers ────────────────────────
-  // TIER 1 (safe to purge anytime): ephemeral temp drafts, never read by other pages
-  const AI_SAFE_PURGE_KEYS = ["aiWizardHandoffPayload", "aiAssistPayload_temp"] as const;
-  // TIER 2 (handoff keys): carry AI data between pages — only purge as last resort
-  const AI_HANDOFF_KEYS = ["aiPendingAssistDraft", "createProjectDraft", "projectDescription"] as const;
-  const AI_PROTECTED_KEYS = ["aiSandboxSessionId", "aiKeepConversationOnRefresh"] as const;
+  // ── sessionStorage: just clear the temp assist draft on mount ─
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try { sessionStorage.removeItem("aiPendingAssistDraft"); } catch {}
+  }, []);
 
-  function estimateStorageKB(): number {
-    let total = 0;
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const k = sessionStorage.key(i);
-      if (k) total += (sessionStorage.getItem(k) || "").length;
-    }
-    return Math.round((total / 1024) * 10) / 10;
-  }
-
-  // Aggressive cleanup: tier 1 only (safe temp keys)
-  function cleanTier1Storage(): void {
-    for (const k of AI_SAFE_PURGE_KEYS) {
-      try { sessionStorage.removeItem(k); } catch {}
-    }
-  }
-
-  // Emergency cleanup: tier 1 + tier 2 (handoff keys — only when quota is critical)
-  function cleanAllEphemeralStorage(): void {
-    for (const k of [...AI_SAFE_PURGE_KEYS, ...AI_HANDOFF_KEYS]) {
-      try { sessionStorage.removeItem(k); } catch {}
-    }
-  }
-
+  // ── Quota-safe write for the temp assist draft only ─────────
   function writeStorageSafe(key: string, value: string): void {
-    if (estimateStorageKB() > 3500) {
-      cleanTier1Storage();
-    }
     try {
       sessionStorage.setItem(key, value);
     } catch (e) {
       if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        console.warn("[storage] Quota exceeded — tier 1 cleanup");
-        cleanTier1Storage();
+        // Clear old temp drafts (never touch createProjectDraft / projectDescription — those are the wizard handoff keys)
+        try { sessionStorage.removeItem("aiPendingAssistDraft"); } catch {}
+        try { sessionStorage.removeItem("aiWizardHandoffPayload"); } catch {}
+        try { sessionStorage.removeItem("aiAssistPayload_temp"); } catch {}
         try {
           sessionStorage.setItem(key, value);
         } catch {
-          console.warn("[storage] Still full — emergency cleanup (including handoff keys)");
-          cleanAllEphemeralStorage();
-          try {
-            sessionStorage.setItem(key, value);
-          } catch {
-            console.warn("[storage] Critical: storing minimal fallback");
-            try {
-              sessionStorage.setItem(key, JSON.stringify({ _truncated: true, createdAt: new Date().toISOString() }));
-            } catch { /* give up */ }
-          }
+          // Still full — store minimal marker so the flow doesn't crash
+          try { sessionStorage.setItem(key, JSON.stringify({ _truncated: true })); } catch {}
         }
       }
     }
@@ -1344,12 +1312,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       // Ignore storage failures
     }
   }, [keepConversationOnRefresh]);
-
-  // Proactive cleanup: purge stale temp keys on mount (tier 1 only — never touch handoff keys)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    cleanTier1Storage();
-  }, []);
 
   useEffect(() => {
     try {

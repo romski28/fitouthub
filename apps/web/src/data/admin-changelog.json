@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-8c110948",
+    "date": "2026-06-18T23:05:18+08:00",
+    "title": "Simplify: just clear aiPendingAssistDraft on home page mount, nothing else",
+    "summary": "Simplify: just clear aiPendingAssistDraft on home page mount, nothing else",
+    "areas": [
+      "web"
+    ],
+    "commit": "8c110948",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-44bee5c3",
     "date": "2026-06-18T23:02:32+08:00",
     "title": "Fix: tiered sessionStorage cleanup — never purge handoff keys on quota recovery",
