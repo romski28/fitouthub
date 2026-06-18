@@ -181,7 +181,6 @@ export function PwaProvider() {
     if (typeof window === "undefined") return;
     try {
       const val = localStorage.getItem(DISMISS_KEY);
-      // Only show if not dismissed, and SW registered (or native prompt available)
       if (val !== "true") {
         setDismissed(false);
       }
@@ -190,13 +189,10 @@ export function PwaProvider() {
     }
   }, []);
 
-  // Don't show if already in standalone mode
   if (inStandalone) return null;
 
-  // Show once SW is registered OR native prompt is available
-  const shouldShow = !dismissed && (swRegistered || canInstall);
-
-  if (!shouldShow) return null;
+  // Show once SW is registered
+  if (dismissed || !swRegistered) return null;
 
   function dismiss() {
     setDismissed(true);
@@ -206,16 +202,13 @@ export function PwaProvider() {
   }
 
   async function handleInstall() {
+    if (!canInstall) return;
     setInstalling(true);
     const accepted = await promptInstall();
     if (accepted) {
       dismiss();
-    } else if (!canInstall) {
-      // No native prompt — show platform instructions
-      setInstalling(false);
-    } else {
-      setInstalling(false);
     }
+    setInstalling(false);
   }
 
   const isIOS = platform === "ios";
@@ -237,18 +230,26 @@ export function PwaProvider() {
             {isIOS
               ? "Tap Share  →  Add to Home Screen"
               : isAndroid
-                ? "Quick access & push notifications"
+                ? canInstall
+                  ? "Add to home screen for quick access"
+                  : "Add to home screen — preparing…"
                 : "Add to home screen for the best experience"}
           </p>
         </div>
         {isAndroid ? (
-          <button
-            onClick={handleInstall}
-            disabled={installing}
-            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
-          >
-            {installing ? "..." : "Install"}
-          </button>
+          canInstall ? (
+            <button
+              onClick={handleInstall}
+              disabled={installing}
+              className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            >
+              {installing ? "..." : "Install"}
+            </button>
+          ) : (
+            <span className="shrink-0 text-xs text-slate-400 animate-pulse">
+              ⏳
+            </span>
+          )
         ) : isIOS ? (
           <button
             onClick={dismiss}
@@ -258,11 +259,10 @@ export function PwaProvider() {
           </button>
         ) : (
           <button
-            onClick={handleInstall}
-            disabled={installing}
-            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+            onClick={dismiss}
+            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
           >
-            {installing ? "..." : "Install"}
+            OK
           </button>
         )}
         <button

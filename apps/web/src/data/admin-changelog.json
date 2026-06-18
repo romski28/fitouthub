@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-40c57936",
+    "date": "2026-06-18T21:47:50+08:00",
+    "title": "Fix: hide install button until beforeinstallprompt fires on Android",
+    "summary": "Fix: hide install button until beforeinstallprompt fires on Android",
+    "areas": [
+      "web"
+    ],
+    "commit": "40c57936",
+    "files": [
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-23bf01a4",
     "date": "2026-06-18T21:37:31+08:00",
     "title": "Fix PWA: proactive install banner, proper icons, viewport, content-type headers",
