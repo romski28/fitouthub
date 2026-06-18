@@ -9,7 +9,7 @@ interface SubscribeDto {
   platform?: string;
 }
 
-@Controller('api/push')
+@Controller('push')
 export class PushNotificationController {
   private readonly logger = new Logger(PushNotificationController.name);
 

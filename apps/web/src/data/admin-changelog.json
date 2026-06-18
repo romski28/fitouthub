@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-b9d93fe9",
+    "date": "2026-06-19T07:40:22+08:00",
+    "title": "Fix: remove duplicate api prefix from push controller (global prefix already adds /api)",
+    "summary": "Fix: remove duplicate api prefix from push controller (global prefix already adds /api)",
+    "areas": [
+      "api"
+    ],
+    "commit": "b9d93fe9",
+    "files": [
+      "apps/api/src/notifications/push-notification.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-6c65ee27",
     "date": "2026-06-19T07:28:32+08:00",
     "title": "Add diagnostic logging to push notification flow (frontend + backend)",
