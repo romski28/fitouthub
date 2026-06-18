@@ -828,28 +828,46 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     writeStorageSafe(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
   }, [aiStructured, buildAiAssistProjectPayload]);
 
-  // ── Quota-safe sessionStorage write ──────────────────────────
+  // ── Quota-safe sessionStorage helpers ────────────────────────
+  const AI_STALE_KEYS = ["aiPendingAssistDraft", "aiWizardHandoffPayload", "aiAssistPayload_temp", "createProjectDraft", "projectDescription"] as const;
+  const AI_PROTECTED_KEYS = ["aiSandboxSessionId", "aiKeepConversationOnRefresh"] as const;
+
+  // Estimate storage usage for a domain (rough — sessionStorage has no .length)
+  function estimateStorageKB(): number {
+    let total = 0;
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k) total += (sessionStorage.getItem(k) || "").length;
+    }
+    return Math.round((total / 1024) * 10) / 10;
+  }
+
+  // Clean stale AI draft keys (safe to delete — they're ephemeral)
+  function cleanStaleAiStorage(): void {
+    for (const k of AI_STALE_KEYS) {
+      try { sessionStorage.removeItem(k); } catch {}
+    }
+  }
+
+  // Quota-safe write with progressive fallback
   function writeStorageSafe(key: string, value: string): void {
+    // Proactively clean if approaching quota (~4MB used)
+    if (estimateStorageKB() > 3500) {
+      cleanStaleAiStorage();
+    }
     try {
       sessionStorage.setItem(key, value);
     } catch (e) {
       if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        console.warn("[storage] Quota exceeded — cleaning stale draft data only");
-        // Only clear draft/payload keys — NEVER touch aiSandboxSessionId (AI thread continuity)
-        const staleKeys = ["aiPendingAssistDraft", "aiWizardHandoffPayload", "aiAssistPayload_temp", "createProjectDraft"];
-        for (const k of staleKeys) {
-          try { sessionStorage.removeItem(k); } catch {}
-        }
-        // Retry with the current key
+        console.warn("[storage] Quota exceeded — cleaning ephemeral drafts");
+        cleanStaleAiStorage();
         try {
           sessionStorage.setItem(key, value);
         } catch {
           console.warn("[storage] Still full after cleanup — storing minimal draft");
           try {
             sessionStorage.setItem(key, JSON.stringify({ _truncated: true, createdAt: new Date().toISOString() }));
-          } catch {
-            // Give up
-          }
+          } catch { /* give up */ }
         }
       }
     }
@@ -1313,6 +1331,12 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       // Ignore storage failures
     }
   }, [keepConversationOnRefresh]);
+
+  // Proactive cleanup: purge stale AI draft keys on mount to prevent quota issues
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    cleanStaleAiStorage();
+  }, []);
 
   useEffect(() => {
     try {

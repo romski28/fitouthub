@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-79f95d33",
+    "date": "2026-06-18T22:46:53+08:00",
+    "title": "Proactive sessionStorage cleanup: estimate usage, purge stale drafts on mount",
+    "summary": "Proactive sessionStorage cleanup: estimate usage, purge stale drafts on mount",
+    "areas": [
+      "web"
+    ],
+    "commit": "79f95d33",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-a6a1db52",
     "date": "2026-06-18T22:42:47+08:00",
     "title": "Fix: never clear aiSandboxSessionId during quota cleanup — preserves AI thread continuity",
