@@ -567,6 +567,7 @@ export default function ProfessionalProjectsPage() {
                       </div>
 
                       {/* Action buttons */}
+                      <div className="flex flex-wrap items-center gap-2">
                           {isRestricted ? (
                             <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
                               Bidding closed
@@ -649,7 +650,6 @@ export default function ProfessionalProjectsPage() {
                             </>
                           )}
                         </div>
-                      </div>
                     </div>
                   </div>
                 );

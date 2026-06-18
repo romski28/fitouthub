@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-db7bd72f",
+    "date": "2026-06-18T11:32:24+08:00",
+    "title": "Fix extra closing div from restructured card layout",
+    "summary": "Fix extra closing div from restructured card layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "db7bd72f",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-2ba23b04",
     "date": "2026-06-18T11:28:40+08:00",
     "title": "Restructure pro project card: add project scope, move chips after title, resize to button dimensions",
