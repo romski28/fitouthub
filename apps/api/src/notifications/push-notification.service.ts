@@ -11,6 +11,9 @@ const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@fitouthub.com';
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+  console.log('[PushNotificationService] VAPID keys configured — push is active');
+} else {
+  console.warn('[PushNotificationService] ⚠️ VAPID keys NOT configured — push will be SKIPPED. Set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT env vars.');
 }
 
 export interface PushPayload {
@@ -82,6 +85,7 @@ export class PushNotificationService {
     const subs = await this.prisma.pushSubscription.findMany({
       where: { userId, active: true },
     });
+    this.logger.log(`sendToUser: userId=${userId}, subs=${subs.length}, title="${payload.title}"`);
     return this.sendToSubscriptions(subs, payload);
   }
 
@@ -90,6 +94,7 @@ export class PushNotificationService {
     const subs = await this.prisma.pushSubscription.findMany({
       where: { professionalId, active: true },
     });
+    this.logger.log(`sendToProfessional: professionalId=${professionalId}, subs=${subs.length}, title="${payload.title}"`);
     return this.sendToSubscriptions(subs, payload);
   }
 

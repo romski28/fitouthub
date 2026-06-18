@@ -320,9 +320,12 @@ export async function subscribeToPushNotifications(): Promise<void> {
 
     // POST to API
     const token = localStorage.getItem("accessToken") || localStorage.getItem("professionalAccessToken");
-    if (!token) return;
+    if (!token) {
+      console.warn("[PWA] No auth token found — skipping push subscribe POST");
+      return;
+    }
 
-    await fetch(`${API_BASE_URL}/push/subscribe`, {
+    const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -339,7 +342,12 @@ export async function subscribeToPushNotifications(): Promise<void> {
       }),
     });
 
-    console.log("[PWA] Push subscription saved to server");
+    const result = await response.json().catch(() => ({}));
+    if (response.ok && result.success) {
+      console.log("[PWA] Push subscription saved to server ✅");
+    } else {
+      console.warn("[PWA] Push subscription API failed:", response.status, result);
+    }
   } catch (err) {
     console.warn("[PWA] Push subscription failed:", err);
   }

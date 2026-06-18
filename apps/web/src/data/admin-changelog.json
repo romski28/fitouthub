@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-19-6c65ee27",
+    "date": "2026-06-19T07:28:32+08:00",
+    "title": "Add diagnostic logging to push notification flow (frontend + backend)",
+    "summary": "Add diagnostic logging to push notification flow (frontend + backend)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6c65ee27",
+    "files": [
+      "apps/api/src/notifications/push-notification.service.ts",
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-19-af7a24d9",
     "date": "2026-06-19T07:13:45+08:00",
     "title": "Fix: add CombinedAuthGuard to push controller — subscriptions were always rejected",
