@@ -477,33 +477,26 @@ export default function ProfessionalProjectsPage() {
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </button>
                     )}
+
                     <div className="grid gap-3">
-                      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                        {isRestricted ? (
-                          <span className="truncate text-[1.2rem] font-bold leading-tight text-slate-900">
-                            {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
-                          </span>
-                        ) : (
-                          <Link
-                            href={`/professional-projects/${projectProf.id}?tab=overview`}
-                            className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
-                              quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
-                            }`}
-                            title="Open project details"
-                          >
-                            {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
-                          </Link>
-                        )}
-                        <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                          {quoteOverdue && quoteDeadlineState ? (
+                      {/* Title row with scope chips */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {isRestricted ? (
+                            <span className="truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                              {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
+                            </span>
+                          ) : (
                             <Link
-                              href={`/professional-projects/${projectProf.id}?tab=chat`}
-                              className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 shadow-[0_0_10px_rgba(255,255,255,0.08)] hover:bg-white/15"
-                              title="Open chat with the client"
+                              href={`/professional-projects/${projectProf.id}?tab=overview`}
+                              className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
+                                quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
+                              }`}
+                              title="Open project details"
                             >
-                              Quote overdue ({quoteDeadlineState.windowLongLabel}). Contact client to reopen bidding.
+                              {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                             </Link>
-                          ) : null}
+                          )}
                           <ProjectSentimentBadge
                             projectId={projectProf.project.id}
                             storageScope="professional"
@@ -511,62 +504,69 @@ export default function ProfessionalProjectsPage() {
                             size="lg"
                           />
                         </div>
-                      </div>
-                      
-                      {/* Details Row - Responsive Grid */}
-                      <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
-                        {/* Project Details */}
-                        <div className="col-span-2 md:col-span-1">
-                          <div className={`flex items-center gap-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
-                            {projectProf.project.region ? <span>{projectProf.project.region}</span> : null}
-                            {!isRestricted && projectProf.quoteAmount && (
-                              <>
-                                {projectProf.project.region ? <span>•</span> : null}
-                                <span className={`font-medium ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}>${Number(projectProf.quoteAmount).toLocaleString()}</span>
-                              </>
+                        {/* Scope chips moved here — sized like buttons */}
+                        {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
+                              projectProf.quoteRequestedTrades.map((trade) => (
+                                <span
+                                  key={`requested-${projectProf.id}-${trade}`}
+                                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                                    quoteOverdue || isStopStatus
+                                      ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
+                                      : 'border border-amber-300 bg-amber-50 text-amber-800'
+                                  }`}
+                                >
+                                  {trade}
+                                </span>
+                              ))
+                            ) : (
+                              <span className={`text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
+                                Scope: to be confirmed
+                              </span>
                             )}
                           </div>
-                          {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              {projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
-                                <>
-                                  <span className={`text-[11px] font-semibold ${quoteOverdue || isStopStatus ? 'text-amber-100' : 'text-slate-600'}`}>
-                                    Your scope:
-                                  </span>
-                                  {projectProf.quoteRequestedTrades.map((trade) => (
-                                    <span
-                                      key={`requested-${projectProf.id}-${trade}`}
-                                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                        quoteOverdue || isStopStatus
-                                          ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
-                                          : 'border border-amber-300 bg-amber-50 text-amber-800'
-                                      }`}
-                                    >
-                                      {trade}
-                                    </span>
-                                  ))}
-                                </>
-                              ) : (
-                                <span className={`text-[11px] ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
-                                  Your scope: to be confirmed
-                                </span>
-                              )}
-                            </div>
-                          ) : null}
-                          {isRestricted ? (
-                            <p className={`mt-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
-                              {projectProf.project.notes || 'Bidding has concluded for this project.'}
-                            </p>
-                          ) : quoteOverdue ? (
-                            <p className="mt-2 text-xs text-rose-100">
-                              No quote was submitted within the allowed window. Open chat to ask the client to reopen bidding.
-                            </p>
-                          ) : primaryAction?.description ? (
-                            <p className="mt-2 text-xs text-slate-600">{primaryAction.description}</p>
-                          ) : null}
-                        </div>
+                        ) : null}
+                        {/* Project scope/notes */}
+                        {projectProf.project.notes && (
+                          <p className={`text-xs leading-relaxed line-clamp-2 ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
+                            {projectProf.project.notes}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Details Row */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        {projectProf.project.region ? (
+                          <span className={quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}>
+                            {projectProf.project.region}
+                          </span>
+                        ) : null}
+                        {!isRestricted && projectProf.quoteAmount && (
+                          <span className={`font-medium ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}>
+                            ${Number(projectProf.quoteAmount).toLocaleString()}
+                          </span>
+                        )}
+                        {quoteOverdue && quoteDeadlineState ? (
+                          <Link
+                            href={`/professional-projects/${projectProf.id}?tab=chat`}
+                            className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 hover:bg-white/15"
+                          >
+                            Quote overdue ({quoteDeadlineState.windowLongLabel})
+                          </Link>
+                        ) : null}
+                        {isRestricted ? (
+                          <p className={`text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
+                            {projectProf.project.notes || 'Bidding has concluded for this project.'}
+                          </p>
+                        ) : quoteOverdue ? (
+                          <p className="text-xs text-rose-100">
+                            No quote was submitted within the allowed window.
+                          </p>
+                        ) : null}
+                      </div>
 
-                        <div className="col-span-2 flex flex-wrap items-center gap-2 md:col-span-1 md:justify-end">
+                      {/* Action buttons */}
                           {isRestricted ? (
                             <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
                               Bidding closed
