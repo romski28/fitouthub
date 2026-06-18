@@ -198,7 +198,7 @@ export function PwaProvider() {
     <div className="fixed bottom-20 left-4 right-4 z-[9999] mx-auto max-w-md">
       <div className="flex items-center gap-3 rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] p-4 shadow-lg">
         <img
-          src="/assets/images/favicon-180.png"
+          src="/assets/mark-coral-512.png"
           alt="Mimo"
           className="h-10 w-10 rounded-lg"
         />

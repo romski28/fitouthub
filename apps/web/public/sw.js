@@ -7,7 +7,7 @@ const RUNTIME_CACHE = "mimo-runtime";
 const PRECACHE_URLS = [
   "/",
   "/manifest.json",
-  "/assets/images/favicon-180.png",
+  "/assets/mark-coral-512.png",
 ];
 
 // ── Install ─────────────────────────────────────────────────────
@@ -93,8 +93,8 @@ self.addEventListener("push", (event) => {
     event.waitUntil(
       self.registration.showNotification("Mimo", {
         body: "You have a new update on your project.",
-        icon: "/assets/images/favicon-180.png",
-        badge: "/assets/images/favicon-180.png",
+        icon: "/assets/mark-coral-512.png",
+        badge: "/assets/mark-coral-512.png",
         tag: "mimo-generic",
         vibrate: [200, 100, 200],
         data: { url: "/" },
@@ -110,8 +110,8 @@ self.addEventListener("push", (event) => {
     event.waitUntil(
       self.registration.showNotification(title || "Mimo", {
         body: body || "",
-        icon: icon || "/assets/images/favicon-180.png",
-        badge: "/assets/images/favicon-180.png",
+        icon: icon || "/assets/mark-coral-512.png",
+        badge: "/assets/mark-coral-512.png",
         tag: tag || "mimo-default",
         vibrate: [200, 100, 200],
         requireInteraction: true,
@@ -124,8 +124,8 @@ self.addEventListener("push", (event) => {
     event.waitUntil(
       self.registration.showNotification("Mimo", {
         body: event.data.text(),
-        icon: "/assets/images/favicon-180.png",
-        badge: "/assets/images/favicon-180.png",
+        icon: "/assets/mark-coral-512.png",
+        badge: "/assets/mark-coral-512.png",
         vibrate: [200, 100, 200],
         data: { url: "/" },
       })

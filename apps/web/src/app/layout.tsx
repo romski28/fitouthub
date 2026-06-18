@@ -46,7 +46,7 @@ export const metadata: Metadata = {
       { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
       { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
     ],
-    apple: "/assets/images/favicon-180.png",
+    apple: "/assets/mark-coral-512.png",
   },
 };
 

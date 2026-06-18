@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-18-c35496a0",
+    "date": "2026-06-18T15:41:19+08:00",
+    "title": "Switch PWA icon to mark-coral-512.png",
+    "summary": "Switch PWA icon to mark-coral-512.png",
+    "areas": [
+      "web"
+    ],
+    "commit": "c35496a0",
+    "files": [
+      "apps/web/public/assets/mark-coral-512.png",
+      "apps/web/public/manifest.json",
+      "apps/web/public/sw.js",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-8fdee4ed",
     "date": "2026-06-18T15:33:01+08:00",
     "title": "Commit web-push dep + type fixes (missed in previous commit)",
