@@ -207,6 +207,7 @@ model User {
   projectLocationDetailsReviewed  ProjectLocationDetails[] @relation("ProjectLocationDetailsReviewedBy")
   notificationPreference          NotificationPreference?
   notificationLogs                NotificationLog[]
+  pushSubscriptions               PushSubscription[]
   nextStepActions                 NextStepAction[]
   adminActionsAssigned            AdminAction[]           @relation("AdminActionAssigned")
   adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
@@ -335,6 +336,7 @@ model Professional {
   startProposals          ProjectStartProposal[]
   notificationLogs        NotificationLog[]
   notificationPreferences NotificationPreference?
+  pushSubscriptions       PushSubscription[]
   nextStepActions         NextStepAction[]
   agreedToTermsAt                DateTime?
   agreedToTermsVersion            String?                 @default("1.0")

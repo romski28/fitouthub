@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-48242a2d",
+    "date": "2026-06-18T15:22:37+08:00",
+    "title": "Fix Prisma: add reverse relation fields for PushSubscription on User and Professional",
+    "summary": "Fix Prisma: add reverse relation fields for PushSubscription on User and Professional",
+    "areas": [
+      "api"
+    ],
+    "commit": "48242a2d",
+    "files": [
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-06-18-6c572c0a",
     "date": "2026-06-18T15:18:36+08:00",
     "title": "Fix TS type: Uint8Array to Uint8Array<ArrayBuffer> for push subscription",
