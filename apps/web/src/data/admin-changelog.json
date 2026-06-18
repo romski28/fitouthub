@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-8d2bf2b8",
+    "date": "2026-06-18T15:29:29+08:00",
+    "title": "Fix: null→undefined type + install web-push in API",
+    "summary": "Fix: null→undefined type + install web-push in API",
+    "areas": [
+      "infra"
+    ],
+    "commit": "8d2bf2b8",
+    "files": [
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-06-18-48242a2d",
     "date": "2026-06-18T15:22:37+08:00",
     "title": "Fix Prisma: add reverse relation fields for PushSubscription on User and Professional",
