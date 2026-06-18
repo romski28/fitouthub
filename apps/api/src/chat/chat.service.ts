@@ -5,6 +5,7 @@ import { AnonymousChatThreadDto, AnonymousChatMessageDto } from './dto/anonymous
 import { ProjectChatThreadDto, ProjectChatMessageDto } from './dto/project-chat.dto';
 import { RealtimeService } from '../realtime/realtime.service';
 import { ActivityLogService } from '../activity-log.service';
+import { PushNotificationService } from '../notifications/push-notification.service';
 
 @Injectable()
 export class ChatService {
@@ -15,6 +16,7 @@ export class ChatService {
     private prisma: PrismaService,
     private readonly realtime: RealtimeService,
     private readonly activityLogService: ActivityLogService,
+    private readonly pushService: PushNotificationService,
   ) {}
 
   private appendTimelineEvent(
@@ -508,6 +510,19 @@ export class ChatService {
       this.realtime.emitToProfessional(thread.professionalId, realtimeEvent);
     }
     void this.realtime.emitToAdmins(realtimeEvent);
+
+    // Push notification for new chat message (rate-limited: 1 per 5 min per thread)
+    const pushPayload = {
+      title: senderType === 'professional' ? (thread.project?.projectName || 'New message') : 'New message',
+      body: `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`,
+      url: `/chat/${threadId}`,
+      tag: `chat-msg-${threadId}`,
+    };
+    void this.pushService.sendToUserAndProfessional(
+      senderType === 'professional' ? thread.userId : undefined,
+      senderType === 'user' ? thread.professionalId : undefined,
+      pushPayload,
+    );
 
     if (thread.status === 'closure_pending' || thread.status === 'closed') {
       const reopenEvent = {

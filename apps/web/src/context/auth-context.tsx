@@ -226,6 +226,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     setIsLoggedIn(true);
 
+    // Subscribe to push notifications (PWA)
+    import("@/components/pwa-provider").then((m) =>
+      m.subscribeToPushNotifications().catch(() => {})
+    );
+
     return result;
   };
 
@@ -267,6 +272,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
     setIsLoggedIn(true);
+
+    // Subscribe to push notifications (PWA)
+    import("@/components/pwa-provider").then((m) =>
+      m.subscribeToPushNotifications().catch(() => {})
+    );
 
     return result;
   };

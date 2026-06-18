@@ -172,6 +172,11 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
+      // Subscribe to push notifications (PWA)
+      import("@/components/pwa-provider").then((m) =>
+        m.subscribeToPushNotifications().catch(() => {})
+      );
+
       return {
         success: true,
         accessToken: result.accessToken,
@@ -218,6 +223,11 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       setProfessional(result.professional);
       applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
+
+      // Subscribe to push notifications (PWA)
+      import("@/components/pwa-provider").then((m) =>
+        m.subscribeToPushNotifications().catch(() => {})
+      );
 
       return {
         success: true,

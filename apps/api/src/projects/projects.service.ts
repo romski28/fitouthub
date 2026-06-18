@@ -4,6 +4,7 @@ import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
 import { NotificationService } from '../notifications/notification.service';
+import { PushNotificationService } from '../notifications/push-notification.service';
 import { AiService } from '../ai/ai.service';
 import { ActivityLogService } from '../activity-log.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -237,6 +238,7 @@ export class ProjectsService {
     private chatService: ChatService,
     private platformFeeService: PlatformFeeService,
     private notificationService: NotificationService,
+    private pushService: PushNotificationService,
     private aiService: AiService,
     private activityLogService: ActivityLogService,
   ) {}
@@ -4707,6 +4709,14 @@ Please review the project details and respond with your quote or decline the inv
               recipientAudit.direct.error =
                 sendResult.error || 'Direct invitation notification failed';
             }
+
+            // Push notification for new project match
+            void this.pushService.sendToProfessional(professional.id, {
+              title: 'New Project Match',
+              body: `You've been matched to "${project.projectName}" in ${project.region}. Review and submit your quote.`,
+              url: `/professional-projects?projectId=${projectId}`,
+              tag: `project-invite-${projectId}-${professional.id}`,
+            });
           } else {
             recipientAudit.direct.status = 'skipped';
             recipientAudit.direct.reason = preference
@@ -5892,6 +5902,17 @@ Please review the project details and respond with your quote or decline the inv
         baseUrl,
       });
       clientAudit.email.status = 'sent';
+
+      // Push notification for new quote
+      const clientUserId = projectProfessional.project.user?.id;
+      if (clientUserId) {
+        void this.pushService.sendToUser(clientUserId, {
+          title: 'New Quote Received',
+          body: `${professionalName} submitted a quote of HK$${quoteAmount.toLocaleString()} for "${projectProfessional.project.projectName}".`,
+          url: `/projects/${projectId}?tab=quotes`,
+          tag: `quote-submitted-${projectProfessional.id}`,
+        });
+      }
     } catch (error) {
       clientAudit.email.status = 'failed';
       clientAudit.email.error = error?.message;
@@ -8572,6 +8593,14 @@ Please review the project details and respond with your quote or decline the inv
           winnerAudit.direct.error =
             sendResult.error || 'Direct winner notification failed';
         }
+
+        // Push notification for quote awarded
+        void this.pushService.sendToProfessional(projectProfessional.professional.id, {
+          title: 'Quote Awarded!',
+          body: `Your quote for "${project.projectName}" was accepted. The client will contact you soon.`,
+          url: `/professional-projects?projectId=${projectId}`,
+          tag: `quote-awarded-${projectProfessional.id}`,
+        });
       } else {
         winnerAudit.direct.status = 'skipped';
         winnerAudit.direct.reason = !projectProfessional.professional.phone

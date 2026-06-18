@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-06-18-74130ae5",
+    "date": "2026-06-18T22:18:41+08:00",
+    "title": "Wire push notifications: 4 triggers (match, quote submitted, awarded, chat) + auth subscription",
+    "summary": "Wire push notifications: 4 triggers (match, quote submitted, awarded, chat) + auth subscription",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "74130ae5",
+    "files": [
+      "apps/api/src/chat/chat.module.ts",
+      "apps/api/src/chat/chat.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/pwa-provider.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-40c57936",
     "date": "2026-06-18T21:47:50+08:00",
     "title": "Fix: hide install button until beforeinstallprompt fires on Android",

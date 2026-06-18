@@ -282,3 +282,65 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
+
+// ── Standalone push subscription (call after login) ───────────────
+// No React hooks needed — call imperatively from auth contexts.
+
+import { API_BASE_URL } from "@/config/api";
+
+export async function subscribeToPushNotifications(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (!("serviceWorker" in navigator)) return;
+  if (!("PushManager" in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let sub = await registration.pushManager.getSubscription();
+
+    if (!sub) {
+      const vapidKey = VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
+        console.log("[PWA] No VAPID key configured — skipping push subscribe");
+        return;
+      }
+
+      const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4);
+      const base64url = (vapidKey + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = window.atob(base64url);
+      const keyBytes = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; i++) {
+        keyBytes[i] = rawData.charCodeAt(i);
+      }
+
+      sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: keyBytes as Uint8Array<ArrayBuffer>,
+      });
+    }
+
+    // POST to API
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("professionalAccessToken");
+    if (!token) return;
+
+    await fetch(`${API_BASE_URL}/push/subscribe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.toJSON().keys?.p256dh || "",
+          auth: sub.toJSON().keys?.auth || "",
+        },
+        userAgent: navigator.userAgent,
+        platform: getPlatform(),
+      }),
+    });
+
+    console.log("[PWA] Push subscription saved to server");
+  } catch (err) {
+    console.warn("[PWA] Push subscription failed:", err);
+  }
+}
