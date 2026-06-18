@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-34f9f6b5",
+    "date": "2026-06-18T11:57:12+08:00",
+    "title": "Fix alignment: title+trade chips left, sentiment badge right",
+    "summary": "Fix alignment: title+trade chips left, sentiment badge right",
+    "areas": [
+      "web"
+    ],
+    "commit": "34f9f6b5",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-db7bd72f",
     "date": "2026-06-18T11:32:24+08:00",
     "title": "Fix extra closing div from restructured card layout",

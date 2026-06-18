@@ -497,12 +497,14 @@ export default function ProfessionalProjectsPage() {
                               {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                             </Link>
                           )}
-                          <ProjectSentimentBadge
-                            projectId={projectProf.project.id}
-                            storageScope="professional"
-                            iconOnly
-                            size="lg"
-                          />
+                          <div className="ml-auto shrink-0">
+                            <ProjectSentimentBadge
+                              projectId={projectProf.project.id}
+                              storageScope="professional"
+                              iconOnly
+                              size="lg"
+                            />
+                          </div>
                         </div>
                         {/* Scope chips moved here — sized like buttons */}
                         {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
