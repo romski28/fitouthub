@@ -3,24 +3,28 @@
 import { useEffect, useState, useCallback } from "react";
 
 const SW_PATH = "/sw.js";
+const DISMISS_KEY = "mimo-pwa-banner-dismissed";
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
-// ── Types ────────────────────────────────────────────────────────
-interface PwaState {
-  swSupported: boolean;
-  swRegistered: boolean;
-  pushSupported: boolean;
-  pushSubscribed: boolean;
-  canInstall: boolean;
-  isStandalone: boolean;
+// ── Detect platform ─────────────────────────────────────────────
+function getPlatform(): "ios" | "android" | "other" {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return "ios";
+  if (/android/.test(ua)) return "android";
+  return "other";
 }
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as any).standalone === true
-  );
+  try {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true
+    );
+  } catch {
+    return false;
+  }
 }
 
 // ── URL-safe base64 ──────────────────────────────────────────────
@@ -36,80 +40,68 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 }
 
 // ── Hook ─────────────────────────────────────────────────────────
-export function usePwa(): PwaState & {
-  subscribeToPush: () => Promise<PushSubscription | null>;
-  unsubscribeFromPush: () => Promise<boolean>;
-  promptInstall: () => Promise<boolean>;
-} {
-  const [state, setState] = useState<PwaState>({
-    swSupported: false,
-    swRegistered: false,
-    pushSupported: false,
-    pushSubscribed: false,
-    canInstall: false,
-    isStandalone: false,
-  });
-
-  // Capture beforeinstallprompt
+export function usePwa() {
+  const [swRegistered, setSwRegistered] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [platform] = useState(getPlatform);
+  const [inStandalone] = useState(isStandalone);
 
   useEffect(() => {
-    // Check basic support
-    const swSupported = "serviceWorker" in navigator;
-    const pushSupported = swSupported && "PushManager" in window;
-    setState((s) => ({ ...s, swSupported, pushSupported, isStandalone: isStandalone() }));
+    if (!("serviceWorker" in navigator)) {
+      console.log("[PWA] Service workers not supported");
+      return;
+    }
 
-    // Listen for install prompt (Chrome/Edge on Android)
+    // Register service worker
+    navigator.serviceWorker
+      .register(SW_PATH, { scope: "/" })
+      .then(async (registration) => {
+        console.log("[PWA] SW registered OK, scope:", registration.scope);
+        setSwRegistered(true);
+
+        // Check existing push subscription
+        if ("PushManager" in window) {
+          try {
+            const sub = await registration.pushManager.getSubscription();
+            if (sub) {
+              setPushSubscribed(true);
+              console.log("[PWA] Existing push subscription found");
+            }
+          } catch {
+            // push not available or denied
+          }
+        }
+
+        // Listen for SW updates
+        registration.addEventListener("updatefound", () => {
+          const installing = registration.installing;
+          if (!installing) return;
+          installing.addEventListener("statechange", () => {
+            if (installing.state === "installed" && navigator.serviceWorker.controller) {
+              console.log("[PWA] New version available — will update on next load");
+            }
+          });
+        });
+      })
+      .catch((err) => {
+        console.warn("[PWA] SW registration failed:", err.message);
+      });
+
+    // Capture Chrome install prompt
     const handleBeforeInstall = (e: Event) => {
+      console.log("[PWA] beforeinstallprompt fired — native install available");
       e.preventDefault();
       setInstallPrompt(e as BeforeInstallPromptEvent);
-      setState((s) => ({ ...s, canInstall: true }));
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
-    // Detect when app is installed
+    // Listen for install completion
     const handleAppInstalled = () => {
-      setInstallPrompt(null);
-      setState((s) => ({ ...s, canInstall: false, isStandalone: true }));
       console.log("[PWA] App installed successfully");
+      setInstallPrompt(null);
     };
     window.addEventListener("appinstalled", handleAppInstalled);
-
-    // Register service worker
-    if (swSupported) {
-      navigator.serviceWorker
-        .register(SW_PATH)
-        .then(async (registration) => {
-          console.log("[PWA] SW registered:", registration.scope);
-          setState((s) => ({ ...s, swRegistered: true }));
-
-          // Check existing push subscription
-          if (pushSupported) {
-            const sub = await registration.pushManager.getSubscription();
-            if (sub) {
-              setState((s) => ({ ...s, pushSubscribed: true }));
-            }
-          }
-
-          // Listen for SW updates
-          registration.addEventListener("updatefound", () => {
-            const installing = registration.installing;
-            if (!installing) return;
-            installing.addEventListener("statechange", () => {
-              if (
-                installing.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                console.log("[PWA] New version available — refresh to update");
-                // Could show a toast: "New version available!"
-              }
-            });
-          });
-        })
-        .catch((err) => {
-          console.warn("[PWA] SW registration failed:", err);
-        });
-    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
@@ -117,107 +109,165 @@ export function usePwa(): PwaState & {
     };
   }, []);
 
-  // ── Subscribe to push ──────────────────────────────────────────
   const subscribeToPush = useCallback(async (): Promise<PushSubscription | null> => {
-    if (!state.swRegistered) return null;
-
+    if (!("serviceWorker" in navigator)) return null;
     try {
       const registration = await navigator.serviceWorker.ready;
       let sub = await registration.pushManager.getSubscription();
-      if (sub) return sub; // already subscribed
-
+      if (sub) return sub;
       sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: VAPID_PUBLIC_KEY
           ? urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
           : undefined,
       });
-
-      setState((s) => ({ ...s, pushSubscribed: true }));
-      console.log("[PWA] Push subscribed:", sub.endpoint);
+      setPushSubscribed(true);
       return sub;
-    } catch (err) {
-      console.warn("[PWA] Push subscription failed:", err);
+    } catch {
       return null;
     }
-  }, [state.swRegistered]);
+  }, []);
 
-  // ── Unsubscribe from push ───────────────────────────────────────
   const unsubscribeFromPush = useCallback(async (): Promise<boolean> => {
-    if (!state.swRegistered) return false;
+    if (!("serviceWorker" in navigator)) return false;
     try {
       const registration = await navigator.serviceWorker.ready;
       const sub = await registration.pushManager.getSubscription();
       if (!sub) return true;
       await sub.unsubscribe();
-      setState((s) => ({ ...s, pushSubscribed: false }));
-      console.log("[PWA] Push unsubscribed");
+      setPushSubscribed(false);
       return true;
     } catch {
       return false;
     }
-  }, [state.swRegistered]);
+  }, []);
 
-  // ── Prompt install ─────────────────────────────────────────────
   const promptInstall = useCallback(async (): Promise<boolean> => {
-    if (!installPrompt) return false;
-    try {
-      await installPrompt.prompt();
-      const result = await installPrompt.userChoice;
-      console.log("[PWA] Install prompt:", result.outcome);
-      setInstallPrompt(null);
-      setState((s) => ({ ...s, canInstall: false }));
-      return result.outcome === "accepted";
-    } catch {
-      return false;
+    if (installPrompt) {
+      try {
+        await installPrompt.prompt();
+        const result = await installPrompt.userChoice;
+        console.log("[PWA] Install prompt result:", result.outcome);
+        setInstallPrompt(null);
+        return result.outcome === "accepted";
+      } catch {
+        return false;
+      }
     }
+    // Fallback: show manual instructions
+    return false;
   }, [installPrompt]);
 
-  return { ...state, subscribeToPush, unsubscribeFromPush, promptInstall };
+  return {
+    swRegistered,
+    pushSubscribed,
+    canInstall: !!installPrompt,
+    inStandalone,
+    platform,
+    subscribeToPush,
+    unsubscribeFromPush,
+    promptInstall,
+  };
 }
 
 // ── PWA Provider Component ───────────────────────────────────────
 export function PwaProvider() {
-  const { canInstall, isStandalone, promptInstall, swRegistered } = usePwa();
-  const [dismissed, setDismissed] = useState(false);
+  const { swRegistered, canInstall, inStandalone, platform, promptInstall } = usePwa();
+  const [dismissed, setDismissed] = useState(true);
   const [installing, setInstalling] = useState(false);
 
-  // Hide if already in standalone mode, not installable, or dismissed
-  if (isStandalone || !canInstall || dismissed) return null;
+  // Read dismissal from localStorage on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const val = localStorage.getItem(DISMISS_KEY);
+      // Only show if not dismissed, and SW registered (or native prompt available)
+      if (val !== "true") {
+        setDismissed(false);
+      }
+    } catch {
+      setDismissed(false);
+    }
+  }, []);
+
+  // Don't show if already in standalone mode
+  if (inStandalone) return null;
+
+  // Show once SW is registered OR native prompt is available
+  const shouldShow = !dismissed && (swRegistered || canInstall);
+
+  if (!shouldShow) return null;
+
+  function dismiss() {
+    setDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, "true");
+    } catch {}
+  }
 
   async function handleInstall() {
     setInstalling(true);
     const accepted = await promptInstall();
-    if (!accepted) {
+    if (accepted) {
+      dismiss();
+    } else if (!canInstall) {
+      // No native prompt — show platform instructions
       setInstalling(false);
-      // Don't dismiss — user may want to install later
+    } else {
+      setInstalling(false);
     }
   }
 
+  const isIOS = platform === "ios";
+  const isAndroid = platform === "android";
+
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-[9999] mx-auto max-w-md">
-      <div className="flex items-center gap-3 rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] p-4 shadow-lg">
+    <div className="fixed bottom-20 left-4 right-4 z-[9999] mx-auto max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="flex items-center gap-3 rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] p-4 shadow-xl">
         <img
           src="/assets/mark-coral-512.png"
           alt="Mimo"
-          className="h-10 w-10 rounded-lg"
+          className="h-10 w-10 rounded-lg shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800">Install Mimo App</p>
+          <p className="text-sm font-semibold text-slate-800">
+            {isIOS ? "Install Mimo App" : "Get the App"}
+          </p>
           <p className="text-xs text-slate-600">
-            Add to home screen for quick access {swRegistered ? "and push notifications" : ""}
+            {isIOS
+              ? "Tap Share  →  Add to Home Screen"
+              : isAndroid
+                ? "Quick access & push notifications"
+                : "Add to home screen for the best experience"}
           </p>
         </div>
+        {isAndroid ? (
+          <button
+            onClick={handleInstall}
+            disabled={installing}
+            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+          >
+            {installing ? "..." : "Install"}
+          </button>
+        ) : isIOS ? (
+          <button
+            onClick={dismiss}
+            className="shrink-0 rounded-lg bg-[#007AFF] px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+          >
+            Got it
+          </button>
+        ) : (
+          <button
+            onClick={handleInstall}
+            disabled={installing}
+            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+          >
+            {installing ? "..." : "Install"}
+          </button>
+        )}
         <button
-          onClick={handleInstall}
-          disabled={installing}
-          className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
-        >
-          {installing ? "..." : "Install"}
-        </button>
-        <button
-          onClick={() => setDismissed(true)}
-          className="shrink-0 text-slate-400 hover:text-slate-600"
+          onClick={dismiss}
+          className="shrink-0 text-slate-400 hover:text-slate-600 p-1"
           aria-label="Dismiss"
         >
           ✕
@@ -225,13 +275,6 @@ export function PwaProvider() {
       </div>
     </div>
   );
-}
-
-// ── Inline service worker registration (no React needed) ────────
-// This runs once at script level to register early
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  // Service worker registration is now handled inside the usePwa hook.
-  // This block is intentionally empty — keep for future early-registration.
 }
 
 // ── BeforeInstallPromptEvent type ────────────────────────────────

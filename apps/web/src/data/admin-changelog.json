@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-18-23bf01a4",
+    "date": "2026-06-18T21:37:31+08:00",
+    "title": "Fix PWA: proactive install banner, proper icons, viewport, content-type headers",
+    "summary": "Fix PWA: proactive install banner, proper icons, viewport, content-type headers",
+    "areas": [
+      "web"
+    ],
+    "commit": "23bf01a4",
+    "files": [
+      "apps/web/next.config.ts",
+      "apps/web/public/manifest.json",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-c35496a0",
     "date": "2026-06-18T15:41:19+08:00",
     "title": "Switch PWA icon to mark-coral-512.png",

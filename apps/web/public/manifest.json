@@ -2,27 +2,27 @@
   "name": "Mimo — Find Tradesmen & Manage Fitout Projects",
   "short_name": "Mimo",
   "description": "Find tradesmen, professionals, and manage fitout projects in Hong Kong",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#F5EEDE",
   "theme_color": "#1E293B",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/",
   "lang": "en",
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "/assets/mark-coral-512.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/mark-coral-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/assets/images/favicon-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
   "screenshots": [],

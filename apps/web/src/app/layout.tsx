@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Toaster } from 'react-hot-toast';
@@ -28,14 +28,22 @@ type PackageJson = {
 const geistSans = GeistSans;
 const geistMono = GeistMono;
 
-export const metadata: Metadata = {
-  title: "Mimo",
-  description: "Find tradesmen, professionals, and manage fitout projects",
-  manifest: "/manifest.json",
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F5EEDE" },
     { media: "(prefers-color-scheme: dark)", color: "#1E293B" },
   ],
+};
+
+export const metadata: Metadata = {
+  title: "Mimo",
+  description: "Find tradesmen, professionals, and manage fitout projects",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: "Mimo",
@@ -47,6 +55,9 @@ export const metadata: Metadata = {
       { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
     ],
     apple: "/assets/mark-coral-512.png",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
