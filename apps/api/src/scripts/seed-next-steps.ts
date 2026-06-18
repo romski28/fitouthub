@@ -42,7 +42,7 @@ const nextStepSeeds: NextStepSeed[] = [
   // proposals + client confirmations in the site-access flow.
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'REQUEST_SITE_VISIT', actionLabel: 'Request site visit', description: 'Allow professionals to inspect site before final quote.', isElective: true, displayOrder: 2 },
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_QUOTE', actionLabel: 'Submit quote', description: 'Provide quote and timeline.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'REQUEST_SITE_ACCESS', actionLabel: 'Request site access', description: 'Ask for visit access before finalizing quote.', isElective: true, displayOrder: 2 },
+  { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'REQUEST_SITE_ACCESS', actionLabel: 'Site inspection', description: 'Ask to visit site before finalizing quote.', isElective: true, displayOrder: 2 },
 
   { projectStage: ProjectStage.SITE_VISIT_SCHEDULED, role: 'CLIENT', actionKey: 'CONFIRM_SITE_VISIT', actionLabel: 'Confirm site visit', description: 'Confirm date/time and access instructions.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.SITE_VISIT_SCHEDULED, role: 'PROFESSIONAL', actionKey: 'ATTEND_SITE_VISIT', actionLabel: 'Attend site visit', description: 'Attend the scheduled visit and gather details.', isPrimary: true, displayOrder: 1 },

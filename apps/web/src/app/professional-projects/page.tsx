@@ -219,8 +219,8 @@ export default function ProfessionalProjectsPage() {
       if (!res.ok) throw new Error('Failed to accept');
       toast.success('Project accepted! You can now submit your quote.');
       setProjects(prev => prev.map(p => p.id === ppId ? { ...p, status: 'accepted' } : p));
-      const actions = await fetchPrimaryNextStep(projectProf.project.id, accessToken!, { cacheScope: nextStepCacheScope, forceRefresh: true });
-      if (actions) setNextStepMap(prev => ({ ...prev, [projectProf.project.id]: [actions] }));
+      const actions = await fetchPrimaryNextSteps(projectProf.project.id, accessToken!, { cacheScope: nextStepCacheScope, forceRefresh: true });
+      if (actions) setNextStepMap(prev => ({ ...prev, [projectProf.project.id]: actions }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to accept project');
     } finally {
