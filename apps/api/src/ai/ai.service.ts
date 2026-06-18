@@ -411,15 +411,23 @@ export class AiService {
         : null;
 
       if (rawOutput) {
-        const location = rawOutput.location && typeof rawOutput.location === 'object' && !Array.isArray(rawOutput.location)
-          ? (rawOutput.location as Record<string, unknown>)
-          : null;
-        // Geographic location — HK districts/zones only (for professional matching)
-        if (location && !facts.geographicLocation) {
-          const parts = [location.tertiary, location.secondary, location.primary]
-            .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
-          if (parts.length > 0) {
-            facts.geographicLocation = parts.join(', ');
+        // Geographic location — check both nested (rawOutput.location.primary) and flat (rawOutput.locationPrimary) formats
+        if (!facts.geographicLocation) {
+          const location = rawOutput.location && typeof rawOutput.location === 'object' && !Array.isArray(rawOutput.location)
+            ? (rawOutput.location as Record<string, unknown>)
+            : null;
+          let geoParts: string[] = [];
+          if (location) {
+            geoParts = [location.tertiary, location.secondary, location.primary]
+              .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+          }
+          if (geoParts.length === 0) {
+            // Fallback: check flat fields on rawOutput
+            geoParts = [rawOutput.locationTertiary, rawOutput.locationSecondary, rawOutput.locationPrimary]
+              .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+          }
+          if (geoParts.length > 0) {
+            facts.geographicLocation = geoParts.join(', ');
           }
         }
 

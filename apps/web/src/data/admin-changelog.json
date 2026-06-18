@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-eadda6f2",
+    "date": "2026-06-18T23:45:35+08:00",
+    "title": "Fix: buildEstablishedFacts now reads both nested and flat location formats from AI output",
+    "summary": "Fix: buildEstablishedFacts now reads both nested and flat location formats from AI output",
+    "areas": [
+      "api"
+    ],
+    "commit": "eadda6f2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-18-f6c1527c",
     "date": "2026-06-18T23:27:36+08:00",
     "title": "Add safeSessionSet wrapper: auto-cleans stale keys on quota exceeded",
