@@ -834,18 +834,16 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       sessionStorage.setItem(key, value);
     } catch (e) {
       if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        console.warn("[storage] Quota exceeded — cleaning stale AI data");
-        // Remove stale AI keys to free space, then retry
-        const aiKeys = ["aiPendingAssistDraft", "aiSandboxSessionId", "aiWizardHandoffPayload", "aiAssistPayload_temp"];
-        for (const k of aiKeys) {
-          if (k !== key) {
-            try { sessionStorage.removeItem(k); } catch {}
-          }
+        console.warn("[storage] Quota exceeded — cleaning stale draft data only");
+        // Only clear draft/payload keys — NEVER touch aiSandboxSessionId (AI thread continuity)
+        const staleKeys = ["aiPendingAssistDraft", "aiWizardHandoffPayload", "aiAssistPayload_temp", "createProjectDraft"];
+        for (const k of staleKeys) {
+          try { sessionStorage.removeItem(k); } catch {}
         }
+        // Retry with the current key
         try {
           sessionStorage.setItem(key, value);
         } catch {
-          // Still failing — store minimal fallback
           console.warn("[storage] Still full after cleanup — storing minimal draft");
           try {
             sessionStorage.setItem(key, JSON.stringify({ _truncated: true, createdAt: new Date().toISOString() }));

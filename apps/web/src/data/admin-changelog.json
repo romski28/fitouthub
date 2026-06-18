@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-a6a1db52",
+    "date": "2026-06-18T22:42:47+08:00",
+    "title": "Fix: never clear aiSandboxSessionId during quota cleanup — preserves AI thread continuity",
+    "summary": "Fix: never clear aiSandboxSessionId during quota cleanup — preserves AI thread continuity",
+    "areas": [
+      "web"
+    ],
+    "commit": "a6a1db52",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-befaa35d",
     "date": "2026-06-18T22:35:14+08:00",
     "title": "Fix QuotaExceededError on sessionStorage for aiPendingAssistDraft",
