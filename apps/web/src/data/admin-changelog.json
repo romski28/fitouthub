@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-befaa35d",
+    "date": "2026-06-18T22:35:14+08:00",
+    "title": "Fix QuotaExceededError on sessionStorage for aiPendingAssistDraft",
+    "summary": "Fix QuotaExceededError on sessionStorage for aiPendingAssistDraft",
+    "areas": [
+      "web"
+    ],
+    "commit": "befaa35d",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-74130ae5",
     "date": "2026-06-18T22:18:41+08:00",
     "title": "Wire push notifications: 4 triggers (match, quote submitted, awarded, chat) + auth subscription",

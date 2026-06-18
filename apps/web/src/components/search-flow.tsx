@@ -813,18 +813,49 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   }, [aiStructured, activeTrades, user, userLocation, initialAiPrompt, aiPromptHistory]);
 
   const persistTempAssistDraft = useCallback(() => {
-    if (typeof window === 'undefined' || !aiStructured) return;
+    if (typeof window === "undefined" || !aiStructured) return;
     const payload = buildAiAssistProjectPayload();
     if (!payload) return;
     const tempClientId = `temp_client_${Date.now().toString(36)}`;
     const tempDraft = {
       tempClientId,
       createdAt: new Date().toISOString(),
-      source: 'ai-search',
+      source: "ai-search",
       payload,
     };
-    sessionStorage.setItem(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
+
+    // Quota-safe: sessionStorage has ~5MB limit; AI draft with accumulated scope may approach it
+    writeStorageSafe(AI_ASSIST_DRAFT_STORAGE_KEY, JSON.stringify(tempDraft));
   }, [aiStructured, buildAiAssistProjectPayload]);
+
+  // ── Quota-safe sessionStorage write ──────────────────────────
+  function writeStorageSafe(key: string, value: string): void {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "QuotaExceededError") {
+        console.warn("[storage] Quota exceeded — cleaning stale AI data");
+        // Remove stale AI keys to free space, then retry
+        const aiKeys = ["aiPendingAssistDraft", "aiSandboxSessionId", "aiWizardHandoffPayload", "aiAssistPayload_temp"];
+        for (const k of aiKeys) {
+          if (k !== key) {
+            try { sessionStorage.removeItem(k); } catch {}
+          }
+        }
+        try {
+          sessionStorage.setItem(key, value);
+        } catch {
+          // Still failing — store minimal fallback
+          console.warn("[storage] Still full after cleanup — storing minimal draft");
+          try {
+            sessionStorage.setItem(key, JSON.stringify({ _truncated: true, createdAt: new Date().toISOString() }));
+          } catch {
+            // Give up
+          }
+        }
+      }
+    }
+  }
 
   const persistAiWizardHandoffForAuth = useCallback(() => {
     if (!aiStructured) return false;
