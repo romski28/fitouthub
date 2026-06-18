@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-19-af7a24d9",
+    "date": "2026-06-19T07:13:45+08:00",
+    "title": "Fix: add CombinedAuthGuard to push controller — subscriptions were always rejected",
+    "summary": "Fix: add CombinedAuthGuard to push controller — subscriptions were always rejected",
+    "areas": [
+      "api"
+    ],
+    "commit": "af7a24d9",
+    "files": [
+      "apps/api/src/notifications/notification.module.ts",
+      "apps/api/src/notifications/push-notification.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-18-eadda6f2",
     "date": "2026-06-18T23:45:35+08:00",
     "title": "Fix: buildEstablishedFacts now reads both nested and flat location formats from AI output",

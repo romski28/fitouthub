@@ -1,5 +1,6 @@
-import { Controller, Post, Delete, Body, Req, Logger } from '@nestjs/common';
+import { Controller, Post, Delete, Body, Req, Logger, UseGuards } from '@nestjs/common';
 import { PushNotificationService } from './push-notification.service';
+import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 interface SubscribeDto {
   endpoint: string;
@@ -16,9 +17,11 @@ export class PushNotificationController {
 
   // ── Subscribe (called from PWA after user logs in) ─────────────
   @Post('subscribe')
+  @UseGuards(CombinedAuthGuard)
   async subscribe(@Body() body: SubscribeDto, @Req() req: any) {
-    const userId = req.user?.id || null;
-    const professionalId = req.professional?.id || null;
+    // CombinedAuthGuard sets req.user.id and req.user.isProfessional
+    const userId = !req.user?.isProfessional ? req.user?.id : null;
+    const professionalId = req.user?.isProfessional ? req.user?.id : null;
 
     if (!userId && !professionalId) {
       return { success: false, error: 'Authentication required' };
@@ -39,9 +42,10 @@ export class PushNotificationController {
 
   // ── Unsubscribe ────────────────────────────────────────────────
   @Delete('subscribe')
+  @UseGuards(CombinedAuthGuard)
   async unsubscribe(@Body() body: { endpoint: string }, @Req() req: any) {
-    const userId = req.user?.id || null;
-    const professionalId = req.professional?.id || null;
+    const userId = !req.user?.isProfessional ? req.user?.id : null;
+    const professionalId = req.user?.isProfessional ? req.user?.id : null;
 
     if (!userId && !professionalId) {
       return { success: false, error: 'Authentication required' };
