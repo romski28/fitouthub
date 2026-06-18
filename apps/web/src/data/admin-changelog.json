@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-6c572c0a",
+    "date": "2026-06-18T15:18:36+08:00",
+    "title": "Fix TS type: Uint8Array to Uint8Array<ArrayBuffer> for push subscription",
+    "summary": "Fix TS type: Uint8Array to Uint8Array<ArrayBuffer> for push subscription",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c572c0a",
+    "files": [
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-38739076",
     "date": "2026-06-18T15:11:40+08:00",
     "title": "Add PWA support: manifest, service worker, push notifications infrastructure",

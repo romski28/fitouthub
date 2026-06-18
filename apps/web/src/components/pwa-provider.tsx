@@ -24,7 +24,7 @@ function isStandalone(): boolean {
 }
 
 // ── URL-safe base64 ──────────────────────────────────────────────
-function urlBase64ToUint8Array(base64: string): Uint8Array {
+function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const base64url = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64url);
@@ -32,7 +32,7 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   for (let i = 0; i < rawData.length; i++) {
     output[i] = rawData.charCodeAt(i);
   }
-  return output;
+  return output as Uint8Array<ArrayBuffer>;
 }
 
 // ── Hook ─────────────────────────────────────────────────────────
