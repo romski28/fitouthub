@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-18-44bee5c3",
+    "date": "2026-06-18T23:02:32+08:00",
+    "title": "Fix: tiered sessionStorage cleanup — never purge handoff keys on quota recovery",
+    "summary": "Fix: tiered sessionStorage cleanup — never purge handoff keys on quota recovery",
+    "areas": [
+      "web"
+    ],
+    "commit": "44bee5c3",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-79f95d33",
     "date": "2026-06-18T22:46:53+08:00",
     "title": "Proactive sessionStorage cleanup: estimate usage, purge stale drafts on mount",
