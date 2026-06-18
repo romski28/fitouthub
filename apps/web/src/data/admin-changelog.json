@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-18-f6c1527c",
+    "date": "2026-06-18T23:27:36+08:00",
+    "title": "Add safeSessionSet wrapper: auto-cleans stale keys on quota exceeded",
+    "summary": "Add safeSessionSet wrapper: auto-cleans stale keys on quota exceeded",
+    "areas": [
+      "web"
+    ],
+    "commit": "f6c1527c",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/lib/safe-storage.ts"
+    ]
+  },
+  {
     "id": "2026-06-18-d0577b47",
     "date": "2026-06-18T23:16:18+08:00",
     "title": "Fix: clear handoff data on project submit, not on page mount — preserves data for round-trip",

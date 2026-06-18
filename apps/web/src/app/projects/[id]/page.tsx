@@ -8,6 +8,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { showWorkflowSuccessToast } from '@/lib/workflow-toast';
+import { safeSessionSet } from '@/lib/safe-storage';
 import { fetchPrimaryNextStep } from '@/lib/next-steps';
 import { resolveNextStepModalContent } from '@/lib/next-step-modal-content';
 import { getClientTabForAction } from '@/lib/client-workflow';
@@ -346,7 +347,7 @@ export default function ClientProjectDetailPage() {
     // Check session storage to avoid showing twice
     const seenKey = `ux_feedback_seen_${project.id}`;
     if (sessionStorage.getItem(seenKey)) return;
-    sessionStorage.setItem(seenKey, '1');
+    safeSessionSet(seenKey, '1');
     setShowUxFeedback(true);
   }, [project, loading]);
 
