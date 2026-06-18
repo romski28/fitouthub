@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-18-5be34fc1",
+    "date": "2026-06-18T11:19:46+08:00",
+    "title": "Replace window.confirm with proper decline modal with reason radio buttons, store in quoteNotes",
+    "summary": "Replace window.confirm with proper decline modal with reason radio buttons, store in quoteNotes",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5be34fc1",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-18-6f9a4078",
     "date": "2026-06-18T11:07:36+08:00",
     "title": "Transition project to BIDDING_ACTIVE on accept; add SQL to relabel to Site inspection",

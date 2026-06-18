@@ -136,6 +136,8 @@ export default function ProfessionalProjectsPage() {
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [decliningIds, setDecliningIds] = useState<Set<string>>(new Set());
+  const [declineProject, setDeclineProject] = useState<ProjectProfessional | null>(null);
+  const [declineReason, setDeclineReason] = useState('');
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(
     () => projects.filter((p) => !p.accessRestricted).map((p) => p.project.id),
@@ -229,14 +231,22 @@ export default function ProfessionalProjectsPage() {
   };
 
   const handleQuickDecline = async (projectProf: ProjectProfessional) => {
-    const confirmed = window.confirm('Decline this project? This cannot be undone.');
-    if (!confirmed) return;
-    const ppId = projectProf.id;
+    setDeclineProject(projectProf);
+    setDeclineReason('');
+  };
+
+  const handleConfirmDecline = async () => {
+    if (!declineProject) return;
+    const ppId = declineProject.id;
     setDecliningIds(prev => new Set(prev).add(ppId));
+    setDeclineProject(null);
     try {
+      const body: any = {};
+      if (declineReason) body.quoteNotes = `Decline reason: ${declineReason}`;
       const res = await fetch(`${API_BASE_URL}/professional/projects/${ppId}/reject`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Failed to decline');
       toast.success('Project declined.');
@@ -245,8 +255,11 @@ export default function ProfessionalProjectsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to decline project');
     } finally {
       setDecliningIds(prev => { const next = new Set(prev); next.delete(ppId); return next; });
+      setDeclineReason('');
     }
   };
+
+  const declineReasons = ['Location', 'Availability', 'Not my trade', 'Other'];
 
   useEffect(() => {
     if (isLoggedIn === false) {
@@ -658,6 +671,51 @@ export default function ProfessionalProjectsPage() {
         ) : null}
 
         <BackToTop />
+
+        {/* Decline confirmation modal */}
+        {declineProject && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setDeclineProject(null)}>
+            <div className="mx-4 w-full max-w-sm rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h2 className="text-lg font-bold text-slate-900">Decline project?</h2>
+              <p className="mt-1 text-sm text-slate-600">You are about to decline this project. This cannot be undone. Are you sure?</p>
+
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold text-slate-700">Why are you declining?</p>
+                {declineReasons.map(reason => (
+                  <label key={reason} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="declineReason"
+                      value={reason}
+                      checked={declineReason === reason}
+                      onChange={e => setDeclineReason(e.target.value)}
+                      className="h-4 w-4 text-[#b94e2d]"
+                    />
+                    <span className="text-sm text-slate-700">{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeclineProject(null)}
+                  className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDecline}
+                  className="flex-1 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 transition"
+                >
+                  Decline project
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         </div>
       </div>
   );

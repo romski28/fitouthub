@@ -2065,6 +2065,7 @@ export class ProfessionalController {
   async rejectProject(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: any,
   ) {
     try {
       const professionalId = req.user.id || req.user.sub;
@@ -2089,6 +2090,7 @@ export class ProfessionalController {
         data: {
           status: 'rejected',
           respondedAt: new Date(),
+          ...(body?.quoteNotes ? { quoteNotes: body.quoteNotes } : {}),
         },
       });
 
