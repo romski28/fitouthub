@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-18-8fdee4ed",
+    "date": "2026-06-18T15:33:01+08:00",
+    "title": "Commit web-push dep + type fixes (missed in previous commit)",
+    "summary": "Commit web-push dep + type fixes (missed in previous commit)",
+    "areas": [
+      "api"
+    ],
+    "commit": "8fdee4ed",
+    "files": [
+      "apps/api/package.json",
+      "apps/api/src/notifications/push-notification.controller.ts",
+      "apps/api/src/notifications/push-notification.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-18-8d2bf2b8",
     "date": "2026-06-18T15:29:29+08:00",
     "title": "Fix: null→undefined type + install web-push in API",

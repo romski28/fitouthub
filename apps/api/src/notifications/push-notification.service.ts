@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import * as webpush from 'web-push';
+import webpush from 'web-push';
 
 // ── VAPID Keys ────────────────────────────────────────────────────
 // Generate once: npx web-push generate-vapid-keys

@@ -30,7 +30,7 @@ export class PushNotificationController {
       userId,
       professionalId,
       body.userAgent || req.headers['user-agent'],
-      body.platform || null,
+      body.platform || undefined,
     );
 
     this.logger.log(`Push subscribed: userId=${userId}, profId=${professionalId}`);
