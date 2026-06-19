@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-dc69d541",
+    "date": "2026-06-19T11:51:39+08:00",
+    "title": "Add realtime + push to addProjectMessage (was completely missing)",
+    "summary": "Add realtime + push to addProjectMessage (was completely missing)",
+    "areas": [
+      "api"
+    ],
+    "commit": "dc69d541",
+    "files": [
+      "apps/api/src/chat/chat.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-92b7bd4b",
     "date": "2026-06-19T11:36:34+08:00",
     "title": "Add debug log to chat push to trace recipient IDs",

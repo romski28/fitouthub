@@ -995,6 +995,7 @@ export class ChatService {
   ): Promise<ProjectChatMessageDto> {
     const thread = await this.prisma.projectChatThread.findUnique({
       where: { id: threadId },
+      include: { project: { select: { userId: true } } },
     });
 
     if (!thread) {
@@ -1040,6 +1041,23 @@ export class ChatService {
       userId: senderUserId,
       professionalId: senderProId,
     }).catch(() => undefined);
+
+    // Realtime + Push notification for project chat message
+    const realtimeEvent = {
+      type: 'chat.message.created',
+      payload: { sourceType: 'project', threadId, senderType, message: this.mapProjectMessageDto(message) },
+    };
+    if (thread.projectId) {
+      void this.realtime.emitToAdmins(realtimeEvent);
+    }
+    // Push to the OTHER party
+    const projectClientId = thread.project?.userId;
+    console.log(`[chat.push:project] senderType=${senderType}, clientId=${projectClientId}, proId=${senderProId}`);
+    void this.pushService.sendToUserAndProfessional(
+      senderType === 'professional' ? projectClientId : undefined,
+      senderType === 'user' ? senderProId : undefined,
+      { title: 'New message', body: `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`, url: `/projects/${thread.projectId}?tab=messages`, tag: `proj-chat-${threadId}` },
+    );
 
     return this.mapProjectMessageDto(message);
   }
