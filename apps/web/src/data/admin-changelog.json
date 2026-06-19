@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-577f53b0",
+    "date": "2026-06-19T09:54:52+08:00",
+    "title": "Fix: push call back inside for loop but outside phone conditional",
+    "summary": "Fix: push call back inside for loop but outside phone conditional",
+    "areas": [
+      "api"
+    ],
+    "commit": "577f53b0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-a821d319",
     "date": "2026-06-19T09:42:05+08:00",
     "title": "Fix: move push call completely outside phone-number conditional block",

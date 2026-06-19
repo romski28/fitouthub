@@ -4733,18 +4733,18 @@ Please review the project details and respond with your quote or decline the inv
         recipientAudit.direct.reason = 'missing_phone';
       }
 
+      // Push notification for new project match (fires regardless of phone/SMS channel)
+      try {
+        void this.pushService.sendToProfessional(professional.id, {
+          title: 'New Project Match',
+          body: `You've been matched to "${project.projectName}" in ${project.region}. Review and submit your quote.`,
+          url: `/professional-projects?projectId=${projectId}`,
+          tag: `project-invite-${projectId}-${professional.id}`,
+        });
+      } catch { /* push is fire-and-forget */ }
+
       this.pushNotificationAuditRecipient(notificationAudit, recipientAudit);
     }
-
-    // Push notification for new project match (fires regardless of phone/SMS channel)
-    try {
-      void this.pushService.sendToProfessional(professional.id, {
-        title: 'New Project Match',
-        body: `You've been matched to "${project.projectName}" in ${project.region}. Review and submit your quote.`,
-        url: `/professional-projects?projectId=${projectId}`,
-        tag: `project-invite-${projectId}-${professional.id}`,
-      });
-    } catch { /* push is fire-and-forget */ }
 
     await this.finalizeNotificationAudit(notificationAudit);
 
