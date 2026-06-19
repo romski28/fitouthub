@@ -5914,7 +5914,8 @@ Please review the project details and respond with your quote or decline the inv
       clientAudit.email.status = 'sent';
 
       // Push notification for new quote
-      const clientUserId = projectProfessional.project.user?.id;
+      const clientUserId = projectProfessional.project.user?.id || projectProfessional.project.clientId;
+      console.log(`[submitQuote] Push check: clientUserId=${clientUserId}, userObj=${!!projectProfessional.project.user}`);
       if (clientUserId) {
         void this.pushService.sendToUser(clientUserId, {
           title: 'New Quote Received',

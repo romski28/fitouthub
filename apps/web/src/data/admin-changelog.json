@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-93e709d1",
+    "date": "2026-06-19T11:16:28+08:00",
+    "title": "Add debug log + fallback to clientId for quote push notification",
+    "summary": "Add debug log + fallback to clientId for quote push notification",
+    "areas": [
+      "api"
+    ],
+    "commit": "93e709d1",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-577f53b0",
     "date": "2026-06-19T09:54:52+08:00",
     "title": "Fix: push call back inside for loop but outside phone conditional",
