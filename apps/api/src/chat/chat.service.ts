@@ -511,16 +511,19 @@ export class ChatService {
     }
     void this.realtime.emitToAdmins(realtimeEvent);
 
-    // Push notification for new chat message (rate-limited: 1 per 5 min per thread)
+    // Push notification for new chat message
+    const recipientUserId = senderType === 'professional' ? thread.userId : undefined;
+    const recipientProId = senderType === 'user' ? thread.professionalId : undefined;
+    console.log(`[chat.push] senderType=${senderType}, recipientUserId=${recipientUserId}, recipientProId=${recipientProId}`);
     const pushPayload = {
-      title: senderType === 'professional' ? (thread.project?.projectName || 'New message') : 'New message',
+      title: senderType === 'professional' ? 'New message from client' : 'New message',
       body: `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`,
       url: `/chat/${threadId}`,
       tag: `chat-msg-${threadId}`,
     };
     void this.pushService.sendToUserAndProfessional(
-      senderType === 'professional' ? thread.userId : undefined,
-      senderType === 'user' ? thread.professionalId : undefined,
+      recipientUserId,
+      recipientProId,
       pushPayload,
     );
 
