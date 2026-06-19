@@ -4709,20 +4709,20 @@ Please review the project details and respond with your quote or decline the inv
               recipientAudit.direct.error =
                 sendResult.error || 'Direct invitation notification failed';
             }
-
-            // Push notification for new project match
-            void this.pushService.sendToProfessional(professional.id, {
-              title: 'New Project Match',
-              body: `You've been matched to "${project.projectName}" in ${project.region}. Review and submit your quote.`,
-              url: `/professional-projects?projectId=${projectId}`,
-              tag: `project-invite-${projectId}-${professional.id}`,
-            });
           } else {
             recipientAudit.direct.status = 'skipped';
             recipientAudit.direct.reason = preference
               ? 'no_enabled_messaging_channel'
               : 'missing_notification_preference';
           }
+
+          // Push notification for new project match (independent of SMS/WhatsApp channel)
+          void this.pushService.sendToProfessional(professional.id, {
+            title: 'New Project Match',
+            body: `You've been matched to "${project.projectName}" in ${project.region}. Review and submit your quote.`,
+            url: `/professional-projects?projectId=${projectId}`,
+            tag: `project-invite-${projectId}-${professional.id}`,
+          });
         } catch (err) {
           recipientAudit.direct.status = 'failed';
           recipientAudit.direct.error = err?.message;
@@ -8593,14 +8593,6 @@ Please review the project details and respond with your quote or decline the inv
           winnerAudit.direct.error =
             sendResult.error || 'Direct winner notification failed';
         }
-
-        // Push notification for quote awarded
-        void this.pushService.sendToProfessional(projectProfessional.professional.id, {
-          title: 'Quote Awarded!',
-          body: `Your quote for "${project.projectName}" was accepted. The client will contact you soon.`,
-          url: `/professional-projects?projectId=${projectId}`,
-          tag: `quote-awarded-${projectProfessional.id}`,
-        });
       } else {
         winnerAudit.direct.status = 'skipped';
         winnerAudit.direct.reason = !projectProfessional.professional.phone
@@ -8623,6 +8615,14 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     this.pushNotificationAuditRecipient(notificationAudit, winnerAudit);
+
+    // Push notification for quote awarded (independent of SMS/WhatsApp)
+    void this.pushService.sendToProfessional(projectProfessional.professional.id, {
+      title: 'Quote Awarded!',
+      body: `Your quote for "${project.projectName}" was accepted. The client will contact you soon.`,
+      url: `/professional-projects?projectId=${projectId}`,
+      tag: `quote-awarded-${projectProfessional.id}`,
+    });
 
     // Send escrow notification to professional
     const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';

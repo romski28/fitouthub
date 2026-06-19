@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-37935f5a",
+    "date": "2026-06-19T09:26:44+08:00",
+    "title": "Fix: move push calls outside SMS phone/channel conditional blocks - push should fire independently",
+    "summary": "Fix: move push calls outside SMS phone/channel conditional blocks - push should fire independently",
+    "areas": [
+      "api"
+    ],
+    "commit": "37935f5a",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-b9d93fe9",
     "date": "2026-06-19T07:40:22+08:00",
     "title": "Fix: remove duplicate api prefix from push controller (global prefix already adds /api)",
