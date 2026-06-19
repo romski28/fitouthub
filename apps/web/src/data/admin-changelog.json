@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-19-a821d319",
+    "date": "2026-06-19T09:42:05+08:00",
+    "title": "Fix: move push call completely outside phone-number conditional block",
+    "summary": "Fix: move push call completely outside phone-number conditional block",
+    "areas": [
+      "api"
+    ],
+    "commit": "a821d319",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-37935f5a",
     "date": "2026-06-19T09:26:44+08:00",
     "title": "Fix: move push calls outside SMS phone/channel conditional blocks - push should fire independently",
