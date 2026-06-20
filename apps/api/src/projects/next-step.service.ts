@@ -2,6 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ProjectStage } from '@prisma/client';
 
+// ── In-memory cache for NextStepConfig (changes only on manual SQL deployment) ──
+interface CachedConfig {
+  steps: any[];
+  timestamp: number;
+}
+const configCache = new Map<string, CachedConfig>();
+const CACHE_TTL_MS = 60_000; // 60 seconds — short enough to pick up new configs after deploy
+
+function getCachedConfig(cacheKey: string): any[] | null {
+  const cached = configCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.steps;
+  }
+  configCache.delete(cacheKey);
+  return null;
+}
+
+function setCachedConfig(cacheKey: string, steps: any[]): void {
+  configCache.set(cacheKey, { steps, timestamp: Date.now() });
+}
+
 export interface NextStepAction {
   actionKey: string;
   actionLabel: string;
@@ -226,14 +247,19 @@ export class NextStepService {
         ? ProjectStage.CONTRACT_PHASE
         : safeStage;
 
-    // Get available actions for this stage and role
-    const nextSteps = await this.prisma.nextStepConfig.findMany({
-      where: {
-        projectStage: effectiveStage,
-        role: role,
-      },
-      orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
-    });
+    // Get available actions for this stage and role (cached — NextStepConfig rarely changes)
+    const configCacheKey = `config:${effectiveStage}:${role}`;
+    let nextSteps = getCachedConfig(configCacheKey);
+    if (!nextSteps) {
+      nextSteps = await this.prisma.nextStepConfig.findMany({
+        where: {
+          projectStage: effectiveStage,
+          role: role,
+        },
+        orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
+      });
+      setCachedConfig(configCacheKey, nextSteps);
+    }
 
     const modalContentByActionKey = new Map<string, NextStepModalContent>();
     for (const step of nextSteps) {
@@ -276,13 +302,18 @@ export class NextStepService {
         isProfessional.status,
       )
     ) {
-      const biddingActiveSteps = await this.prisma.nextStepConfig.findMany({
-        where: {
-          projectStage: ProjectStage.BIDDING_ACTIVE,
-          role: 'PROFESSIONAL',
-        },
-        orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
-      });
+      const biddingCacheKey = `config:${ProjectStage.BIDDING_ACTIVE}:PROFESSIONAL`;
+      let biddingActiveSteps = getCachedConfig(biddingCacheKey);
+      if (!biddingActiveSteps) {
+        biddingActiveSteps = await this.prisma.nextStepConfig.findMany({
+          where: {
+            projectStage: ProjectStage.BIDDING_ACTIVE,
+            role: 'PROFESSIONAL',
+          },
+          orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
+        });
+        setCachedConfig(biddingCacheKey, biddingActiveSteps);
+      }
       availableConfigSteps = biddingActiveSteps;
     }
 

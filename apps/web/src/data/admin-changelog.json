@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-20-29e1858c",
+    "date": "2026-06-20T10:43:21+08:00",
+    "title": "Perf: increase DB pool 2→6 + cache NextStepConfig queries in-memory (60s TTL)",
+    "summary": "Perf: increase DB pool 2→6 + cache NextStepConfig queries in-memory (60s TTL)",
+    "areas": [
+      "api"
+    ],
+    "commit": "29e1858c",
+    "files": [
+      "apps/api/src/prisma.service.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-a6c43d36",
     "date": "2026-06-20T10:31:58+08:00",
     "title": "Fix TS null→undefined type for projectClientId",

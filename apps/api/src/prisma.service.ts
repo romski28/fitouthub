@@ -34,7 +34,7 @@ export class PrismaService
           // Each instance gets its own pool; multiple instances = pool multiplication
           // Supabase free tier pooler has limited connections (~15 total)
           if (!parsed.searchParams.has('connection_limit')) {
-            parsed.searchParams.set('connection_limit', '2');
+            parsed.searchParams.set('connection_limit', '6');
           }
           
           // Set reasonable timeouts for pooler mode
