@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-45cac850",
+    "date": "2026-06-20T11:27:23+08:00",
+    "title": "Implement nextStepCache read/write in getNextSteps — cache hit skips all queries",
+    "summary": "Implement nextStepCache read/write in getNextSteps — cache hit skips all queries",
+    "areas": [
+      "api"
+    ],
+    "commit": "45cac850",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-9016cb2c",
     "date": "2026-06-20T11:14:04+08:00",
     "title": "Add admin endpoint POST /api/admin/next-step-cache/backfill",

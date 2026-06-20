@@ -226,6 +226,21 @@ export class NextStepService {
       throw new Error('User does not have access to this project');
     }
 
+    // ── Cache check: if cached result is newer than project update, return it ──
+    const cache = project.nextStepCache as Record<string, any> | null;
+    if (cache?.computedAt && project.updatedAt && new Date(cache.computedAt) > new Date(project.updatedAt)) {
+      return cache.result as NextStepResult;
+    }
+
+    // Helper to save cache after successful computation
+    const saveCache = (result: NextStepResult) => {
+      void this.prisma.project.update({
+        where: { id: projectId },
+        data: { nextStepCache: { result, computedAt: new Date().toISOString() } } as any,
+      }).catch(() => {});
+    };
+    const returnWithCache = (r: NextStepResult): NextStepResult => { saveCache(r); return r; };
+
     const actionActorWhere =
       role === 'PROFESSIONAL'
         ? { professionalId: isProfessional?.professionalId || userId }
@@ -645,7 +660,7 @@ export class NextStepService {
       if (role === 'PROFESSIONAL' && clientSigned && professionalSigned) {
         // If site has already been started on-site, show a non-actionable status step
         if (project.siteStartedAt) {
-          return {
+          return returnWithCache({
             PRIMARY: [toApiAction(createSyntheticPrimaryStep(
               'SITE_STARTED',
               'Project started on site',
@@ -657,7 +672,7 @@ export class NextStepService {
             ELECTIVE: [],
             status: project.status,
             stage: effectiveStage,
-          };
+          });
         }
 
         const normalizedScale = String(project.projectScale || '').toUpperCase();
@@ -698,12 +713,12 @@ export class NextStepService {
             ),
           ];
 
-          return {
+          return returnWithCache({
             PRIMARY: availableConfigSteps.map(toApiAction),
             ELECTIVE: [],
             status: project.status,
             stage: effectiveStage,
-          };
+          });
         }
 
         if (!startDateAgreed) {
@@ -718,12 +733,12 @@ export class NextStepService {
             ),
           ];
 
-          return {
+          return returnWithCache({
             PRIMARY: availableConfigSteps.map(toApiAction),
             ELECTIVE: [],
             status: project.status,
             stage: effectiveStage,
-          };
+          });
         }
 
         // Check if professional has already confirmed the schedule
@@ -1022,12 +1037,12 @@ export class NextStepService {
                 displayOrder: 1,
               } as any,
             ];
-            return {
+            return returnWithCache({
               PRIMARY: availableConfigSteps.map(toApiAction),
               ELECTIVE: [],
               status: project.status,
               stage: effectiveStage,
-            };
+            });
           }
 
           const clientScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
@@ -1059,12 +1074,12 @@ export class NextStepService {
                 displayOrder: 1,
               } as any,
             ];
-            return {
+            return returnWithCache({
               PRIMARY: availableConfigSteps.map(toApiAction),
               ELECTIVE: [],
               status: project.status,
               stage: effectiveStage,
-            };
+            });
           }
         }
 
@@ -1496,12 +1511,14 @@ export class NextStepService {
       );
     }
 
-    return {
+    const result: NextStepResult = {
       PRIMARY: primary,
       ELECTIVE: elective,
       status: project.status,
       stage: effectiveStage,
     };
+    saveCache(result);
+    return result;
     } catch (error: any) {
       // Never crash the process — return empty steps so the page still loads
       console.error('[NextStepService.getNextSteps] error:', error?.message, { projectId, userId, role });
