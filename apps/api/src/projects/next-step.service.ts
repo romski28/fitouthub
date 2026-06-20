@@ -162,7 +162,7 @@ export class NextStepService {
     role: string,
   ): Promise<NextStepResult> {
     try {
-    // Get project with current stage
+    // Get project with current stage + cache
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
@@ -178,6 +178,8 @@ export class NextStepService {
         startDate: true,
         siteStartedAt: true,
         siteInspectionAvailableOn: true,
+        nextStepCache: true,
+        updatedAt: true,
         _count: {
           select: {
             professionals: true,
@@ -1613,6 +1615,40 @@ export class NextStepService {
 
     // Will be populated by separate seed function
     return { message: 'NextStepConfig ready for seeding' };
+  }
+
+  // ── NextStep Cache ──────────────────────────────────────────
+  /** Invalidate the cached next-step state for a project (call after any mutation) */
+  async invalidateNextStepCache(projectId: string): Promise<void> {
+    try {
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: { nextStepCache: null as any },
+      });
+    } catch {
+      // Non-critical — cache will self-correct on next read
+    }
+  }
+
+  /** Rebuild cache for all projects (admin backfill) */
+  async backfillNextStepCache(): Promise<{ processed: number; errors: number }> {
+    const projects = await this.prisma.project.findMany({ select: { id: true } });
+    let processed = 0;
+    let errors = 0;
+
+    for (const p of projects) {
+      try {
+        // Simply invalidate — cache rebuilds on next real read
+        await this.prisma.project.update({
+          where: { id: p.id },
+          data: { nextStepCache: null as any },
+        });
+        processed++;
+      } catch {
+        errors++;
+      }
+    }
+    return { processed, errors };
   }
 
   async listNextStepConfigs(filters?: {

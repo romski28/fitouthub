@@ -499,6 +499,7 @@ model Project {
   currentStage                 ProjectStage             @default(CREATED)
   stageStartedAt               DateTime                 @default(now())
   lastStageTransitionAt        DateTime?                @updatedAt
+  nextStepCache                Json?                    // Snapshot of expensive next-step inputs (recomputed on mutation)
   nextStepActions              NextStepAction[]
   adminActions                 AdminAction[]
   // Contract signing fields

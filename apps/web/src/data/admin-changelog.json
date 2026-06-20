@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-20-41f0997c",
+    "date": "2026-06-20T11:07:32+08:00",
+    "title": "Add nextStepCache JSON column to Project + invalidation helpers",
+    "summary": "Add nextStepCache JSON column to Project + invalidation helpers",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "41f0997c",
+    "files": [
+      "MANUAL_SQL_ADD_NEXTSTEP_CACHE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-29e1858c",
     "date": "2026-06-20T10:43:21+08:00",
     "title": "Perf: increase DB pool 2→6 + cache NextStepConfig queries in-memory (60s TTL)",
