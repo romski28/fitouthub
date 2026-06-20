@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-a6c43d36",
+    "date": "2026-06-20T10:31:58+08:00",
+    "title": "Fix TS null→undefined type for projectClientId",
+    "summary": "Fix TS null→undefined type for projectClientId",
+    "areas": [
+      "api"
+    ],
+    "commit": "a6c43d36",
+    "files": [
+      "apps/api/src/chat/chat.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-19-dc69d541",
     "date": "2026-06-19T11:51:39+08:00",
     "title": "Add realtime + push to addProjectMessage (was completely missing)",

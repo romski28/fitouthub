@@ -1051,11 +1051,11 @@ export class ChatService {
       void this.realtime.emitToAdmins(realtimeEvent);
     }
     // Push to the OTHER party
-    const projectClientId = thread.project?.userId;
+    const projectClientId: string | undefined = thread.project?.userId ?? undefined;
     console.log(`[chat.push:project] senderType=${senderType}, clientId=${projectClientId}, proId=${senderProId}`);
     void this.pushService.sendToUserAndProfessional(
       senderType === 'professional' ? projectClientId : undefined,
-      senderType === 'user' ? senderProId : undefined,
+      senderType === 'user' ? (senderProId ?? undefined) : undefined,
       { title: 'New message', body: `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`, url: `/projects/${thread.projectId}?tab=messages`, tag: `proj-chat-${threadId}` },
     );
 
