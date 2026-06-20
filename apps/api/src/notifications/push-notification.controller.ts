@@ -25,6 +25,9 @@ export class PushNotificationController {
     const userId = !req.user?.isProfessional ? req.user?.id : null;
     const professionalId = req.user?.isProfessional ? req.user?.id : null;
 
+    console.log(`[PushController.subscribe] user=${JSON.stringify({ id: req.user?.id, isPro: req.user?.isProfessional, email: req.user?.email })}`);
+    console.log(`[PushController.subscribe] resolved: userId=${userId}, professionalId=${professionalId}`);
+
     if (!userId && !professionalId) {
       return { success: false, error: 'Authentication required' };
     }

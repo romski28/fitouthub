@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-2afb4add",
+    "date": "2026-06-20T15:01:24+08:00",
+    "title": "Add debug logging to push controller to trace user vs professional ID",
+    "summary": "Add debug logging to push controller to trace user vs professional ID",
+    "areas": [
+      "api"
+    ],
+    "commit": "2afb4add",
+    "files": [
+      "apps/api/src/notifications/push-notification.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-6307f577",
     "date": "2026-06-20T11:39:10+08:00",
     "title": "Add startup confirmation logs for push service and controller",
