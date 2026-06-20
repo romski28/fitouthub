@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-20-e4ee6ce7",
+    "date": "2026-06-20T22:01:47+08:00",
+    "title": "V2: green primary button, fix toggle position, add tabs (Quotes/Chat/Files)",
+    "summary": "V2: green primary button, fix toggle position, add tabs (Quotes/Chat/Files)",
+    "areas": [
+      "web"
+    ],
+    "commit": "e4ee6ce7",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx",
+      "apps/web/src/components/page-version-toggle.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-544b4c57",
     "date": "2026-06-20T21:42:38+08:00",
     "title": "Wire Next Steps buttons to modal dispatcher in V2 project page",

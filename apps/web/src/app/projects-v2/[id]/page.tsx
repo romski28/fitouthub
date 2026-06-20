@@ -7,7 +7,15 @@ import { useAuth } from "@/context/auth-context";
 import { useNextStepModal } from "@/context/next-step-modal-context";
 import { resolveNextStepModalContent } from "@/lib/next-step-modal-content";
 import { API_BASE_URL } from "@/config/api";
+import { ProjectTabs } from "@/components/project-tabs";
+import { ProjectChat } from "@/components/project-chat";
 import type { NextStepAction } from "@/lib/next-steps";
+
+const V2_TABS = [
+  { id: "quotes", label: "Quotes", icon: "💰" },
+  { id: "chat", label: "Chat", icon: "💬" },
+  { id: "files", label: "Files", icon: "📎" },
+];
 
 // ── Types ────────────────────────────────────────────────────────
 interface ProjectV2 {
@@ -37,6 +45,7 @@ export default function ProjectV2Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<"CLIENT" | "PROFESSIONAL" | null>(null);
+  const [activeTab, setActiveTab] = useState("quotes");
   const { openModal } = useNextStepModal();
 
   // ── Handle next step click ─────────────────────────────────────
@@ -147,7 +156,7 @@ export default function ProjectV2Page() {
             <button
               key={step.actionKey}
               onClick={() => handleStepClick(step)}
-              className="mb-2 block w-full rounded-lg bg-slate-800 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-slate-700"
+              className="mb-2 block w-full rounded-lg bg-emerald-600 px-4 py-3 text-left text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
             >
               {step.actionLabel}
               {step.description && (
@@ -177,11 +186,35 @@ export default function ProjectV2Page() {
         </div>
       )}
 
-      {/* Placeholder: Tabs will go here */}
-      <div className="rounded-xl border border-dashed border-[#D4C8A0] bg-[#F5EEDE]/50 px-5 py-12 text-center">
-        <p className="text-sm text-slate-400">
-          Tabs (Quotes · Chat · Files) — coming in next step
-        </p>
+      {/* Tabs */}
+      <div className="rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] overflow-hidden">
+        <ProjectTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={V2_TABS}
+        />
+
+        <div className="px-5 py-4">
+          {activeTab === "quotes" && (
+            <div className="text-sm text-slate-600">
+              <p className="text-slate-400 italic">Quotes overview — read-only view of submitted quotes.</p>
+              {/* TODO: wire quote data */}
+            </div>
+          )}
+          {activeTab === "chat" && (
+            <ProjectChat
+              projectId={id}
+              accessToken={accessToken || ""}
+              currentUserRole={role === "CLIENT" ? "client" : "professional"}
+            />
+          )}
+          {activeTab === "files" && (
+            <div className="text-sm text-slate-600">
+              <p className="text-slate-400 italic">Project files and media — read-only view.</p>
+              {/* TODO: wire file/media data */}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* V2 badge */}
