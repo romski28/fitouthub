@@ -9,11 +9,13 @@ import { resolveNextStepModalContent } from "@/lib/next-step-modal-content";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectTabs } from "@/components/project-tabs";
 import { ProjectChat } from "@/components/project-chat";
+import { ProjectCalendar } from "@/components/project-calendar";
 import type { NextStepAction } from "@/lib/next-steps";
 
 const V2_TABS = [
   { id: "quotes", label: "Quotes", icon: "💰" },
   { id: "chat", label: "Chat", icon: "💬" },
+  { id: "timeline", label: "Timeline", icon: "📅" },
   { id: "files", label: "Files", icon: "📎" },
 ];
 
@@ -26,6 +28,11 @@ interface ProjectV2 {
   region: string;
   clientName: string;
   notes?: string;
+  startDate?: string;
+  endDate?: string;
+  siteInspectionAvailableOn?: string;
+  siteStartedAt?: string;
+  createdAt?: string;
 }
 
 interface NextStepResult {
@@ -76,7 +83,20 @@ export default function ProjectV2Page() {
       });
       if (!res.ok) throw new Error(`Project fetch failed (${res.status})`);
       const data = await res.json();
-      setProject(data);
+      setProject({
+        id: data.id,
+        projectName: data.projectName,
+        status: data.status,
+        currentStage: data.currentStage,
+        region: data.region,
+        clientName: data.clientName,
+        notes: data.notes,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        siteInspectionAvailableOn: data.siteInspectionAvailableOn,
+        siteStartedAt: data.siteStartedAt,
+        createdAt: data.createdAt,
+      });
 
       // Detect role
       const isClient = data.userId === user?.id || data.clientId === user?.id;
@@ -206,6 +226,27 @@ export default function ProjectV2Page() {
               projectId={id}
               accessToken={accessToken || ""}
               currentUserRole={role === "CLIENT" ? "client" : "professional"}
+            />
+          )}
+          {activeTab === "timeline" && (
+            <ProjectCalendar
+              events={[
+                ...(project.startDate
+                  ? [{ date: project.startDate, label: "Proposed start date", type: "start" as const }]
+                  : []),
+                ...(project.endDate
+                  ? [{ date: project.endDate, label: "Project deadline", type: "deadline" as const }]
+                  : []),
+                ...(project.siteInspectionAvailableOn
+                  ? [{ date: project.siteInspectionAvailableOn, label: "Site inspection available", type: "inspection" as const }]
+                  : []),
+                ...(project.siteStartedAt
+                  ? [{ date: project.siteStartedAt, label: "Site work started", type: "milestone" as const }]
+                  : []),
+                ...(project.createdAt
+                  ? [{ date: project.createdAt, label: "Project created", type: "milestone" as const }]
+                  : []),
+              ]}
             />
           )}
           {activeTab === "files" && (

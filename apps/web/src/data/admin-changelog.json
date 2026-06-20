@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-20-c84271ef",
+    "date": "2026-06-20T22:08:35+08:00",
+    "title": "Add read-only Timeline tab with calendar event list to V2",
+    "summary": "Add read-only Timeline tab with calendar event list to V2",
+    "areas": [
+      "web"
+    ],
+    "commit": "c84271ef",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx",
+      "apps/web/src/components/project-calendar.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-e4ee6ce7",
     "date": "2026-06-20T22:01:47+08:00",
     "title": "V2: green primary button, fix toggle position, add tabs (Quotes/Chat/Files)",
