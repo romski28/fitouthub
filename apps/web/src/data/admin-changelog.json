@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-20-9016cb2c",
+    "date": "2026-06-20T11:14:04+08:00",
+    "title": "Add admin endpoint POST /api/admin/next-step-cache/backfill",
+    "summary": "Add admin endpoint POST /api/admin/next-step-cache/backfill",
+    "areas": [
+      "api"
+    ],
+    "commit": "9016cb2c",
+    "files": [
+      "apps/api/src/admin/next-step-cache.controller.ts",
+      "apps/api/src/app.module.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-41f0997c",
     "date": "2026-06-20T11:07:32+08:00",
     "title": "Add nextStepCache JSON column to Project + invalidation helpers",
