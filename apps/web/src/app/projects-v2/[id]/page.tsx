@@ -8,7 +8,7 @@ import { useNextStepModal } from "@/context/next-step-modal-context";
 import { resolveNextStepModalContent } from "@/lib/next-step-modal-content";
 import { API_BASE_URL } from "@/config/api";
 import { ProjectTabs } from "@/components/project-tabs";
-import { ProjectChat } from "@/components/project-chat";
+import ProjectChat from "@/components/project-chat";
 import { ProjectCalendar } from "@/components/project-calendar";
 import type { NextStepAction } from "@/lib/next-steps";
 

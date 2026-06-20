@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-cdb8bb90",
+    "date": "2026-06-20T22:21:23+08:00",
+    "title": "Fix: ProjectChat is default export, not named",
+    "summary": "Fix: ProjectChat is default export, not named",
+    "areas": [
+      "web"
+    ],
+    "commit": "cdb8bb90",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-c84271ef",
     "date": "2026-06-20T22:08:35+08:00",
     "title": "Add read-only Timeline tab with calendar event list to V2",
