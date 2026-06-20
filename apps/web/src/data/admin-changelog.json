@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-cbabc583",
+    "date": "2026-06-20T15:08:30+08:00",
+    "title": "Use console.log for push send logs (more visible in Render)",
+    "summary": "Use console.log for push send logs (more visible in Render)",
+    "areas": [
+      "api"
+    ],
+    "commit": "cbabc583",
+    "files": [
+      "apps/api/src/notifications/push-notification.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-2afb4add",
     "date": "2026-06-20T15:01:24+08:00",
     "title": "Add debug logging to push controller to trace user vs professional ID",

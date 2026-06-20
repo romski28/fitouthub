@@ -86,7 +86,7 @@ export class PushNotificationService {
     const subs = await this.prisma.pushSubscription.findMany({
       where: { userId, active: true },
     });
-    this.logger.log(`sendToUser: userId=${userId}, subs=${subs.length}, title="${payload.title}"`);
+    console.log(`[PUSH] sendToUser: userId=${userId}, subs=${subs.length}, title="${payload.title}"`);
     return this.sendToSubscriptions(subs, payload);
   }
 
@@ -95,7 +95,7 @@ export class PushNotificationService {
     const subs = await this.prisma.pushSubscription.findMany({
       where: { professionalId, active: true },
     });
-    this.logger.log(`sendToProfessional: professionalId=${professionalId}, subs=${subs.length}, title="${payload.title}"`);
+    console.log(`[PUSH] sendToProfessional: professionalId=${professionalId}, subs=${subs.length}, title="${payload.title}"`);
     return this.sendToSubscriptions(subs, payload);
   }
 
