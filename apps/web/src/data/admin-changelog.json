@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-47264d0c",
+    "date": "2026-06-20T21:28:24+08:00",
+    "title": "Scaffold V2 project page with status bar + next steps (parallel to V1)",
+    "summary": "Scaffold V2 project page with status bar + next steps (parallel to V1)",
+    "areas": [
+      "web"
+    ],
+    "commit": "47264d0c",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-ac4b54e3",
     "date": "2026-06-20T17:06:15+08:00",
     "title": "Fix: key nextStepCache by userId+role (cache was serving wrong user's data)",
