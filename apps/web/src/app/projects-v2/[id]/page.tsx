@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { PageVersionToggle } from "@/components/page-version-toggle";
 import { useAuth } from "@/context/auth-context";
+import { useNextStepModal } from "@/context/next-step-modal-context";
+import { resolveNextStepModalContent } from "@/lib/next-step-modal-content";
 import { API_BASE_URL } from "@/config/api";
 import type { NextStepAction } from "@/lib/next-steps";
 
@@ -35,6 +37,23 @@ export default function ProjectV2Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<"CLIENT" | "PROFESSIONAL" | null>(null);
+  const { openModal } = useNextStepModal();
+
+  // ── Handle next step click ─────────────────────────────────────
+  const handleStepClick = (step: NextStepAction) => {
+    if (!project || !user || !role) return;
+    const content = resolveNextStepModalContent(step.actionKey, step.modalContent);
+    openModal(
+      step.actionKey,
+      project.id,
+      `/projects-v2/${project.id}`,
+      user.id,
+      role,
+      content,
+      nextSteps?.stage || project.currentStage,
+      () => fetchProject(), // Refresh after completion
+    );
+  };
 
   // ── Fetch project + next steps ─────────────────────────────────
   const fetchProject = useCallback(async () => {
@@ -127,9 +146,13 @@ export default function ProjectV2Page() {
           {nextSteps.PRIMARY.map((step) => (
             <button
               key={step.actionKey}
+              onClick={() => handleStepClick(step)}
               className="mb-2 block w-full rounded-lg bg-slate-800 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-slate-700"
             >
               {step.actionLabel}
+              {step.description && (
+                <span className="mt-0.5 block text-xs font-normal text-white/70">{step.description}</span>
+              )}
             </button>
           ))}
 
@@ -139,6 +162,7 @@ export default function ProjectV2Page() {
               {nextSteps.ELECTIVE.map((step) => (
                 <button
                   key={step.actionKey}
+                  onClick={() => handleStepClick(step)}
                   className="block w-full rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-[#F5EEDE]"
                 >
                   {step.actionLabel}

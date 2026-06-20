@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-544b4c57",
+    "date": "2026-06-20T21:42:38+08:00",
+    "title": "Wire Next Steps buttons to modal dispatcher in V2 project page",
+    "summary": "Wire Next Steps buttons to modal dispatcher in V2 project page",
+    "areas": [
+      "web"
+    ],
+    "commit": "544b4c57",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-f14851b0",
     "date": "2026-06-20T21:32:06+08:00",
     "title": "Add page version toggle component (V2↔V1) with subtle fixed button",
