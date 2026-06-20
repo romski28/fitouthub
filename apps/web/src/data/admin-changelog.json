@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-20-f14851b0",
+    "date": "2026-06-20T21:32:06+08:00",
+    "title": "Add page version toggle component (V2↔V1) with subtle fixed button",
+    "summary": "Add page version toggle component (V2↔V1) with subtle fixed button",
+    "areas": [
+      "web"
+    ],
+    "commit": "f14851b0",
+    "files": [
+      "apps/web/src/app/projects-v2/[id]/page.tsx",
+      "apps/web/src/components/page-version-toggle.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-47264d0c",
     "date": "2026-06-20T21:28:24+08:00",
     "title": "Scaffold V2 project page with status bar + next steps (parallel to V1)",

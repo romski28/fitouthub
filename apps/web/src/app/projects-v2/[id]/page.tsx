@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { PageVersionToggle } from "@/components/page-version-toggle";
 import { useAuth } from "@/context/auth-context";
 import { API_BASE_URL } from "@/config/api";
 import type { NextStepAction } from "@/lib/next-steps";
@@ -161,11 +161,7 @@ export default function ProjectV2Page() {
       </div>
 
       {/* V2 badge */}
-      <div className="mt-8 text-center">
-        <Link href={`/projects/${id}`} className="text-xs text-slate-400 underline">
-          Switch to V1 page
-        </Link>
-      </div>
+      <PageVersionToggle mode="v2" />
     </div>
   );
 }
