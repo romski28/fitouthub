@@ -226,17 +226,23 @@ export class NextStepService {
       throw new Error('User does not have access to this project');
     }
 
-    // ── Cache check: if cached result is newer than project update, return it ──
+    // ── Cache check: keyed by userId+role (different users see different steps) ──
     const cache = project.nextStepCache as Record<string, any> | null;
-    if (cache?.computedAt && project.updatedAt && new Date(cache.computedAt) > new Date(project.updatedAt)) {
-      return cache.result as NextStepResult;
+    const cacheKey = `${userId}:${role}`;
+    if (cache?.[cacheKey]?.computedAt && project.updatedAt && new Date(cache[cacheKey].computedAt) > new Date(project.updatedAt)) {
+      return cache[cacheKey].result as NextStepResult;
     }
 
-    // Helper to save cache after successful computation
+    // Helper to save cache for this user+role
     const saveCache = (result: NextStepResult) => {
       void this.prisma.project.update({
         where: { id: projectId },
-        data: { nextStepCache: { result, computedAt: new Date().toISOString() } } as any,
+        data: {
+          nextStepCache: {
+            ...(project.nextStepCache as any || {}),
+            [cacheKey]: { result, computedAt: new Date().toISOString() },
+          },
+        } as any,
       }).catch(() => {});
     };
     const returnWithCache = (r: NextStepResult): NextStepResult => { saveCache(r); return r; };

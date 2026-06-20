@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-ac4b54e3",
+    "date": "2026-06-20T17:06:15+08:00",
+    "title": "Fix: key nextStepCache by userId+role (cache was serving wrong user's data)",
+    "summary": "Fix: key nextStepCache by userId+role (cache was serving wrong user's data)",
+    "areas": [
+      "api"
+    ],
+    "commit": "ac4b54e3",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-6259f7b2",
     "date": "2026-06-20T16:54:15+08:00",
     "title": "Add push notification to ProfessionalController.submitQuote (was bypassing ProjectsService)",
