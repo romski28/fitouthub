@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-20-6259f7b2",
+    "date": "2026-06-20T16:54:15+08:00",
+    "title": "Add push notification to ProfessionalController.submitQuote (was bypassing ProjectsService)",
+    "summary": "Add push notification to ProfessionalController.submitQuote (was bypassing ProjectsService)",
+    "areas": [
+      "api"
+    ],
+    "commit": "6259f7b2",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-cbabc583",
     "date": "2026-06-20T15:08:30+08:00",
     "title": "Use console.log for push send logs (more visible in Render)",

@@ -20,6 +20,7 @@ import { EmailService } from '../email/email.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
 import { UpdatesService } from '../updates/updates.service';
 import { ActivityLogService } from '../activity-log.service';
+import { PushNotificationService } from '../notifications/push-notification.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
@@ -39,6 +40,7 @@ export class ProfessionalController {
     private platformFeeService: PlatformFeeService,
     private updatesService: UpdatesService,
     private activityLogService: ActivityLogService,
+    private pushService: PushNotificationService,
   ) {}
 
   private readonly visibleProfessionalStatuses = [
@@ -1910,6 +1912,18 @@ export class ProfessionalController {
         });
       } catch (e) {
         console.error('[ProfessionalController.submitQuote] Failed to write activity log:', (e as any)?.message);
+      }
+
+      // Push notification to client
+      const clientUserId = updated.project?.user?.id;
+      if (clientUserId) {
+        const proName = updated.professional?.fullName || updated.professional?.businessName || 'A professional';
+        void this.pushService.sendToUser(clientUserId, {
+          title: 'New Quote Received',
+          body: `${proName} submitted a quote of HK$${Number(quoteAmount).toLocaleString()} for "${updated.project?.projectName}".`,
+          url: `/projects/${updated.project?.id}?tab=quotes`,
+          tag: `quote-submitted-${projectProfessionalId}`,
+        });
       }
 
       return {
