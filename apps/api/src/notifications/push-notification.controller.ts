@@ -13,7 +13,9 @@ interface SubscribeDto {
 export class PushNotificationController {
   private readonly logger = new Logger(PushNotificationController.name);
 
-  constructor(private readonly pushService: PushNotificationService) {}
+  constructor(private readonly pushService: PushNotificationService) {
+    console.log('[PushController] ✅ Registered — push endpoints available');
+  }
 
   // ── Subscribe (called from PWA after user logs in) ─────────────
   @Post('subscribe')

@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-06-20-6307f577",
+    "date": "2026-06-20T11:39:10+08:00",
+    "title": "Add startup confirmation logs for push service and controller",
+    "summary": "Add startup confirmation logs for push service and controller",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "6307f577",
+    "files": [
+      "AI_PROMPT_UPDATES_JUNE_2026.md",
+      "apps/api/src/notifications/push-notification.controller.ts",
+      "apps/api/src/notifications/push-notification.service.ts",
+      "apps/web/public/assets/images/ac-specialist-600.webp",
+      "apps/web/public/assets/images/builder-600.webp",
+      "apps/web/src/i18n/messages/zh-CN.ts",
+      "apps/web/src/i18n/messages/zh-HK.ts"
+    ]
+  },
+  {
     "id": "2026-06-20-45cac850",
     "date": "2026-06-20T11:27:23+08:00",
     "title": "Implement nextStepCache read/write in getNextSteps — cache hit skips all queries",

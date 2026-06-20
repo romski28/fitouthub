@@ -11,9 +11,10 @@ const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@fitouthub.com';
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  console.log('[PushNotificationService] VAPID keys configured — push is active');
+  console.log('[PushNotificationService] ✅ VAPID keys configured — push is ACTIVE');
 } else {
   console.warn('[PushNotificationService] ⚠️ VAPID keys NOT configured — push will be SKIPPED. Set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT env vars.');
+  console.warn('[PushNotificationService] Current values: VAPID_PUBLIC_KEY=' + (vapidPublicKey ? 'SET ✅' : 'MISSING ❌') + ', VAPID_PRIVATE_KEY=' + (vapidPrivateKey ? 'SET ✅' : 'MISSING ❌'));
 }
 
 export interface PushPayload {
