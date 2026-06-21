@@ -13,13 +13,8 @@ export interface WorkflowNextStep {
   waitingFor?: WaitingParty; // shown when requiresAction === false
 }
 
-export type CelebrationVariant =
-  | 'confetti'
-  | 'sparkle-ring'
-  | 'check-wave'
-  | 'prism-burst';
-
-type CelebrationMode = CelebrationVariant | 'random';
+export type CelebrationVariant = 'confetti';
+type CelebrationMode = CelebrationVariant;
 
 interface WorkflowCompletionModalProps {
   isOpen: boolean;
@@ -44,25 +39,6 @@ const waitingCopy: Record<WaitingParty, string> = {
   platform: 'MIMO has been notified and will process this shortly.',
 };
 
-const weightedCelebrations: Array<{ variant: CelebrationVariant; weight: number }> = [
-  { variant: 'confetti', weight: 35 },
-  { variant: 'sparkle-ring', weight: 25 },
-  { variant: 'check-wave', weight: 20 },
-  { variant: 'prism-burst', weight: 20 },
-];
-
-const pickWeightedCelebration = (): CelebrationVariant => {
-  const totalWeight = weightedCelebrations.reduce((sum, entry) => sum + entry.weight, 0);
-  let roll = Math.random() * totalWeight;
-
-  for (const entry of weightedCelebrations) {
-    roll -= entry.weight;
-    if (roll <= 0) return entry.variant;
-  }
-
-  return 'confetti';
-};
-
 export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = ({
   isOpen,
   completedLabel,
@@ -72,7 +48,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   additionalActionLabel,
   secondaryActionLabel = 'Close',
   showConfetti = false,
-  celebrationVariant = 'random',
+  celebrationVariant = 'confetti',
   showPrimaryActionOverride,
   highlightWaitingAsAmber = false,
   onNavigate,
@@ -80,41 +56,22 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
   onClose,
 }) => {
   const hasFiredConfettiRef = React.useRef(false);
-  const selectedCelebrationRef = React.useRef<CelebrationVariant | null>(null);
-  const [overlayCelebration, setOverlayCelebration] = React.useState<Exclude<CelebrationVariant, 'confetti'> | null>(null);
 
   React.useEffect(() => {
     if (!isOpen) {
       hasFiredConfettiRef.current = false;
-      selectedCelebrationRef.current = null;
-      setOverlayCelebration(null);
       return;
     }
 
     if (!showConfetti || hasFiredConfettiRef.current) return;
     hasFiredConfettiRef.current = true;
 
-    if (!selectedCelebrationRef.current) {
-      selectedCelebrationRef.current =
-        celebrationVariant === 'random' ? pickWeightedCelebration() : celebrationVariant;
-    }
-
-    const resolvedVariant = selectedCelebrationRef.current;
-
-    if (resolvedVariant !== 'confetti') {
-      setOverlayCelebration(resolvedVariant);
-      const timer = window.setTimeout(() => {
-        setOverlayCelebration(null);
-      }, resolvedVariant === 'check-wave' ? 850 : 1000);
-      return () => window.clearTimeout(timer);
-    }
-
     confetti({
       particleCount: 110,
       spread: 80,
       origin: { y: 0.65 },
     });
-  }, [isOpen, showConfetti, celebrationVariant]);
+  }, [isOpen, showConfetti]);
 
   if (!isOpen) return null;
 
@@ -130,58 +87,14 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
       aria-modal="true"
       aria-label={completedLabel}
     >
-      {overlayCelebration === 'sparkle-ring' && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-44 w-44">
-            <div className="absolute inset-0 rounded-full border-4 border-cyan-300/70 animate-ping" />
-            <div className="absolute inset-5 rounded-full border-2 border-emerald-300/70 animate-pulse" />
-            <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-yellow-200 text-lg">✦</div>
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 text-cyan-200 text-sm animate-pulse">✧</div>
-            <div className="absolute right-2 top-7 text-emerald-200 text-sm animate-pulse">✦</div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 text-cyan-100 text-sm animate-pulse">✧</div>
-            <div className="absolute bottom-2 right-7 text-emerald-200 text-sm animate-pulse">✦</div>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-cyan-200 text-sm animate-pulse">✧</div>
-            <div className="absolute bottom-2 left-7 text-emerald-200 text-sm animate-pulse">✦</div>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 text-cyan-100 text-sm animate-pulse">✧</div>
-            <div className="absolute left-2 top-7 text-emerald-200 text-sm animate-pulse">✦</div>
-          </div>
-        </div>
-      )}
-      {overlayCelebration === 'check-wave' && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-44 w-44">
-            <div className="absolute inset-0 rounded-full border-4 border-emerald-300/60 animate-ping" />
-            <div className="absolute inset-4 rounded-full border-2 border-emerald-200/80 animate-pulse" />
-            <div className="absolute inset-10 rounded-full border border-cyan-200/80 animate-pulse" />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/85 px-3 py-1 text-white text-xl shadow-lg">
-              ✓
-            </div>
-          </div>
-        </div>
-      )}
-      {overlayCelebration === 'prism-burst' && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-48 w-48">
-            <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-cyan-200/90 animate-pulse" />
-            <div className="absolute left-1/2 top-2 h-3 w-3 -translate-x-1/2 rotate-12 rounded-sm bg-emerald-200/80 animate-pulse" />
-            <div className="absolute right-6 top-8 h-3 w-3 rotate-45 rounded-sm bg-cyan-200/80 animate-pulse" />
-            <div className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 rotate-12 rounded-sm bg-teal-200/80 animate-pulse" />
-            <div className="absolute bottom-6 right-8 h-3 w-3 rotate-45 rounded-sm bg-emerald-200/80 animate-pulse" />
-            <div className="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-12 rounded-sm bg-cyan-200/80 animate-pulse" />
-            <div className="absolute bottom-6 left-8 h-3 w-3 rotate-45 rounded-sm bg-teal-200/80 animate-pulse" />
-            <div className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 rotate-12 rounded-sm bg-emerald-200/80 animate-pulse" />
-            <div className="absolute left-6 top-8 h-3 w-3 rotate-45 rounded-sm bg-cyan-200/80 animate-pulse" />
-          </div>
-        </div>
-      )}
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
         {/* Success header */}
-        <div className="flex items-start gap-3 rounded-t-2xl bg-emerald-900/40 border-b border-emerald-700/40 px-5 py-4">
+        <div className="flex items-start gap-3 rounded-t-2xl bg-emerald-100/80 border-b border-emerald-200 px-5 py-4">
           <span className="mt-0.5 text-xl">✅</span>
           <div>
-            <p className="text-base font-bold text-emerald-300">{completedLabel}</p>
+            <p className="text-base font-bold text-emerald-800">{completedLabel}</p>
             {completedDescription && (
-              <p className="mt-1 text-sm text-emerald-200/80">{completedDescription}</p>
+              <p className="mt-1 text-sm text-emerald-700">{completedDescription}</p>
             )}
           </div>
         </div>
@@ -189,20 +102,20 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
         {/* Next step body */}
         {nextStep && (
           <div className="px-5 py-4 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {canActNow ? 'Your next step' : 'What happens next'}
             </p>
 
             <div className={`rounded-lg border px-4 py-3 space-y-1 ${
               emphasizeAmber
                 ? 'border-amber-500/40 bg-amber-500/10'
-                : 'border-slate-600 bg-slate-800/60'
+                : 'border-[#D4C8A0] bg-white'
             }`}>
-              <p className={`text-sm font-semibold ${emphasizeAmber ? 'text-amber-200' : 'text-slate-200'}`}>
+              <p className={`text-sm font-semibold ${emphasizeAmber ? 'text-amber-700' : 'text-slate-700'}`}>
                 {nextStep.actionLabel}
               </p>
               {nextStep.description && (
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   {nextStep.description}
                 </p>
               )}
@@ -222,11 +135,11 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-[#D4C8A0]">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+            className="rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
           >
             {secondaryActionLabel}
           </button>
@@ -237,7 +150,7 @@ export const WorkflowCompletionModal: React.FC<WorkflowCompletionModalProps> = (
                 onAdditionalAction();
                 onClose();
               }}
-              className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-800 transition"
+              className="rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
             >
               {additionalActionLabel}
             </button>

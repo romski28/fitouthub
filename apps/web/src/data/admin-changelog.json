@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-2aa54649",
+    "date": "2026-06-21T23:34:05+08:00",
+    "title": "Simplify celebrations to confetti only + recolor modal to Mimo cream",
+    "summary": "Simplify celebrations to confetti only + recolor modal to Mimo cream",
+    "areas": [
+      "web"
+    ],
+    "commit": "2aa54649",
+    "files": [
+      "apps/web/src/components/workflow-completion-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-cf5cc401",
     "date": "2026-06-21T23:15:09+08:00",
     "title": "Fix stale cache: re-fetch next steps on tab visibility change",
