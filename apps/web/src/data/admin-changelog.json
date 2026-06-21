@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-a8b27f83",
+    "date": "2026-06-21T23:04:34+08:00",
+    "title": "Replace status with next-step stage + created date in ddd dd mmm format",
+    "summary": "Replace status with next-step stage + created date in ddd dd mmm format",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8b27f83",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-a6d0dad2",
     "date": "2026-06-21T22:54:20+08:00",
     "title": "Recolor Review Quotes modal: dark theme → Mimo cream",

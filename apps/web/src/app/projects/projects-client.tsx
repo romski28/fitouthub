@@ -866,7 +866,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         {isEmergencyProject ? `🚨 ${project.projectName}` : project.projectName}
                       </Link>
                       <p className={`text-sm ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
-                        {project.region}{project.status ? ` · ${project.status}` : ''}{quotedCount > 0 ? ` · ${quotedCount} quote${quotedCount !== 1 ? 's' : ''}` : ''}
+                        {project.region}{' · '}
+                        {(project as any).currentStage
+                          ? (project as any).currentStage.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                          : project.status}
+                        {project.createdAt ? ` · ${new Date(project.createdAt).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/,/g, '')}` : ''}
                       </p>
                     </div>
 
