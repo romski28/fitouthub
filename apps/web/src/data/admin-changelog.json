@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-82845d0f",
+    "date": "2026-06-21T23:37:19+08:00",
+    "title": "Simplify site visit request toast to standard toast.success",
+    "summary": "Simplify site visit request toast to standard toast.success",
+    "areas": [
+      "web"
+    ],
+    "commit": "82845d0f",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-2aa54649",
     "date": "2026-06-21T23:34:05+08:00",
     "title": "Simplify celebrations to confetti only + recolor modal to Mimo cream",

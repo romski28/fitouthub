@@ -800,17 +800,7 @@ export default function ProjectDetailPage() {
       }
 
       const data = await response.json();
-      await showWorkflowSuccessToast({
-        successMessage: 'Site visit request sent to the client.',
-        projectId: project.project.id,
-        token: accessToken,
-        fallbackGuidance: {
-          nextStepLabel: 'Wait for client response',
-          canActNow: false,
-          waitReason:
-            'No action needed now; the client needs to accept or decline the proposed visit.',
-        },
-      });
+      toast.success('Site visit request sent to the client.');
       if (data.visit) {
         setSiteVisits((prev) => [data.visit, ...prev]);
       }
