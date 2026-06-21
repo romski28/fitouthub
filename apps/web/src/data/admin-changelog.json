@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-72e6c60e",
+    "date": "2026-06-21T22:43:52+08:00",
+    "title": "Fix: add back elective buttons + clean leftover garbage code",
+    "summary": "Fix: add back elective buttons + clean leftover garbage code",
+    "areas": [
+      "web"
+    ],
+    "commit": "72e6c60e",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-5b7f916f",
     "date": "2026-06-21T22:42:14+08:00",
     "title": "Restyle client project cards: V2 hero format with title/region/status left, green button right",

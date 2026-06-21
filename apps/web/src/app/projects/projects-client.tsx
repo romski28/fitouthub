@@ -870,52 +870,40 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </p>
                     </div>
 
-                    <div className="ml-4 shrink-0 flex items-center gap-2">
+                    <div className="ml-4 shrink-0 flex flex-col items-end gap-1.5">
                       {nextStepsLoading && !nextStepMap[project.id] ? (
                         <div className="animate-pulse rounded-lg bg-slate-200 h-9 w-28" />
-                      ) : primaryAction ? (
-                        <NextStepModalButton
-                          action={primaryAction}
-                          projectId={project.id}
-                          variant="primary"
-                          onCompleted={() => refreshProjectNextStep(project.id)}
-                        />
                       ) : (
-                        <Link
-                          href={primaryActionHref}
-                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"
-                        >
-                          View project
-                        </Link>
+                        <>
+                          {primaryAction && (
+                            <NextStepModalButton
+                              action={primaryAction}
+                              projectId={project.id}
+                              variant="primary"
+                              onCompleted={() => refreshProjectNextStep(project.id)}
+                            />
+                          )}
+                          {electiveActions.map((action) => (
+                            <NextStepModalButton
+                              key={`${project.id}-${action.actionKey}-elective`}
+                              action={action}
+                              projectId={project.id}
+                              variant="secondary"
+                              onCompleted={() => refreshProjectNextStep(project.id)}
+                            />
+                          ))}
+                          {!primaryAction && electiveActions.length === 0 && (
+                            <Link
+                              href={primaryActionHref}
+                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"
+                            >
+                              View project
+                            </Link>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
-                                        ...action,
-                                        actionKey: 'WAIT_FOR_QUOTES',
-                                        actionLabel: 'Wait for quotes',
-                                        requiresAction: false,
-                                        modalContent: {
-                                          title: 'Waiting for quotes',
-                                          body: 'Professionals have been invited to submit pricing for your project. You\'ll be notified when quotes start coming in — no action needed right now.',
-                                          detailsBody: 'Once quotes are received, you\'ll be able to compare pricing, timelines, and choose the best professional for your project.',
-                                          primaryButtonLabel: 'Got it',
-                                          primaryActionType: 'close_modal',
-                                        },
-                                      }
-                                    : action;
-
-                                  return (
-                                    <NextStepModalButton
-                                      key={`${project.id}-${action.actionKey}`}
-                                      action={effectiveAction}
-                                      projectId={project.id}
-                                      variant={action.actionKey === 'SITE_STARTED' ? 'status' : 'primary'}
-                                      disabled={false}
-                                      onCompleted={() => refreshProjectNextStep(project.id)}
-                                    />
-                </div>
-            </div>
-                    </div>
                   );
                 })}
               </div>
