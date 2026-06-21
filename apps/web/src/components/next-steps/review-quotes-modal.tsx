@@ -272,28 +272,28 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
         <div className="relative h-[86dvh] min-h-[420px] max-h-[760px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-          <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
-            <div className="relative flex items-center justify-between border-b border-slate-700 px-5 pb-4 pt-5 shrink-0">
+          <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+            <div className="relative flex items-center justify-between border-b border-[#D4C8A0] px-5 pb-4 pt-5 shrink-0">
               {hasDetails && (
                 <button
                   type="button"
                   onClick={() => setShowDetails(true)}
-                  className="absolute right-5 top-5 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  className="absolute right-5 top-5 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
                   aria-label="Show details"
                 >
                   i
                 </button>
               )}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400 mb-0.5">Quotes received</p>
-                <h2 className="text-lg font-bold text-white leading-tight">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 mb-0.5">Quotes received</p>
+                <h2 className="text-lg font-bold text-slate-900 leading-tight">
                   {title}
                 </h2>
               </div>
             </div>
 
             <div className="shrink-0 px-5 pt-4">
-              <div className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
+              <div className="rounded-lg border border-[#D4C8A0] bg-white px-4 py-3 text-xs text-slate-700">
                 <button
                   type="button"
                   onClick={() => setTermsExpanded((prev) => !prev)}
@@ -301,8 +301,8 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   aria-expanded={termsExpanded}
                   aria-label="Toggle quotation terms"
                 >
-                  <p className="font-semibold text-blue-200">Quotation Terms</p>
-                  <span className="text-blue-200/90 text-[11px] font-semibold">
+                  <p className="font-semibold text-slate-800">Quotation Terms</p>
+                  <span className="text-slate-500 text-[11px] font-semibold">
                     {termsExpanded ? 'Hide' : 'Show'}
                   </span>
                 </button>
@@ -316,7 +316,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
 
             <div className="next-step-scrollbar overflow-y-auto flex-1 px-5 py-4 space-y-3">
               {fetching && (
-                <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
+                <div className="flex items-center justify-center py-10 text-slate-500 text-sm gap-2">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
@@ -326,13 +326,13 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               )}
 
               {fetchError && (
-                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {fetchError}
                 </div>
               )}
 
               {!fetching && !fetchError && professionals.length === 0 && (
-                <div className="py-10 text-center text-slate-400 text-sm">
+                <div className="py-10 text-center text-slate-500 text-sm">
                   No quotes submitted yet. Check back soon.
                 </div>
               )}
@@ -352,14 +352,14 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                 <div
                   key={pp.id}
                   className={`rounded-xl border p-4 transition-all ${
-                    isCheapest ? 'border-emerald-500/50 bg-emerald-950/30' : 'border-slate-700 bg-slate-800/50'
+                    isCheapest ? 'border-emerald-500 bg-emerald-50' : 'border-[#D4C8A0] bg-white'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-white truncate">{name}</p>
+                      <p className="font-semibold text-slate-900 truncate">{name}</p>
                       {(pp.quoteRequestedTrades?.length || pp.projectTradesSnapshot?.length) && (
-                        <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
+                        <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
                           {pp.quoteRequestedTrades?.length
                             ? `Quote for ${pp.quoteRequestedTrades.join(', ')}`
                             : 'Quote for full scope'}
@@ -394,7 +394,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                         className={`rounded-md border px-3 py-1.5 text-lg font-bold leading-none block ${
                           isCheapest
                             ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-200'
-                            : 'border-slate-500/50 bg-slate-900/70 text-slate-100'
+                            : 'border-[#D4C8A0] bg-white text-slate-700'
                         }`}
                       >
                         {formatHKD(pp.quoteAmount)}
@@ -405,19 +405,19 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   {(breakdownItems.length > 0 || startDate || duration || pp.quoteNotes) && (
                     <div className="mb-3 space-y-1">
                       {breakdownItems.length > 0 && (
-                        <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2">
-                          <div className="grid gap-1 text-xs text-slate-300 sm:grid-cols-3">
+                        <div className="rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-2">
+                          <div className="grid gap-1 text-xs text-slate-600 sm:grid-cols-3">
                             {breakdownItems.map((item) => (
                               <div key={`${pp.id}-${item.code}`} className="flex items-center justify-between gap-2 sm:block">
                                 <span className="text-slate-500">{item.label}</span>
-                                <span className="font-semibold text-slate-100">{formatHKD(item.amount)}</span>
+                                <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
                       {(startDate || duration) && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-300">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                           {startDate && (
                             <span>
                               <span className="text-slate-500">Start </span>
@@ -445,7 +445,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                     className={`w-full rounded-lg py-2.5 text-sm font-semibold transition-all ${
                       isCheapest
                         ? 'bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-50'
-                        : 'bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-50'
+                        : 'border border-[#D4C8A0] hover:bg-[#F5EEDE] text-slate-600 disabled:opacity-50'
                     }`}
                   >
                     {isAccepting ? (
@@ -471,22 +471,22 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               )}
             </div>
 
-            <div className="px-5 py-4 border-t border-slate-700 shrink-0">
+            <div className="px-5 py-4 border-t border-[#D4C8A0] shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full rounded-lg py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 transition-colors"
+                className="w-full rounded-lg py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-[#F5EEDE] transition-colors"
               >
                 Close
               </button>
             </div>
           </div>
 
-          <div className="absolute inset-0 flex flex-col overflow-hidden rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+          <div className="absolute inset-0 flex flex-col overflow-hidden rounded-t-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
             <button
               type="button"
               onClick={() => setShowDetails(false)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
               aria-label="Hide details"
             >
               x
@@ -495,14 +495,14 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
             <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
               <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
-              <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+              <p className="mt-5 text-sm leading-relaxed text-slate-700">{detailsBody}</p>
             </div>
 
-            <div className="mt-auto border-t border-slate-700 px-5 py-4">
+            <div className="mt-auto border-t border-[#D4C8A0] px-5 py-4">
               <button
                 type="button"
                 onClick={() => setShowDetails(false)}
-                className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-base font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
               >
                 Back to quotes
               </button>

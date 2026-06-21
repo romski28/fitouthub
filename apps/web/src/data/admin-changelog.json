@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-a6d0dad2",
+    "date": "2026-06-21T22:54:20+08:00",
+    "title": "Recolor Review Quotes modal: dark theme → Mimo cream",
+    "summary": "Recolor Review Quotes modal: dark theme → Mimo cream",
+    "areas": [
+      "web"
+    ],
+    "commit": "a6d0dad2",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-028ab08c",
     "date": "2026-06-21T22:46:30+08:00",
     "title": "Fix missing closing div on card wrapper",
