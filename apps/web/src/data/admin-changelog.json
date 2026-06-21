@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-21-e8c42e2c",
+    "date": "2026-06-21T19:23:16+08:00",
+    "title": "Update localStorage cache immediately when a next step is completed",
+    "summary": "Update localStorage cache immediately when a next step is completed",
+    "areas": [
+      "web"
+    ],
+    "commit": "e8c42e2c",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-d64f4dee",
     "date": "2026-06-21T11:51:58+08:00",
     "title": "Add localStorage optimistic cache to client projects list",

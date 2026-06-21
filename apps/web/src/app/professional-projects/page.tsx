@@ -382,7 +382,14 @@ export default function ProfessionalProjectsPage() {
         cacheScope: nextStepCacheScope,
         forceRefresh: true,
       });
-      setNextStepMap((prev) => ({ ...prev, [projectId]: refreshed }));
+      setNextStepMap((prev) => {
+        const updated = { ...prev, [projectId]: refreshed };
+        // Update localStorage cache immediately
+        try {
+          localStorage.setItem(`ns_list_${nextStepCacheScope}`, JSON.stringify(updated));
+        } catch { /* ignore quota */ }
+        return updated;
+      });
     } finally {
       setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));
     }
