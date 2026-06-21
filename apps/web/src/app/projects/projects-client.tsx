@@ -828,14 +828,14 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';
               const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
                   return (
-                    <div key={`dash-${project.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
+                    <div key={`dash-${project.id}`} className={`relative rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] px-5 py-3 shadow-sm transition ${
                       quoteOverdue
-                        ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] emergency-card-throb shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
+                        ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)]'
                         : isStopStatus
-                          ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
+                          ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)]'
                         : isEmergencyProject
-                          ? 'border-[rgba(220,20,60,0.8)] bg-[var(--mimo-project-paper)] emergency-card-throb hover:bg-[var(--mimo-project-paper)]'
-                          : `${baseBorder} bg-[var(--mimo-project-paper)] hover:bg-[var(--mimo-project-paper)]`
+                          ? 'border-[rgba(220,20,60,0.8)] emergency-card-throb'
+                          : ''
                     }`}>
                   {unreadCount > 0 && (
                     <button
@@ -856,78 +856,40 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </button>
                   )}
-                  <div className="grid gap-3">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
                       <Link
                         href={`/projects/${project.id}?tab=overview`}
-                        className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
-                          quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
-                        }`}
+                        className={`truncate text-lg font-bold leading-tight underline-offset-2 hover:underline block ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}
                         title="Open project details"
                       >
                         {isEmergencyProject ? `🚨 ${project.projectName}` : project.projectName}
                       </Link>
-                      <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                        {quoteOverdue && (
-                          <span className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 shadow-[0_0_10px_rgba(255,255,255,0.08)]">
-                            Quote overdue blocker
-                          </span>
-                        )}
-                        {/* Assist badge hidden for now */}
-                        <ProjectSentimentBadge
-                          projectId={project.id}
-                          storageScope="client"
-                          iconOnly
-                          size="lg"
-                        />
-                      </div>
+                      <p className={`text-sm ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
+                        {project.region}{project.status ? ` · ${project.status}` : ''}{quotedCount > 0 ? ` · ${quotedCount} quote${quotedCount !== 1 ? 's' : ''}` : ''}
+                      </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
-                      <div className="col-span-2 md:col-span-1">
-                        <div className={`flex items-center gap-2 text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
-                          <span>{project.region}</span>
-                          {quotedCount > 0 && (
-                            <>
-                              <span>•</span>
-                              <span className="text-emerald-300 font-medium">{quotedCount} quote{quotedCount !== 1 ? 's' : ''}</span>
-                            </>
-                          )}
-                        </div>
-                        {quoteOverdue ? (
-                          <p className="mt-2 text-xs text-rose-200">
-                            No quote was submitted within the allowed window. Re-invite professionals or request assistance.
-                          </p>
-                        ) : primaryAction?.description ? (
-                          <p className={`mt-2 text-xs ${isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>{primaryAction.description}</p>
-                        ) : null}
-                      </div>
 
-                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        {nextStepsLoading && !nextStepMap[project.id] ? (
-                          <div className="animate-pulse rounded-lg bg-white/20 h-9 w-28" />
-                        ) : (
-                          <>
-                            {primaryActions.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {primaryActions.map((action) => {
-                                  const shouldWaitForQuotes =
-                                    quotedCount === 0 && /review\s+quotes?/i.test(action.actionLabel || '');
-
-                                  if (action.actionKey === 'CONFIRM_SITE_VISIT') {
-                                    return (
-                                      <Link
-                                        key={`${project.id}-${action.actionKey}`}
-                                        href={`/projects/${project.id}?tab=site-access`}
-                                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                                      >
-                                        {action.actionLabel}
-                                      </Link>
-                                    );
-                                  }
-
-                                  // When waiting for quotes, show info modal instead of disabled button
-                                  const effectiveAction = shouldWaitForQuotes
-                                    ? {
+                    <div className="ml-4 shrink-0 flex items-center gap-2">
+                      {nextStepsLoading && !nextStepMap[project.id] ? (
+                        <div className="animate-pulse rounded-lg bg-slate-200 h-9 w-28" />
+                      ) : primaryAction ? (
+                        <NextStepModalButton
+                          action={primaryAction}
+                          projectId={project.id}
+                          variant="primary"
+                          onCompleted={() => refreshProjectNextStep(project.id)}
+                        />
+                      ) : (
+                        <Link
+                          href={primaryActionHref}
+                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"
+                        >
+                          View project
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                                         ...action,
                                         actionKey: 'WAIT_FOR_QUOTES',
                                         actionLabel: 'Wait for quotes',
@@ -951,31 +913,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                                       disabled={false}
                                       onCompleted={() => refreshProjectNextStep(project.id)}
                                     />
-                                  );
-                                })}
-                                {electiveActions.map((action) => (
-                                  <NextStepModalButton
-                                    key={`${project.id}-${action.actionKey}-elective`}
-                                    action={action}
-                                    projectId={project.id}
-                                    variant="secondary"
-                                    onCompleted={() => refreshProjectNextStep(project.id)}
-                                  />
-                                ))}
-                              </div>
-                            ) : (
-                              <Link
-                                href={primaryActionHref}
-                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                              >
-                                Open project
-                              </Link>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                </div>
+            </div>
                     </div>
                   );
                 })}
