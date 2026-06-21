@@ -54,18 +54,18 @@ export function ProjectCalendar({ events }: ProjectCalendarProps) {
         return (
           <div
             key={i}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
-              isPast ? "opacity-50" : badge.bg
+            className={`flex items-center gap-3 rounded-lg bg-[#F5EEDE] px-3 py-2.5 ${
+              isPast ? "opacity-50" : ""
             }`}
           >
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${badge.dot}`} />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${badge.dot}`} />
+            <span className="w-24 shrink-0 text-xs text-slate-500">
+              {formatDate(evt.date)}
+            </span>
             <span className="flex-1 text-sm font-medium text-slate-800">
               {evt.label}
             </span>
-            <span className="text-xs text-slate-500">
-              {formatDate(evt.date)}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide text-slate-400">
+            <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400">
               {badge.label}
             </span>
           </div>

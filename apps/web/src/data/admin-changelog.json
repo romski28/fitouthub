@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-1b75f9ee",
+    "date": "2026-06-21T11:27:06+08:00",
+    "title": "Timeline: uniform Mimo paper background, date left, label+type right",
+    "summary": "Timeline: uniform Mimo paper background, date left, label+type right",
+    "areas": [
+      "web"
+    ],
+    "commit": "1b75f9ee",
+    "files": [
+      "apps/web/src/components/project-calendar.tsx"
+    ]
+  },
+  {
     "id": "2026-06-20-cdb8bb90",
     "date": "2026-06-20T22:21:23+08:00",
     "title": "Fix: ProjectChat is default export, not named",
