@@ -318,6 +318,19 @@ export default function ProfessionalProjectsPage() {
     const loadNextSteps = async () => {
       setNextStepsLoading(true);
 
+      // Optimistic: try localStorage cache first for instant display
+      const cacheKey = `ns_list_${nextStepCacheScope}`;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as Record<string, NextStepAction[]>;
+          if (Object.keys(parsed).length > 0) {
+            setNextStepMap(parsed);
+            setNextStepsLoading(false); // don't show skeleton if we have cache
+          }
+        }
+      } catch { /* ignore corrupted cache */ }
+
       const fetches = projectIds.map((projectId) =>
         fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope })
           .then((actions) => ({ id: projectId, actions }))
@@ -334,6 +347,11 @@ export default function ProfessionalProjectsPage() {
         }
       });
       setNextStepMap((prev) => ({ ...prev, ...batch }));
+      // Save to localStorage for next visit
+      try {
+        const merged = { ...nextStepMap, ...batch };
+        localStorage.setItem(cacheKey, JSON.stringify(merged));
+      } catch { /* ignore quota */ }
       setNextStepsLoading(false);
     };
 

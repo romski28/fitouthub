@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-df56583e",
+    "date": "2026-06-21T11:43:39+08:00",
+    "title": "Optimistic UI: localStorage cache for instant next-step display on professional list",
+    "summary": "Optimistic UI: localStorage cache for instant next-step display on professional list",
+    "areas": [
+      "web"
+    ],
+    "commit": "df56583e",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-1b75f9ee",
     "date": "2026-06-21T11:27:06+08:00",
     "title": "Timeline: uniform Mimo paper background, date left, label+type right",
