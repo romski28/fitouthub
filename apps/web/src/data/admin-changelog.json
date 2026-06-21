@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-e4b73ae1",
+    "date": "2026-06-21T23:49:47+08:00",
+    "title": "Fix: import NotificationModule into ProfessionalModule for PushNotificationService",
+    "summary": "Fix: import NotificationModule into ProfessionalModule for PushNotificationService",
+    "areas": [
+      "api"
+    ],
+    "commit": "e4b73ae1",
+    "files": [
+      "apps/api/src/professional/professional.module.ts"
+    ]
+  },
+  {
     "id": "2026-06-21-652f3b47",
     "date": "2026-06-21T23:42:44+08:00",
     "title": "Invalidate nextStepCache when quote is submitted (Project.updatedAt not auto-touched)",
