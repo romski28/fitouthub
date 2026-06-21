@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-27d4bbdd",
+    "date": "2026-06-21T23:56:30+08:00",
+    "title": "Add synthetic REVIEW_QUOTES step for CLIENT when professionals have quoted",
+    "summary": "Add synthetic REVIEW_QUOTES step for CLIENT when professionals have quoted",
+    "areas": [
+      "api"
+    ],
+    "commit": "27d4bbdd",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-21-e4b73ae1",
     "date": "2026-06-21T23:49:47+08:00",
     "title": "Fix: import NotificationModule into ProfessionalModule for PushNotificationService",
