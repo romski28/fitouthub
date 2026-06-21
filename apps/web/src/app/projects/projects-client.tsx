@@ -714,8 +714,17 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
     loadNextSteps();
 
+    // Re-fetch when tab becomes visible (user navigates back from detail page)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !cancelled) {
+        loadNextSteps();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [isLoggedIn, accessToken, itemProjectIdsKey, nextStepCacheScope]);
 

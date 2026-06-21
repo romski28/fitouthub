@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-21-cf5cc401",
+    "date": "2026-06-21T23:15:09+08:00",
+    "title": "Fix stale cache: re-fetch next steps on tab visibility change",
+    "summary": "Fix stale cache: re-fetch next steps on tab visibility change",
+    "areas": [
+      "web"
+    ],
+    "commit": "cf5cc401",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-a8b27f83",
     "date": "2026-06-21T23:04:34+08:00",
     "title": "Replace status with next-step stage + created date in ddd dd mmm format",
