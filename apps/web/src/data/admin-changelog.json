@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-99a01498",
+    "date": "2026-06-21T22:11:58+08:00",
+    "title": "Make safety/emergency panels mutually exclusive toggle",
+    "summary": "Make safety/emergency panels mutually exclusive toggle",
+    "areas": [
+      "web"
+    ],
+    "commit": "99a01498",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-82313980",
     "date": "2026-06-21T22:06:26+08:00",
     "title": "Fix wizard safety layout: always show safety panel, emergency toggle adds callout with large emoji",

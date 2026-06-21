@@ -1252,9 +1252,9 @@ export default function CreateProjectWizardPage() {
                           <span className="text-sm font-medium text-slate-900 sm:text-base">This is an emergency</span>
                         </label>
 
-                        {/* Safety advisory — always visible when there are notes */}
-                        {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
-                          <div className={`rounded-lg border p-4 space-y-3 text-sm ${isEmergency ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-sky-300 bg-sky-50 text-sky-900'}`}>
+                        {/* Safety advisory — shown when emergency is OFF */}
+                        {isEmergency !== true && (aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
+                          <div className="rounded-lg border border-sky-300 bg-sky-50 p-4 space-y-3 text-sm text-sky-900">
                             <p className="font-semibold text-sky-950">Help us help you — stay safe</p>
                             {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
                               <p>
@@ -1277,7 +1277,7 @@ export default function CreateProjectWizardPage() {
                           </div>
                         )}
 
-                        {/* Emergency callout notice — toggled by checkbox */}
+                        {/* Emergency callout — shown when emergency is ON */}
                         {isEmergency === true && (
                           <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm text-amber-900">
                             <p className="font-semibold text-amber-950">
