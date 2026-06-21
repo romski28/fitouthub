@@ -873,12 +873,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                             Quote overdue blocker
                           </span>
                         )}
-                        <img
-                          src={assistInfo?.hasAssist ? '/FOHAssistYes.png' : '/FOHAssistNo.png'}
-                          alt={assistInfo?.hasAssist ? t('assistRequestedAlt') : t('noAssistAlt')}
-                          title={assistInfo?.hasAssist ? t('assistRequestedTitle') : t('noAssistTitle')}
-                          className={`h-6 w-6 object-contain ${assistInfo?.hasAssist ? '' : 'opacity-70'}`}
-                        />
+                        {/* Assist badge hidden for now */}
                         <ProjectSentimentBadge
                           projectId={project.id}
                           storageScope="client"
