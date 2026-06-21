@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-d64f4dee",
+    "date": "2026-06-21T11:51:58+08:00",
+    "title": "Add localStorage optimistic cache to client projects list",
+    "summary": "Add localStorage optimistic cache to client projects list",
+    "areas": [
+      "web"
+    ],
+    "commit": "d64f4dee",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-df56583e",
     "date": "2026-06-21T11:43:39+08:00",
     "title": "Optimistic UI: localStorage cache for instant next-step display on professional list",
