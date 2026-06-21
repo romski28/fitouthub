@@ -1926,6 +1926,14 @@ export class ProfessionalController {
         });
       }
 
+      // Invalidate next-step cache so the client sees updated actions
+      try {
+        await this.prisma.project.update({
+          where: { id: updated.project?.id },
+          data: { nextStepCache: null as any },
+        });
+      } catch { /* non-critical */ }
+
       return {
         success: true,
         projectProfessional: updated,

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-652f3b47",
+    "date": "2026-06-21T23:42:44+08:00",
+    "title": "Invalidate nextStepCache when quote is submitted (Project.updatedAt not auto-touched)",
+    "summary": "Invalidate nextStepCache when quote is submitted (Project.updatedAt not auto-touched)",
+    "areas": [
+      "api"
+    ],
+    "commit": "652f3b47",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-21-82845d0f",
     "date": "2026-06-21T23:37:19+08:00",
     "title": "Simplify site visit request toast to standard toast.success",
