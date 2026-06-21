@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-530c137d",
+    "date": "2026-06-21T19:34:00+08:00",
+    "title": "Wizard: add safety heading + toggle panels with emergency checkbox",
+    "summary": "Wizard: add safety heading + toggle panels with emergency checkbox",
+    "areas": [
+      "web"
+    ],
+    "commit": "530c137d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-e8c42e2c",
     "date": "2026-06-21T19:23:16+08:00",
     "title": "Update localStorage cache immediately when a next step is completed",
