@@ -1252,46 +1252,16 @@ export default function CreateProjectWizardPage() {
                           <span className="text-sm font-medium text-slate-900 sm:text-base">This is an emergency</span>
                         </label>
 
-                        {isEmergency === true && (
-                          <>
-                            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm text-amber-900">
-                              <p className="font-semibold text-amber-950">⚠️ Emergency callout notice</p>
-                              <p>Emergency callouts normally carry a specific callout charge, particularly if outside normal working hours — from <strong>HK$500</strong> up.</p>
-                              <p>Works undertaken outside of standard working hours will normally be charged at <strong>1.5 or 2 times</strong> normal rate or more.</p>
-                              <p>Please be sure that this is an emergency that warrants the extra money before you continue.</p>
-                            </div>
-
-                            {/* AI Safety & Risk Advisory — toggled with emergency */}
-                            {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
-                              <div className="rounded-lg border border-sky-300 bg-sky-50 p-4 space-y-3 text-sm text-sky-900">
-                                <p className="font-semibold text-sky-950">🛡️ Help us help you — stay safe</p>
-                                {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
-                                  <p>
-                                    ⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected
-                                    {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) ? ' — please review the notes below.' : ' — proceed with caution.'}
-                                  </p>
-                                )}
-                                {aiSafetyNotes.map((note, i) => (
-                                  <p key={`safety-${i}`} className="flex gap-2">
-                                    <span className="shrink-0 mt-0.5">🛡️</span>
-                                    <span>{note}</span>
-                                  </p>
-                                ))}
-                                {aiRiskNotes.map((note, i) => (
-                                  <p key={`risk-${i}`} className="flex gap-2">
-                                    <span className="shrink-0 mt-0.5">⚠️</span>
-                                    <span>{note}</span>
-                                  </p>
-                                ))}
-                              </div>
+                        {/* Safety advisory — always visible when there are notes */}
+                        {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
+                          <div className={`rounded-lg border p-4 space-y-3 text-sm ${isEmergency ? 'border-sky-300 bg-sky-50 text-sky-900' : 'border-sky-300 bg-sky-50 text-sky-900'}`}>
+                            <p className="font-semibold text-sky-950">Help us help you — stay safe</p>
+                            {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
+                              <p>
+                                ⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected
+                                {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) ? ' — please review the notes below.' : ' — proceed with caution.'}
+                              </p>
                             )}
-                          </>
-                        )}
-
-                        {/* Show safety panel even when emergency is NOT checked, if risk level is critical */}
-                        {isEmergency !== true && aiRiskLevel === 'critical' && (aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) && (
-                          <div className="rounded-lg border border-red-300 bg-red-50 p-4 space-y-3 text-sm text-red-900">
-                            <p className="font-semibold text-red-950">🛡️ Help us help you — critical safety notice</p>
                             {aiSafetyNotes.map((note, i) => (
                               <p key={`safety-${i}`} className="flex gap-2">
                                 <span className="shrink-0 mt-0.5">🛡️</span>
@@ -1304,6 +1274,18 @@ export default function CreateProjectWizardPage() {
                                 <span>{note}</span>
                               </p>
                             ))}
+                          </div>
+                        )}
+
+                        {/* Emergency callout notice — toggled by checkbox */}
+                        {isEmergency === true && (
+                          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm text-amber-900">
+                            <p className="font-semibold text-amber-950">
+                              <span className="text-xl mr-1">🚨</span> Emergency callout notice
+                            </p>
+                            <p>Emergency callouts normally carry a specific callout charge, particularly if outside normal working hours — from <strong>HK$500</strong> up.</p>
+                            <p>Works undertaken outside of standard working hours will normally be charged at <strong>1.5 or 2 times</strong> normal rate or more.</p>
+                            <p>Please be sure that this is an emergency that warrants the extra money before you continue.</p>
                           </div>
                         )}
                       </div>

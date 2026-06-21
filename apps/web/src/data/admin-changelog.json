@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-82313980",
+    "date": "2026-06-21T22:06:26+08:00",
+    "title": "Fix wizard safety layout: always show safety panel, emergency toggle adds callout with large emoji",
+    "summary": "Fix wizard safety layout: always show safety panel, emergency toggle adds callout with large emoji",
+    "areas": [
+      "web"
+    ],
+    "commit": "82313980",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-530c137d",
     "date": "2026-06-21T19:34:00+08:00",
     "title": "Wizard: add safety heading + toggle panels with emergency checkbox",
