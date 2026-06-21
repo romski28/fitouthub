@@ -904,6 +904,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       )}
                     </div>
                   </div>
+                  </div>
                   );
                 })}
               </div>

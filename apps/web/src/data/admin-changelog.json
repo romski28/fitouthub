@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-21-028ab08c",
+    "date": "2026-06-21T22:46:30+08:00",
+    "title": "Fix missing closing div on card wrapper",
+    "summary": "Fix missing closing div on card wrapper",
+    "areas": [
+      "web"
+    ],
+    "commit": "028ab08c",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-72e6c60e",
     "date": "2026-06-21T22:43:52+08:00",
     "title": "Fix: add back elective buttons + clean leftover garbage code",
