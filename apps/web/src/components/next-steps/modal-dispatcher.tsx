@@ -20,6 +20,7 @@ import { StartOnSiteModal } from './start-on-site-modal';
 import { ProgressReportModal } from './progress-report-modal';
 import { RequestSiteAccessModal } from './request-site-access-modal';
 import { ClientSiteAccessModal } from './client-site-access-modal';
+import { InspectSiteModal } from './inspect-site-modal';
 import { BookMimoSurveyModal } from './book-mimo-survey-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
@@ -314,6 +315,10 @@ export function ModalDispatcher({
     return <ClientSiteAccessModal isOpen={state.isOpen} onClose={closeModal} />;
   }
 
+  if (modalType === 'inspect-site') {
+    return <InspectSiteModal isOpen={state.isOpen} onClose={closeModal} />;
+  }
+
   return null;
 }
 
@@ -321,7 +326,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -388,6 +393,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (actionKey === 'REQUEST_SITE_ACCESS') {
     return 'request-site-access';
+  }
+
+  if (actionKey === 'INSPECT_SITE') {
+    return 'inspect-site';
   }
 
   if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {

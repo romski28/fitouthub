@@ -7048,6 +7048,15 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
+    // Grant address visibility to this professional
+    await this.prisma.projectProfessional.update({
+      where: { id: request.projectProfessionalId },
+      data: {
+        addressVisible: true,
+        addressVisibleAt: new Date(),
+      },
+    });
+
     const siteAccessApprovalMessage =
       approvedStatus === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
@@ -8405,6 +8414,15 @@ Please review the project details and respond with your quote or decline the inv
         },
       });
 
+      // Grant address visibility to awarded professional
+      await tx.projectProfessional.update({
+        where: { id: awardedPP.id },
+        data: {
+          addressVisible: true,
+          addressVisibleAt: new Date(),
+        },
+      });
+
       // Mark project as awarded for downstream views
       await tx.project.update({
         where: { id: projectId },
@@ -8821,7 +8839,11 @@ Please review the project details and respond with your quote or decline the inv
       try {
         await this.prisma.projectProfessional.update({
           where: { id: pp.id },
-          data: { status: 'declined' },
+          data: {
+            status: 'declined',
+            addressVisible: false,
+            addressVisibleAt: null,
+          },
         });
 
         // Cancel any pending site access requests from non-awarded professionals

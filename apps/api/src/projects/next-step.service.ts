@@ -214,6 +214,9 @@ export class NextStepService {
         id: true,
         status: true,
         professionalId: true,
+        addressVisible: true,
+        addressVisibleAt: true,
+        siteVisitedAt: true,
         professional: {
           select: {
             userId: true,
@@ -408,6 +411,28 @@ export class NextStepService {
           } as any);
         }
       }
+
+      // If address is now visible (client approved site access), surface INSPECT_SITE as primary
+      if (
+        isProfessional.addressVisible === true &&
+        !isProfessional.siteVisitedAt
+      ) {
+        const visitDate = (isProfessional as any).addressVisibleAt;
+        const dateLabel = visitDate
+          ? new Date(visitDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+          : 'site';
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'INSPECT_SITE',
+            `Inspect site on ${dateLabel}`,
+            true,
+            role,
+            effectiveStage,
+            'Address access granted. View details, message the client, and record your visit.',
+          ),
+          ...availableConfigSteps,
+        ];
+      }
     }
 
     if (role === 'CLIENT') {
@@ -596,6 +621,33 @@ export class NextStepService {
                 'Submit your drafted agreement so the client can review and sign.',
               ),
             ];
+
+        // If address is visible, add INSPECT_SITE as elective
+        if (
+          isProfessional?.addressVisible === true &&
+          !isProfessional?.siteVisitedAt
+        ) {
+          const visitDate = (isProfessional as any).addressVisibleAt;
+          const dateLabel = visitDate
+            ? new Date(visitDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+            : 'site';
+          availableConfigSteps = [
+            ...availableConfigSteps,
+            {
+              ...createSyntheticPrimaryStep(
+                'INSPECT_SITE',
+                `Inspect site on ${dateLabel}`,
+                false,
+                role,
+                effectiveStage,
+                'Address access granted. View details, message the client, and record your visit.',
+              ),
+              isPrimary: false,
+              isElective: true,
+              displayOrder: 2,
+            } as any,
+          ];
+        }
       }
 
       if (role === 'CLIENT' && !clientSigned) {

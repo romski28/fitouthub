@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-06-22-c42c3bc4",
+    "date": "2026-06-22T21:23:04+08:00",
+    "title": "Phase 1: addressVisible for professionals — schema, manual SQL, INSPECT_SITE next step, InspectSiteModal, dispatcher wiring",
+    "summary": "Phase 1: addressVisible for professionals — schema, manual SQL, INSPECT_SITE next step, InspectSiteModal, dispatcher wiring",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "c42c3bc4",
+    "files": [
+      "MANUAL_SQL_ADD_ADDRESS_VISIBLE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-5b516286",
     "date": "2026-06-22T20:32:26+08:00",
     "title": "Modal title shows inspection date as ddd dd mmm; request cards show pro name + time on one line",

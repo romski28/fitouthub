@@ -619,6 +619,8 @@ model ProjectProfessional {
   visitApprovedButNotDone Boolean                @default(false)
   siteVisitedAt           DateTime?
   visitNotes              String?
+  addressVisible          Boolean                @default(false)
+  addressVisibleAt        DateTime?
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
   professional            Professional           @relation(fields: [professionalId], references: [id], onDelete: Cascade)
