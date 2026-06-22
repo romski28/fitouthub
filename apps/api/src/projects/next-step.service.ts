@@ -381,10 +381,8 @@ export class NextStepService {
       isProfessional &&
       project.status !== 'awarded'
     ) {
-      // Remove DB-seeded steps we'll replace with synthetic equivalents
-      availableConfigSteps = availableConfigSteps.filter(
-        (s) => !['REQUEST_SITE_ACCESS', 'INSPECT_SITE', 'SUBMIT_QUOTE', 'REPLY_TO_INVITATION'].includes(s.actionKey),
-      );
+      // Clear all DB-seeded steps — we'll rebuild with synthetic equivalents
+      availableConfigSteps = [];
 
       const inspectionDate = (project as any).siteInspectionAvailableOn;
 

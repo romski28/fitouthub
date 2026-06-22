@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-11643732",
+    "date": "2026-06-22T23:04:48+08:00",
+    "title": "Clear all DB-seeded steps in bidding block to prevent stale buttons leaking",
+    "summary": "Clear all DB-seeded steps in bidding block to prevent stale buttons leaking",
+    "areas": [
+      "api"
+    ],
+    "commit": "11643732",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-03b8911c",
     "date": "2026-06-22T22:55:21+08:00",
     "title": "Add skipped to SiteAccessRequestStatus enum + manual SQL",
