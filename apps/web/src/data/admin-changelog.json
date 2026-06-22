@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-aaa2df8c",
+    "date": "2026-06-22T23:17:24+08:00",
+    "title": "Auto-accept professional invitation when booking site visit or client approves access",
+    "summary": "Auto-accept professional invitation when booking site visit or client approves access",
+    "areas": [
+      "api"
+    ],
+    "commit": "aaa2df8c",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-11643732",
     "date": "2026-06-22T23:04:48+08:00",
     "title": "Clear all DB-seeded steps in bidding block to prevent stale buttons leaking",

@@ -6697,6 +6697,14 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // Booking a site visit counts as tentative acceptance
+    if (projectProfessional.status === 'pending') {
+      await this.prisma.projectProfessional.update({
+        where: { id: projectProfessional.id },
+        data: { status: 'accepted', respondedAt: new Date() },
+      });
+    }
+
     const professionalName =
       projectProfessional.professional?.businessName ||
       projectProfessional.professional?.fullName ||
@@ -6777,11 +6785,11 @@ Please review the project details and respond with your quote or decline the inv
   async skipSiteVisit(projectId: string, professionalId: string) {
     const pp = await this.prisma.projectProfessional.findFirst({
       where: { projectId, professionalId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
     if (!pp) throw new BadRequestException('Professional not found on this project');
 
-    // Create a skipped site access request record so the next-step service picks it up
+    // Create a skipped site access request record
     await this.prisma.siteAccessRequest.create({
       data: {
         projectId,
@@ -6793,7 +6801,15 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
-    // Flush nextStepCache so the change takes effect immediately
+    // Auto-accept if still pending
+    if (pp.status === 'pending') {
+      await this.prisma.projectProfessional.update({
+        where: { id: pp.id },
+        data: { status: 'accepted', respondedAt: new Date() },
+      });
+    }
+
+    // Flush nextStepCache
     await this.prisma.project.update({
       where: { id: projectId },
       data: { nextStepCache: null as any },
@@ -7076,12 +7092,17 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
-    // Grant address visibility to this professional
+    // Grant address visibility and auto-accept if still pending
+    const pp = await this.prisma.projectProfessional.findUnique({
+      where: { id: request.projectProfessionalId },
+      select: { status: true },
+    });
     await this.prisma.projectProfessional.update({
       where: { id: request.projectProfessionalId },
       data: {
         addressVisible: true,
         addressVisibleAt: new Date(),
+        ...(pp?.status === 'pending' ? { status: 'accepted', respondedAt: new Date() } : {}),
       },
     });
 
