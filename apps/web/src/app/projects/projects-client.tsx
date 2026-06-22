@@ -888,14 +888,15 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         <div className="animate-pulse rounded-lg bg-slate-200 h-9 w-28" />
                       ) : (
                         <>
-                          {primaryAction && (
+                          {primaryActions.map((action, i) => (
                             <NextStepModalButton
-                              action={primaryAction}
+                              key={`${project.id}-${action.actionKey}`}
+                              action={action}
                               projectId={project.id}
-                              variant="primary"
+                              variant={i === 0 ? "primary" : "secondary"}
                               onCompleted={() => refreshProjectNextStep(project.id)}
                             />
-                          )}
+                          ))}
                           {electiveActions.map((action) => (
                             <NextStepModalButton
                               key={`${project.id}-${action.actionKey}-elective`}
@@ -905,7 +906,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               onCompleted={() => refreshProjectNextStep(project.id)}
                             />
                           ))}
-                          {!primaryAction && electiveActions.length === 0 && (
+                          {primaryActions.length === 0 && electiveActions.length === 0 && (
                             <Link
                               href={primaryActionHref}
                               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"

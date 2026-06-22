@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-1065db15",
+    "date": "2026-06-22T11:28:25+08:00",
+    "title": "Fix: render ALL primary actions as buttons, not just the first one",
+    "summary": "Fix: render ALL primary actions as buttons, not just the first one",
+    "areas": [
+      "web"
+    ],
+    "commit": "1065db15",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-21-27d4bbdd",
     "date": "2026-06-21T23:56:30+08:00",
     "title": "Add synthetic REVIEW_QUOTES step for CLIENT when professionals have quoted",
