@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-22-d16f6445",
+    "date": "2026-06-22T13:12:06+08:00",
+    "title": "Version-bust localStorage cache keys (ns_list → ns_list_v2) to clear stale duplicates",
+    "summary": "Version-bust localStorage cache keys (ns_list → ns_list_v2) to clear stale duplicates",
+    "areas": [
+      "web"
+    ],
+    "commit": "d16f6445",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-213aaf1f",
     "date": "2026-06-22T13:07:22+08:00",
     "title": "Deduplicate next step actions by actionKey on client list",

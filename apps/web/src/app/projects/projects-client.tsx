@@ -676,7 +676,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       setNextStepsLoading(true);
 
       // Optimistic: try localStorage cache first for instant display
-      const cacheKey = `ns_list_${nextStepCacheScope}`;
+      const cacheKey = `ns_list_v2_${nextStepCacheScope}`;
       try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
@@ -745,7 +745,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       setNextStepMap((prev) => {
         const updated = { ...prev, [projectId]: refreshed };
         try {
-          localStorage.setItem(`ns_list_${nextStepCacheScope}`, JSON.stringify(updated));
+          localStorage.setItem(`ns_list_v2_${nextStepCacheScope}`, JSON.stringify(updated));
         } catch { /* ignore quota */ }
         return updated;
       });

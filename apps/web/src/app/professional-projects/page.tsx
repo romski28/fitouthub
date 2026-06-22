@@ -319,7 +319,7 @@ export default function ProfessionalProjectsPage() {
       setNextStepsLoading(true);
 
       // Optimistic: try localStorage cache first for instant display
-      const cacheKey = `ns_list_${nextStepCacheScope}`;
+      const cacheKey = `ns_list_v2_${nextStepCacheScope}`;
       try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
@@ -394,7 +394,7 @@ export default function ProfessionalProjectsPage() {
         const updated = { ...prev, [projectId]: refreshed };
         // Update localStorage cache immediately
         try {
-          localStorage.setItem(`ns_list_${nextStepCacheScope}`, JSON.stringify(updated));
+          localStorage.setItem(`ns_list_v2_${nextStepCacheScope}`, JSON.stringify(updated));
         } catch { /* ignore quota */ }
         return updated;
       });
