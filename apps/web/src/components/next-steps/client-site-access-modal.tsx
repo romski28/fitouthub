@@ -227,10 +227,15 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const handleAcceptRequest = async (requestId: string) => {
     setActionBusy(`accept-${requestId}`);
     try {
+      const req = requests.find((r) => r.id === requestId);
+      const body: Record<string, any> = { status: "approved_visit_scheduled" };
+      if (req?.visitScheduledAt) body.visitScheduledAt = req.visitScheduledAt;
+      else if (req?.visitScheduledFor) body.visitScheduledFor = req.visitScheduledFor;
+
       const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "approved_visit_scheduled" }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
