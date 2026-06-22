@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-22-03b8911c",
+    "date": "2026-06-22T22:55:21+08:00",
+    "title": "Add skipped to SiteAccessRequestStatus enum + manual SQL",
+    "summary": "Add skipped to SiteAccessRequestStatus enum + manual SQL",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "03b8911c",
+    "files": [
+      "MANUAL_SQL_ADD_SKIPPED_SITE_ACCESS_STATUS.sql",
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-06-22-8815bb41",
     "date": "2026-06-22T22:49:58+08:00",
     "title": "Sequential flow: site inspection OR quote (never both), skip endpoint, No need button in booking modal",

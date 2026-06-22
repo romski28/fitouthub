@@ -15,6 +15,7 @@ enum SiteAccessRequestStatus {
   visited
   denied
   cancelled
+  skipped
 }
 
 enum SiteAccessVisitStatus {
