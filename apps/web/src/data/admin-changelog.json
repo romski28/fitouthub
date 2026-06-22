@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-22-f4c9d55f",
+    "date": "2026-06-22T22:10:47+08:00",
+    "title": "Fix: move INSPECT_SITE & REQUEST_SITE_ACCESS logic outside status===quoted block so all bidding pros see dynamic labels",
+    "summary": "Fix: move INSPECT_SITE & REQUEST_SITE_ACCESS logic outside status===quoted block so all bidding pros see dynamic labels",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "f4c9d55f",
+    "files": [
+      "FLUSH_NEXTSTEP_CACHE.sql",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-40e67db7",
     "date": "2026-06-22T21:52:21+08:00",
     "title": "Rename site inspection labels: Request site inspection, Await approval, Visit site at HH:MM on ddd; navigate to tab not modal",

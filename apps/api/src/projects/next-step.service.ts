@@ -359,74 +359,19 @@ export class NextStepService {
           'Your quote has been submitted. No action is needed from you until the client responds.',
         ),
       ];
+    }
 
-      // If the client has shared an inspection date and this professional has no blocking
-      // site access state, surface REQUEST_SITE_ACCESS as an elective.
-      const inspectionDate = (project as any).siteInspectionAvailableOn;
-      if (inspectionDate) {
-        const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
-          where: {
-            projectProfessionalId: isProfessional.id,
-            status: { notIn: ['cancelled', 'denied'] },
-          },
-          select: {
-            id: true,
-            status: true,
-            visitDetails: true,
-          },
-          orderBy: {
-            requestedAt: 'desc',
-          },
-        });
-
-        const latestStatus = (latestAccessRequest?.status || '').toLowerCase();
-        const rescheduleRequired = Boolean(
-          latestAccessRequest?.visitDetails?.includes('Site availability changed to'),
-        );
-
-        const hasBlockingAccessState =
-          (latestStatus === 'pending' && !rescheduleRequired) ||
-          latestStatus === 'approved_visit_scheduled' ||
-          latestStatus === 'visited' ||
-          (latestStatus === 'approved_no_visit' && !rescheduleRequired);
-
-        if (latestStatus === 'pending') {
-          availableConfigSteps.push({
-            ...createSyntheticPrimaryStep(
-              'AWAIT_SITE_ACCESS_APPROVAL',
-              'Await approval of site inspection',
-              false,
-              role,
-              effectiveStage,
-              'Your site inspection request has been submitted. The client will review and respond shortly.',
-            ),
-            isPrimary: false,
-            isElective: true,
-            displayOrder: 2,
-          } as any);
-        } else if (!hasBlockingAccessState) {
-          const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          });
-          availableConfigSteps.push({
-            ...createSyntheticPrimaryStep(
-              'REQUEST_SITE_ACCESS',
-              'Request site inspection',
-              false,
-              role,
-              effectiveStage,
-              `The client has made the site available for inspection on ${inspectionLabel}. Request a visit to get a clearer picture before the client makes their decision.`,
-            ),
-            isPrimary: false,
-            isElective: true,
-            displayOrder: 2,
-          } as any);
-        }
-      }
-
-      // If address is now visible (client approved site access), surface INSPECT_SITE as primary
+    // ── Site access steps for all bidding-phase professionals ──
+    if (
+      role === 'PROFESSIONAL' &&
+      isProfessional &&
+      project.status !== 'awarded'
+    ) {
+      // Remove DB-seeded REQUEST_SITE_ACCESS — will be replaced by synthetic equivalents
+      availableConfigSteps = availableConfigSteps.filter(
+        (s) => s.actionKey !== 'REQUEST_SITE_ACCESS',
+      );
+      // If address is already visible, surface INSPECT_SITE as primary
       if (
         isProfessional.addressVisible === true &&
         !isProfessional.siteVisitedAt
@@ -458,8 +403,72 @@ export class NextStepService {
             effectiveStage,
             'Address access granted. View details on the Site Access tab.',
           ),
-          ...availableConfigSteps,
+          ...availableConfigSteps.filter(
+            (s) => !['INSPECT_SITE', 'REQUEST_SITE_ACCESS'].includes(s.actionKey),
+          ),
         ];
+      }
+
+      // Otherwise, if client set an inspection date, surface REQUEST_SITE_ACCESS or AWAIT
+      const inspectionDate = (project as any).siteInspectionAvailableOn;
+      if (inspectionDate && !isProfessional.addressVisible) {
+        const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+          where: {
+            projectProfessionalId: isProfessional.id,
+            status: { notIn: ['cancelled', 'denied'] },
+          },
+          select: {
+            id: true,
+            status: true,
+            visitDetails: true,
+          },
+          orderBy: {
+            requestedAt: 'desc',
+          },
+        });
+
+        const latestStatus = (latestAccessRequest?.status || '').toLowerCase();
+        const rescheduleRequired = Boolean(
+          latestAccessRequest?.visitDetails?.includes('Site availability changed to'),
+        );
+
+        if (latestStatus === 'pending') {
+          availableConfigSteps.push({
+            ...createSyntheticPrimaryStep(
+              'AWAIT_SITE_ACCESS_APPROVAL',
+              'Await approval of site inspection',
+              false,
+              role,
+              effectiveStage,
+              'Your site inspection request has been submitted. The client will review and respond shortly.',
+            ),
+            isPrimary: false,
+            isElective: true,
+            displayOrder: 2,
+          } as any);
+        } else if (
+          !['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(latestStatus) ||
+          rescheduleRequired
+        ) {
+          const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
+          availableConfigSteps.push({
+            ...createSyntheticPrimaryStep(
+              'REQUEST_SITE_ACCESS',
+              'Request site inspection',
+              false,
+              role,
+              effectiveStage,
+              `The client has made the site available for inspection on ${inspectionLabel}. Request a visit to get a clearer picture before the client makes their decision.`,
+            ),
+            isPrimary: false,
+            isElective: true,
+            displayOrder: 2,
+          } as any);
+        }
       }
     }
 
