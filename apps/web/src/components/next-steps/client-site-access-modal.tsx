@@ -497,12 +497,6 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         </div>
                       );
                     })}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
                 </div>
               )}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-ae83a0d9",
+    "date": "2026-06-22T17:17:04+08:00",
+    "title": "Fix duplicate leftover code in ClientSiteAccessModal causing build failure",
+    "summary": "Fix duplicate leftover code in ClientSiteAccessModal causing build failure",
+    "areas": [
+      "web"
+    ],
+    "commit": "ae83a0d9",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-5e919e05",
     "date": "2026-06-22T17:13:25+08:00",
     "title": "Polish ClientSiteAccessModal: wider modal, Add New in address selector, horizontal request cards, inspection date as card title",
