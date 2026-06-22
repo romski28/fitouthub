@@ -395,10 +395,6 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'request-site-access';
   }
 
-  if (actionKey === 'INSPECT_SITE') {
-    return 'inspect-site';
-  }
-
   if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {
     return 'client-site-access';
   }

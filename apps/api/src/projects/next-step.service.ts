@@ -390,7 +390,21 @@ export class NextStepService {
           latestStatus === 'visited' ||
           (latestStatus === 'approved_no_visit' && !rescheduleRequired);
 
-        if (!hasBlockingAccessState) {
+        if (latestStatus === 'pending') {
+          availableConfigSteps.push({
+            ...createSyntheticPrimaryStep(
+              'AWAIT_SITE_ACCESS_APPROVAL',
+              'Await approval of site inspection',
+              false,
+              role,
+              effectiveStage,
+              'Your site inspection request has been submitted. The client will review and respond shortly.',
+            ),
+            isPrimary: false,
+            isElective: true,
+            displayOrder: 2,
+          } as any);
+        } else if (!hasBlockingAccessState) {
           const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
             day: 'numeric',
             month: 'short',
@@ -399,11 +413,11 @@ export class NextStepService {
           availableConfigSteps.push({
             ...createSyntheticPrimaryStep(
               'REQUEST_SITE_ACCESS',
-              'Book a site visit',
+              'Request site inspection',
               false,
               role,
               effectiveStage,
-              `The client has made the site available for inspection on ${inspectionLabel}. Book a visit to get a clearer picture before the client makes their decision.`,
+              `The client has made the site available for inspection on ${inspectionLabel}. Request a visit to get a clearer picture before the client makes their decision.`,
             ),
             isPrimary: false,
             isElective: true,
@@ -417,18 +431,32 @@ export class NextStepService {
         isProfessional.addressVisible === true &&
         !isProfessional.siteVisitedAt
       ) {
-        const visitDate = (isProfessional as any).addressVisibleAt;
-        const dateLabel = visitDate
-          ? new Date(visitDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+        const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
+          where: {
+            projectProfessionalId: isProfessional.id,
+            status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
+          },
+          select: { visitScheduledAt: true, visitScheduledFor: true },
+          orderBy: { respondedAt: 'desc' },
+        });
+        const visitDateTime = approvedAccess?.visitScheduledAt || approvedAccess?.visitScheduledFor;
+        const timeLabel = visitDateTime
+          ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
+          : null;
+        const dateLabel = visitDateTime
+          ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
           : 'site';
+        const inspectLabel = timeLabel
+          ? `Visit site at ${timeLabel} on ${dateLabel}`
+          : `Visit site on ${dateLabel}`;
         availableConfigSteps = [
           createSyntheticPrimaryStep(
             'INSPECT_SITE',
-            `Inspect site on ${dateLabel}`,
+            inspectLabel,
             true,
             role,
             effectiveStage,
-            'Address access granted. View details, message the client, and record your visit.',
+            'Address access granted. View details on the Site Access tab.',
           ),
           ...availableConfigSteps,
         ];
@@ -627,20 +655,34 @@ export class NextStepService {
           isProfessional?.addressVisible === true &&
           !isProfessional?.siteVisitedAt
         ) {
-          const visitDate = (isProfessional as any).addressVisibleAt;
-          const dateLabel = visitDate
-            ? new Date(visitDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+          const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
+            where: {
+              projectProfessionalId: isProfessional.id,
+              status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
+            },
+            select: { visitScheduledAt: true, visitScheduledFor: true },
+            orderBy: { respondedAt: 'desc' },
+          });
+          const visitDateTime = approvedAccess?.visitScheduledAt || approvedAccess?.visitScheduledFor;
+          const timeLabel = visitDateTime
+            ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
+            : null;
+          const dateLabel = visitDateTime
+            ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
             : 'site';
+          const inspectLabel = timeLabel
+            ? `Visit site at ${timeLabel} on ${dateLabel}`
+            : `Visit site on ${dateLabel}`;
           availableConfigSteps = [
             ...availableConfigSteps,
             {
               ...createSyntheticPrimaryStep(
                 'INSPECT_SITE',
-                `Inspect site on ${dateLabel}`,
+                inspectLabel,
                 false,
                 role,
                 effectiveStage,
-                'Address access granted. View details, message the client, and record your visit.',
+                'Address access granted. View details on the Site Access tab.',
               ),
               isPrimary: false,
               isElective: true,

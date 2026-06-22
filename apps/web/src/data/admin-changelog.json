@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-22-40e67db7",
+    "date": "2026-06-22T21:52:21+08:00",
+    "title": "Rename site inspection labels: Request site inspection, Await approval, Visit site at HH:MM on ddd; navigate to tab not modal",
+    "summary": "Rename site inspection labels: Request site inspection, Await approval, Visit site at HH:MM on ddd; navigate to tab not modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "40e67db7",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-bd0f2836",
     "date": "2026-06-22T21:39:03+08:00",
     "title": "Fix: pass selected address details when accepting site access request",
