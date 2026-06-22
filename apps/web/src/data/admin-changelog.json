@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-22-8815bb41",
+    "date": "2026-06-22T22:49:58+08:00",
+    "title": "Sequential flow: site inspection OR quote (never both), skip endpoint, No need button in booking modal",
+    "summary": "Sequential flow: site inspection OR quote (never both), skip endpoint, No need button in booking modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8815bb41",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-5c40e48e",
     "date": "2026-06-22T22:32:51+08:00",
     "title": "Fix duplicate SUBMIT_QUOTE in professional-workflow tab map",

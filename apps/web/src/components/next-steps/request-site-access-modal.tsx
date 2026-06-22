@@ -106,6 +106,8 @@ export function RequestSiteAccessModal({
   const [error, setError] = useState<string | null>(null);
   const [siteAccessRequestDate, setSiteAccessRequestDate] = useState('');
   const [siteAccessRequestTime, setSiteAccessRequestTime] = useState('');
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [skipLoading, setSkipLoading] = useState(false);
 
   const title = state.modalContent?.title || 'Book a site visit';
   const body =
@@ -247,6 +249,26 @@ export function RequestSiteAccessModal({
       setError(message);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSkipVisit = async () => {
+    if (!accessToken || !state.projectId) return;
+    setSkipLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${state.projectId}/site-access/skip`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to skip site visit');
+      toast.success('Site visit skipped. You can now submit your quote.');
+      setShowSkipConfirm(false);
+      onClose();
+      state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed');
+    } finally {
+      setSkipLoading(false);
     }
   };
 
@@ -438,6 +460,14 @@ export function RequestSiteAccessModal({
           </button>
           <button
             type="button"
+            onClick={() => setShowSkipConfirm(true)}
+            disabled={actionLoading || requestPending || isBusy}
+            className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            No need for site visit
+          </button>
+          <button
+            type="button"
             onClick={handleSubmitRequest}
             disabled={
               actionLoading ||
@@ -459,6 +489,36 @@ export function RequestSiteAccessModal({
           </button>
         </div>
       </div>
+
+      {/* Skip confirmation modal */}
+      {showSkipConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowSkipConfirm(false); }}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <p className="text-sm font-semibold text-white mb-2">Skip site visit?</p>
+            <p className="text-sm text-slate-300 mb-5">
+              Are you sure you do not need to visit the site? Your quote is final, regardless of your inspection or not.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowSkipConfirm(false)}
+                disabled={skipLoading}
+                className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 transition"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipVisit}
+                disabled={skipLoading}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+              >
+                {skipLoading ? 'Skipping...' : 'Yes, skip visit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6774,6 +6774,34 @@ Please review the project details and respond with your quote or decline the inv
     };
   }
 
+  async skipSiteVisit(projectId: string, professionalId: string) {
+    const pp = await this.prisma.projectProfessional.findFirst({
+      where: { projectId, professionalId },
+      select: { id: true },
+    });
+    if (!pp) throw new BadRequestException('Professional not found on this project');
+
+    // Create a skipped site access request record so the next-step service picks it up
+    await this.prisma.siteAccessRequest.create({
+      data: {
+        projectId,
+        projectProfessionalId: pp.id,
+        professionalId,
+        status: 'skipped',
+        requestedAt: new Date(),
+        respondedAt: new Date(),
+      },
+    });
+
+    // Flush nextStepCache so the change takes effect immediately
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
+    });
+
+    return { success: true };
+  }
+
   async respondToSiteAccessRequest(
     requestId: string,
     userId: string,

@@ -859,6 +859,24 @@ export class ProjectsController {
     return this.projectsService.submitSiteAccessData(projectId, userId, body);
   }
 
+  @Post(':id/site-access/skip')
+  @UseGuards(CombinedAuthGuard)
+  async skipSiteVisit(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can skip site visits', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.skipSiteVisit(projectId, professionalId);
+  }
+
   @Get(':id/site-addresses')
   @UseGuards(CombinedAuthGuard)
   async listClientSiteAddresses(

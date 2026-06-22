@@ -408,10 +408,7 @@ export class NextStepService {
           }
         }
       } else {
-
-      // ── Accepted pros (not yet quoted): 2-step flow ──
-      // Step 1: Site inspection (if client set a date)
-      // Step 2: Submit quote / Decline
+      // ── Accepted pros: site inspection OR quote, never both ──
 
       const quoteStep = {
         ...createSyntheticPrimaryStep(
@@ -440,23 +437,17 @@ export class NextStepService {
         displayOrder: 20,
       } as any;
 
-      // If address is already visible — INSPECT_SITE first
+      // If address is visible and not yet visited — INSPECT_SITE only
       if (
         isProfessional.addressVisible === true &&
         !isProfessional.siteVisitedAt
       ) {
         const inspectStep = await this.buildInspectSiteStep(isProfessional.id);
-        if (inspectStep) {
-          availableConfigSteps = [
-            { ...inspectStep, isPrimary: true },
-            quoteStep,
-            declineStep,
-          ];
-        } else {
-          availableConfigSteps = [quoteStep, declineStep];
-        }
+        availableConfigSteps = inspectStep
+          ? [{ ...inspectStep, isPrimary: true }]
+          : [quoteStep, declineStep];
       }
-      // If client set inspection date and pro hasn't been approved yet
+      // If client set inspection date — site access loop
       else if (inspectionDate) {
         const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
           where: {
@@ -472,9 +463,12 @@ export class NextStepService {
           latestAccessRequest?.visitDetails?.includes('Site availability changed to'),
         );
 
-        if (latestStatus === 'pending') {
-          // Awaiting approval — can't do anything yet, but quote is available
-          const awaitStep = {
+        if (latestStatus === 'skipped') {
+          // Pro chose not to visit — go to quote
+          availableConfigSteps = [quoteStep, declineStep];
+        } else if (latestStatus === 'pending') {
+          // Awaiting approval
+          availableConfigSteps = [{
             ...createSyntheticPrimaryStep(
               'AWAIT_SITE_ACCESS_APPROVAL',
               'Await approval of site inspection',
@@ -486,8 +480,7 @@ export class NextStepService {
             isPrimary: true,
             isElective: false,
             displayOrder: 0,
-          } as any;
-          availableConfigSteps = [awaitStep, quoteStep, declineStep];
+          } as any];
         } else if (
           !['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(latestStatus) ||
           rescheduleRequired
@@ -496,20 +489,20 @@ export class NextStepService {
           const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
           });
-          const bookStep = {
+          availableConfigSteps = [{
             ...createSyntheticPrimaryStep(
               'REQUEST_SITE_ACCESS',
               `Book site inspection — ${inspectionLabel}`,
               true,
               role,
               effectiveStage,
-              `The client has made the site available on ${inspectionLabel}. Book a visit or skip to quote.`,
+              `The client has made the site available on ${inspectionLabel}. You can book a visit or choose to skip.`,
             ),
             isPrimary: true,
             displayOrder: 0,
-          } as any;
-          availableConfigSteps = [bookStep, quoteStep, declineStep];
+          } as any];
         } else {
+          // Approved but not addressVisible? fallback to quote
           availableConfigSteps = [quoteStep, declineStep];
         }
       }
