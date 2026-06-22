@@ -228,9 +228,18 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     setActionBusy(`accept-${requestId}`);
     try {
       const req = requests.find((r) => r.id === requestId);
+      const addr = addresses.find((a) => a.id === selectedAddressId);
       const body: Record<string, any> = { status: "approved_visit_scheduled" };
       if (req?.visitScheduledAt) body.visitScheduledAt = req.visitScheduledAt;
       else if (req?.visitScheduledFor) body.visitScheduledFor = req.visitScheduledFor;
+      if (addr) {
+        body.addressFull = addr.addressFull;
+        if (addr.unitNumber) body.unitNumber = addr.unitNumber;
+        if (addr.floorLevel) body.floorLevel = addr.floorLevel;
+        if (addr.accessDetails) body.accessDetails = addr.accessDetails;
+        if (addr.onSiteContactName) body.onSiteContactName = addr.onSiteContactName;
+        if (addr.onSiteContactPhone) body.onSiteContactPhone = addr.onSiteContactPhone;
+      }
 
       const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
         method: "PUT",

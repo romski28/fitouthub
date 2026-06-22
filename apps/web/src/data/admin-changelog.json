@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-bd0f2836",
+    "date": "2026-06-22T21:39:03+08:00",
+    "title": "Fix: pass selected address details when accepting site access request",
+    "summary": "Fix: pass selected address details when accepting site access request",
+    "areas": [
+      "web"
+    ],
+    "commit": "bd0f2836",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-372b394c",
     "date": "2026-06-22T21:33:08+08:00",
     "title": "Fix: pass visitScheduledAt/visitScheduledFor when accepting site access request",
