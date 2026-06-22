@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-5e919e05",
+    "date": "2026-06-22T17:13:25+08:00",
+    "title": "Polish ClientSiteAccessModal: wider modal, Add New in address selector, horizontal request cards, inspection date as card title",
+    "summary": "Polish ClientSiteAccessModal: wider modal, Add New in address selector, horizontal request cards, inspection date as card title",
+    "areas": [
+      "web"
+    ],
+    "commit": "5e919e05",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-ae16fc45",
     "date": "2026-06-22T14:24:40+08:00",
     "title": "Rewrite ClientSiteAccessModal: dropdown address selector + new address form, show inspection slot not request date, decline reason text input",

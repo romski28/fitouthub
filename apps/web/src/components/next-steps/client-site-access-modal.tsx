@@ -63,14 +63,6 @@ interface ClientSiteAccessModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-const toDateInput = (value?: string | null) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
-
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -305,7 +297,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="w-full max-w-xl rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
           <h2 className="text-lg font-bold text-slate-900">Site Access</h2>
@@ -330,40 +322,31 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
 
-                {addresses.length > 0 ? (
-                  <div className="flex gap-2">
-                    <select
-                      value={selectedAddressId}
-                      onChange={(e) => setSelectedAddressId(e.target.value)}
-                      className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Select a saved address</option>
-                      {addresses.map((addr) => (
-                        <option key={addr.id} value={addr.id}>
-                          {(addr.label || addr.buildingName || "Saved address").trim()} — {addr.addressFull}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewAddress((v) => !v)}
-                      className="shrink-0 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
-                    >
-                      {showNewAddress ? "Cancel" : "+ New"}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-500 italic">No addresses saved yet.</p>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewAddress(true)}
-                      className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
-                    >
-                      + New Address
-                    </button>
-                  </div>
-                )}
+                <select
+                  value={showNewAddress ? "__new__" : selectedAddressId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "__new__") {
+                      setShowNewAddress(true);
+                      setSelectedAddressId("");
+                    } else if (val === "") {
+                      setShowNewAddress(false);
+                      setSelectedAddressId("");
+                    } else {
+                      setShowNewAddress(false);
+                      setSelectedAddressId(val);
+                    }
+                  }}
+                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%23999%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-8"
+                >
+                  <option value="">Select address or add new one</option>
+                  {addresses.map((addr) => (
+                    <option key={addr.id} value={addr.id}>
+                      {(addr.label || addr.buildingName || "Saved address").trim()} — {addr.addressFull}
+                    </option>
+                  ))}
+                  <option value="__new__">＋ Add new address</option>
+                </select>
 
                 {/* New address form */}
                 {showNewAddress && (
@@ -408,18 +391,27 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         <option key={d.areaCode} value={d.name}>{d.name}</option>
                       ))}
                     </select>
-                    <button
-                      type="button"
-                      onClick={handleSaveNewAddress}
-                      disabled={savingAddress}
-                      className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                    >
-                      {savingAddress ? "Saving..." : "Save Address"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSaveNewAddress}
+                        disabled={savingAddress}
+                        className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                      >
+                        {savingAddress ? "Saving..." : "Save Address"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowNewAddress(false); setNewAddressForm({ buildingName: "", addressFull: "", unitNumber: "", floorLevel: "", district: "" }); }}
+                        className="rounded-lg border border-[#D4C8A0] px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {!selectedAddressId && addresses.length > 0 && (
+                {!selectedAddressId && !showNewAddress && addresses.length > 0 && (
                   <p className="mt-1 text-xs text-amber-600">Select an address to accept visits</p>
                 )}
               </div>
@@ -442,11 +434,40 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         : "requested access";
                       return (
                         <div key={req.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                          <p className="text-sm font-medium text-slate-800">{proName(req.professional)}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{slotLabel}</p>
-                          {req.visitDetails && <p className="text-xs text-slate-600 mt-1">{req.visitDetails}</p>}
+                          {/* Card title: inspection date */}
+                          {inspectionDate && (
+                            <p className="text-xs font-semibold text-slate-500 mb-1">
+                              Site inspection on {formatDate(inspectionDate)}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">{proName(req.professional)}</p>
+                              <p className="text-xs text-slate-500">{slotLabel}</p>
+                              {req.visitDetails && <p className="text-xs text-slate-600 mt-0.5">{req.visitDetails}</p>}
+                            </div>
+                            {!isDeclining && (
+                              <div className="flex gap-1.5 shrink-0">
+                                <button
+                                  onClick={() => handleAcceptRequest(req.id)}
+                                  disabled={!!actionBusy || !selectedAddressId}
+                                  title={!selectedAddressId ? "Select an address first" : "Accept this request"}
+                                  className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                                >
+                                  {actionBusy === `accept-${req.id}` ? "..." : "Accept"}
+                                </button>
+                                <button
+                                  onClick={() => setDecliningRequestId(req.id)}
+                                  disabled={!!actionBusy}
+                                  className="rounded-lg border border-red-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 transition"
+                                >
+                                  {actionBusy === `decline-${req.id}` ? "..." : "Decline"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
 
-                          {isDeclining ? (
+                          {isDeclining && (
                             <div className="mt-2 space-y-2">
                               <textarea
                                 rows={2}
@@ -472,22 +493,10 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                                 </button>
                               </div>
                             </div>
-                          ) : (
-                            <div className="flex gap-2 mt-2">
-                              <button
-                                onClick={() => handleAcceptRequest(req.id)}
-                                disabled={!!actionBusy || !selectedAddressId}
-                                title={!selectedAddressId ? "Select an address first" : "Accept this request"}
-                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
-                              >
-                                {actionBusy === `accept-${req.id}` ? "..." : "Accept"}
-                              </button>
-                              <button
-                                onClick={() => setDecliningRequestId(req.id)}
-                                disabled={!!actionBusy}
-                                className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 transition"
-                              >
-                                {actionBusy === `decline-${req.id}` ? "..." : "Decline"}
+                          )}
+                        </div>
+                      );
+                    })}
                               </button>
                             </div>
                           )}
@@ -505,17 +514,19 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                   <div className="space-y-2">
                     {pendingVisits.map((v) => (
                       <div key={v.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                        <p className="text-sm font-medium text-slate-800">{proName(v.professional)}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {formatBookedSlot(v.proposedAt)}
-                        </p>
-                        {v.notes && <p className="text-xs text-slate-600 mt-1">{v.notes}</p>}
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">{proName(v.professional)}</p>
+                            <p className="text-xs text-slate-500">
+                              {formatBookedSlot(v.proposedAt)}
+                            </p>
+                            {v.notes && <p className="text-xs text-slate-600 mt-0.5">{v.notes}</p>}
+                          </div>
                           <button
                             onClick={() => handleConfirmVisit(v.id)}
                             disabled={!!actionBusy || !selectedAddressId}
                             title={!selectedAddressId ? "Select an address first" : "Confirm this visit"}
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                            className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
                           >
                             {actionBusy === `confirm-${v.id}` ? "..." : "Confirm"}
                           </button>
