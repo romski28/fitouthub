@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/config/api";
 import { fetchWithRetry } from "@/lib/http";
 import { useAuth } from "@/context/auth-context";
 import { useNextStepModal } from "@/context/next-step-modal-context";
+import { HK_DISTRICTS } from "@/lib/hk-districts";
 import toast from "react-hot-toast";
 
 // ── Types ────────────────────────────────────────────────────────
@@ -14,6 +15,7 @@ interface SiteAccessRequest {
   requestedAt: string;
   respondedAt?: string;
   visitScheduledFor?: string | null;
+  visitScheduledAt?: string | null;
   visitDetails?: string | null;
   reasonDenied?: string | null;
   professional: {
@@ -61,17 +63,40 @@ interface ClientSiteAccessModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-const formatDate = (iso?: string) => {
+const toDateInput = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+const formatDate = (iso?: string | null) => {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-const formatDateTime = (iso?: string) => {
+const formatDateTime = (iso?: string | null) => {
   if (!iso) return "";
   return new Date(iso).toLocaleString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: false,
   });
+};
+
+const formatTime = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const formatBookedSlot = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${formatDate(iso)} at ${formatTime(iso)}`;
 };
 
 const proName = (p: { fullName?: string; businessName?: string }) =>
@@ -84,12 +109,28 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const projectId = state.projectId || "";
 
   const [addresses, setAddresses] = useState<ClientSiteAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [requests, setRequests] = useState<SiteAccessRequest[]>([]);
   const [visits, setVisits] = useState<SiteAccessVisit[]>([]);
+  const [siteAccessData, setSiteAccessData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+  // Address form
+  const [showNewAddress, setShowNewAddress] = useState(false);
+  const [newAddressForm, setNewAddressForm] = useState({
+    buildingName: "",
+    addressFull: "",
+    unitNumber: "",
+    floorLevel: "",
+    district: "",
+  });
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  // Decline reason
+  const [declineReason, setDeclineReason] = useState<Record<string, string>>({});
+  const [decliningRequestId, setDecliningRequestId] = useState<string | null>(null);
 
   // ── Fetch data ─────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -123,9 +164,9 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
         visitRes.json().catch(() => ({})),
       ]);
 
-      // API wraps responses: { addresses: [...] }, { requests: [...], siteAccessData: {...} }, { visits: [...] }
       setAddresses(addrData?.addresses || []);
       setRequests(reqData?.requests || []);
+      setSiteAccessData(reqData?.siteAccessData || null);
       setVisits(visitData?.visits || []);
 
       // Pre-select primary address
@@ -141,6 +182,42 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   }, [isOpen, projectId, accessToken]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ── Handle new address ─────────────────────────────────────────
+  const handleSaveNewAddress = async () => {
+    const f = newAddressForm;
+    if (!f.addressFull.trim()) { toast.error("Street address is required"); return; }
+    if (!f.unitNumber.trim()) { toast.error("Unit number is required"); return; }
+    if (!f.floorLevel.trim()) { toast.error("Floor level is required"); return; }
+    if (!f.district.trim()) { toast.error("District is required"); return; }
+
+    setSavingAddress(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/location-details`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buildingName: f.buildingName || undefined,
+          addressFull: f.addressFull,
+          unitNumber: f.unitNumber,
+          floorLevel: f.floorLevel,
+          district: f.district,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to save address");
+      }
+      toast.success("Address saved.");
+      setShowNewAddress(false);
+      setNewAddressForm({ buildingName: "", addressFull: "", unitNumber: "", floorLevel: "", district: "" });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save address");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
 
   // ── Actions ────────────────────────────────────────────────────
   const handleAcceptRequest = async (requestId: string) => {
@@ -165,18 +242,23 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   };
 
   const handleDeclineRequest = async (requestId: string) => {
+    const reason = (declineReason[requestId] || "").trim();
+    if (!reason) { toast.error("Please provide a reason for declining"); return; }
+
     setActionBusy(`decline-${requestId}`);
     try {
       const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "denied", reasonDenied: "Declined by client" }),
+        body: JSON.stringify({ status: "denied", reasonDenied: reason }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "Failed to decline");
       }
       toast.success("Site access request declined.");
+      setDecliningRequestId(null);
+      setDeclineReason((prev) => { const next = { ...prev }; delete next[requestId]; return next; });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to decline");
@@ -206,8 +288,18 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     }
   };
 
-  const pendingRequests = requests.filter((r) => r.status === "pending");
+  // ── Derived ────────────────────────────────────────────────────
+  const pendingRequests = requests.filter((r) => {
+    const s = (r.status || "").toLowerCase();
+    return !r.respondedAt && (!s || s === "requested" || s === "pending" || s === "awaiting_response");
+  });
   const pendingVisits = visits.filter((v) => v.status === "proposed" && v.proposedByRole !== "client");
+
+  // Group requests by inspection date
+  const inspectionDate = pendingRequests
+    .map((r) => r.visitScheduledFor)
+    .filter(Boolean)
+    .sort()[0] || siteAccessData?.siteInspectionAvailableOn || null;
 
   if (!isOpen) return null;
 
@@ -216,7 +308,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       <div className="w-full max-w-lg rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Site Access Requests</h2>
+          <h2 className="text-lg font-bold text-slate-900">Site Access</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
         </div>
 
@@ -234,64 +326,179 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
 
           {!loading && !error && (
             <>
-              {/* Address selector */}
+              {/* ── Address ──────────────────────────────────── */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
-                {addresses.length === 0 ? (
-                  <p className="text-sm text-slate-500 italic">No addresses saved. Add one below.</p>
-                ) : (
-                  <div className="space-y-1">
-                    {addresses.map((addr) => (
-                      <button
-                        key={addr.id}
-                        onClick={() => setSelectedAddressId(addr.id)}
-                        className={`w-full text-left rounded-lg border px-3 py-2 text-sm transition ${
-                          selectedAddressId === addr.id
-                            ? "border-emerald-500 bg-emerald-50 text-emerald-900"
-                            : "border-[#D4C8A0] bg-white text-slate-700 hover:bg-[#F5EEDE]"
-                        }`}
-                      >
-                        <span className="font-medium">{addr.label || addr.addressFull}</span>
-                        <span className="block text-xs text-slate-500 mt-0.5">{addr.addressFull}</span>
-                      </button>
-                    ))}
+
+                {addresses.length > 0 ? (
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedAddressId}
+                      onChange={(e) => setSelectedAddressId(e.target.value)}
+                      className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    >
+                      <option value="">Select a saved address</option>
+                      {addresses.map((addr) => (
+                        <option key={addr.id} value={addr.id}>
+                          {(addr.label || addr.buildingName || "Saved address").trim()} — {addr.addressFull}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewAddress((v) => !v)}
+                      className="shrink-0 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
+                    >
+                      {showNewAddress ? "Cancel" : "+ New"}
+                    </button>
                   </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-slate-500 italic">No addresses saved yet.</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewAddress(true)}
+                      className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
+                    >
+                      + New Address
+                    </button>
+                  </div>
+                )}
+
+                {/* New address form */}
+                {showNewAddress && (
+                  <div className="mt-2 space-y-2 rounded-lg border border-[#D4C8A0] bg-white p-3">
+                    <input
+                      type="text"
+                      value={newAddressForm.buildingName}
+                      onChange={(e) => setNewAddressForm((f) => ({ ...f, buildingName: e.target.value }))}
+                      placeholder="Building name (optional)"
+                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={newAddressForm.addressFull}
+                      onChange={(e) => setNewAddressForm((f) => ({ ...f, addressFull: e.target.value }))}
+                      placeholder="Street address *"
+                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    />
+                    <div className="grid gap-2 grid-cols-2">
+                      <input
+                        type="text"
+                        value={newAddressForm.unitNumber}
+                        onChange={(e) => setNewAddressForm((f) => ({ ...f, unitNumber: e.target.value }))}
+                        placeholder="Unit number *"
+                        className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={newAddressForm.floorLevel}
+                        onChange={(e) => setNewAddressForm((f) => ({ ...f, floorLevel: e.target.value }))}
+                        placeholder="Floor level *"
+                        className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                    <select
+                      value={newAddressForm.district}
+                      onChange={(e) => setNewAddressForm((f) => ({ ...f, district: e.target.value }))}
+                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    >
+                      <option value="">Select district *</option>
+                      {HK_DISTRICTS.map((d: { areaCode: string; name: string }) => (
+                        <option key={d.areaCode} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleSaveNewAddress}
+                      disabled={savingAddress}
+                      className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                    >
+                      {savingAddress ? "Saving..." : "Save Address"}
+                    </button>
+                  </div>
+                )}
+
+                {!selectedAddressId && addresses.length > 0 && (
+                  <p className="mt-1 text-xs text-amber-600">Select an address to accept visits</p>
                 )}
               </div>
 
-              {/* Pending requests */}
+              {/* ── Pending requests ────────────────────────── */}
               {pendingRequests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">📋 Pending Requests</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">
+                    {inspectionDate
+                      ? `📋 Site inspection on ${formatDate(inspectionDate)}`
+                      : "📋 Pending Requests"}
+                  </h3>
                   <div className="space-y-2">
-                    {pendingRequests.map((req) => (
-                      <div key={req.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                        <p className="text-sm font-medium text-slate-800">{proName(req.professional)}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Requested {formatDateTime(req.requestedAt)}</p>
-                        {req.visitDetails && <p className="text-xs text-slate-600 mt-1">{req.visitDetails}</p>}
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => handleAcceptRequest(req.id)}
-                            disabled={!!actionBusy || !selectedAddressId}
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
-                          >
-                            {actionBusy === `accept-${req.id}` ? "..." : "Accept"}
-                          </button>
-                          <button
-                            onClick={() => handleDeclineRequest(req.id)}
-                            disabled={!!actionBusy}
-                            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 transition"
-                          >
-                            {actionBusy === `decline-${req.id}` ? "..." : "Decline"}
-                          </button>
+                    {pendingRequests.map((req) => {
+                      const isDeclining = decliningRequestId === req.id;
+                      const slotLabel = req.visitScheduledAt
+                        ? `wants to visit at ${formatDateTime(req.visitScheduledAt)}`
+                        : req.visitScheduledFor
+                        ? `wants to visit ${formatDate(req.visitScheduledFor)}`
+                        : "requested access";
+                      return (
+                        <div key={req.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                          <p className="text-sm font-medium text-slate-800">{proName(req.professional)}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{slotLabel}</p>
+                          {req.visitDetails && <p className="text-xs text-slate-600 mt-1">{req.visitDetails}</p>}
+
+                          {isDeclining ? (
+                            <div className="mt-2 space-y-2">
+                              <textarea
+                                rows={2}
+                                value={declineReason[req.id] || ""}
+                                onChange={(e) => setDeclineReason((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                                placeholder="Reason for declining..."
+                                className="w-full rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-slate-800 focus:border-red-500 focus:outline-none"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleDeclineRequest(req.id)}
+                                  disabled={!!actionBusy || !(declineReason[req.id] || "").trim()}
+                                  className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-40 transition"
+                                >
+                                  {actionBusy === `decline-${req.id}` ? "..." : "Confirm Decline"}
+                                </button>
+                                <button
+                                  onClick={() => { setDecliningRequestId(null); setDeclineReason((prev) => { const n = { ...prev }; delete n[req.id]; return n; }); }}
+                                  disabled={!!actionBusy}
+                                  className="rounded-lg border border-[#D4C8A0] px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleAcceptRequest(req.id)}
+                                disabled={!!actionBusy || !selectedAddressId}
+                                title={!selectedAddressId ? "Select an address first" : "Accept this request"}
+                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                              >
+                                {actionBusy === `accept-${req.id}` ? "..." : "Accept"}
+                              </button>
+                              <button
+                                onClick={() => setDecliningRequestId(req.id)}
+                                disabled={!!actionBusy}
+                                className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 transition"
+                              >
+                                {actionBusy === `decline-${req.id}` ? "..." : "Decline"}
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Proposed visits */}
+              {/* ── Proposed visits ─────────────────────────── */}
               {pendingVisits.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-slate-700 mb-2">📅 Proposed Visits</h3>
@@ -299,12 +506,15 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                     {pendingVisits.map((v) => (
                       <div key={v.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
                         <p className="text-sm font-medium text-slate-800">{proName(v.professional)}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Proposed {formatDateTime(v.proposedAt)}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {formatBookedSlot(v.proposedAt)}
+                        </p>
                         {v.notes && <p className="text-xs text-slate-600 mt-1">{v.notes}</p>}
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={() => handleConfirmVisit(v.id)}
                             disabled={!!actionBusy || !selectedAddressId}
+                            title={!selectedAddressId ? "Select an address first" : "Confirm this visit"}
                             className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
                           >
                             {actionBusy === `confirm-${v.id}` ? "..." : "Confirm"}
