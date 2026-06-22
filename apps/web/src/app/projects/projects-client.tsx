@@ -893,7 +893,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               key={`${project.id}-${action.actionKey}`}
                               action={action}
                               projectId={project.id}
-                              variant={i === 0 ? "primary" : "secondary"}
+                              variant="primary"
                               onCompleted={() => refreshProjectNextStep(project.id)}
                             />
                           ))}

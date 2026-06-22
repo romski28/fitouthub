@@ -385,6 +385,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'request-site-access';
   }
 
+  if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {
+    return 'request-site-access';
+  }
+
   if (actionKey === 'BOOK_MIMO_SURVEY') {
     return 'book-mimo-survey';
   }

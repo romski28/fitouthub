@@ -27,12 +27,12 @@ export function GeneralActionModal({
   const { state } = useNextStepModal();
   const [showDetails, setShowDetails] = useState(false);
 
-  if (!isOpen || !state.modalContent) {
+  if (!isOpen) {
     return null;
   }
 
   const {
-    title,
+    title = state.actionKey?.replace(/_/g, ' ') || 'Action',
     body,
     detailsBody,
     imageUrl,
@@ -41,7 +41,7 @@ export function GeneralActionModal({
     primaryActionType,
     secondaryActionType,
     detailsTarget,
-  } = state.modalContent;
+  } = state.modalContent || {};
 
   const hasDetails = Boolean(detailsBody);
   const secondaryLabelLower = secondaryButtonLabel.toLowerCase();

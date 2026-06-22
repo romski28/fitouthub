@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-22-860b1352",
+    "date": "2026-06-22T11:36:57+08:00",
+    "title": "Fix: use correct action keys + fallback modal for synthetic steps",
+    "summary": "Fix: use correct action keys + fallback modal for synthetic steps",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "860b1352",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/projects/projects-client.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-1065db15",
     "date": "2026-06-22T11:28:25+08:00",
     "title": "Fix: render ALL primary actions as buttons, not just the first one",
