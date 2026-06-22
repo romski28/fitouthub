@@ -1501,6 +1501,16 @@ export class NextStepService {
       .filter((s) => s.isElective)
       .map(toApiAction);
 
+    // Diagnostic: log action keys when multiple primary quote-related actions appear
+    const quoteKeys = primary.filter(a => a.actionLabel?.toLowerCase().includes('quote') || a.actionLabel?.toLowerCase().includes('review'));
+    if (quoteKeys.length > 1) {
+      console.warn(`[NextStepService] Multiple quote PRIMARY actions for ${role}/${projectId}: ${JSON.stringify(quoteKeys.map(a => ({ key: a.actionKey, label: a.actionLabel })))}`);
+    }
+    const electiveQuoteKeys = elective.filter(a => a.actionLabel?.toLowerCase().includes('quote') || a.actionLabel?.toLowerCase().includes('review'));
+    if (electiveQuoteKeys.length > 0) {
+      console.warn(`[NextStepService] Quote ELECTIVE actions for ${role}/${projectId}: ${JSON.stringify(electiveQuoteKeys.map(a => ({ key: a.actionKey, label: a.actionLabel })))}`);
+    }
+
     // Keep SITE_STARTED as a fallback status for client only when there are no active actions.
     if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0) {
       primary.push(
