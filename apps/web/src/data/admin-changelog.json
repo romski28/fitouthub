@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-5b516286",
+    "date": "2026-06-22T20:32:26+08:00",
+    "title": "Modal title shows inspection date as ddd dd mmm; request cards show pro name + time on one line",
+    "summary": "Modal title shows inspection date as ddd dd mmm; request cards show pro name + time on one line",
+    "areas": [
+      "web"
+    ],
+    "commit": "5b516286",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-ae83a0d9",
     "date": "2026-06-22T17:17:04+08:00",
     "title": "Fix duplicate leftover code in ClientSiteAccessModal causing build failure",

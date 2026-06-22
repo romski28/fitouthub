@@ -63,6 +63,11 @@ interface ClientSiteAccessModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+const formatDayDate = (iso?: string | null) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" });
+};
+
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -82,6 +87,13 @@ const formatTime = (iso?: string | null) => {
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const formatTime12h = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true });
 };
 
 const formatBookedSlot = (iso?: string | null) => {
@@ -300,7 +312,11 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       <div className="w-full max-w-xl rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Site Access</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            {inspectionDate
+              ? `Site inspection on ${formatDayDate(inspectionDate)}`
+              : "Site Access"}
+          </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
         </div>
 
@@ -419,32 +435,22 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
               {/* ── Pending requests ────────────────────────── */}
               {pendingRequests.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">
-                    {inspectionDate
-                      ? `📋 Site inspection on ${formatDate(inspectionDate)}`
-                      : "📋 Pending Requests"}
-                  </h3>
                   <div className="space-y-2">
                     {pendingRequests.map((req) => {
                       const isDeclining = decliningRequestId === req.id;
-                      const slotLabel = req.visitScheduledAt
-                        ? `wants to visit at ${formatDateTime(req.visitScheduledAt)}`
+                      const timeLabel = req.visitScheduledAt
+                        ? formatTime12h(req.visitScheduledAt)
                         : req.visitScheduledFor
-                        ? `wants to visit ${formatDate(req.visitScheduledFor)}`
-                        : "requested access";
+                        ? formatTime12h(req.visitScheduledFor)
+                        : null;
                       return (
                         <div key={req.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                          {/* Card title: inspection date */}
-                          {inspectionDate && (
-                            <p className="text-xs font-semibold text-slate-500 mb-1">
-                              Site inspection on {formatDate(inspectionDate)}
-                            </p>
-                          )}
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">{proName(req.professional)}</p>
-                              <p className="text-xs text-slate-500">{slotLabel}</p>
-                              {req.visitDetails && <p className="text-xs text-slate-600 mt-0.5">{req.visitDetails}</p>}
+                              <p className="text-sm font-medium text-slate-800 truncate">
+                                {proName(req.professional)}
+                                {timeLabel && <span className="font-normal text-slate-500"> requested {timeLabel}</span>}
+                              </p>
                             </div>
                             {!isDeclining && (
                               <div className="flex gap-1.5 shrink-0">
