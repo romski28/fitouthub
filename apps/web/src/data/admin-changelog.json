@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-213aaf1f",
+    "date": "2026-06-22T13:07:22+08:00",
+    "title": "Deduplicate next step actions by actionKey on client list",
+    "summary": "Deduplicate next step actions by actionKey on client list",
+    "areas": [
+      "web"
+    ],
+    "commit": "213aaf1f",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-22-77c53ef7",
     "date": "2026-06-22T12:59:48+08:00",
     "title": "Fix: remove duplicate synthetic REVIEW_QUOTES + nav CONFIRM_SITE_VISIT to site-access tab",

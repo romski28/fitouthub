@@ -819,12 +819,19 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               <div className="space-y-2">
                 {dashboardProjects.map((project) => {
               const actions = nextStepMap[project.id] || [];
-              const primaryActions = actions.filter((action) => action.isPrimary).slice(0, 3);
+              // Deduplicate by actionKey
+              const seen = new Set<string>();
+              const uniqueActions = actions.filter((a) => {
+                if (seen.has(a.actionKey)) return false;
+                seen.add(a.actionKey);
+                return true;
+              });
+              const primaryActions = uniqueActions.filter((action) => action.isPrimary).slice(0, 3);
               const primaryActionKeys = new Set(primaryActions.map((action) => action.actionKey));
-              const electiveActions = actions
+              const electiveActions = uniqueActions
                 .filter((action) => action.isElective && !primaryActionKeys.has(action.actionKey))
                 .slice(0, 2);
-              const primaryAction = primaryActions[0] || null;
+              const primaryActionHref = primaryActions[0] ? getClientShowMeHref(project.id, primaryActions[0].actionKey) : `/projects/${project.id}`;
               const quotedCount = project.professionals?.filter(p => p.status === 'quoted').length || 0;
               const assistInfo = assistMap[project.id];
               const unreadCount = (project.sourceIds ?? [project.id]).reduce(
@@ -835,7 +842,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
               const isStopStatus = ['withdrawn', 'rejected', 'declined'].includes((project.status || '').toLowerCase());
               const isEmergencyProject = (project as any).isEmergency === true;
               const baseBorder = clientCardBorderByStatus[project.status] || 'border-white/20';
-              const primaryActionHref = primaryAction ? getClientShowMeHref(project.id, primaryAction.actionKey) : `/projects/${project.id}`;
                   return (
                     <div key={`dash-${project.id}`} className={`relative rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] px-5 py-3 shadow-sm transition ${
                       quoteOverdue
