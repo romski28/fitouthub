@@ -386,7 +386,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
   }
 
   if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {
-    return 'request-site-access';
+    return 'general'; // shows descriptive modal with site-access link
   }
 
   if (actionKey === 'BOOK_MIMO_SURVEY') {

@@ -888,15 +888,25 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                         <div className="animate-pulse rounded-lg bg-slate-200 h-9 w-28" />
                       ) : (
                         <>
-                          {primaryActions.map((action, i) => (
-                            <NextStepModalButton
-                              key={`${project.id}-${action.actionKey}`}
-                              action={action}
-                              projectId={project.id}
-                              variant="primary"
-                              onCompleted={() => refreshProjectNextStep(project.id)}
-                            />
-                          ))}
+                          {primaryActions.map((action) =>
+                            action.actionKey === 'CONFIRM_SITE_VISIT' ? (
+                              <Link
+                                key={`${project.id}-${action.actionKey}`}
+                                href={`/projects/${project.id}?tab=site-access`}
+                                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center"
+                              >
+                                {action.actionLabel}
+                              </Link>
+                            ) : (
+                              <NextStepModalButton
+                                key={`${project.id}-${action.actionKey}`}
+                                action={action}
+                                projectId={project.id}
+                                variant="primary"
+                                onCompleted={() => refreshProjectNextStep(project.id)}
+                              />
+                            )
+                          )}
                           {electiveActions.map((action) => (
                             <NextStepModalButton
                               key={`${project.id}-${action.actionKey}-elective`}

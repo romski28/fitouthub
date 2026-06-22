@@ -460,24 +460,6 @@ export class NextStepService {
         // Extras table may not be present in all environments.
       }
 
-      // Check for quoted professionals and surface REVIEW_INCOMING_QUOTES as primary
-      const quotedPros = await this.prisma.projectProfessional.count({
-        where: { projectId, status: 'quoted' },
-      });
-      if (quotedPros > 0) {
-        availableConfigSteps = [
-          createSyntheticPrimaryStep(
-            'REVIEW_INCOMING_QUOTES',
-            'Review quotes',
-            true,
-            role,
-            effectiveStage,
-            `${quotedPros} professional${quotedPros !== 1 ? 's' : ''} submitted a quote. Review and select the best one.`,
-          ),
-          ...availableConfigSteps.filter((step) => step.actionKey !== 'REVIEW_INCOMING_QUOTES'),
-        ];
-      }
-
       let manageSiteRequestsDescription: string | null = null;
 
       const pendingClientAccessRequest = await this.prisma.siteAccessRequest.findFirst({
