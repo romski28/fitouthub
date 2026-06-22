@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/config/api";
+import { fetchWithRetry } from "@/lib/http";
 import { useAuth } from "@/context/auth-context";
 import { useNextStepModal } from "@/context/next-step-modal-context";
+import toast from "react-hot-toast";
 
 // ── Types ────────────────────────────────────────────────────────
 interface SiteAccessRequest {
@@ -96,31 +98,38 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     setError(null);
     try {
       const [addrRes, reqRes, visitRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/projects/${projectId}/site-addresses`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        fetchWithRetry(`${API_BASE_URL}/projects/${projectId}/site-addresses?_ts=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         }),
-        fetch(`${API_BASE_URL}/projects/${projectId}/site-access/requests`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        fetchWithRetry(`${API_BASE_URL}/projects/${projectId}/site-access/requests?_ts=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         }),
-        fetch(`${API_BASE_URL}/projects/${projectId}/site-visits`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        fetchWithRetry(`${API_BASE_URL}/projects/${projectId}/site-visits?_ts=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         }),
       ]);
 
       if (!addrRes.ok || !reqRes.ok || !visitRes.ok) throw new Error("Failed to load data");
 
       const [addrData, reqData, visitData] = await Promise.all([
-        addrRes.json(),
-        reqRes.json(),
-        visitRes.json(),
+        addrRes.json().catch(() => ({})),
+        reqRes.json().catch(() => ({})),
+        visitRes.json().catch(() => ({})),
       ]);
 
-      setAddresses(Array.isArray(addrData) ? addrData : []);
-      setRequests(Array.isArray(reqData) ? reqData : []);
-      setVisits(Array.isArray(visitData) ? visitData : []);
+      // API wraps responses: { addresses: [...] }, { requests: [...], siteAccessData: {...} }, { visits: [...] }
+      setAddresses(addrData?.addresses || []);
+      setRequests(reqData?.requests || []);
+      setVisits(visitData?.visits || []);
 
       // Pre-select primary address
-      const primary = (Array.isArray(addrData) ? addrData : []).find(
+      const primary = (addrData?.addresses || []).find(
         (a: ClientSiteAddress) => a.isProjectPrimary
       );
       if (primary) setSelectedAddressId(primary.id);
@@ -137,14 +146,19 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const handleAcceptRequest = async (requestId: string) => {
     setActionBusy(`accept-${requestId}`);
     try {
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-access/requests/${requestId}/approve`, {
-        method: "POST",
+      const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "approved_visit_scheduled" }),
       });
-      if (!res.ok) throw new Error("Failed to accept");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to accept");
+      }
+      toast.success("Site access request accepted.");
       fetchData();
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message || "Failed to accept");
     } finally {
       setActionBusy(null);
     }
@@ -153,14 +167,19 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const handleDeclineRequest = async (requestId: string) => {
     setActionBusy(`decline-${requestId}`);
     try {
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-access/requests/${requestId}/deny`, {
-        method: "POST",
+      const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "denied", reasonDenied: "Declined by client" }),
       });
-      if (!res.ok) throw new Error("Failed to decline");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to decline");
+      }
+      toast.success("Site access request declined.");
       fetchData();
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message || "Failed to decline");
     } finally {
       setActionBusy(null);
     }
@@ -169,14 +188,19 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const handleConfirmVisit = async (visitId: string) => {
     setActionBusy(`confirm-${visitId}`);
     try {
-      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-visits/${visitId}/accept`, {
-        method: "POST",
+      const res = await fetch(`${API_BASE_URL}/projects/site-visits/${visitId}/respond`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "accepted" }),
       });
-      if (!res.ok) throw new Error("Failed to confirm");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to confirm");
+      }
+      toast.success("Site visit confirmed.");
       fetchData();
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message || "Failed to confirm");
     } finally {
       setActionBusy(null);
     }
