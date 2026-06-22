@@ -111,6 +111,38 @@ export class NextStepService {
       : undefined;
   }
 
+  private async buildInspectSiteStep(
+    projectProfessionalId: string,
+  ): Promise<any | null> {
+    const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId,
+        status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
+      },
+      select: { visitScheduledAt: true, visitScheduledFor: true },
+      orderBy: { respondedAt: 'desc' },
+    });
+    if (!approvedAccess) return null;
+    const visitDateTime = approvedAccess.visitScheduledAt || approvedAccess.visitScheduledFor;
+    const timeLabel = visitDateTime
+      ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : null;
+    const dateLabel = visitDateTime
+      ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+      : 'site';
+    const label = timeLabel
+      ? `Visit site at ${timeLabel} on ${dateLabel}`
+      : `Visit site on ${dateLabel}`;
+    return createSyntheticPrimaryStep(
+      'INSPECT_SITE',
+      label,
+      true,
+      'PROFESSIONAL',
+      ProjectStage.BIDDING_ACTIVE,
+      'Address access granted. View details on the Site Access tab.',
+    );
+  }
+
   private async getProfessionalWalletTransferPrerequisiteStatus(
     projectId: string,
   ): Promise<'not_required' | 'pending' | 'completed' | 'skipped'> {
@@ -343,88 +375,96 @@ export class NextStepService {
       availableConfigSteps = biddingActiveSteps;
     }
 
+    // ── Professional bidding-phase steps (before award) ──
     if (
       role === 'PROFESSIONAL' &&
       isProfessional &&
-      isProfessional.status === 'quoted' &&
       project.status !== 'awarded'
     ) {
-      availableConfigSteps = [
-        createSyntheticPrimaryStep(
-          'WAIT_FOR_CLIENT_DECISION',
-          'Wait for client review and decision',
+      // Remove DB-seeded steps we'll replace with synthetic equivalents
+      availableConfigSteps = availableConfigSteps.filter(
+        (s) => !['REQUEST_SITE_ACCESS', 'INSPECT_SITE', 'SUBMIT_QUOTE', 'REPLY_TO_INVITATION'].includes(s.actionKey),
+      );
+
+      const inspectionDate = (project as any).siteInspectionAvailableOn;
+
+      // ── Quoted pros: waiting for client decision ──
+      if (isProfessional.status === 'quoted') {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'WAIT_FOR_CLIENT_DECISION',
+            'Wait for client review and decision',
+            false,
+            role,
+            effectiveStage,
+            'Your quote has been submitted. No action is needed from you until the client responds.',
+          ),
+        ];
+        // If address is visible, add INSPECT_SITE as elective
+        if (isProfessional.addressVisible && !isProfessional.siteVisitedAt) {
+          const step = await this.buildInspectSiteStep(isProfessional.id);
+          if (step) {
+            availableConfigSteps.push({ ...step, isPrimary: false, isElective: true } as any);
+          }
+        }
+      } else {
+
+      // ── Accepted pros (not yet quoted): 2-step flow ──
+      // Step 1: Site inspection (if client set a date)
+      // Step 2: Submit quote / Decline
+
+      const quoteStep = {
+        ...createSyntheticPrimaryStep(
+          'SUBMIT_QUOTE',
+          'Submit quote',
+          true,
+          role,
+          effectiveStage,
+          'Submit your quotation for this project.',
+        ),
+        isPrimary: true,
+        displayOrder: 10,
+      } as any;
+
+      const declineStep = {
+        ...createSyntheticPrimaryStep(
+          'DECLINE_PROJECT',
+          'Decline project',
           false,
           role,
           effectiveStage,
-          'Your quote has been submitted. No action is needed from you until the client responds.',
+          'Decline this project invitation.',
         ),
-      ];
-    }
+        isPrimary: false,
+        isElective: true,
+        displayOrder: 20,
+      } as any;
 
-    // ── Site access steps for all bidding-phase professionals ──
-    if (
-      role === 'PROFESSIONAL' &&
-      isProfessional &&
-      project.status !== 'awarded'
-    ) {
-      // Remove DB-seeded REQUEST_SITE_ACCESS — will be replaced by synthetic equivalents
-      availableConfigSteps = availableConfigSteps.filter(
-        (s) => s.actionKey !== 'REQUEST_SITE_ACCESS',
-      );
-      // If address is already visible, surface INSPECT_SITE as primary
+      // If address is already visible — INSPECT_SITE first
       if (
         isProfessional.addressVisible === true &&
         !isProfessional.siteVisitedAt
       ) {
-        const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
-          where: {
-            projectProfessionalId: isProfessional.id,
-            status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
-          },
-          select: { visitScheduledAt: true, visitScheduledFor: true },
-          orderBy: { respondedAt: 'desc' },
-        });
-        const visitDateTime = approvedAccess?.visitScheduledAt || approvedAccess?.visitScheduledFor;
-        const timeLabel = visitDateTime
-          ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
-          : null;
-        const dateLabel = visitDateTime
-          ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
-          : 'site';
-        const inspectLabel = timeLabel
-          ? `Visit site at ${timeLabel} on ${dateLabel}`
-          : `Visit site on ${dateLabel}`;
-        availableConfigSteps = [
-          createSyntheticPrimaryStep(
-            'INSPECT_SITE',
-            inspectLabel,
-            true,
-            role,
-            effectiveStage,
-            'Address access granted. View details on the Site Access tab.',
-          ),
-          ...availableConfigSteps.filter(
-            (s) => !['INSPECT_SITE', 'REQUEST_SITE_ACCESS'].includes(s.actionKey),
-          ),
-        ];
+        const inspectStep = await this.buildInspectSiteStep(isProfessional.id);
+        if (inspectStep) {
+          availableConfigSteps = [
+            { ...inspectStep, isPrimary: true },
+            quoteStep,
+            declineStep,
+          ];
+        } else {
+          availableConfigSteps = [quoteStep, declineStep];
+        }
       }
-
-      // Otherwise, if client set an inspection date, surface REQUEST_SITE_ACCESS or AWAIT
-      const inspectionDate = (project as any).siteInspectionAvailableOn;
-      if (inspectionDate && !isProfessional.addressVisible) {
+      // If client set inspection date and pro hasn't been approved yet
+      else if (inspectionDate) {
         const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
           where: {
             projectProfessionalId: isProfessional.id,
             status: { notIn: ['cancelled', 'denied'] },
           },
-          select: {
-            id: true,
-            status: true,
-            visitDetails: true,
-          },
-          orderBy: {
-            requestedAt: 'desc',
-          },
+          select: { id: true, status: true, visitDetails: true },
+          orderBy: { requestedAt: 'desc' },
         });
 
         const latestStatus = (latestAccessRequest?.status || '').toLowerCase();
@@ -433,7 +473,8 @@ export class NextStepService {
         );
 
         if (latestStatus === 'pending') {
-          availableConfigSteps.push({
+          // Awaiting approval — can't do anything yet, but quote is available
+          const awaitStep = {
             ...createSyntheticPrimaryStep(
               'AWAIT_SITE_ACCESS_APPROVAL',
               'Await approval of site inspection',
@@ -442,34 +483,41 @@ export class NextStepService {
               effectiveStage,
               'Your site inspection request has been submitted. The client will review and respond shortly.',
             ),
-            isPrimary: false,
-            isElective: true,
-            displayOrder: 2,
-          } as any);
+            isPrimary: true,
+            isElective: false,
+            displayOrder: 0,
+          } as any;
+          availableConfigSteps = [awaitStep, quoteStep, declineStep];
         } else if (
           !['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(latestStatus) ||
           rescheduleRequired
         ) {
+          // Need to request
           const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+            weekday: 'short', day: '2-digit', month: 'short',
           });
-          availableConfigSteps.push({
+          const bookStep = {
             ...createSyntheticPrimaryStep(
               'REQUEST_SITE_ACCESS',
-              'Request site inspection',
-              false,
+              `Book site inspection — ${inspectionLabel}`,
+              true,
               role,
               effectiveStage,
-              `The client has made the site available for inspection on ${inspectionLabel}. Request a visit to get a clearer picture before the client makes their decision.`,
+              `The client has made the site available on ${inspectionLabel}. Book a visit or skip to quote.`,
             ),
-            isPrimary: false,
-            isElective: true,
-            displayOrder: 2,
-          } as any);
+            isPrimary: true,
+            displayOrder: 0,
+          } as any;
+          availableConfigSteps = [bookStep, quoteStep, declineStep];
+        } else {
+          availableConfigSteps = [quoteStep, declineStep];
         }
       }
+      // No inspection date — straight to quote
+      else {
+        availableConfigSteps = [quoteStep, declineStep];
+      }
+      } // end accepted-pros flow
     }
 
     if (role === 'CLIENT') {

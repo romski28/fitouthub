@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-06-22-0f83c8a7",
+    "date": "2026-06-22T22:29:51+08:00",
+    "title": "2-step flow: Book site inspection or Submit quote, with Decline project modal + quick reasons",
+    "summary": "2-step flow: Book site inspection or Submit quote, with Decline project modal + quick reasons",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0f83c8a7",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/decline-project-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/context/next-step-modal-context.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-f4c9d55f",
     "date": "2026-06-22T22:10:47+08:00",
     "title": "Fix: move INSPECT_SITE & REQUEST_SITE_ACCESS logic outside status===quoted block so all bidding pros see dynamic labels",
