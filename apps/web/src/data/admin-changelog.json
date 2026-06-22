@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-22-5c40e48e",
+    "date": "2026-06-22T22:32:51+08:00",
+    "title": "Fix duplicate SUBMIT_QUOTE in professional-workflow tab map",
+    "summary": "Fix duplicate SUBMIT_QUOTE in professional-workflow tab map",
+    "areas": [
+      "web"
+    ],
+    "commit": "5c40e48e",
+    "files": [
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-06-22-0f83c8a7",
     "date": "2026-06-22T22:29:51+08:00",
     "title": "2-step flow: Book site inspection or Submit quote, with Decline project modal + quick reasons",
