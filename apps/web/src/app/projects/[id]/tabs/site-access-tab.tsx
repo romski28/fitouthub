@@ -305,6 +305,14 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
       );
     }).sort((a, b) => toRequestTime(a) - toRequestTime(b));
   }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
+  const skippedAccessRequests = useMemo(() => {
+    return latestAccessRequestsByProfessional.filter((request) => {
+      const status = (request.status || '').toLowerCase();
+      return status === 'skipped' &&
+        !professionalsWithPendingVisits.has(request.professional.id) &&
+        !professionalsWithAcceptedVisits.has(request.professional.id);
+    });
+  }, [latestAccessRequestsByProfessional, professionalsWithPendingVisits, professionalsWithAcceptedVisits]);
   const visibleOtherVisits = useMemo(() => {
     return otherVisits.filter((visit) => {
       if (!isRescheduleRequired(visit.responseNotes)) {
@@ -446,8 +454,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               visit.professional.businessName ||
               visit.professional.email ||
               'Contractor';
-            const isJustAccepted = acceptedVisitId === visit.id;
-            const isSubmitting = submittingSiteVisit === visit.id;
             return (
               <div
                 key={visit.id}
@@ -457,24 +463,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-sm font-semibold text-slate-900">{name}</p>
                   <p className="text-xs text-slate-600">will visit at {formatDateTime(visit.proposedAt)}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!hasBasicLocation || isSubmitting) return;
-                    setAcceptedVisitId(visit.id);
-                    try {
-                      await onRespondToVisit(visit.id, 'accepted');
-                      setTimeout(() => setAcceptedVisitId(null), 1800);
-                    } catch {
-                      setAcceptedVisitId(null);
-                    }
-                  }}
-                  disabled={isSubmitting || !hasBasicLocation}
-                  title={!hasBasicLocation ? 'Complete your address details first' : 'Confirm this visit'}
-                  className={`min-w-[70px] rounded-lg bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
-                >
-                  {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
-                </button>
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                  Proposed
+                </span>
               </div>
             );
           })}
@@ -485,8 +476,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               request.professional.businessName ||
               request.professional.email ||
               'Contractor';
-            const isSubmitting = submittingSiteAccess === request.id;
-            const isJustAccepted = acceptedRequestId === request.id;
             const proposedVisitLabel = request.visitScheduledAt
               ? `wants to visit ${formatDateTime(request.visitScheduledAt)}`
               : request.visitScheduledFor
@@ -501,24 +490,9 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-sm font-semibold text-slate-900">{name}</p>
                   <p className="text-xs text-slate-600">{proposedVisitLabel}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!hasBasicLocation || isSubmitting) return;
-                    setAcceptedRequestId(request.id);
-                    try {
-                      await onRespondToRequest(request.id, { status: 'approved_no_visit' });
-                      setTimeout(() => setAcceptedRequestId(null), 1800);
-                    } catch {
-                      setAcceptedRequestId(null);
-                    }
-                  }}
-                  disabled={isSubmitting || !hasBasicLocation}
-                  title={!hasBasicLocation ? 'Complete your address details first' : 'Approve this request'}
-                  className={`min-w-[70px] rounded-lg bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50 ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}
-                >
-                  {isSubmitting ? 'Saving...' : isJustAccepted ? 'Accepted' : 'Accept'}
-                </button>
+                <span className="rounded-full border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                  Requested
+                </span>
               </div>
             );
           })}
@@ -552,6 +526,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               request.professional.email ||
               'Contractor';
             const rescheduleRequired = isRescheduleRequired(request.visitDetails);
+            const status = (request.status || '').toLowerCase();
+            const isVisited = status === 'visited';
             const bookedLabel = rescheduleRequired
               ? `Reschedule required - new availability ${formatDate(siteAvailabilityDate)}`
               : request.visitScheduledAt
@@ -559,7 +535,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
               : request.visitScheduledFor
               ? formatBookedSlot(request.visitScheduledFor)
               : 'Access approved';
-            const isJustAccepted = acceptedRequestId === request.id;
             return (
               <div
                 key={`approved-${request.id}`}
@@ -569,8 +544,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                   <p className="text-sm font-semibold text-slate-900">{name}</p>
                   <p className="text-xs text-slate-600">{bookedLabel}</p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${rescheduleRequired ? 'bg-[rgba(194,110,37,0.9)]' : 'bg-[rgba(215,107,78,0.92)]'} ${isJustAccepted ? 'animate-thumbs-wiggle' : ''}`}>
-                  {rescheduleRequired ? 'Reschedule' : 'Booked'}
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${rescheduleRequired ? 'border border-amber-300 bg-amber-50 text-amber-700' : isVisited ? 'border border-slate-300 bg-slate-50 text-slate-600' : 'border border-emerald-300 bg-emerald-50 text-emerald-700'}`}>
+                  {rescheduleRequired ? 'Reschedule' : isVisited ? 'Visited' : 'Approved'}
                 </span>
               </div>
             );
@@ -598,6 +573,28 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
                 </div>
                 <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${rescheduleRequired ? 'border-[rgba(194,110,37,0.35)] bg-[rgba(255,239,218,0.85)] text-[rgba(144,86,30,0.95)]' : 'border-[rgba(120,53,15,0.22)] bg-[rgba(245,238,219,0.92)] text-slate-700 capitalize'}`}>
                   {rescheduleRequired ? 'Reschedule' : visit.status}
+                </span>
+              </div>
+            );
+          })}
+
+          {skippedAccessRequests.map((request) => {
+            const name =
+              request.professional.fullName ||
+              request.professional.businessName ||
+              request.professional.email ||
+              'Contractor';
+            return (
+              <div
+                key={`skipped-${request.id}`}
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-600">Skipped site inspection</p>
+                </div>
+                <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                  Skipped
                 </span>
               </div>
             );

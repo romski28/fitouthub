@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-4b50da1c",
+    "date": "2026-06-23T18:42:25+08:00",
+    "title": "Replace accept/decline buttons with status badges (Requested/Approved/Visited/Skipped) in client site-access tab",
+    "summary": "Replace accept/decline buttons with status badges (Requested/Approved/Visited/Skipped) in client site-access tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "4b50da1c",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-465d09c8",
     "date": "2026-06-23T18:32:09+08:00",
     "title": "Remove Your Address and Building Information forms from client site-access tab (-361 lines)",
