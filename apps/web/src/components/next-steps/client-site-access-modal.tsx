@@ -65,21 +65,31 @@ interface ClientSiteAccessModalProps {
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDayDate = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short", timeZone: "Asia/Hong_Kong" });
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  return hkt.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", timeZone: "UTC" });
 };
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Hong_Kong" });
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  return hkt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 };
 
 const formatDateTime = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleString("en-HK", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", hour12: false,
-    timeZone: "Asia/Hong_Kong",
-  });
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  const h = hkt.getUTCHours();
+  const m = String(hkt.getUTCMinutes()).padStart(2, "0");
+  const day = hkt.getUTCDate();
+  const month = hkt.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+  const year = hkt.getUTCFullYear();
+  return `${String(day).padStart(2, "0")} ${month} ${year}, ${String(h).padStart(2, "0")}:${m}`;
 };
 
 const formatTime = (iso?: string | null) => {
@@ -94,7 +104,12 @@ const formatTime12h = (iso?: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Hong_Kong" });
+  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  const h = hkt.getUTCHours();
+  const m = String(hkt.getUTCMinutes()).padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 };
 
 const formatBookedSlot = (iso?: string | null) => {

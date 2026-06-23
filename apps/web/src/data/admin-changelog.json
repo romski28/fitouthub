@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-68866a47",
+    "date": "2026-06-23T10:59:06+08:00",
+    "title": "Fix timezone: use manual UTC+8 offset instead of toLocaleTimeString timeZone option",
+    "summary": "Fix timezone: use manual UTC+8 offset instead of toLocaleTimeString timeZone option",
+    "areas": [
+      "web"
+    ],
+    "commit": "68866a47",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-b3c89c84",
     "date": "2026-06-23T10:54:45+08:00",
     "title": "Switch date/time locale from en-GB to en-HK to match backend formatting",
