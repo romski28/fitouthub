@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-daf12d8b",
+    "date": "2026-06-23T10:04:31+08:00",
+    "title": "Restore InspectSiteModal with Google Maps embed + QR placeholder, re-enable INSPECT_SITE dispatcher",
+    "summary": "Restore InspectSiteModal with Google Maps embed + QR placeholder, re-enable INSPECT_SITE dispatcher",
+    "areas": [
+      "web"
+    ],
+    "commit": "daf12d8b",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-9b11563a",
     "date": "2026-06-23T00:17:47+08:00",
     "title": "Add backfill SQL to promote pending pros with addressVisible to accepted",

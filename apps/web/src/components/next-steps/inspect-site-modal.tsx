@@ -192,6 +192,27 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                 </div>
               </div>
 
+              {/* Google Maps Embed */}
+              {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+                <div>
+                  <div className="overflow-hidden rounded-lg border border-[#D4C8A0]">
+                    <iframe
+                      title="Site location"
+                      width="100%"
+                      height="200"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
+                        [address.buildingName, address.unitNumber, address.addressFull, address.district, "Hong Kong"]
+                          .filter(Boolean)
+                          .join(", ")
+                      )}`}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Access details */}
               {address.accessDetails && (
                 <div>
@@ -225,7 +246,7 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                 </div>
               </div>
 
-              {/* Visit notes + Mark as visited */}
+              {/* Visit notes + actions */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📝 Visit Notes</h3>
                 <textarea
@@ -235,14 +256,23 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                   placeholder="Measurements taken, discussed materials, site conditions..."
                   className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                 />
-                <button
-                  type="button"
-                  onClick={handleMarkVisited}
-                  disabled={markingVisited}
-                  className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                >
-                  {markingVisited ? "Recording..." : "✅ Mark as Visited"}
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => toast("QR check-in coming soon", { icon: "🆔" })}
+                    className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
+                  >
+                    🆔 QR Check-in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleMarkVisited}
+                    disabled={markingVisited}
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                  >
+                    {markingVisited ? "Recording..." : "✅ Mark as Visited"}
+                  </button>
+                </div>
               </div>
             </>
           )}

@@ -396,6 +396,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'progress-report';
   }
 
+  if (actionKey === 'INSPECT_SITE') {
+    return 'inspect-site';
+  }
+
   if (actionKey === 'DECLINE_PROJECT') {
     return 'decline-project';
   }
