@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-38e23b00",
+    "date": "2026-06-23T11:06:39+08:00",
+    "title": "Replace Intl date formatting with manual UTC+8 math for guaranteed HKT times",
+    "summary": "Replace Intl date formatting with manual UTC+8 math for guaranteed HKT times",
+    "areas": [
+      "web"
+    ],
+    "commit": "38e23b00",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-4b4deb94",
     "date": "2026-06-23T11:00:30+08:00",
     "title": "Match backend time formatting exactly: en-HK locale, no timeZone parameter",

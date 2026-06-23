@@ -63,43 +63,57 @@ interface ClientSiteAccessModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+const HK_OFFSET = 8 * 60 * 60 * 1000;
+
+const toHKT = (iso?: string | null): Date | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getTime() + HK_OFFSET);
+};
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
 const formatDayDate = (iso?: string | null) => {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short" });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  return `${DAYS[hkt.getUTCDay()]} ${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]}`;
 };
 
 const formatDate = (iso?: string | null) => {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}`;
 };
 
 const formatDateTime = (iso?: string | null) => {
-  if (!iso) return "";
-  return new Date(iso).toLocaleString("en-HK", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", hour12: false,
-  });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  const h = hkt.getUTCHours();
+  const m = pad2(hkt.getUTCMinutes());
+  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}, ${pad2(h)}:${m}`;
 };
 
 const formatTime = (iso?: string | null) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  return `${pad2(hkt.getUTCHours())}:${pad2(hkt.getUTCMinutes())}`;
 };
 
 const formatTime12h = (iso?: string | null) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  const h = hkt.getUTCHours();
+  const m = pad2(hkt.getUTCMinutes());
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 };
 
 const formatBookedSlot = (iso?: string | null) => {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
   return `${formatDate(iso)} at ${formatTime(iso)}`;
 };
 

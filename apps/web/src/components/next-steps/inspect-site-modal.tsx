@@ -31,16 +31,34 @@ interface InspectSiteModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+const HK_OFFSET = 8 * 60 * 60 * 1000; // UTC+8
+
+const toHKT = (iso?: string | null): Date | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getTime() + HK_OFFSET);
+};
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
 const formatDate = (iso?: string | null) => {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}`;
 };
 
 const formatTime = (iso?: string | null) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const hkt = toHKT(iso);
+  if (!hkt) return "";
+  const h = hkt.getUTCHours();
+  const m = pad2(hkt.getUTCMinutes());
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 };
 
 // ── Component ────────────────────────────────────────────────────
