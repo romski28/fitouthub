@@ -177,7 +177,19 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   };
 
   const address = status?.siteAccessData;
-  const visitLabel = status?.formattedVisitTime || null;
+  const visitLabel = status?.formattedVisitTime
+    || (status?.visitScheduledAt
+      ? new Date(status.visitScheduledAt).toLocaleString("en-HK", {
+          weekday: "short", day: "2-digit", month: "short",
+          hour: "2-digit", minute: "2-digit", hour12: true,
+          timeZone: "Asia/Hong_Kong",
+        })
+      : status?.visitScheduledFor
+      ? new Date(status.visitScheduledFor).toLocaleDateString("en-HK", {
+          weekday: "short", day: "2-digit", month: "short",
+          timeZone: "Asia/Hong_Kong",
+        })
+      : null);
 
   if (!isOpen) return null;
 

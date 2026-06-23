@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-32ebb1e8",
+    "date": "2026-06-23T11:14:54+08:00",
+    "title": "Add client-side fallback for visitLabel when formattedVisitTime not yet available from API",
+    "summary": "Add client-side fallback for visitLabel when formattedVisitTime not yet available from API",
+    "areas": [
+      "web"
+    ],
+    "commit": "32ebb1e8",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-cdc8ebe9",
     "date": "2026-06-23T11:10:47+08:00",
     "title": "Server-side time formatting: API returns formattedVisitTime, frontend displays it directly with no timezone math",
