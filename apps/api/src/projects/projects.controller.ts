@@ -2026,6 +2026,7 @@ export class ProjectsController {
   async generateSiteStartToken(
     @Param('id') projectId: string,
     @Request() req: any,
+    @Body() body?: { purpose?: string },
   ) {
     const isProfessional =
       Boolean(req.user?.isProfessional) ||
@@ -2041,7 +2042,7 @@ export class ProjectsController {
     }
 
     try {
-      return await this.projectsService.generateSiteStartToken(projectId, professionalUserId);
+      return await this.projectsService.generateSiteStartToken(projectId, professionalUserId, body?.purpose);
     } catch (error: any) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }

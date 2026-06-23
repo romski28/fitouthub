@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/config/api";
 import { fetchWithRetry } from "@/lib/http";
 import { useProfessionalAuth } from "@/context/professional-auth-context";
 import { useNextStepModal } from "@/context/next-step-modal-context";
+import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
 
 // ── Types ────────────────────────────────────────────────────────
@@ -32,14 +33,14 @@ interface InspectSiteModalProps {
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Hong_Kong" });
 };
 
 const formatTime = (iso?: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Hong_Kong" });
 };
 
 // ── Component ────────────────────────────────────────────────────
@@ -59,6 +60,13 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   // Visit notes + mark visited
   const [visitNotes, setVisitNotes] = useState("");
   const [markingVisited, setMarkingVisited] = useState(false);
+
+  // QR check-in
+  const [showQR, setShowQR] = useState(false);
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [generatingQr, setGeneratingQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(0);
 
   // ── Fetch site access status ───────────────────────────────────
   const fetchStatus = useCallback(async () => {
@@ -134,6 +142,50 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
     } finally {
       setMarkingVisited(false);
     }
+  };
+
+  // ── QR generation ──────────────────────────────────────────────
+  const generateQr = async () => {
+    if (generatingQr || !projectId || !accessToken) return;
+    setGeneratingQr(true);
+    setQrError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-start/generate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "site_inspection" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to generate QR");
+      }
+      const { token } = await res.json();
+      setQrToken(token);
+      setShowQR(true);
+      setQrSecondsLeft(15 * 60); // 15 min
+    } catch (err: any) {
+      setQrError(err.message || "Failed to generate QR");
+    } finally {
+      setGeneratingQr(false);
+    }
+  };
+
+  // QR countdown
+  useEffect(() => {
+    if (!qrToken || !showQR) return;
+    const id = setInterval(() => {
+      setQrSecondsLeft((prev) => {
+        if (prev <= 1) { setQrToken(null); setShowQR(false); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [qrToken, showQR]);
+
+  const formatCountdown = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
   };
 
   const address = status?.siteAccessData;
@@ -257,13 +309,27 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                   className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                 />
                 <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => toast("QR check-in coming soon", { icon: "🆔" })}
-                    className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
-                  >
-                    🆔 QR Check-in
-                  </button>
+                  {!showQR ? (
+                    <button
+                      type="button"
+                      onClick={generateQr}
+                      disabled={generatingQr}
+                      className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+                    >
+                      {generatingQr ? "Generating..." : "🆔 QR Check-in"}
+                    </button>
+                  ) : (
+                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-3 text-center">
+                      <p className="text-xs text-slate-500 mb-2">Have the client scan this QR</p>
+                      <div className="flex justify-center mb-1">
+                        <QRCodeSVG value={qrToken || ""} size={120} />
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Expires in {formatCountdown(qrSecondsLeft)}
+                      </p>
+                      {qrError && <p className="text-xs text-red-500 mt-1">{qrError}</p>}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={handleMarkVisited}

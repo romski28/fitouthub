@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-23-1eabff2d",
+    "date": "2026-06-23T10:34:01+08:00",
+    "title": "Fix HKT timezone in modals, add inline QR check-in with purpose param, reuse site-start QR system",
+    "summary": "Fix HKT timezone in modals, add inline QR check-in with purpose param, reuse site-start QR system",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1eabff2d",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-daf12d8b",
     "date": "2026-06-23T10:04:31+08:00",
     "title": "Restore InspectSiteModal with Google Maps embed + QR placeholder, re-enable INSPECT_SITE dispatcher",

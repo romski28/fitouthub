@@ -10518,6 +10518,7 @@ Please review the project details and respond with your quote or decline the inv
   async generateSiteStartToken(
     projectId: string,
     professionalUserId: string,
+    purpose: string = 'site_start',
   ): Promise<{ token: string; expiresAt: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -10534,14 +10535,16 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Project not found');
     }
 
-    if (project.siteStartedAt) {
-      throw new BadRequestException('Project has already been started on site');
-    }
+    // Only enforce site-start checks for site_start purpose
+    if (purpose === 'site_start') {
+      if (project.siteStartedAt) {
+        throw new BadRequestException('Project has already been started on site');
+      }
 
-    // Verify the caller is the awarded professional
-    const awardedUserId = (project.awardedProjectProfessional as any)?.professional?.userId;
-    if (awardedUserId && awardedUserId !== professionalUserId) {
-      throw new BadRequestException('Only the awarded professional can generate the site start QR');
+      const awardedUserId = (project.awardedProjectProfessional as any)?.professional?.userId;
+      if (awardedUserId && awardedUserId !== professionalUserId) {
+        throw new BadRequestException('Only the awarded professional can generate the site start QR');
+      }
     }
 
     const secret = process.env.JWT_SECRET || 'your-secret-key';
@@ -10549,7 +10552,7 @@ Please review the project details and respond with your quote or decline the inv
     const payload = {
       projectId,
       generatedByUserId: professionalUserId,
-      purpose: 'site_start',
+      purpose,
     };
 
     const token = jwt.sign(payload, secret, { expiresIn: expiresInSeconds });
