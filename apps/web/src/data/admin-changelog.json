@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-5138c587",
+    "date": "2026-06-23T12:45:31+08:00",
+    "title": "Fix: accept site_inspection QR purpose, record visit attendance on scan",
+    "summary": "Fix: accept site_inspection QR purpose, record visit attendance on scan",
+    "areas": [
+      "api"
+    ],
+    "commit": "5138c587",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-23-70753111",
     "date": "2026-06-23T12:16:43+08:00",
     "title": "Add server-formatted formattedProposedAt to site-visits, remove manual UTC+8 from client modal",

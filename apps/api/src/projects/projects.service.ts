@@ -10609,13 +10609,64 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
     }
 
-    if (decoded.purpose !== 'site_start') {
+    if (decoded.purpose !== 'site_start' && decoded.purpose !== 'site_inspection') {
       throw new BadRequestException('Invalid QR code');
     }
 
     if (decoded.projectId !== projectId) {
       throw new BadRequestException('QR code does not match this project');
     }
+
+    // ── Site inspection: record attendance on the visit ──
+    if (decoded.purpose === 'site_inspection') {
+      const pro = await this.prisma.professional.findFirst({
+        where: { userId: decoded.generatedByUserId },
+        select: { id: true },
+      });
+      if (!pro) throw new BadRequestException('Professional not found');
+
+      const visit = await this.prisma.siteAccessVisit.findFirst({
+        where: {
+          projectId,
+          professionalId: pro.id,
+          status: 'accepted',
+        },
+        orderBy: { proposedAt: 'desc' },
+      });
+      if (!visit) throw new BadRequestException('No accepted site visit found for this professional');
+
+      await this.prisma.siteAccessVisit.update({
+        where: { id: visit.id },
+        data: {
+          completedAt: new Date(),
+          status: 'completed',
+        },
+      });
+
+      // Also update the site access request and projectProfessional
+      const sar = await this.prisma.siteAccessRequest.findFirst({
+        where: {
+          projectId,
+          professionalId: pro.id,
+          status: 'approved_visit_scheduled',
+        },
+        orderBy: { respondedAt: 'desc' },
+      });
+      if (sar) {
+        await this.prisma.siteAccessRequest.update({
+          where: { id: sar.id },
+          data: { status: 'visited', visitedAt: new Date() },
+        });
+        await this.prisma.projectProfessional.update({
+          where: { id: sar.projectProfessionalId },
+          data: { siteVisitedAt: new Date(), visitApprovedButNotDone: false },
+        });
+      }
+
+      return { siteStartedAt: new Date(), previousStage: 'site_inspection' };
+    }
+
+    // ── Site start (existing flow) ──
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
