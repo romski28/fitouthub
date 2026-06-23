@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-5014f2d4",
+    "date": "2026-06-23T11:34:03+08:00",
+    "title": "Three-tier fallback: formattedVisitTime → visitScheduledAtTs → visitScheduledAt (works now)",
+    "summary": "Three-tier fallback: formattedVisitTime → visitScheduledAtTs → visitScheduledAt (works now)",
+    "areas": [
+      "web"
+    ],
+    "commit": "5014f2d4",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-3f19f134",
     "date": "2026-06-23T11:26:35+08:00",
     "title": "Use numeric timestamp visitScheduledAtTs to avoid JSON Date serialization issues",
