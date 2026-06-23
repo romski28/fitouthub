@@ -7544,6 +7544,14 @@ Please review the project details and respond with your quote or decline the inv
     actorId: string,
     isProfessional: boolean,
   ) {
+    const formatVisitTime = (date: Date | null) =>
+      date
+        ? new Date(date).toLocaleString('en-HK', {
+            weekday: 'short', day: '2-digit', month: 'short',
+            hour: '2-digit', minute: '2-digit', hour12: true,
+          })
+        : null;
+
     if (isProfessional) {
       const projectProfessional = await this.prisma.projectProfessional.findUnique({
         where: {
@@ -7564,7 +7572,13 @@ Please review the project details and respond with your quote or decline the inv
         orderBy: { proposedAt: 'desc' },
       });
 
-      return { success: true, visits };
+      return {
+        success: true,
+        visits: visits.map((v) => ({
+          ...v,
+          formattedProposedAt: formatVisitTime(v.proposedAt),
+        })),
+      };
     }
 
     await this.assertClientProjectAccess(projectId, actorId);
@@ -7574,7 +7588,13 @@ Please review the project details and respond with your quote or decline the inv
       orderBy: { proposedAt: 'desc' },
     });
 
-    return { success: true, visits };
+    return {
+      success: true,
+      visits: visits.map((v) => ({
+        ...v,
+        formattedProposedAt: formatVisitTime(v.proposedAt),
+      })),
+    };
   }
 
   async getSiteAccessStatus(projectId: string, professionalId: string) {

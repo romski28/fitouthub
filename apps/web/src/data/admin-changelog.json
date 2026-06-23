@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-23-70753111",
+    "date": "2026-06-23T12:16:43+08:00",
+    "title": "Add server-formatted formattedProposedAt to site-visits, remove manual UTC+8 from client modal",
+    "summary": "Add server-formatted formattedProposedAt to site-visits, remove manual UTC+8 from client modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "70753111",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-87869835",
     "date": "2026-06-23T12:10:09+08:00",
     "title": "Fix: client-approved visits now created as accepted, not proposed + backfill SQL",

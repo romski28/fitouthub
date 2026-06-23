@@ -52,6 +52,7 @@ interface SiteAccessVisit {
   notes?: string | null;
   completedAt?: string | null;
   respondedAt?: string | null;
+  formattedProposedAt?: string | null;
   professional: {
     id: string;
     fullName?: string;
@@ -65,58 +66,32 @@ interface ClientSiteAccessModalProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-const HK_OFFSET = 8 * 60 * 60 * 1000;
-
-const toHKT = (iso?: string | null): Date | null => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Date(d.getTime() + HK_OFFSET);
-};
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
 const formatDayDate = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  return `${DAYS[hkt.getUTCDay()]} ${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]}`;
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short" });
 };
 
 const formatDate = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}`;
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const formatDateTime = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  const h = hkt.getUTCHours();
-  const m = pad2(hkt.getUTCMinutes());
-  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}, ${pad2(h)}:${m}`;
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("en-HK", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
 };
 
 const formatTime = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  return `${pad2(hkt.getUTCHours())}:${pad2(hkt.getUTCMinutes())}`;
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit" });
 };
 
 const formatTime12h = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  const h = hkt.getUTCHours();
-  const m = pad2(hkt.getUTCMinutes());
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m} ${ampm}`;
-};
-
-const formatBookedSlot = (iso?: string | null) => {
   if (!iso) return "";
-  return `${formatDate(iso)} at ${formatTime(iso)}`;
+  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
 };
 
 const proName = (p: { fullName?: string; businessName?: string }) =>
@@ -611,7 +586,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-800 truncate">{proName(v.professional)}</p>
                             <p className="text-xs text-slate-500">
-                              {formatBookedSlot(v.proposedAt)}
+                              {v.formattedProposedAt || formatDateTime(v.proposedAt)}
                             </p>
                             {v.notes && <p className="text-xs text-slate-600 mt-0.5">{v.notes}</p>}
                           </div>
@@ -643,7 +618,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                               {proName(v.professional)}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {formatBookedSlot(v.proposedAt)}
+                              {v.formattedProposedAt || formatDateTime(v.proposedAt)}
                             </p>
                           </div>
                           <button
