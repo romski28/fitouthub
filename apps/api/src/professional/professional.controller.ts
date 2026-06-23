@@ -1328,6 +1328,7 @@ export class ProfessionalController {
               budget: true,
               notes: true,
               tradesRequired: true,
+              endDate: true,
             },
           },
         },
@@ -1351,6 +1352,7 @@ export class ProfessionalController {
             region: '',
             budget: undefined,
             notes: pp.project?.notes,
+            endDate: pp.project?.endDate,
           },
         };
       });

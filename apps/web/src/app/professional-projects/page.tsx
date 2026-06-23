@@ -41,6 +41,7 @@ interface ProjectProfessional {
     budget?: string;
     notes?: string;
     isEmergency?: boolean;
+    endDate?: string;
   };
   status: string;
   accessRestricted?: boolean;
@@ -557,11 +558,11 @@ export default function ProfessionalProjectsPage() {
                           </div>
                         </div>
                         {/* Project scope/notes */}
-                        {(projectProf.project.notes || (projectProf.project as any).endDate) && (
+                        {(projectProf.project.notes || projectProf.project.endDate) && (
                           <p className={`text-xs leading-relaxed line-clamp-2 ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
                             {projectProf.project.notes}
-                            {(projectProf.project as any).endDate && (
-                              <> {projectProf.project.notes ? '· ' : ''}Proposed completion {new Date((projectProf.project as any).endDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })}</>
+                            {projectProf.project.endDate && (
+                              <> {projectProf.project.notes ? '· ' : ''}Proposed completion {new Date(projectProf.project.endDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })}</>
                             )}
                           </p>
                         )}

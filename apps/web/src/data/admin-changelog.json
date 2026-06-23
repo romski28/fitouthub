@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-23-9f7015a4",
+    "date": "2026-06-23T17:39:44+08:00",
+    "title": "Add endDate to professional projects API response + frontend type, show proposed completion date on card",
+    "summary": "Add endDate to professional projects API response + frontend type, show proposed completion date on card",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9f7015a4",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-b2013af7",
     "date": "2026-06-23T17:26:40+08:00",
     "title": "Remove Tentatively accept, move trade chips next to sentiment badge, add proposed completion date",
