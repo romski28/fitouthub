@@ -179,16 +179,12 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   const address = status?.siteAccessData;
   const visitLabel = status?.formattedVisitTime
     || (status?.visitScheduledAt
-      ? new Date(status.visitScheduledAt).toLocaleString("en-HK", {
-          weekday: "short", day: "2-digit", month: "short",
-          hour: "2-digit", minute: "2-digit", hour12: true,
-          timeZone: "Asia/Hong_Kong",
-        })
-      : status?.visitScheduledFor
-      ? new Date(status.visitScheduledFor).toLocaleDateString("en-HK", {
-          weekday: "short", day: "2-digit", month: "short",
-          timeZone: "Asia/Hong_Kong",
-        })
+      ? (() => {
+          const d = new Date(status.visitScheduledAt);
+          const time = d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
+          const date = d.toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short" });
+          return `${time} on ${date}`;
+        })()
       : null);
 
   if (!isOpen) return null;

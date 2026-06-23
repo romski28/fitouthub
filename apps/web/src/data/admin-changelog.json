@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-fa3da2a3",
+    "date": "2026-06-23T11:21:02+08:00",
+    "title": "Match backend formatting exactly in fallback: toLocaleTimeString en-HK, no timeZone",
+    "summary": "Match backend formatting exactly in fallback: toLocaleTimeString en-HK, no timeZone",
+    "areas": [
+      "web"
+    ],
+    "commit": "fa3da2a3",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-32ebb1e8",
     "date": "2026-06-23T11:14:54+08:00",
     "title": "Add client-side fallback for visitLabel when formattedVisitTime not yet available from API",
