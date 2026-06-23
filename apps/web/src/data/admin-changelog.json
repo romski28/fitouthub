@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-d43e65d4",
+    "date": "2026-06-23T13:59:06+08:00",
+    "title": "Consolidate pro site-access tab into 2 unified panels with consistent Mimo styling",
+    "summary": "Consolidate pro site-access tab into 2 unified panels with consistent Mimo styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "d43e65d4",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-1988a380",
     "date": "2026-06-23T13:53:56+08:00",
     "title": "Add timeZone Asia/Hong_Kong to all server-side formatted time fields",

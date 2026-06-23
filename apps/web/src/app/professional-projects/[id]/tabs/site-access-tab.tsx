@@ -200,97 +200,89 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
             <p className="text-sm text-slate-600">No site access data</p>
           ) : (
             <div className="space-y-3">
-              {offeredInspectionDate && (
-                <div className="rounded-2xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
-                  Site inspection date available: <span className="font-semibold">{formatInspectionDate(offeredInspectionDate)}</span>
-                </div>
-              )}
+              {/* ── Panel 1: Status + Address ─────────────────── */}
+              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
+                  {offeredInspectionDate && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Inspection Date</p>
+                      <p className="mt-1 font-semibold text-slate-900">{formatInspectionDate(offeredInspectionDate)}</p>
+                    </div>
+                  )}
 
-              {showPendingReadOnlyPanel && (
-                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                  Awaiting client approval
-                  {siteAccessStatus.formattedScheduledSlot && (
-                    <> at <span className="font-semibold text-amber-900">{siteAccessStatus.formattedScheduledSlot}</span>.</>
+                  {showPendingReadOnlyPanel && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 text-slate-700">
+                        Awaiting client approval
+                        {siteAccessStatus.formattedScheduledSlot && (
+                          <> — <span className="font-semibold">{siteAccessStatus.formattedScheduledSlot}</span></>
+                        )}
+                      </p>
+                    </div>
+                  )}
+
+                  {isBooked && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 font-semibold text-emerald-700">
+                        ✅ Inspection booked
+                        {siteAccessStatus.formattedScheduledSlot && ` — ${siteAccessStatus.formattedScheduledSlot}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {backendRescheduleRequired && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 text-amber-700">The client requested a reschedule. Please select a new slot.</p>
+                    </div>
+                  )}
+
+                  {/* SITE ADDRESS at bottom of panel */}
+                  {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
+                    <>
+                      <hr className="border-[rgba(120,53,15,0.14)]" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Site Address</p>
+                        <p className="mt-1 font-medium text-slate-900">
+                          {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
+                            .filter(Boolean)
+                            .join('/')
+                            .concat(
+                              [siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel].some(Boolean)
+                                ? ` ${siteAccessStatus.siteAccessData.addressFull}`
+                                : siteAccessStatus.siteAccessData.addressFull,
+                            )}
+                        </p>
+                        {siteAccessStatus.siteAccessData.postalCode?.trim() && (
+                          <p className="text-slate-600 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
+                        )}
+                      </div>
+                      {siteAccessStatus.siteAccessData.accessDetails && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Access Details</p>
+                          <p className="text-slate-700">{siteAccessStatus.siteAccessData.accessDetails}</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
 
-              {showPendingReadOnlyPanel && offeredInspectionDate && (
-                <div className="space-y-2 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
-                  <p className="text-sm font-semibold text-slate-900">Selected inspection slot</p>
-                  <p className="text-xs text-slate-600">Slot picker is read-only while the client reviews your request.</p>
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-1 text-slate-700">
-                      {formatInspectionDate(offeredInspectionDate)}
-                    </span>
-                    <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-amber-800">
-                      {siteAccessStatus.visitScheduledAt
-                        ? new Date(siteAccessStatus.visitScheduledAt).toLocaleTimeString('en-HK', {
-                            timeZone: 'Asia/Hong_Kong',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          })
-                        : 'Time submitted'}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {backendRescheduleRequired && (
-                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                  The client requested a reschedule. Please select a new slot.
-                </div>
-              )}
-
-              {isBooked && (
-                <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                  Inspection booked
-                  {siteAccessStatus.formattedScheduledSlot
-                    ? ` — ${siteAccessStatus.formattedScheduledSlot}. Don't be late.`
-                    : '.'}
-                </div>
-              )}
-
+              {/* ── Panel 2: Visit completed + Notes ──────────── */}
               {siteAccessStatus.formattedVisitedAt && (
-                <div className="space-y-2">
-                  <div className="rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    ✅ Visit completed on {siteAccessStatus.formattedVisitedAt}
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Completed</p>
+                    <p className="mt-1 text-slate-700">{siteAccessStatus.formattedVisitedAt}</p>
                   </div>
                   {siteAccessStatus.visitDetails && (
-                    <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 text-sm text-slate-700">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Visit Notes</p>
-                      <p className="text-slate-800">{siteAccessStatus.visitDetails}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
-                <div className="grid gap-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm text-slate-700">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">SITE ADDRESS</p>
-                    <p className="mt-2 font-medium text-slate-900">
-                      {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
-                        .filter(Boolean)
-                        .join('/')
-                        .concat(
-                          [siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel].some(Boolean)
-                            ? ` ${siteAccessStatus.siteAccessData.addressFull}`
-                            : siteAccessStatus.siteAccessData.addressFull,
-                        )}
-                    </p>
-                    {siteAccessStatus.siteAccessData.postalCode?.trim() ? (
-                      <p className="text-slate-600 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
-                    ) : null}
-                  </div>
-                  {siteAccessStatus.siteAccessData.accessDetails && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Access Details</p>
-                      <p className="text-slate-700">{siteAccessStatus.siteAccessData.accessDetails}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Notes</p>
+                      <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
                     </div>
                   )}
-                  <p className="text-xs text-slate-600">Client or their representative will be on site for your visit.</p>
                 </div>
               )}
 
