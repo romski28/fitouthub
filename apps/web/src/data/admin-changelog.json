@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-87d39cdd",
+    "date": "2026-06-23T18:15:14+08:00",
+    "title": "Fix reset after save: include new property fields",
+    "summary": "Fix reset after save: include new property fields",
+    "areas": [
+      "web"
+    ],
+    "commit": "87d39cdd",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-58157c3f",
     "date": "2026-06-23T18:12:48+08:00",
     "title": "Reorder address form, gate save button, add optional property size/type fields",

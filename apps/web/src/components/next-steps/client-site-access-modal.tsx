@@ -224,7 +224,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       }
       toast.success("Address saved.");
       setShowNewAddress(false);
-      setNewAddressForm({ buildingName: "", addressFull: "", unitNumber: "", floorLevel: "", district: "" });
+      setNewAddressForm({ buildingName: "", unitNumber: "", floorLevel: "", addressFull: "", district: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to save address");
