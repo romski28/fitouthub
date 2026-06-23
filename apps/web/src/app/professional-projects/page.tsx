@@ -530,7 +530,24 @@ export default function ProfessionalProjectsPage() {
                               {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                             </Link>
                           )}
-                          <div className="ml-auto shrink-0">
+                          <div className="ml-auto shrink-0 flex items-center gap-2">
+                            {/* Trade/scope chips */}
+                            {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
+                              projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
+                                projectProf.quoteRequestedTrades.map((trade) => (
+                                  <span
+                                    key={`requested-${projectProf.id}-${trade}`}
+                                    className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                                      quoteOverdue || isStopStatus
+                                        ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
+                                        : 'border border-amber-300 bg-amber-50 text-amber-800'
+                                    }`}
+                                  >
+                                    {trade}
+                                  </span>
+                                ))
+                              ) : null
+                            ) : null}
                             <ProjectSentimentBadge
                               projectId={projectProf.project.id}
                               storageScope="professional"
@@ -539,33 +556,13 @@ export default function ProfessionalProjectsPage() {
                             />
                           </div>
                         </div>
-                        {/* Scope chips moved here — sized like buttons */}
-                        {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
-                              projectProf.quoteRequestedTrades.map((trade) => (
-                                <span
-                                  key={`requested-${projectProf.id}-${trade}`}
-                                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                                    quoteOverdue || isStopStatus
-                                      ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
-                                      : 'border border-amber-300 bg-amber-50 text-amber-800'
-                                  }`}
-                                >
-                                  {trade}
-                                </span>
-                              ))
-                            ) : (
-                              <span className={`text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
-                                Scope: to be confirmed
-                              </span>
-                            )}
-                          </div>
-                        ) : null}
                         {/* Project scope/notes */}
-                        {projectProf.project.notes && (
+                        {(projectProf.project.notes || (projectProf.project as any).endDate) && (
                           <p className={`text-xs leading-relaxed line-clamp-2 ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
                             {projectProf.project.notes}
+                            {(projectProf.project as any).endDate && (
+                              <> {projectProf.project.notes ? '· ' : ''}Proposed completion {new Date((projectProf.project as any).endDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })}</>
+                            )}
                           </p>
                         )}
                       </div>
@@ -654,24 +651,14 @@ export default function ProfessionalProjectsPage() {
                                     </button>
                                   ))}
                                   {projectProf.status === 'pending' && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleQuickAccept(projectProf)}
-                                        disabled={acceptingIds.has(projectProf.id) || decliningIds.has(projectProf.id)}
-                                        className="rounded-lg bg-[rgba(126,58,33,0.92)] hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                                      >
-                                        {acceptingIds.has(projectProf.id) ? 'Accepting...' : 'Tentatively accept'}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleQuickDecline(projectProf)}
-                                        disabled={acceptingIds.has(projectProf.id) || decliningIds.has(projectProf.id)}
-                                        className="rounded-lg border border-rose-300 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                                      >
-                                        {decliningIds.has(projectProf.id) ? 'Declining...' : 'Decline'}
-                                      </button>
-                                    </>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickDecline(projectProf)}
+                                      disabled={acceptingIds.has(projectProf.id) || decliningIds.has(projectProf.id)}
+                                      className="rounded-lg border border-rose-300 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                    >
+                                      {decliningIds.has(projectProf.id) ? 'Declining...' : 'Decline'}
+                                    </button>
                                   )}
                                 </div>
                               ) : (

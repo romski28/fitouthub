@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-b2013af7",
+    "date": "2026-06-23T17:26:40+08:00",
+    "title": "Remove Tentatively accept, move trade chips next to sentiment badge, add proposed completion date",
+    "summary": "Remove Tentatively accept, move trade chips next to sentiment badge, add proposed completion date",
+    "areas": [
+      "web"
+    ],
+    "commit": "b2013af7",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-d43e65d4",
     "date": "2026-06-23T13:59:06+08:00",
     "title": "Consolidate pro site-access tab into 2 unified panels with consistent Mimo styling",
