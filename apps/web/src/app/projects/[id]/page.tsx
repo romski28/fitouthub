@@ -2499,6 +2499,7 @@ export default function ClientProjectDetailPage() {
               isSubmittingLocationDetails={submittingLocationDetails}
               isUpdatingSiteAvailability={updatingSiteAvailability}
               locationDetailsError={locationDetailsError}
+              onOpenSiteAccessModal={() => openModal('CONFIRM_SITE_VISIT', projectId, undefined, user?.id || '', 'CLIENT')}
             />
           </div>
         )}

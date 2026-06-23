@@ -96,6 +96,7 @@ interface SiteAccessTabProps {
   isSubmittingLocationDetails: boolean;
   isUpdatingSiteAvailability: boolean;
   locationDetailsError: string | null;
+  onOpenSiteAccessModal?: () => void;
 }
 
 const formatDate = (date?: string) => {
@@ -196,6 +197,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   isSubmittingLocationDetails,
   isUpdatingSiteAvailability,
   locationDetailsError,
+  onOpenSiteAccessModal,
 }) => {
   const [acceptedVisitId, setAcceptedVisitId] = useState<string | null>(null);
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
@@ -600,6 +602,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
             );
           })}
         </div>
+      )}
+
+      {onOpenSiteAccessModal && (
+        <button
+          type="button"
+          onClick={onOpenSiteAccessModal}
+          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+        >
+          Manage site requests
+        </button>
       )}
 
       {showAvailabilityConfirm && (
