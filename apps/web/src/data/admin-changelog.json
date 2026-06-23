@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-15b5811a",
+    "date": "2026-06-23T12:59:53+08:00",
+    "title": "Show Checked In badge after QR scan, keep completed visits visible in session",
+    "summary": "Show Checked In badge after QR scan, keep completed visits visible in session",
+    "areas": [
+      "web"
+    ],
+    "commit": "15b5811a",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-8d7569fc",
     "date": "2026-06-23T12:52:13+08:00",
     "title": "Dedicated POST site-inspection/confirm endpoint, separate from site-start",

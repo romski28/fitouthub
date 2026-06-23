@@ -130,6 +130,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   // QR Scanner
   const [scanningVisitId, setScanningVisitId] = useState<string | null>(null);
   const [scannerError, setScannerError] = useState<string | null>(null);
+  const [checkedInVisitIds, setCheckedInVisitIds] = useState<Set<string>>(new Set());
   const scannerRef = useRef<any>(null);
   const scannerDivId = "qr-scanner-client-access";
 
@@ -330,6 +331,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
               throw new Error(err.message || "Confirmation failed");
             }
             toast.success("Site inspection attendance recorded!");
+            setCheckedInVisitIds((prev) => new Set(prev).add(visitId));
             fetchData();
           } catch (err: any) {
             toast.error(err.message || "Failed to confirm attendance");
@@ -352,6 +354,14 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     scannerRef.current = null;
   };
 
+  // Reset on close
+  useEffect(() => {
+    if (!isOpen) {
+      setCheckedInVisitIds(new Set());
+      setScanningVisitId(null);
+    }
+  }, [isOpen]);
+
   // Cleanup scanner on unmount
   useEffect(() => {
     return () => {
@@ -365,7 +375,9 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     return !r.respondedAt && (!s || s === "requested" || s === "pending" || s === "awaiting_response");
   });
   const pendingVisits = visits.filter((v) => v.status === "proposed" && v.proposedByRole !== "client");
-  const upcomingVisits = visits.filter((v) => v.status === "accepted" && !v.completedAt);
+  const upcomingVisits = visits.filter((v) =>
+    (v.status === "accepted" && !v.completedAt) || checkedInVisitIds.has(v.id)
+  );
 
   // Group requests by inspection date
   const inspectionDate = pendingRequests
@@ -621,14 +633,18 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                               {v.formattedProposedAt || formatDateTime(v.proposedAt)}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => startScanning(v.id)}
-                            disabled={!!scanningVisitId}
-                            className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
-                          >
-                            Scan QR
-                          </button>
+                          {checkedInVisitIds.has(v.id) ? (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">✓ Checked In</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startScanning(v.id)}
+                              disabled={!!scanningVisitId}
+                              className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                            >
+                              Scan QR
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
