@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/config/api";
 import { fetchWithRetry } from "@/lib/http";
 import { useAuth } from "@/context/auth-context";
@@ -50,6 +50,8 @@ interface SiteAccessVisit {
   proposedAt: string;
   proposedByRole: string;
   notes?: string | null;
+  completedAt?: string | null;
+  respondedAt?: string | null;
   professional: {
     id: string;
     fullName?: string;
@@ -149,6 +151,12 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   // Decline reason
   const [declineReason, setDeclineReason] = useState<Record<string, string>>({});
   const [decliningRequestId, setDecliningRequestId] = useState<string | null>(null);
+
+  // QR Scanner
+  const [scanningVisitId, setScanningVisitId] = useState<string | null>(null);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const scannerRef = useRef<any>(null);
+  const scannerDivId = "qr-scanner-client-access";
 
   // ── Fetch data ─────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -320,12 +328,69 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     }
   };
 
+  // ── QR Scanner ─────────────────────────────────────────────────
+  const startScanning = async (visitId: string) => {
+    setScanningVisitId(visitId);
+    setScannerError(null);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode(scannerDivId);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (decodedText: string) => {
+          scannerRef.current = null;
+          await scanner.stop().catch(() => {});
+          setScanningVisitId(null);
+          // decodedText is the JWT token — call confirm
+          try {
+            const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-start/confirm`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ token: decodedText }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.message || "Confirmation failed");
+            }
+            toast.success("Site inspection attendance recorded!");
+            fetchData();
+          } catch (err: any) {
+            toast.error(err.message || "Failed to confirm attendance");
+          }
+        },
+        () => { /* ignore scan misses */ },
+      );
+    } catch (err: any) {
+      const msg = err?.message?.includes("Permission")
+        ? "Camera permission denied."
+        : err?.message || "Could not start camera.";
+      setScannerError(msg);
+      setScanningVisitId(null);
+    }
+  };
+
+  const stopScanning = () => {
+    setScanningVisitId(null);
+    scannerRef.current?.stop().catch(() => {});
+    scannerRef.current = null;
+  };
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      scannerRef.current?.stop().catch(() => {});
+    };
+  }, []);
+
   // ── Derived ────────────────────────────────────────────────────
   const pendingRequests = requests.filter((r) => {
     const s = (r.status || "").toLowerCase();
     return !r.respondedAt && (!s || s === "requested" || s === "pending" || s === "awaiting_response");
   });
   const pendingVisits = visits.filter((v) => v.status === "proposed" && v.proposedByRole !== "client");
+  const upcomingVisits = visits.filter((v) => v.status === "accepted" && !v.completedAt);
 
   // Group requests by inspection date
   const inspectionDate = pendingRequests
@@ -565,8 +630,53 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                 </div>
               )}
 
+              {/* ── Upcoming inspections ────────────────────── */}
+              {upcomingVisits.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">📋 Upcoming Inspections</h3>
+                  <div className="space-y-2">
+                    {upcomingVisits.map((v) => (
+                      <div key={v.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">
+                              {proName(v.professional)}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {formatBookedSlot(v.proposedAt)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => startScanning(v.id)}
+                            disabled={!!scanningVisitId}
+                            className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                          >
+                            Scan QR
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* QR Scanner */}
+                  {scanningVisitId && (
+                    <div className="mt-3 rounded-lg border border-[#D4C8A0] bg-white p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-slate-700">Scan professional's QR code</p>
+                        <button onClick={stopScanning} className="text-xs text-red-500 hover:text-red-700">Cancel</button>
+                      </div>
+                      <div id={scannerDivId} className="w-full aspect-square max-w-[300px] mx-auto rounded-lg overflow-hidden" />
+                      {scannerError && (
+                        <p className="text-xs text-red-500 mt-2 text-center">{scannerError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Empty state */}
-              {pendingRequests.length === 0 && pendingVisits.length === 0 && (
+              {pendingRequests.length === 0 && pendingVisits.length === 0 && upcomingVisits.length === 0 && (
                 <p className="text-sm text-slate-500 italic py-4">No pending access requests or visits.</p>
               )}
             </>

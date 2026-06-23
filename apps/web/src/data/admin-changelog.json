@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-9e352b44",
+    "date": "2026-06-23T11:56:21+08:00",
+    "title": "Add upcoming inspections + QR scanner to client site access modal",
+    "summary": "Add upcoming inspections + QR scanner to client site access modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "9e352b44",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-236e0395",
     "date": "2026-06-23T11:46:03+08:00",
     "title": "Simplify: remove time fallbacks, use only server-formatted formattedVisitTime",
