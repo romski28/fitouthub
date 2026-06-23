@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-58157c3f",
+    "date": "2026-06-23T18:12:48+08:00",
+    "title": "Reorder address form, gate save button, add optional property size/type fields",
+    "summary": "Reorder address form, gate save button, add optional property size/type fields",
+    "areas": [
+      "web"
+    ],
+    "commit": "58157c3f",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-9f7015a4",
     "date": "2026-06-23T17:39:44+08:00",
     "title": "Add endDate to professional projects API response + frontend type, show proposed completion date on card",

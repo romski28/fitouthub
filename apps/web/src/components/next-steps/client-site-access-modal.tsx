@@ -116,12 +116,21 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const [showNewAddress, setShowNewAddress] = useState(false);
   const [newAddressForm, setNewAddressForm] = useState({
     buildingName: "",
-    addressFull: "",
     unitNumber: "",
     floorLevel: "",
+    addressFull: "",
     district: "",
+    propertySize: "",
+    propertySizeUnit: "sqft" as "sqft" | "sqm",
+    propertyType: "",
   });
   const [savingAddress, setSavingAddress] = useState(false);
+
+  const addressFieldsComplete =
+    newAddressForm.addressFull.trim() &&
+    newAddressForm.unitNumber.trim() &&
+    newAddressForm.floorLevel.trim() &&
+    newAddressForm.district.trim();
 
   // Decline reason
   const [declineReason, setDeclineReason] = useState<Record<string, string>>({});
@@ -200,10 +209,13 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           buildingName: f.buildingName || undefined,
-          addressFull: f.addressFull,
           unitNumber: f.unitNumber,
           floorLevel: f.floorLevel,
+          addressFull: f.addressFull,
           district: f.district,
+          propertySize: f.propertySize || undefined,
+          propertySizeUnit: f.propertySize ? f.propertySizeUnit : undefined,
+          propertyType: f.propertyType || undefined,
         }),
       });
       if (!res.ok) {
@@ -454,13 +466,6 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                       placeholder="Building name (optional)"
                       className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                     />
-                    <input
-                      type="text"
-                      value={newAddressForm.addressFull}
-                      onChange={(e) => setNewAddressForm((f) => ({ ...f, addressFull: e.target.value }))}
-                      placeholder="Street address *"
-                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                    />
                     <div className="grid gap-2 grid-cols-2">
                       <input
                         type="text"
@@ -477,6 +482,13 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                       />
                     </div>
+                    <input
+                      type="text"
+                      value={newAddressForm.addressFull}
+                      onChange={(e) => setNewAddressForm((f) => ({ ...f, addressFull: e.target.value }))}
+                      placeholder="Street address *"
+                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    />
                     <select
                       value={newAddressForm.district}
                       onChange={(e) => setNewAddressForm((f) => ({ ...f, district: e.target.value }))}
@@ -487,18 +499,55 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         <option key={d.areaCode} value={d.name}>{d.name}</option>
                       ))}
                     </select>
+
+                    {/* Optional: Property size + type */}
+                    <div className="grid gap-2 grid-cols-[1fr_auto]">
+                      <input
+                        type="text"
+                        value={newAddressForm.propertySize}
+                        onChange={(e) => setNewAddressForm((f) => ({ ...f, propertySize: e.target.value }))}
+                        placeholder="Property size (optional)"
+                        className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                      />
+                      <div className="flex rounded-lg border border-[#D4C8A0] bg-white overflow-hidden">
+                        {(["sqft", "sqm"] as const).map((unit) => (
+                          <button
+                            key={unit}
+                            type="button"
+                            onClick={() => setNewAddressForm((f) => ({ ...f, propertySizeUnit: unit }))}
+                            className={`px-2 py-1.5 text-xs font-semibold transition ${newAddressForm.propertySizeUnit === unit ? "bg-emerald-600 text-white" : "text-slate-500 hover:bg-[#F5EEDE]"}`}
+                          >
+                            {unit}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <select
+                      value={newAddressForm.propertyType}
+                      onChange={(e) => setNewAddressForm((f) => ({ ...f, propertyType: e.target.value }))}
+                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    >
+                      <option value="">Property type (optional)</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="industrial">Industrial</option>
+                      <option value="retail">Retail</option>
+                      <option value="office">Office</option>
+                      <option value="other">Other</option>
+                    </select>
+
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={handleSaveNewAddress}
-                        disabled={savingAddress}
+                        disabled={savingAddress || !addressFieldsComplete}
                         className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                       >
                         {savingAddress ? "Saving..." : "Save Address"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setShowNewAddress(false); setNewAddressForm({ buildingName: "", addressFull: "", unitNumber: "", floorLevel: "", district: "" }); }}
+                        onClick={() => { setShowNewAddress(false); setNewAddressForm({ buildingName: "", unitNumber: "", floorLevel: "", addressFull: "", district: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" }); }}
                         className="rounded-lg border border-[#D4C8A0] px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
                       >
                         Cancel
