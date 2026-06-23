@@ -20,8 +20,10 @@ interface SiteAccessStatus {
   requiresReschedule?: boolean | null;
   visitScheduledFor: string | null;
   visitScheduledAt?: string | null;
+  formattedScheduledSlot?: string | null;
   visitDetails?: string | null;
   visitedAt: string | null;
+  formattedVisitedAt?: string | null;
   reasonDenied: string | null;
   hasAccess: boolean;
   siteInspectionAvailableOn?: string | null;
@@ -207,11 +209,8 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               {showPendingReadOnlyPanel && (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                   Awaiting client approval
-                  {siteAccessStatus.visitScheduledAt && (
-                    <> at <span className="font-semibold text-amber-900">{formatInspectionTime(siteAccessStatus.visitScheduledAt)}</span>.</>
-                  )}
-                  {scheduledInspectionSlot && (
-                    <span className="block mt-1 text-amber-800">Requested slot: {scheduledInspectionSlot}</span>
+                  {siteAccessStatus.formattedScheduledSlot && (
+                    <> at <span className="font-semibold text-amber-900">{siteAccessStatus.formattedScheduledSlot}</span>.</>
                   )}
                 </div>
               )}
@@ -247,21 +246,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               {isBooked && (
                 <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                   Inspection booked
-                  {siteAccessStatus.visitScheduledAt
-                    ? ` at ${formatInspectionTime(siteAccessStatus.visitScheduledAt)}. Don't be late.`
-                    : siteAccessStatus.visitScheduledFor
-                    ? ` for ${formatInspectionDate(siteAccessStatus.visitScheduledFor)}`
+                  {siteAccessStatus.formattedScheduledSlot
+                    ? ` — ${siteAccessStatus.formattedScheduledSlot}. Don't be late.`
                     : '.'}
-                  {scheduledInspectionSlot && (
-                    <span className="block mt-1 text-emerald-900">Confirmed slot: {scheduledInspectionSlot}</span>
-                  )}
                 </div>
               )}
 
-              {siteAccessStatus.visitedAt && (
+              {siteAccessStatus.formattedVisitedAt && (
                 <div className="space-y-2">
                   <div className="rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    ✅ Visit completed on {formatInspectionDateTime(siteAccessStatus.visitedAt)}
+                    ✅ Visit completed on {siteAccessStatus.formattedVisitedAt}
                   </div>
                   {siteAccessStatus.visitDetails && (
                     <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 text-sm text-slate-700">

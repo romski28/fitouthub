@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-23-5851766e",
+    "date": "2026-06-23T13:39:53+08:00",
+    "title": "Add server-formatted time fields to site-access-status, use in pro tab display",
+    "summary": "Add server-formatted time fields to site-access-status, use in pro tab display",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5851766e",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-782efb3a",
     "date": "2026-06-23T13:33:21+08:00",
     "title": "Responsive QR size on mobile, add visit completed + notes to pro site-access tab",

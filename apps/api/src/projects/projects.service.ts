@@ -7720,6 +7720,22 @@ Please review the project details and respond with your quote or decline the inv
         : null,
       visitDetails: latestAccessRequest?.visitDetails || null,
       visitedAt: latestAccessRequest?.visitedAt || null,
+      formattedVisitedAt: latestAccessRequest?.visitedAt
+        ? new Date(latestAccessRequest.visitedAt).toLocaleString('en-HK', {
+            weekday: 'short', day: '2-digit', month: 'short',
+            hour: '2-digit', minute: '2-digit', hour12: true,
+          })
+        : null,
+      formattedScheduledSlot: latestAccessRequest?.visitScheduledAt
+        ? new Date(latestAccessRequest.visitScheduledAt).toLocaleString('en-HK', {
+            weekday: 'short', day: '2-digit', month: 'short',
+            hour: '2-digit', minute: '2-digit', hour12: true,
+          })
+        : latestAccessRequest?.visitScheduledFor
+        ? new Date(latestAccessRequest.visitScheduledFor).toLocaleDateString('en-HK', {
+            weekday: 'long', day: 'numeric', month: 'long',
+          })
+        : null,
       reasonDenied: latestAccessRequest?.reasonDenied || null,
       hasAccess,
       siteInspectionAvailableOn,
