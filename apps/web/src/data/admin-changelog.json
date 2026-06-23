@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-23-cdc8ebe9",
+    "date": "2026-06-23T11:10:47+08:00",
+    "title": "Server-side time formatting: API returns formattedVisitTime, frontend displays it directly with no timezone math",
+    "summary": "Server-side time formatting: API returns formattedVisitTime, frontend displays it directly with no timezone math",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "cdc8ebe9",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-38e23b00",
     "date": "2026-06-23T11:06:39+08:00",
     "title": "Replace Intl date formatting with manual UTC+8 math for guaranteed HKT times",

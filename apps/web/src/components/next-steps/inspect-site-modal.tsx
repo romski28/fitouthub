@@ -14,6 +14,7 @@ interface SiteAccessStatus {
   requestStatus: string;
   visitScheduledFor: string | null;
   visitScheduledAt: string | null;
+  formattedVisitTime: string | null;
   hasAccess: boolean;
   siteAccessData: {
     addressFull: string;
@@ -29,37 +30,6 @@ interface InspectSiteModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-// ── Helpers ──────────────────────────────────────────────────────
-const HK_OFFSET = 8 * 60 * 60 * 1000; // UTC+8
-
-const toHKT = (iso?: string | null): Date | null => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Date(d.getTime() + HK_OFFSET);
-};
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-const formatDate = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  return `${pad2(hkt.getUTCDate())} ${MONTHS[hkt.getUTCMonth()]} ${hkt.getUTCFullYear()}`;
-};
-
-const formatTime = (iso?: string | null) => {
-  const hkt = toHKT(iso);
-  if (!hkt) return "";
-  const h = hkt.getUTCHours();
-  const m = pad2(hkt.getUTCMinutes());
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m} ${ampm}`;
-};
 
 // ── Component ────────────────────────────────────────────────────
 export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
@@ -207,11 +177,7 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   };
 
   const address = status?.siteAccessData;
-  const visitLabel = status?.visitScheduledAt
-    ? `${formatDate(status.visitScheduledAt)} at ${formatTime(status.visitScheduledAt)}`
-    : status?.visitScheduledFor
-    ? formatDate(status.visitScheduledFor)
-    : null;
+  const visitLabel = status?.formattedVisitTime || null;
 
   if (!isOpen) return null;
 
