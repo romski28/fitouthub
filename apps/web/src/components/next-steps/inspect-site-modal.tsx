@@ -14,7 +14,6 @@ interface SiteAccessStatus {
   requestStatus: string;
   visitScheduledFor: string | null;
   visitScheduledAt: string | null;
-  visitScheduledAtTs: number | null;
   formattedVisitTime: string | null;
   hasAccess: boolean;
   siteAccessData: {
@@ -178,27 +177,7 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   };
 
   const address = status?.siteAccessData;
-  const visitLabel = (() => {
-    // 1. Server-formatted string (available after backend deploy)
-    if (status?.formattedVisitTime) return status.formattedVisitTime;
-    // 2. Numeric timestamp (available after backend deploy)
-    if (status?.visitScheduledAtTs) {
-      return new Intl.DateTimeFormat("en-HK", {
-        weekday: "short", day: "2-digit", month: "short",
-        hour: "2-digit", minute: "2-digit", hour12: true,
-        timeZone: "Asia/Hong_Kong",
-      }).format(new Date(status.visitScheduledAtTs));
-    }
-    // 3. ISO string fallback (works with current deployed API)
-    if (status?.visitScheduledAt) {
-      return new Intl.DateTimeFormat("en-HK", {
-        weekday: "short", day: "2-digit", month: "short",
-        hour: "2-digit", minute: "2-digit", hour12: true,
-        timeZone: "Asia/Hong_Kong",
-      }).format(new Date(status.visitScheduledAt));
-    }
-    return null;
-  })();
+  const visitLabel = status?.formattedVisitTime || null;
 
   if (!isOpen) return null;
 

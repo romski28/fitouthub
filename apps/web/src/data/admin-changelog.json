@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-236e0395",
+    "date": "2026-06-23T11:46:03+08:00",
+    "title": "Simplify: remove time fallbacks, use only server-formatted formattedVisitTime",
+    "summary": "Simplify: remove time fallbacks, use only server-formatted formattedVisitTime",
+    "areas": [
+      "web"
+    ],
+    "commit": "236e0395",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-5014f2d4",
     "date": "2026-06-23T11:34:03+08:00",
     "title": "Three-tier fallback: formattedVisitTime → visitScheduledAtTs → visitScheduledAt (works now)",
