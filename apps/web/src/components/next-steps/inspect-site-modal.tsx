@@ -33,24 +33,14 @@ interface InspectSiteModalProps {
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  // Convert UTC to HKT (+8)
-  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
-  return hkt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const formatTime = (iso?: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  // Convert UTC to HKT (+8)
-  const hkt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
-  const h = hkt.getUTCHours();
-  const m = hkt.getUTCMinutes();
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  return d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
 };
 
 // ── Component ────────────────────────────────────────────────────

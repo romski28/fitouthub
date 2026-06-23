@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-4b4deb94",
+    "date": "2026-06-23T11:00:30+08:00",
+    "title": "Match backend time formatting exactly: en-HK locale, no timeZone parameter",
+    "summary": "Match backend time formatting exactly: en-HK locale, no timeZone parameter",
+    "areas": [
+      "web"
+    ],
+    "commit": "4b4deb94",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-68866a47",
     "date": "2026-06-23T10:59:06+08:00",
     "title": "Fix timezone: use manual UTC+8 offset instead of toLocaleTimeString timeZone option",
