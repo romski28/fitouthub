@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { HK_DISTRICTS } from '@/lib/hk-districts';
 
 interface SiteAccessRequest {
   id: string;
@@ -198,10 +197,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
   isUpdatingSiteAvailability,
   locationDetailsError,
 }) => {
-  const [basicAddressSaved, setBasicAddressSaved] = useState(false);
-  const [buildingInfoSaved, setBuildingInfoSaved] = useState(false);
-  const [showBuildingInfo, setShowBuildingInfo] = useState(false);
-  const [addressExpanded, setAddressExpanded] = useState(true);
   const [acceptedVisitId, setAcceptedVisitId] = useState<string | null>(null);
   const [acceptedRequestId, setAcceptedRequestId] = useState<string | null>(null);
   const [changeAvailDate, setChangeAvailDate] = useState(locationDetailsForm.desiredStartDate || '');
@@ -212,39 +207,11 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     setChangeAvailDate(siteInspectionAvailableOn || locationDetailsForm.desiredStartDate || '');
   }, [locationDetailsForm.desiredStartDate, siteInspectionAvailableOn]);
 
-  useEffect(() => {
-    if (clientSiteAddresses.length > 0 && !showBuildingInfo) {
-      setShowBuildingInfo(true);
-    }
-  }, [clientSiteAddresses.length, showBuildingInfo]);
-
   const hasBasicLocation =
     Boolean(locationDetailsForm.addressFull?.trim()) &&
     Boolean(locationDetailsForm.unitNumber?.trim()) &&
     Boolean(locationDetailsForm.floorLevel?.trim()) &&
     Boolean(locationDetailsForm.district?.trim());
-
-  const selectedAddressId = useMemo(() => {
-    if (!clientSiteAddresses.length) return '';
-
-    const normalize = (value?: string | null) => String(value || '').trim().toLowerCase();
-    const matched = clientSiteAddresses.find((address) => (
-      normalize(address.addressFull) === normalize(locationDetailsForm.addressFull) &&
-      normalize(address.unitNumber) === normalize(locationDetailsForm.unitNumber) &&
-      normalize(address.floorLevel) === normalize(locationDetailsForm.floorLevel)
-    ));
-    if (matched) return matched.id;
-
-    const projectPrimary = clientSiteAddresses.find((address) => address.isProjectPrimary);
-    if (projectPrimary) return projectPrimary.id;
-
-    return '';
-  }, [
-    clientSiteAddresses,
-    locationDetailsForm.addressFull,
-    locationDetailsForm.unitNumber,
-    locationDetailsForm.floorLevel,
-  ]);
 
   const pendingVisits = useMemo(
     () => siteVisits.filter((v) => v.status === 'proposed' && v.proposedByRole === 'professional'),
@@ -354,14 +321,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
     pendingAccessRequests.length > 0 ||
     acceptedAccessRequests.length > 0;
 
-  const addressOpen = addressExpanded;
-
-  const addressSummary = [
-    locationDetailsForm.district,
-    locationDetailsForm.buildingName,
-    locationDetailsForm.addressFull,
-    [locationDetailsForm.unitNumber, locationDetailsForm.floorLevel].filter(Boolean).join(' / '),
-  ].filter(Boolean).join(' · ');
   const siteAvailabilityDate = siteInspectionAvailableOn || locationDetailsForm.desiredStartDate;
   const currentAvailabilityInput =
     toDateInput(siteInspectionAvailableOn || null) || locationDetailsForm.desiredStartDate || '';
@@ -383,163 +342,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
 
   return (
     <div className="space-y-6">
-
-      {/* Address details — collapsed when complete, open when required */}
-      <div className={`overflow-hidden rounded-2xl border ${hasBasicLocation ? 'border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)]' : 'border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)]'}`}>
-        {/* Header / collapsed summary */}
-        <button
-          type="button"
-          onClick={() => setAddressExpanded((v) => !v)}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-        >
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              Your address
-              {hasBasicLocation
-                ? <span className="text-xs font-semibold text-emerald-700">Saved</span>
-                : <span className="text-xs font-semibold text-[rgba(215,107,78,0.96)]">Required</span>}
-            </p>
-            {hasBasicLocation && !addressOpen && addressSummary && (
-              <p className="mt-0.5 truncate text-xs text-slate-600">{addressSummary}</p>
-            )}
-            {!hasBasicLocation && !addressOpen && (
-              <p className="mt-0.5 text-xs text-[rgba(176,74,46,0.95)]">Complete your address before accepting visits</p>
-            )}
-          </div>
-          <span className="shrink-0 text-xs text-slate-600">{addressOpen ? '▲' : '▼'}</span>
-        </button>
-
-        {/* Expanded form */}
-        {addressOpen && (
-          <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
-            <p className="text-xs text-slate-600">Required before accepting a visit. This will be shared with the contractor.</p>
-            {clientSiteAddresses.length > 0 && (
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Your addresses</label>
-                <select
-                  value={selectedAddressId}
-                  onChange={(e) => {
-                    if (!e.target.value) return;
-                    onSelectClientSiteAddress(e.target.value);
-                  }}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select a saved address</option>
-                  {clientSiteAddresses.map((address) => (
-                    <option key={address.id} value={address.id}>
-                      {(address.label || address.buildingName || 'Saved address').trim()} - {address.addressFull}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Building Name</label>
-              <input
-                type="text"
-                value={locationDetailsForm.buildingName || ''}
-                onChange={(e) => onUpdateLocationDetailsForm({ buildingName: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                placeholder="e.g. Harbour View Tower"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Street Address *</label>
-              <input
-                type="text"
-                value={locationDetailsForm.addressFull}
-                onChange={(e) => onUpdateLocationDetailsForm({ addressFull: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                placeholder="e.g. 123 Nathan Road, Tsim Sha Tsui"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Unit Number *</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.unitNumber}
-                  onChange={(e) => onUpdateLocationDetailsForm({ unitNumber: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                  placeholder="e.g. Flat 12A"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Floor Level *</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.floorLevel}
-                  onChange={(e) => onUpdateLocationDetailsForm({ floorLevel: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                  placeholder="e.g. 12/F"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">District *</label>
-                <select
-                  value={locationDetailsForm.district || ''}
-                  onChange={(e) => onUpdateLocationDetailsForm({ district: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select district</option>
-                  {HK_DISTRICTS.map((district) => (
-                    <option key={district.areaCode} value={district.name}>{district.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Postcode (optional)</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.postalCode}
-                  onChange={(e) => onUpdateLocationDetailsForm({ postalCode: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Size (optional)</label>
-                {surveyRequested ? (
-                  <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
-                ) : (
-                  <input
-                    type="text"
-                    value={locationDetailsForm.propertySize}
-                    onChange={(e) => onUpdateLocationDetailsForm({ propertySize: e.target.value })}
-                    className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 pt-1">
-              {basicAddressSaved && (
-                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-300">
-                  <span className="animate-thumbs-wiggle inline-block">👍</span> Saved
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const saved = await onSubmitLocationDetails();
-                    if (saved) {
-                      setBasicAddressSaved(true);
-                      setTimeout(() => setBasicAddressSaved(false), 8000);
-                    }
-                  } catch {
-                    toast.error('Failed to save address');
-                  }
-                }}
-                disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
-                className="rounded-md bg-[rgba(215,107,78,0.95)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:opacity-50"
-              >
-                {isSubmittingLocationDetails ? 'Saving...' : 'Save address'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Site availability */}
       <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4">
@@ -802,169 +604,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = ({
           })}
         </div>
       )}
-
-      {/* Building Information (optional, collapsible) */}
-      <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)]">
-        <button
-          type="button"
-          onClick={() => setShowBuildingInfo((v) => !v)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left"
-        >
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Building information</p>
-            <p className="text-xs text-slate-600">Optional - helps contractors prepare for the visit.</p>
-          </div>
-          <span className="shrink-0 text-xs text-slate-600">{showBuildingInfo ? '▲' : '▼'}</span>
-        </button>
-        {showBuildingInfo && (
-          <div className="space-y-3 border-t border-[rgba(120,53,15,0.12)] p-4">
-            {clientSiteAddresses.length > 0 && (
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Your addresses</label>
-                <select
-                  value={selectedAddressId}
-                  onChange={(e) => {
-                    if (!e.target.value) return;
-                    onSelectClientSiteAddress(e.target.value);
-                  }}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select a saved address</option>
-                  {clientSiteAddresses.map((address) => (
-                    <option key={address.id} value={address.id}>
-                      {(address.label || address.buildingName || 'Saved address').trim()} - {address.addressFull}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Type</label>
-                <select
-                  value={locationDetailsForm.propertyType || ''}
-                  onChange={(e) => onUpdateLocationDetailsForm({ propertyType: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select type</option>
-                  <option value="residential">Residential</option>
-                  <option value="commercial">Commercial</option>
-                  <option value="industrial">Industrial</option>
-                  <option value="retail">Retail</option>
-                  <option value="office">Office</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Property Age (optional)</label>
-                {surveyRequested ? (
-                  <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
-                ) : (
-                  <input
-                    type="text"
-                    value={locationDetailsForm.propertyAge}
-                    onChange={(e) => onUpdateLocationDetailsForm({ propertyAge: e.target.value })}
-                    className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                  />
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Existing Conditions (optional)</label>
-              {surveyRequested ? (
-                <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.8)] px-3 py-2 text-sm font-semibold text-slate-700">Survey booked</div>
-              ) : (
-                <textarea
-                  rows={2}
-                  value={locationDetailsForm.existingConditions}
-                  onChange={(e) => onUpdateLocationDetailsForm({ existingConditions: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
-              )}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Access Hours</label>
-                <select
-                  value={locationDetailsForm.accessHoursType || ''}
-                  onChange={(e) => onUpdateLocationDetailsForm({ accessHoursType: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select access hours</option>
-                  <option value="24 Hour">24 Hour</option>
-                  <option value="Working Hours">Working Hours</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">Working Hours</label>
-                <select
-                  value={locationDetailsForm.workingHoursWindow || ''}
-                  onChange={(e) => onUpdateLocationDetailsForm({ workingHoursWindow: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                >
-                  <option value="">Select working hours</option>
-                  <option value="24 Hour">24 Hour</option>
-                  <option value="Working Hours">Working Hours</option>
-                  <option value="After Hours">After Hours</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-800">Access Details</label>
-              <textarea
-                rows={2}
-                value={locationDetailsForm.accessDetails}
-                onChange={(e) => onUpdateLocationDetailsForm({ accessDetails: e.target.value })}
-                className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">On-site Contact Name</label>
-                <input
-                  type="text"
-                  value={locationDetailsForm.onSiteContactName}
-                  onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactName: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-800">On-site Contact Phone</label>
-                <input
-                  type="tel"
-                  value={locationDetailsForm.onSiteContactPhone}
-                  onChange={(e) => onUpdateLocationDetailsForm({ onSiteContactPhone: e.target.value })}
-                  className="w-full rounded-xl border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end pt-1">
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const saved = await onSubmitLocationDetails();
-                    if (saved) {
-                      setBuildingInfoSaved(true);
-                      setTimeout(() => setBuildingInfoSaved(false), 8000);
-                    }
-                  } catch {
-                    toast.error('Failed to update building information');
-                  }
-                }}
-                disabled={isSubmittingLocationDetails || !locationDetailsForm.addressFull?.trim()}
-                className="rounded-md border border-[rgba(215,107,78,0.45)] bg-[rgba(255,240,232,0.92)] px-3 py-1.5 text-xs font-semibold text-[rgba(176,74,46,0.95)] transition hover:bg-[rgba(255,231,220,0.96)] disabled:opacity-50"
-              >
-                {isSubmittingLocationDetails ? 'Saving...' : 'Update building information'}
-              </button>
-            </div>
-            {buildingInfoSaved && (
-              <p className="text-right text-xs font-semibold text-emerald-700">Saved just now</p>
-            )}
-          </div>
-        )}
-      </div>
 
       {showAvailabilityConfirm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(81,55,32,0.34)] px-4">

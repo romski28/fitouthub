@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-465d09c8",
+    "date": "2026-06-23T18:32:09+08:00",
+    "title": "Remove Your Address and Building Information forms from client site-access tab (-361 lines)",
+    "summary": "Remove Your Address and Building Information forms from client site-access tab (-361 lines)",
+    "areas": [
+      "web"
+    ],
+    "commit": "465d09c8",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-87d39cdd",
     "date": "2026-06-23T18:15:14+08:00",
     "title": "Fix reset after save: include new property fields",
