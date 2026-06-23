@@ -7689,6 +7689,9 @@ Please review the project details and respond with your quote or decline the inv
       requiresReschedule: rescheduleRequired,
       visitScheduledFor: latestAccessRequest?.visitScheduledFor || null,
       visitScheduledAt: latestAccessRequest?.visitScheduledAt || null,
+      visitScheduledAtTs: latestAccessRequest?.visitScheduledAt
+        ? new Date(latestAccessRequest.visitScheduledAt).getTime()
+        : null,
       formattedVisitTime: latestAccessRequest?.visitScheduledAt
         ? new Date(latestAccessRequest.visitScheduledAt).toLocaleString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',

@@ -14,6 +14,7 @@ interface SiteAccessStatus {
   requestStatus: string;
   visitScheduledFor: string | null;
   visitScheduledAt: string | null;
+  visitScheduledAtTs: number | null;
   formattedVisitTime: string | null;
   hasAccess: boolean;
   siteAccessData: {
@@ -178,11 +179,11 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
 
   const address = status?.siteAccessData;
   const visitLabel = status?.formattedVisitTime
-    || (status?.visitScheduledAt
+    || (status?.visitScheduledAtTs
       ? (() => {
-          const d = new Date(status.visitScheduledAt);
-          const time = d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
-          const date = d.toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short" });
+          const d = new Date(status.visitScheduledAtTs);
+          const time = d.toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Hong_Kong" });
+          const date = d.toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short", timeZone: "Asia/Hong_Kong" });
           return `${time} on ${date}`;
         })()
       : null);
