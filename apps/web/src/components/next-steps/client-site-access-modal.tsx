@@ -320,7 +320,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
           setScanningVisitId(null);
           // decodedText is the JWT token — call confirm
           try {
-            const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-start/confirm`, {
+            const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-inspection/confirm`, {
               method: "POST",
               headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
               body: JSON.stringify({ token: decodedText }),

@@ -2048,6 +2048,28 @@ export class ProjectsController {
     }
   }
 
+  @Post(':id/site-inspection/confirm')
+  @UseGuards(CombinedAuthGuard)
+  async confirmSiteInspection(
+    @Param('id') projectId: string,
+    @Request() req: any,
+    @Body() body: { token: string },
+  ) {
+    if (req.user?.isProfessional) {
+      throw new HttpException('Only the client can confirm site inspection', HttpStatus.FORBIDDEN);
+    }
+
+    const clientUserId = req.user?.id || req.user?.sub;
+    if (!clientUserId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (!body?.token) throw new HttpException('token is required', HttpStatus.BAD_REQUEST);
+
+    try {
+      return await this.projectsService.confirmSiteInspection(projectId, clientUserId, body.token);
+    } catch (error: any) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Post(':id/site-start/confirm')
   @UseGuards(CombinedAuthGuard)
   async confirmSiteStart(

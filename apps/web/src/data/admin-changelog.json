@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-23-8d7569fc",
+    "date": "2026-06-23T12:52:13+08:00",
+    "title": "Dedicated POST site-inspection/confirm endpoint, separate from site-start",
+    "summary": "Dedicated POST site-inspection/confirm endpoint, separate from site-start",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8d7569fc",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-5138c587",
     "date": "2026-06-23T12:45:31+08:00",
     "title": "Fix: accept site_inspection QR purpose, record visit attendance on scan",
