@@ -292,7 +292,7 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                   placeholder="Measurements taken, discussed materials, site conditions..."
                   className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                 />
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
                   {!showQR ? (
                     <button
                       type="button"
@@ -303,10 +303,10 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
                       {generatingQr ? "Generating..." : "🆔 QR Check-in"}
                     </button>
                   ) : (
-                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-3 text-center">
-                      <p className="text-xs text-slate-500 mb-2">Have the client scan this QR</p>
-                      <div className="flex justify-center mb-1">
-                        <QRCodeSVG value={qrToken || ""} size={120} />
+                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-4 text-center">
+                      <p className="text-xs text-slate-500 mb-3">Have the client scan this QR</p>
+                      <div className="flex justify-center mb-2">
+                        <QRCodeSVG value={qrToken || ""} size={Math.min(window.innerWidth - 80, 280)} />
                       </div>
                       <p className="text-xs text-slate-400">
                         Expires in {formatCountdown(qrSecondsLeft)}

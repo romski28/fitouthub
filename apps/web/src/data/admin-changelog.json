@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-782efb3a",
+    "date": "2026-06-23T13:33:21+08:00",
+    "title": "Responsive QR size on mobile, add visit completed + notes to pro site-access tab",
+    "summary": "Responsive QR size on mobile, add visit completed + notes to pro site-access tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "782efb3a",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-76d07cf0",
     "date": "2026-06-23T13:05:56+08:00",
     "title": "Fix professional lookup: try both id and userId from JWT payload",

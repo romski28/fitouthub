@@ -258,6 +258,20 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                 </div>
               )}
 
+              {siteAccessStatus.visitedAt && (
+                <div className="space-y-2">
+                  <div className="rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    ✅ Visit completed on {formatInspectionDateTime(siteAccessStatus.visitedAt)}
+                  </div>
+                  {siteAccessStatus.visitDetails && (
+                    <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3 text-sm text-slate-700">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">Visit Notes</p>
+                      <p className="text-slate-800">{siteAccessStatus.visitDetails}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
                 <div className="grid gap-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm text-slate-700">
                   <div>
