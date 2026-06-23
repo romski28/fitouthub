@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-23-b3c89c84",
+    "date": "2026-06-23T10:54:45+08:00",
+    "title": "Switch date/time locale from en-GB to en-HK to match backend formatting",
+    "summary": "Switch date/time locale from en-GB to en-HK to match backend formatting",
+    "areas": [
+      "web"
+    ],
+    "commit": "b3c89c84",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-24a6690e",
     "date": "2026-06-23T10:52:06+08:00",
     "title": "Show Manage site requests button for upcoming approved inspections (QR scan visibility gate)",
