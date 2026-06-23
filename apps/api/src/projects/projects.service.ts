@@ -10673,8 +10673,14 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('QR code does not match this project');
     }
 
+    // generatedByUserId can be either Professional.id or Professional.userId depending on auth strategy
     const pro = await this.prisma.professional.findFirst({
-      where: { userId: decoded.generatedByUserId },
+      where: {
+        OR: [
+          { id: decoded.generatedByUserId },
+          { userId: decoded.generatedByUserId },
+        ],
+      },
       select: { id: true, businessName: true, fullName: true },
     });
     if (!pro) throw new BadRequestException('Professional not found');
