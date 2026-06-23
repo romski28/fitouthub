@@ -7087,7 +7087,7 @@ Please review the project details and respond with your quote or decline the inv
           professionalId: request.professionalId,
           proposedAt: effectiveScheduledAt,
           proposedByRole: 'client',
-          status: 'proposed',
+          status: 'accepted',
         },
       });
     }

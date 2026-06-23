@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-23-87869835",
+    "date": "2026-06-23T12:10:09+08:00",
+    "title": "Fix: client-approved visits now created as accepted, not proposed + backfill SQL",
+    "summary": "Fix: client-approved visits now created as accepted, not proposed + backfill SQL",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "87869835",
+    "files": [
+      "MANUAL_SQL_BACKFILL_ACCEPTED_SITE_VISITS.sql",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-23-9e352b44",
     "date": "2026-06-23T11:56:21+08:00",
     "title": "Add upcoming inspections + QR scanner to client site access modal",
