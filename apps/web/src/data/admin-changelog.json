@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-1988a380",
+    "date": "2026-06-23T13:53:56+08:00",
+    "title": "Add timeZone Asia/Hong_Kong to all server-side formatted time fields",
+    "summary": "Add timeZone Asia/Hong_Kong to all server-side formatted time fields",
+    "areas": [
+      "api"
+    ],
+    "commit": "1988a380",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-23-5851766e",
     "date": "2026-06-23T13:39:53+08:00",
     "title": "Add server-formatted time fields to site-access-status, use in pro tab display",

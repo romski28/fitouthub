@@ -7716,6 +7716,7 @@ Please review the project details and respond with your quote or decline the inv
         ? new Date(latestAccessRequest.visitScheduledAt).toLocaleString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit', hour12: true,
+            timeZone: 'Asia/Hong_Kong',
           })
         : null,
       visitDetails: latestAccessRequest?.visitDetails || null,
@@ -7724,12 +7725,14 @@ Please review the project details and respond with your quote or decline the inv
         ? new Date(latestAccessRequest.visitedAt).toLocaleString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit', hour12: true,
+            timeZone: 'Asia/Hong_Kong',
           })
         : null,
       formattedScheduledSlot: latestAccessRequest?.visitScheduledAt
         ? new Date(latestAccessRequest.visitScheduledAt).toLocaleString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit', hour12: true,
+            timeZone: 'Asia/Hong_Kong',
           })
         : latestAccessRequest?.visitScheduledFor
         ? new Date(latestAccessRequest.visitScheduledFor).toLocaleDateString('en-HK', {
