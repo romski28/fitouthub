@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-23-24a6690e",
+    "date": "2026-06-23T10:52:06+08:00",
+    "title": "Show Manage site requests button for upcoming approved inspections (QR scan visibility gate)",
+    "summary": "Show Manage site requests button for upcoming approved inspections (QR scan visibility gate)",
+    "areas": [
+      "api"
+    ],
+    "commit": "24a6690e",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-23-1eabff2d",
     "date": "2026-06-23T10:34:01+08:00",
     "title": "Fix HKT timezone in modals, add inline QR check-in with purpose param, reuse site-start QR system",

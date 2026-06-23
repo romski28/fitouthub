@@ -616,6 +616,30 @@ export class NextStepService {
         }
       }
 
+      // Show button when there are upcoming site inspections to manage (QR scan, etc.)
+      if (!manageSiteRequestsDescription) {
+        const upcomingInspection = await this.prisma.siteAccessRequest.findFirst({
+          where: {
+            projectId,
+            status: 'approved_visit_scheduled',
+          },
+          select: { id: true, visitScheduledAt: true, professional: { select: { businessName: true, fullName: true } } },
+          orderBy: { visitScheduledAt: 'asc' },
+        });
+
+        if (upcomingInspection) {
+          const proName = upcomingInspection.professional?.businessName || upcomingInspection.professional?.fullName || 'A professional';
+          const timeLabel = upcomingInspection.visitScheduledAt
+            ? new Date(upcomingInspection.visitScheduledAt).toLocaleString('en-HK', {
+                weekday: 'short', day: '2-digit', month: 'short',
+                hour: '2-digit', minute: '2-digit', hour12: true,
+              })
+            : 'upcoming';
+          manageSiteRequestsDescription =
+            `${proName} is scheduled to visit on ${timeLabel}. Manage site inspections or scan their QR badge.`;
+        }
+      }
+
       if (manageSiteRequestsDescription) {
         availableConfigSteps = [
           createSyntheticPrimaryStep(
