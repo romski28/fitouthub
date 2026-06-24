@@ -62,8 +62,8 @@ export function useVoiceInput({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = lang;
-    recognition.interimResults = true;
-    recognition.continuous = true;
+    recognition.interimResults = !isMobile;
+    recognition.continuous = !isMobile;
     finalTranscriptRef.current = '';
 
     recognition.onresult = (event: any) => {

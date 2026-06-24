@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-4d88436a",
+    "date": "2026-06-24T18:01:17+08:00",
+    "title": "Mobile voice: use single-utterance mode (continuous=false, interimResults=false) for cleaner output",
+    "summary": "Mobile voice: use single-utterance mode (continuous=false, interimResults=false) for cleaner output",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d88436a",
+    "files": [
+      "apps/web/src/hooks/use-voice-input.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-0cbfa0fa",
     "date": "2026-06-24T17:52:25+08:00",
     "title": "Suppress live interim voice preview on mobile to avoid repeated-word glitch",
