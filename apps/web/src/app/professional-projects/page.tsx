@@ -656,14 +656,14 @@ export default function ProfessionalProjectsPage() {
                                       type="button"
                                       onClick={() =>
                                         void openProfessionalNextStepModal(
-                                          { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline', description: 'Decline this project invitation.' },
+                                          { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.' },
                                           projectProf.project.id,
                                           projectProf.id,
                                         )
                                       }
-                                      className="rounded-lg border border-rose-300 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 text-rose-700 px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
                                     >
-                                      Decline
+                                      Decline project
                                     </button>
                                   )}
                                 </div>
