@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-da1fcf06",
+    "date": "2026-06-24T12:16:26+08:00",
+    "title": "Fix date-gate loop: once marked missed, skip expiry step and go to quote",
+    "summary": "Fix date-gate loop: once marked missed, skip expiry step and go to quote",
+    "areas": [
+      "api"
+    ],
+    "commit": "da1fcf06",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-2547072a",
     "date": "2026-06-24T11:51:38+08:00",
     "title": "Create dedicated SiteInspectionExpiredModal with own auth context to fix Continue button",

@@ -449,7 +449,7 @@ export class NextStepService {
           select: { id: true, status: true },
         });
 
-        if (!existingAccessReq || existingAccessReq.status === 'missed') {
+        if (!existingAccessReq) {
           availableConfigSteps = [{
             ...createSyntheticPrimaryStep(
               'SITE_INSPECTION_EXPIRED',
