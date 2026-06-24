@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-77cd9eac",
+    "date": "2026-06-24T09:38:40+08:00",
+    "title": "Fix TypeScript error: add missing NextStepAction fields to synthetic decline action",
+    "summary": "Fix TypeScript error: add missing NextStepAction fields to synthetic decline action",
+    "areas": [
+      "web"
+    ],
+    "commit": "77cd9eac",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-824943f1",
     "date": "2026-06-24T08:46:26+08:00",
     "title": "Match both Decline buttons to same style: label Decline project, blue bg, white text",

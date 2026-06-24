@@ -656,7 +656,7 @@ export default function ProfessionalProjectsPage() {
                                       type="button"
                                       onClick={() =>
                                         void openProfessionalNextStepModal(
-                                          { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.' },
+                                          { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.', isPrimary: false, isElective: true, requiresAction: true, displayOrder: 99 },
                                           projectProf.project.id,
                                           projectProf.id,
                                         )
