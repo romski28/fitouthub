@@ -292,26 +292,26 @@ export function RequestSiteAccessModal({
         }
       }}
     >
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        <div className="border-b border-slate-700 px-6 py-4">
-          <h2 className="text-xl font-bold text-emerald-300">{title}</h2>
-          <p className="mt-2 text-sm text-slate-200">{body}</p>
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl backdrop-blur">
+        <div className="border-b border-[rgba(120,53,15,0.12)] px-6 py-4">
+          <h2 className="text-xl font-bold text-amber-800">{title}</h2>
+          <p className="mt-2 text-sm text-stone-600">{body}</p>
         </div>
 
         <div className="next-step-scrollbar max-h-[60vh] space-y-4 overflow-y-auto px-6 py-5">
           {error ? (
-            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+            <div className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {error}
             </div>
           ) : null}
 
           {isBusy ? (
-            <p className="text-sm text-slate-300">Loading site access status...</p>
+            <p className="text-sm text-stone-500">Loading site access status...</p>
           ) : !status ? (
-            <p className="text-sm text-slate-300">No site access data available.</p>
+            <p className="text-sm text-stone-500">No site access data available.</p>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-slate-200">
+              <div className="text-sm text-stone-700">
                 <span className="font-semibold">Status:</span>{' '}
                 {status.requestStatus === 'none'
                   ? 'No request yet'
@@ -319,7 +319,7 @@ export function RequestSiteAccessModal({
               </div>
 
               {offeredInspectionDate ? (
-                <div className="rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                <div className="rounded-md border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
                   Client inspection date available:{' '}
                   <span className="font-semibold">
                     {formatInspectionDate(offeredInspectionDate)}
@@ -328,10 +328,10 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {requestPending ? (
-                <div className="rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-200">
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700">
                   Awaiting client approval.
                   {status.visitScheduledAt ? (
-                    <span className="mt-1 block text-amber-100">
+                    <span className="mt-1 block text-amber-600">
                       Requested visit: {formatInspectionDateTime(status.visitScheduledAt)}
                     </span>
                   ) : null}
@@ -339,13 +339,13 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {status.requestStatus === 'denied' ? (
-                <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                <div className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   Site access denied{status.reasonDenied ? `: ${status.reasonDenied}` : '.'}
                 </div>
               ) : null}
 
               {status.requestStatus === 'approved_no_visit' ? (
-                <div className={`rounded-md border px-3 py-2 text-sm ${rescheduleRequired ? 'border-amber-500/40 bg-amber-500/15 text-amber-200' : 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'}`}>
+                <div className={`rounded-md border px-3 py-2 text-sm ${rescheduleRequired ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-emerald-300 bg-emerald-50 text-emerald-700'}`}>
                   {rescheduleRequired
                     ? 'Your previous visit slot was voided due to a client date change. Please choose a new slot.'
                     : 'Site access approved (no visit required).'}
@@ -353,7 +353,7 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {status.requestStatus === 'approved_visit_scheduled' ? (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
+                <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                   Visit approved
                   {status.visitScheduledAt
                     ? ` for ${formatInspectionDateTime(status.visitScheduledAt)}`
@@ -364,7 +364,7 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {status.requestStatus === 'visited' ? (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
+                <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                   Site visited
                   {status.visitedAt
                     ? ` on ${new Date(status.visitedAt).toLocaleDateString('en-HK')}`
@@ -373,9 +373,9 @@ export function RequestSiteAccessModal({
               ) : null}
 
               {canRequestNewVisit ? (
-                <div className="space-y-3 rounded-md border border-slate-700 bg-slate-900/60 p-4">
-                  <p className="text-sm font-semibold text-white">Request Site Access</p>
-                  <p className="text-xs text-slate-300">
+                <div className="space-y-3 rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.55)] p-4">
+                  <p className="text-sm font-semibold text-stone-800">Request Site Access</p>
+                  <p className="text-xs text-stone-600">
                     {offeredInspectionDate
                       ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
                       : 'Propose a preferred date and time so the client can accept, update, or decline.'}
@@ -384,13 +384,13 @@ export function RequestSiteAccessModal({
                   {offeredInspectionDate ? (
                     <div className="space-y-3">
                       <div>
-                        <p className="mb-1 text-xs font-semibold text-slate-300">Inspection Date</p>
-                        <div className="rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-white">
+                        <p className="mb-1 text-xs font-semibold text-stone-600">Inspection Date</p>
+                        <div className="rounded-md border border-[rgba(120,53,15,0.18)] bg-white/70 px-3 py-2 text-sm text-stone-800">
                           {formatInspectionDate(offeredInspectionDate)}
                         </div>
                       </div>
                       <div>
-                        <p className="mb-2 text-xs font-semibold text-slate-300">Choose an hourly time</p>
+                        <p className="mb-2 text-xs font-semibold text-stone-600">Choose an hourly time</p>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                           {INSPECTION_TIME_OPTIONS.map((timeOption) => {
                             const isBooked = bookedInspectionTimes.has(timeOption);
@@ -405,10 +405,10 @@ export function RequestSiteAccessModal({
                                 }
                                 className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
                                   isSelected
-                                    ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                                    ? 'border-amber-500 bg-amber-100/60 text-amber-900'
                                     : isBooked
-                                    ? 'border-slate-700 bg-slate-900 text-slate-500'
-                                    : 'border-slate-600 bg-slate-900 text-white hover:border-emerald-500 hover:text-emerald-100'
+                                    ? 'border-[rgba(120,53,15,0.08)] bg-stone-200/50 text-stone-400'
+                                    : 'border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.75)] text-stone-700 hover:border-amber-500 hover:text-amber-800'
                                 }`}
                               >
                                 {timeOption}
@@ -421,25 +421,25 @@ export function RequestSiteAccessModal({
                   ) : (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-300">
+                        <label className="mb-1 block text-xs font-semibold text-stone-600">
                           Preferred Date
                         </label>
                         <input
                           type="date"
                           value={siteAccessRequestDate}
                           onChange={(e) => setSiteAccessRequestDate(e.target.value)}
-                          className="quote-picker-input w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                          className="w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-sm text-stone-800 focus:border-amber-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-300">
+                        <label className="mb-1 block text-xs font-semibold text-stone-600">
                           Preferred Time
                         </label>
                         <input
                           type="time"
                           value={siteAccessRequestTime}
                           onChange={(e) => setSiteAccessRequestTime(e.target.value)}
-                          className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                          className="w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-sm text-stone-800 focus:border-amber-500 focus:outline-none"
                         />
                       </div>
                     </div>
@@ -450,11 +450,11 @@ export function RequestSiteAccessModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-[rgba(120,53,15,0.12)] px-6 py-4">
           <button
             type="button"
             onClick={onOpenProjectInformation}
-            className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
+            className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)]"
           >
             {secondaryButtonLabel}
           </button>
@@ -462,7 +462,7 @@ export function RequestSiteAccessModal({
             type="button"
             onClick={() => setShowSkipConfirm(true)}
             disabled={actionLoading || requestPending || isBusy}
-            className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+            className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-[rgba(245,238,219,0.9)] disabled:opacity-50"
           >
             No need for site visit
           </button>
@@ -476,7 +476,7 @@ export function RequestSiteAccessModal({
               !canRequestSiteAccess ||
               isBusy
             }
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:opacity-50"
             title={
               !canRequestSiteAccess
                 ? offeredInspectionDate
@@ -493,9 +493,9 @@ export function RequestSiteAccessModal({
       {/* Skip confirmation modal */}
       {showSkipConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowSkipConfirm(false); }}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <p className="text-sm font-semibold text-white mb-2">Skip site visit?</p>
-            <p className="text-sm text-slate-300 mb-5">
+          <div className="w-full max-w-sm rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] p-6 shadow-2xl backdrop-blur">
+            <p className="text-sm font-semibold text-stone-800 mb-2">Skip site visit?</p>
+            <p className="text-sm text-stone-600 mb-5">
               Are you sure you do not need to visit the site? Your quote is final, regardless of your inspection or not.
             </p>
             <div className="flex gap-2 justify-end">
@@ -503,7 +503,7 @@ export function RequestSiteAccessModal({
                 type="button"
                 onClick={() => setShowSkipConfirm(false)}
                 disabled={skipLoading}
-                className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 transition"
+                className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-medium text-stone-600 hover:bg-[rgba(245,238,219,0.9)] transition"
               >
                 No
               </button>
@@ -511,7 +511,7 @@ export function RequestSiteAccessModal({
                 type="button"
                 onClick={handleSkipVisit}
                 disabled={skipLoading}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
               >
                 {skipLoading ? 'Skipping...' : 'Yes, skip visit'}
               </button>
