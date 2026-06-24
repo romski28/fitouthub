@@ -3,8 +3,6 @@
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { useProfessionalAuth } from '@/context/professional-auth-context';
-import { API_BASE_URL } from '@/config/api';
 import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
@@ -24,6 +22,7 @@ import { RequestSiteAccessModal } from './request-site-access-modal';
 import { ClientSiteAccessModal } from './client-site-access-modal';
 import { InspectSiteModal } from './inspect-site-modal';
 import { DeclineProjectModal } from './decline-project-modal';
+import { SiteInspectionExpiredModal } from './site-inspection-expired-modal';
 import { BookMimoSurveyModal } from './book-mimo-survey-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
@@ -36,7 +35,6 @@ export function ModalDispatcher({
 }: Omit<ModalDispatcherProps, 'projectId' | 'userId' | 'role'>) {
   const { state, closeModal } = useNextStepModal();
   const router = useRouter();
-  const { accessToken } = useProfessionalAuth();
   const fallbackTab = (state.role || '').toUpperCase().includes('PROFESSIONAL')
     ? getProfessionalTabForAction(state.actionKey)
     : getClientTabForAction(state.actionKey);
@@ -149,32 +147,14 @@ export function ModalDispatcher({
   // For now, all actions render through GeneralActionModal
   // Future: add PaymentModal, QuoteModal, ContractModal
   if (modalType === 'general') {
-    const isInspectionExpired = state.modalContent?.primaryActionType === 'mark_site_inspection_expired';
     return (
       <GeneralActionModal
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
         detailsTargetFallback={fallbackDetailsTarget}
-        onOpenProject={isInspectionExpired ? undefined : handleOpenProject}
+        onOpenProject={handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
-        onPrimaryAction={
-          isInspectionExpired
-            ? async () => {
-                if (!state.projectId || !accessToken) return;
-                try {
-                  await fetch(`${API_BASE_URL}/projects/${state.projectId}/site-access/mark-missed`, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                  });
-                  await state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
-                } catch {
-                  // Silently proceed — onCompleted will still refresh
-                }
-                closeModal();
-              }
-            : undefined
-        }
       />
     );
   }
@@ -345,6 +325,10 @@ export function ModalDispatcher({
     return <DeclineProjectModal isOpen={state.isOpen} onClose={closeModal} />;
   }
 
+  if (modalType === 'site-inspection-expired') {
+    return <SiteInspectionExpiredModal isOpen={state.isOpen} onClose={closeModal} />;
+  }
+
   return null;
 }
 
@@ -352,7 +336,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -423,6 +407,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (actionKey === 'DECLINE_PROJECT') {
     return 'decline-project';
+  }
+
+  if (actionKey === 'SITE_INSPECTION_EXPIRED') {
+    return 'site-inspection-expired';
   }
 
   if (actionKey === 'REQUEST_SITE_ACCESS') {

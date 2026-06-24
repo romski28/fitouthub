@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-24-2547072a",
+    "date": "2026-06-24T11:51:38+08:00",
+    "title": "Create dedicated SiteInspectionExpiredModal with own auth context to fix Continue button",
+    "summary": "Create dedicated SiteInspectionExpiredModal with own auth context to fix Continue button",
+    "areas": [
+      "web"
+    ],
+    "commit": "2547072a",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/site-inspection-expired-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-5c8e3fbc",
     "date": "2026-06-24T11:34:17+08:00",
     "title": "Tighten expired inspection modal narrative to match exact wording",
