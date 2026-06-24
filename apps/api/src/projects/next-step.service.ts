@@ -461,12 +461,12 @@ export class NextStepService {
             ),
             isPrimary: true,
             displayOrder: 0,
-            modalContent: {
-              title: 'Site inspection is now closed',
-              body: 'The inspection date for this project has passed and you did not book or skip a visit. We\'ll mark your record as missed and move you to the next step.',
-              primaryButtonLabel: 'OK',
-              primaryActionType: 'mark_site_inspection_expired',
-            },
+            modalTitle: 'Site inspection is now closed',
+            modalBody: 'The inspection date for this project has passed and you did not book or skip a visit. We\'ll mark your record as missed and move you to the next step.',
+            modalPrimaryButtonLabel: 'Continue',
+            modalPrimaryActionType: 'mark_site_inspection_expired',
+            modalSecondaryButtonLabel: 'Cancel',
+            modalSecondaryActionType: 'close_modal',
           } as any];
         } else {
           // Already engaged (e.g. skipped) — go to quote

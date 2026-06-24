@@ -149,16 +149,17 @@ export function ModalDispatcher({
   // For now, all actions render through GeneralActionModal
   // Future: add PaymentModal, QuoteModal, ContractModal
   if (modalType === 'general') {
+    const isInspectionExpired = state.modalContent?.primaryActionType === 'mark_site_inspection_expired';
     return (
       <GeneralActionModal
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
         detailsTargetFallback={fallbackDetailsTarget}
-        onOpenProject={handleOpenProject}
+        onOpenProject={isInspectionExpired ? undefined : handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
         onPrimaryAction={
-          state.modalContent?.primaryActionType === 'mark_site_inspection_expired'
+          isInspectionExpired
             ? async () => {
                 if (!state.projectId || !accessToken) return;
                 try {

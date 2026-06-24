@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-24-b8592642",
+    "date": "2026-06-24T11:32:32+08:00",
+    "title": "Fix expired inspection modal: flat modalTitle/modalBody keys, 2-button layout, suppress View details",
+    "summary": "Fix expired inspection modal: flat modalTitle/modalBody keys, 2-button layout, suppress View details",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b8592642",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-1d98fd68",
     "date": "2026-06-24T11:21:59+08:00",
     "title": "Add site inspection expiry: SITE_INSPECTION_EXPIRED step, mark-missed endpoint, Missed badge",
