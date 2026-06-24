@@ -36,7 +36,7 @@ export function useVoiceInput({
 }: UseVoiceInputOptions): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false);
   const [lang, setLangState] = useState<VoiceLang>(initialLang);
-  const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
+  const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef('');
 
   const isSupported =

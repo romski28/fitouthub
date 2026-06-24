@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-5955b112",
+    "date": "2026-06-24T16:12:01+08:00",
+    "title": "Fix build: SpeechRecognition not in global types, use any for ref",
+    "summary": "Fix build: SpeechRecognition not in global types, use any for ref",
+    "areas": [
+      "web"
+    ],
+    "commit": "5955b112",
+    "files": [
+      "apps/web/src/hooks/use-voice-input.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-ac6642a2",
     "date": "2026-06-24T16:09:35+08:00",
     "title": "Wire voice language selection through to AI prompt: voiceLang overrides preferredLanguage",
