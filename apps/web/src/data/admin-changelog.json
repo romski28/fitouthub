@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-0ec494aa",
+    "date": "2026-06-24T08:45:01+08:00",
+    "title": "Route pending Decline button through DeclineProjectModal (unified decline path)",
+    "summary": "Route pending Decline button through DeclineProjectModal (unified decline path)",
+    "areas": [
+      "web"
+    ],
+    "commit": "0ec494aa",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-23-ac6151f7",
     "date": "2026-06-23T19:00:52+08:00",
     "title": "Add Manage site requests button to client site-access tab, wired to modal",
