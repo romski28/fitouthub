@@ -877,6 +877,24 @@ export class ProjectsController {
     return this.projectsService.skipSiteVisit(projectId, professionalId);
   }
 
+  @Post(':id/site-access/mark-missed')
+  @UseGuards(CombinedAuthGuard)
+  async markSiteInspectionMissed(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    if (!req.user?.isProfessional) {
+      throw new HttpException('Only professionals can mark site inspections as missed', HttpStatus.FORBIDDEN);
+    }
+
+    const professionalId = req.user?.id || req.user?.sub;
+    if (!professionalId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.projectsService.markSiteInspectionMissed(projectId, professionalId);
+  }
+
   @Get(':id/site-addresses')
   @UseGuards(CombinedAuthGuard)
   async listClientSiteAddresses(

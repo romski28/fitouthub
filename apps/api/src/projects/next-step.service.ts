@@ -435,8 +435,46 @@ export class NextStepService {
         displayOrder: 20,
       } as any;
 
-      // If address is visible and not yet visited — INSPECT_SITE only
+      // Date-gate: check if inspection date has passed without pro engagement
       if (
+        inspectionDate &&
+        !isProfessional.siteVisitedAt &&
+        new Date(inspectionDate).toDateString() < new Date().toDateString()
+      ) {
+        const existingAccessReq = await this.prisma.siteAccessRequest.findFirst({
+          where: {
+            projectProfessionalId: isProfessional.id,
+            status: { in: ['approved_visit_scheduled', 'approved_no_visit', 'visited', 'skipped', 'missed'] },
+          },
+          select: { id: true, status: true },
+        });
+
+        if (!existingAccessReq || existingAccessReq.status === 'missed') {
+          availableConfigSteps = [{
+            ...createSyntheticPrimaryStep(
+              'SITE_INSPECTION_EXPIRED',
+              'Site inspection closed',
+              true,
+              role,
+              effectiveStage,
+              'The inspection date for this project has passed and you did not book or skip a visit. We\'ll mark your record as missed and move you to the next step.',
+            ),
+            isPrimary: true,
+            displayOrder: 0,
+            modalContent: {
+              title: 'Site inspection is now closed',
+              body: 'The inspection date for this project has passed and you did not book or skip a visit. We\'ll mark your record as missed and move you to the next step.',
+              primaryButtonLabel: 'OK',
+              primaryActionType: 'mark_site_inspection_expired',
+            },
+          } as any];
+        } else {
+          // Already engaged (e.g. skipped) — go to quote
+          availableConfigSteps = [quoteStep, declineStep];
+        }
+      }
+      // If address is visible and not yet visited — INSPECT_SITE only
+      else if (
         isProfessional.addressVisible === true &&
         !isProfessional.siteVisitedAt
       ) {

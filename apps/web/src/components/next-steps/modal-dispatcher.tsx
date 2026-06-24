@@ -3,6 +3,8 @@
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
+import { API_BASE_URL } from '@/config/api';
 import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
@@ -34,6 +36,7 @@ export function ModalDispatcher({
 }: Omit<ModalDispatcherProps, 'projectId' | 'userId' | 'role'>) {
   const { state, closeModal } = useNextStepModal();
   const router = useRouter();
+  const { accessToken } = useProfessionalAuth();
   const fallbackTab = (state.role || '').toUpperCase().includes('PROFESSIONAL')
     ? getProfessionalTabForAction(state.actionKey)
     : getClientTabForAction(state.actionKey);
@@ -154,6 +157,23 @@ export function ModalDispatcher({
         detailsTargetFallback={fallbackDetailsTarget}
         onOpenProject={handleOpenProject}
         onDetailsAction={handleDetailsNavigation}
+        onPrimaryAction={
+          state.modalContent?.primaryActionType === 'mark_site_inspection_expired'
+            ? async () => {
+                if (!state.projectId || !accessToken) return;
+                try {
+                  await fetch(`${API_BASE_URL}/projects/${state.projectId}/site-access/mark-missed`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                  });
+                  await state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
+                } catch {
+                  // Silently proceed — onCompleted will still refresh
+                }
+                closeModal();
+              }
+            : undefined
+        }
       />
     );
   }

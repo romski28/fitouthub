@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-06-24-1d98fd68",
+    "date": "2026-06-24T11:21:59+08:00",
+    "title": "Add site inspection expiry: SITE_INSPECTION_EXPIRED step, mark-missed endpoint, Missed badge",
+    "summary": "Add site inspection expiry: SITE_INSPECTION_EXPIRED step, mark-missed endpoint, Missed badge",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "1d98fd68",
+    "files": [
+      "MANUAL_SQL_ADD_MISSED_SITE_ACCESS_STATUS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-e55437c2",
     "date": "2026-06-24T11:08:16+08:00",
     "title": "Recolor RequestSiteAccessModal to Mimo beige scheme (warm amber/brown tones)",

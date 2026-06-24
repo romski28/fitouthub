@@ -6818,6 +6818,58 @@ Please review the project details and respond with your quote or decline the inv
     return { success: true };
   }
 
+  async markSiteInspectionMissed(projectId: string, professionalId: string) {
+    const pp = await this.prisma.projectProfessional.findFirst({
+      where: { projectId, professionalId },
+      select: { id: true },
+    });
+    if (!pp) throw new BadRequestException('Professional not found on this project');
+
+    // Check if any existing access request already has a terminal status
+    const existing = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId: pp.id,
+        status: { in: ['approved_visit_scheduled', 'approved_no_visit', 'skipped', 'visited', 'missed'] },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (!existing || existing.status === 'missed') {
+      // Create or update to 'missed'
+      if (existing) {
+        await this.prisma.siteAccessRequest.update({
+          where: { id: existing.id },
+          data: { status: 'missed', respondedAt: new Date() },
+        });
+      } else {
+        await this.prisma.siteAccessRequest.create({
+          data: {
+            projectId,
+            projectProfessionalId: pp.id,
+            professionalId,
+            status: 'missed',
+            requestedAt: new Date(),
+            respondedAt: new Date(),
+          },
+        });
+      }
+    }
+
+    // Clear address visibility — inspection window is closed
+    await this.prisma.projectProfessional.update({
+      where: { id: pp.id },
+      data: { addressVisible: false },
+    });
+
+    // Flush nextStepCache
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
+    });
+
+    return { success: true };
+  }
+
   async respondToSiteAccessRequest(
     requestId: string,
     userId: string,

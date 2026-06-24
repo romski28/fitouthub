@@ -162,6 +162,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const isBooked =
     !backendRescheduleRequired &&
     hasApprovedAccess;
+  const isMissed = requestStatus === 'missed';
   const isNotAvailable = !offeredInspectionDate;
   const isNotRequested =
     !backendRescheduleRequired &&
@@ -201,7 +202,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
           ) : (
             <div className="space-y-3">
               {/* ── Panel 1: Status + Address ─────────────────── */}
-              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
+              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || isMissed || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
                 <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
                   {offeredInspectionDate && (
                     <div>
@@ -228,6 +229,15 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                       <p className="mt-1 font-semibold text-emerald-700">
                         ✅ Inspection booked
                         {siteAccessStatus.formattedScheduledSlot && ` — ${siteAccessStatus.formattedScheduledSlot}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {isMissed && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 text-slate-600">
+                        ⏰ Inspection missed — the site inspection date has passed and you did not book or skip a visit.
                       </p>
                     </div>
                   )}
