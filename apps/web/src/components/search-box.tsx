@@ -15,12 +15,12 @@ export interface SearchBoxProps {
   onHelpClick?: () => void;
   onCharCountChange?: (count: number) => void;
   onImagePaste?: (files: File[]) => void;
-  onVoiceLangChange?: (lang: VoiceLang) => void;
+  voiceLang?: VoiceLang;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste, onVoiceLangChange }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste, voiceLang }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
@@ -185,6 +185,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
           <div className="flex items-center justify-between px-3 sm:px-4 pb-1 pt-1">
             <div className="flex items-center gap-2">
               <VoiceInputButton
+                lang={voiceLang}
                 onTranscript={(text) => setQuery(prev => {
                   const clean = prev.replace(/\s*\[⋯\].*$/, '').trim();
                   return clean ? `${clean} ${text}` : text;
@@ -193,7 +194,6 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
                   const base = prev.replace(/\s*\[⋯\].*$/, '').trim();
                   return base ? `${base} [⋯] ${text}` : `[⋯] ${text}`;
                 })}
-                onLangChange={onVoiceLangChange}
               />
               {imageActions}
               {query.trim().length > 0 && (

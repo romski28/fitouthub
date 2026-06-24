@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-24-1b91a8f7",
+    "date": "2026-06-24T17:49:30+08:00",
+    "title": "Remove inline voice lang toggle, derive from navbar preferredLanguage instead",
+    "summary": "Remove inline voice lang toggle, derive from navbar preferredLanguage instead",
+    "areas": [
+      "web"
+    ],
+    "commit": "1b91a8f7",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/voice-input-button.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-5955b112",
     "date": "2026-06-24T16:12:01+08:00",
     "title": "Fix build: SpeechRecognition not in global types, use any for ref",

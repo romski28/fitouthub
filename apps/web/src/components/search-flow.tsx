@@ -688,7 +688,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
   const [promptImages, setPromptImages] = useState<File[]>([]);
-  const [voiceLang, setVoiceLang] = useState<string | null>(null);
   const [promptUploaderClearKey, setPromptUploaderClearKey] = useState(0);
   const [visionQuotaLoading, setVisionQuotaLoading] = useState(false);
   const [visionQuota, setVisionQuota] = useState<{
@@ -1536,8 +1535,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         },
         body: JSON.stringify(
           isAdminTester
-            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls, preferredLanguage: voiceLang || preferredLanguage }
-            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls, preferredLanguage: voiceLang || preferredLanguage },
+            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls, preferredLanguage }
+            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls, preferredLanguage },
         ),
       });
       if (!response.ok) {
@@ -1960,7 +1959,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           onHelpClick={() => setShowHelp(true)}
           onImagePaste={(files) => setPromptImages((prev) => [...prev, ...files])}
           onCharCountChange={setPromptCharCount}
-          onVoiceLangChange={setVoiceLang}
+          voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
           imageActions={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
               <ChatImageUploader
