@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-1b6f5e03",
+    "date": "2026-06-24T10:45:35+08:00",
+    "title": "Fix elective Decline project button: set requiresAction=true so modal opens instead of navigating",
+    "summary": "Fix elective Decline project button: set requiresAction=true so modal opens instead of navigating",
+    "areas": [
+      "api"
+    ],
+    "commit": "1b6f5e03",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-7381b4ef",
     "date": "2026-06-24T10:38:56+08:00",
     "title": "Remove displayOrder from synthetic NextStepAction (not in frontend type)",

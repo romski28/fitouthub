@@ -425,7 +425,7 @@ export class NextStepService {
         ...createSyntheticPrimaryStep(
           'DECLINE_PROJECT',
           'Decline project',
-          false,
+          true,
           role,
           effectiveStage,
           'Decline this project invitation.',
