@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-5c8e3fbc",
+    "date": "2026-06-24T11:34:17+08:00",
+    "title": "Tighten expired inspection modal narrative to match exact wording",
+    "summary": "Tighten expired inspection modal narrative to match exact wording",
+    "areas": [
+      "api"
+    ],
+    "commit": "5c8e3fbc",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-b8592642",
     "date": "2026-06-24T11:32:32+08:00",
     "title": "Fix expired inspection modal: flat modalTitle/modalBody keys, 2-button layout, suppress View details",
