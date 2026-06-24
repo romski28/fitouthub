@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-0cbfa0fa",
+    "date": "2026-06-24T17:52:25+08:00",
+    "title": "Suppress live interim voice preview on mobile to avoid repeated-word glitch",
+    "summary": "Suppress live interim voice preview on mobile to avoid repeated-word glitch",
+    "areas": [
+      "web"
+    ],
+    "commit": "0cbfa0fa",
+    "files": [
+      "apps/web/src/hooks/use-voice-input.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-1b91a8f7",
     "date": "2026-06-24T17:49:30+08:00",
     "title": "Remove inline voice lang toggle, derive from navbar preferredLanguage instead",

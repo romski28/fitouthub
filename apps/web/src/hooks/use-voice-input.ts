@@ -43,6 +43,10 @@ export function useVoiceInput({
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
     setIsListening(false);
@@ -70,14 +74,16 @@ export function useVoiceInput({
         const result = event.results[i];
         if (result.isFinal) {
           final += result[0].transcript;
-        } else {
+        } else if (!isMobile) {
           interim += result[0].transcript;
         }
       }
 
       finalTranscriptRef.current = final;
-      const display = final + interim;
-      onInterim?.(display);
+      if (!isMobile) {
+        const display = final + interim;
+        onInterim?.(display);
+      }
     };
 
     recognition.onerror = (event: any) => {
