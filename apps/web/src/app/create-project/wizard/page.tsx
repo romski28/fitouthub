@@ -22,6 +22,7 @@ import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets'
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 import { RequirementChecklist } from '@/components/requirement-checklist';
 import { VoiceInputButton } from '@/components/voice-input-button';
+import { ListenButton } from '@/components/listen-button';
 
 type WizardStep =
   | { kind: 'basics' }
@@ -1362,6 +1363,14 @@ export default function CreateProjectWizardPage() {
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
+                                  {message.role === 'assistant' && (
+                                    <div className="mt-1 flex justify-end">
+                                      <ListenButton
+                                        text={message.text}
+                                        lang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'zh-HK' : 'en-HK'}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                               {chatBusy && (

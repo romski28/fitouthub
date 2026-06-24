@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-24-37951fee",
+    "date": "2026-06-24T18:47:19+08:00",
+    "title": "Add text-to-speech ListenButton to AI chat bubbles in wizard",
+    "summary": "Add text-to-speech ListenButton to AI chat bubbles in wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "37951fee",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/listen-button.tsx",
+      "apps/web/src/hooks/use-text-to-speech.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-fd8bd033",
     "date": "2026-06-24T18:27:42+08:00",
     "title": "Add voice-to-text mic button to AI chat in project wizard",
