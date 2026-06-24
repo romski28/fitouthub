@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-7381b4ef",
+    "date": "2026-06-24T10:38:56+08:00",
+    "title": "Remove displayOrder from synthetic NextStepAction (not in frontend type)",
+    "summary": "Remove displayOrder from synthetic NextStepAction (not in frontend type)",
+    "areas": [
+      "web"
+    ],
+    "commit": "7381b4ef",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-77cd9eac",
     "date": "2026-06-24T09:38:40+08:00",
     "title": "Fix TypeScript error: add missing NextStepAction fields to synthetic decline action",
