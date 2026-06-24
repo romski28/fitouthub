@@ -21,6 +21,7 @@ import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 import { RequirementChecklist } from '@/components/requirement-checklist';
+import { VoiceInputButton } from '@/components/voice-input-button';
 
 type WizardStep =
   | { kind: 'basics' }
@@ -296,7 +297,7 @@ const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoggedIn, userLocation, accessToken } = useAuth();
+  const { isLoggedIn, userLocation, accessToken, preferredLanguage } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
@@ -1421,6 +1422,11 @@ export default function CreateProjectWizardPage() {
                                         disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
                                       />
                                     </label>
+
+                                    <VoiceInputButton
+                                      lang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
+                                      onTranscript={(text) => setChatInput(prev => prev ? `${prev} ${text}` : text)}
+                                    />
 
                                     <textarea
                                       value={chatInput}

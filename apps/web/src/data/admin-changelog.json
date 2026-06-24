@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-fd8bd033",
+    "date": "2026-06-24T18:27:42+08:00",
+    "title": "Add voice-to-text mic button to AI chat in project wizard",
+    "summary": "Add voice-to-text mic button to AI chat in project wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd8bd033",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-4d88436a",
     "date": "2026-06-24T18:01:17+08:00",
     "title": "Mobile voice: use single-utterance mode (continuous=false, interimResults=false) for cleaner output",
