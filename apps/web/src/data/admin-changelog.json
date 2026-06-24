@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-857cfe06",
+    "date": "2026-06-24T13:03:55+08:00",
+    "title": "Suppress hardcoded Decline button when API already provides DECLINE_PROJECT elective",
+    "summary": "Suppress hardcoded Decline button when API already provides DECLINE_PROJECT elective",
+    "areas": [
+      "web"
+    ],
+    "commit": "857cfe06",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-1b296794",
     "date": "2026-06-24T12:51:54+08:00",
     "title": "Show Decline project alongside Site inspection closed step",

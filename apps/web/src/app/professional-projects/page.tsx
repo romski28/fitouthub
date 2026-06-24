@@ -651,7 +651,7 @@ export default function ProfessionalProjectsPage() {
                                       {action.actionLabel}
                                     </button>
                                   ))}
-                                  {projectProf.status === 'pending' && (
+                                  {projectProf.status === 'pending' && !electiveActions.some(a => a.actionKey === 'DECLINE_PROJECT') && (
                                     <button
                                       type="button"
                                       onClick={() =>
