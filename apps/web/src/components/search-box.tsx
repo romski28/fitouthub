@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { VoiceInputButton } from '@/components/voice-input-button';
+import type { VoiceLang } from '@/hooks/use-voice-input';
 
 export interface SearchBoxProps {
   onSubmit: (query: string) => void;
@@ -14,11 +15,12 @@ export interface SearchBoxProps {
   onHelpClick?: () => void;
   onCharCountChange?: (count: number) => void;
   onImagePaste?: (files: File[]) => void;
+  onVoiceLangChange?: (lang: VoiceLang) => void;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste }: SearchBoxProps) {
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste, onVoiceLangChange }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
@@ -191,6 +193,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
                   const base = prev.replace(/\s*\[⋯\].*$/, '').trim();
                   return base ? `${base} [⋯] ${text}` : `[⋯] ${text}`;
                 })}
+                onLangChange={onVoiceLangChange}
               />
               {imageActions}
               {query.trim().length > 0 && (

@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useVoiceInput, VOICE_LANGUAGES, type VoiceLang } from '@/hooks/use-voice-input';
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
   onInterim?: (text: string) => void;
+  onLangChange?: (lang: VoiceLang) => void;
   defaultLang?: VoiceLang;
   className?: string;
 }
@@ -12,6 +14,7 @@ interface VoiceInputButtonProps {
 export function VoiceInputButton({
   onTranscript,
   onInterim,
+  onLangChange,
   defaultLang = 'yue-Hant-HK',
   className = '',
 }: VoiceInputButtonProps) {
@@ -20,6 +23,10 @@ export function VoiceInputButton({
     onResult: onTranscript,
     onInterim,
   });
+
+  useEffect(() => {
+    onLangChange?.(lang);
+  }, [lang, onLangChange]);
 
   if (!isSupported) return null;
 

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-24-ac6642a2",
+    "date": "2026-06-24T16:09:35+08:00",
+    "title": "Wire voice language selection through to AI prompt: voiceLang overrides preferredLanguage",
+    "summary": "Wire voice language selection through to AI prompt: voiceLang overrides preferredLanguage",
+    "areas": [
+      "web"
+    ],
+    "commit": "ac6642a2",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/voice-input-button.tsx"
+    ]
+  },
+  {
     "id": "2026-06-24-fe78044b",
     "date": "2026-06-24T16:06:05+08:00",
     "title": "Add reusable voice-to-text input: useVoiceInput hook + VoiceInputButton + wire into search-box",
