@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-24-fe78044b",
+    "date": "2026-06-24T16:06:05+08:00",
+    "title": "Add reusable voice-to-text input: useVoiceInput hook + VoiceInputButton + wire into search-box",
+    "summary": "Add reusable voice-to-text input: useVoiceInput hook + VoiceInputButton + wire into search-box",
+    "areas": [
+      "web"
+    ],
+    "commit": "fe78044b",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/voice-input-button.tsx",
+      "apps/web/src/hooks/use-voice-input.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-857cfe06",
     "date": "2026-06-24T13:03:55+08:00",
     "title": "Suppress hardcoded Decline button when API already provides DECLINE_PROJECT elective",

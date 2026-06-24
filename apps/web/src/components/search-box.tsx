@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { VoiceInputButton } from '@/components/voice-input-button';
 
 export interface SearchBoxProps {
   onSubmit: (query: string) => void;
@@ -181,6 +182,16 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
 
           <div className="flex items-center justify-between px-3 sm:px-4 pb-1 pt-1">
             <div className="flex items-center gap-2">
+              <VoiceInputButton
+                onTranscript={(text) => setQuery(prev => {
+                  const clean = prev.replace(/\s*\[⋯\].*$/, '').trim();
+                  return clean ? `${clean} ${text}` : text;
+                })}
+                onInterim={(text) => setQuery(prev => {
+                  const base = prev.replace(/\s*\[⋯\].*$/, '').trim();
+                  return base ? `${base} [⋯] ${text}` : `[⋯] ${text}`;
+                })}
+              />
               {imageActions}
               {query.trim().length > 0 && (
                 <button
