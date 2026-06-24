@@ -467,7 +467,7 @@ export class NextStepService {
             modalPrimaryActionType: 'mark_site_inspection_expired',
             modalSecondaryButtonLabel: 'Cancel',
             modalSecondaryActionType: 'close_modal',
-          } as any];
+          } as any, declineStep];
         } else {
           // Already engaged (e.g. skipped) — go to quote
           availableConfigSteps = [quoteStep, declineStep];

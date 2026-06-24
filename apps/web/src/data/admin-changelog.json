@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-24-1b296794",
+    "date": "2026-06-24T12:51:54+08:00",
+    "title": "Show Decline project alongside Site inspection closed step",
+    "summary": "Show Decline project alongside Site inspection closed step",
+    "areas": [
+      "api"
+    ],
+    "commit": "1b296794",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-da1fcf06",
     "date": "2026-06-24T12:16:26+08:00",
     "title": "Fix date-gate loop: once marked missed, skip expiry step and go to quote",
