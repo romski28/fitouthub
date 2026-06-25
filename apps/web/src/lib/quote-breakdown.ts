@@ -160,7 +160,7 @@ export const buildQuoteBreakdownPayload = (
       }
       return item;
     })
-    .filter((item) => item.required || item.amount > 0);
+    .filter((item) => item.required || item.amount > 0 || item.code === 'other_items');
 
   const baseTotal = roundMoney(baseItems.reduce((sum, item) => sum + item.amount, 0));
 

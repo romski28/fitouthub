@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-26-74b91d1c",
+    "date": "2026-06-26T00:28:30+08:00",
+    "title": "Always show Other items in quote breakdown, fallback to 0 for existing quotes",
+    "summary": "Always show Other items in quote breakdown, fallback to 0 for existing quotes",
+    "areas": [
+      "web"
+    ],
+    "commit": "74b91d1c",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx",
+      "apps/web/src/lib/quote-breakdown.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-da29313f",
     "date": "2026-06-26T00:22:25+08:00",
     "title": "Fix review quotes: mini panel breakdown, remove fee line, white pill text, hide empty Also required",

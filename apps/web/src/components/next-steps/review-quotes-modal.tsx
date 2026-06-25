@@ -345,7 +345,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const isFastest = pp.id === fastestId && withDuration.length > 1;
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
-              const breakdownItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
+              const rawItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
+              // Ensure "Other items" always appears, even if not stored
+              const breakdownItems = rawItems.some(i => i.code === 'other_items')
+                ? rawItems
+                : [...rawItems, { code: 'other_items' as const, label: 'Other items', amount: 0, displayOrder: 99 }];
               const baseTotal = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
               const grossTotal = Math.round(baseTotal * 1.1); // 10% platform fee
               const isAccepting = acceptingId === pp.id;
