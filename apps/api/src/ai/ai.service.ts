@@ -3036,6 +3036,26 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           parsedOutput = merged.parsedOutput;
           imageInsightsRecord = merged.imageInsightsRecord;
 
+          // Inject Qwen's image summary into the conversational text so the user sees photo-specific observations
+          if (
+            parsedOutput &&
+            typeof parsedOutput === 'object' &&
+            !Array.isArray(parsedOutput) &&
+            typeof parsed.imageSummary === 'string' &&
+            parsed.imageSummary.trim()
+          ) {
+            const po = parsedOutput as Record<string, unknown>;
+            const existing = typeof po.conversationalText === 'string' ? po.conversationalText : '';
+            const tradesFromVision = Array.isArray(parsed.suggestedTrades)
+              ? parsed.suggestedTrades.filter((t: unknown) => typeof t === 'string')
+              : [];
+            const tradeHint = tradesFromVision.length > 0
+              ? ` Based on what I can see, trades like ${tradesFromVision.join(', ')} may be needed.`
+              : '';
+            po.conversationalText = `Looking at your photo${parsed.imageSummary.startsWith('I') ? ', ' : ': '}${parsed.imageSummary}.${tradeHint}\n\n${existing}`;
+            this.logger.log(`[${requestId}] Injected Qwen image summary into conversationalText (${parsed.imageSummary.length} chars, ${tradesFromVision.length} trades)`);
+          }
+
           visionUsageMeta = {
             requestedImageCount,
             processedImageCount: requestedImageCount,

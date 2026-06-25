@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-958f5397",
+    "date": "2026-06-25T18:44:11+08:00",
+    "title": "Inject Qwen imageSummary into conversationalText so users see photo-specific observations",
+    "summary": "Inject Qwen imageSummary into conversationalText so users see photo-specific observations",
+    "areas": [
+      "api"
+    ],
+    "commit": "958f5397",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-8d128033",
     "date": "2026-06-25T17:48:37+08:00",
     "title": "Add Qwen vision logging + sanitize confidence field for omni model compatibility",
