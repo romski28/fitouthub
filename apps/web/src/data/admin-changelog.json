@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-25-9f1fa5b8",
+    "date": "2026-06-25T12:09:07+08:00",
+    "title": "Fix photo auto-submit: use fresh mount key + simplified effect with empty deps",
+    "summary": "Fix photo auto-submit: use fresh mount key + simplified effect with empty deps",
+    "areas": [
+      "web"
+    ],
+    "commit": "9f1fa5b8",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-d32255d4",
     "date": "2026-06-25T11:56:14+08:00",
     "title": "Photo path: auto-submit images to AI for analysis and observations",

@@ -717,18 +717,13 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       initialImages.length > 0 &&
       !initialPrompt &&
       !photoAutoSubmitRef.current &&
-      promptImages.length === initialImages.length &&
       deepSeekSandboxEnabled
     ) {
       photoAutoSubmitRef.current = true;
-      // Small delay to let uploader initialize
-      const timer = setTimeout(() => {
-        handleSearch('Analyze these renovation photos. What do you see? What rooms, condition, and trades might be needed?');
-      }, 300);
-      return () => clearTimeout(timer);
+      handleSearch('Analyze these renovation photos. What do you see? What rooms, condition, and trades might be needed?');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialImages, promptImages.length, deepSeekSandboxEnabled]);
+  }, []);
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
     provider?: 'deepseek' | 'qwen';
