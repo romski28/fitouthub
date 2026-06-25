@@ -1,4 +1,4 @@
-export type QuoteBreakdownCode = 'callout_fee' | 'supplies' | 'labour';
+export type QuoteBreakdownCode = 'callout_fee' | 'supplies' | 'labour' | 'other_items';
 
 export interface QuoteBreakdownItem {
   code: QuoteBreakdownCode;
@@ -6,6 +6,7 @@ export interface QuoteBreakdownItem {
   amount: number;
   required?: boolean;
   displayOrder?: number;
+  notes?: string;
 }
 
 export interface StoredQuoteBreakdown {
@@ -23,6 +24,8 @@ export interface QuoteBreakdownFormValues {
   calloutFee: string;
   supplies: string;
   labour: string;
+  otherItems: string;
+  otherItemsDescription: string;
 }
 
 export interface QuoteBreakdownFieldDefinition {
@@ -43,6 +46,8 @@ export const emptyQuoteBreakdownForm = (): QuoteBreakdownFormValues => ({
   calloutFee: '',
   supplies: '',
   labour: '',
+  otherItems: '',
+  otherItemsDescription: '',
 });
 
 export const getQuoteBreakdownFields = (isEmergency: boolean): QuoteBreakdownFieldDefinition[] => {
@@ -52,6 +57,7 @@ export const getQuoteBreakdownFields = (isEmergency: boolean): QuoteBreakdownFie
   }
   fields.push({ key: 'supplies', code: 'supplies', label: 'Supplies', required: true });
   fields.push({ key: 'labour', code: 'labour', label: 'Labour', required: true });
+  fields.push({ key: 'otherItems', code: 'other_items', label: 'Other items (optional)', required: false });
   return fields;
 };
 
@@ -113,6 +119,7 @@ export const parseQuoteBreakdownForm = (
     if (item.code === 'callout_fee') form.calloutFee = amount;
     if (item.code === 'supplies') form.supplies = amount;
     if (item.code === 'labour') form.labour = amount;
+    if (item.code === 'other_items') form.otherItems = amount;
   });
 
   if (!form.supplies && !form.labour) {
@@ -131,7 +138,7 @@ const parseAmount = (value: string) => {
 };
 
 export const getQuoteBreakdownFormTotal = (form: QuoteBreakdownFormValues): number => {
-  return roundMoney(parseAmount(form.calloutFee) + parseAmount(form.supplies) + parseAmount(form.labour));
+  return roundMoney(parseAmount(form.calloutFee) + parseAmount(form.supplies) + parseAmount(form.labour) + parseAmount(form.otherItems));
 };
 
 export const buildQuoteBreakdownPayload = (
@@ -140,13 +147,19 @@ export const buildQuoteBreakdownPayload = (
 ): StoredQuoteBreakdown => {
   const fields = getQuoteBreakdownFields(context.isEmergency);
   const baseItems = fields
-    .map((field, index) => ({
-      code: field.code,
-      label: field.label,
-      amount: parseAmount(form[field.key]),
-      required: field.required,
-      displayOrder: index + 1,
-    }))
+    .map((field, index) => {
+      const item: QuoteBreakdownItem = {
+        code: field.code,
+        label: field.label,
+        amount: parseAmount(form[field.key]),
+        required: field.required,
+        displayOrder: index + 1,
+      };
+      if (field.code === 'other_items' && form.otherItemsDescription?.trim()) {
+        item.notes = form.otherItemsDescription.trim();
+      }
+      return item;
+    })
     .filter((item) => item.required || item.amount > 0);
 
   const baseTotal = roundMoney(baseItems.reduce((sum, item) => sum + item.amount, 0));

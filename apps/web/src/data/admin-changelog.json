@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-25-b89eeb9d",
+    "date": "2026-06-25T23:46:15+08:00",
+    "title": "Quote modal: hide Mimo fee, add Other items with description, 30min time intervals, updated subtotal",
+    "summary": "Quote modal: hide Mimo fee, add Other items with description, 30min time intervals, updated subtotal",
+    "areas": [
+      "web"
+    ],
+    "commit": "b89eeb9d",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/lib/quote-breakdown.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-855971fc",
     "date": "2026-06-25T22:59:53+08:00",
     "title": "Recolor quote submission modal to Mimo beige scheme",

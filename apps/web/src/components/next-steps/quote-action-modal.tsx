@@ -556,27 +556,25 @@ export function QuoteActionModal({
                         />
                       </label>
                     ))}
+                  </div>
 
+                  {parseFloat(breakdown.otherItems || '0') > 0 && (
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-stone-700">Mimo fee</span>
-                      <input
-                        type="text"
-                        value={loadingFeePreview ? '...' : platformFeePercent !== undefined ? `${platformFeePercent.toFixed(1)}%` : '—'}
-                        disabled
-                        className="w-full rounded-lg border border-[rgba(120,53,15,0.12)] bg-stone-100 px-3 py-2 text-stone-500 text-center outline-none"
+                      <span className="mb-1 block text-sm font-semibold text-stone-700">Other items description</span>
+                      <textarea
+                        value={breakdown.otherItemsDescription}
+                        onChange={(e) => setBreakdown((prev) => ({ ...prev, otherItemsDescription: e.target.value }))}
+                        rows={2}
+                        className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
+                        placeholder="e.g. Disposal of old fixtures, protective covers..."
+                        disabled={submitting}
                       />
                     </label>
-                  </div>
+                  )}
 
                   <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
-                    <p>Entered subtotal: {formatHKD(enteredTotal)}</p>
+                    <p>Your price (supplies + labour + other): {formatHKD(enteredTotal)}</p>
                   </div>
-
-                  {enteredTotal > 0 && platformFeePercent !== undefined && grossAmount !== undefined && (
-                    <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
-                      <p>Your quote: {formatHKD(enteredTotal)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
-                    </div>
-                  )}
 
                   {requestedCompletionBy ? (
                     <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.65)] px-3 py-2 text-sm text-stone-700">
@@ -650,9 +648,7 @@ export function QuoteActionModal({
                           disabled={submitting}
                         >
                           <option value="00">00</option>
-                          <option value="15">15</option>
                           <option value="30">30</option>
-                          <option value="45">45</option>
                         </select>
                       </div>
                     </label>
