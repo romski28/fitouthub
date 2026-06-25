@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-a4939cd8",
+    "date": "2026-06-25T23:58:59+08:00",
+    "title": "Wire quote submission onCompleted to bust next-step cache after submit",
+    "summary": "Wire quote submission onCompleted to bust next-step cache after submit",
+    "areas": [
+      "web"
+    ],
+    "commit": "a4939cd8",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-ac32476b",
     "date": "2026-06-25T23:56:24+08:00",
     "title": "Fix save warning text: white on rose background for readability",

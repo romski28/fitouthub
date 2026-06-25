@@ -189,6 +189,9 @@ export function ModalDispatcher({
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
+        onSubmitted={() => {
+          state.onCompleted?.({ projectId: state.projectId ?? '', actionKey: state.actionKey ?? '' });
+        }}
       />
     );
   }
