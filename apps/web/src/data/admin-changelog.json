@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-25-2b7543ec",
+    "date": "2026-06-25T12:46:21+08:00",
+    "title": "Fix photo intake: limit to 1 image, clear stale sessionStorage, init aiLoading for thinking animation",
+    "summary": "Fix photo intake: limit to 1 image, clear stale sessionStorage, init aiLoading for thinking animation",
+    "areas": [
+      "web"
+    ],
+    "commit": "2b7543ec",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/flip-choice.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-c0dc219d",
     "date": "2026-06-25T12:21:54+08:00",
     "title": "Fix photo intake: show Mimo thinking immediately, use unique state key to force fresh AI session",

@@ -126,10 +126,10 @@ export function FlipChoice({ onIntake, voiceLang = 'en-HK' }: FlipChoiceProps) {
             <div className="space-y-4">
               <PhotoDropZone
                 onPhotos={setPhotos}
-                maxFiles={5}
+                maxFiles={1}
               />
               <p className="text-xs text-stone-500 text-center">
-                Tip: show the whole room for context, plus close-ups of any problem areas.
+                Tip: show the whole room — you can add more photos later in the chat.
               </p>
               <button
                 type="button"

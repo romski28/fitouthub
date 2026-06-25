@@ -23,6 +23,10 @@ export default function Home() {
   const [intakeKey, setIntakeKey] = useState(0);
 
   const handleIntake = useCallback((mode: 'photos' | 'words', data: { text?: string; photos?: File[] }) => {
+    // Clear any stale AI session from previous intakes
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('aiSandboxSessionId');
+    }
     setIntakeKey(k => k + 1);
     if (mode === 'photos') setMimoThinking(true);
     setIntakeData({ mode, ...data });
