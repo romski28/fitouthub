@@ -3036,7 +3036,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           parsedOutput = merged.parsedOutput;
           imageInsightsRecord = merged.imageInsightsRecord;
 
-          // Inject Qwen's image summary into the conversational text so the user sees photo-specific observations
+          // Inject Qwen's image summary as the primary conversational text — replace DeepSeek's generic response
           if (
             parsedOutput &&
             typeof parsedOutput === 'object' &&
@@ -3045,15 +3045,20 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             parsed.imageSummary.trim()
           ) {
             const po = parsedOutput as Record<string, unknown>;
-            const existing = typeof po.conversationalText === 'string' ? po.conversationalText : '';
             const tradesFromVision = Array.isArray(parsed.suggestedTrades)
               ? parsed.suggestedTrades.filter((t: unknown) => typeof t === 'string')
               : [];
             const tradeHint = tradesFromVision.length > 0
               ? ` Based on what I can see, trades like ${tradesFromVision.join(', ')} may be needed.`
               : '';
-            po.conversationalText = `Looking at your photo${parsed.imageSummary.startsWith('I') ? ', ' : ': '}${parsed.imageSummary}.${tradeHint}\n\n${existing}`;
-            this.logger.log(`[${requestId}] Injected Qwen image summary into conversationalText (${parsed.imageSummary.length} chars, ${tradesFromVision.length} trades)`);
+            const conditionFindings = Array.isArray(parsed.conditionFindings)
+              ? parsed.conditionFindings.filter((c: unknown) => typeof c === 'string')
+              : [];
+            const conditionText = conditionFindings.length > 0
+              ? `\n\nI noticed: ${conditionFindings.join('; ')}.`
+              : '';
+            po.conversationalText = `${parsed.imageSummary}.${tradeHint}${conditionText}`;
+            this.logger.log(`[${requestId}] Replaced conversationalText with Qwen image summary (${parsed.imageSummary.length} chars, ${tradesFromVision.length} trades, ${conditionFindings.length} conditions)`);
           }
 
           visionUsageMeta = {

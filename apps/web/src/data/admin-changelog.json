@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-ee918a1c",
+    "date": "2026-06-25T18:59:05+08:00",
+    "title": "Replace conversationalText entirely with Qwen analysis, drop DeepSeek generic text when vision is available",
+    "summary": "Replace conversationalText entirely with Qwen analysis, drop DeepSeek generic text when vision is available",
+    "areas": [
+      "api"
+    ],
+    "commit": "ee918a1c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-958f5397",
     "date": "2026-06-25T18:44:11+08:00",
     "title": "Inject Qwen imageSummary into conversationalText so users see photo-specific observations",
