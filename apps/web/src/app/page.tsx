@@ -90,7 +90,7 @@ export default function Home() {
                       />
                     ) : (
                       <SearchFlow
-                        key={intakeData.mode + (intakeData.photos?.length ?? 0)}
+                        key={(intakeData.mode ?? '') + (intakeData.photos?.length ?? 0)}
                         autoFocusPrompt={shouldFocusPrompt}
                         resetAiSession={true}
                         onAiLoadingChange={setMimoThinking}

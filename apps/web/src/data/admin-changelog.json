@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-79ba3e07",
+    "date": "2026-06-25T12:13:58+08:00",
+    "title": "Fix null safety on intakeData.mode for key prop",
+    "summary": "Fix null safety on intakeData.mode for key prop",
+    "areas": [
+      "web"
+    ],
+    "commit": "79ba3e07",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-9f1fa5b8",
     "date": "2026-06-25T12:09:07+08:00",
     "title": "Fix photo auto-submit: use fresh mount key + simplified effect with empty deps",
