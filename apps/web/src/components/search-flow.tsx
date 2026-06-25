@@ -708,16 +708,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   useEffect(() => {
     onAiLoadingChange?.(aiLoading);
   }, [aiLoading, onAiLoadingChange]);
-
-  // Auto-submit when intake provides initial prompt
-  const initialPromptSubmittedRef = useRef(false);
-  useEffect(() => {
-    if (initialPrompt && !initialPromptSubmittedRef.current && deepSeekSandboxEnabled) {
-      initialPromptSubmittedRef.current = true;
-      handleSearch(initialPrompt);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPrompt, deepSeekSandboxEnabled]);
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
     provider?: 'deepseek' | 'qwen';
@@ -1962,7 +1952,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       <div className={`origin-top transition-all duration-[900ms] ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
         <SearchBox
           onSubmit={handleSearch}
-          autoFocus={autoFocusPrompt}
+          autoFocus={autoFocusPrompt || !!initialPrompt || !!initialImages?.length}
           onClear={handleClearSearch}
           submitLabel={showFollowUpComposer ? t('updateMimo') : t('askMimo')}
           clearKey={searchBoxClearKey}
@@ -1970,6 +1960,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           onImagePaste={(files) => setPromptImages((prev) => [...prev, ...files])}
           onCharCountChange={setPromptCharCount}
           voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
+          initialQuery={initialPrompt}
           imageActions={
             !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
               <ChatImageUploader

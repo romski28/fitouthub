@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-25-6a511ff3",
+    "date": "2026-06-25T11:50:20+08:00",
+    "title": "Fix photo/text intake: pre-fill text in SearchBox instead of fragile auto-submit",
+    "summary": "Fix photo/text intake: pre-fill text in SearchBox instead of fragile auto-submit",
+    "areas": [
+      "web"
+    ],
+    "commit": "6a511ff3",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-e2436995",
     "date": "2026-06-25T11:41:07+08:00",
     "title": "Add photo/text split intake: FlipChoice, PhotoDropZone (drag-and-drop), wired into homepage",

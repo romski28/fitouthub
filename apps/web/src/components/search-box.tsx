@@ -16,12 +16,13 @@ export interface SearchBoxProps {
   onCharCountChange?: (count: number) => void;
   onImagePaste?: (files: File[]) => void;
   voiceLang?: VoiceLang;
+  initialQuery?: string;
 }
 
 const MAX_QUERY_CHARS = 5000;
 
-export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste, voiceLang }: SearchBoxProps) {
-  const [query, setQuery] = useState('');
+export default function SearchBox({ onSubmit, autoFocus = false, onClear, submitLabel = 'Ask Mimo', clearKey, imageSection, imageActions, onHelpClick, onCharCountChange, onImagePaste, voiceLang, initialQuery }: SearchBoxProps) {
+  const [query, setQuery] = useState(initialQuery || '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const prompts = useMemo(
     () => [
