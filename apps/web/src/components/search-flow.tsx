@@ -1857,7 +1857,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       }
 
       let imageUrls: string[] = [];
-      if (qwenVisionEnabled && !isAdminTester && promptImages.length > 0) {
+      if (!isAdminTester && promptImages.length > 0) {
         try {
           imageUrls = await uploadPromptImages(promptImages);
         } catch (error) {
@@ -1875,7 +1875,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       } else {
         setAiPromptHistory((current) => [...current, trimmed]);
       }
-      runSandbox(trimmed, imageUrls);
+      runSandbox(trimmed, qwenVisionEnabled ? imageUrls : []);
       return;
     }
     setAiOutput(null);
