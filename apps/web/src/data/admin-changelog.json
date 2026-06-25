@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-06-25-18d4f54c",
+    "date": "2026-06-25T23:48:26+08:00",
+    "title": "Trigger Vercel deploy",
+    "summary": "Trigger Vercel deploy",
+    "areas": [],
+    "commit": "18d4f54c",
+    "files": []
+  },
+  {
     "id": "2026-06-25-b89eeb9d",
     "date": "2026-06-25T23:46:15+08:00",
     "title": "Quote modal: hide Mimo fee, add Other items with description, 30min time intervals, updated subtotal",
