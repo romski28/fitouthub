@@ -47,6 +47,15 @@ A two-path intake system on the homepage replacing the single text prompt:
 - `search-flow.tsx` props (`initialPrompt`, `initialImages`, `sourceMode`) — harmless
 - `photo-drop-zone.tsx` and `flip-choice.tsx` files on disk (unused)
 
+### Qwen Kill Switch (KEPT)
+
+| Env Var | Where | Effect |
+|---|---|---|
+| `QWEN_VISION_ENABLED=false` | Render | Strips `imageUrls` from AI input; Qwen never called; images saved & linked only |
+| `NEXT_PUBLIC_QWEN_VISION_ENABLED=false` | Vercel | Skips vision quota fetch; removes upload limits; disables quota error messages |
+
+When re-enabling Qwen vision, set both to `true` (or remove them — they default to enabled).
+
 ### To revisit
 
 1. Test Qwen vision with `qwen-omni-turbo` thoroughly — ensure consistent photo-specific responses

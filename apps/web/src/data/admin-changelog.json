@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-25-dcd1851a",
+    "date": "2026-06-25T21:52:37+08:00",
+    "title": "Gate vision quota on client-side with NEXT_PUBLIC_QWEN_VISION_ENABLED; update MD with kill switch docs",
+    "summary": "Gate vision quota on client-side with NEXT_PUBLIC_QWEN_VISION_ENABLED; update MD with kill switch docs",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "dcd1851a",
+    "files": [
+      "PHOTO_TEXT_INTAKE_WORK.md",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-e4503272",
     "date": "2026-06-25T20:18:03+08:00",
     "title": "Strip imageUrls from AI input when QWEN_VISION_ENABLED=false; images saved but not sent to DeepSeek or Qwen",

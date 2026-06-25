@@ -644,6 +644,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const AI_KEEP_CONVERSATION_PREF_KEY = 'aiKeepConversationOnRefresh';
   const ENABLE_FOLLOW_UP_COMPOSER = false; // gated — set to true to re-enable
   const deepSeekSandboxEnabled = process.env.NEXT_PUBLIC_ENABLE_DEEPSEEK_SANDBOX !== 'false';
+  const qwenVisionEnabled = process.env.NEXT_PUBLIC_QWEN_VISION_ENABLED !== 'false';
   const router = useRouter();
   const t = useTranslations('home.searchFlow');
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
@@ -791,7 +792,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     : aiSessionId
       ? `visitor:${aiSessionId}`
       : null;
-  const promptImageLimit = visionQuota?.maxImagesPerPrompt ?? ((isLoggedIn && user?.role === 'client') ? 3 : 1);
+  const promptImageLimit = qwenVisionEnabled
+    ? (visionQuota?.maxImagesPerPrompt ?? ((isLoggedIn && user?.role === 'client') ? 3 : 1))
+    : 5;
 
   // Portal support: render AI results panel into an external DOM node
   const [portalEl, setPortalEl] = useState<Element | null>(null);
@@ -1542,7 +1545,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   }, [intent, searchMode]);
 
   useEffect(() => {
-    if (!deepSeekSandboxEnabled || isAdminTester) return;
+    if (!deepSeekSandboxEnabled || isAdminTester || !qwenVisionEnabled) return;
     fetchVisionQuota();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visionQuotaScopeKey, deepSeekSandboxEnabled, isAdminTester]);
@@ -1836,17 +1839,20 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       hasClearedForgottenPromptRef.current = false;
 
       if (!isAdminTester && promptImages.length > 0) {
-        const maxPerPrompt = visionQuota?.maxImagesPerPrompt ?? promptImageLimit;
-        const remainingToday = visionQuota?.remainingToday ?? maxPerPrompt;
-        if (promptImages.length > maxPerPrompt) {
-          setAiLoading(false);
-          setAiError(`You can attach up to ${maxPerPrompt} image${maxPerPrompt > 1 ? 's' : ''} per prompt.`);
-          return;
-        }
-        if (promptImages.length > remainingToday) {
-          setAiLoading(false);
-          setAiError(`Daily image quota exceeded. ${remainingToday} image${remainingToday === 1 ? '' : 's'} remaining today.`);
-          return;
+        // Only enforce quota when Qwen vision is active
+        if (qwenVisionEnabled) {
+          const maxPerPrompt = visionQuota?.maxImagesPerPrompt ?? promptImageLimit;
+          const remainingToday = visionQuota?.remainingToday ?? maxPerPrompt;
+          if (promptImages.length > maxPerPrompt) {
+            setAiLoading(false);
+            setAiError(`You can attach up to ${maxPerPrompt} image${maxPerPrompt > 1 ? 's' : ''} per prompt.`);
+            return;
+          }
+          if (promptImages.length > remainingToday) {
+            setAiLoading(false);
+            setAiError(`Daily image quota exceeded. ${remainingToday} image${remainingToday === 1 ? '' : 's'} remaining today.`);
+            return;
+          }
         }
       }
 
