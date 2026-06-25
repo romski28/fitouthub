@@ -337,6 +337,70 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                 </div>
               )}
 
+          {!fetching && !fetchError && professionals.length > 0 && (
+            /* ── Desktop comparison table ── */
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-[#D4C8A0] text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="py-2 pr-3">Professional</th>
+                    <th className="py-2 px-2 whitespace-nowrap">Start</th>
+                    <th className="py-2 px-2">Duration</th>
+                    <th className="py-2 px-2 text-right">Supplies</th>
+                    <th className="py-2 px-2 text-right">Labour</th>
+                    <th className="py-2 px-2 text-right">Other</th>
+                    <th className="py-2 pl-2 text-right">Total*</th>
+                    <th className="py-2 pl-3 w-24"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {professionals.map((pp) => {
+                    const name = pp.professional.fullName || pp.professional.businessName || 'Professional';
+                    const isCheapest = pp.id === cheapestId && withQuoteNums.length > 1;
+                    const rawTableItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
+                    const tblItems = rawTableItems.some(i => i.code === 'other_items')
+                      ? rawTableItems
+                      : [...rawTableItems, { code: 'other_items' as const, label: 'Other items', amount: 0, displayOrder: 99 }];
+                    const tblBase = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
+                    const tblGross = Math.round(tblBase * 1.1);
+                    const suppliesAmt = tblItems.find(i => i.code === 'supplies')?.amount ?? 0;
+                    const labourAmt = tblItems.find(i => i.code === 'labour')?.amount ?? 0;
+                    const otherAmt = tblItems.find(i => i.code === 'other_items')?.amount ?? 0;
+                    const sd = formatShortDate(pp.quoteEstimatedStartAt);
+                    const dur = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
+                    return (
+                      <tr key={pp.id} className={`border-b border-[#D4C8A0]/50 ${isCheapest ? 'bg-emerald-50/70' : ''}`}>
+                        <td className="py-2.5 pr-3">
+                          <span className="font-medium text-slate-800">{name}</span>
+                          {isCheapest && <span className="ml-1.5 rounded-full bg-emerald-600/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Best</span>}
+                        </td>
+                        <td className="py-2.5 px-2 text-slate-600 whitespace-nowrap">{sd || '—'}</td>
+                        <td className="py-2.5 px-2 text-slate-600">{dur || '—'}</td>
+                        <td className="py-2.5 px-2 text-right text-slate-700">{formatHKD(suppliesAmt)}</td>
+                        <td className="py-2.5 px-2 text-right text-slate-700">{formatHKD(labourAmt)}</td>
+                        <td className="py-2.5 px-2 text-right text-slate-700">{otherAmt > 0 ? formatHKD(otherAmt) : '—'}</td>
+                        <td className="py-2.5 pl-2 text-right font-bold text-slate-900">{formatHKD(tblGross)}</td>
+                        <td className="py-2.5 pl-3">
+                          <button
+                            type="button"
+                            disabled={!!acceptingId}
+                            onClick={() => handleAccept(pp)}
+                            className="w-full rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-2.5 py-1.5 text-xs font-semibold text-white transition"
+                          >
+                            {acceptingId === pp.id ? '...' : 'Accept'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="mt-2 text-[10px] text-slate-400">* Total includes 10% platform fee</p>
+            </div>
+          )}
+
+          {/* ── Mobile cards ── */}
+          <div className="md:hidden space-y-3">
           {!fetching &&
             professionals.map((pp) => {
               const name = pp.professional.fullName || pp.professional.businessName || 'Professional';
@@ -346,12 +410,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
               const rawItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
-              // Ensure "Other items" always appears, even if not stored
               const breakdownItems = rawItems.some(i => i.code === 'other_items')
                 ? rawItems
                 : [...rawItems, { code: 'other_items' as const, label: 'Other items', amount: 0, displayOrder: 99 }];
               const baseTotal = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
-              const grossTotal = Math.round(baseTotal * 1.1); // 10% platform fee
+              const grossTotal = Math.round(baseTotal * 1.1);
               const isAccepting = acceptingId === pp.id;
 
               return (
@@ -476,6 +539,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                 </div>
               );
             })}
+          </div>
 
               {acceptError && (
                 <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">

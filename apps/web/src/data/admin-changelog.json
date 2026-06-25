@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-0f1641bc",
+    "date": "2026-06-26T00:35:40+08:00",
+    "title": "Add desktop comparison table view for quotes (hidden on mobile, cards stay on mobile)",
+    "summary": "Add desktop comparison table view for quotes (hidden on mobile, cards stay on mobile)",
+    "areas": [
+      "web"
+    ],
+    "commit": "0f1641bc",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-74b91d1c",
     "date": "2026-06-26T00:28:30+08:00",
     "title": "Always show Other items in quote breakdown, fallback to 0 for existing quotes",
