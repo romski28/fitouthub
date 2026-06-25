@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -10,27 +10,13 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { VideoTeaser } from '@/components/video-teaser';
-import { FlipChoice } from '@/components/flip-choice';
-import type { IntakeMode } from '@/components/flip-choice';
 
 export default function Home() {
-  const { isLoggedIn, user, preferredLanguage } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
-  const [intakeData, setIntakeData] = useState<{ mode: IntakeMode; text?: string; photos?: File[] } | null>(null);
-  const [intakeKey, setIntakeKey] = useState(0);
-
-  const handleIntake = useCallback((mode: 'photos' | 'words', data: { text?: string; photos?: File[] }) => {
-    // Clear any stale AI session from previous intakes
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('aiSandboxSessionId');
-    }
-    setIntakeKey(k => k + 1);
-    if (mode === 'photos') setMimoThinking(true);
-    setIntakeData({ mode, ...data });
-  }, []);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -94,22 +80,7 @@ export default function Home() {
                   {/* Prompt box — center, flexes to fill */}
                   <div className="min-w-0 flex-1">
                     <VideoTeaser />
-                    {!intakeData ? (
-                      <FlipChoice
-                        onIntake={handleIntake}
-                        voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
-                      />
-                    ) : (
-                      <SearchFlow
-                        key={`${intakeData.mode ?? ''}-${intakeKey}`}
-                        autoFocusPrompt={shouldFocusPrompt}
-                        resetAiSession={true}
-                        onAiLoadingChange={setMimoThinking}
-                        initialPrompt={intakeData.text}
-                        initialImages={intakeData.photos}
-                        sourceMode={intakeData.mode ?? undefined}
-                      />
-                    )}
+                    <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
                   </div>
 
                   {/* Mike — right, hidden below lg */}

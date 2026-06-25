@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-25-77231d88",
+    "date": "2026-06-25T20:11:15+08:00",
+    "title": "Revert homepage to simple text prompt; document photo intake work in MD; keep Qwen backend fixes",
+    "summary": "Revert homepage to simple text prompt; document photo intake work in MD; keep Qwen backend fixes",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "77231d88",
+    "files": [
+      "PHOTO_TEXT_INTAKE_WORK.md",
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-ee918a1c",
     "date": "2026-06-25T18:59:05+08:00",
     "title": "Replace conversationalText entirely with Qwen analysis, drop DeepSeek generic text when vision is available",
