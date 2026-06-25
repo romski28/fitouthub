@@ -27,6 +27,7 @@ const getDefinitions = (isEmergency: boolean): Array<Omit<QuoteBreakdownItem, 'a
   }
   items.push({ code: 'supplies', label: 'Supplies', required: true, displayOrder: isEmergency ? 2 : 1 });
   items.push({ code: 'labour', label: 'Labour', required: true, displayOrder: isEmergency ? 3 : 2 });
+  items.push({ code: 'other_items', label: 'Other items', required: false, displayOrder: isEmergency ? 4 : 3 });
   return items;
 };
 
@@ -97,10 +98,14 @@ export const normalizeQuoteBreakdownInput = (
     if (!Number.isFinite(numeric) || numeric < 0) {
       throw new Error(`Invalid amount for ${definition.label.toLowerCase()}`);
     }
-    return {
+    const item: QuoteBreakdownItem = {
       ...definition,
       amount: roundMoney(numeric),
     };
+    if (definition.code === 'other_items' && typeof raw?.notes === 'string' && raw.notes.trim()) {
+      item.notes = raw.notes.trim();
+    }
+    return item;
   });
 
   const missingRequired = baseItems.find((item) => item.required && !Number.isFinite(item.amount));

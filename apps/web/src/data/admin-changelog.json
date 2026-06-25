@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-01fcf9fd",
+    "date": "2026-06-26T00:43:17+08:00",
+    "title": "Fix API: add other_items to getDefinitions, preserve notes during normalization",
+    "summary": "Fix API: add other_items to getDefinitions, preserve notes during normalization",
+    "areas": [
+      "api"
+    ],
+    "commit": "01fcf9fd",
+    "files": [
+      "apps/api/src/projects/quote-breakdown.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-0f1641bc",
     "date": "2026-06-26T00:35:40+08:00",
     "title": "Add desktop comparison table view for quotes (hidden on mobile, cards stay on mobile)",
