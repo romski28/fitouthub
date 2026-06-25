@@ -23,6 +23,7 @@ import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '
 import { RequirementChecklist } from '@/components/requirement-checklist';
 import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
+import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
   | { kind: 'basics' }
@@ -320,6 +321,23 @@ export default function CreateProjectWizardPage() {
   const [isChatSendFinalizing, setIsChatSendFinalizing] = useState(false);
   const [chatImageError, setChatImageError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
+  const [listenMode, setListenMode] = useState(false);
+  const ttsLang = preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'zh-HK' : 'en-HK';
+  const { isSupported: ttsSupported, speak: ttsSpeak, stop: ttsStop } = useTextToSpeech({ lang: ttsLang });
+
+  const prevMsgCountRef = useRef(chatMessages.length);
+  useEffect(() => {
+    if (!listenMode) return;
+    const prev = prevMsgCountRef.current;
+    prevMsgCountRef.current = chatMessages.length;
+    if (chatMessages.length > prev) {
+      const last = chatMessages[chatMessages.length - 1];
+      if (last.role === 'assistant') {
+        ttsSpeak(last.text);
+      }
+    }
+  }, [chatMessages, listenMode, ttsSpeak]);
+
   const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
   const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
   const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
@@ -1351,7 +1369,20 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'followups' && (
                       <div className="flex h-full min-h-0 flex-col gap-2.5 sm:gap-3">
-                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with MIMO</span></h3>
+                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with MIMO</span>{ttsSupported && (
+                              <button
+                                type="button"
+                                onClick={() => { setListenMode(v => !v); if (listenMode) ttsStop(); }}
+                                className={`ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition ${
+                                  listenMode
+                                    ? 'border-amber-400 bg-amber-50 text-amber-700'
+                                    : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50'
+                                }`}
+                                title={listenMode ? 'Stop reading aloud' : 'Read messages aloud'}
+                              >
+                                {listenMode ? '🔊 On' : '🔇 Listen'}
+                              </button>
+                            )}</h3>
                             <p className={panelNoteClass}>Answer MIMO&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
 
                             <RequirementChecklist

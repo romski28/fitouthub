@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-25-dd6e3c36",
+    "date": "2026-06-25T11:05:07+08:00",
+    "title": "Add global Listen toggle to wizard chat + female voice preference in TTS hook",
+    "summary": "Add global Listen toggle to wizard chat + female voice preference in TTS hook",
+    "areas": [
+      "web"
+    ],
+    "commit": "dd6e3c36",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/hooks/use-text-to-speech.ts"
+    ]
+  },
+  {
     "id": "2026-06-24-37951fee",
     "date": "2026-06-24T18:47:19+08:00",
     "title": "Add text-to-speech ListenButton to AI chat bubbles in wizard",
