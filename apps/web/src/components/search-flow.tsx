@@ -1801,7 +1801,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setActiveTrades(parsedTrades);
 
       setAiRoundCount((current) => Math.min(current + 1, MAX_AI_ROUNDS));
-      if (imageUrls.length > 0) {
+      if (qwenVisionEnabled && imageUrls.length > 0) {
         setPromptImages([]);
         setPromptUploaderClearKey((key) => key + 1);
         fetchVisionQuota({ force: true });
@@ -1857,7 +1857,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       }
 
       let imageUrls: string[] = [];
-      if (!isAdminTester && promptImages.length > 0) {
+      if (qwenVisionEnabled && !isAdminTester && promptImages.length > 0) {
         try {
           imageUrls = await uploadPromptImages(promptImages);
         } catch (error) {

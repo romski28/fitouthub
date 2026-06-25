@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-fd6ecfab",
+    "date": "2026-06-25T22:02:11+08:00",
+    "title": "Skip image upload and AI submission when Qwen vision disabled; images stay as UI-only attachments",
+    "summary": "Skip image upload and AI submission when Qwen vision disabled; images stay as UI-only attachments",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd6ecfab",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-dcd1851a",
     "date": "2026-06-25T21:52:37+08:00",
     "title": "Gate vision quota on client-side with NEXT_PUBLIC_QWEN_VISION_ENABLED; update MD with kill switch docs",
