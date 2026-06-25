@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-8d128033",
+    "date": "2026-06-25T17:48:37+08:00",
+    "title": "Add Qwen vision logging + sanitize confidence field for omni model compatibility",
+    "summary": "Add Qwen vision logging + sanitize confidence field for omni model compatibility",
+    "areas": [
+      "api"
+    ],
+    "commit": "8d128033",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-b9d85755",
     "date": "2026-06-25T13:33:09+08:00",
     "title": "Bypass handleSearch for photo auto-submit: directly upload initialImages and call runSandbox",

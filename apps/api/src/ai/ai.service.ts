@@ -2534,13 +2534,16 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
+    this.logger.log(`[${requestId}] Qwen vision request started model=${model} imageCount=${imageUrls.length}`);
+
     const contentParts: Array<Record<string, unknown>> = [
       {
         type: 'text',
         text:
           `Analyze these renovation-related photos and return strict JSON with this shape: ` +
           `{"imageSummary":string,"suggestedTrades":string[],"conditionFindings":string[],"safetyFlags":string[],"followUpQuestions":string[],"confidence":number}. ` +
-          `Keep suggestedTrades concise and relevant to Hong Kong renovation context. User prompt: ${userPrompt}`,
+          `Keep suggestedTrades concise and relevant to Hong Kong renovation context. ` +
+          `confidence must be a decimal number like 0.85 (not a string). User prompt: ${userPrompt}`,
       },
       ...imageUrls.map((url) => ({
         type: 'image_url',
@@ -2600,6 +2603,20 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           confidence: 0.35,
         };
       }
+
+      // Sanitize confidence: ensure it's a number between 0 and 1
+      if (parsed.confidence !== undefined && parsed.confidence !== null) {
+        const num = Number(parsed.confidence);
+        if (Number.isFinite(num)) {
+          parsed.confidence = Math.max(0, Math.min(1, num));
+        } else {
+          parsed.confidence = 0.5;
+        }
+      } else {
+        parsed.confidence = 0.5;
+      }
+
+      this.logger.log(`[${requestId}] Qwen vision request completed durationMs=${Date.now() - startedAt}`);
 
       return {
         ok: true,
