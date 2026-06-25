@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-2e501dc3",
+    "date": "2026-06-26T00:44:47+08:00",
+    "title": "Widen review quotes modal on desktop: max-w-lg -> md:max-w-4xl",
+    "summary": "Widen review quotes modal on desktop: max-w-lg -> md:max-w-4xl",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e501dc3",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-01fcf9fd",
     "date": "2026-06-26T00:43:17+08:00",
     "title": "Fix API: add other_items to getDefinitions, preserve notes during normalization",

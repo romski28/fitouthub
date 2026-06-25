@@ -270,7 +270,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
+      <div className="relative z-10 w-full max-w-lg md:max-w-4xl [perspective:1600px]">
         <div className="relative h-[86dvh] min-h-[420px] max-h-[760px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
           <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
             <div className="relative flex items-center justify-between border-b border-[#D4C8A0] px-5 pb-4 pt-5 shrink-0">
