@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -20,6 +20,13 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
   const [intakeData, setIntakeData] = useState<{ mode: IntakeMode; text?: string; photos?: File[] } | null>(null);
+  const [intakeKey, setIntakeKey] = useState(0);
+
+  const handleIntake = useCallback((mode: 'photos' | 'words', data: { text?: string; photos?: File[] }) => {
+    setIntakeKey(k => k + 1);
+    if (mode === 'photos') setMimoThinking(true);
+    setIntakeData({ mode, ...data });
+  }, []);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -85,12 +92,12 @@ export default function Home() {
                     <VideoTeaser />
                     {!intakeData ? (
                       <FlipChoice
-                        onIntake={(mode, data) => setIntakeData({ mode, ...data })}
+                        onIntake={handleIntake}
                         voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
                       />
                     ) : (
                       <SearchFlow
-                        key={(intakeData.mode ?? '') + (intakeData.photos?.length ?? 0)}
+                        key={`${intakeData.mode ?? ''}-${intakeKey}`}
                         autoFocusPrompt={shouldFocusPrompt}
                         resetAiSession={true}
                         onAiLoadingChange={setMimoThinking}

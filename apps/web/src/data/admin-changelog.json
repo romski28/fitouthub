@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-c0dc219d",
+    "date": "2026-06-25T12:21:54+08:00",
+    "title": "Fix photo intake: show Mimo thinking immediately, use unique state key to force fresh AI session",
+    "summary": "Fix photo intake: show Mimo thinking immediately, use unique state key to force fresh AI session",
+    "areas": [
+      "web"
+    ],
+    "commit": "c0dc219d",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-79ba3e07",
     "date": "2026-06-25T12:13:58+08:00",
     "title": "Fix null safety on intakeData.mode for key prop",
