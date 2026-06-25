@@ -2821,11 +2821,14 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const sessionId = this.sanitizeSessionId(context?.sessionId);
-    const normalizedImageUrls = Array.isArray(context?.imageUrls)
+    const rawImageUrls = Array.isArray(context?.imageUrls)
       ? context!.imageUrls
           .map((url) => (typeof url === 'string' ? url.trim() : ''))
           .filter((url) => /^https?:\/\//i.test(url))
       : [];
+    // Strip images from AI input when vision is disabled — images are saved & linked
+    // to the project but not sent to DeepSeek or Qwen.
+    const normalizedImageUrls = process.env.QWEN_VISION_ENABLED === 'false' ? [] : rawImageUrls;
     const requestedImageCount = normalizedImageUrls.length;
     const quota = await this.getVisionQuota({
       userId: context?.userId,

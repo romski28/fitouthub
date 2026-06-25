@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-e4503272",
+    "date": "2026-06-25T20:18:03+08:00",
+    "title": "Strip imageUrls from AI input when QWEN_VISION_ENABLED=false; images saved but not sent to DeepSeek or Qwen",
+    "summary": "Strip imageUrls from AI input when QWEN_VISION_ENABLED=false; images saved but not sent to DeepSeek or Qwen",
+    "areas": [
+      "api"
+    ],
+    "commit": "e4503272",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-9bf56f07",
     "date": "2026-06-25T20:15:51+08:00",
     "title": "Add QWEN_VISION_ENABLED kill switch — set to false to skip vision, images become text-only attachments",
