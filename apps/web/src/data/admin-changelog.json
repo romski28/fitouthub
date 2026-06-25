@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-1c4922be",
+    "date": "2026-06-26T00:04:54+08:00",
+    "title": "Fix quote modal error text: white on rose for readability",
+    "summary": "Fix quote modal error text: white on rose for readability",
+    "areas": [
+      "web"
+    ],
+    "commit": "1c4922be",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-62764978",
     "date": "2026-06-26T00:02:37+08:00",
     "title": "Show quoteBaseAmount on pro card instead of gross quoteAmount (pre-fee price)",

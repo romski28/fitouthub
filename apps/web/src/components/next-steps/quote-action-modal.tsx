@@ -700,7 +700,7 @@ export function QuoteActionModal({
                   </label>
 
                   {error ? (
-                    <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                    <div className="rounded-lg border border-rose-400 bg-rose-500 px-3 py-2 text-sm text-white">
                       {error}
                     </div>
                   ) : null}
