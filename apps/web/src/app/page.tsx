@@ -10,13 +10,16 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { VideoTeaser } from '@/components/video-teaser';
+import { FlipChoice } from '@/components/flip-choice';
+import type { IntakeMode } from '@/components/flip-choice';
 
 export default function Home() {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, preferredLanguage } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
+  const [intakeData, setIntakeData] = useState<{ mode: IntakeMode; text?: string; photos?: File[] } | null>(null);
   
   const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
@@ -80,7 +83,21 @@ export default function Home() {
                   {/* Prompt box — center, flexes to fill */}
                   <div className="min-w-0 flex-1">
                     <VideoTeaser />
-                    <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+                    {!intakeData ? (
+                      <FlipChoice
+                        onIntake={(mode, data) => setIntakeData({ mode, ...data })}
+                        voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
+                      />
+                    ) : (
+                      <SearchFlow
+                        autoFocusPrompt={shouldFocusPrompt}
+                        resetAiSession={true}
+                        onAiLoadingChange={setMimoThinking}
+                        initialPrompt={intakeData.text}
+                        initialImages={intakeData.photos}
+                        sourceMode={intakeData.mode ?? undefined}
+                      />
+                    )}
                   </div>
 
                   {/* Mike — right, hidden below lg */}

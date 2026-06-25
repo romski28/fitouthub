@@ -637,7 +637,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
-export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void }) {
+export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange, initialPrompt, initialImages, sourceMode }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void; initialPrompt?: string; initialImages?: File[]; sourceMode?: 'photos' | 'words' }) {
   const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
   const MAX_AI_ROUNDS = 2;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
@@ -687,7 +687,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
-  const [promptImages, setPromptImages] = useState<File[]>([]);
+  const [promptImages, setPromptImages] = useState<File[]>(initialImages || []);
   const [promptUploaderClearKey, setPromptUploaderClearKey] = useState(0);
   const [visionQuotaLoading, setVisionQuotaLoading] = useState(false);
   const [visionQuota, setVisionQuota] = useState<{
@@ -708,6 +708,16 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   useEffect(() => {
     onAiLoadingChange?.(aiLoading);
   }, [aiLoading, onAiLoadingChange]);
+
+  // Auto-submit when intake provides initial prompt
+  const initialPromptSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (initialPrompt && !initialPromptSubmittedRef.current && deepSeekSandboxEnabled) {
+      initialPromptSubmittedRef.current = true;
+      handleSearch(initialPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt, deepSeekSandboxEnabled]);
   const [visionResult, setVisionResult] = useState<{
     ok: boolean;
     provider?: 'deepseek' | 'qwen';
@@ -1535,8 +1545,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         },
         body: JSON.stringify(
           isAdminTester
-            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls, preferredLanguage }
-            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls, preferredLanguage },
+            ? { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, mode: 'structured', imageUrls, preferredLanguage, sourceMode }
+            : { prompt: query.trim(), sessionId: aiSessionId, intakeId: threadIntakeId, imageUrls, preferredLanguage, sourceMode },
         ),
       });
       if (!response.ok) {

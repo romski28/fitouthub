@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-25-e2436995",
+    "date": "2026-06-25T11:41:07+08:00",
+    "title": "Add photo/text split intake: FlipChoice, PhotoDropZone (drag-and-drop), wired into homepage",
+    "summary": "Add photo/text split intake: FlipChoice, PhotoDropZone (drag-and-drop), wired into homepage",
+    "areas": [
+      "web"
+    ],
+    "commit": "e2436995",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/flip-choice.tsx",
+      "apps/web/src/components/photo-drop-zone.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-dd6e3c36",
     "date": "2026-06-25T11:05:07+08:00",
     "title": "Add global Listen toggle to wizard chat + female voice preference in TTS hook",
