@@ -1335,7 +1335,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       if (resetAiSession) {
         clearPendingAssistDraft();
         clearAiClientState();
-        clearAiResponseState();
+        // Don't clear AI response state when we have initial images — the photo
+        // auto-submit effect is already processing and would get wiped.
+        if (!initialImages?.length) {
+          clearAiResponseState();
+        }
         setIntent(null);
         setMatchCount(null);
       }

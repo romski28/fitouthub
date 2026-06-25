@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-9664a7b4",
+    "date": "2026-06-25T12:59:37+08:00",
+    "title": "Fix photo intake reset race: skip clearAiResponseState when initialImages present to avoid wiping AI response",
+    "summary": "Fix photo intake reset race: skip clearAiResponseState when initialImages present to avoid wiping AI response",
+    "areas": [
+      "web"
+    ],
+    "commit": "9664a7b4",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-2b7543ec",
     "date": "2026-06-25T12:46:21+08:00",
     "title": "Fix photo intake: limit to 1 image, clear stale sessionStorage, init aiLoading for thinking animation",
