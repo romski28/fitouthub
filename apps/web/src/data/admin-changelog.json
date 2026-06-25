@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-ac32476b",
+    "date": "2026-06-25T23:56:24+08:00",
+    "title": "Fix save warning text: white on rose background for readability",
+    "summary": "Fix save warning text: white on rose background for readability",
+    "areas": [
+      "web"
+    ],
+    "commit": "ac32476b",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-18d4f54c",
     "date": "2026-06-25T23:48:26+08:00",
     "title": "Trigger Vercel deploy",

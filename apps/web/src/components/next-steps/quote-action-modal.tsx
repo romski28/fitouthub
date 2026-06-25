@@ -589,7 +589,7 @@ export function QuoteActionModal({
                   ) : null}
 
                   {exceedsClientFinishDate ? (
-                    <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 animate-[pulse_0.7s_ease-in-out_3]">
+                    <div className="rounded-lg border border-rose-400 bg-rose-500 px-3 py-2 text-sm font-semibold text-white animate-[pulse_0.7s_ease-in-out_3]">
                       Your project break the clients finish date.
                     </div>
                   ) : null}
