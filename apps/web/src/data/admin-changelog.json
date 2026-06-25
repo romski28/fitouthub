@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-62764978",
+    "date": "2026-06-26T00:02:37+08:00",
+    "title": "Show quoteBaseAmount on pro card instead of gross quoteAmount (pre-fee price)",
+    "summary": "Show quoteBaseAmount on pro card instead of gross quoteAmount (pre-fee price)",
+    "areas": [
+      "web"
+    ],
+    "commit": "62764978",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-a4939cd8",
     "date": "2026-06-25T23:58:59+08:00",
     "title": "Wire quote submission onCompleted to bust next-step cache after submit",

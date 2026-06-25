@@ -46,6 +46,7 @@ interface ProjectProfessional {
   status: string;
   accessRestricted?: boolean;
   quoteAmount?: string;
+  quoteBaseAmount?: string;
   quoteNotes?: string;
   quotedAt?: string;
 }
@@ -575,9 +576,9 @@ export default function ProfessionalProjectsPage() {
                             {projectProf.project.region}
                           </span>
                         ) : null}
-                        {!isRestricted && projectProf.quoteAmount && (
+                        {!isRestricted && (projectProf.quoteBaseAmount || projectProf.quoteAmount) && (
                           <span className={`font-medium ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}>
-                            ${Number(projectProf.quoteAmount).toLocaleString()}
+                            ${Number(projectProf.quoteBaseAmount || projectProf.quoteAmount).toLocaleString()}
                           </span>
                         )}
                         {quoteOverdue && quoteDeadlineState ? (
