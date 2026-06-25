@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-855971fc",
+    "date": "2026-06-25T22:59:53+08:00",
+    "title": "Recolor quote submission modal to Mimo beige scheme",
+    "summary": "Recolor quote submission modal to Mimo beige scheme",
+    "areas": [
+      "web"
+    ],
+    "commit": "855971fc",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-25-a8a5f74a",
     "date": "2026-06-25T22:26:48+08:00",
     "title": "Keep image upload for storage but strip from AI call when vision disabled; images still flow to wizard via handoff",

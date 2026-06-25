@@ -500,23 +500,23 @@ export function QuoteActionModal({
     >
       <div className="w-full max-w-xl max-h-[80vh] [perspective:1600px]">
         {isLoading ? (
-          <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl backdrop-blur">
             <div className="flex flex-col items-center justify-center px-6 py-14">
-              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-              <p className="text-slate-300">Loading...</p>
+              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[rgba(120,53,15,0.15)] border-t-amber-600" />
+              <p className="text-stone-600">Loading...</p>
             </div>
           </div>
         ) : (
           <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
             <div
-              className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+              className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl backdrop-blur [backface-visibility:hidden]"
               aria-hidden={showDetails}
             >
               {hasDetails && (
                 <button
                   type="button"
                   onClick={() => setShowDetails(true)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-white text-lg font-semibold text-amber-700 transition hover:bg-amber-50"
                   aria-label="Show details"
                 >
                   i
@@ -524,7 +524,7 @@ export function QuoteActionModal({
               )}
 
               <form onSubmit={handleSubmit} className="flex max-h-[80vh] flex-col">
-                <div className="shrink-0 border-b border-slate-700 px-4 sm:px-6 py-5">
+                <div className="shrink-0 border-b border-[rgba(120,53,15,0.12)] px-4 sm:px-6 py-5">
                   <div className="flex items-start gap-4">
                     <img
                       src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
@@ -532,8 +532,8 @@ export function QuoteActionModal({
                       className="h-12 sm:h-14 w-12 sm:w-14 rounded-full border border-white/20 object-cover flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <h2 className="text-lg sm:text-2xl font-bold text-emerald-300">{title}</h2>
-                      {body ? <p className="mt-1 text-xs sm:text-sm text-slate-200">{body}</p> : null}
+                      <h2 className="text-lg sm:text-2xl font-bold text-amber-800">{title}</h2>
+                      {body ? <p className="mt-1 text-xs sm:text-sm text-stone-600">{body}</p> : null}
                     </div>
                   </div>
                 </div>
@@ -542,14 +542,14 @@ export function QuoteActionModal({
                   <div className={`grid grid-cols-1 gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
                     {breakdownFields.map((field) => (
                       <label key={field.code} className="block">
-                        <span className="mb-1 block text-sm font-semibold text-slate-200">{field.label}{field.required ? ' *' : ''}</span>
+                        <span className="mb-1 block text-sm font-semibold text-stone-700">{field.label}{field.required ? ' *' : ''}</span>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={breakdown[field.key]}
                           onChange={(e) => setBreakdown((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                          className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           placeholder="0.00"
                           disabled={submitting}
                           required={field.required}
@@ -558,49 +558,49 @@ export function QuoteActionModal({
                     ))}
 
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">Mimo fee</span>
+                      <span className="mb-1 block text-sm font-semibold text-stone-700">Mimo fee</span>
                       <input
                         type="text"
                         value={loadingFeePreview ? '...' : platformFeePercent !== undefined ? `${platformFeePercent.toFixed(1)}%` : '—'}
                         disabled
-                        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-slate-300 text-center outline-none"
+                        className="w-full rounded-lg border border-[rgba(120,53,15,0.12)] bg-stone-100 px-3 py-2 text-stone-500 text-center outline-none"
                       />
                     </label>
                   </div>
 
-                  <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+                  <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
                     <p>Entered subtotal: {formatHKD(enteredTotal)}</p>
                   </div>
 
                   {enteredTotal > 0 && platformFeePercent !== undefined && grossAmount !== undefined && (
-                    <div className="rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+                    <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
                       <p>Your quote: {formatHKD(enteredTotal)} → Client sees: {formatHKD(grossAmount)} (+ {formatHKD(platformFeeAmount)} fee)</p>
                     </div>
                   )}
 
                   {requestedCompletionBy ? (
-                    <div className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-sm text-slate-200">
-                      Client requested completion by: <span className="font-semibold text-white">{requestedCompletionBy}</span>
+                    <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.65)] px-3 py-2 text-sm text-stone-700">
+                      Client requested completion by: <span className="font-semibold text-stone-900">{requestedCompletionBy}</span>
                     </div>
                   ) : null}
 
                   {siteInspectionAvailableOn ? (
-                    <div className="rounded-lg border border-sky-600/50 bg-sky-600/10 px-3 py-2 text-sm text-sky-200">
-                      Site inspection available: <span className="font-semibold text-sky-100">{siteInspectionAvailableOn}</span>
+                    <div className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                      Site inspection available: <span className="font-semibold text-sky-800">{siteInspectionAvailableOn}</span>
                     </div>
                   ) : null}
 
                   {exceedsClientFinishDate ? (
-                    <div className="rounded-lg border border-amber-500/60 bg-amber-500/20 px-3 py-2 text-sm font-semibold text-amber-100 animate-[pulse_0.7s_ease-in-out_3]">
+                    <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 animate-[pulse_0.7s_ease-in-out_3]">
                       Your project break the clients finish date.
                     </div>
                   ) : null}
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'Be with you...' : 'Estimated start date'}</span>
+                      <span className="mb-1 block text-sm font-semibold text-stone-700">{isEmergencyProject ? 'Be with you...' : 'Estimated start date'}</span>
                       {isEmergencyProject ? (
-                        <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-800">
+                        <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70">
                           {emergencyDateOptions.map((option) => {
                             const active = estimatedStartDate === option.value;
                             return (
@@ -609,7 +609,7 @@ export function QuoteActionModal({
                                 type="button"
                                 onClick={() => setEstimatedStartDate(option.value)}
                                 className={`px-3 py-2 text-sm font-semibold transition ${
-                                  active ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                                  active ? 'bg-amber-600 text-white' : 'bg-white/70 text-stone-600 hover:bg-[rgba(245,238,219,0.9)]'
                                 }`}
                                 disabled={submitting}
                               >
@@ -623,30 +623,30 @@ export function QuoteActionModal({
                           type="date"
                           value={estimatedStartDate}
                           onChange={(e) => setEstimatedStartDate(e.target.value)}
-                          className="quote-picker-input w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           disabled={submitting}
                         />
                       )}
                     </label>
 
                     <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-slate-200">{isEmergencyProject ? 'at...' : 'Estimated start time'}</span>
+                      <span className="mb-1 block text-sm font-semibold text-stone-700">{isEmergencyProject ? 'at...' : 'Estimated start time'}</span>
                       <div className="flex items-center gap-2">
                         <select
                           value={estimatedStartHour}
                           onChange={(e) => setEstimatedStartHour(e.target.value)}
-                          className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          className="flex-1 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           disabled={submitting}
                         >
                           {hourOptions.map((h) => (
                             <option key={h} value={h}>{h}</option>
                           ))}
                         </select>
-                        <span className="text-slate-300">:</span>
+                        <span className="text-stone-500">:</span>
                         <select
                           value={estimatedStartMinute}
                           onChange={(e) => setEstimatedStartMinute(e.target.value)}
-                          className="w-24 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                          className="w-24 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           disabled={submitting}
                         >
                           <option value="00">00</option>
@@ -659,7 +659,7 @@ export function QuoteActionModal({
                   </div>
 
                   <div className="block">
-                    <span className="mb-1 block text-sm font-semibold text-slate-200">Duration</span>
+                    <span className="mb-1 block text-sm font-semibold text-stone-700">Duration</span>
                     <div className="grid grid-cols-2 gap-3">
                       <input
                         type="number"
@@ -667,11 +667,11 @@ export function QuoteActionModal({
                         step="0.1"
                         value={estimatedDurationValue}
                         onChange={(e) => setEstimatedDurationValue(e.target.value)}
-                        className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                        className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                         placeholder="e.g. 8"
                         disabled={submitting}
                       />
-                      <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-slate-600">
+                      <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)]">
                         {(['hours', 'days'] as const).map((unit) => (
                           <button
                             key={unit}
@@ -680,8 +680,8 @@ export function QuoteActionModal({
                             disabled={submitting}
                             className={`w-full px-3 py-2 text-sm font-semibold transition ${
                               estimatedDurationUnit === unit
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                ? 'bg-amber-600 text-white'
+                                : 'bg-white/70 text-stone-500 hover:bg-[rgba(245,238,219,0.9)]'
                             }`}
                           >
                             {unit.charAt(0).toUpperCase() + unit.slice(1)}
@@ -692,12 +692,12 @@ export function QuoteActionModal({
                   </div>
 
                   <label className="block">
-                    <span className="mb-1 block text-sm font-semibold text-slate-200">Notes</span>
+                    <span className="mb-1 block text-sm font-semibold text-stone-700">Notes</span>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       rows={4}
-                      className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+                      className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                       placeholder="Optional details about materials, assumptions, or timing."
                       disabled={submitting}
                     />
@@ -710,11 +710,11 @@ export function QuoteActionModal({
                   ) : null}
                 </div>
 
-                  <div className="shrink-0 flex items-center justify-end gap-2 sm:gap-3 border-t border-slate-700 px-4 sm:px-6 py-4">
+                  <div className="shrink-0 flex items-center justify-end gap-2 sm:gap-3 border-t border-[rgba(120,53,15,0.12)] px-4 sm:px-6 py-4">
                     <button
                       type="button"
                       onClick={handleClose}
-                      className="min-w-fit rounded-lg border border-slate-500 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="min-w-fit rounded-lg border border-[rgba(120,53,15,0.2)] px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={submitting}
                     >
                       {secondaryButtonLabel || 'Cancel'}
@@ -731,14 +731,14 @@ export function QuoteActionModal({
             </div>
 
             <div
-              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+              className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl backdrop-blur [backface-visibility:hidden]"
               style={{ transform: 'rotateY(180deg)' }}
               aria-hidden={!showDetails}
             >
               <button
                 type="button"
                 onClick={() => setShowDetails(false)}
-                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-white text-lg font-semibold text-amber-700 transition hover:bg-amber-50"
                 aria-label="Hide details"
               >
                 x
@@ -750,11 +750,11 @@ export function QuoteActionModal({
                 <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
               </div>
 
-              <div className="mt-auto border-t border-slate-700 px-5 py-4">
+              <div className="mt-auto border-t border-[rgba(120,53,15,0.12)] px-5 py-4">
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
-                  className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                  className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)]"
                 >
                   Back to quote form
                 </button>
