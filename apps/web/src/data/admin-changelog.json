@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-da29313f",
+    "date": "2026-06-26T00:22:25+08:00",
+    "title": "Fix review quotes: mini panel breakdown, remove fee line, white pill text, hide empty Also required",
+    "summary": "Fix review quotes: mini panel breakdown, remove fee line, white pill text, hide empty Also required",
+    "areas": [
+      "web"
+    ],
+    "commit": "da29313f",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-8d5d147d",
     "date": "2026-06-26T00:08:31+08:00",
     "title": "Client review quotes: show other items notes, recalculate total with 10% platform fee",

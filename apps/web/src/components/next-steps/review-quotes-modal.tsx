@@ -366,9 +366,13 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                             ? `Quote for ${pp.quoteRequestedTrades.join(', ')}`
                             : 'Quote for full scope'}
                           {pp.projectTradesSnapshot?.length
-                            ? ` · Also required: ${pp.projectTradesSnapshot
-                                .filter((trade) => !(pp.quoteRequestedTrades || []).some((requested) => requested.toLowerCase() === trade.toLowerCase()))
-                                .join(', ') || 'none'}`
+                            ? (() => {
+                                const alsoRequired = pp.projectTradesSnapshot
+                                  .filter((trade) => !(pp.quoteRequestedTrades || []).some((requested) => requested.toLowerCase() === trade.toLowerCase()));
+                                return alsoRequired.length > 0
+                                  ? ` · Also required: ${alsoRequired.join(', ')}`
+                                  : '';
+                              })()
                             : ''}
                         </p>
                       )}
@@ -379,12 +383,12 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                           </span>
                         )}
                         {isSoonest && (
-                          <span className="rounded-full bg-sky-600/20 px-2 py-0.5 text-[11px] font-semibold text-sky-200">
+                          <span className="rounded-full bg-sky-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                             Soonest
                           </span>
                         )}
                         {isFastest && (
-                          <span className="rounded-full bg-indigo-600/20 px-2 py-0.5 text-[11px] font-semibold text-indigo-200">
+                          <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                             Fastest
                           </span>
                         )}
@@ -407,24 +411,18 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   {(breakdownItems.length > 0 || startDate || duration || pp.quoteNotes) && (
                     <div className="mb-3 space-y-1">
                       {breakdownItems.length > 0 && (
-                        <div className="rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-2">
-                          <div className="grid gap-1 text-xs text-slate-600 sm:grid-cols-3">
-                            {breakdownItems.map((item) => (
-                              <div key={`${pp.id}-${item.code}`}>
-                                <div className="flex items-center justify-between gap-2 sm:block">
-                                  <span className="text-slate-500">{item.label}</span>
-                                  <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
-                                </div>
+                        <div className="space-y-1">
+                          {breakdownItems.map((item) => (
+                            <div key={`${pp.id}-${item.code}`} className="flex items-center justify-between rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-1.5 text-xs">
+                              <span className="text-slate-600">{item.label}</span>
+                              <div className="text-right">
+                                <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
                                 {item.code === 'other_items' && item.notes && (
                                   <p className="mt-0.5 text-[10px] text-slate-400 italic">{item.notes}</p>
                                 )}
                               </div>
-                            ))}
-                            <div className="flex items-center justify-between gap-2 sm:block">
-                              <span className="text-slate-500">Platform fee</span>
-                              <span className="font-semibold text-slate-500">10%</span>
                             </div>
-                          </div>
+                          ))}
                         </div>
                       )}
                       {(startDate || duration) && (
