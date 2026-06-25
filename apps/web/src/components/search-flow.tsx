@@ -720,7 +720,45 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       deepSeekSandboxEnabled
     ) {
       photoAutoSubmitRef.current = true;
-      handleSearch('Analyze these renovation photos. What do you see? What rooms, condition, and trades might be needed?');
+      const prompt = 'Analyze these renovation photos. What do you see? What rooms, condition, and trades might be needed?';
+
+      // Inline the submission to avoid any state dependency issues
+      (async () => {
+        try {
+          setAiLoading(true);
+          setAiError(null);
+          setAiOutput(null);
+          setAiMeta(null);
+          setAiStructured(null);
+          setActiveTrades([]);
+          setAiConversationalText(null);
+          setAiDebug(null);
+          setIsConversationSequenceComplete(false);
+          setAiRoundNotice(null);
+
+          let urls: string[] = [];
+          if (!isAdminTester && initialImages.length > 0) {
+            try {
+              urls = await uploadPromptImages(initialImages);
+            } catch (uploadErr) {
+              setAiLoading(false);
+              setAiError((uploadErr as Error).message || 'Failed to upload images');
+              return;
+            }
+          }
+
+          setIntent(null);
+          setMatchCount(null);
+          setInitialAiPrompt(prompt);
+          setAiPromptHistory([prompt]);
+          setInitialAiImageUrls(urls);
+
+          runSandbox(prompt, urls);
+        } catch (err) {
+          setAiLoading(false);
+          setAiError((err as Error).message || 'AI request failed');
+        }
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1349,6 +1387,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     } catch {
       setAiSessionId(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignNewAiSessionId, clearPendingAssistDraft, keepConversationOnRefresh, resetAiSession]);
 
   useEffect(() => {
