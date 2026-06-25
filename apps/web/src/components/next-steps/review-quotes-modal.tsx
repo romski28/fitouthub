@@ -8,7 +8,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { fetchPrimaryNextStep, NextStepAction } from '@/lib/next-steps';
 import { getClientTabForAction } from '@/lib/client-workflow';
-import { getQuoteBreakdownClientItems, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
+import { getQuoteBreakdownClientItems, getQuoteBreakdownBaseTotal, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
 interface ReviewQuotesModalProps {
   isOpen: boolean;
@@ -346,6 +346,8 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
               const breakdownItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
+              const baseTotal = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
+              const grossTotal = Math.round(baseTotal * 1.1); // 10% platform fee
               const isAccepting = acceptingId === pp.id;
 
               return (
@@ -397,7 +399,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                             : 'border-[#D4C8A0] bg-white text-slate-700'
                         }`}
                       >
-                        {formatHKD(pp.quoteAmount)}
+                        {formatHKD(grossTotal)}
                       </span>
                     </div>
                   </div>
@@ -408,11 +410,20 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                         <div className="rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-2">
                           <div className="grid gap-1 text-xs text-slate-600 sm:grid-cols-3">
                             {breakdownItems.map((item) => (
-                              <div key={`${pp.id}-${item.code}`} className="flex items-center justify-between gap-2 sm:block">
-                                <span className="text-slate-500">{item.label}</span>
-                                <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
+                              <div key={`${pp.id}-${item.code}`}>
+                                <div className="flex items-center justify-between gap-2 sm:block">
+                                  <span className="text-slate-500">{item.label}</span>
+                                  <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
+                                </div>
+                                {item.code === 'other_items' && item.notes && (
+                                  <p className="mt-0.5 text-[10px] text-slate-400 italic">{item.notes}</p>
+                                )}
                               </div>
                             ))}
+                            <div className="flex items-center justify-between gap-2 sm:block">
+                              <span className="text-slate-500">Platform fee</span>
+                              <span className="font-semibold text-slate-500">10%</span>
+                            </div>
                           </div>
                         </div>
                       )}

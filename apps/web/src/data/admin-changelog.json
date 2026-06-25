@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-8d5d147d",
+    "date": "2026-06-26T00:08:31+08:00",
+    "title": "Client review quotes: show other items notes, recalculate total with 10% platform fee",
+    "summary": "Client review quotes: show other items notes, recalculate total with 10% platform fee",
+    "areas": [
+      "web"
+    ],
+    "commit": "8d5d147d",
+    "files": [
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-1c4922be",
     "date": "2026-06-26T00:04:54+08:00",
     "title": "Fix quote modal error text: white on rose for readability",
