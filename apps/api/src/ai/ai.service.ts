@@ -2520,6 +2520,11 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
   }
 
   private async analyzeImagesWithQwen(imageUrls: string[], userPrompt: string) {
+    // Kill switch — set QWEN_VISION_ENABLED=false in Render to skip vision entirely
+    if (process.env.QWEN_VISION_ENABLED === 'false') {
+      throw new ServiceUnavailableException('Qwen vision is disabled via QWEN_VISION_ENABLED');
+    }
+
     const apiKey = (process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '').trim();
     if (!apiKey) {
       throw new ServiceUnavailableException('Qwen sandbox is not configured');

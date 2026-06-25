@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-25-9bf56f07",
+    "date": "2026-06-25T20:15:51+08:00",
+    "title": "Add QWEN_VISION_ENABLED kill switch — set to false to skip vision, images become text-only attachments",
+    "summary": "Add QWEN_VISION_ENABLED kill switch — set to false to skip vision, images become text-only attachments",
+    "areas": [
+      "api"
+    ],
+    "commit": "9bf56f07",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-25-77231d88",
     "date": "2026-06-25T20:11:15+08:00",
     "title": "Revert homepage to simple text prompt; document photo intake work in MD; keep Qwen backend fixes",
