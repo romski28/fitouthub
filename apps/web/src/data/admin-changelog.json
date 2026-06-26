@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-9056dc5d",
+    "date": "2026-06-26T12:10:26+08:00",
+    "title": "Fix API types: add other_items to QuoteBreakdownCode, notes to QuoteBreakdownItem",
+    "summary": "Fix API types: add other_items to QuoteBreakdownCode, notes to QuoteBreakdownItem",
+    "areas": [
+      "api"
+    ],
+    "commit": "9056dc5d",
+    "files": [
+      "apps/api/src/projects/quote-breakdown.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-5d2de23d",
     "date": "2026-06-26T12:04:16+08:00",
     "title": "Fix platform fee: hardcode 10% (override DB bands), other_items now flows through normalize and fee calc",

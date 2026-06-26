@@ -1,4 +1,4 @@
-export type QuoteBreakdownCode = 'callout_fee' | 'supplies' | 'labour';
+export type QuoteBreakdownCode = 'callout_fee' | 'supplies' | 'labour' | 'other_items';
 
 export interface QuoteBreakdownItem {
   code: QuoteBreakdownCode;
@@ -6,6 +6,7 @@ export interface QuoteBreakdownItem {
   amount: number;
   required: boolean;
   displayOrder: number;
+  notes?: string;
 }
 
 export interface StoredQuoteBreakdown {
