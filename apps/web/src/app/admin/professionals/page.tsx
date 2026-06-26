@@ -101,6 +101,7 @@ export default function AdminProfessionalsPage() {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPro, setEditingPro] = useState<Professional | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -255,7 +256,7 @@ export default function AdminProfessionalsPage() {
     }
   };
 
-  // Reset formData when editingPro changes
+  // Reset formData when editingPro changes or creating new
   useEffect(() => {
     if (editingPro) {
       setFormData({
@@ -279,8 +280,26 @@ export default function AdminProfessionalsPage() {
           ? editingPro.suppliesOffered
           : [],
       });
+    } else if (isCreating) {
+      setFormData({
+        professionType: "contractor",
+        email: "",
+        phone: "",
+        status: "pending",
+        rating: "0",
+        fullName: "",
+        businessName: "",
+        serviceArea: "",
+        locationPrimary: "",
+        locationSecondary: "",
+        locationTertiary: "",
+        coverageAreaCodes: [],
+        primaryTrade: "",
+        tradesOffered: [],
+        suppliesOffered: [],
+      });
     }
-  }, [editingPro]);
+  }, [editingPro, isCreating]);
 
   useEffect(() => {
     if (!highlightedProfessionalId || professionals.length === 0) return;
@@ -374,7 +393,7 @@ export default function AdminProfessionalsPage() {
   };
 
   const handleSave = async () => {
-    if (!editingPro) return;
+    if (!editingPro && !isCreating) return;
 
     const payload = {
       profession_type: formData.professionType,
@@ -397,24 +416,68 @@ export default function AdminProfessionalsPage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/professionals/${editingPro.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      if (isCreating) {
+        // Step 1: Create with basic fields
+        const createRes = await fetch(`${API_BASE_URL}/professionals`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profession_type: payload.profession_type,
+            email: payload.email,
+            phone: payload.phone,
+            full_name: payload.full_name,
+            business_name: payload.business_name,
+          }),
+        });
 
-      if (!res.ok) {
-        const error = await res.text();
-        console.error("API Error:", error);
-        alert(`Error: ${error}`);
-        return;
+        if (!createRes.ok) {
+          const error = await createRes.text();
+          alert(`Create error: ${error}`);
+          return;
+        }
+
+        const created = await createRes.json();
+        const newId = created?.data?.id || created?.id;
+
+        if (!newId) {
+          alert('Professional created but could not determine ID. Please refresh.');
+          await fetchProfessionals();
+          setIsCreating(false);
+          return;
+        }
+
+        // Step 2: Update with full payload (status, trades, coverage, etc.)
+        const updateRes = await fetch(`${API_BASE_URL}/professionals/${newId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!updateRes.ok) {
+          const error = await updateRes.text();
+          alert(`Professional created but update failed: ${error}. You can edit it manually.`);
+        }
+      } else {
+        const res = await fetch(`${API_BASE_URL}/professionals/${editingPro!.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const error = await res.text();
+          console.error("API Error:", error);
+          alert(`Error: ${error}`);
+          return;
+        }
       }
 
       await fetchProfessionals();
       setEditingPro(null);
+      setIsCreating(false);
     } catch (error) {
       console.error("Save error:", error);
-      alert(`Error saving professional: ${error}`);
+      alert(`Error ${isCreating ? 'creating' : 'saving'} professional: ${error}`);
     }
   };
 
@@ -796,6 +859,12 @@ export default function AdminProfessionalsPage() {
           >
             Export CSV
           </button>
+          <button
+            onClick={() => { setIsCreating(true); setEditingPro(null); }}
+            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            + Create Professional
+          </button>
           <div className="flex-1" />
           <label className="flex items-center gap-2 text-xs text-slate-700">
             <input
@@ -1110,24 +1179,28 @@ export default function AdminProfessionalsPage() {
         </div>
       )}
 
-      {editingPro && (
+      {(editingPro || isCreating) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur p-4">
           <div className="w-full max-w-5xl rounded-lg bg-white shadow-lg">
             <div className="border-b border-slate-200 px-6 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">
-                    Edit {editingPro.fullName || editingPro.businessName}
+                    {isCreating
+                      ? 'Create Professional'
+                      : `Edit ${editingPro!.fullName || editingPro!.businessName}`}
                   </h2>
-                  {highlightedCertificationId && (
+                  {highlightedCertificationId && !isCreating && (
                     <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
                       Deep-linked certification review target active
                     </p>
                   )}
                 </div>
-                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                  {certifications.length} certification{certifications.length === 1 ? '' : 's'}
-                </div>
+                {!isCreating && (
+                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    {certifications.length} certification{certifications.length === 1 ? '' : 's'}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1346,6 +1419,7 @@ export default function AdminProfessionalsPage() {
                   </div>
                 </div>
 
+                {!isCreating && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -1618,12 +1692,13 @@ export default function AdminProfessionalsPage() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </div>
 
             <div className="flex gap-3 border-t border-slate-200 px-6 py-4">
               <button
-                onClick={() => setEditingPro(null)}
+                onClick={() => { setEditingPro(null); setIsCreating(false); }}
                 className="flex-1 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
               >
                 Cancel
@@ -1632,7 +1707,7 @@ export default function AdminProfessionalsPage() {
                 onClick={handleSave}
                 className="flex-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               >
-                Save Changes
+                {isCreating ? 'Create Professional' : 'Save Changes'}
               </button>
             </div>
           </div>

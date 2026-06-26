@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-0414875c",
+    "date": "2026-06-26T23:37:43+08:00",
+    "title": "Admin professionals: add create professional button + repurpose edit modal for creation, reuse email/phone for testing, deactivate via inactive status",
+    "summary": "Admin professionals: add create professional button + repurpose edit modal for creation, reuse email/phone for testing, deactivate via inactive status",
+    "areas": [
+      "web"
+    ],
+    "commit": "0414875c",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-8e9244bb",
     "date": "2026-06-26T17:36:27+08:00",
     "title": "Skip AUTHORIZE_MATERIALS_WALLET client step for single-milestone projects — funds stay in escrow",
