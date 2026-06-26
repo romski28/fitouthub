@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-03f526d3",
+    "date": "2026-06-26T13:44:53+08:00",
+    "title": "Fix leftover orphaned code breaking milestone types ternary",
+    "summary": "Fix leftover orphaned code breaking milestone types ternary",
+    "areas": [
+      "api"
+    ],
+    "commit": "03f526d3",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-d20d786b",
     "date": "2026-06-26T13:27:35+08:00",
     "title": "Simplify milestones for SCALE_1/2: 1 milestone (≤) or 2 milestones (>), SCALE_3 unchanged",

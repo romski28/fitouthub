@@ -2120,9 +2120,6 @@ export class ProjectsService {
         : isSmallScale1
           ? ['final']
           : ['progress', 'final'];
-        : scale === 'SCALE_2'
-          ? ['deposit', 'progress', 'final']
-          : ['deposit', 'progress', 'progress', 'progress', 'final'];
 
     const count = percentages.length;
     const startAt = input.startAt && !Number.isNaN(input.startAt.getTime()) ? input.startAt : null;
