@@ -2095,29 +2095,31 @@ export class ProjectsService {
     const { scale, totalAmount } = input;
     const safeTotal = this.roundMoney(Math.max(0, Number(totalAmount) || 0));
 
+    // Reduced milestone sets for SCALE_1 & SCALE_2
+    // Under $5,000: 1 milestone (completion only)
+    // Over $5,000: 2 milestones (interim + completion)
+    const isSmallScale1 = scale === 'SCALE_1' && safeTotal <= 5000;
+
     const percentages =
-      scale === 'SCALE_1'
-        ? [30, 70]
-        : scale === 'SCALE_2'
-          ? [20, 50, 30]
-          : [10, 20, 20, 20, 30];
+      scale === 'SCALE_3'
+        ? [10, 20, 20, 20, 30]
+        : isSmallScale1
+          ? [100]
+          : [50, 50];
 
     const titles =
-      scale === 'SCALE_1'
-        ? ['Site Preparation', 'Final Handover']
-        : scale === 'SCALE_2'
-          ? ['Site Preparation', 'Milestone 1', 'Final Handover']
-          : [
-              'Site Preparation',
-              'Milestone 1',
-              'Milestone 2',
-              'Milestone 3',
-              'Final Handover',
-            ];
+      scale === 'SCALE_3'
+        ? ['Site Preparation', 'Milestone 1', 'Milestone 2', 'Milestone 3', 'Final Handover']
+        : isSmallScale1
+          ? ['Project Completion']
+          : ['Milestone 1', 'Final Handover'];
 
     const types =
-      scale === 'SCALE_1'
-        ? ['deposit', 'final']
+      scale === 'SCALE_3'
+        ? ['deposit', 'progress', 'progress', 'progress', 'final']
+        : isSmallScale1
+          ? ['final']
+          : ['progress', 'final'];
         : scale === 'SCALE_2'
           ? ['deposit', 'progress', 'final']
           : ['deposit', 'progress', 'progress', 'progress', 'final'];
@@ -2333,12 +2335,14 @@ export class ProjectsService {
       return existing;
     }
 
+    const isSmallScale1 = scale === 'SCALE_1' && totalAmount <= 5000;
+
     const baseData = {
       projectProfessionalId: input.projectProfessionalId || null,
       projectScale: scale,
       escrowFundingPolicy: escrowPolicy,
       totalAmount: new Decimal(totalAmount),
-      depositCapPercent: scale === 'SCALE_1' ? 30 : scale === 'SCALE_2' ? 20 : 10,
+      depositCapPercent: scale === 'SCALE_3' ? 10 : isSmallScale1 ? 100 : 50,
       fundingBufferMilestones: scale === 'SCALE_3' ? 2 : null,
       retentionEnabled: existing?.retentionEnabled ?? false,
       retentionPercent:

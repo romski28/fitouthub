@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-d20d786b",
+    "date": "2026-06-26T13:27:35+08:00",
+    "title": "Simplify milestones for SCALE_1/2: 1 milestone (≤) or 2 milestones (>), SCALE_3 unchanged",
+    "summary": "Simplify milestones for SCALE_1/2: 1 milestone (≤) or 2 milestones (>), SCALE_3 unchanged",
+    "areas": [
+      "api"
+    ],
+    "commit": "d20d786b",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-fbfb61b7",
     "date": "2026-06-26T13:05:34+08:00",
     "title": "Replace grey pulse skeleton with shimmer skeleton loaders for uncached next steps",
