@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-5d2de23d",
+    "date": "2026-06-26T12:04:16+08:00",
+    "title": "Fix platform fee: hardcode 10% (override DB bands), other_items now flows through normalize and fee calc",
+    "summary": "Fix platform fee: hardcode 10% (override DB bands), other_items now flows through normalize and fee calc",
+    "areas": [
+      "api"
+    ],
+    "commit": "5d2de23d",
+    "files": [
+      "apps/api/src/common/platform-fee.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-726b3ab6",
     "date": "2026-06-26T11:34:53+08:00",
     "title": "Remove duplicate Mimo thinking chip from homepage header",

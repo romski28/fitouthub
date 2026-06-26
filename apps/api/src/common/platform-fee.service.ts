@@ -41,6 +41,9 @@ export class PlatformFeeService {
   ): Promise<PlatformFeeBreakdown> {
     const now = new Date();
 
+    // Fixed platform fee at 10% — overrides DB bands and adjustments
+    const PLATFORM_FEE_PERCENT = 10;
+
     // 1. Get active quote band for this amount
     const quoteBand = await this.prisma.platformFeeQuoteBand.findFirst({
       where: {
@@ -77,10 +80,8 @@ export class PlatformFeeService {
       ? await this.getClientLoyaltyAdjustment(clientId, now)
       : 0;
 
-    // 4. Calculate effective percentage
-    const effectivePercent = this.clampPercent(
-      baseBandPercent + performanceAdjust + loyaltyAdjust,
-    );
+    // 4. Calculate effective percentage — using fixed 10% override
+    const effectivePercent = PLATFORM_FEE_PERCENT;
 
     // 5. Calculate gross amount with rounding (floor to nearest 10)
     const feeAmount = baseAmount * (effectivePercent / 100);
