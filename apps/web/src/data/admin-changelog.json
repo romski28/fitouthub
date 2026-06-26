@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-87f2e3c3",
+    "date": "2026-06-27T00:15:08+08:00",
+    "title": "Replace admin professionals card grid with compact table: Name, Type, Status, ID, Registered, Last Edited + edit/delete icons",
+    "summary": "Replace admin professionals card grid with compact table: Name, Type, Status, ID, Registered, Last Edited + edit/delete icons",
+    "areas": [
+      "web"
+    ],
+    "commit": "87f2e3c3",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-37becada",
     "date": "2026-06-27T00:00:32+08:00",
     "title": "Add Select all trades button in admin edit professional modal",

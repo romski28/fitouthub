@@ -866,14 +866,6 @@ export default function AdminProfessionalsPage() {
             + Create Professional
           </button>
           <div className="flex-1" />
-          <label className="flex items-center gap-2 text-xs text-slate-700">
-            <input
-              type="checkbox"
-              checked={selectedIds.length > 0 && selectedIds.length === filtered.length}
-              onChange={toggleSelectAll}
-            />
-            Select all ({filtered.length})
-          </label>
         </div>
       </div>
 
@@ -1047,125 +1039,104 @@ export default function AdminProfessionalsPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.slice(0, itemsToShow).map((pro) => (
-          <div
-            key={pro.id}
-            className={`group overflow-hidden rounded-xl border ${
-              selectedIds.includes(pro.id) || highlightedProfessionalId === pro.id
-                ? "border-emerald-400 ring-2 ring-emerald-200"
-                : "border-slate-200"
-            } bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md`}
-          >
-            <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
-              <div className="flex items-start gap-3">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+              <th className="px-4 py-3 w-10">
                 <input
                   type="checkbox"
-                  checked={selectedIds.includes(pro.id)}
-                  onChange={() => toggleSelect(pro.id)}
-                  className="mt-0.5"
+                  checked={selectedIds.length > 0 && selectedIds.length === filtered.length}
+                  onChange={toggleSelectAll}
                 />
-                <div>
-                  <div className="text-base font-bold">
-                    {pro.fullName || pro.businessName || "Unnamed"}
-                  </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">{pro.professionType}</div>
-                </div>
-              </div>
-              <span
-                className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                  pro.status === "approved"
-                    ? "bg-emerald-500/20 text-emerald-200"
-                    : pro.status === "pending"
-                      ? "bg-amber-500/20 text-amber-100"
-                      : "bg-slate-500/20 text-slate-200"
+              </th>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 hidden md:table-cell">ID</th>
+              <th className="px-4 py-3 hidden md:table-cell">Registered</th>
+              <th className="px-4 py-3 hidden lg:table-cell">Last Edited</th>
+              <th className="px-4 py-3 w-20">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.slice(0, itemsToShow).map((pro) => (
+              <tr
+                key={pro.id}
+                className={`border-b border-slate-100 transition hover:bg-slate-50 ${
+                  selectedIds.includes(pro.id) || highlightedProfessionalId === pro.id
+                    ? "bg-emerald-50"
+                    : ""
                 }`}
               >
-                {pro.status}
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="font-semibold">Email:</span>
-                  <span className="text-slate-600 break-all">{pro.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="font-semibold">Phone:</span>
-                  <span className="text-slate-600">{pro.phone}</span>
-                </div>
-                {pro.locationPrimary ? (
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Location:</span>
-                    <span className="text-slate-600">{pro.locationPrimary}</span>
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(pro.id)}
+                    onChange={() => toggleSelect(pro.id)}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <span className="font-semibold text-slate-900">
+                    {pro.fullName || pro.businessName || "Unnamed"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs font-medium uppercase text-slate-600">
+                    {pro.professionType}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                      pro.status === "approved"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : pro.status === "pending"
+                          ? "bg-amber-100 text-amber-800"
+                          : pro.status === "suspended"
+                            ? "bg-rose-100 text-rose-800"
+                            : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {pro.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 hidden md:table-cell">
+                  <code className="text-[11px] text-slate-500">{pro.id.slice(0, 8)}…</code>
+                </td>
+                <td className="px-4 py-3 hidden md:table-cell text-slate-600">
+                  {formatDate(pro.registrationDate)}
+                </td>
+                <td className="px-4 py-3 hidden lg:table-cell text-slate-600">
+                  {formatDate(pro.updatedAt)}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setEditingPro(pro)}
+                      className="rounded p-1.5 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                      title="Edit"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(pro.id)}
+                      className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700 transition"
+                      title="Delete"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                   </div>
-                ) : null}
-                {pro.rating > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold">Rating:</span>
-                    <span className="text-slate-600">{pro.rating.toFixed(1)}★</span>
-                  </div>
-                ) : null}
-              </div>
-
-              {pro.primaryTrade || (pro.tradesOffered && pro.tradesOffered.length > 0) || (pro.suppliesOffered && pro.suppliesOffered.length > 0) ? (
-                <div>
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                    {(pro.professionType === 'contractor' || pro.professionType === 'company') && 'Trades'}
-                    {pro.professionType === 'reseller' && 'Supplies'}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {pro.primaryTrade && (!pro.tradesOffered || pro.tradesOffered.length === 0) && (
-                      <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                        {pro.primaryTrade}
-                      </span>
-                    )}
-                    {pro.tradesOffered?.slice(0, 2).map((trade, i) => (
-                      <span key={i} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                        {trade}
-                      </span>
-                    ))}
-                    {pro.suppliesOffered?.slice(0, 2).map((supply, i) => (
-                      <span key={i} className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-semibold text-white">
-                        {supply}
-                      </span>
-                    ))}
-                    {((pro.tradesOffered?.length ?? 0) + (pro.suppliesOffered?.length ?? 0) > 2) && (
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                        +{(pro.tradesOffered?.length ?? 0) + (pro.suppliesOffered?.length ?? 0) - 2} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span>ID: {pro.id}</span>
-                <span>Registered: {formatDate(pro.registrationDate)}</span>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => setEditingPro(pro)}
-                  className="flex-1 rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeletingId(pro.id)}
-                  className="flex-1 rounded-md border border-rose-600 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && (
+          <div className="px-4 py-10 text-center text-sm text-slate-500">
+            No professionals match the current filters.
           </div>
-        ))}
+        )}
       </div>
 
       {filtered.length > itemsToShow && (
