@@ -454,12 +454,6 @@ export default function ProfessionalProjectsPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
                 <h2 className="text-xl font-bold text-slate-900">
                   {dashboardProjects.length} Projects in this view
-                  {nextStepsLoading && (
-                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-600">
-                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-transparent" />
-                      Gathering action items&hellip;
-                    </span>
-                  )}
                 </h2>
               </div>
             </div>
@@ -611,10 +605,7 @@ export default function ProfessionalProjectsPage() {
                               Bidding closed
                             </span>
                           ) : nextStepsLoading ? (
-                            <div className="flex flex-wrap gap-2">
-                              <div className="h-9 w-32 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
-                              <div className="h-9 w-24 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
-                            </div>
+                            <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                           ) : (
                             <>
                               {primaryActions.length > 0 ? (

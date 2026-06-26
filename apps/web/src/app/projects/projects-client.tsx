@@ -890,10 +890,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
 
                     <div className="sm:ml-4 shrink-0 flex flex-row flex-wrap gap-1.5 sm:flex-col sm:items-end">
                       {nextStepsLoading ? (
-                        <div className="flex flex-col gap-2">
-                          <div className="h-9 w-32 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
-                          <div className="h-9 w-24 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
-                        </div>
+                        <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                       ) : (
                         <>
                           {primaryActions.map((action) => (

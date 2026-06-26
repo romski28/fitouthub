@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-26-0036ae76",
+    "date": "2026-06-26T14:18:26+08:00",
+    "title": "Simplify: single pulse skeleton, remove duplicate sync banner in cards container",
+    "summary": "Simplify: single pulse skeleton, remove duplicate sync banner in cards container",
+    "areas": [
+      "web"
+    ],
+    "commit": "0036ae76",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-7f48372d",
     "date": "2026-06-26T14:06:13+08:00",
     "title": "Fix mobile: buttons stack below text on both project lists",
