@@ -328,7 +328,6 @@ export default function ProfessionalProjectsPage() {
           const parsed = JSON.parse(cached) as Record<string, NextStepAction[]>;
           if (Object.keys(parsed).length > 0) {
             setNextStepMap(parsed);
-            setNextStepsLoading(false);
           }
         }
       } catch { /* ignore corrupted cache */ }

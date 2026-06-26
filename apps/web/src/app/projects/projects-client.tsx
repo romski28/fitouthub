@@ -683,7 +683,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           const parsed = JSON.parse(cached) as Record<string, NextStepAction[]>;
           if (Object.keys(parsed).length > 0) {
             setNextStepMap(parsed);
-            setNextStepsLoading(false);
           }
         }
       } catch { /* ignore corrupted cache */ }
