@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-87786f8c",
+    "date": "2026-06-26T15:50:07+08:00",
+    "title": "Bypass OTP gate in escrow checkout API — wrap assertEscrowOtpVerified in try/catch, guard challenge updates",
+    "summary": "Bypass OTP gate in escrow checkout API — wrap assertEscrowOtpVerified in try/catch, guard challenge updates",
+    "areas": [
+      "api"
+    ],
+    "commit": "87786f8c",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-9de409d7",
     "date": "2026-06-26T15:41:30+08:00",
     "title": "Bypass OTP in escrow deposit flow — go straight to checkout, OTP code preserved for reactivation",

@@ -729,7 +729,21 @@ export class FinancialService {
       actorId,
       role,
     );
-    const verifiedChallenge = await this.assertEscrowOtpVerified(transactionId, actorId);
+    // OTP bypass: to re-enable OTP verification, remove the try/catch wrapper
+    // and restore the bare `await this.assertEscrowOtpVerified(...)` call.
+    // Also uncomment the OTP phase in deposit-escrow-modal.tsx handleDepositNow.
+    let verifiedChallenge: any = null;
+    try {
+      verifiedChallenge = await this.assertEscrowOtpVerified(transactionId, actorId);
+    } catch {
+      // OTP bypass active — proceeding without verification
+      verifiedChallenge = { id: 'otp-bypassed', verifiedAt: new Date() };
+    }
+
+    // Bypass OTP verification gate — to re-enable, remove the line below.
+    // If OTP is re-enabled, also uncomment the frontend OTP phase in deposit-escrow-modal.tsx handleDepositNow.
+    const effectiveChallenge = verifiedChallenge; // eslint-disable-line @typescript-eslint/no-unused-vars
+    void effectiveChallenge; // no-op: OTP bypass active
 
     const amountInCents = Math.round(amountNumber * 100);
     const projectName = transaction.project?.projectName || 'Project';
@@ -763,16 +777,21 @@ export class FinancialService {
     await this.prisma.financialTransaction.update({
       where: { id: transactionId },
       data: {
-        notes: this.appendNote(transaction.notes, `stripe_checkout_session:${session.id} | otp_verified_challenge:${verifiedChallenge.id}`),
+        notes: this.appendNote(
+          transaction.notes,
+          verifiedChallenge.id === 'otp-bypassed'
+            ? `stripe_checkout_session:${session.id} | otp_bypassed:true`
+            : `stripe_checkout_session:${session.id} | otp_verified_challenge:${verifiedChallenge.id}`,
+        ),
       },
     });
 
-    await (this.prisma as any).escrowCheckoutOtpChallenge.update({
-      where: { id: verifiedChallenge.id },
-      data: {
-        consumedAt: new Date(),
-      },
-    });
+    if (verifiedChallenge.id !== 'otp-bypassed') {
+      await (this.prisma as any).escrowCheckoutOtpChallenge.update({
+        where: { id: verifiedChallenge.id },
+        data: { consumedAt: new Date() },
+      });
+    }
 
     if (!session.url) {
       throw new Error('Stripe checkout session did not return a redirect URL');
