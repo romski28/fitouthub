@@ -870,7 +870,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </button>
                   )}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/projects/${project.id}?tab=overview`}
@@ -888,7 +888,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                       </p>
                     </div>
 
-                    <div className="sm:ml-4 shrink-0 flex flex-col items-end gap-1.5">
+                    <div className="sm:ml-4 shrink-0 flex flex-row flex-wrap gap-1.5 sm:flex-col sm:items-end">
                       {nextStepsLoading ? (
                         <div className="flex flex-col gap-2">
                           <div className="h-9 w-32 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />

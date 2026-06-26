@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-26-7f48372d",
+    "date": "2026-06-26T14:06:13+08:00",
+    "title": "Fix mobile: buttons stack below text on both project lists",
+    "summary": "Fix mobile: buttons stack below text on both project lists",
+    "areas": [
+      "web"
+    ],
+    "commit": "7f48372d",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-295fec51",
     "date": "2026-06-26T14:04:14+08:00",
     "title": "Fix loading state: never visible because cache hit cleared it in same render batch",
