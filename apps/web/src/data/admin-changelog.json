@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-a8f60a50",
+    "date": "2026-06-26T13:58:59+08:00",
+    "title": "Fix client list: shimmer skeletons, simpler loading condition, mobile button layout",
+    "summary": "Fix client list: shimmer skeletons, simpler loading condition, mobile button layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8f60a50",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-d86b1d64",
     "date": "2026-06-26T13:48:32+08:00",
     "title": "Fix skeletons always show during loading, add Syncing banner, fix mobile chips layout",
