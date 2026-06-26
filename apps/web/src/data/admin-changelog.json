@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-94327a34",
+    "date": "2026-06-26T16:22:18+08:00",
+    "title": "Add OTP bypass documentation",
+    "summary": "Add OTP bypass documentation",
+    "areas": [
+      "infra"
+    ],
+    "commit": "94327a34",
+    "files": [
+      "OTP_BYPASS.md"
+    ]
+  },
+  {
     "id": "2026-06-26-87786f8c",
     "date": "2026-06-26T15:50:07+08:00",
     "title": "Bypass OTP gate in escrow checkout API — wrap assertEscrowOtpVerified in try/catch, guard challenge updates",
