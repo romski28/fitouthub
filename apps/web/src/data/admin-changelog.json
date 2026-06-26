@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-7ec66180",
+    "date": "2026-06-26T11:31:36+08:00",
+    "title": "Fix video teaser: 30-second -> 60-second",
+    "summary": "Fix video teaser: 30-second -> 60-second",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ec66180",
+    "files": [
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-2e501dc3",
     "date": "2026-06-26T00:44:47+08:00",
     "title": "Widen review quotes modal on desktop: max-w-lg -> md:max-w-4xl",
