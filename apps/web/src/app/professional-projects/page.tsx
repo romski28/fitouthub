@@ -479,7 +479,7 @@ export default function ProfessionalProjectsPage() {
                 const unreadCount = unreadByProjectId[String(projectProf.project.id)] || 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
-                  <div key={`dash-${projectProf.id}`} className={`relative overflow-hidden rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
+                  <div key={`dash-${projectProf.id}`} className={`relative rounded-lg border-[3px] px-4 py-3 shadow-sm transition ${
                     quoteOverdue
                       ? 'border-[rgba(220,20,60,0.8)] bg-[rgba(121,24,38,0.84)] emergency-card-throb shadow-[0_0_16px_rgba(220,20,60,0.32)] hover:bg-[rgba(121,24,38,0.9)]'
                       : isStopStatus
@@ -510,18 +510,18 @@ export default function ProfessionalProjectsPage() {
                       </button>
                     )}
 
-                    <div className="grid gap-3">
+                    <div className="grid gap-3 overflow-hidden">
                       {/* Title row with scope chips */}
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-2 min-w-0">
                           {isRestricted ? (
-                            <span className="truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                            <span className="flex-1 min-w-0 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
                               {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                             </span>
                           ) : (
                             <Link
                               href={`/professional-projects/${projectProf.id}?tab=overview`}
-                              className={`truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
+                              className={`flex-1 min-w-0 truncate text-[1.2rem] font-bold leading-tight underline-offset-2 hover:underline ${
                                 quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'
                               }`}
                               title="Open project details"
