@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-d2d19fac",
+    "date": "2026-06-26T17:24:57+08:00",
+    "title": "Skip WAIT_FOR_MATERIALS_PROCESS for single-milestone projects — return not_required from getProfessionalWalletTransferPrerequisiteStatus",
+    "summary": "Skip WAIT_FOR_MATERIALS_PROCESS for single-milestone projects — return not_required from getProfessionalWalletTransferPrerequisiteStatus",
+    "areas": [
+      "api"
+    ],
+    "commit": "d2d19fac",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-b9821090",
     "date": "2026-06-26T16:50:14+08:00",
     "title": "Skip milestone-1 wallet transfer for single-milestone projects (≤1 milestone), keep auto-transfer for multi-milestone",

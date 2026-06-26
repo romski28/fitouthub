@@ -151,17 +151,18 @@ export class NextStepService {
       select: {
         projectScale: true,
         milestones: {
-          where: { sequence: 1 },
           select: { id: true },
-          take: 1,
         },
       },
     });
 
     const normalizedScale = String(paymentPlan?.projectScale || '').toUpperCase();
-    const firstMilestoneId = paymentPlan?.milestones?.[0]?.id;
+    const milestones = paymentPlan?.milestones || [];
+    const firstMilestoneId = milestones[0]?.id;
 
-    if (!firstMilestoneId || !['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
+    // Single-milestone projects don't have a milestone 1 wallet transfer
+    const isSingleMilestone = milestones.length <= 1;
+    if (!firstMilestoneId || !['SCALE_1', 'SCALE_2'].includes(normalizedScale) || isSingleMilestone) {
       return 'not_required';
     }
 
