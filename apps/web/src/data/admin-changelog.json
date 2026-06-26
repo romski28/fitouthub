@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-d86b1d64",
+    "date": "2026-06-26T13:48:32+08:00",
+    "title": "Fix skeletons always show during loading, add Syncing banner, fix mobile chips layout",
+    "summary": "Fix skeletons always show during loading, add Syncing banner, fix mobile chips layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "d86b1d64",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-03f526d3",
     "date": "2026-06-26T13:44:53+08:00",
     "title": "Fix leftover orphaned code breaking milestone types ternary",

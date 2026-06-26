@@ -427,6 +427,11 @@ export default function ProfessionalProjectsPage() {
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight text-slate-900">My Projects</h1>
+              {nextStepsLoading && (
+                <p className="text-xs text-slate-400 animate-pulse">
+                  Syncing next steps...
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
@@ -532,7 +537,7 @@ export default function ProfessionalProjectsPage() {
                               {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
                             </Link>
                           )}
-                          <div className="ml-auto shrink-0 flex items-center gap-2">
+                          <div className="sm:ml-auto shrink-0 flex items-center gap-2">
                             {/* Trade/scope chips */}
                             {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
                               projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
@@ -606,7 +611,7 @@ export default function ProfessionalProjectsPage() {
                             <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
                               Bidding closed
                             </span>
-                          ) : nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
+                          ) : nextStepsLoading ? (
                             <div className="flex flex-wrap gap-2">
                               <div className="h-9 w-32 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
                               <div className="h-9 w-24 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
