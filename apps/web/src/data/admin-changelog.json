@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-8e9244bb",
+    "date": "2026-06-26T17:36:27+08:00",
+    "title": "Skip AUTHORIZE_MATERIALS_WALLET client step for single-milestone projects — funds stay in escrow",
+    "summary": "Skip AUTHORIZE_MATERIALS_WALLET client step for single-milestone projects — funds stay in escrow",
+    "areas": [
+      "api"
+    ],
+    "commit": "8e9244bb",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-2e91f013",
     "date": "2026-06-26T17:29:45+08:00",
     "title": "Revert MAKE_MILESTONE_1_CLAIM gate — professionals can still submit materials claims on single-milestone projects",

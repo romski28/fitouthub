@@ -1336,13 +1336,13 @@ export class NextStepService {
               where: { projectId },
               select: {
                 milestones: {
-                  where: { sequence: 1 },
-                  select: { id: true },
-                  take: 1,
+                  select: { id: true, sequence: true },
                 },
               },
             });
-            const m1Id = procPlan?.milestones?.[0]?.id;
+            const allMilestones = procPlan?.milestones || [];
+            const isSingleMilestone = allMilestones.length <= 1;
+            const m1Id = allMilestones.find((m) => m.sequence === 1)?.id;
             if (m1Id) {
               const [capCount, pendingEvidenceCount, procurementApprovedCount, capReturnedCount] =
                 await this.prisma.$transaction([
@@ -1381,8 +1381,9 @@ export class NextStepService {
 
               const materialsClaimDone = procurementApprovedCount > 0 || capReturnedCount > 0;
 
-              if (capCount === 0) {
+              if (capCount === 0 && !isSingleMilestone) {
                 // Step A: client confirms the nominal wallet allocation (no proof needed).
+                // Skip for single-milestone projects — funds stay in escrow.
                 availableConfigSteps = [
                   {
                     actionKey: 'AUTHORIZE_MATERIALS_WALLET',
