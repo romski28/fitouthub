@@ -1293,19 +1293,32 @@ export default function AdminProfessionalsPage() {
 
                 {/* Multi-trade field for contractors and companies */}
                 {(formData.professionType === "contractor" || formData.professionType === "company") && (
-                  <TagInput
-                    label="Trades Offered"
-                    placeholder="Add trades..."
-                    tags={
-                      Array.isArray(formData.tradesOffered) ? formData.tradesOffered : []
-                    }
-                    onTagsChange={(tags) =>
-                      setFormData((prev) => ({ ...prev, tradesOffered: tags }))
-                    }
-                    suggestions={tradeOptions}
-                    multiple={true}
-                    allowCustom={false}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <TagInput
+                        label="Trades Offered"
+                        placeholder="Add trades..."
+                        tags={
+                          Array.isArray(formData.tradesOffered) ? formData.tradesOffered : []
+                        }
+                        onTagsChange={(tags) =>
+                          setFormData((prev) => ({ ...prev, tradesOffered: tags }))
+                        }
+                        suggestions={tradeOptions}
+                        multiple={true}
+                        allowCustom={false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, tradesOffered: [...tradeOptions] }))
+                        }
+                        className="mt-5 shrink-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Select all
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 {/* Conditional supplies field for resellers */}

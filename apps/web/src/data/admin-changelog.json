@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-37becada",
+    "date": "2026-06-27T00:00:32+08:00",
+    "title": "Add Select all trades button in admin edit professional modal",
+    "summary": "Add Select all trades button in admin edit professional modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "37becada",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-0414875c",
     "date": "2026-06-26T23:37:43+08:00",
     "title": "Admin professionals: add create professional button + repurpose edit modal for creation, reuse email/phone for testing, deactivate via inactive status",
