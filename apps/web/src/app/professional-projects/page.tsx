@@ -681,6 +681,7 @@ export default function ProfessionalProjectsPage() {
                 );
               })}
             </div>
+            </div>
           )}
         </div>
 

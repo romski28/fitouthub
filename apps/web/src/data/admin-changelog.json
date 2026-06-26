@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-a7f41722",
+    "date": "2026-06-26T14:51:42+08:00",
+    "title": "Fix missing closing div for project cards wrapper",
+    "summary": "Fix missing closing div for project cards wrapper",
+    "areas": [
+      "web"
+    ],
+    "commit": "a7f41722",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-f7dae163",
     "date": "2026-06-26T14:30:21+08:00",
     "title": "Fix build: remove orphaned fragment, add min-w-0 for text truncation in pro cards",
