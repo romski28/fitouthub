@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-f7dae163",
+    "date": "2026-06-26T14:30:21+08:00",
+    "title": "Fix build: remove orphaned fragment, add min-w-0 for text truncation in pro cards",
+    "summary": "Fix build: remove orphaned fragment, add min-w-0 for text truncation in pro cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "f7dae163",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-0036ae76",
     "date": "2026-06-26T14:18:26+08:00",
     "title": "Simplify: single pulse skeleton, remove duplicate sync banner in cards container",

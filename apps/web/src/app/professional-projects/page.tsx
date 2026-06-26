@@ -447,8 +447,7 @@ export default function ProfessionalProjectsPage() {
 
           {/* Project cards — inside the same container */}
           {dashboardProjects.length > 0 && (
-            <>
-              <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
+            <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
@@ -514,7 +513,7 @@ export default function ProfessionalProjectsPage() {
                     <div className="grid gap-3">
                       {/* Title row with scope chips */}
                       <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 min-w-0">
                           {isRestricted ? (
                             <span className="truncate text-[1.2rem] font-bold leading-tight text-slate-900">
                               {isEmergencyProject ? `🚨 ${projectProf.project.projectName}` : projectProf.project.projectName}
@@ -568,7 +567,7 @@ export default function ProfessionalProjectsPage() {
                       </div>
                       
                       {/* Details Row */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2 text-xs min-w-0">
                         {projectProf.project.region ? (
                           <span className={quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}>
                             {projectProf.project.region}
@@ -682,7 +681,6 @@ export default function ProfessionalProjectsPage() {
                 );
               })}
             </div>
-            </>
           )}
         </div>
 
