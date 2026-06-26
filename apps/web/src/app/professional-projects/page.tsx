@@ -607,7 +607,10 @@ export default function ProfessionalProjectsPage() {
                               Bidding closed
                             </span>
                           ) : nextStepsLoading && !nextStepMap[projectProf.project.id] ? (
-                            <div className="animate-pulse rounded-lg bg-slate-300/50 h-9 w-28" />
+                            <div className="flex flex-wrap gap-2">
+                              <div className="h-9 w-32 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
+                              <div className="h-9 w-24 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" />
+                            </div>
                           ) : (
                             <>
                               {primaryActions.length > 0 ? (

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-26-fbfb61b7",
+    "date": "2026-06-26T13:05:34+08:00",
+    "title": "Replace grey pulse skeleton with shimmer skeleton loaders for uncached next steps",
+    "summary": "Replace grey pulse skeleton with shimmer skeleton loaders for uncached next steps",
+    "areas": [
+      "web"
+    ],
+    "commit": "fbfb61b7",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/tailwind.config.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-9056dc5d",
     "date": "2026-06-26T12:10:26+08:00",
     "title": "Fix API types: add other_items to QuoteBreakdownCode, notes to QuoteBreakdownItem",
