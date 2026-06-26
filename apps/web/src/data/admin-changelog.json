@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-9de409d7",
+    "date": "2026-06-26T15:41:30+08:00",
+    "title": "Bypass OTP in escrow deposit flow — go straight to checkout, OTP code preserved for reactivation",
+    "summary": "Bypass OTP in escrow deposit flow — go straight to checkout, OTP code preserved for reactivation",
+    "areas": [
+      "web"
+    ],
+    "commit": "9de409d7",
+    "files": [
+      "apps/web/src/components/next-steps/deposit-escrow-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-c17201b5",
     "date": "2026-06-26T15:31:49+08:00",
     "title": "Milestone agreement modal: show payment amounts, remove Financial chips, add final payment note",

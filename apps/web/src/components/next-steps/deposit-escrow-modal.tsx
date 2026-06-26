@@ -116,10 +116,34 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
   );
 
   const handleDepositNow = async () => {
-    if (!pendingTx) return;
-    await requestOtp(pendingTx.id);
-    setOtpCode('');
-    setPhase('otp');
+    if (!pendingTx || !accessToken) return;
+
+    // Bypass OTP — go straight to checkout.
+    // To re-enable OTP, uncomment the three lines below and comment out the checkout call.
+    // await requestOtp(pendingTx.id);
+    // setOtpCode('');
+    // setPhase('otp');
+    setOtpSending(true);
+    try {
+      const checkoutRes = await fetch(`${API_BASE_URL}/financial/${pendingTx.id}/checkout-session`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!checkoutRes.ok) {
+        const data = (await checkoutRes.json().catch(() => ({}))) as { message?: string };
+        throw new Error(data.message || 'Failed to start checkout');
+      }
+
+      const data = (await checkoutRes.json()) as { checkoutUrl?: string };
+      if (!data.checkoutUrl) throw new Error('Checkout URL missing from response');
+
+      onClose();
+      window.location.assign(data.checkoutUrl);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to process payment');
+    } finally {
+      setOtpSending(false);
+    }
   };
 
   const handleVerifyAndCheckout = async () => {
@@ -224,7 +248,7 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
                 disabled={!pendingTx || otpSending}
                 className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
               >
-                {otpSending ? 'Sending OTP...' : 'Deposit now'}
+                {otpSending ? 'Processing...' : 'Deposit now'}
               </button>
             </div>
           </>
