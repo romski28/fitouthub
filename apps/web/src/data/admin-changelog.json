@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-252cc9a1",
+    "date": "2026-06-26T14:56:24+08:00",
+    "title": "Add overflow-hidden to professional project cards to prevent text bleed",
+    "summary": "Add overflow-hidden to professional project cards to prevent text bleed",
+    "areas": [
+      "web"
+    ],
+    "commit": "252cc9a1",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-a7f41722",
     "date": "2026-06-26T14:51:42+08:00",
     "title": "Fix missing closing div for project cards wrapper",
