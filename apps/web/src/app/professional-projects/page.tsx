@@ -433,7 +433,7 @@ export default function ProfessionalProjectsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+              <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
                 <SummaryCard label="Total" value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
                 <SummaryCard label="Pending" value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
                 <SummaryCard label="Accepted" value={totals.accepted} tone="emerald" filterStatus="accepted" currentFilter={filterStatus} onClick={() => setFilterStatus('accepted')} />
@@ -444,15 +444,15 @@ export default function ProfessionalProjectsPage() {
               <p className="text-[10px] text-center text-slate-600 italic">Click on a status to filter</p>
             </div>
           </div>
-        </div>
 
-        {/* Action Dashboard */}
-        {dashboardProjects.length > 0 && (
-          <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
-                <h2 className="text-xl font-bold text-slate-900">
+          {/* Project cards — inside the same container */}
+          {dashboardProjects.length > 0 && (
+            <>
+              <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
+                    <h2 className="text-xl font-bold text-slate-900">
                   {dashboardProjects.length} Projects in this view
                 </h2>
               </div>
@@ -682,8 +682,9 @@ export default function ProfessionalProjectsPage() {
                 );
               })}
             </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
 
         {error && (
           <div className="rounded-md bg-red-50 p-4 mb-8">
