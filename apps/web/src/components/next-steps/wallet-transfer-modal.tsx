@@ -149,6 +149,15 @@ export function WalletTransferModal({ isOpen, isLoading = false, onClose }: Wall
         if (planRes.ok) {
           const planData = (await planRes.json()) as PaymentPlan;
           setPaymentPlan(planData || null);
+
+          // Single-milestone projects (e.g. SCALE_1 ≤ $5K) don't need an
+          // auto-transfer of milestone 1 to the professional wallet.
+          // The professional can request materials funding separately.
+          if (planData?.milestones && planData.milestones.length <= 1) {
+            toast.success('Escrow funded. Your professional can request materials funding when ready.');
+            onClose();
+            return;
+          }
         } else {
           setPaymentPlan(null);
         }
@@ -187,6 +196,14 @@ export function WalletTransferModal({ isOpen, isLoading = false, onClose }: Wall
   const executeTransfer = async () => {
     if (!state.projectId || !accessToken) {
       toast.error('Missing project context');
+      return;
+    }
+
+    // Safety: single-milestone projects should not reach this point,
+    // but guard against it anyway.
+    if ((paymentPlan?.milestones?.length ?? 0) <= 1) {
+      toast.success('No transfer needed for single-milestone projects.');
+      onClose();
       return;
     }
 

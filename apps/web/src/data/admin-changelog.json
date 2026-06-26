@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-b9821090",
+    "date": "2026-06-26T16:50:14+08:00",
+    "title": "Skip milestone-1 wallet transfer for single-milestone projects (≤1 milestone), keep auto-transfer for multi-milestone",
+    "summary": "Skip milestone-1 wallet transfer for single-milestone projects (≤1 milestone), keep auto-transfer for multi-milestone",
+    "areas": [
+      "web"
+    ],
+    "commit": "b9821090",
+    "files": [
+      "apps/web/src/components/next-steps/wallet-transfer-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-94327a34",
     "date": "2026-06-26T16:22:18+08:00",
     "title": "Add OTP bypass documentation",
