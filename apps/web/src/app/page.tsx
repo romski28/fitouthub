@@ -51,16 +51,6 @@ export default function Home() {
                   <h2 className="text-2xl font-bold text-slate-900">
                     <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.<br />Welcome Home.
                   </h2>
-                  {mimoThinking && (
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 shadow-sm" aria-live="polite">
-                      <span className="flex items-end gap-1" aria-hidden="true">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
-                      </span>
-                      <span>{t('welcome.thinking')}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* 3-col: Sarah | Prompt | Mike */}

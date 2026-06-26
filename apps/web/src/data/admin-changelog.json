@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-726b3ab6",
+    "date": "2026-06-26T11:34:53+08:00",
+    "title": "Remove duplicate Mimo thinking chip from homepage header",
+    "summary": "Remove duplicate Mimo thinking chip from homepage header",
+    "areas": [
+      "web"
+    ],
+    "commit": "726b3ab6",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-7ec66180",
     "date": "2026-06-26T11:31:36+08:00",
     "title": "Fix video teaser: 30-second -> 60-second",
