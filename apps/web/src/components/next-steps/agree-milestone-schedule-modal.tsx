@@ -64,6 +64,7 @@ export function AgreeMilestoneScheduleModal({
   const [error, setError] = useState<string | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
+  const [financialAmounts, setFinancialAmounts] = useState<Record<string, { amount: number }> | undefined>(undefined);
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
@@ -132,6 +133,41 @@ export function AgreeMilestoneScheduleModal({
 
     void fetchDetails();
   }, [isOpen, projectId, projectProfessionalId, token, isProfessional]);
+
+  // Fetch payment plan to get milestone amounts
+  useEffect(() => {
+    if (!isOpen || !projectId || !token) return;
+
+    const fetchPaymentPlan = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/payment-plan`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          setFinancialAmounts(undefined);
+          return;
+        }
+
+        const data = await response.json();
+        const milestones: Array<{ projectMilestoneId?: string | null; amount: number | string }> =
+          data?.milestones || [];
+        const amounts: Record<string, { amount: number }> = {};
+        for (const pm of milestones) {
+          if (pm.projectMilestoneId) {
+            amounts[pm.projectMilestoneId] = {
+              amount: typeof pm.amount === 'string' ? parseFloat(pm.amount) : pm.amount,
+            };
+          }
+        }
+        setFinancialAmounts(Object.keys(amounts).length > 0 ? amounts : undefined);
+      } catch {
+        setFinancialAmounts(undefined);
+      }
+    };
+
+    void fetchPaymentPlan();
+  }, [isOpen, projectId, token]);
 
   const markStepCompleted = useCallback(async () => {
     if (!projectId || !token || !state.actionKey) return;
@@ -286,18 +322,22 @@ export function AgreeMilestoneScheduleModal({
                         accessToken={token}
                         hideStartNegotiationPanel={true}
                         onScheduleConfirmed={handleScheduleConfirmed}
+                        financialAmounts={financialAmounts}
                       />
                     )}
                   </div>
 
-                  <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
-                    >
-                      Close
-                    </button>
+                  <div className="shrink-0 flex flex-col gap-2 border-t border-slate-700 px-6 py-4">
+                    <p className="text-xs text-slate-400 italic text-center">Final payment may be different depending on materials claims.</p>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

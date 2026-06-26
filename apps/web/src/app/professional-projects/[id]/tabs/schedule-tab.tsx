@@ -68,6 +68,7 @@ interface ScheduleTabProps {
   onMilestonesUpdate?: () => void;
   hideStartNegotiationPanel?: boolean;
   onScheduleConfirmed?: () => void;
+  financialAmounts?: Record<string, { amount: number }>;
 }
 
 const inferWaitingParty = (actionKey?: string): WaitingParty | undefined => {
@@ -217,6 +218,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   onMilestonesUpdate,
   hideStartNegotiationPanel = false,
   onScheduleConfirmed,
+  financialAmounts,
 }) => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [startProposals, setStartProposals] = useState<StartProposal[]>([]);
@@ -351,6 +353,15 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     if (durationMinutes < 60) return `${durationMinutes} min`;
     const hours = durationMinutes / 60;
     return `${hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1)} hour${hours === 1 ? '' : 's'}`;
+  };
+
+  const formatHKD = (value: number | string) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('en-HK', {
+      style: 'currency',
+      currency: 'HKD',
+      minimumFractionDigits: 0,
+    }).format(num);
   };
 
   const getStatusPercent = (status: string, percentComplete: number) => {
@@ -1469,9 +1480,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                           <td className="px-3 py-3 text-slate-900">
                             <span className="font-semibold">{isFinancialMilestone ? '💰 ' : ''}{milestone.title}</span>
                             {isFinancialMilestone ? (
-                              <span className="ml-2 rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-900">
-                                Financial
-                              </span>
+                              financialAmounts?.[milestone.id]
+                                ? <span className="ml-2 text-xs font-semibold text-emerald-700">{formatHKD(financialAmounts[milestone.id].amount)}</span>
+                                : null
                             ) : null}
                           </td>
                           <td className="px-3 py-3 text-slate-700">{formatDayMonth(milestone.plannedStartDate) || 'No date'}</td>

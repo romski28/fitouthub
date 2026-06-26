@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-26-c17201b5",
+    "date": "2026-06-26T15:31:49+08:00",
+    "title": "Milestone agreement modal: show payment amounts, remove Financial chips, add final payment note",
+    "summary": "Milestone agreement modal: show payment amounts, remove Financial chips, add final payment note",
+    "areas": [
+      "web"
+    ],
+    "commit": "c17201b5",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-26-a31278d0",
     "date": "2026-06-26T15:02:46+08:00",
     "title": "Fix card overflow: badge outside overflow, title flex-1 for proper ellipsis",
