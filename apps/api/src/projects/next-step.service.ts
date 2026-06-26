@@ -1029,18 +1029,19 @@ export class NextStepService {
         } else {
           let hasPendingMaterialsClaim = false;
           let procurementApproved = false;
+          let isSingleMilestoneMaterial = false;
           if (escrowFunded && ['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
             const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
               where: { projectId },
               select: {
                 milestones: {
-                  where: { sequence: 1 },
-                  select: { id: true },
-                  take: 1,
+                  select: { id: true, sequence: true },
                 },
               },
             });
-            const firstMilestoneId = paymentPlan?.milestones?.[0]?.id;
+            const allMilestones = paymentPlan?.milestones || [];
+            isSingleMilestoneMaterial = allMilestones.length <= 1;
+            const firstMilestoneId = allMilestones.find((m) => m.sequence === 1)?.id;
             if (firstMilestoneId) {
               const [pendingCount, approvedCount] = await this.prisma.$transaction([
                 (this.prisma as any).milestoneProcurementEvidence.count({
@@ -1109,8 +1110,8 @@ export class NextStepService {
               ),
             );
 
-            // Primary action 2: Make milestone 1 claim (if applicable, not skipped, and not yet approved)
-            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped' && !procurementApproved) {
+            // Primary action 2: Make milestone 1 claim (if applicable, not skipped, not a single-milestone project, and not yet approved)
+            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped' && !isSingleMilestoneMaterial && !procurementApproved) {
               availableConfigSteps.push({
                 id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
                 createdAt: new Date(),
@@ -1562,11 +1563,14 @@ export class NextStepService {
             // Schedule confirmed — check for pending materials claim and whether procurement is already approved
             let hasPendingClaimPreWork = false;
             let procurementApprovedPreWork = false;
+            let isSingleMilestonePreWork = false;
             if (escrowPreWork && ['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
               const pp = await this.prisma.projectPaymentPlan.findUnique({
-                where: { projectId }, select: { milestones: { where: { sequence: 1 }, select: { id: true }, take: 1 } },
+                where: { projectId }, select: { milestones: { select: { id: true, sequence: true } } },
               });
-              const m1 = pp?.milestones?.[0]?.id;
+              const allMilestonesPreWork = pp?.milestones || [];
+              isSingleMilestonePreWork = allMilestonesPreWork.length <= 1;
+              const m1 = allMilestonesPreWork.find((m) => m.sequence === 1)?.id;
               if (m1) {
                 const [pendingCountPw, approvedCountPw] = await this.prisma.$transaction([
                   (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } }),
@@ -1584,8 +1588,8 @@ export class NextStepService {
                 createSyntheticPrimaryStep('START_PROJECT', 'Start project on site', true, role, effectiveStage,
                   'Escrow is funded and schedule confirmed. You may begin work on site.'),
               ];
-              // Show MAKE_MILESTONE_1_CLAIM only if not skipped and procurement not yet approved
-              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped' && !procurementApprovedPreWork) {
+              // Show MAKE_MILESTONE_1_CLAIM only if not skipped, not a single-milestone project, and procurement not yet approved
+              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped' && !isSingleMilestonePreWork && !procurementApprovedPreWork) {
                 availableConfigSteps.push({
                   id: 'synthetic-MAKE_MILESTONE_1_CLAIM', createdAt: new Date(), updatedAt: new Date(), role,
                   projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',
