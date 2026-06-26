@@ -1110,8 +1110,8 @@ export class NextStepService {
               ),
             );
 
-            // Primary action 2: Make milestone 1 claim (if applicable, not skipped, not a single-milestone project, and not yet approved)
-            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped' && !isSingleMilestoneMaterial && !procurementApproved) {
+            // Primary action 2: Make milestone 1 claim (if applicable, not skipped, and not yet approved)
+            if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && walletTransferPrerequisite !== 'skipped' && !procurementApproved) {
               availableConfigSteps.push({
                 id: 'synthetic-MAKE_MILESTONE_1_CLAIM',
                 createdAt: new Date(),
@@ -1588,8 +1588,8 @@ export class NextStepService {
                 createSyntheticPrimaryStep('START_PROJECT', 'Start project on site', true, role, effectiveStage,
                   'Escrow is funded and schedule confirmed. You may begin work on site.'),
               ];
-              // Show MAKE_MILESTONE_1_CLAIM only if not skipped, not a single-milestone project, and procurement not yet approved
-              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped' && !isSingleMilestonePreWork && !procurementApprovedPreWork) {
+              // Show MAKE_MILESTONE_1_CLAIM only if not skipped and procurement not yet approved
+              if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && walletPreWork !== 'skipped' && !procurementApprovedPreWork) {
                 availableConfigSteps.push({
                   id: 'synthetic-MAKE_MILESTONE_1_CLAIM', createdAt: new Date(), updatedAt: new Date(), role,
                   projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',

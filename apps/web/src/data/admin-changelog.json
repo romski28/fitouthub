@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-26-2e91f013",
+    "date": "2026-06-26T17:29:45+08:00",
+    "title": "Revert MAKE_MILESTONE_1_CLAIM gate — professionals can still submit materials claims on single-milestone projects",
+    "summary": "Revert MAKE_MILESTONE_1_CLAIM gate — professionals can still submit materials claims on single-milestone projects",
+    "areas": [
+      "api"
+    ],
+    "commit": "2e91f013",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-26-294bd7df",
     "date": "2026-06-26T17:28:16+08:00",
     "title": "Gate MAKE_MILESTONE_1_CLAIM behind !isSingleMilestone — no materials claim for single-milestone projects",
