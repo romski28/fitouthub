@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-71e7abf4",
+    "date": "2026-06-27T22:43:13+08:00",
+    "title": "Replace complex transactions table with simple card layout — green check for complete, coral open for pending",
+    "summary": "Replace complex transactions table with simple card layout — green check for complete, coral open for pending",
+    "areas": [
+      "web"
+    ],
+    "commit": "71e7abf4",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-c9646e9f",
     "date": "2026-06-27T22:25:04+08:00",
     "title": "Replace SLA grid with simple Payment Policy statement — all payments must be queried or approved within 24hrs",

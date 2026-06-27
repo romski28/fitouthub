@@ -2080,258 +2080,75 @@ export default function ProjectFinancialsCard({
             </div>
           )}
 
-          {/* Transactions table */}
-          <div className="order-2 overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-white border-b border-slate-600">
-                  <th className="py-2 pr-4">Date</th>
-                  <th className="py-2 pr-4">Action On</th>
-                  <th className="py-2 pr-4">Type</th>
-                  <th className="py-2 pr-4">Amount</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-4 text-center text-slate-300">No financial transactions yet</td>
-                  </tr>
-                )}
-                {/* Pending materials wallet transfer — shown before cap is authorized for SCALE_1/2 projects with 2+ milestones */}
-                {isProcurementWorkflowProject && !isSingleMilestoneProject && hasMilestoneEscrowFunded && firstMilestoneMeta.capTotal === 0 && (resolvedRole === 'client' || resolvedRole === 'admin') && (
-                  <tr className="border-b border-slate-700 bg-indigo-900/10">
-                    <td className="py-2 pr-4 text-slate-400 text-sm">—</td>
-                    <td className="py-2 pr-4 text-white">
-                      <div className="flex items-center gap-2">
-                        <span className="capitalize">Client</span>
-                        {resolvedRole === 'client' && (
-                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
-                            You
-                          </span>
+          {/* Transactions — card layout */}
+          <div className="order-2 space-y-3">
+            {filteredTransactions.length === 0 && (
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
+                No financial transactions yet
+              </div>
+            )}
+            {filteredTransactions.map((tx) => {
+              const status = (tx.status || '').toLowerCase();
+              const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
+              const dateObj = new Date(tx.createdAt);
+              const dateLabel = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+              const isPendingWalletTransfer =
+                isProcurementWorkflowProject &&
+                !isSingleMilestoneProject &&
+                hasMilestoneEscrowFunded &&
+                firstMilestoneMeta.capTotal === 0 &&
+                tx.type === 'milestone_foh_allocation_cap' &&
+                !isComplete;
+
+              return (
+                <div
+                  key={tx.id}
+                  className={`rounded-lg border-2 p-4 ${
+                    isComplete
+                      ? 'border-emerald-400 bg-[#F5F0E0]'
+                      : 'border-[#FF7F50] bg-[#F5F0E0]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                        isComplete ? 'bg-emerald-500 text-white' : 'border-2 border-[#FF7F50] bg-transparent'
+                      }`}>
+                        {isComplete ? (
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 truncate">
+                          {tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type)}
+                        </p>
+                        {tx.description && (
+                          <p className="mt-0.5 text-xs text-slate-500 truncate">{tx.description}</p>
                         )}
                       </div>
-                    </td>
-                    <td className="py-2 pr-4">
-                      <div className="font-medium text-white">Materials Wallet Transfer</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        Milestone 1 procurement cap — held in professional wallet until invoices approved
-                      </div>
-                    </td>
-                    <td className="py-2 pr-4 text-white font-semibold">{formatHKD(Number(firstMilestone!.amount))}</td>
-                    <td className="py-2 pr-4">
-                      <StatusPill status="pending" label="pending" tone="warning" />
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        {resolvedRole === 'client' && (
-                          <button
-                            type="button"
-                            onClick={handleAuthorizeMaterialsWalletTransfer}
-                            disabled={processingId === 'cap-authorize'}
-                            className="w-[140px] px-3 py-1 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 disabled:bg-slate-400 transition"
-                          >
-                            {processingId === 'cap-authorize' ? 'Processing...' : 'Transfer to Wallet'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-                {filteredTransactions.map((tx) => {
-                  const createdDate = new Date(tx.createdAt).toLocaleDateString('en-HK');
-                  const status = (tx.status || '').toLowerCase();
-                  const statusKey = status.replace(/\s+/g, '_');
-                  const type = tx.type;
-                  const canConfirmDeposit =
-                    resolvedRole === 'admin' &&
-                    ((type === 'escrow_deposit' && statusKey === 'pending') ||
-                      (type === 'escrow_deposit_confirmation' && statusKey === 'pending'));
-                  console.log('[ProjectFinancials] Action checks:', {
-                    id: tx.id,
-                    type,
-                    statusKey,
-                    role: resolvedRole,
-                    canConfirmDeposit,
-                    actionByRole: tx.actionByRole,
-                  });
-                  const canApprove =
-                    resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
-                  const canRelease =
-                    resolvedRole === 'admin' && type === 'release_payment' && statusKey === 'pending';
-                  const canConfirmWalletTransfer =
-                    resolvedRole === 'admin' && type === 'professional_wallet_transfer' && statusKey === 'pending';
-                  const canReject =
-                    resolvedRole === 'client' && type === 'payment_request' && statusKey === 'pending';
-                  const canPayEscrow =
-                    resolvedRole === 'client' && type === 'escrow_deposit_request' && statusKey === 'pending';
-                  const actionRole = (tx.actionByRole || '').toLowerCase();
-                  const actionOn = tx.actionByRole || tx.requestedByRole || '—';
-                  const roleMatches =
-                    (actionRole === 'admin' && resolvedRole === 'admin') ||
-                    (actionRole === 'client' && resolvedRole === 'client') ||
-                    (actionRole === 'professional' && resolvedRole === 'professional') ||
-                    (actionRole === 'platform' && resolvedRole === 'admin');
-                  const userMatches = tx.actionBy && user?.id === tx.actionBy;
-                  const highlightActor = !tx.actionComplete && (roleMatches || userMatches);
-                  const isInfo = statusKey === 'info';
-                  const slaItem = slaStatusByTxId[tx.id];
-                  const showSlaForRole = isSlaItemRelevantToRole(slaItem);
-
-                  const actionButton = () => {
-                    if (isInfo) {
-                      return <span className="text-slate-400 text-xs">—</span>;
-                    }
-                    if (canPayEscrow) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handlePayEscrow(tx.id)}
-                          disabled={processingId === tx.id}
-                          className="w-[120px] px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
-                        >
-                          {processingId === tx.id ? 'Processing...' : 'Fund Escrow'}
-                        </button>
-                      );
-                    }
-                    if (canConfirmDeposit) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handleConfirmDeposit(tx.id)}
-                          disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
-                        >
-                          {processingId === tx.id ? 'Confirming...' : 'Confirm'}
-                        </button>
-                      );
-                    }
-                    if (canRelease) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handleReleasePayment(tx.id)}
-                          disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:bg-slate-400 transition"
-                        >
-                          {processingId === tx.id ? 'Releasing...' : 'Release'}
-                        </button>
-                      );
-                    }
-                    if (canConfirmWalletTransfer) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handleConfirmWalletTransfer(tx.id)}
-                          disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-violet-600 text-white rounded text-xs font-medium hover:bg-violet-700 disabled:bg-slate-400 transition"
-                        >
-                          {processingId === tx.id ? 'Confirming...' : 'Mark Paid Out'}
-                        </button>
-                      );
-                    }
-                    if (canApprove) {
-                      return (
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleApprovePayment(tx.id)}
-                            disabled={processingId === tx.id}
-                            className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:bg-slate-400 transition"
-                          >
-                            {processingId === tx.id ? 'Approving...' : 'Approve'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleClarifyPayment(tx.id)}
-                            disabled={processingId === tx.id}
-                            className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
-                          >
-                            {processingId === tx.id ? 'Processing...' : 'Clarify'}
-                          </button>
-                        </div>
-                      );
-                    }
-                    if (canReject) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handleClarifyPayment(tx.id)}
-                          disabled={processingId === tx.id}
-                          className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 disabled:bg-slate-400 transition"
-                        >
-                          {processingId === tx.id ? 'Processing...' : 'Clarify'}
-                        </button>
-                      );
-                    }
-                    return <span className="text-slate-400 text-xs">—</span>;
-                  };
-
-                  return (
-                    <tr key={tx.id} className="border-b border-slate-700">
-                      <td className="py-2 pr-4 text-white">{createdDate}</td>
-                      <td className="py-2 pr-4 text-white">
-                        <div className="flex items-center gap-2">
-                          <span className="capitalize">{actionOn.replace('_', ' ')}</span>
-                          {highlightActor && (
-                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
-                              You
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2 pr-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">{getTypeLabel(tx.type)}</span>
-                            {showSlaForRole && (
-                              <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                slaItem!.slaStatus === 'breached'
-                                  ? 'bg-rose-500/20 text-rose-200'
-                                  : slaItem!.slaStatus === 'at_risk'
-                                    ? 'bg-amber-500/20 text-amber-200'
-                                    : 'bg-emerald-500/20 text-emerald-200'
-                              }`}>
-                                SLA: {slaItem!.slaStatus.replace('_', ' ')}
-                              </span>
-                            )}
-                          </div>
-                          {tx.auditSummary?.latestAction && (
-                            <span className="inline-flex w-fit items-center rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-200">
-                              Last audited: {formatAuditActionLabel(tx.auditSummary.latestAction)}
-                            </span>
-                          )}
-                          {showSlaForRole && (
-                            <span className="inline-flex w-fit items-center rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-medium text-indigo-100">
-                              Due: {new Date(slaItem!.slaDueAt).toLocaleString('en-HK')} ({formatSlaRule(slaItem!.slaRule)})
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2 pr-4 text-white font-semibold">{formatHKD(tx.amount)}</td>
-                      <td className="py-2 pr-4">
-                        <StatusPill status={tx.status} label={statusKey.replace('_', ' ')} tone={statusToneFromStatus(tx.status)} />
-                      </td>
-                      <td className="py-2 pr-4 text-right">
-                        <div className="flex items-center gap-2 justify-end">
-                          {actionButton()}
-                          {!isInfo && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedTx(tx)}
-                              className="text-xs text-blue-400 hover:underline"
-                            >
-                              Details
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-slate-800">{formatHKD(tx.amount)}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{dateLabel}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    {!isComplete && (
+                      <span className="text-xs font-medium text-[#FF7F50]">Pending</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTx(tx)}
+                      className="text-xs text-slate-600 hover:text-slate-900 hover:underline"
+                    >
+                      Details
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
