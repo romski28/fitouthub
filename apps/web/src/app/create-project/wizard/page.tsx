@@ -1075,11 +1075,9 @@ export default function CreateProjectWizardPage() {
             : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
-        } else if (!summaryConfirmationShown) {
-          setSummaryConfirmationShown(true);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.' }]);
         } else {
-          // Already shown summary, no more questions — just signal can-continue without another message
+          // No more questions — all done
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, you have answered all our questions. Click → to continue and upload images.' }]);
         }
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);

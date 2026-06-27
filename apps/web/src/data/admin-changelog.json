@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-85e6d2b1",
+    "date": "2026-06-27T15:05:58+08:00",
+    "title": "Simplify wizard suffix logic: always show a message — question with prefix, or all-done message",
+    "summary": "Simplify wizard suffix logic: always show a message — question with prefix, or all-done message",
+    "areas": [
+      "web"
+    ],
+    "commit": "85e6d2b1",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-9707d8ac",
     "date": "2026-06-27T14:53:33+08:00",
     "title": "Fix empty Another question prefix — only show prefix when a question follows, silent continue otherwise",
