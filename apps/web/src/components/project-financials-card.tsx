@@ -2070,94 +2070,10 @@ export default function ProjectFinancialsCard({
                 </div>
               )}
 
-              {resolvedRole === 'admin' && slaDraft && (
-                <div className="rounded-md border border-indigo-500/30 bg-indigo-500/10 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-white">SLA Policy</h4>
-                      <p className="text-xs text-indigo-100 mt-1">Configure response windows per payment category for this project.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleSaveSlaPolicy}
-                      disabled={slaSaving}
-                      className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                      {slaSaving ? 'Saving...' : 'Save SLA'}
-                    </button>
-                  </div>
-                  <div className="grid gap-2">
-                    {SLA_CATEGORIES.map((category) => {
-                      const rule = slaDraft[category] || { mode: 'hours' as SlaMode, value: 24 };
-                      const valueOptions = rule.mode === 'hours' ? HOURS_OPTIONS : WORKING_DAY_OPTIONS;
-                      return (
-                        <div key={category} className="grid gap-2 rounded-md border border-indigo-400/20 bg-slate-900/40 p-2 sm:grid-cols-[minmax(0,1fr),120px,120px] sm:items-center">
-                          <p className="text-xs text-white">{SLA_LABEL_BY_CATEGORY[category]}</p>
-                          <select
-                            value={rule.mode}
-                            onChange={(event) => {
-                              const mode = event.target.value as SlaMode;
-                              setSlaDraft((prev) => {
-                                const base = prev || {};
-                                const nextValue = mode === 'hours' ? 24 : 3;
-                                return {
-                                  ...base,
-                                  [category]: {
-                                    mode,
-                                    value: nextValue,
-                                  },
-                                };
-                              });
-                            }}
-                            className="rounded-md border border-indigo-300/40 bg-slate-900 px-2 py-1 text-xs text-white"
-                          >
-                            <option value="hours">Hours</option>
-                            <option value="working_days">Working days</option>
-                          </select>
-                          <select
-                            value={rule.value}
-                            onChange={(event) => {
-                              const value = Number(event.target.value);
-                              setSlaDraft((prev) => ({
-                                ...(prev || {}),
-                                [category]: {
-                                  mode: rule.mode,
-                                  value,
-                                },
-                              }));
-                            }}
-                            className="rounded-md border border-indigo-300/40 bg-slate-900 px-2 py-1 text-xs text-white"
-                          >
-                            {valueOptions.map((value) => (
-                              <option key={`${category}-${rule.mode}-${value}`} value={value}>
-                                {rule.mode === 'hours' ? `${value}h` : `${value}d`}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {resolvedRole !== 'admin' && slaPolicy?.effectivePolicy && (
-                <div className="rounded-md border border-indigo-500/20 bg-indigo-500/10 p-4 space-y-3">
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">SLA Policy</h4>
-                    <p className="text-xs text-indigo-100 mt-1">Read-only SLA response windows for this project.</p>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {SLA_CATEGORIES.map((category) => {
-                      const rule = slaPolicy.effectivePolicy[category];
-                      return (
-                        <div key={`sla-readonly-${category}`} className="rounded-md border border-indigo-400/20 bg-slate-900/40 p-2">
-                          <p className="text-[11px] font-medium text-slate-200">{SLA_LABEL_BY_CATEGORY[category]}</p>
-                          <p className="mt-1 text-xs text-indigo-100">{formatSlaRule(rule)}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+              {(slaPolicy || slaDraft) && (
+                <div className="rounded-md border border-indigo-500/20 bg-indigo-500/10 p-4">
+                  <h4 className="text-sm font-semibold text-white">Payment Policy</h4>
+                  <p className="text-xs text-indigo-100 mt-1">All payments must be queried or approved within 24 hours of request.</p>
                 </div>
               )}
 

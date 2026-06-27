@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-c9646e9f",
+    "date": "2026-06-27T22:25:04+08:00",
+    "title": "Replace SLA grid with simple Payment Policy statement — all payments must be queried or approved within 24hrs",
+    "summary": "Replace SLA grid with simple Payment Policy statement — all payments must be queried or approved within 24hrs",
+    "areas": [
+      "web"
+    ],
+    "commit": "c9646e9f",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-028d8e22",
     "date": "2026-06-27T22:19:19+08:00",
     "title": "Gate materials wallet transfer UI in financials card for single-milestone projects",
