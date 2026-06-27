@@ -633,12 +633,9 @@ export default function CreateProjectPage() {
               }}
               onAssistRequest={handleAssist}
               onSubmit={handleSubmit}
-              onCancel={() => router.push('/')}
               isSubmitting={isSubmitting}
               error={error}
               showAiOverview={true}
-              submitLabel={invitedCount > 0 ? 'START LIMITED TENDER' : 'Invite selected (0) professionals'}
-              submitVariant="green"
               hideSubmit={true}
               showBudget={false}
               showService={true}
@@ -684,32 +681,29 @@ export default function CreateProjectPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     {/* Open tender card */}
                     <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-3">
-                      <p className="mimo-panel-eyebrow">Open Tender</p>
-                      <div>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setOpenTenderLoading(true);
-                            try {
-                              await handleOpenTender();
-                            } finally {
-                              setOpenTenderLoading(false);
-                            }
-                          }}
-                          disabled={openTenderLoading || isSubmitting}
-                          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
-                        >
-                          {countLoading
-                            ? 'Finding professionals...'
-                            : openTenderLoading
-                            ? openTenderProgress || 'Starting...'
-                            : openTenderCount !== null && openTenderCount > 0
-                            ? 'Get prices from everyone'
-                            : openTenderCount === 0
-                            ? 'No professionals found'
-                            : 'Get prices from everyone'}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setOpenTenderLoading(true);
+                          try {
+                            await handleOpenTender();
+                          } finally {
+                            setOpenTenderLoading(false);
+                          }
+                        }}
+                        disabled={openTenderLoading || isSubmitting}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+                      >
+                        {countLoading
+                          ? 'Finding professionals...'
+                          : openTenderLoading
+                          ? openTenderProgress || 'Starting...'
+                          : openTenderCount !== null && openTenderCount > 0
+                          ? 'Get prices from everyone'
+                          : openTenderCount === 0
+                          ? 'No professionals found'
+                          : 'Get prices from everyone'}
+                      </button>
                       <p className="text-sm text-slate-600">
                         We will ask all local matching trades to send in pricing for your project.
                         {openTenderCount !== null && openTenderCount > 0 && (
@@ -720,32 +714,29 @@ export default function CreateProjectPage() {
 
                     {/* Limited tender card */}
                     <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-3">
-                      <p className="mimo-panel-eyebrow">Limited Tender</p>
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            writeCreateProjectDraftSafely({
-                              initialData: initialFormData,
-                              selectedProfessionals: [],
-                              ...(aiIntakeId ? { aiIntakeId } : {}),
-                            });
-                            const params = new URLSearchParams();
-                            const trades = initialFormData.tradesRequired?.length
-                              ? initialFormData.tradesRequired
-                              : descriptionData?.tradesRequired;
-                            if (trades?.length) params.set('trades', trades.join(','));
-                            const loc = initialFormData.location || descriptionData?.location || userLocation;
-                            const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                            if (locStr) params.set('location', locStr);
-                            params.set('source', 'create-project');
-                            router.push(`/professionals?${params.toString()}`);
-                          }}
-                          className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
-                        >
-                          I&apos;ll choose who sends prices
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          writeCreateProjectDraftSafely({
+                            initialData: initialFormData,
+                            selectedProfessionals: [],
+                            ...(aiIntakeId ? { aiIntakeId } : {}),
+                          });
+                          const params = new URLSearchParams();
+                          const trades = initialFormData.tradesRequired?.length
+                            ? initialFormData.tradesRequired
+                            : descriptionData?.tradesRequired;
+                          if (trades?.length) params.set('trades', trades.join(','));
+                          const loc = initialFormData.location || descriptionData?.location || userLocation;
+                          const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                          if (locStr) params.set('location', locStr);
+                          params.set('source', 'create-project');
+                          router.push(`/professionals?${params.toString()}`);
+                        }}
+                        className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                      >
+                        I&apos;ll choose who sends prices
+                      </button>
                       <p className="text-sm text-slate-600">
                         Select from qualified local professionals who you want to price your project.
                       </p>

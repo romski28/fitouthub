@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-748a484e",
+    "date": "2026-06-27T15:44:27+08:00",
+    "title": "Remove Open/Limited Tender eyebrow labels, remove stray Cancel button from ProjectForm",
+    "summary": "Remove Open/Limited Tender eyebrow labels, remove stray Cancel button from ProjectForm",
+    "areas": [
+      "web"
+    ],
+    "commit": "748a484e",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-8aca2026",
     "date": "2026-06-27T15:38:59+08:00",
     "title": "Redesign create-project bidding panel: two clear cards replacing tender info + select + actions",
