@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-8ec400ef",
+    "date": "2026-06-27T10:57:06+08:00",
+    "title": "Render professional details drawer via Portal to body — fixes clipping and visibility when closed",
+    "summary": "Render professional details drawer via Portal to body — fixes clipping and visibility when closed",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ec400ef",
+    "files": [
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-c2bc6050",
     "date": "2026-06-27T10:41:04+08:00",
     "title": "Use brief prefix for successive optional questions after first sufficient-info confirmation in AI wizard",

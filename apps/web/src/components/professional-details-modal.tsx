@@ -1,6 +1,6 @@
 "use client";
 
-import { ModalOverlay } from '@/components/modal-overlay';
+import { createPortal } from 'react-dom';
 import { Professional } from '@/lib/types';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { useState, useEffect, useMemo } from 'react';
@@ -77,7 +77,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
     return Array.from(codes);
   }, [professional.regionCoverage]);
 
-  return (
+  const drawerContent = (
     <>
       {/* Backdrop */}
       <div
@@ -94,6 +94,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
         className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ visibility: isOpen ? 'visible' : 'hidden', transition: 'transform 300ms ease-in-out, visibility 0ms 300ms' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky header */}
@@ -290,6 +291,8 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
       </div>
     </>
   );
+
+  return createPortal(drawerContent, document.body);
 }
 
 function Detail({ label, value }: { label: string; value?: string | number | null }) {
