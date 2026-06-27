@@ -795,6 +795,11 @@ export default function ProjectFinancialsCard({
     [paymentPlan, firstMilestone],
   );
 
+  const isSingleMilestoneProject = useMemo(
+    () => (paymentPlan?.milestones?.length ?? 0) <= 1,
+    [paymentPlan],
+  );
+
   const pendingProcurementEvidence = useMemo(
     () => procurementEvidence.filter((evidence) => String(evidence.status || '').toLowerCase() === 'pending'),
     [procurementEvidence],
@@ -1333,7 +1338,7 @@ export default function ProjectFinancialsCard({
     if (hasAutoOpenedMaterialsWalletRef.current) return;
     if (!openMaterialsWalletOnLoad) return;
     if (resolvedRole !== 'client') return;
-    if (!isProcurementWorkflowProject || !hasMilestoneEscrowFunded || firstMilestoneMeta.capTotal > 0) return;
+    if (!isProcurementWorkflowProject || isSingleMilestoneProject || !hasMilestoneEscrowFunded || firstMilestoneMeta.capTotal > 0) return;
 
     hasAutoOpenedMaterialsWalletRef.current = true;
     setShowMaterialsWalletInfo(false);
@@ -1345,6 +1350,7 @@ export default function ProjectFinancialsCard({
     openMaterialsWalletOnLoad,
     resolvedRole,
     isProcurementWorkflowProject,
+    isSingleMilestoneProject,
     hasMilestoneEscrowFunded,
     firstMilestoneMeta.capTotal,
     onMaterialsWalletAutoOpenHandled,
@@ -1742,6 +1748,7 @@ export default function ProjectFinancialsCard({
                       const canAuthorizeMaterialsWallet =
                         resolvedRole === 'client' &&
                         isProcurementWorkflowProject &&
+                        !isSingleMilestoneProject &&
                         Number(milestone.sequence) === 1 &&
                         firstMilestoneMeta.capTotal === 0 &&
                         (Number(walletMilestone?.fundedAmount || 0) > 0 ||
@@ -2176,8 +2183,8 @@ export default function ProjectFinancialsCard({
                     <td colSpan={6} className="py-4 text-center text-slate-300">No financial transactions yet</td>
                   </tr>
                 )}
-                {/* Pending materials wallet transfer — shown before cap is authorized for SCALE_1/2 projects */}
-                {isProcurementWorkflowProject && hasMilestoneEscrowFunded && firstMilestoneMeta.capTotal === 0 && (resolvedRole === 'client' || resolvedRole === 'admin') && (
+                {/* Pending materials wallet transfer — shown before cap is authorized for SCALE_1/2 projects with 2+ milestones */}
+                {isProcurementWorkflowProject && !isSingleMilestoneProject && hasMilestoneEscrowFunded && firstMilestoneMeta.capTotal === 0 && (resolvedRole === 'client' || resolvedRole === 'admin') && (
                   <tr className="border-b border-slate-700 bg-indigo-900/10">
                     <td className="py-2 pr-4 text-slate-400 text-sm">—</td>
                     <td className="py-2 pr-4 text-white">

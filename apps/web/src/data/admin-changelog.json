@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-028d8e22",
+    "date": "2026-06-27T22:19:19+08:00",
+    "title": "Gate materials wallet transfer UI in financials card for single-milestone projects",
+    "summary": "Gate materials wallet transfer UI in financials card for single-milestone projects",
+    "areas": [
+      "web"
+    ],
+    "commit": "028d8e22",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-4a8d4283",
     "date": "2026-06-27T22:01:46+08:00",
     "title": "Move UX survey trigger from after professionals invited to after first milestone payment released",
