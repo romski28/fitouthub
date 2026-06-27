@@ -317,8 +317,13 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
     }
 
     lastSectionCompleteRef.current = true;
+
+    // Only show a celebratory break at the halfway mark (after 3rd section)
+    if (sectionIndex === 2) {
+      setCompletedMessage('Halfway there! You\'re making great progress — just a few more to go.');
+    }
+
     setSectionIndex((prev) => prev + 1);
-    setCompletedMessage(pickCompletionMessage());
   };
 
   const dismissNudge = () => {

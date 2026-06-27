@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-560cbebb",
+    "date": "2026-06-27T21:47:25+08:00",
+    "title": "Only show survey encouragement break at halfway mark (after 3rd section)",
+    "summary": "Only show survey encouragement break at halfway mark (after 3rd section)",
+    "areas": [
+      "web"
+    ],
+    "commit": "560cbebb",
+    "files": [
+      "apps/web/src/components/post-project-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-90c94d83",
     "date": "2026-06-27T17:12:43+08:00",
     "title": "Add Now, get your prices H1 title above pricing buttons on create-project page",
