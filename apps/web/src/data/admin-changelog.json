@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-c9b7ce98",
+    "date": "2026-06-27T11:00:59+08:00",
+    "title": "Fix missing ModalOverlay import in professional-details-modal",
+    "summary": "Fix missing ModalOverlay import in professional-details-modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "c9b7ce98",
+    "files": [
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-8ec400ef",
     "date": "2026-06-27T10:57:06+08:00",
     "title": "Render professional details drawer via Portal to body — fixes clipping and visibility when closed",

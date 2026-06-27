@@ -1,6 +1,7 @@
 "use client";
 
 import { createPortal } from 'react-dom';
+import { ModalOverlay } from '@/components/modal-overlay';
 import { Professional } from '@/lib/types';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { useState, useEffect, useMemo } from 'react';
