@@ -1612,36 +1612,36 @@ export default function ProjectFinancialsCard({
   }, [cashflow]);
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/50 backdrop-blur-sm">
+    <div className="rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] backdrop-blur-sm">
       {/* Header */}
-      <div className="p-5 border-b border-slate-700 flex items-start justify-between">
+      <div className="p-5 border-b border-[rgba(120,53,15,0.12)] flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white">Project Financials</h2>
+          <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
           <button
             onClick={handleViewStatement}
-            className="mt-1 text-xs text-emerald-400 hover:text-emerald-300 transition"
+            className="mt-1 text-xs text-[#b94e2d] hover:text-[#8b3a1e] transition"
           >
             View Statement
           </button>
         </div>
         {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
           <div className="text-right">
-            <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Confirmed Quotation</p>
-            <p className="text-lg font-bold text-white">{formatHKD(originalBudget)}</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Confirmed Quotation</p>
+            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
           </div>
         )}
       </div>
 
       {loading ? (
-        <div className="p-5 text-sm text-slate-400">Loading financials...</div>
+        <div className="p-5 text-sm text-slate-600">Loading financials...</div>
       ) : error ? (
-        <div className="p-5 text-sm text-rose-400">{error}</div>
+        <div className="p-5 text-sm text-rose-600">{error}</div>
       ) : (
         <div className="p-5 flex flex-col gap-6">
           {/* Transactions — card layout */}
           <div className="space-y-3">
             {displayTransactions.length === 0 && (
-              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
+              <div className="rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] p-6 text-center text-sm text-slate-600">
                 No financial transactions yet
               </div>
             )}
@@ -1694,15 +1694,15 @@ export default function ProjectFinancialsCard({
             })}
           </div>
 
-          <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+          <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-white">Cashflow Overview</h3>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+              <h3 className="text-sm font-semibold text-slate-900">Cashflow Overview</h3>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Contract Value: {formatHKD(cashflow.contractValue)}
               </p>
             </div>
 
-            <div className="h-4 w-full overflow-hidden rounded-full bg-slate-700/80">
+            <div className="h-4 w-full overflow-hidden rounded-full bg-[rgba(120,53,15,0.1)]">
               <div className="flex h-full w-full">
                 {cashflowSegments.map((segment) => (
                   <div
@@ -1717,23 +1717,23 @@ export default function ProjectFinancialsCard({
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               {cashflowSegments.map((segment) => (
-                <div key={`legend-${segment.key}`} className="rounded-md border border-slate-700 bg-slate-900/60 p-2">
-                  <p className="text-sm font-semibold text-white">{formatHKD(segment.amount)}</p>
+                <div key={`legend-${segment.key}`} className="rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.75)] p-2">
+                  <p className="text-sm font-semibold text-slate-900">{formatHKD(segment.amount)}</p>
                   <div className="mt-1 flex items-center gap-2">
                     <span className={`inline-block h-2 w-2 rounded-full ${segment.className}`} />
-                    <p className="text-[10px] font-normal text-slate-300">{segment.label}</p>
+                    <p className="text-[10px] font-normal text-slate-600">{segment.label}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {resolvedRole === 'professional' && (
-              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3">
+              <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Professional Wallet</p>
-                    <p className="mt-1 text-sm text-emerald-100">
-                      Available to transfer: <span className="font-semibold">{formatHKD(cashflow.professionalAvailable)}</span>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Professional Wallet</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Available to transfer: <span className="font-semibold text-slate-900">{formatHKD(cashflow.professionalAvailable)}</span>
                     </p>
                   </div>
                   <div className="flex w-full gap-2 sm:w-auto">
@@ -1744,7 +1744,7 @@ export default function ProjectFinancialsCard({
                       value={transferAmount}
                       onChange={(event) => setTransferAmount(event.target.value)}
                       placeholder="Amount"
-                      className="w-full rounded-md border border-emerald-300/40 bg-slate-900 px-3 py-1.5 text-sm text-white sm:w-40"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-1.5 text-sm text-slate-900 sm:w-40"
                     />
                     <button
                       type="button"
@@ -1761,9 +1761,9 @@ export default function ProjectFinancialsCard({
           </div>
 
           {(slaPolicy || slaDraft) && (
-            <div className="rounded-md border border-indigo-500/20 bg-indigo-500/10 p-4">
-              <h4 className="text-sm font-semibold text-white">Payment Policy</h4>
-              <p className="text-xs text-indigo-100 mt-1">All payments must be queried or approved within 24 hours of request.</p>
+            <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
+              <h4 className="text-sm font-semibold text-slate-900">Payment Policy</h4>
+              <p className="text-xs text-slate-600 mt-1">All payments must be queried or approved within 24 hours of request.</p>
             </div>
           )}
         </div>

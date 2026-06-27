@@ -26,7 +26,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
 }) => {
   if (!accessToken) {
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-6 text-sm text-slate-300">
+      <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-6 text-sm text-slate-600">
         Please log in to view project financials.
       </div>
     );

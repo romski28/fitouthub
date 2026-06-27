@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-27-f73dcd92",
+    "date": "2026-06-27T23:24:47+08:00",
+    "title": "Recolor financials tab and card to Mimo beige scheme",
+    "summary": "Recolor financials tab and card to Mimo beige scheme",
+    "areas": [
+      "web"
+    ],
+    "commit": "f73dcd92",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-3ce37a53",
     "date": "2026-06-27T23:10:27+08:00",
     "title": "Move transactions cards to top of financials container",
