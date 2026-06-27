@@ -344,6 +344,7 @@ export default function CreateProjectWizardPage() {
   const [requiresDesignService, setRequiresDesignService] = useState<boolean | null>(null);
   const [surveyOfferPrompted, setSurveyOfferPrompted] = useState(false);
   const [designOfferPrompted, setDesignOfferPrompted] = useState(false);
+  const [summaryConfirmationShown, setSummaryConfirmationShown] = useState(false);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
   const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
@@ -398,6 +399,7 @@ export default function CreateProjectWizardPage() {
     setRequiresDesignService(null);
     setSurveyOfferPrompted(false);
     setDesignOfferPrompted(false);
+    setSummaryConfirmationShown(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
     setAiSafetyNotes([]);
@@ -1048,10 +1050,13 @@ export default function CreateProjectWizardPage() {
         const nextQuestion = nextUnaskedQuestion
           ? appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)
           : null;
-        const summaryForConfirmation = 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
+        const prefix = summaryConfirmationShown
+          ? 'Another question, if you have the time.'
+          : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
+        if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
 
         setAiChatCanContinue(true);
-        const msgParts = [summaryForConfirmation];
+        const msgParts = [prefix];
         if (nextQuestion) {
           msgParts.push(nextQuestion);
         }

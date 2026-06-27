@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-c2bc6050",
+    "date": "2026-06-27T10:41:04+08:00",
+    "title": "Use brief prefix for successive optional questions after first sufficient-info confirmation in AI wizard",
+    "summary": "Use brief prefix for successive optional questions after first sufficient-info confirmation in AI wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "c2bc6050",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-cd5284c0",
     "date": "2026-06-27T09:43:06+08:00",
     "title": "Move skip confirmation dialog inside main container div",
