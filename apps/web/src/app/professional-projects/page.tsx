@@ -633,6 +633,31 @@ export default function ProfessionalProjectsPage() {
                                       );
                                     })()
                                   ))}
+                                  {/* Skip site visit button — shown when REQUEST_SITE_ACCESS is primary */}
+                                  {primaryActions.some(a => a.actionKey === 'REQUEST_SITE_ACCESS') && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        if (!accessToken) return;
+                                        try {
+                                          const res = await fetch(`${API_BASE_URL}/projects/${projectProf.project.id}/site-access/skip`, {
+                                            method: 'POST',
+                                            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                                          });
+                                          if (!res.ok) throw new Error('Failed to skip site visit');
+                                          toast.success('Site visit skipped. You can now submit your quote.');
+                                          await completeNextStep(projectProf.project.id, 'REQUEST_SITE_ACCESS', accessToken, nextStepCacheScope);
+                                          const refreshed = await fetchPrimaryNextSteps(projectProf.project.id, accessToken, { cacheScope: nextStepCacheScope, forceRefresh: true });
+                                          setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: refreshed }));
+                                        } catch (err: any) {
+                                          toast.error(err.message || 'Failed to skip site visit');
+                                        }
+                                      }}
+                                      className="rounded-lg bg-[#FF7F50] hover:bg-[#E67245] text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                    >
+                                      No need for site visit
+                                    </button>
+                                  )}
                                   {electiveActions.map((action) => (
                                     <button
                                       key={`${projectProf.project.id}-${action.actionKey}-elective`}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-bfa34a70",
+    "date": "2026-06-27T09:16:59+08:00",
+    "title": "Add No need for site visit button between primary and elective actions on professional project cards",
+    "summary": "Add No need for site visit button between primary and elective actions on professional project cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "bfa34a70",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-3ef7d147",
     "date": "2026-06-27T08:55:25+08:00",
     "title": "Fix missing BadRequestException import in professionals controller",
