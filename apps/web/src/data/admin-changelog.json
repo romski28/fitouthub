@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-4a8d4283",
+    "date": "2026-06-27T22:01:46+08:00",
+    "title": "Move UX survey trigger from after professionals invited to after first milestone payment released",
+    "summary": "Move UX survey trigger from after professionals invited to after first milestone payment released",
+    "areas": [
+      "web"
+    ],
+    "commit": "4a8d4283",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-560cbebb",
     "date": "2026-06-27T21:47:25+08:00",
     "title": "Only show survey encouragement break at halfway mark (after 3rd section)",

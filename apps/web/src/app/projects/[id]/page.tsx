@@ -334,13 +334,14 @@ export default function ClientProjectDetailPage() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
-  // UX feedback survey — shown once per project after professionals are invited
+  // UX feedback survey — shown once per project after first milestone payment is released
   const [showUxFeedback, setShowUxFeedback] = useState(false);
 
   useEffect(() => {
     if (!project || loading) return;
-    const hasProfessionals = (project.professionals?.length ?? 0) > 0;
-    if (!hasProfessionals) return;
+    // Only trigger when a milestone payment has been released
+    const stage = String(project.currentStage || '').toUpperCase();
+    if (stage !== 'PAYMENT_RELEASED' && stage !== 'NEAR_COMPLETION' && stage !== 'COMPLETE') return;
     // Check probability
     const rate = parseFloat(process.env.NEXT_PUBLIC_UX_FEEDBACK_RATE || '1.0');
     if (Math.random() > rate) return;
