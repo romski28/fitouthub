@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-9707d8ac",
+    "date": "2026-06-27T14:53:33+08:00",
+    "title": "Fix empty Another question prefix — only show prefix when a question follows, silent continue otherwise",
+    "summary": "Fix empty Another question prefix — only show prefix when a question follows, silent continue otherwise",
+    "areas": [
+      "web"
+    ],
+    "commit": "9707d8ac",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-53c9fd4a",
     "date": "2026-06-27T14:42:41+08:00",
     "title": "Fix missing follow-up questions after sufficient-info prefix — fallback question when AI returns none",

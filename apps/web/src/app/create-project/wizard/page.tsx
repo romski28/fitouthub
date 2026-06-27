@@ -1067,17 +1067,20 @@ export default function CreateProjectWizardPage() {
           }
         }
 
-        const prefix = summaryConfirmationShown
-          ? 'Another question, if you have the time.'
-          : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
-        if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
-
         setAiChatCanContinue(true);
-        const msgParts = [prefix];
+
         if (nextQuestion) {
-          msgParts.push(nextQuestion);
+          const prefix = summaryConfirmationShown
+            ? 'Another question, if you have the time.'
+            : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
+          if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
+        } else if (!summaryConfirmationShown) {
+          setSummaryConfirmationShown(true);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.' }]);
+        } else {
+          // Already shown summary, no more questions — just signal can-continue without another message
         }
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: msgParts.join('\n\n') }]);
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
         setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer) }]);
