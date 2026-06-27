@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-27-3e13a322",
+    "date": "2026-06-27T16:41:31+08:00",
+    "title": "Simplify selected pros panel to single line, remove Ask for advice button from help panel",
+    "summary": "Simplify selected pros panel to single line, remove Ask for advice button from help panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e13a322",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-748a484e",
     "date": "2026-06-27T15:44:27+08:00",
     "title": "Remove Open/Limited Tender eyebrow labels, remove stray Cancel button from ProjectForm",

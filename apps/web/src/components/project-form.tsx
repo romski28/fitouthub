@@ -656,17 +656,7 @@ export function ProjectForm({
         {/* Assistance Explanation */}
         {onAssistRequest && !isReadOnly && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-blue-900">💡 Need help?</p>
-              <button
-                type="button"
-                onClick={handleAssistClick}
-                disabled={isSubmitting}
-                className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
-              >
-                Ask for advice
-              </button>
-            </div>
+            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Need help?</p>
             <p className="text-xs text-blue-800">
               Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
             </p>
@@ -1360,19 +1350,9 @@ export function ProjectForm({
             ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
             : 'mimo-panel'
         }`}>
-          <div className="mb-1 flex items-center justify-between gap-3">
-            <p className={`text-sm font-semibold ${usesDarkCreateSurface ? 'text-white' : 'text-blue-900'}`}>
-              💡 Need help?
-            </p>
-            <button
-              type="button"
-              onClick={handleAssistClick}
-              disabled={isSubmitting}
-              className={`shrink-0 ${solidBlueButtonClassName}`}
-            >
-              Ask for advice
-            </button>
-          </div>
+          <p className={`text-sm font-semibold mb-1 ${usesDarkCreateSurface ? 'text-white' : 'text-blue-900'}`}>
+            💡 Need help?
+          </p>
           <p className={`text-sm ${usesDarkCreateSurface ? 'text-blue-100' : 'text-blue-800'}`}>
             Get advice or let us manage the whole project — your choice. Open your project and click the chat bubble on the right to start a project-specific chat, WhatsApp, or book a call with us.
           </p>

@@ -644,26 +644,23 @@ export default function CreateProjectPage() {
               recipientsSlot={
                 invitedCount > 0 ? (
                   /* Selected professionals view */
-                  <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-4">
-                    <p className="mimo-panel-eyebrow">Selected professionals</p>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-slate-700">You have selected</span>
                       {selectedProfessionalNames.map((name, index) => (
                         <span
                           key={`${name}-${index}`}
-                          className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
+                          className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-2.5 py-1 text-sm font-medium text-[rgba(185,78,45,0.92)]"
                         >
                           {name}
                         </span>
                       ))}
                     </div>
-                    <p className="text-sm text-slate-600">
-                      You are inviting {invitedCount} professional{invitedCount === 1 ? '' : 's'} to price your project.
-                    </p>
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => setSelectedProfessionals([])}
-                        className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         Cancel
                       </button>
