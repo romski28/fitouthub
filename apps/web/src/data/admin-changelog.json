@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-e8e64956",
+    "date": "2026-06-27T23:44:42+08:00",
+    "title": "Fix TS errors: remove overly narrow milestone type cast",
+    "summary": "Fix TS errors: remove overly narrow milestone type cast",
+    "areas": [
+      "api"
+    ],
+    "commit": "e8e64956",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-27-c2b9bdd6",
     "date": "2026-06-27T23:40:51+08:00",
     "title": "Gate materials claim cap for single-milestone projects (30% of total contract)",

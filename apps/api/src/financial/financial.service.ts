@@ -451,8 +451,8 @@ export class FinancialService {
       throw new NotFoundException('Payment plan not found for this project');
     }
 
-    const allMilestones = (paymentPlan.milestones || []) as Array<{ id: string; sequence: number }>;
-    const milestone = allMilestones.find((m) => m.id === milestoneId);
+    const allMilestones = paymentPlan.milestones || [];
+    const milestone = allMilestones.find((m: any) => m.id === milestoneId);
     if (!milestone) {
       throw new NotFoundException('Milestone not found for this project');
     }
