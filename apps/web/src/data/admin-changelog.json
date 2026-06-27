@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-27-66554b2c",
+    "date": "2026-06-27T11:41:02+08:00",
+    "title": "Redirect clients to /projects after login — consistent with professional flow",
+    "summary": "Redirect clients to /projects after login — consistent with professional flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "66554b2c",
+    "files": [
+      "apps/web/src/app/login/page.tsx",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-55c5604b",
     "date": "2026-06-27T11:26:17+08:00",
     "title": "Make professional names clickable in overview tab and review quotes modal — opens details drawer",

@@ -94,7 +94,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (normalizedRole === 'surveyor' || normalizedRole === 'mimo_boh') {
       return '/survey-ops';
     }
-    return null;
+    // Clients land on their projects page
+    return '/projects';
   };
 
   React.useEffect(() => {
