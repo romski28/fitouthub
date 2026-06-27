@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-8aca2026",
+    "date": "2026-06-27T15:38:59+08:00",
+    "title": "Redesign create-project bidding panel: two clear cards replacing tender info + select + actions",
+    "summary": "Redesign create-project bidding panel: two clear cards replacing tender info + select + actions",
+    "areas": [
+      "web"
+    ],
+    "commit": "8aca2026",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-85e6d2b1",
     "date": "2026-06-27T15:05:58+08:00",
     "title": "Simplify wizard suffix logic: always show a message — question with prefix, or all-done message",

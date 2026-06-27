@@ -97,7 +97,6 @@ export default function CreateProjectPage() {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionData, setDescriptionData] = useState<ProjectDescriptionData | null>(null);
   const [showAssistModal, setShowAssistModal] = useState(false);
-  const [showTenderInfoModal, setShowTenderInfoModal] = useState(false);
   const [assistDraft, setAssistDraft] = useState<AssistDraft | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<ProjectFormData>>({});
   const [selectedProfessionals, setSelectedProfessionals] = useState<SelectedProfessionalWithScope[]>([]);
@@ -587,50 +586,6 @@ export default function CreateProjectPage() {
         projectName={assistDraft?.formData.projectName || descriptionData?.profession}
       />
 
-      {/* Tender Info Modal */}
-      {showTenderInfoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-[1px]">
-          <div className="mx-4 w-full max-w-lg rounded-2xl border border-white/20 bg-white px-6 py-6 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-900">How tendering works</h2>
-              <button
-                type="button"
-                onClick={() => setShowTenderInfoModal(false)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="space-y-4 text-sm text-slate-700">
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="font-semibold text-emerald-900">🔓 Open tender</p>
-                <p className="mt-1 text-emerald-800">
-                  Your project is shared with <strong>all matched professionals</strong> in your area. They can review your brief and submit quotations through the platform. No private contact information is shared until you choose to engage.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                <p className="font-semibold text-amber-900">🔒 Closed tender</p>
-                <p className="mt-1 text-amber-800">
-                  You <strong>hand-pick which professionals</strong> can view and tender for your project. Use &ldquo;Select my own professionals&rdquo; to choose who you&rsquo;d like to invite. Your privacy is paramount &mdash; no information is shared until absolutely necessary.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowTenderInfoModal(false)}
-              className="mt-5 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-6 lg:px-8">
         <section className="mimo-panel overflow-hidden text-slate-900">
           <div className="space-y-6 px-6 py-6">
@@ -684,103 +639,119 @@ export default function CreateProjectPage() {
               showAiOverview={true}
               submitLabel={invitedCount > 0 ? 'START LIMITED TENDER' : 'Invite selected (0) professionals'}
               submitVariant="green"
-              hideSubmit={invitedCount === 0}
+              hideSubmit={true}
               showBudget={false}
               showService={true}
               showClientName={false}
               confirmationMode={true}
               recipientsSlot={
-                <div className="rounded-xl border border-slate-200 bg-white px-5 py-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                      <p className="mimo-panel-eyebrow">BIDDING TYPES</p>
-                      <div className="space-y-1.5 text-sm text-slate-600">
-                        <p>
-                          <span className="font-semibold text-slate-800">OPEN TENDER:</span> You will invite all {openTenderCount ?? '...'} matched professionals to submit pricing for your project.
-                        </p>
-                        <p>
-                          <span className="font-semibold text-slate-800">LIMITED TENDER:</span>{' '}
-                          {invitedCount > 0
-                            ? `You will invite only the ${invitedCount} professional${invitedCount === 1 ? '' : 's'} you have selected to price your project.`
-                            : 'You can select from the matched professionals who you want to price for your project.'}
-                        </p>
+                invitedCount > 0 ? (
+                  /* Selected professionals view */
+                  <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-4">
+                    <p className="mimo-panel-eyebrow">Selected professionals</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProfessionalNames.map((name, index) => (
+                        <span
+                          key={`${name}-${index}`}
+                          className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      You are inviting {invitedCount} professional{invitedCount === 1 ? '' : 's'} to price your project.
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProfessionals([])}
+                        className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+                      >
+                        {isSubmitting ? 'Sending...' : 'Get prices from selected'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Default two-button panel */
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Open tender card */}
+                    <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-3">
+                      <p className="mimo-panel-eyebrow">Open Tender</p>
+                      <div>
                         <button
                           type="button"
-                          onClick={() => setShowTenderInfoModal(true)}
-                          className="mt-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                          onClick={async () => {
+                            setOpenTenderLoading(true);
+                            try {
+                              await handleOpenTender();
+                            } finally {
+                              setOpenTenderLoading(false);
+                            }
+                          }}
+                          disabled={openTenderLoading || isSubmitting}
+                          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
                         >
-                          Learn more
+                          {countLoading
+                            ? 'Finding professionals...'
+                            : openTenderLoading
+                            ? openTenderProgress || 'Starting...'
+                            : openTenderCount !== null && openTenderCount > 0
+                            ? 'Get prices from everyone'
+                            : openTenderCount === 0
+                            ? 'No professionals found'
+                            : 'Get prices from everyone'}
                         </button>
                       </div>
+                      <p className="text-sm text-slate-600">
+                        We will ask all local matching trades to send in pricing for your project.
+                        {openTenderCount !== null && openTenderCount > 0 && (
+                          <> Up to {openTenderCount} professional{openTenderCount === 1 ? '' : 's'} match your project.</>
+                        )}
+                      </p>
                     </div>
 
-                    {invitedCount > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex max-w-2xl flex-wrap gap-2">
-                          {selectedProfessionalNames.map((name, index) => (
-                            <span
-                              key={`${name}-${index}`}
-                              className="rounded-full border border-[rgba(185,78,45,0.16)] bg-[rgba(255,250,240,0.92)] px-3 py-1.5 text-sm font-medium text-[rgba(185,78,45,0.92)]"
-                            >
-                              {name}
-                            </span>
-                          ))}
-                        </div>
+                    {/* Limited tender card */}
+                    <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-3">
+                      <p className="mimo-panel-eyebrow">Limited Tender</p>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            writeCreateProjectDraftSafely({
+                              initialData: initialFormData,
+                              selectedProfessionals: [],
+                              ...(aiIntakeId ? { aiIntakeId } : {}),
+                            });
+                            const params = new URLSearchParams();
+                            const trades = initialFormData.tradesRequired?.length
+                              ? initialFormData.tradesRequired
+                              : descriptionData?.tradesRequired;
+                            if (trades?.length) params.set('trades', trades.join(','));
+                            const loc = initialFormData.location || descriptionData?.location || userLocation;
+                            const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
+                            if (locStr) params.set('location', locStr);
+                            params.set('source', 'create-project');
+                            router.push(`/professionals?${params.toString()}`);
+                          }}
+                          className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                        >
+                          I&apos;ll choose who sends prices
+                        </button>
                       </div>
-                    )}
+                      <p className="text-sm text-slate-600">
+                        Select from qualified local professionals who you want to price your project.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              }
-              selectSlot={
-                <button
-                  type="button"
-                  onClick={() => {
-                    writeCreateProjectDraftSafely({
-                      initialData: initialFormData,
-                      selectedProfessionals: invitedCount > 0 ? selectedProfessionals.map(p => ({ id: p.id, professionType: p.professionType, email: p.email || '', phone: p.phone || '', status: p.status || 'approved', rating: Number.isFinite(p.rating) ? p.rating : 0, fullName: p.fullName ?? null, businessName: p.businessName ?? null })) : [],
-                      ...(aiIntakeId ? { aiIntakeId } : {}),
-                    });
-                    const params = new URLSearchParams();
-                    if (invitedCount > 0) params.set('selectedIds', selectedProfessionals.map(p => p.id).join(','));
-                    const trades = initialFormData.tradesRequired?.length
-                      ? initialFormData.tradesRequired
-                      : descriptionData?.tradesRequired;
-                    if (trades?.length) params.set('trades', trades.join(','));
-                    const loc = initialFormData.location || descriptionData?.location || userLocation;
-                    const locStr = [loc?.secondary, loc?.primary].filter(Boolean).join(', ');
-                    if (locStr) params.set('location', locStr);
-                    params.set('source', 'create-project');
-                    router.push(`/professionals?${params.toString()}`);
-                  }}
-                  className="rounded-lg border border-[#b94e2d] bg-white px-3 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
-                >
-                  {invitedCount > 0 ? 'Reselect my professionals' : 'Select my own professionals'}
-                </button>
-              }
-              actionsSlot={
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setOpenTenderLoading(true);
-                    try {
-                      await handleOpenTender();
-                    } finally {
-                      setOpenTenderLoading(false);
-                    }
-                  }}
-                  disabled={openTenderLoading || isSubmitting}
-                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40 min-w-[140px]"
-                >
-                  {countLoading
-                    ? <span className="inline-flex items-center gap-1">Finding<span className="inline-flex gap-0.5"><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:0ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:150ms]"></span><span className="inline-block h-1 w-1 rounded-full bg-white animate-bounce [animation-delay:300ms]"></span></span></span>
-                    : openTenderLoading
-                    ? openTenderProgress || 'Starting...'
-                    : openTenderCount !== null && openTenderCount > 0
-                      ? 'START OPEN TENDER'
-                      : openTenderCount === 0
-                        ? 'No professionals found'
-                        : 'START OPEN TENDER'}
-                </button>
+                )
               }
             />
           </div>
