@@ -849,6 +849,15 @@ export class ProfessionalsService {
     });
   }
 
+  async updatePassword(id: string, password: string) {
+    const bcrypt = require('bcrypt');
+    const hash = await bcrypt.hash(password, 10);
+    return (this.prisma as any).professional.update({
+      where: { id },
+      data: { passwordHash: hash },
+    });
+  }
+
   getLocations() {
     // Return HK locations dataset for client consumption
     // In production, this would be synced from a shared schema

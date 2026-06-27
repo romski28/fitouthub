@@ -105,6 +105,9 @@ export default function AdminProfessionalsPage() {
   const [brcCheckResultByKey, setBrcCheckResultByKey] = useState<Record<string, BrcCheckResponse>>({});
   const [brcCheckVerdictByKey, setBrcCheckVerdictByKey] = useState<Record<string, 'up' | 'down'>>({});
   const [brcManualInputById, setBrcManualInputById] = useState<Record<string, { companyName: string; brn: string }>>({});
+  const [passwordValue, setPasswordValue] = useState('');
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
   const [formData, setFormData] = useState<Record<string, string | number | string[]>>({
     professionType: "",
     email: "",
@@ -455,6 +458,36 @@ export default function AdminProfessionalsPage() {
     } catch (error) {
       console.error("Delete error:", error);
       alert(`Error deleting professional: ${error}`);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!editingPro || !accessToken || passwordValue.length < 6) return;
+
+    setPasswordUpdating(true);
+    setPasswordMessage('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/professionals/${editingPro.id}/password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ password: passwordValue }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { message?: string }).message || 'Failed to update password');
+      }
+
+      setPasswordValue('');
+      setPasswordMessage('✓ Password updated');
+      setTimeout(() => setPasswordMessage(''), 3000);
+    } catch (err) {
+      setPasswordMessage(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setPasswordUpdating(false);
     }
   };
 
@@ -1128,6 +1161,35 @@ export default function AdminProfessionalsPage() {
                     multiple={true}
                     allowCustom={false}
                   />
+                )}
+
+                {/* Password update (edit only) */}
+                {!isCreating && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-slate-900">Password</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={passwordValue}
+                        onChange={(e) => setPasswordValue(e.target.value)}
+                        placeholder="New password (min 6 chars)"
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleUpdatePassword}
+                        disabled={passwordUpdating || passwordValue.length < 6}
+                        className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                      >
+                        {passwordUpdating ? 'Updating…' : 'Update Password'}
+                      </button>
+                    </div>
+                    {passwordMessage && (
+                      <p className={`text-xs ${passwordMessage.startsWith('✓') ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {passwordMessage}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* Other location fields */}

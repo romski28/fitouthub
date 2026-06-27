@@ -261,6 +261,21 @@ export class ProfessionalsController {
 
   // ─── Professional Availability ──────────────────────────────────────────
 
+  @Patch(':id/password')
+  @UseGuards(CombinedAuthGuard)
+  async updatePassword(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { password: string },
+  ) {
+    this.requireAdmin(req);
+    const password = String(body?.password || '').trim();
+    if (!password || password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    return this.professionalsService.updatePassword(id, password);
+  }
+
   @Get(':id/availability')
   async getAvailability(@Param('id') id: string) {
     return this.professionalsService.getAvailability(id);

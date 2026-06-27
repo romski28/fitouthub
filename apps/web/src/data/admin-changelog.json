@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-27-30f9425f",
+    "date": "2026-06-27T08:52:29+08:00",
+    "title": "Add password update to admin professionals edit modal + PATCH :id/password API endpoint",
+    "summary": "Add password update to admin professionals edit modal + PATCH :id/password API endpoint",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "30f9425f",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts",
+      "apps/api/src/professionals/professionals.service.ts",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-6aa3d94d",
     "date": "2026-06-27T00:23:59+08:00",
     "title": "Remove Region Backfill Control section and all related state/functions from admin professionals page",
