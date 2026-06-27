@@ -358,6 +358,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         id: pp?.id || professionalName,
         professionalId: pp?.professional?.id || '',
         professionalName,
+        status,
+        isAwarded: status === 'awarded',
         bidDateLabel: bidAt ? formatDate(bidAt) : 'No bid',
         totalQuoteLabel: pp?.quoteAmount ? formatHKD(pp.quoteAmount) : 'HK$ —',
       };
@@ -651,10 +653,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <div key={row.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm text-slate-700">
                     <button
                       type="button"
-                      className="col-span-6 text-left font-medium text-slate-800 hover:text-[#b94e2d] hover:underline transition"
+                      className="col-span-6 text-left font-medium text-slate-800 hover:text-[#b94e2d] hover:underline transition flex items-center gap-1.5"
                       onClick={() => handleOpenProDetails(row.professionalId)}
                     >
-                      {row.professionalName}
+                      {row.isAwarded && (
+                        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 text-white shrink-0">
+                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </span>
+                      )}
+                      <span>{row.professionalName}</span>
                     </button>
                     <span className="col-span-3">{row.bidDateLabel}</span>
                     <span className="col-span-3 text-right font-semibold text-slate-900">{row.totalQuoteLabel}</span>

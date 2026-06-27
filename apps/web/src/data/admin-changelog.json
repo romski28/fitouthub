@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-e9931c5a",
+    "date": "2026-06-27T14:39:39+08:00",
+    "title": "Show green checkmark next to awarded professional names in bidding status overview",
+    "summary": "Show green checkmark next to awarded professional names in bidding status overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "e9931c5a",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-66554b2c",
     "date": "2026-06-27T11:41:02+08:00",
     "title": "Redirect clients to /projects after login — consistent with professional flow",
