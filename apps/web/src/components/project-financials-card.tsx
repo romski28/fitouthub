@@ -1638,7 +1638,63 @@ export default function ProjectFinancialsCard({
         <div className="p-5 text-sm text-rose-400">{error}</div>
       ) : (
         <div className="p-5 flex flex-col gap-6">
-          <div className="order-1 rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
+          {/* Transactions — card layout */}
+          <div className="space-y-3">
+            {displayTransactions.length === 0 && (
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
+                No financial transactions yet
+              </div>
+            )}
+            {displayTransactions.map((tx: any) => {
+              const status = (tx.status || '').toLowerCase();
+              const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
+              const dateObj = tx.createdAt ? new Date(tx.createdAt) : null;
+              const dateLabel = dateObj && !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+                : '';
+
+              return (
+                <div
+                  key={tx.id}
+                  className={`rounded-lg border-2 p-3 ${
+                    isComplete
+                      ? 'border-emerald-400 bg-[#F5F0E0]'
+                      : 'border-[#FF7F50] bg-[#F5F0E0]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                      isComplete ? 'bg-emerald-500 text-white' : 'border-2 border-[#FF7F50] bg-transparent'
+                    }`}>
+                      {isComplete ? (
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : null}
+                    </div>
+                    <p className="flex-1 text-sm font-semibold text-slate-800 min-w-0">
+                      {dateLabel && <span className="text-slate-500 font-normal">{dateLabel}{' — '}</span>}
+                      {tx._isUpcoming ? tx.description : (tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type))}
+                      {' · '}
+                      <span>{formatHKD(tx.amount)}</span>
+                      {tx._isUpcoming && <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Upcoming</span>}
+                    </p>
+                    {!tx._isUpcoming && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTx(tx)}
+                        className="shrink-0 text-xs text-slate-500 hover:text-slate-800 hover:underline"
+                      >
+                        Details
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-white">Cashflow Overview</h3>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
@@ -1710,62 +1766,6 @@ export default function ProjectFinancialsCard({
               <p className="text-xs text-indigo-100 mt-1">All payments must be queried or approved within 24 hours of request.</p>
             </div>
           )}
-
-          {/* Transactions — card layout */}
-          <div className="order-2 space-y-3">
-            {displayTransactions.length === 0 && (
-              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
-                No financial transactions yet
-              </div>
-            )}
-            {displayTransactions.map((tx: any) => {
-              const status = (tx.status || '').toLowerCase();
-              const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
-              const dateObj = tx.createdAt ? new Date(tx.createdAt) : null;
-              const dateLabel = dateObj && !isNaN(dateObj.getTime())
-                ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-                : '';
-
-              return (
-                <div
-                  key={tx.id}
-                  className={`rounded-lg border-2 p-3 ${
-                    isComplete
-                      ? 'border-emerald-400 bg-[#F5F0E0]'
-                      : 'border-[#FF7F50] bg-[#F5F0E0]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                      isComplete ? 'bg-emerald-500 text-white' : 'border-2 border-[#FF7F50] bg-transparent'
-                    }`}>
-                      {isComplete ? (
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : null}
-                    </div>
-                    <p className="flex-1 text-sm font-semibold text-slate-800 min-w-0">
-                      {dateLabel && <span className="text-slate-500 font-normal">{dateLabel}{' — '}</span>}
-                      {tx._isUpcoming ? tx.description : (tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type))}
-                      {' · '}
-                      <span>{formatHKD(tx.amount)}</span>
-                      {tx._isUpcoming && <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Upcoming</span>}
-                    </p>
-                    {!tx._isUpcoming && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTx(tx)}
-                        className="shrink-0 text-xs text-slate-500 hover:text-slate-800 hover:underline"
-                      >
-                        Details
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
 

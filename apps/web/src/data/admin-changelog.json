@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-3ce37a53",
+    "date": "2026-06-27T23:10:27+08:00",
+    "title": "Move transactions cards to top of financials container",
+    "summary": "Move transactions cards to top of financials container",
+    "areas": [
+      "web"
+    ],
+    "commit": "3ce37a53",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-2c2a93ec",
     "date": "2026-06-27T23:05:29+08:00",
     "title": "Remove Payment Plan scale/escrow/total grid, milestone schedule table, retention section — keep only Payment Policy",
