@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-27-55c5604b",
+    "date": "2026-06-27T11:26:17+08:00",
+    "title": "Make professional names clickable in overview tab and review quotes modal — opens details drawer",
+    "summary": "Make professional names clickable in overview tab and review quotes modal — opens details drawer",
+    "areas": [
+      "web"
+    ],
+    "commit": "55c5604b",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-b54b897d",
     "date": "2026-06-27T11:17:06+08:00",
     "title": "Soften professional drawer animation — longer duration + custom easing curve",

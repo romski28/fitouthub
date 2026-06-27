@@ -6,8 +6,10 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
+import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { fetchPrimaryNextStep, NextStepAction } from '@/lib/next-steps';
 import { getClientTabForAction } from '@/lib/client-workflow';
+import type { Professional } from '@/lib/types';
 import { getQuoteBreakdownClientItems, getQuoteBreakdownBaseTotal, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
 interface ReviewQuotesModalProps {
@@ -90,6 +92,8 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptError, setAcceptError] = useState<string | null>(null);
+  const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [termsExpanded, setTermsExpanded] = useState(true);
@@ -97,6 +101,19 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
   const [resolvedNextAction, setResolvedNextAction] = useState<NextStepAction | null>(null);
   const hasNotifiedCompletionRef = useRef(false);
+
+  const handleOpenProDetails = async (professionalId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/professionals/${professionalId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const pro = await res.json();
+        setDetailsPro(pro);
+        setDetailsOpen(true);
+      }
+    } catch { /* silently fail */ }
+  };
 
   const projectId = state.projectId;
 
@@ -268,6 +285,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const title = state.modalContent?.title || 'Review Quotes';
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg md:max-w-4xl [perspective:1600px]">
@@ -371,7 +389,13 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                     return (
                       <tr key={pp.id} className={`border-b border-[#D4C8A0]/50 ${isCheapest ? 'bg-emerald-50/70' : ''}`}>
                         <td className="py-2.5 pr-3">
-                          <span className="font-medium text-slate-800">{name}</span>
+                          <button
+                            type="button"
+                            className="font-medium text-[#b94e2d] hover:underline transition text-left"
+                            onClick={() => handleOpenProDetails(pp.professionalId)}
+                          >
+                            {name}
+                          </button>
                           {isCheapest && <span className="ml-1.5 rounded-full bg-emerald-600/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Best</span>}
                         </td>
                         <td className="py-2.5 px-2 text-slate-600 whitespace-nowrap">{sd || '—'}</td>
@@ -426,7 +450,13 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">{name}</p>
+                      <button
+                        type="button"
+                        className="font-semibold text-[#b94e2d] hover:underline transition text-left truncate"
+                        onClick={() => handleOpenProDetails(pp.professionalId)}
+                      >
+                        {name}
+                      </button>
                       {(pp.quoteRequestedTrades?.length || pp.projectTradesSnapshot?.length) && (
                         <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
                           {pp.quoteRequestedTrades?.length
@@ -588,5 +618,12 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         </div>
       </div>
     </div>
+
+    <ProfessionalDetailsModal
+      isOpen={detailsOpen}
+      onClose={() => setDetailsOpen(false)}
+      professional={detailsPro}
+    />
+    </>
   );
 }

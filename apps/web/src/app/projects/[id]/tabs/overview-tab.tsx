@@ -970,7 +970,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         {metrics.map((metric) => (
                           <div key={metric.label} className="flex items-start justify-between rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.68)] px-2 py-1.5">
                             <p className="text-[10px] uppercase tracking-wide text-slate-500">{metric.label}</p>
-                            <p className="whitespace-pre-line text-right text-xs font-semibold leading-tight text-slate-800">{metric.value}</p>
+                            {metric.label === 'Awarded Pro' && awardedProfessional?.professional?.id ? (
+                              <button
+                                type="button"
+                                className="whitespace-pre-line text-right text-xs font-semibold leading-tight text-[#b94e2d] hover:underline transition"
+                                onClick={() => handleOpenProDetails(awardedProfessional.professional.id)}
+                              >
+                                {metric.value}
+                              </button>
+                            ) : (
+                              <p className="whitespace-pre-line text-right text-xs font-semibold leading-tight text-slate-800">{metric.value}</p>
+                            )}
                           </div>
                         ))}
                       </div>
