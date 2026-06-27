@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-c0f676d8",
+    "date": "2026-06-27T22:58:37+08:00",
+    "title": "Show upcoming milestone payments at top of transactions list with coral borders",
+    "summary": "Show upcoming milestone payments at top of transactions list with coral borders",
+    "areas": [
+      "web"
+    ],
+    "commit": "c0f676d8",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-e1759778",
     "date": "2026-06-27T22:50:46+08:00",
     "title": "Tighten transaction cards: combined date + title + value on single line",

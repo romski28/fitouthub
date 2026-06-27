@@ -411,6 +411,39 @@ export default function ProjectFinancialsCard({
     return transactions;
   }, [transactions, resolvedRole, projectProfessionalId]);
 
+  // Merge payment plan milestones (future payments) on top of actual transactions
+  const displayTransactions = useMemo(() => {
+    const milestoneIdsWithTx = new Set(
+      filteredTransactions
+        .filter((tx) => tx.type === 'milestone_payment' || tx.type === 'release_payment')
+        .map((tx) => {
+          const meta = parseMilestoneMetadataFromNotes(tx.notes);
+          return meta?.paymentMilestoneId || '';
+        })
+        .filter(Boolean),
+    );
+
+    const upcomingMilestones = (paymentPlan?.milestones || [])
+      .filter((m) => !milestoneIdsWithTx.has(m.id) && m.status !== 'cancelled')
+      .map((m) => ({
+        id: `upcoming-${m.id}`,
+        type: 'milestone_payment' as const,
+        status: 'pending',
+        amount: typeof m.amount === 'string' ? parseFloat(m.amount) : m.amount,
+        createdAt: m.plannedDueAt || '',
+        description: `Milestone ${m.sequence}: ${m.title}`,
+        projectProfessionalId: null,
+        actionByRole: null,
+        actionBy: null,
+        actionComplete: false,
+        notes: null,
+        auditSummary: null,
+        _isUpcoming: true as const,
+      }));
+
+    return [...upcomingMilestones, ...filteredTransactions];
+  }, [filteredTransactions, paymentPlan]);
+
   const approvedBudget = useMemo(() => {
     const approvedTx = transactions.find((tx) => tx.type === 'approved_budget');
     if (approvedTx) return approvedTx.amount;
@@ -2082,16 +2115,18 @@ export default function ProjectFinancialsCard({
 
           {/* Transactions — card layout */}
           <div className="order-2 space-y-3">
-            {filteredTransactions.length === 0 && (
+            {displayTransactions.length === 0 && (
               <div className="rounded-md border border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
                 No financial transactions yet
               </div>
             )}
-            {filteredTransactions.map((tx) => {
+            {displayTransactions.map((tx: any) => {
               const status = (tx.status || '').toLowerCase();
               const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
-              const dateObj = new Date(tx.createdAt);
-              const dateLabel = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+              const dateObj = tx.createdAt ? new Date(tx.createdAt) : null;
+              const dateLabel = dateObj && !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+                : '';
 
               return (
                 <div
@@ -2113,19 +2148,21 @@ export default function ProjectFinancialsCard({
                       ) : null}
                     </div>
                     <p className="flex-1 text-sm font-semibold text-slate-800 min-w-0">
-                      <span className="text-slate-500 font-normal">{dateLabel}</span>
-                      {' — '}
-                      {tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type)}
+                      {dateLabel && <span className="text-slate-500 font-normal">{dateLabel}{' — '}</span>}
+                      {tx._isUpcoming ? tx.description : (tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type))}
                       {' · '}
                       <span>{formatHKD(tx.amount)}</span>
+                      {tx._isUpcoming && <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Upcoming</span>}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTx(tx)}
-                      className="shrink-0 text-xs text-slate-500 hover:text-slate-800 hover:underline"
-                    >
-                      Details
-                    </button>
+                    {!tx._isUpcoming && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTx(tx)}
+                        className="shrink-0 text-xs text-slate-500 hover:text-slate-800 hover:underline"
+                      >
+                        Details
+                      </button>
+                    )}
                   </div>
                 </div>
               );
