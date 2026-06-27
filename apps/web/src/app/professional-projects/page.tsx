@@ -637,54 +637,13 @@ export default function ProfessionalProjectsPage() {
                                   ))}
                                   {/* Skip site visit button — shown when REQUEST_SITE_ACCESS is primary */}
                                   {primaryActions.some(a => a.actionKey === 'REQUEST_SITE_ACCESS') && (
-                                    skipConfirmProjectId === projectProf.project.id ? (
-                                      <span className="inline-flex items-center gap-2 rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.94)] px-3 py-2 text-xs text-stone-700">
-                                        <span>Skip site visit?</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => setSkipConfirmProjectId(null)}
-                                          disabled={skipLoading}
-                                          className="rounded border border-[rgba(120,53,15,0.2)] px-2 py-0.5 text-xs font-medium text-stone-600 hover:bg-[rgba(245,238,219,0.9)] transition"
-                                        >
-                                          No
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={async () => {
-                                            if (!accessToken) return;
-                                            setSkipLoading(true);
-                                            try {
-                                              const res = await fetch(`${API_BASE_URL}/projects/${projectProf.project.id}/site-access/skip`, {
-                                                method: 'POST',
-                                                headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                                              });
-                                              if (!res.ok) throw new Error('Failed to skip site visit');
-                                              toast.success('Site visit skipped. You can now submit your quote.');
-                                              await completeNextStep(projectProf.project.id, 'REQUEST_SITE_ACCESS', accessToken, nextStepCacheScope);
-                                              const refreshed = await fetchPrimaryNextSteps(projectProf.project.id, accessToken, { cacheScope: nextStepCacheScope, forceRefresh: true });
-                                              setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: refreshed }));
-                                              setSkipConfirmProjectId(null);
-                                            } catch (err: any) {
-                                              toast.error(err.message || 'Failed to skip site visit');
-                                            } finally {
-                                              setSkipLoading(false);
-                                            }
-                                          }}
-                                          disabled={skipLoading}
-                                          className="rounded bg-[#FF7F50] px-2 py-0.5 text-xs font-semibold text-white hover:bg-[#E67245] transition disabled:opacity-50"
-                                        >
-                                          {skipLoading ? '…' : 'Yes'}
-                                        </button>
-                                      </span>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() => setSkipConfirmProjectId(projectProf.project.id)}
-                                        className="rounded-lg bg-[#FF7F50] hover:bg-[#E67245] text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                                      >
-                                        No need for site visit
-                                      </button>
-                                    )
+                                    <button
+                                      type="button"
+                                      onClick={() => setSkipConfirmProjectId(projectProf.project.id)}
+                                      className="rounded-lg bg-[#FF7F50] hover:bg-[#E67245] text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                    >
+                                      No need for site visit
+                                    </button>
                                   )}
                                   {electiveActions.map((action) => (
                                     <button
@@ -798,6 +757,55 @@ export default function ProfessionalProjectsPage() {
 
         </div>
       </div>
+
+      {/* Skip site visit confirmation dialog */}
+      {skipConfirmProjectId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setSkipConfirmProjectId(null); }}>
+          <div className="w-full max-w-sm rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] p-6 shadow-2xl backdrop-blur">
+            <p className="text-sm font-semibold text-stone-800 mb-2">Skip site visit?</p>
+            <p className="text-sm text-stone-600 mb-5">
+              Are you sure you do not need to visit the site? Your quote is final, regardless of your inspection or not.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setSkipConfirmProjectId(null)}
+                disabled={skipLoading}
+                className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-medium text-stone-600 hover:bg-[rgba(245,238,219,0.9)] transition"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!accessToken || !skipConfirmProjectId) return;
+                  setSkipLoading(true);
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/projects/${skipConfirmProjectId}/site-access/skip`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                    });
+                    if (!res.ok) throw new Error('Failed to skip site visit');
+                    toast.success('Site visit skipped. You can now submit your quote.');
+                    await completeNextStep(skipConfirmProjectId, 'REQUEST_SITE_ACCESS', accessToken, nextStepCacheScope);
+                    const refreshed = await fetchPrimaryNextSteps(skipConfirmProjectId, accessToken, { cacheScope: nextStepCacheScope, forceRefresh: true });
+                    setNextStepMap((prev) => ({ ...prev, [skipConfirmProjectId]: refreshed }));
+                    setSkipConfirmProjectId(null);
+                  } catch (err: any) {
+                    toast.error(err.message || 'Failed to skip site visit');
+                  } finally {
+                    setSkipLoading(false);
+                  }
+                }}
+                disabled={skipLoading}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition"
+              >
+                {skipLoading ? 'Skipping...' : 'Yes, skip visit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 

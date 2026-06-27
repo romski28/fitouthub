@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-d7812cc2",
+    "date": "2026-06-27T09:31:12+08:00",
+    "title": "Replace inline skip confirmation with proper Mimo-themed overlay dialog matching the modal pattern",
+    "summary": "Replace inline skip confirmation with proper Mimo-themed overlay dialog matching the modal pattern",
+    "areas": [
+      "web"
+    ],
+    "commit": "d7812cc2",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-95ca8673",
     "date": "2026-06-27T09:22:35+08:00",
     "title": "Add inline confirmation before skipping site visit on professional project cards",
