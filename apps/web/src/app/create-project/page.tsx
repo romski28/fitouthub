@@ -642,7 +642,9 @@ export default function CreateProjectPage() {
               showClientName={false}
               confirmationMode={true}
               recipientsSlot={
-                invitedCount > 0 ? (
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900 mb-4">Now, get your prices</h1>
+                  {invitedCount > 0 ? (
                   /* Selected professionals view */
                   <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -740,6 +742,8 @@ export default function CreateProjectPage() {
                     </div>
                   </div>
                 )
+              }
+                </div>
               }
             />
           </div>
