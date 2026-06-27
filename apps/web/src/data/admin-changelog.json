@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-3ef7d147",
+    "date": "2026-06-27T08:55:25+08:00",
+    "title": "Fix missing BadRequestException import in professionals controller",
+    "summary": "Fix missing BadRequestException import in professionals controller",
+    "areas": [
+      "api"
+    ],
+    "commit": "3ef7d147",
+    "files": [
+      "apps/api/src/professionals/professionals.controller.ts"
+    ]
+  },
+  {
     "id": "2026-06-27-30f9425f",
     "date": "2026-06-27T08:52:29+08:00",
     "title": "Add password update to admin professionals edit modal + PATCH :id/password API endpoint",

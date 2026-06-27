@@ -13,6 +13,7 @@ import {
   Query,
   Req,
   UnauthorizedException,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
