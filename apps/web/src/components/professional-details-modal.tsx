@@ -82,7 +82,7 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ease-out ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -92,10 +92,13 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ visibility: isOpen ? 'visible' : 'hidden', transition: 'transform 300ms ease-in-out, visibility 0ms 300ms' }}
+        style={{
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'transform 450ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0ms 450ms',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky header */}

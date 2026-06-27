@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-b54b897d",
+    "date": "2026-06-27T11:17:06+08:00",
+    "title": "Soften professional drawer animation — longer duration + custom easing curve",
+    "summary": "Soften professional drawer animation — longer duration + custom easing curve",
+    "areas": [
+      "web"
+    ],
+    "commit": "b54b897d",
+    "files": [
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-c9b7ce98",
     "date": "2026-06-27T11:00:59+08:00",
     "title": "Fix missing ModalOverlay import in professional-details-modal",
