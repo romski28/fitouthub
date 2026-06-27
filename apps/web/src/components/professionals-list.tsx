@@ -2462,7 +2462,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       />
 
       {/* Selection band — centered fixed footer to avoid viewport-edge jitter */}
-      <div className="fixed bottom-3 left-1/2 z-40 w-[min(1200px,calc(100%-1rem))] -translate-x-1/2 rounded-2xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-3 shadow-2xl backdrop-blur-sm">
+      <div className="fixed bottom-6 left-1/2 z-40 w-[min(1200px,calc(100%-1rem))] -translate-x-1/2 rounded-2xl border-[3px] border-[#FF7F50] bg-[#F5EEDE]/95 px-4 py-3 shadow-2xl backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <span className="text-sm font-semibold text-slate-800 shrink-0">
@@ -2506,7 +2506,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               type="button"
               onClick={handleInviteSelected}
               disabled={blockInviteForMissingLocation}
-              className="rounded-lg bg-[#DC143C] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#b01030] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={t('actions.shareProjectAria')}
             >
               {source === 'create-project' ? 'Back to project summary' : 'Finish creating your project →'}

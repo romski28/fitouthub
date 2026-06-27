@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-4d5c7bff",
+    "date": "2026-06-27T16:54:45+08:00",
+    "title": "Lift selection band, coral 3px border, emerald Back to project summary button",
+    "summary": "Lift selection band, coral 3px border, emerald Back to project summary button",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d5c7bff",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-3e13a322",
     "date": "2026-06-27T16:41:31+08:00",
     "title": "Simplify selected pros panel to single line, remove Ask for advice button from help panel",
