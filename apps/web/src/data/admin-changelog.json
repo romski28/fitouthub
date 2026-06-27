@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-95ca8673",
+    "date": "2026-06-27T09:22:35+08:00",
+    "title": "Add inline confirmation before skipping site visit on professional project cards",
+    "summary": "Add inline confirmation before skipping site visit on professional project cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "95ca8673",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-bfa34a70",
     "date": "2026-06-27T09:16:59+08:00",
     "title": "Add No need for site visit button between primary and elective actions on professional project cards",
