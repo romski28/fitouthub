@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-df61fd17",
+    "date": "2026-06-27T16:56:09+08:00",
+    "title": "Change Back to project summary button label to Confirm my selection",
+    "summary": "Change Back to project summary button label to Confirm my selection",
+    "areas": [
+      "web"
+    ],
+    "commit": "df61fd17",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-4d5c7bff",
     "date": "2026-06-27T16:54:45+08:00",
     "title": "Lift selection band, coral 3px border, emerald Back to project summary button",
