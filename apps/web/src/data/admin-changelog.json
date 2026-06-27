@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-2c2a93ec",
+    "date": "2026-06-27T23:05:29+08:00",
+    "title": "Remove Payment Plan scale/escrow/total grid, milestone schedule table, retention section — keep only Payment Policy",
+    "summary": "Remove Payment Plan scale/escrow/total grid, milestone schedule table, retention section — keep only Payment Policy",
+    "areas": [
+      "web"
+    ],
+    "commit": "2c2a93ec",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-c0f676d8",
     "date": "2026-06-27T22:58:37+08:00",
     "title": "Show upcoming milestone payments at top of transactions list with coral borders",
