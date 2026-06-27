@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-53c9fd4a",
+    "date": "2026-06-27T14:42:41+08:00",
+    "title": "Fix missing follow-up questions after sufficient-info prefix — fallback question when AI returns none",
+    "summary": "Fix missing follow-up questions after sufficient-info prefix — fallback question when AI returns none",
+    "areas": [
+      "web"
+    ],
+    "commit": "53c9fd4a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-e9931c5a",
     "date": "2026-06-27T14:39:39+08:00",
     "title": "Show green checkmark next to awarded professional names in bidding status overview",

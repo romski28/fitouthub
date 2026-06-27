@@ -1047,9 +1047,26 @@ export default function CreateProjectWizardPage() {
 
       // Inject the first next-question as the next chat prompt so it appears inside the conversation
       if (shouldOfferSummaryConfirmation) {
-        const nextQuestion = nextUnaskedQuestion
+        let nextQuestion = nextUnaskedQuestion
           ? appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)
           : null;
+
+        // If no unasked question from AI, try a fallback
+        if (!nextQuestion) {
+          const fallback = getNextBestMissingBriefQuestion({
+            title: nextTitle || title,
+            summary: nextSummary || summary,
+            trades: mergedTrades,
+            isEmergency,
+            allowSurveyPrompt: requiresSurveyService !== true,
+            hasAskedSizeOrCondition,
+            hasSurveyService: requiresSurveyService === true,
+          });
+          if (fallback) {
+            nextQuestion = appendServiceOfferHint(fallback, nextPendingOffer);
+          }
+        }
+
         const prefix = summaryConfirmationShown
           ? 'Another question, if you have the time.'
           : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
