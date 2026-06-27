@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-27-e1759778",
+    "date": "2026-06-27T22:50:46+08:00",
+    "title": "Tighten transaction cards: combined date + title + value on single line",
+    "summary": "Tighten transaction cards: combined date + title + value on single line",
+    "areas": [
+      "web"
+    ],
+    "commit": "e1759778",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-71e7abf4",
     "date": "2026-06-27T22:43:13+08:00",
     "title": "Replace complex transactions table with simple card layout — green check for complete, coral open for pending",

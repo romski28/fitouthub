@@ -2092,56 +2092,37 @@ export default function ProjectFinancialsCard({
               const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
               const dateObj = new Date(tx.createdAt);
               const dateLabel = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-              const isPendingWalletTransfer =
-                isProcurementWorkflowProject &&
-                !isSingleMilestoneProject &&
-                hasMilestoneEscrowFunded &&
-                firstMilestoneMeta.capTotal === 0 &&
-                tx.type === 'milestone_foh_allocation_cap' &&
-                !isComplete;
 
               return (
                 <div
                   key={tx.id}
-                  className={`rounded-lg border-2 p-4 ${
+                  className={`rounded-lg border-2 p-3 ${
                     isComplete
                       ? 'border-emerald-400 bg-[#F5F0E0]'
                       : 'border-[#FF7F50] bg-[#F5F0E0]'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                        isComplete ? 'bg-emerald-500 text-white' : 'border-2 border-[#FF7F50] bg-transparent'
-                      }`}>
-                        {isComplete ? (
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : null}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">
-                          {tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type)}
-                        </p>
-                        {tx.description && (
-                          <p className="mt-0.5 text-xs text-slate-500 truncate">{tx.description}</p>
-                        )}
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                      isComplete ? 'bg-emerald-500 text-white' : 'border-2 border-[#FF7F50] bg-transparent'
+                    }`}>
+                      {isComplete ? (
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : null}
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-sm font-bold text-slate-800">{formatHKD(tx.amount)}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{dateLabel}</p>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-end gap-2">
-                    {!isComplete && (
-                      <span className="text-xs font-medium text-[#FF7F50]">Pending</span>
-                    )}
+                    <p className="flex-1 text-sm font-semibold text-slate-800 min-w-0">
+                      <span className="text-slate-500 font-normal">{dateLabel}</span>
+                      {' — '}
+                      {tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type)}
+                      {' · '}
+                      <span>{formatHKD(tx.amount)}</span>
+                    </p>
                     <button
                       type="button"
                       onClick={() => setSelectedTx(tx)}
-                      className="text-xs text-slate-600 hover:text-slate-900 hover:underline"
+                      className="shrink-0 text-xs text-slate-500 hover:text-slate-800 hover:underline"
                     >
                       Details
                     </button>
