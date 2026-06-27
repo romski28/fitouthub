@@ -443,10 +443,7 @@ export class FinancialService {
             },
           },
         },
-        milestones: {
-          where: { id: milestoneId },
-          take: 1,
-        },
+        milestones: true,
       },
     });
 
@@ -454,7 +451,8 @@ export class FinancialService {
       throw new NotFoundException('Payment plan not found for this project');
     }
 
-    const milestone = paymentPlan.milestones?.[0];
+    const allMilestones = (paymentPlan.milestones || []) as Array<{ id: string; sequence: number }>;
+    const milestone = allMilestones.find((m) => m.id === milestoneId);
     if (!milestone) {
       throw new NotFoundException('Milestone not found for this project');
     }
@@ -462,6 +460,7 @@ export class FinancialService {
     return {
       paymentPlan,
       milestone,
+      allMilestones,
       project: paymentPlan.project,
       projectProfessional: paymentPlan.projectProfessional,
     };
@@ -2337,7 +2336,7 @@ export class FinancialService {
     amount?: number;
     notes?: string;
   }) {
-    const { paymentPlan, milestone, project, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -2346,6 +2345,11 @@ export class FinancialService {
 
     if (Number(milestone.sequence) !== 1) {
       throw new BadRequestException('Only milestone 1 supports procurement-gated cap authorization');
+    }
+
+    // Single-milestone projects don't have wallet transfers — no cap to authorize.
+    if (allMilestones.length <= 1) {
+      throw new BadRequestException('Single-milestone projects do not require cap authorization');
     }
 
     if (input.actorRole === 'client' && project?.userId !== input.actorId) {
@@ -2523,7 +2527,7 @@ export class FinancialService {
     notes?: string;
     titleTransferAcknowledged?: boolean;
   }) {
-    const { paymentPlan, milestone, project, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -2552,21 +2556,33 @@ export class FinancialService {
       throw new BadRequestException('At least one invoice or photo file is required');
     }
 
-    const capAgg = await this.prisma.financialTransaction.aggregate({
-      where: {
-        projectId: input.projectId,
-        type: 'milestone_foh_allocation_cap',
-        status: 'confirmed',
-        notes: { contains: milestone.id },
-      },
-      _sum: { amount: true },
-    });
-    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
-    if (capTotal <= 0) {
-      throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
-    }
-    if (claimedAmount > capTotal) {
-      throw new BadRequestException('Claimed amount cannot exceed the authorized milestone 1 cap');
+    const isSingleMilestoneProject = allMilestones.length <= 1;
+
+    // For single-milestone projects there's no wallet transfer, so no cap transaction exists.
+    // Instead, allow claims up to 30% of the total project contract value.
+    const maxClaimable = isSingleMilestoneProject
+      ? this.toAmount(paymentPlan.totalAmount || 0) * 0.3
+      : await (async () => {
+          const capAgg = await this.prisma.financialTransaction.aggregate({
+            where: {
+              projectId: input.projectId,
+              type: 'milestone_foh_allocation_cap',
+              status: 'confirmed',
+              notes: { contains: milestone.id },
+            },
+            _sum: { amount: true },
+          });
+          const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+          if (capTotal <= 0) {
+            throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
+          }
+          return capTotal;
+        })();
+
+    if (claimedAmount > maxClaimable) {
+      throw new BadRequestException(
+        `Claimed amount cannot exceed ${isSingleMilestoneProject ? '30% of the project total' : 'the authorized milestone 1 cap'}`
+      );
     }
 
     if (input.actorRole === 'professional') {
@@ -2681,7 +2697,7 @@ export class FinancialService {
     openingMessage?: string;
     notes?: string;
   }) {
-    const { paymentPlan, milestone, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -2710,21 +2726,31 @@ export class FinancialService {
       throw new BadRequestException('At least one invoice or photo file is required');
     }
 
-    const capAgg = await this.prisma.financialTransaction.aggregate({
-      where: {
-        projectId: input.projectId,
-        type: 'milestone_foh_allocation_cap',
-        status: 'confirmed',
-        notes: { contains: milestone.id },
-      },
-      _sum: { amount: true },
-    });
-    const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
-    if (capTotal <= 0) {
-      throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
-    }
-    if (claimedAmount > capTotal) {
-      throw new BadRequestException('Claimed amount cannot exceed the authorized milestone 1 cap');
+    const isSingleMilestoneProject = allMilestones.length <= 1;
+
+    const maxClaimable = isSingleMilestoneProject
+      ? this.toAmount(paymentPlan.totalAmount || 0) * 0.3
+      : await (async () => {
+          const capAgg = await this.prisma.financialTransaction.aggregate({
+            where: {
+              projectId: input.projectId,
+              type: 'milestone_foh_allocation_cap',
+              status: 'confirmed',
+              notes: { contains: milestone.id },
+            },
+            _sum: { amount: true },
+          });
+          const capTotal = this.toAmount(capAgg?._sum?.amount || 0);
+          if (capTotal <= 0) {
+            throw new BadRequestException('Materials wallet cap is not authorized yet for this milestone');
+          }
+          return capTotal;
+        })();
+
+    if (claimedAmount > maxClaimable) {
+      throw new BadRequestException(
+        `Claimed amount cannot exceed ${isSingleMilestoneProject ? '30% of the project total' : 'the authorized milestone 1 cap'}`
+      );
     }
 
     let existingEvidence: any;
@@ -2844,7 +2870,7 @@ export class FinancialService {
     reviewNotes?: string;
     titleTransferAcknowledged?: boolean;
   }) {
-    const { paymentPlan, milestone, project, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
     await this.expireOverdueMilestoneProcurementEvidence(input.projectId, milestone.id);
 
@@ -2932,7 +2958,8 @@ export class FinancialService {
     const returnedTotal = this.toAmount(returnedAgg?._sum?.amount || 0);
     const remainingCap = Math.max(capTotal - approvedTotal - returnedTotal, 0);
 
-    if (input.decision === 'approved' && requestedApproved > remainingCap) {
+    const isSingleMilestoneProject = allMilestones.length <= 1;
+    if (!isSingleMilestoneProject && input.decision === 'approved' && requestedApproved > remainingCap) {
       throw new BadRequestException('Approved amount exceeds remaining authorized cap');
     }
 
@@ -3045,7 +3072,7 @@ export class FinancialService {
     actorRole: 'client' | 'admin';
     notes?: string;
   }) {
-    const { paymentPlan, milestone, project, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, project, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -3056,6 +3083,11 @@ export class FinancialService {
     }
     if (input.actorRole === 'client' && project?.userId !== input.actorId) {
       throw new ForbiddenException('Only the project client can return the cap remainder');
+    }
+
+    // Single-milestone projects have no wallet transfer, so no cap to return.
+    if (allMilestones.length <= 1) {
+      return { success: true, transaction: null, walletSummary: null, skipped: true };
     }
 
     const [capAgg, approvedAgg, returnedAgg] = await this.retryWithBackoff(() =>
@@ -3158,7 +3190,7 @@ export class FinancialService {
     professionalId: string;
     notes?: string;
   }) {
-    const { paymentPlan, milestone, projectProfessional } =
+    const { paymentPlan, milestone, allMilestones, projectProfessional } =
       await this.getMilestoneProcurementContext(input.projectId, input.milestoneId);
 
     if (!['SCALE_1', 'SCALE_2'].includes(String(paymentPlan.projectScale || '').toUpperCase())) {
@@ -3172,6 +3204,11 @@ export class FinancialService {
       projectProfessional.professionalId !== input.professionalId
     ) {
       throw new ForbiddenException('You are not the awarded professional for this project');
+    }
+
+    // Single-milestone projects have no wallet transfer, so nothing to skip.
+    if (allMilestones.length <= 1) {
+      return { success: true, returnedAmount: 0, transactionId: null, skipped: true };
     }
 
     const [capAgg, approvedAgg, returnedAgg] = await this.retryWithBackoff(() =>

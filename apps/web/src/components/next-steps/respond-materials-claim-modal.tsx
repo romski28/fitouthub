@@ -33,6 +33,7 @@ type PaymentMilestone = {
 
 type PaymentPlan = {
   projectScale: string;
+  totalAmount?: number | string;
   milestones: PaymentMilestone[];
 };
 
@@ -181,6 +182,15 @@ export function RespondMaterialsClaimModal({
   const [maxClaimableAmount, setMaxClaimableAmount] = React.useState<number>(0);
   React.useEffect(() => {
     if (!firstMilestone || !state.projectId || !accessToken) return;
+
+    const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
+    if (isSingleMilestone) {
+      // Single-milestone projects have no wallet transfer — allow up to 30% of total.
+      const totalAmount = Number(paymentPlan?.totalAmount || 0);
+      setMaxClaimableAmount(totalAmount * 0.3);
+      return;
+    }
+
     const fetchCap = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/financial/project/${state.projectId}/summary`, {
@@ -205,7 +215,7 @@ export function RespondMaterialsClaimModal({
       } catch {}
     };
     fetchCap();
-  }, [firstMilestone, state.projectId, accessToken]);
+  }, [firstMilestone, state.projectId, accessToken, paymentPlan?.milestones?.length, paymentPlan?.totalAmount]);
 
   // ── Load data ─────────────────────────────────────────────────────────────
 

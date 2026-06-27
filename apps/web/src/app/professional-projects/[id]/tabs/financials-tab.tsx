@@ -314,6 +314,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   }, 0);
   const maxClaimableAmount = React.useMemo(() => {
     if (!firstPaymentMilestone) return 0;
+
+    // For single-milestone projects there's no wallet transfer — allow up to 30% of total.
+    const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
+    if (isSingleMilestone) {
+      const totalAmount = Number(paymentPlan?.totalAmount || 0);
+      return totalAmount * 0.3;
+    }
+
     const firstMilestoneId = firstPaymentMilestone.id;
     const txs = Array.isArray(projectFinancialSummary?.transactions)
       ? projectFinancialSummary.transactions
@@ -341,7 +349,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     }
 
     return Math.max(capAuthorized - alreadyApproved - alreadyReturned, 0);
-  }, [firstPaymentMilestone, projectFinancialSummary?.transactions]);
+  }, [firstPaymentMilestone, projectFinancialSummary?.transactions, paymentPlan?.milestones?.length, paymentPlan?.totalAmount]);
   const isClaimOverMaximum = materialsClaimTotal > maxClaimableAmount;
   const scheduleMilestoneOptions = [...projectMilestones].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
 

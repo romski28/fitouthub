@@ -1105,7 +1105,11 @@ export default function ProjectFinancialsCard({
     }
 
     const defaultCapAmount = Number(firstMilestone.amount || 0);
-    const availableCap = firstMilestoneMeta.remainingCap > 0 ? firstMilestoneMeta.remainingCap : defaultCapAmount;
+    const availableCap = isSingleMilestoneProject
+      ? (Number(paymentPlan?.totalAmount || 0) * 0.3) - firstMilestoneMeta.approvedTotal
+      : firstMilestoneMeta.remainingCap > 0
+        ? firstMilestoneMeta.remainingCap
+        : defaultCapAmount;
     if (!Number.isFinite(availableCap) || availableCap <= 0) {
       toast.error('No milestone amount is available to authorise');
       return;
@@ -1118,7 +1122,8 @@ export default function ProjectFinancialsCard({
     try {
       setProcurementBusy(`settle-${selectedProcurementEvidence.id}`);
 
-      if (firstMilestoneMeta.capTotal <= 0) {
+      // Single-milestone projects: no wallet transfer, so no cap to authorise or return.
+      if (!isSingleMilestoneProject && firstMilestoneMeta.capTotal <= 0) {
         await authorizeMilestoneCap(defaultCapAmount);
       }
 
@@ -1128,7 +1133,7 @@ export default function ProjectFinancialsCard({
       });
 
       const remainderAfterApproval = Math.max(availableCap - approvedAmount, 0);
-      if (remainderAfterApproval > 0) {
+      if (!isSingleMilestoneProject && remainderAfterApproval > 0) {
         await returnCapRemainder();
       }
 

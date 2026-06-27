@@ -41,6 +41,7 @@ type PaymentPlanMilestone = {
 
 type PaymentPlan = {
   projectScale: string;
+  totalAmount?: number | string;
   milestones: PaymentPlanMilestone[];
 };
 
@@ -116,8 +117,21 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
   const normalizedProjectScale = String(paymentPlan?.projectScale || '').toUpperCase();
   const isMaterialsWorkflowProject = Boolean(firstMilestone && ['SCALE_1', 'SCALE_2'].includes(normalizedProjectScale));
 
+  const isSingleMilestoneProject = React.useMemo(
+    () => (paymentPlan?.milestones?.length ?? 0) <= 1,
+    [paymentPlan?.milestones],
+  );
+
   const maxClaimableAmount = React.useMemo(() => {
     if (!firstMilestone) return 0;
+
+    // For single-milestone projects there's no wallet transfer, so no cap transaction.
+    // Allow claims up to 30% of the total project contract value.
+    if (isSingleMilestoneProject) {
+      const totalAmount = Number(paymentPlan?.totalAmount || 0);
+      return totalAmount * 0.3;
+    }
+
     const firstMilestoneId = firstMilestone.id;
     const txs = Array.isArray(summary?.transactions) ? summary.transactions : [];
 
@@ -138,7 +152,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
     }
 
     return Math.max(capAuthorized - alreadyApproved - alreadyReturned, 0);
-  }, [firstMilestone, summary?.transactions]);
+  }, [firstMilestone, isSingleMilestoneProject, paymentPlan?.totalAmount, summary?.transactions]);
 
   const totalClaimed = React.useMemo(
     () => uploadRows.reduce((sum, row) => {
@@ -471,14 +485,16 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                       >
                         {submitting ? 'Submitting...' : 'Submit for payment'}
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleSkip}
-                        disabled={skipping}
-                        className="w-full rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
-                      >
-                        {skipping ? 'Processing...' : 'Skip until final payment'}
-                      </button>
+                      {!isSingleMilestoneProject && (
+                        <button
+                          type="button"
+                          onClick={handleSkip}
+                          disabled={skipping}
+                          className="w-full rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
+                        >
+                          {skipping ? 'Processing...' : 'Skip until final payment'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </>

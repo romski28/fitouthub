@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-06-27-c2b9bdd6",
+    "date": "2026-06-27T23:40:51+08:00",
+    "title": "Gate materials claim cap for single-milestone projects (30% of total contract)",
+    "summary": "Gate materials claim cap for single-milestone projects (30% of total contract)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c2b9bdd6",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx",
+      "apps/web/src/components/next-steps/respond-materials-claim-modal.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-f73dcd92",
     "date": "2026-06-27T23:24:47+08:00",
     "title": "Recolor financials tab and card to Mimo beige scheme",
