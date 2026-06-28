@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-06-28-0983f1d1",
+    "date": "2026-06-28T11:30:56+08:00",
+    "title": "Add Class 1 payment release: ReviewPaymentRequestModal + backend endpoint",
+    "summary": "Add Class 1 payment release: ReviewPaymentRequestModal + backend endpoint",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0983f1d1",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/review-payment-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-27-e8e64956",
     "date": "2026-06-27T23:44:42+08:00",
     "title": "Fix TS errors: remove overly narrow milestone type cast",

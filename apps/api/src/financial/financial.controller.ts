@@ -322,6 +322,23 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/release-payment - Class 1 direct release (client)
+   * Client releases payment directly to professional's drawable wallet.
+   * For single-milestone, deducts previously approved materials claims.
+   */
+  @Post('project/:projectId/release-payment')
+  @UseGuards(CombinedAuthGuard)
+  async releaseClass1Payment(@Param('projectId') projectId: string, @Request() req: any) {
+    if (req.user?.isProfessional) {
+      throw new ForbiddenException('Only clients can release payments');
+    }
+    return this.financialService.releaseClass1Payment({
+      projectId,
+      clientId: req.user.id,
+    });
+  }
+
+  /**
    * POST /financial/:transactionId/release - Release payment (admin)
    * Admin only
    */

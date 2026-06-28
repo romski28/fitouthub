@@ -24,6 +24,7 @@ import { InspectSiteModal } from './inspect-site-modal';
 import { DeclineProjectModal } from './decline-project-modal';
 import { SiteInspectionExpiredModal } from './site-inspection-expired-modal';
 import { BookMimoSurveyModal } from './book-mimo-survey-modal';
+import { ReviewPaymentRequestModal } from './review-payment-request-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -332,6 +333,16 @@ export function ModalDispatcher({
     return <SiteInspectionExpiredModal isOpen={state.isOpen} onClose={closeModal} />;
   }
 
+  if (modalType === 'review-payment-request') {
+    return (
+      <ReviewPaymentRequestModal
+        isOpen={state.isOpen}
+        isLoading={state.isLoading}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -339,7 +350,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' | 'review-payment-request' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -422,6 +433,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {
     return 'client-site-access';
+  }
+
+  if (actionKey === 'REVIEW_PAYMENT_REQUEST') {
+    return 'review-payment-request';
   }
 
   if (actionKey === 'BOOK_MIMO_SURVEY') {

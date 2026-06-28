@@ -1362,6 +1362,160 @@ export class FinancialService {
   }
 
   /**
+   * Class 1 direct release: client pays the professional directly.
+   * For single-milestone projects, deducts previously approved materials claims
+   * so the professional only receives the net difference.
+   */
+  async releaseClass1Payment(input: {
+    projectId: string;
+    clientId: string;
+  }) {
+    // 1. Find the pending payment_request
+    const paymentRequest = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId: input.projectId,
+        type: 'payment_request',
+        status: 'pending',
+        actionComplete: false,
+        actionBy: input.clientId,
+        actionByRole: 'client',
+      },
+      include: {
+        projectProfessional: {
+          select: {
+            id: true,
+            professionalId: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!paymentRequest) {
+      throw new BadRequestException('No pending payment request found for this project');
+    }
+
+    const requestedAmount = this.toAmount(paymentRequest.amount);
+    const projectProfessionalId = paymentRequest.projectProfessionalId;
+
+    // 2. Get payment plan to determine milestone count
+    const paymentPlan = await (this.prisma as any).projectPaymentPlan.findUnique({
+      where: { projectId: input.projectId },
+      include: { milestones: true },
+    });
+
+    const milestones = paymentPlan?.milestones || [];
+    const isSingleMilestone = milestones.length <= 1;
+
+    // 3. For single-milestone: sum already-approved materials claims
+    let materialsAlreadyPaid = 0;
+    if (isSingleMilestone && milestones[0]) {
+      const approvedAgg = await this.prisma.financialTransaction.aggregate({
+        where: {
+          projectId: input.projectId,
+          type: 'milestone_procurement_approved',
+          status: 'confirmed',
+          notes: { contains: milestones[0].id },
+        },
+        _sum: { amount: true },
+      });
+      materialsAlreadyPaid = this.toAmount(approvedAgg?._sum?.amount || 0);
+    }
+
+    const netAmount = Math.max(requestedAmount - materialsAlreadyPaid, 0);
+    if (netAmount <= 0) {
+      throw new BadRequestException(
+        'All requested payment has already been covered by approved materials claims.'
+      );
+    }
+
+    // 4. Execute in transaction: confirm payment_request + create confirmed release_payment
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Mark the payment_request as confirmed
+      await prisma.financialTransaction.updateMany({
+        where: {
+          id: paymentRequest.id,
+          status: 'pending',
+          actionComplete: false,
+        },
+        data: {
+          status: 'confirmed',
+          actionBy: input.clientId,
+          actionByRole: 'client',
+          actionAt: new Date(),
+          actionComplete: true,
+        },
+      });
+
+      // Create release_payment for the NET amount, directly confirmed
+      const releaseTx = await prisma.financialTransaction.create({
+        data: {
+          projectId: input.projectId,
+          projectProfessionalId: projectProfessionalId || null,
+          type: 'release_payment',
+          description: `Class 1 direct release — professional payment`,
+          amount: new Decimal(netAmount.toFixed(2)),
+          status: 'confirmed',
+          requestedBy: input.clientId,
+          requestedByRole: 'client',
+          actionBy: input.clientId,
+          actionByRole: 'client',
+          actionAt: new Date(),
+          actionComplete: true,
+          notes: this.appendNote(
+            this.appendNote(
+              `Client released payment directly (Class 1)`,
+              paymentRequest.notes || '',
+            ),
+            `source_payment_request:${paymentRequest.id}`,
+          ),
+        },
+      });
+
+      return { releaseTx };
+    });
+
+    // 5. Notify professional
+    try {
+      const formatter = new Intl.NumberFormat('en-HK', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 0,
+      });
+
+      const proProf = projectProfessionalId
+        ? await this.prisma.projectProfessional.findUnique({
+            where: { id: projectProfessionalId },
+            include: {
+              professional: { select: { id: true, phone: true } },
+              project: { select: { projectName: true } },
+            },
+          })
+        : null;
+
+      if (proProf?.professional?.phone) {
+        await this.notificationService.send({
+          professionalId: proProf.professional.id,
+          phoneNumber: proProf.professional.phone,
+          eventType: 'payment_released',
+          message: `${formatter.format(netAmount)} has been released to your drawable wallet for "${proProf.project?.projectName || 'Project'}".`,
+        });
+      }
+    } catch (notificationError) {
+      console.warn('[FinancialService] Failed to notify professional of payment release:', notificationError);
+    }
+
+    return {
+      success: true,
+      requestedAmount,
+      materialsAlreadyPaid,
+      netAmount,
+      releaseTransactionId: result.releaseTx.id,
+      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null),
+    };
+  }
+
+  /**
    * Reject advance payment request
    */
   async rejectAdvancePayment(transactionId: string, approvedBy: string, reason: string, approverRole: 'client' | 'admin' = 'client') {
