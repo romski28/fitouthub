@@ -1636,10 +1636,11 @@ export class NextStepService {
           // Start date is agreed — don't show CONFIRM_START_DETAILS; show schedule review then escrow.
           const escrowClientPreWork = Number(project.escrowHeld ?? 0) > 0;
           if (!escrowClientPreWork) {
-            // Still waiting for escrow — check schedule confirmation gate
+            // Still waiting for escrow — check schedule confirmation gates
             const requiresProfSchedFirst = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
+            let profSchedDone = true; // default: not required
             if (requiresProfSchedFirst) {
-              const profSchedDone = await this.prisma.nextStepAction.findFirst({
+              const profAction = await this.prisma.nextStepAction.findFirst({
                 where: {
                   projectId,
                   professionalId: project.awardedProjectProfessionalId || undefined,
@@ -1649,6 +1650,7 @@ export class NextStepService {
                 },
                 select: { id: true },
               });
+              profSchedDone = Boolean(profAction);
               if (!profSchedDone) {
                 availableConfigSteps = [{
                   actionKey: 'WAIT_FOR_CLIENT_FUNDS', actionLabel: 'Wait for professional schedule',
@@ -1658,8 +1660,9 @@ export class NextStepService {
               }
             }
 
-            // For CLASS 1 & 2: client must review and confirm the schedule before escrow.
-            if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
+            // For CLASS 1 (always) and CLASS 2 (only after pro has confirmed):
+            // client must review and confirm the schedule before escrow.
+            if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && profSchedDone) {
               const clientSchedConfirmed = await this.prisma.nextStepAction.findFirst({
                 where: {
                   projectId,

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-9183f1de",
+    "date": "2026-06-28T22:48:53+08:00",
+    "title": "Fix CLASS 2 schedule gate: only show client CONFIRM_SCHEDULE after pro has confirmed",
+    "summary": "Fix CLASS 2 schedule gate: only show client CONFIRM_SCHEDULE after pro has confirmed",
+    "areas": [
+      "api"
+    ],
+    "commit": "9183f1de",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-d2d7d18c",
     "date": "2026-06-28T22:30:55+08:00",
     "title": "Add CONFIRM_SCHEDULE step for CLASS 1 & 2 clients in PRE_WORK stage",
