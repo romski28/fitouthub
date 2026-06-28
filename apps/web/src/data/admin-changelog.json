@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-e507517c",
+    "date": "2026-06-28T12:53:15+08:00",
+    "title": "Register ProjectStageService, NextStepService, and dependencies in FinancialModule",
+    "summary": "Register ProjectStageService, NextStepService, and dependencies in FinancialModule",
+    "areas": [
+      "api"
+    ],
+    "commit": "e507517c",
+    "files": [
+      "apps/api/src/financial/financial.module.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-c22f29d3",
     "date": "2026-06-28T12:49:38+08:00",
     "title": "Skip materials workflow when project is fully paid (release_payment + zero escrow)",
