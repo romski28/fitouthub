@@ -1241,6 +1241,7 @@ export class NextStepService {
           });
 
           if (requiresProfessionalScheduleFirst && !professionalScheduleConfirmed) {
+            console.log(`[NextStep] schedule-block project=${projectId} -> WAIT_FOR_PROFESSIONAL_SCHEDULE`);
             availableConfigSteps = [
               {
                 actionKey: 'WAIT_FOR_CLIENT_FUNDS',
@@ -1273,6 +1274,7 @@ export class NextStepService {
           });
 
           if (!clientScheduleConfirmed) {
+            console.log(`[NextStep] schedule-block project=${projectId} -> CONFIRM_SCHEDULE (client not confirmed)`);
             availableConfigSteps = [
               {
                 actionKey: 'CONFIRM_SCHEDULE',
@@ -1298,6 +1300,7 @@ export class NextStepService {
               stage: effectiveStage,
             });
           }
+          console.log(`[NextStep] schedule-block project=${projectId} -> fall-through (client already confirmed, moving to escrow/materials)`);
         }
 
         const pendingEscrowRequest =

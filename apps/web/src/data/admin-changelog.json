@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-73caee7c",
+    "date": "2026-06-28T23:17:59+08:00",
+    "title": "Add more diagnostic logs inside schedule block",
+    "summary": "Add more diagnostic logs inside schedule block",
+    "areas": [
+      "api"
+    ],
+    "commit": "73caee7c",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-88909ee5",
     "date": "2026-06-28T23:09:21+08:00",
     "title": "Fix diagnostic log: move isPreCompletion log after declaration",
