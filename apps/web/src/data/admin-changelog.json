@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-0131b570",
+    "date": "2026-06-28T11:59:06+08:00",
+    "title": "Transition project stage to PAYMENT_RELEASED after Class 1 payment release",
+    "summary": "Transition project stage to PAYMENT_RELEASED after Class 1 payment release",
+    "areas": [
+      "api"
+    ],
+    "commit": "0131b570",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-173c4504",
     "date": "2026-06-28T11:50:21+08:00",
     "title": "Suppress upcoming milestone in transactions list when a payment_request exists",

@@ -14,6 +14,7 @@ import { ChatService } from '../chat/chat.service';
 import { NotificationService } from '../notifications/notification.service';
 import { StripePaymentsService } from './stripe-payments.service';
 import { ActivityLogService } from '../activity-log.service';
+import { ProjectStageService } from '../projects/project-stage.service';
 import { createHash, randomInt } from 'crypto';
 
 export interface CreateFinancialTransactionDto {
@@ -69,6 +70,7 @@ export class FinancialService {
     private notificationService: NotificationService,
     private stripePaymentsService: StripePaymentsService,
     private activityLogService: ActivityLogService,
+    private projectStageService: ProjectStageService,
   ) {}
 
   private readonly slaMarker = '__FOH_SLA_POLICY__';
@@ -1503,6 +1505,13 @@ export class FinancialService {
       }
     } catch (notificationError) {
       console.warn('[FinancialService] Failed to notify professional of payment release:', notificationError);
+    }
+
+    // 6. Transition project stage to PAYMENT_RELEASED (triggers UX survey etc.)
+    try {
+      await this.projectStageService.transitionStage(input.projectId, ProjectStage.PAYMENT_RELEASED);
+    } catch (stageError) {
+      console.warn('[FinancialService] Failed to transition project stage to PAYMENT_RELEASED:', stageError);
     }
 
     return {
