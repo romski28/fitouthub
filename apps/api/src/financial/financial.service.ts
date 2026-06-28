@@ -15,6 +15,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { StripePaymentsService } from './stripe-payments.service';
 import { ActivityLogService } from '../activity-log.service';
 import { ProjectStageService } from '../projects/project-stage.service';
+import { NextStepService } from '../projects/next-step.service';
 import { createHash, randomInt } from 'crypto';
 
 export interface CreateFinancialTransactionDto {
@@ -71,6 +72,7 @@ export class FinancialService {
     private stripePaymentsService: StripePaymentsService,
     private activityLogService: ActivityLogService,
     private projectStageService: ProjectStageService,
+    private nextStepService: NextStepService,
   ) {}
 
   private readonly slaMarker = '__FOH_SLA_POLICY__';
@@ -1513,8 +1515,10 @@ export class FinancialService {
     try {
       const targetStage = isSingleMilestone ? ProjectStage.COMPLETE : ProjectStage.PAYMENT_RELEASED;
       await this.projectStageService.transitionStage(input.projectId, targetStage);
-    } catch (stageError) {
-      console.warn('[FinancialService] Failed to transition project stage:', stageError);
+      // Bust the next-step cache so the client sees the new stage immediately
+      await this.nextStepService.invalidateNextStepCache(input.projectId);
+    } catch (stageError: any) {
+      console.error('[FinancialService] Failed to transition project stage:', stageError?.message || stageError);
     }
 
     return {

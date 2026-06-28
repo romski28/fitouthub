@@ -1722,7 +1722,9 @@ export class NextStepService {
     }
 
     // Keep SITE_STARTED as a fallback status for client only when there are no active actions.
-    if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0) {
+    // Never show for completed/near-complete projects — they have their own next steps.
+    const isCompletedStage = effectiveStage === ProjectStage.COMPLETE || effectiveStage === ProjectStage.NEAR_COMPLETION;
+    if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0 && !isCompletedStage) {
       primary.push(
         toApiAction(
           createSyntheticPrimaryStep(

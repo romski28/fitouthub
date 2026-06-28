@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-28-c4ec24af",
+    "date": "2026-06-28T12:30:57+08:00",
+    "title": "Invalidate next-step cache after Class 1 payment + block SITE_STARTED fallback for COMPLETE",
+    "summary": "Invalidate next-step cache after Class 1 payment + block SITE_STARTED fallback for COMPLETE",
+    "areas": [
+      "api"
+    ],
+    "commit": "c4ec24af",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-d69a66cc",
     "date": "2026-06-28T12:06:04+08:00",
     "title": "Class 1 payment transitions to COMPLETE stage instead of PAYMENT_RELEASED",
