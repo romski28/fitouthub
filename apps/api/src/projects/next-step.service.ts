@@ -739,7 +739,6 @@ export class NextStepService {
       effectiveStage === ProjectStage.CONTRACT_PHASE &&
       project.status === 'awarded'
     ) {
-      console.log(`[NextStep] CONTRACT_PHASE-section project=${projectId} role=${role}`);
       const clientSigned = Boolean(project.clientSignedAt);
       const professionalSigned = Boolean(project.professionalSignedAt);
 
@@ -1145,9 +1144,6 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT' && project.status === 'awarded') {
-      // ── DIAGNOSTIC: log project state to trace "Start project on site" issue ──
-      console.log(`[NextStep] CLIENT+awarded project=${projectId} effectiveStage=${effectiveStage} scale=${project.projectScale} escrowHeld=${project.escrowHeld} startDate=${project.startDate} clientSigned=${!!project.clientSignedAt} proSigned=${!!project.professionalSignedAt} siteStartedAt=${!!project.siteStartedAt}`);
-
       const pendingPaymentRequest =
         await this.prisma.financialTransaction.findFirst({
           where: {
@@ -1219,101 +1215,93 @@ export class NextStepService {
         ];
       }
 
-      // Only offer escrow deposit AFTER both parties have signed the contract.
-      // Until then, the standard CONTRACT_PHASE step (sign contract) should show.
+      // ── Schedule → escrow → materials: gated in order ──
       if (!pendingPaymentRequest && contractFullySigned && !latestStartProposal) {
         const normalizedScale = String(project.projectScale || '').toUpperCase();
         const requiresProfessionalScheduleFirst = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
         const startDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
 
-        console.log(`[NextStep] schedule-block project=${projectId} startDateAgreed=${startDateAgreed} acceptedStartProposal=${!!acceptedStartProposal} project.startDate=${!!project.startDate} requiresProfSchedFirst=${requiresProfessionalScheduleFirst}`);
+        let clientScheduleConfirmed = true; // default: no schedule gate needed
+        let professionalScheduleConfirmed = true;
 
         if (startDateAgreed) {
-          const professionalScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
-            where: {
-              projectId,
-              professionalId: project.awardedProjectProfessionalId || undefined,
-              actionKey: 'CONFIRM_SCHEDULE',
-              userAction: 'COMPLETED',
-              projectStage: effectiveStage,
-            },
-            select: { id: true },
-          });
-
-          if (requiresProfessionalScheduleFirst && !professionalScheduleConfirmed) {
-            console.log(`[NextStep] schedule-block project=${projectId} -> WAIT_FOR_PROFESSIONAL_SCHEDULE`);
-            availableConfigSteps = [
-              {
+          // Check professional schedule confirmation (CLASS 2/3)
+          if (requiresProfessionalScheduleFirst) {
+            const profSched = await this.prisma.nextStepAction.findFirst({
+              where: {
+                projectId,
+                professionalId: project.awardedProjectProfessionalId || undefined,
+                actionKey: 'CONFIRM_SCHEDULE',
+                userAction: 'COMPLETED',
+                projectStage: effectiveStage,
+              },
+              select: { id: true },
+            });
+            professionalScheduleConfirmed = Boolean(profSched);
+            if (!professionalScheduleConfirmed) {
+              availableConfigSteps = [{
                 actionKey: 'WAIT_FOR_CLIENT_FUNDS',
                 actionLabel: 'Wait for professional schedule',
-                description:
-                  'The professional is preparing the milestone schedule. You can review details in the schedule tab while waiting for their confirmation.',
-                isPrimary: true,
-                isElective: false,
-                requiresAction: false,
-                estimatedDurationMinutes: 2,
-                displayOrder: 1,
-              } as any,
-            ];
-            return returnWithCache({
-              PRIMARY: availableConfigSteps.map(toApiAction),
-              ELECTIVE: [],
-              status: project.status,
-              stage: effectiveStage,
-            });
+                description: 'The professional is preparing the milestone schedule. You can review details in the schedule tab while waiting for their confirmation.',
+                isPrimary: true, isElective: false, requiresAction: false,
+                estimatedDurationMinutes: 2, displayOrder: 1,
+              } as any];
+              return returnWithCache({
+                PRIMARY: availableConfigSteps.map(toApiAction),
+                ELECTIVE: [],
+                status: project.status,
+                stage: effectiveStage,
+              });
+            }
           }
 
-          const clientScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
-            where: {
-              projectId,
-              userId,
-              actionKey: 'CONFIRM_SCHEDULE',
-              userAction: 'COMPLETED',
-            },
-            select: { id: true },
-          });
-
-          if (!clientScheduleConfirmed) {
-            console.log(`[NextStep] schedule-block project=${projectId} -> CONFIRM_SCHEDULE (client not confirmed)`);
-            availableConfigSteps = [
-              {
+          // Check client schedule confirmation (CLASS 1 & 2)
+          if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && professionalScheduleConfirmed) {
+            const clientSched = await this.prisma.nextStepAction.findFirst({
+              where: {
+                projectId,
+                userId,
                 actionKey: 'CONFIRM_SCHEDULE',
-                actionLabel:
-                  normalizedScale === 'SCALE_1'
-                    ? 'Review project timeline end date'
-                    : 'Agree milestone schedule',
-                description:
-                  normalizedScale === 'SCALE_1'
-                    ? 'Start date is agreed. Review the calculated project end date/time and confirm the timeline before funding escrow.'
-                    : 'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
-                isPrimary: true,
-                isElective: false,
-                requiresAction: true,
-                estimatedDurationMinutes: 8,
-                displayOrder: 1,
-              } as any,
-            ];
-            return returnWithCache({
-              PRIMARY: availableConfigSteps.map(toApiAction),
-              ELECTIVE: [],
-              status: project.status,
-              stage: effectiveStage,
+                userAction: 'COMPLETED',
+              },
+              select: { id: true },
             });
+            clientScheduleConfirmed = Boolean(clientSched);
+            if (!clientScheduleConfirmed) {
+              availableConfigSteps = [{
+                actionKey: 'CONFIRM_SCHEDULE',
+                actionLabel: normalizedScale === 'SCALE_1'
+                  ? 'Review project timeline end date'
+                  : 'Agree milestone schedule',
+                description: normalizedScale === 'SCALE_1'
+                  ? 'Start date is agreed. Review the calculated project end date/time and confirm the timeline before funding escrow.'
+                  : 'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
+                isPrimary: true, isElective: false, requiresAction: true,
+                estimatedDurationMinutes: 8, displayOrder: 1,
+              } as any];
+              return returnWithCache({
+                PRIMARY: availableConfigSteps.map(toApiAction),
+                ELECTIVE: [],
+                status: project.status,
+                stage: effectiveStage,
+              });
+            }
           }
-          console.log(`[NextStep] schedule-block project=${projectId} -> fall-through (client already confirmed, moving to escrow/materials)`);
         }
 
-        const pendingEscrowRequest =
-          await this.prisma.financialTransaction.findFirst({
-            where: {
-              projectId,
-              type: 'escrow_deposit_request',
-              status: 'pending',
-              actionComplete: false,
-              OR: [{ actionBy: userId }, { actionBy: null }],
-            },
-            orderBy: { createdAt: 'desc' },
-          });
+        // ── Escrow deposit (only after client has confirmed schedule) ──
+        const pendingEscrowRequest = clientScheduleConfirmed
+          ? await this.prisma.financialTransaction.findFirst({
+              where: {
+                projectId,
+                type: 'escrow_deposit_request',
+                status: 'pending',
+                actionComplete: false,
+                OR: [{ actionBy: userId }, { actionBy: null }],
+              },
+              orderBy: { createdAt: 'desc' },
+            })
+          : null;
 
         if (pendingEscrowRequest) {
           availableConfigSteps = [
@@ -1331,28 +1319,18 @@ export class NextStepService {
           ];
         }
 
-        // For Class 1/2 projects, two sequential client steps apply after escrow is funded:
-        //   Step A: Client authorizes the milestone 1 cap (no proof needed — nominal allocation).
-        //   Step B: After professional submits purchase receipts, client reviews & approves.
-        // These steps are only for milestone 1. Subsequent milestones use the normal
-        // professional payment-request flow.
-        // If a confirmed release_payment exists and escrow is zero, the project
-        // is effectively complete — skip materials workflow, show warranty step.
+        // ── Materials workflow (only after client has confirmed schedule) ──
         const hasReleasePayment = await this.prisma.financialTransaction.findFirst({
           where: { projectId, type: 'release_payment', status: 'confirmed' },
           select: { id: true },
         });
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
         const projectFullyPaid = Boolean(hasReleasePayment) && !escrowNowFunded;
-
-        // Materials workflow only applies pre-completion; COMPLETE/NEAR_COMPLETION
-        // or fully-paid projects have their own next steps (warranty, feedback survey, etc.)
         const isPreCompletion = effectiveStage !== ProjectStage.COMPLETE
           && effectiveStage !== ProjectStage.NEAR_COMPLETION
           && !projectFullyPaid;
 
-        console.log(`[NextStep] materials-section project=${projectId} escrowNowFunded=${escrowNowFunded} isPreCompletion=${isPreCompletion} projectFullyPaid=${projectFullyPaid} pendingEscrowRequest=${!!pendingEscrowRequest}`);
-        if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion) {
+        if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion && clientScheduleConfirmed) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
             const procPlan = await this.prisma.projectPaymentPlan.findUnique({
@@ -1494,7 +1472,6 @@ export class NextStepService {
     // the time we reach this stage both parties have signed and the start date may already be set.
     if (effectiveStage === ProjectStage.PRE_WORK && project.status === 'awarded') {
       const preWorkNormalizedScale = String(project.projectScale || '').toUpperCase();
-      console.log(`[NextStep] PRE_WORK-section project=${projectId} role=${role} scale=${preWorkNormalizedScale}`);
 
       const preWorkAccepted = await this.prisma.projectStartProposal.findFirst({
         where: { projectId, status: 'accepted' },
@@ -1783,7 +1760,6 @@ export class NextStepService {
     // Never show for completed/near-complete projects — they have their own next steps.
     const isCompletedStage = effectiveStage === ProjectStage.COMPLETE || effectiveStage === ProjectStage.NEAR_COMPLETION;
     if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0 && !isCompletedStage) {
-      console.log(`[NextStep] SITE_STARTED-fallback project=${projectId} effectiveStage=${effectiveStage} primaryLen=${primary.length} electiveLen=${elective.length} siteStartedAt=${!!project.siteStartedAt}`);
       primary.push(
         toApiAction(
           createSyntheticPrimaryStep(

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-fc86606c",
+    "date": "2026-06-28T23:22:31+08:00",
+    "title": "Gate escrow deposit and materials workflow on client schedule confirmation",
+    "summary": "Gate escrow deposit and materials workflow on client schedule confirmation",
+    "areas": [
+      "api"
+    ],
+    "commit": "fc86606c",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-73caee7c",
     "date": "2026-06-28T23:17:59+08:00",
     "title": "Add more diagnostic logs inside schedule block",
