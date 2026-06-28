@@ -1329,7 +1329,10 @@ export class NextStepService {
         // These steps are only for milestone 1. Subsequent milestones use the normal
         // professional payment-request flow.
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
-        if (escrowNowFunded && !pendingEscrowRequest) {
+        // Materials workflow only applies pre-completion; COMPLETE/NEAR_COMPLETION
+        // have their own next steps (warranty, feedback survey, etc.)
+        const isPreCompletion = effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION;
+        if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
             const procPlan = await this.prisma.projectPaymentPlan.findUnique({

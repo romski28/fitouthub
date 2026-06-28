@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-758fc71f",
+    "date": "2026-06-28T12:44:34+08:00",
+    "title": "Gate materials workflow section to pre-completion stages only — fixes COMPLETE showing start on site",
+    "summary": "Gate materials workflow section to pre-completion stages only — fixes COMPLETE showing start on site",
+    "areas": [
+      "api"
+    ],
+    "commit": "758fc71f",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-c4ec24af",
     "date": "2026-06-28T12:30:57+08:00",
     "title": "Invalidate next-step cache after Class 1 payment + block SITE_STARTED fallback for COMPLETE",
