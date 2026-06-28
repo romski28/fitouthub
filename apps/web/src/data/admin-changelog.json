@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-88909ee5",
+    "date": "2026-06-28T23:09:21+08:00",
+    "title": "Fix diagnostic log: move isPreCompletion log after declaration",
+    "summary": "Fix diagnostic log: move isPreCompletion log after declaration",
+    "areas": [
+      "api"
+    ],
+    "commit": "88909ee5",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-9bd19a29",
     "date": "2026-06-28T22:59:24+08:00",
     "title": "Add diagnostic logging to trace Start project on site issue",

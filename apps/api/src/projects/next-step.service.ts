@@ -1342,13 +1342,13 @@ export class NextStepService {
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
         const projectFullyPaid = Boolean(hasReleasePayment) && !escrowNowFunded;
 
-        console.log(`[NextStep] materials-section project=${projectId} escrowNowFunded=${escrowNowFunded} isPreCompletion=${isPreCompletion} projectFullyPaid=${projectFullyPaid} pendingEscrowRequest=${!!pendingEscrowRequest}`);
-
         // Materials workflow only applies pre-completion; COMPLETE/NEAR_COMPLETION
         // or fully-paid projects have their own next steps (warranty, feedback survey, etc.)
         const isPreCompletion = effectiveStage !== ProjectStage.COMPLETE
           && effectiveStage !== ProjectStage.NEAR_COMPLETION
           && !projectFullyPaid;
+
+        console.log(`[NextStep] materials-section project=${projectId} escrowNowFunded=${escrowNowFunded} isPreCompletion=${isPreCompletion} projectFullyPaid=${projectFullyPaid} pendingEscrowRequest=${!!pendingEscrowRequest}`);
         if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
