@@ -113,8 +113,15 @@ export function ReviewPaymentRequestModal({
   const requestedAmount = Number(pendingPaymentRequest?.amount || 0);
   const netPayable = Math.max(requestedAmount - materialsAlreadyPaid, 0);
   const requestDate = pendingPaymentRequest?.createdAt || '';
-  const requestNotes =
-    pendingPaymentRequest?.notes || pendingPaymentRequest?.description || '';
+  const requestNotes = React.useMemo(() => {
+    const raw = pendingPaymentRequest?.notes || pendingPaymentRequest?.description || '';
+    // Strip __FOH_MILESTONE__ JSON metadata appended after the pipe
+    const marker = '__FOH_MILESTONE__';
+    const idx = raw.indexOf(marker);
+    const cleaned = idx >= 0 ? raw.slice(0, idx).trim() : raw;
+    // Also strip trailing pipe separators
+    return cleaned.replace(/\s*\|\s*$/, '').trim();
+  }, [pendingPaymentRequest?.notes, pendingPaymentRequest?.description]);
 
   // ── Fetch data ────────────────────────────────────────────────────────────
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-2a36acbe",
+    "date": "2026-06-28T11:37:41+08:00",
+    "title": "Strip __FOH_MILESTONE__ JSON metadata from payment request notes display",
+    "summary": "Strip __FOH_MILESTONE__ JSON metadata from payment request notes display",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a36acbe",
+    "files": [
+      "apps/web/src/components/next-steps/review-payment-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-28-0983f1d1",
     "date": "2026-06-28T11:30:56+08:00",
     "title": "Add Class 1 payment release: ReviewPaymentRequestModal + backend endpoint",
