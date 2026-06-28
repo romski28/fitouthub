@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-3b135e2c",
+    "date": "2026-06-28T12:49:04+08:00",
+    "title": "Add escrow balance check: force COMPLETE stage when client escrow is fully drained",
+    "summary": "Add escrow balance check: force COMPLETE stage when client escrow is fully drained",
+    "areas": [
+      "api"
+    ],
+    "commit": "3b135e2c",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-758fc71f",
     "date": "2026-06-28T12:44:34+08:00",
     "title": "Gate materials workflow section to pre-completion stages only — fixes COMPLETE showing start on site",

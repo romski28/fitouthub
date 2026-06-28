@@ -1511,15 +1511,26 @@ export class FinancialService {
 
     // 6. Transition project stage
     // For single-milestone (Class 1) projects, payment = project complete.
-    // For multi-milestone projects, transition to PAYMENT_RELEASED.
+    // For multi-milestone, transition to PAYMENT_RELEASED.
+    // Double-check: if client escrow is fully drained, force COMPLETE regardless.
     try {
-      const targetStage = isSingleMilestone ? ProjectStage.COMPLETE : ProjectStage.PAYMENT_RELEASED;
+      const walletSummary = await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null);
+      const escrowRemaining = Number(walletSummary.clientEscrowHeld || 0);
+      const escrowFullyDrained = escrowRemaining <= 0;
+
+      const targetStage = (isSingleMilestone || escrowFullyDrained)
+        ? ProjectStage.COMPLETE
+        : ProjectStage.PAYMENT_RELEASED;
+
+      console.log(`[FinancialService] releaseClass1Payment stage transition: isSingleMilestone=${isSingleMilestone}, escrowFullyDrained=${escrowFullyDrained}, targetStage=${targetStage}`);
+
       await this.projectStageService.transitionStage(input.projectId, targetStage);
-      // Bust the next-step cache so the client sees the new stage immediately
       await this.nextStepService.invalidateNextStepCache(input.projectId);
     } catch (stageError: any) {
       console.error('[FinancialService] Failed to transition project stage:', stageError?.message || stageError);
     }
+
+    const walletSummary = await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null);
 
     return {
       success: true,
@@ -1527,7 +1538,7 @@ export class FinancialService {
       materialsAlreadyPaid,
       netAmount,
       releaseTransactionId: result.releaseTx.id,
-      walletSummary: await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null),
+      walletSummary,
     };
   }
 
