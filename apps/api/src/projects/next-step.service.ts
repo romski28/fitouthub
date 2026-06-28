@@ -262,9 +262,43 @@ export class NextStepService {
       throw new Error('User does not have access to this project');
     }
 
-    // ── Cache check: keyed by userId+role (different users see different steps) ──
+    // ── Compute effective stage early (before cache check) so overrides take effect ──
+    const awardedButPreContractStages: ProjectStage[] = [
+      ProjectStage.CREATED,
+      ProjectStage.BIDDING_ACTIVE,
+      ProjectStage.SITE_VISIT_SCHEDULED,
+      ProjectStage.SITE_VISIT_COMPLETE,
+      ProjectStage.QUOTE_RECEIVED,
+      ProjectStage.BIDDING_CLOSED,
+    ];
+    const safeStage: ProjectStage = project.currentStage ?? ProjectStage.CREATED;
+    let effectiveStage =
+      project.status === 'awarded' &&
+      awardedButPreContractStages.includes(safeStage)
+        ? ProjectStage.CONTRACT_PHASE
+        : safeStage;
+
+    // ── Override: single-milestone + confirmed release_payment → COMPLETE ──
+    if (effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION) {
+      const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
+        where: { projectId },
+        select: { milestones: { select: { id: true } } },
+      });
+      const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
+      if (isSingleMilestone) {
+        const hasRelease = await this.prisma.financialTransaction.findFirst({
+          where: { projectId, type: 'release_payment', status: 'confirmed' },
+          select: { id: true },
+        });
+        if (hasRelease) {
+          effectiveStage = ProjectStage.COMPLETE;
+        }
+      }
+    }
+
+    // ── Cache check: keyed by userId+role+effectiveStage ──
     const cache = project.nextStepCache as Record<string, any> | null;
-    const cacheKey = `${userId}:${role}`;
+    const cacheKey = `${userId}:${role}:${effectiveStage}`;
     if (cache?.[cacheKey]?.computedAt && project.updatedAt && new Date(cache[cacheKey].computedAt) > new Date(project.updatedAt)) {
       return cache[cacheKey].result as NextStepResult;
     }
@@ -287,43 +321,6 @@ export class NextStepService {
       role === 'PROFESSIONAL'
         ? { professionalId: isProfessional?.professionalId || userId }
         : { userId };
-
-    const awardedButPreContractStages: ProjectStage[] = [
-      ProjectStage.CREATED,
-      ProjectStage.BIDDING_ACTIVE,
-      ProjectStage.SITE_VISIT_SCHEDULED,
-      ProjectStage.SITE_VISIT_COMPLETE,
-      ProjectStage.QUOTE_RECEIVED,
-      ProjectStage.BIDDING_CLOSED,
-    ];
-
-    // Guard against null currentStage (e.g. projects created before migration)
-    const safeStage: ProjectStage = project.currentStage ?? ProjectStage.CREATED;
-
-    let effectiveStage =
-      project.status === 'awarded' &&
-      awardedButPreContractStages.includes(safeStage)
-        ? ProjectStage.CONTRACT_PHASE
-        : safeStage;
-
-    // ── Override: if a single-milestone project has a confirmed release_payment,
-    //     it is effectively complete regardless of currentStage.
-    if (effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION) {
-      const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
-        where: { projectId },
-        select: { milestones: { select: { id: true } } },
-      });
-      const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
-      if (isSingleMilestone) {
-        const hasRelease = await this.prisma.financialTransaction.findFirst({
-          where: { projectId, type: 'release_payment', status: 'confirmed' },
-          select: { id: true },
-        });
-        if (hasRelease) {
-          effectiveStage = ProjectStage.COMPLETE;
-        }
-      }
-    }
 
     // Get available actions for this stage and role (cached — NextStepConfig rarely changes)
     const configCacheKey = `config:${effectiveStage}:${role}`;

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-70d28a26",
+    "date": "2026-06-28T18:07:11+08:00",
+    "title": "Move effectiveStage override BEFORE cache check so stale cache cant block it",
+    "summary": "Move effectiveStage override BEFORE cache check so stale cache cant block it",
+    "areas": [
+      "api"
+    ],
+    "commit": "70d28a26",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-51604b68",
     "date": "2026-06-28T18:00:48+08:00",
     "title": "Simplify: single-milestone + release_payment = COMPLETE override",
