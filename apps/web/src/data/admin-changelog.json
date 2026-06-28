@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-69219970",
+    "date": "2026-06-28T22:50:01+08:00",
+    "title": "Fix CONTRACT_PHASE schedule gate: also accept project.startDate when no acceptedStartProposal",
+    "summary": "Fix CONTRACT_PHASE schedule gate: also accept project.startDate when no acceptedStartProposal",
+    "areas": [
+      "api"
+    ],
+    "commit": "69219970",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-9183f1de",
     "date": "2026-06-28T22:48:53+08:00",
     "title": "Fix CLASS 2 schedule gate: only show client CONFIRM_SCHEDULE after pro has confirmed",

@@ -1220,8 +1220,9 @@ export class NextStepService {
       if (!pendingPaymentRequest && contractFullySigned && !latestStartProposal) {
         const normalizedScale = String(project.projectScale || '').toUpperCase();
         const requiresProfessionalScheduleFirst = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
+        const startDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
 
-        if (acceptedStartProposal) {
+        if (startDateAgreed) {
           const professionalScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
             where: {
               projectId,
