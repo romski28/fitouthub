@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-51604b68",
+    "date": "2026-06-28T18:00:48+08:00",
+    "title": "Simplify: single-milestone + release_payment = COMPLETE override",
+    "summary": "Simplify: single-milestone + release_payment = COMPLETE override",
+    "areas": [
+      "api"
+    ],
+    "commit": "51604b68",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-db6cb0d0",
     "date": "2026-06-28T17:50:22+08:00",
     "title": "Fix escrow check: compute from actual transactions instead of stale project.escrowHeld",
