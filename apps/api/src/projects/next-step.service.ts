@@ -1328,10 +1328,20 @@ export class NextStepService {
         //   Step B: After professional submits purchase receipts, client reviews & approves.
         // These steps are only for milestone 1. Subsequent milestones use the normal
         // professional payment-request flow.
+        // If a confirmed release_payment exists and escrow is zero, the project
+        // is effectively complete — skip materials workflow, show warranty step.
+        const hasReleasePayment = await this.prisma.financialTransaction.findFirst({
+          where: { projectId, type: 'release_payment', status: 'confirmed' },
+          select: { id: true },
+        });
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
+        const projectFullyPaid = Boolean(hasReleasePayment) && !escrowNowFunded;
+
         // Materials workflow only applies pre-completion; COMPLETE/NEAR_COMPLETION
-        // have their own next steps (warranty, feedback survey, etc.)
-        const isPreCompletion = effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION;
+        // or fully-paid projects have their own next steps (warranty, feedback survey, etc.)
+        const isPreCompletion = effectiveStage !== ProjectStage.COMPLETE
+          && effectiveStage !== ProjectStage.NEAR_COMPLETION
+          && !projectFullyPaid;
         if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {

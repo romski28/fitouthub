@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-c22f29d3",
+    "date": "2026-06-28T12:49:38+08:00",
+    "title": "Skip materials workflow when project is fully paid (release_payment + zero escrow)",
+    "summary": "Skip materials workflow when project is fully paid (release_payment + zero escrow)",
+    "areas": [
+      "api"
+    ],
+    "commit": "c22f29d3",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-3b135e2c",
     "date": "2026-06-28T12:49:04+08:00",
     "title": "Add escrow balance check: force COMPLETE stage when client escrow is fully drained",
