@@ -11,7 +11,7 @@ WHERE id IN (
   SELECT p.id
   FROM "Project" p
   INNER JOIN "ProjectPaymentPlan" pp ON pp."projectId" = p.id
-  WHERE p."currentStage" NOT IN ('COMPLETE', 'NEAR_COMPLETION', 'CLOSED', 'warranty_period')
+  WHERE p."currentStage" NOT IN ('COMPLETE', 'NEAR_COMPLETION', 'CLOSED', 'WARRANTY_PERIOD')
     AND (SELECT COUNT(*) FROM "PaymentMilestone" pm WHERE pm."paymentPlanId" = pp.id) <= 1
     AND EXISTS (
       SELECT 1 FROM "FinancialTransaction" ft

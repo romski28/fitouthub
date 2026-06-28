@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-013d4121",
+    "date": "2026-06-28T18:24:51+08:00",
+    "title": "Fix SQL: WARRANTY_PERIOD case sensitivity",
+    "summary": "Fix SQL: WARRANTY_PERIOD case sensitivity",
+    "areas": [
+      "infra"
+    ],
+    "commit": "013d4121",
+    "files": [
+      "MANUAL_SQL_FIX_SINGLE_MILESTONE_COMPLETE.sql"
+    ]
+  },
+  {
     "id": "2026-06-28-5ca72237",
     "date": "2026-06-28T18:18:00+08:00",
     "title": "Remove broken override; add SQL backfill to fix single-milestone project stages directly",
