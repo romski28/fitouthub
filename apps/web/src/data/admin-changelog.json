@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-2536fed2",
+    "date": "2026-06-28T18:30:55+08:00",
+    "title": "Show skeleton only when no localStorage cache exists; cached buttons render instantly",
+    "summary": "Show skeleton only when no localStorage cache exists; cached buttons render instantly",
+    "areas": [
+      "web"
+    ],
+    "commit": "2536fed2",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-28-013d4121",
     "date": "2026-06-28T18:24:51+08:00",
     "title": "Fix SQL: WARRANTY_PERIOD case sensitivity",

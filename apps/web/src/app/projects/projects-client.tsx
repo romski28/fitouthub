@@ -673,19 +673,24 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     let cancelled = false;
 
     const loadNextSteps = async () => {
-      setNextStepsLoading(true);
-
-      // Optimistic: try localStorage cache first for instant display
+      // 1. Load localStorage first — no skeleton if we have cached data
       const cacheKey = `ns_list_v2_${nextStepCacheScope}`;
+      let hasLocalCache = false;
       try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached) as Record<string, NextStepAction[]>;
           if (Object.keys(parsed).length > 0) {
             setNextStepMap(parsed);
+            hasLocalCache = true;
           }
         }
       } catch { /* ignore corrupted cache */ }
+
+      // 2. Only show skeleton if no local cache
+      if (!hasLocalCache) {
+        setNextStepsLoading(true);
+      }
 
       const fetches = itemProjectIds.map((projectId) =>
         fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope })
