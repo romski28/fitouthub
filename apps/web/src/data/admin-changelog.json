@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-9bd19a29",
+    "date": "2026-06-28T22:59:24+08:00",
+    "title": "Add diagnostic logging to trace Start project on site issue",
+    "summary": "Add diagnostic logging to trace Start project on site issue",
+    "areas": [
+      "api"
+    ],
+    "commit": "9bd19a29",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-69219970",
     "date": "2026-06-28T22:50:01+08:00",
     "title": "Fix CONTRACT_PHASE schedule gate: also accept project.startDate when no acceptedStartProposal",

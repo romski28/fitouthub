@@ -739,6 +739,7 @@ export class NextStepService {
       effectiveStage === ProjectStage.CONTRACT_PHASE &&
       project.status === 'awarded'
     ) {
+      console.log(`[NextStep] CONTRACT_PHASE-section project=${projectId} role=${role}`);
       const clientSigned = Boolean(project.clientSignedAt);
       const professionalSigned = Boolean(project.professionalSignedAt);
 
@@ -1144,6 +1145,9 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT' && project.status === 'awarded') {
+      // ── DIAGNOSTIC: log project state to trace "Start project on site" issue ──
+      console.log(`[NextStep] CLIENT+awarded project=${projectId} effectiveStage=${effectiveStage} scale=${project.projectScale} escrowHeld=${project.escrowHeld} startDate=${project.startDate} clientSigned=${!!project.clientSignedAt} proSigned=${!!project.professionalSignedAt} siteStartedAt=${!!project.siteStartedAt}`);
+
       const pendingPaymentRequest =
         await this.prisma.financialTransaction.findFirst({
           where: {
@@ -1221,6 +1225,8 @@ export class NextStepService {
         const normalizedScale = String(project.projectScale || '').toUpperCase();
         const requiresProfessionalScheduleFirst = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
         const startDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
+
+        console.log(`[NextStep] schedule-block project=${projectId} startDateAgreed=${startDateAgreed} acceptedStartProposal=${!!acceptedStartProposal} project.startDate=${!!project.startDate} requiresProfSchedFirst=${requiresProfessionalScheduleFirst}`);
 
         if (startDateAgreed) {
           const professionalScheduleConfirmed = await this.prisma.nextStepAction.findFirst({
@@ -1335,6 +1341,8 @@ export class NextStepService {
         });
         const escrowNowFunded = Number(project.escrowHeld ?? 0) > 0;
         const projectFullyPaid = Boolean(hasReleasePayment) && !escrowNowFunded;
+
+        console.log(`[NextStep] materials-section project=${projectId} escrowNowFunded=${escrowNowFunded} isPreCompletion=${isPreCompletion} projectFullyPaid=${projectFullyPaid} pendingEscrowRequest=${!!pendingEscrowRequest}`);
 
         // Materials workflow only applies pre-completion; COMPLETE/NEAR_COMPLETION
         // or fully-paid projects have their own next steps (warranty, feedback survey, etc.)
@@ -1483,6 +1491,7 @@ export class NextStepService {
     // the time we reach this stage both parties have signed and the start date may already be set.
     if (effectiveStage === ProjectStage.PRE_WORK && project.status === 'awarded') {
       const preWorkNormalizedScale = String(project.projectScale || '').toUpperCase();
+      console.log(`[NextStep] PRE_WORK-section project=${projectId} role=${role} scale=${preWorkNormalizedScale}`);
 
       const preWorkAccepted = await this.prisma.projectStartProposal.findFirst({
         where: { projectId, status: 'accepted' },
@@ -1771,6 +1780,7 @@ export class NextStepService {
     // Never show for completed/near-complete projects — they have their own next steps.
     const isCompletedStage = effectiveStage === ProjectStage.COMPLETE || effectiveStage === ProjectStage.NEAR_COMPLETION;
     if (role === 'CLIENT' && project.siteStartedAt && primary.length === 0 && elective.length === 0 && !isCompletedStage) {
+      console.log(`[NextStep] SITE_STARTED-fallback project=${projectId} effectiveStage=${effectiveStage} primaryLen=${primary.length} electiveLen=${elective.length} siteStartedAt=${!!project.siteStartedAt}`);
       primary.push(
         toApiAction(
           createSyntheticPrimaryStep(
