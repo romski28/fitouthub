@@ -309,16 +309,26 @@ export class NextStepService {
     // ── Override: if a release_payment exists and escrow is fully drained, the
     //     project is effectively complete regardless of currentStage. This covers
     //     Class 1 single-milestone payments where the stage transition may lag.
+    //     We compute escrow from actual transactions, not project.escrowHeld (stale).
     if (effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION) {
-      const escrowZero = Number(project.escrowHeld ?? 0) <= 0;
-      if (escrowZero) {
-        const hasRelease = await this.prisma.financialTransaction.findFirst({
+      const [releaseCount, escrowDeposited, escrowReleased] = await Promise.all([
+        this.prisma.financialTransaction.count({
           where: { projectId, type: 'release_payment', status: 'confirmed' },
-          select: { id: true },
-        });
-        if (hasRelease) {
-          effectiveStage = ProjectStage.COMPLETE;
-        }
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: { projectId, type: { in: ['escrow_deposit', 'escrow_deposit_confirmation'] }, status: 'confirmed' },
+          _sum: { amount: true },
+        }),
+        this.prisma.financialTransaction.aggregate({
+          where: { projectId, type: 'release_payment', status: 'confirmed' },
+          _sum: { amount: true },
+        }),
+      ]);
+      const totalDeposited = Number(escrowDeposited._sum?.amount ?? 0);
+      const totalReleased = Number(escrowReleased._sum?.amount ?? 0);
+      const escrowFullyDrained = releaseCount > 0 && totalReleased >= totalDeposited;
+      if (escrowFullyDrained) {
+        effectiveStage = ProjectStage.COMPLETE;
       }
     }
 

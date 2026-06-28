@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-db6cb0d0",
+    "date": "2026-06-28T17:50:22+08:00",
+    "title": "Fix escrow check: compute from actual transactions instead of stale project.escrowHeld",
+    "summary": "Fix escrow check: compute from actual transactions instead of stale project.escrowHeld",
+    "areas": [
+      "api"
+    ],
+    "commit": "db6cb0d0",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-be357348",
     "date": "2026-06-28T17:42:27+08:00",
     "title": "Override effectiveStage to COMPLETE when release_payment exists and escrow is zero",
