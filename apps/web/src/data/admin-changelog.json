@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-be357348",
+    "date": "2026-06-28T17:42:27+08:00",
+    "title": "Override effectiveStage to COMPLETE when release_payment exists and escrow is zero",
+    "summary": "Override effectiveStage to COMPLETE when release_payment exists and escrow is zero",
+    "areas": [
+      "api"
+    ],
+    "commit": "be357348",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-e507517c",
     "date": "2026-06-28T12:53:15+08:00",
     "title": "Register ProjectStageService, NextStepService, and dependencies in FinancialModule",

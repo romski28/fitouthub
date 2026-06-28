@@ -300,11 +300,27 @@ export class NextStepService {
     // Guard against null currentStage (e.g. projects created before migration)
     const safeStage: ProjectStage = project.currentStage ?? ProjectStage.CREATED;
 
-    const effectiveStage =
+    let effectiveStage =
       project.status === 'awarded' &&
       awardedButPreContractStages.includes(safeStage)
         ? ProjectStage.CONTRACT_PHASE
         : safeStage;
+
+    // ── Override: if a release_payment exists and escrow is fully drained, the
+    //     project is effectively complete regardless of currentStage. This covers
+    //     Class 1 single-milestone payments where the stage transition may lag.
+    if (effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION) {
+      const escrowZero = Number(project.escrowHeld ?? 0) <= 0;
+      if (escrowZero) {
+        const hasRelease = await this.prisma.financialTransaction.findFirst({
+          where: { projectId, type: 'release_payment', status: 'confirmed' },
+          select: { id: true },
+        });
+        if (hasRelease) {
+          effectiveStage = ProjectStage.COMPLETE;
+        }
+      }
+    }
 
     // Get available actions for this stage and role (cached — NextStepConfig rarely changes)
     const configCacheKey = `config:${effectiveStage}:${role}`;
