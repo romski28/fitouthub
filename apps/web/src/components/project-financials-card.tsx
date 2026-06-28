@@ -423,8 +423,17 @@ export default function ProjectFinancialsCard({
         .filter(Boolean),
     );
 
+    // When a payment_request exists (pending or confirmed), suppress the upcoming
+    // milestone with the lowest sequence — the request replaces the placeholder.
+    const hasPaymentRequest = filteredTransactions.some(
+      (tx) => tx.type === 'payment_request' && ['pending', 'confirmed'].includes(String(tx.status || '').toLowerCase()),
+    );
+    const requestedMilestoneSeq = hasPaymentRequest
+      ? Math.min(...(paymentPlan?.milestones || []).map((m) => m.sequence))
+      : -1;
+
     const upcomingMilestones = (paymentPlan?.milestones || [])
-      .filter((m) => !milestoneIdsWithTx.has(m.id) && m.status !== 'cancelled')
+      .filter((m) => !milestoneIdsWithTx.has(m.id) && m.status !== 'cancelled' && m.sequence !== requestedMilestoneSeq)
       .map((m) => ({
         id: `upcoming-${m.id}`,
         type: 'milestone_payment' as const,

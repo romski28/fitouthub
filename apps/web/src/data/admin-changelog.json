@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-173c4504",
+    "date": "2026-06-28T11:50:21+08:00",
+    "title": "Suppress upcoming milestone in transactions list when a payment_request exists",
+    "summary": "Suppress upcoming milestone in transactions list when a payment_request exists",
+    "areas": [
+      "web"
+    ],
+    "commit": "173c4504",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-28-2a36acbe",
     "date": "2026-06-28T11:37:41+08:00",
     "title": "Strip __FOH_MILESTONE__ JSON metadata from payment request notes display",
