@@ -272,29 +272,11 @@ export class NextStepService {
       ProjectStage.BIDDING_CLOSED,
     ];
     const safeStage: ProjectStage = project.currentStage ?? ProjectStage.CREATED;
-    let effectiveStage =
+    const effectiveStage =
       project.status === 'awarded' &&
       awardedButPreContractStages.includes(safeStage)
         ? ProjectStage.CONTRACT_PHASE
         : safeStage;
-
-    // ── Override: single-milestone + confirmed release_payment → COMPLETE ──
-    if (effectiveStage !== ProjectStage.COMPLETE && effectiveStage !== ProjectStage.NEAR_COMPLETION) {
-      const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
-        where: { projectId },
-        select: { milestones: { select: { id: true } } },
-      });
-      const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
-      if (isSingleMilestone) {
-        const hasRelease = await this.prisma.financialTransaction.findFirst({
-          where: { projectId, type: 'release_payment', status: 'confirmed' },
-          select: { id: true },
-        });
-        if (hasRelease) {
-          effectiveStage = ProjectStage.COMPLETE;
-        }
-      }
-    }
 
     // ── Cache check: keyed by userId+role+effectiveStage ──
     const cache = project.nextStepCache as Record<string, any> | null;

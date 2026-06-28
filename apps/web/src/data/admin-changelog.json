@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-06-28-5ca72237",
+    "date": "2026-06-28T18:18:00+08:00",
+    "title": "Remove broken override; add SQL backfill to fix single-milestone project stages directly",
+    "summary": "Remove broken override; add SQL backfill to fix single-milestone project stages directly",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "5ca72237",
+    "files": [
+      "MANUAL_SQL_FIX_SINGLE_MILESTONE_COMPLETE.sql",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-70d28a26",
     "date": "2026-06-28T18:07:11+08:00",
     "title": "Move effectiveStage override BEFORE cache check so stale cache cant block it",
