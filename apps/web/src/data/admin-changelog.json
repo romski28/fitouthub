@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-28-d69a66cc",
+    "date": "2026-06-28T12:06:04+08:00",
+    "title": "Class 1 payment transitions to COMPLETE stage instead of PAYMENT_RELEASED",
+    "summary": "Class 1 payment transitions to COMPLETE stage instead of PAYMENT_RELEASED",
+    "areas": [
+      "api"
+    ],
+    "commit": "d69a66cc",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-28-0131b570",
     "date": "2026-06-28T11:59:06+08:00",
     "title": "Transition project stage to PAYMENT_RELEASED after Class 1 payment release",

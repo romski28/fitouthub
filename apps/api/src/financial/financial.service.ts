@@ -1507,11 +1507,14 @@ export class FinancialService {
       console.warn('[FinancialService] Failed to notify professional of payment release:', notificationError);
     }
 
-    // 6. Transition project stage to PAYMENT_RELEASED (triggers UX survey etc.)
+    // 6. Transition project stage
+    // For single-milestone (Class 1) projects, payment = project complete.
+    // For multi-milestone projects, transition to PAYMENT_RELEASED.
     try {
-      await this.projectStageService.transitionStage(input.projectId, ProjectStage.PAYMENT_RELEASED);
+      const targetStage = isSingleMilestone ? ProjectStage.COMPLETE : ProjectStage.PAYMENT_RELEASED;
+      await this.projectStageService.transitionStage(input.projectId, targetStage);
     } catch (stageError) {
-      console.warn('[FinancialService] Failed to transition project stage to PAYMENT_RELEASED:', stageError);
+      console.warn('[FinancialService] Failed to transition project stage:', stageError);
     }
 
     return {
