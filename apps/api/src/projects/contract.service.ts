@@ -81,7 +81,7 @@ Total Contract Amount: ${project.paymentCurrency} ${quotedAmount}
 Payment is made according to the milestone schedule agreed by both parties through Mimo.
 
 3. TIMELINE
-Estimated Start Date: ${estimatedStartDate}
+Start Date: ${estimatedStartDate}
 Estimated Completion Date: ${estimatedEndDate}
 
 4. RESPONSIBILITIES

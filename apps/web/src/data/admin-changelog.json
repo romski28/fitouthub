@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-06-29-1229e366",
+    "date": "2026-06-29T13:25:42+08:00",
+    "title": "Quote modal: rename date labels to I can start on / Arriving at; simplify strap line",
+    "summary": "Quote modal: rename date labels to I can start on / Arriving at; simplify strap line",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "1229e366",
+    "files": [
+      "MANUAL_SQL_UPDATE_QUOTE_MODAL_STRAP_LINE.sql",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-cc535973",
     "date": "2026-06-29T13:12:57+08:00",
     "title": "Gate INSPECT_SITE on skipped site access — prevents dead-end step after pro skips inspection",

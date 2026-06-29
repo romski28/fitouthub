@@ -1986,7 +1986,7 @@ export class ProjectsService {
     if (!hasStart && !hasDuration) {
       if (options?.required) {
         throw new BadRequestException(
-          'Estimated start date and duration are required when submitting a quote',
+          'Start date and duration are required when submitting a quote',
         );
       }
 
@@ -1999,7 +1999,7 @@ export class ProjectsService {
 
     if (!hasStart || !hasDuration) {
       throw new BadRequestException(
-        'Estimated start date and duration must be provided together',
+        'Start date and duration must be provided together',
       );
     }
 

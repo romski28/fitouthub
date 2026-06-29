@@ -482,7 +482,7 @@ export class ProfessionalController {
 
     if (!hasStart || !hasDuration) {
       throw new BadRequestException(
-        'Estimated start date and duration are required when submitting a quote',
+        'Start date and duration are required when submitting a quote',
       );
     }
 
