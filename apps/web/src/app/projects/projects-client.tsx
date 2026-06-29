@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -566,6 +566,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
+  const [nextStepsRefreshing, setNextStepsRefreshing] = useState(false);
+  const nextStepMapRef = useRef(nextStepMap);
+  nextStepMapRef.current = nextStepMap;
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const itemProjectIds = useMemo(() => items.map((project) => project.id), [items]);
@@ -687,10 +690,24 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         }
       } catch { /* ignore corrupted cache */ }
 
-      // 2. Only show skeleton if no local cache
+      // 2. Only show global skeleton if no local cache at all
       if (!hasLocalCache) {
         setNextStepsLoading(true);
+      } else {
+        // Background refresh — show subtle indicator
+        setNextStepsRefreshing(true);
       }
+
+      // 3. Mark individual projects as loading if they have no cached entry
+      setNextStepLoadingMap((prev) => {
+        const next = { ...prev };
+        itemProjectIds.forEach((id) => {
+          if (!nextStepMapRef.current[id] || nextStepMapRef.current[id].length === 0) {
+            next[id] = true;
+          }
+        });
+        return next;
+      });
 
       const fetches = itemProjectIds.map((projectId) =>
         fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope })
@@ -708,12 +725,18 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         }
       });
       setNextStepMap((prev) => ({ ...prev, ...batch }));
-      // Save to localStorage for next visit
+      // Save to localStorage using the ref (always has latest value)
       try {
-        const merged = { ...nextStepMap, ...batch };
+        const merged = { ...nextStepMapRef.current, ...batch };
         localStorage.setItem(cacheKey, JSON.stringify(merged));
       } catch { /* ignore quota */ }
+      setNextStepLoadingMap((prev) => {
+        const next = { ...prev };
+        Object.keys(batch).forEach((id) => { next[id] = false; });
+        return next;
+      });
       setNextStepsLoading(false);
+      setNextStepsRefreshing(false);
     };
 
     loadNextSteps();
@@ -798,6 +821,12 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-600">
                       <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-transparent" />
                       Gathering action items&hellip;
+                    </span>
+                  )}
+                  {nextStepsRefreshing && (
+                    <span className="ml-3 inline-flex items-center gap-1.5 text-xs font-normal text-slate-500">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                      Refreshing&hellip;
                     </span>
                   )}
                 </h1>
@@ -894,7 +923,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                     </div>
 
                     <div className="sm:ml-4 shrink-0 flex flex-row flex-wrap gap-1.5 sm:flex-col sm:items-end">
-                      {nextStepsLoading ? (
+                      {nextStepsLoading && nextStepLoadingMap[project.id] !== false ? (
+                        <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
+                      ) : nextStepLoadingMap[project.id] ? (
                         <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                       ) : (
                         <>
@@ -916,7 +947,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               onCompleted={() => refreshProjectNextStep(project.id)}
                             />
                           ))}
-                          {primaryActions.length === 0 && electiveActions.length === 0 && (
+                          {primaryActions.length === 0 && electiveActions.length === 0 && !nextStepLoadingMap[project.id] && (
                             <Link
                               href={primaryActionHref}
                               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition"

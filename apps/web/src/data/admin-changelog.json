@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-00c35b72",
+    "date": "2026-06-29T14:08:20+08:00",
+    "title": "Fix next-step caching: use ref for localStorage save, per-project skeletons, background refresh indicator",
+    "summary": "Fix next-step caching: use ref for localStorage save, per-project skeletons, background refresh indicator",
+    "areas": [
+      "web"
+    ],
+    "commit": "00c35b72",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-dd68bed0",
     "date": "2026-06-29T13:54:44+08:00",
     "title": "Gate Book site visit CTA on skipped site access after quote submission",
