@@ -397,11 +397,20 @@ export class NextStepService {
             'Your quote has been submitted. No action is needed from you until the client responds.',
           ),
         ];
-        // If address is visible, add INSPECT_SITE as elective
+        // If address is visible, add INSPECT_SITE as elective (only if pro hasn't already skipped)
         if (isProfessional.addressVisible && !isProfessional.siteVisitedAt) {
-          const step = await this.buildInspectSiteStep(isProfessional.id);
-          if (step) {
-            availableConfigSteps.push({ ...step, isPrimary: false, isElective: true } as any);
+          const skipCheck = await this.prisma.siteAccessRequest.findFirst({
+            where: {
+              projectProfessionalId: isProfessional.id,
+              status: { in: ['skipped', 'approved_no_visit'] },
+            },
+            select: { id: true },
+          });
+          if (!skipCheck) {
+            const step = await this.buildInspectSiteStep(isProfessional.id);
+            if (step) {
+              availableConfigSteps.push({ ...step, isPrimary: false, isElective: true } as any);
+            }
           }
         }
       } else {
@@ -759,45 +768,54 @@ export class NextStepService {
               ),
             ];
 
-        // If address is visible, add INSPECT_SITE as elective
+        // If address is visible, add INSPECT_SITE as elective (only if pro hasn't already skipped)
         if (
           isProfessional?.addressVisible === true &&
           !isProfessional?.siteVisitedAt
         ) {
-          const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
+          const siteSkipped = await this.prisma.siteAccessRequest.findFirst({
             where: {
               projectProfessionalId: isProfessional.id,
-              status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
+              status: { in: ['skipped', 'approved_no_visit'] },
             },
-            select: { visitScheduledAt: true, visitScheduledFor: true },
-            orderBy: { respondedAt: 'desc' },
+            select: { id: true },
           });
-          const visitDateTime = approvedAccess?.visitScheduledAt || approvedAccess?.visitScheduledFor;
-          const timeLabel = visitDateTime
-            ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
-            : null;
-          const dateLabel = visitDateTime
-            ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
-            : 'site';
-          const inspectLabel = timeLabel
-            ? `Visit site at ${timeLabel} on ${dateLabel}`
-            : `Visit site on ${dateLabel}`;
-          availableConfigSteps = [
-            ...availableConfigSteps,
-            {
-              ...createSyntheticPrimaryStep(
-                'INSPECT_SITE',
-                inspectLabel,
-                false,
-                role,
-                effectiveStage,
-                'Address access granted. View details on the Site Access tab.',
-              ),
-              isPrimary: false,
-              isElective: true,
-              displayOrder: 2,
-            } as any,
-          ];
+          if (!siteSkipped) {
+            const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
+              where: {
+                projectProfessionalId: isProfessional.id,
+                status: { in: ['approved_visit_scheduled', 'approved_no_visit'] },
+              },
+              select: { visitScheduledAt: true, visitScheduledFor: true },
+              orderBy: { respondedAt: 'desc' },
+            });
+            const visitDateTime = approvedAccess?.visitScheduledAt || approvedAccess?.visitScheduledFor;
+            const timeLabel = visitDateTime
+              ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
+              : null;
+            const dateLabel = visitDateTime
+              ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
+              : 'site';
+            const inspectLabel = timeLabel
+              ? `Visit site at ${timeLabel} on ${dateLabel}`
+              : `Visit site on ${dateLabel}`;
+            availableConfigSteps = [
+              ...availableConfigSteps,
+              {
+                ...createSyntheticPrimaryStep(
+                  'INSPECT_SITE',
+                  inspectLabel,
+                  false,
+                  role,
+                  effectiveStage,
+                  'Address access granted. View details on the Site Access tab.',
+                ),
+                isPrimary: false,
+                isElective: true,
+                displayOrder: 2,
+              } as any,
+            ];
+          } // closes if (!siteSkipped)
         }
       }
 

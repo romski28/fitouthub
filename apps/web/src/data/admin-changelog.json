@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-cc535973",
+    "date": "2026-06-29T13:12:57+08:00",
+    "title": "Gate INSPECT_SITE on skipped site access — prevents dead-end step after pro skips inspection",
+    "summary": "Gate INSPECT_SITE on skipped site access — prevents dead-end step after pro skips inspection",
+    "areas": [
+      "api"
+    ],
+    "commit": "cc535973",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-29-db117096",
     "date": "2026-06-29T12:55:12+08:00",
     "title": "AI prompt: never assume client has tools; always refer to them as client, not user",
