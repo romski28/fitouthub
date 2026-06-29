@@ -14,11 +14,12 @@ type SafetyGuidanceCardProps = {
   className?: string;
 };
 
-type RiskTone = 'high' | 'medium' | 'low' | 'default';
+type RiskTone = 'critical' | 'high' | 'medium' | 'low' | 'default';
 
 function normalizeRiskTone(value?: string | null): RiskTone {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === 'critical' || normalized === 'high') return 'high';
+  if (normalized === 'critical') return 'critical';
+  if (normalized === 'high') return 'high';
   if (normalized === 'medium' || normalized === 'moderate') return 'medium';
   if (normalized === 'low') return 'low';
   return 'default';
@@ -26,17 +27,23 @@ function normalizeRiskTone(value?: string | null): RiskTone {
 
 function getRiskToneClasses(tone: RiskTone) {
   switch (tone) {
+    case 'critical':
+      return {
+        border: 'border-crimson-300',
+        text: 'text-crimson-700',
+        badge: 'bg-crimson-100 text-crimson-700',
+      };
     case 'high':
       return {
-        border: 'border-red-300',
-        text: 'text-red-700',
-        badge: 'bg-red-100 text-red-700',
+        border: 'border-[#FF7F50]',
+        text: 'text-[#FF7F50]',
+        badge: 'bg-[#FFF1EE] text-[#FF7F50]',
       };
     case 'medium':
       return {
-        border: 'border-amber-300',
-        text: 'text-amber-700',
-        badge: 'bg-amber-100 text-amber-700',
+        border: 'border-orange-300',
+        text: 'text-orange-700',
+        badge: 'bg-orange-100 text-orange-700',
       };
     case 'low':
       return {
@@ -152,11 +159,6 @@ export function SafetyGuidanceCard({ guidance, size = 'default', className = '' 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-slate-900`}>Your saftey - Please read</p>
-            {riskLabel && (
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${riskToneClasses.badge}`}>
-                {riskLabel}
-              </span>
-            )}
           </div>
 
           {riskLabel && (

@@ -252,17 +252,17 @@ export function ProjectAiPanel({
 
   const clientContent = (
     <>
-      <p className="text-xs text-white mb-3">Safety information prepared by Mimo with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
+      <p className="text-xs text-slate-600 mb-3">Safety information prepared by Mimo with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock}
 
       {assumptions.length > 0 && (
-        <div className="mb-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1">Assumptions</p>
+        <div className="mb-3 rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Assumptions</p>
           <ul className="space-y-1">
             {assumptions.map((item, index) => (
-              <li key={`assumption-${index}`} className="text-sm text-white flex gap-2">
-                <span className="text-white">•</span>
+              <li key={`assumption-${index}`} className="text-sm text-slate-800 flex gap-2">
+                <span className="text-slate-400">•</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -271,12 +271,12 @@ export function ProjectAiPanel({
       )}
 
       {risks.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-white mb-1">Risks</p>
+        <div className="rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Risks</p>
           <ul className="space-y-1">
             {risks.map((item, index) => (
-              <li key={`risk-${index}`} className="text-sm text-white flex gap-2">
-                <span className="text-white">•</span>
+              <li key={`risk-${index}`} className="text-sm text-slate-800 flex gap-2">
+                <span className="text-slate-400">•</span>
                 <span>{item}</span>
               </li>
             ))}

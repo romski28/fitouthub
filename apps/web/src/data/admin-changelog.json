@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-29-d4d95e6d",
+    "date": "2026-06-29T12:47:49+08:00",
+    "title": "Recolor safety tab: charcoal text, risk color coding, remove duplicate chip, panelize assumptions/risks",
+    "summary": "Recolor safety tab: charcoal text, risk color coding, remove duplicate chip, panelize assumptions/risks",
+    "areas": [
+      "web"
+    ],
+    "commit": "d4d95e6d",
+    "files": [
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/components/safety-guidance-card.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-3a70917e",
     "date": "2026-06-29T10:56:28+08:00",
     "title": "Wizard: warn when no images uploaded; rename Continue to Final checks",
