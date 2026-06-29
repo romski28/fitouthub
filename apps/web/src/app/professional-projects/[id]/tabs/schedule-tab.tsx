@@ -1555,7 +1555,6 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                                 )}
                               </div>
                             )}
-                            </div>
                           </td>
                         </tr>
                       );

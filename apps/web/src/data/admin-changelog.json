@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-7d762e9b",
+    "date": "2026-06-29T23:04:20+08:00",
+    "title": "Fix extra closing div in schedule-tab.tsx",
+    "summary": "Fix extra closing div in schedule-tab.tsx",
+    "areas": [
+      "web"
+    ],
+    "commit": "7d762e9b",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-9297644c",
     "date": "2026-06-29T23:01:51+08:00",
     "title": "Client read-only schedule modal; fix finish time to 18:00 for days-based duration",
