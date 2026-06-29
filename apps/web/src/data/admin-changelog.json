@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-30-5cb880fc",
+    "date": "2026-06-30T01:11:07+08:00",
+    "title": "fix: add AdminActionService to ProgressReportsModule for ProjectStageService DI",
+    "summary": "fix: add AdminActionService to ProgressReportsModule for ProjectStageService DI",
+    "areas": [
+      "api"
+    ],
+    "commit": "5cb880fc",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.module.ts"
+    ]
+  },
+  {
     "id": "2026-06-30-065c2dd6",
     "date": "2026-06-30T01:02:53+08:00",
     "title": "feat: milestone sign-off stage transitions, milestone selector filtering, pro site-start celebration",
