@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-29-4220548b",
+    "date": "2026-06-29T09:56:44+08:00",
+    "title": "Pin Sarah & Mike sticky top; auto-redirect logged-in users to wizard after AI",
+    "summary": "Pin Sarah & Mike sticky top; auto-redirect logged-in users to wizard after AI",
+    "areas": [
+      "web"
+    ],
+    "commit": "4220548b",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-28-fc86606c",
     "date": "2026-06-28T23:22:31+08:00",
     "title": "Gate escrow deposit and materials workflow on client schedule confirmation",

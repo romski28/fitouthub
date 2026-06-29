@@ -680,6 +680,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiRoundCount, setAiRoundCount] = useState(0);
   const [aiRoundNotice, setAiRoundNotice] = useState<string | null>(null);
   const [isConversationSequenceComplete, setIsConversationSequenceComplete] = useState(false);
+  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState<number | null>(null);
   const [promptCharCount, setPromptCharCount] = useState(0);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
   const hasClearedForgottenPromptRef = useRef(false);
@@ -1914,6 +1915,29 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
   const hasAiResponse = Boolean(!aiLoading && !aiError && aiOutput && aiStructured && aiConversationalText);
 
+  // ── Auto-redirect logged-in users to wizard when AI response is complete ──
+  const handleStartAiWizardRef = useRef(handleStartAiWizard);
+  handleStartAiWizardRef.current = handleStartAiWizard;
+
+  useEffect(() => {
+    if (!hasAiResponse || !isConversationSequenceComplete || isLoggedIn !== true) {
+      setAutoRedirectCountdown(null);
+      return;
+    }
+    setAutoRedirectCountdown(2);
+    const interval = setInterval(() => {
+      setAutoRedirectCountdown((c) => {
+        if (c === null || c <= 1) {
+          clearInterval(interval);
+          if (c === 1) handleStartAiWizardRef.current();
+          return null;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [hasAiResponse, isConversationSequenceComplete, isLoggedIn]);
+
   const showFollowUpComposer = ENABLE_FOLLOW_UP_COMPOSER && hasAiResponse && aiRoundCount === 1 && isConversationSequenceComplete;
   const showPromptComposer = !deepSeekSandboxEnabled
     ? true
@@ -2101,24 +2125,43 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             {isLoggedIn === true ? (
               <>
                 <div className="text-center">
-                  <p className="text-lg font-semibold text-slate-900">Ready to continue?</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {autoRedirectCountdown !== null && autoRedirectCountdown > 0
+                      ? `Taking you to project setup in ${autoRedirectCountdown}...`
+                      : 'Ready to continue?'}
+                  </p>
                 </div>
 
                 <div className="mt-5">
                   <button
                     type="button"
-                    onClick={handleStartAiWizard}
+                    onClick={() => {
+                      setAutoRedirectCountdown(null);
+                      handleStartAiWizard();
+                    }}
                     className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-lg"
                   >
-                    Continue with MIMO
+                    {autoRedirectCountdown !== null && autoRedirectCountdown > 0 ? 'Go now' : 'Continue with MIMO'}
                   </button>
                 </div>
+
+                {autoRedirectCountdown !== null && autoRedirectCountdown > 0 && (
+                  <div className="mt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setAutoRedirectCountdown(null)}
+                      className="text-xs text-slate-400 underline hover:text-slate-600"
+                    >
+                      Cancel auto-redirect
+                    </button>
+                  </div>
+                )}
 
                 <div className="mt-5 text-center">
                   <p className="text-sm text-slate-700">Prefer to talk to a person? We are here to help.</p>
                   <button
                     type="button"
-                    onClick={handleTalkToPersonNow}
+                    onClick={() => { setAutoRedirectCountdown(null); handleTalkToPersonNow(); }}
                     className="mt-3 rounded-lg border border-emerald-600 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-50"
                   >
                     Book a chat

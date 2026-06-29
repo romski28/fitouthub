@@ -54,15 +54,15 @@ export default function Home() {
                 </div>
 
                 {/* 3-col: Sarah | Prompt | Mike */}
-                <div className="flex items-end gap-2">
+                <div className="flex items-start gap-2">
                   {/* Sarah — left, hidden below md */}
-                  <div className="hidden md:flex items-end justify-end w-[120px] shrink-0">
+                  <div className="hidden md:flex items-start justify-end w-[120px] shrink-0 sticky top-4">
                     <Image
                       src="/assets/images/sarah-800_cropped.webp"
                       alt="Sarah"
                       width={120}
                       height={240}
-                      className="min-w-[120px] max-h-[240px] h-auto object-contain object-bottom"
+                      className="min-w-[120px] max-h-[240px] h-auto object-contain object-top"
                       priority
                     />
                   </div>
@@ -74,13 +74,13 @@ export default function Home() {
                   </div>
 
                   {/* Mike — right, hidden below lg */}
-                  <div className="hidden lg:flex items-end justify-start w-[120px] shrink-0">
+                  <div className="hidden lg:flex items-start justify-start w-[120px] shrink-0 sticky top-4">
                     <Image
                       src="/assets/images/mike-800_cropped.webp"
                       alt="Mike"
                       width={120}
                       height={240}
-                      className="min-w-[120px] max-h-[240px] h-auto object-contain object-bottom"
+                      className="min-w-[120px] max-h-[240px] h-auto object-contain object-top"
                       priority
                     />
                   </div>
