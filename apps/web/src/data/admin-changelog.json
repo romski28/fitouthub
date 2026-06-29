@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-32bfab84",
+    "date": "2026-06-29T23:20:38+08:00",
+    "title": "Client schedule accept opens deposit escrow modal directly instead of financials tab",
+    "summary": "Client schedule accept opens deposit escrow modal directly instead of financials tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "32bfab84",
+    "files": [
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-a8c8a763",
     "date": "2026-06-29T23:08:55+08:00",
     "title": "Restore confirm button for client; label as Accept schedule when read-only",

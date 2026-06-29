@@ -57,7 +57,7 @@ export function AgreeMilestoneScheduleModal({
   onClose,
 }: AgreeMilestoneScheduleModalProps) {
   const router = useRouter();
-  const { state } = useNextStepModal();
+  const { state, openModal } = useNextStepModal();
   const { accessToken: clientAccessToken } = useAuth();
   const { accessToken: professionalAccessToken } = useProfessionalAuth();
 
@@ -230,13 +230,19 @@ export function AgreeMilestoneScheduleModal({
   const handleScheduleConfirmed = useCallback(async () => {
     try {
       await markStepCompleted();
+      // For the client, the natural next step is funding escrow — open that modal directly.
+      if (!isProfessional) {
+        onClose();
+        openModal('DEPOSIT_ESCROW_FUNDS', projectId || '', state.projectDetailsPath, projectId || '', state.role || 'CLIENT');
+        return;
+      }
       await openWorkflowModal(
         state.modalContent?.successTitle || 'Milestone schedule confirmed!',
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to confirm schedule');
     }
-  }, [markStepCompleted, openWorkflowModal, state.modalContent?.successTitle]);
+  }, [markStepCompleted, openWorkflowModal, state, isProfessional, onClose, openModal, projectId]);
 
   const showMainModal = isOpen && !workflowModalOpen;
 
