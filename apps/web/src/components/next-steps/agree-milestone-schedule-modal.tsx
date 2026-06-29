@@ -321,6 +321,7 @@ export function AgreeMilestoneScheduleModal({
                         projectCurrentStage={projectDetails?.currentStage || ''}
                         accessToken={token}
                         hideStartNegotiationPanel={true}
+                        readOnly={!isProfessional}
                         onScheduleConfirmed={handleScheduleConfirmed}
                         financialAmounts={financialAmounts}
                       />

@@ -652,7 +652,13 @@ export class MilestonesService {
   async resetProjectMilestonesToDefault(projectProfessionalId: string, professionalId: string) {
     const assignment = await this.prisma.projectProfessional.findUnique({
       where: { id: projectProfessionalId },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        professionalId: true,
+        quoteEstimatedStartAt: true,
+        quoteEstimatedDurationMinutes: true,
+        quoteEstimatedDurationUnit: true,
         project: {
           include: {
             paymentPlan: {
@@ -706,6 +712,7 @@ export class MilestonesService {
       ? new Date(assignment.quoteEstimatedStartAt)
       : null;
     const durationMinutes = Math.max(0, Number(assignment.quoteEstimatedDurationMinutes) || 0);
+    const isDaysDuration = assignment.quoteEstimatedDurationUnit === 'days';
     const segmentMinutes = durationMinutes > 0 ? Math.floor(durationMinutes / defaultTitles.length) : 0;
 
     return this.prisma.$transaction(async (tx) => {
@@ -753,7 +760,12 @@ export class MilestonesService {
                 ? durationMinutes
                 : segmentMinutes * (index + 1);
             plannedStartDate = new Date(startAt.getTime() + startOffset * 60 * 1000);
-            plannedEndDate = new Date(startAt.getTime() + endOffset * 60 * 1000);
+            const rawEnd = new Date(startAt.getTime() + endOffset * 60 * 1000);
+            // When duration is in days, finish at 18:00 on the last day
+            if (isDaysDuration && index === defaultTitles.length - 1) {
+              rawEnd.setHours(18, 0, 0, 0);
+            }
+            plannedEndDate = rawEnd;
           }
 
           const existing = existingBySequence.get(index + 1);

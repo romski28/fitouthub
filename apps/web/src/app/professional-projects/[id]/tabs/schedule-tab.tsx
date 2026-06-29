@@ -67,6 +67,7 @@ interface ScheduleTabProps {
   accessToken: string | null;
   onMilestonesUpdate?: () => void;
   hideStartNegotiationPanel?: boolean;
+  readOnly?: boolean;
   onScheduleConfirmed?: () => void;
   financialAmounts?: Record<string, { amount: number }>;
 }
@@ -217,6 +218,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
   accessToken,
   onMilestonesUpdate,
   hideStartNegotiationPanel = false,
+  readOnly = false,
   onScheduleConfirmed,
   financialAmounts,
 }) => {
@@ -1319,21 +1321,25 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
               <p className="text-xs text-slate-600">Review the default financial milestone spine, then add and manage any extra non-financial work tasks.</p>
               <div className="flex items-center gap-2 flex-wrap">
                 {reorderSaving && <span className="text-xs text-slate-600">Saving order...</span>}
-                <button
-                  onClick={handleResetMilestonesToDefault}
-                  disabled={resettingDefaults}
-                  className="inline-flex items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50"
-                >
-                  {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
-                </button>
-                <button
-                  onClick={() => setIsAddingNew(true)}
-                  disabled={isAddingNew || editingIndex !== null}
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  + Add Task
-                </button>
-                {!scheduleNextStep && !nextStepLoading && (
+                {!readOnly && (
+                  <>
+                    <button
+                      onClick={handleResetMilestonesToDefault}
+                      disabled={resettingDefaults}
+                      className="inline-flex items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      {resettingDefaults ? 'Resetting...' : 'Reset to Defaults'}
+                    </button>
+                    <button
+                      onClick={() => setIsAddingNew(true)}
+                      disabled={isAddingNew || editingIndex !== null}
+                      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      + Add Task
+                    </button>
+                  </>
+                )}
+                {!scheduleNextStep && !nextStepLoading && !readOnly && (
                   <button
                     onClick={handleConfirmSchedule}
                     disabled={confirmingSchedule}
@@ -1500,7 +1506,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                             {milestone.plannedEndDate ? <div className="text-xs text-slate-500 mt-0.5">{formatTimeHHMM(milestone.plannedEndDate)}</div> : null}
                           </td>
                           <td className="px-3 py-3">
-                            <div className="flex items-center gap-2">
+                            {readOnly ? (
+                              <span className="text-sm text-slate-700">{String(milestone.percentComplete || 0)}%</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
                               <input
                                 type="number"
                                 min="0"
@@ -1523,25 +1532,29 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                                 Save
                               </button>
                             </div>
+                            )}
                           </td>
                           <td className="px-3 py-3">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setEditingIndex(index)}
-                                className="p-2 text-slate-600 hover:bg-slate-200 rounded transition"
-                                title={isFinancialMilestone ? 'Edit milestone' : 'Edit task'}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              {!isFinancialMilestone && (
+                            {!readOnly && (
+                              <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleDeleteTask(index)}
-                                  className="p-2 text-slate-600 hover:bg-rose-100 hover:text-rose-900 rounded transition"
-                                  title="Delete task"
+                                  onClick={() => setEditingIndex(index)}
+                                  className="p-2 text-slate-600 hover:bg-slate-200 rounded transition"
+                                  title={isFinancialMilestone ? 'Edit milestone' : 'Edit task'}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Pencil className="w-4 h-4" />
                                 </button>
-                              )}
+                                {!isFinancialMilestone && (
+                                  <button
+                                    onClick={() => handleDeleteTask(index)}
+                                    className="p-2 text-slate-600 hover:bg-rose-100 hover:text-rose-900 rounded transition"
+                                    title="Delete task"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                             </div>
                           </td>
                         </tr>

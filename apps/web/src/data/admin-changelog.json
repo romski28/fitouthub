@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-06-29-9297644c",
+    "date": "2026-06-29T23:01:51+08:00",
+    "title": "Client read-only schedule modal; fix finish time to 18:00 for days-based duration",
+    "summary": "Client read-only schedule modal; fix finish time to 18:00 for days-based duration",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9297644c",
+    "files": [
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-4a43b359",
     "date": "2026-06-29T16:05:49+08:00",
     "title": "Post-signing opens CONFIRM_SCHEDULE modal; add start/finish times under schedule dates",
