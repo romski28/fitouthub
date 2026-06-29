@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-124c78a9",
+    "date": "2026-06-29T10:09:06+08:00",
+    "title": "Bump auto-redirect countdown from 2s to 4s",
+    "summary": "Bump auto-redirect countdown from 2s to 4s",
+    "areas": [
+      "web"
+    ],
+    "commit": "124c78a9",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-d9344a31",
     "date": "2026-06-29T10:04:05+08:00",
     "title": "Fade-in button panel with delay; cross-fade page transition on wizard navigation",

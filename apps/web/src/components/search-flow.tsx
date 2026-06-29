@@ -1930,7 +1930,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       setAutoRedirectCountdown(null);
       return;
     }
-    setAutoRedirectCountdown(2);
+    setAutoRedirectCountdown(4);
     const interval = setInterval(() => {
       setAutoRedirectCountdown((c) => {
         if (c === null || c <= 1) {
