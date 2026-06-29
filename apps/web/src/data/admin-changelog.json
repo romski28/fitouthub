@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-a8c8a763",
+    "date": "2026-06-29T23:08:55+08:00",
+    "title": "Restore confirm button for client; label as Accept schedule when read-only",
+    "summary": "Restore confirm button for client; label as Accept schedule when read-only",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8c8a763",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-7d762e9b",
     "date": "2026-06-29T23:04:20+08:00",
     "title": "Fix extra closing div in schedule-tab.tsx",
