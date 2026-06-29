@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-db117096",
+    "date": "2026-06-29T12:55:12+08:00",
+    "title": "AI prompt: never assume client has tools; always refer to them as client, not user",
+    "summary": "AI prompt: never assume client has tools; always refer to them as client, not user",
+    "areas": [
+      "api"
+    ],
+    "commit": "db117096",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-29-d4d95e6d",
     "date": "2026-06-29T12:47:49+08:00",
     "title": "Recolor safety tab: charcoal text, risk color coding, remove duplicate chip, panelize assumptions/risks",
