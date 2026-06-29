@@ -425,6 +425,16 @@ export function QuoteActionModal({
 
   const exceedsClientFinishDate = useMemo(() => {
     if (!requestedCompletionDeadline) return false;
+
+    // Check if the start date alone is after the completion deadline
+    if (estimatedStartDate) {
+      const startOnly = new Date(`${estimatedStartDate}T00:00`);
+      if (!Number.isNaN(startOnly.getTime()) && startOnly.getTime() > requestedCompletionDeadline.getTime()) {
+        return true;
+      }
+    }
+
+    // Check if projected end date exceeds the deadline
     if (!estimatedStartDate || !estimatedStartHour || !estimatedStartMinute || !estimatedDurationValue) return false;
 
     const durationValue = Number(estimatedDurationValue);
@@ -576,21 +586,19 @@ export function QuoteActionModal({
                     <p>Your price (supplies + labour + other): {formatHKD(enteredTotal)}</p>
                   </div>
 
-                  {requestedCompletionBy ? (
-                    <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.65)] px-3 py-2 text-sm text-stone-700">
-                      Client requested completion by: <span className="font-semibold text-stone-900">{requestedCompletionBy}</span>
-                    </div>
-                  ) : null}
-
                   {siteInspectionAvailableOn ? (
                     <div className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
                       Site inspection available: <span className="font-semibold text-sky-800">{siteInspectionAvailableOn}</span>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                      No site inspection date set by client
+                    </div>
+                  )}
 
-                  {exceedsClientFinishDate ? (
-                    <div className="rounded-lg border border-rose-400 bg-rose-500 px-3 py-2 text-sm font-semibold text-white animate-[pulse_0.7s_ease-in-out_3]">
-                      Your project break the clients finish date.
+                  {requestedCompletionBy ? (
+                    <div className={`rounded-lg border px-3 py-2 text-sm ${exceedsClientFinishDate ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.65)] text-stone-700'}`}>
+                      Client requested completion by: <span className="font-semibold">{requestedCompletionBy}</span>
                     </div>
                   ) : null}
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-2a717fbe",
+    "date": "2026-06-29T13:42:09+08:00",
+    "title": "Quote modal: swap inspection/completion order; warning colors when exceeds client deadline; note when no inspection date",
+    "summary": "Quote modal: swap inspection/completion order; warning colors when exceeds client deadline; note when no inspection date",
+    "areas": [
+      "web"
+    ],
+    "commit": "2a717fbe",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-1229e366",
     "date": "2026-06-29T13:25:42+08:00",
     "title": "Quote modal: rename date labels to I can start on / Arriving at; simplify strap line",
