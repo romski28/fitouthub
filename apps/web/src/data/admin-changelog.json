@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-29-4a43b359",
+    "date": "2026-06-29T16:05:49+08:00",
+    "title": "Post-signing opens CONFIRM_SCHEDULE modal; add start/finish times under schedule dates",
+    "summary": "Post-signing opens CONFIRM_SCHEDULE modal; add start/finish times under schedule dates",
+    "areas": [
+      "web"
+    ],
+    "commit": "4a43b359",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/contract-tab.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/schedule-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-00c35b72",
     "date": "2026-06-29T14:08:20+08:00",
     "title": "Fix next-step caching: use ref for localStorage save, per-project skeletons, background refresh indicator",

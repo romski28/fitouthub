@@ -6,6 +6,7 @@ import { API_BASE_URL } from '@/config/api';
 import { completeNextStep, fetchPrimaryNextStep, invalidateNextStepCache } from '@/lib/next-steps';
 import { WorkflowCompletionModal, WorkflowNextStep, WaitingParty } from '@/components/workflow-completion-modal';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
+import { useNextStepModal } from '@/context/next-step-modal-context';
 
 interface ContractData {
   projectId: string;
@@ -73,6 +74,7 @@ export const ContractTab: React.FC<ContractTabProps> = ({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const { openModal } = useNextStepModal();
 
   const openWorkflowModal = useCallback(async (completedLabel: string) => {
     if (!accessToken) return;
@@ -412,15 +414,23 @@ export const ContractTab: React.FC<ContractTabProps> = ({
         completedLabel={workflowModalCompletedLabel}
         nextStep={workflowModalNextStep}
         showConfetti
-        additionalActionLabel={workflowModalNextStep?.tab === 'schedule' ? 'Open schedule tab' : undefined}
-        onAdditionalAction={workflowModalNextStep?.tab === 'schedule' ? onOpenScheduleTab : undefined}
-        onNavigate={
-          workflowModalNextStep?.tab === 'schedule'
-            ? onOpenScheduleTab
-            : undefined
+        additionalActionLabel={workflowModalNextStep?.tab === 'schedule' ? 'Confirm project schedule' : undefined}
+        onAdditionalAction={workflowModalNextStep?.tab === 'schedule'
+          ? () => {
+              setWorkflowModalOpen(false);
+              openModal('CONFIRM_SCHEDULE', projectId, undefined, projectId, 'PROFESSIONAL');
+            }
+          : undefined
         }
         showPrimaryActionOverride={workflowModalNextStep?.tab === 'schedule'}
-        primaryActionLabel="Open next step"
+        primaryActionLabel="Confirm project schedule"
+        onNavigate={workflowModalNextStep?.tab === 'schedule'
+          ? () => {
+              setWorkflowModalOpen(false);
+              openModal('CONFIRM_SCHEDULE', projectId, undefined, projectId, 'PROFESSIONAL');
+            }
+          : undefined
+        }
         onClose={() => setWorkflowModalOpen(false)}
       />
     </div>

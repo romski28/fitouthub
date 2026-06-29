@@ -332,6 +332,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
     return date.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
   };
 
+  const formatTimeHHMM = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
+
   const isSameDate = (date1?: string | null, date2?: string | null) => {
     if (!date1 || !date2) return true;
     return date1.split("T")[0] === date2.split("T")[0];
@@ -1485,8 +1491,14 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({
                                 : null
                             ) : null}
                           </td>
-                          <td className="px-3 py-3 text-slate-700">{formatDayMonth(milestone.plannedStartDate) || 'No date'}</td>
-                          <td className="px-3 py-3 text-slate-700">{formatDayMonth(milestone.plannedEndDate) || 'No date'}</td>
+                          <td className="px-3 py-3 text-slate-700">
+                            <div>{formatDayMonth(milestone.plannedStartDate) || 'No date'}</div>
+                            {milestone.plannedStartDate ? <div className="text-xs text-slate-500 mt-0.5">{formatTimeHHMM(milestone.plannedStartDate)}</div> : null}
+                          </td>
+                          <td className="px-3 py-3 text-slate-700">
+                            <div>{formatDayMonth(milestone.plannedEndDate) || 'No date'}</div>
+                            {milestone.plannedEndDate ? <div className="text-xs text-slate-500 mt-0.5">{formatTimeHHMM(milestone.plannedEndDate)}</div> : null}
+                          </td>
                           <td className="px-3 py-3">
                             <div className="flex items-center gap-2">
                               <input
