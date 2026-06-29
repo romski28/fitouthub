@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-dd68bed0",
+    "date": "2026-06-29T13:54:44+08:00",
+    "title": "Gate Book site visit CTA on skipped site access after quote submission",
+    "summary": "Gate Book site visit CTA on skipped site access after quote submission",
+    "areas": [
+      "web"
+    ],
+    "commit": "dd68bed0",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-2a717fbe",
     "date": "2026-06-29T13:42:09+08:00",
     "title": "Quote modal: swap inspection/completion order; warning colors when exceeds client deadline; note when no inspection date",

@@ -138,7 +138,7 @@ export function QuoteActionModal({
   const [requestedCompletionDeadline, setRequestedCompletionDeadline] = useState<Date | null>(null);
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState<string | null>(null);
   const [siteInspectionRawDate, setSiteInspectionRawDate] = useState<string | null>(null);
-  const [hasPendingSiteAccessRequest, setHasPendingSiteAccessRequest] = useState(false);
+  const [hasEngagedSiteAccess, setHasEngagedSiteAccess] = useState(false);
   const [isEmergencyProject, setIsEmergencyProject] = useState(false);
   const [projectScale, setProjectScale] = useState<string | null>(null);
   const [platformFeePercent, setPlatformFeePercent] = useState<number | undefined>();
@@ -173,7 +173,7 @@ export function QuoteActionModal({
       setRequestedCompletionDeadline(null);
       setSiteInspectionAvailableOn(null);
       setSiteInspectionRawDate(null);
-      setHasPendingSiteAccessRequest(false);
+      setHasEngagedSiteAccess(false);
       setIsEmergencyProject(false);
       setProjectScale(null);
       setPlatformFeePercent(undefined);
@@ -229,8 +229,8 @@ export function QuoteActionModal({
                 accessData?.requiresReschedule === true ||
                 typeof accessData?.visitDetails === 'string' &&
                 accessData.visitDetails.includes('Site availability changed to');
-              const activeStatuses = ['pending', 'approved_no_visit', 'approved_visit_scheduled', 'visited'];
-              setHasPendingSiteAccessRequest(
+              const activeStatuses = ['pending', 'approved_no_visit', 'approved_visit_scheduled', 'visited', 'skipped'];
+              setHasEngagedSiteAccess(
                 activeStatuses.includes(accessData?.requestStatus) && !rescheduleRequired
               );
             }
@@ -458,7 +458,7 @@ export function QuoteActionModal({
     requestedCompletionDeadline,
   ]);
 
-  const showSiteVisitCta = Boolean(siteInspectionRawDate) && !hasPendingSiteAccessRequest;
+  const showSiteVisitCta = Boolean(siteInspectionRawDate) && !hasEngagedSiteAccess;
   const breakdownFields = getQuoteBreakdownFields(isEmergencyProject);
   const emergencyDateOptions = getEmergencyDateOptions();
   const hourOptions = isEmergencyProject
