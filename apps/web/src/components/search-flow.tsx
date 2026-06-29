@@ -1010,12 +1010,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     return true;
   }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput]);
 
+  const [pageExiting, setPageExiting] = useState(false);
+
   const handleOpenWizardRoute = useCallback((mode: 'classic' | 'ai') => {
     if (!aiStructured) return;
     const persisted = persistAiWizardHandoffForAuth();
     if (!persisted) return;
     persistTempAssistDraft();
-    router.push(`/create-project/wizard?wizard=${mode}`);
+    // Cross-fade: exit current page, then navigate
+    setPageExiting(true);
+    setTimeout(() => {
+      router.push(`/create-project/wizard?wizard=${mode}`);
+    }, 400);
   }, [aiStructured, persistAiWizardHandoffForAuth, persistTempAssistDraft, router]);
 
   const handleContinueToMatching = useCallback(() => {
@@ -1971,6 +1977,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
 
   return (
+    <div className={`transition-opacity duration-500 ${pageExiting ? 'opacity-0' : 'opacity-100'}`}>
     <div className="space-y-3">
       {!isAdminTester && deepSeekSandboxEnabled && (
         <div className="space-y-3">
@@ -2120,7 +2127,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       </div>
 
       {hasAiResponse && (
-        <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-400 ${isConversationSequenceComplete ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+        <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0'}`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
             {isLoggedIn === true ? (
               <>
@@ -2421,6 +2428,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         openJoinModal={openJoinModal}
       />
       <SearchHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+    </div>
     </div>
   );
 }

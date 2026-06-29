@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-d9344a31",
+    "date": "2026-06-29T10:04:05+08:00",
+    "title": "Fade-in button panel with delay; cross-fade page transition on wizard navigation",
+    "summary": "Fade-in button panel with delay; cross-fade page transition on wizard navigation",
+    "areas": [
+      "web"
+    ],
+    "commit": "d9344a31",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-4220548b",
     "date": "2026-06-29T09:56:44+08:00",
     "title": "Pin Sarah & Mike sticky top; auto-redirect logged-in users to wizard after AI",
