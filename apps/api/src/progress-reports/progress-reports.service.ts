@@ -1,8 +1,11 @@
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ProjectStage } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from '../chat/chat.service';
 import { FinancialService } from '../financial/financial.service';
 import { ActivityLogService } from '../activity-log.service';
+import { ProjectStageService } from '../projects/project-stage.service';
+import { NextStepService } from '../projects/next-step.service';
 import { CreateProgressReportDto, PhotoEntryDto } from './progress-reports.dto';
 
 export { CreateProgressReportDto, PhotoEntryDto };
@@ -30,6 +33,8 @@ export class ProgressReportsService {
     private readonly chatService: ChatService,
     private readonly financialService: FinancialService,
     private readonly activityLogService: ActivityLogService,
+    private readonly projectStageService: ProjectStageService,
+    private readonly nextStepService: NextStepService,
   ) {}
 
   async createReport(
@@ -76,6 +81,14 @@ export class ProgressReportsService {
         where: { id: milestoneId, projectId },
       });
       if (!milestone) throw new BadRequestException('Milestone not found on this project');
+
+      // Guard: prevent double-submission of the same milestone
+      if (signOffRequested && milestone.signOffStatus === 'pending') {
+        throw new BadRequestException('This milestone already has a pending sign-off request');
+      }
+      if (signOffRequested && milestone.signOffStatus === 'approved') {
+        throw new BadRequestException('This milestone has already been approved');
+      }
     }
 
     if (paymentMilestoneId) {
@@ -144,6 +157,17 @@ export class ProgressReportsService {
         }).catch((err) => {
           console.error('[ProgressReportsService] Finance sign-off notification failed:', err);
         });
+      }
+
+      // Transition project stage: WORK_IN_PROGRESS → MILESTONE_PENDING
+      // Non-fatal — report is already persisted regardless of stage transition outcome.
+      try {
+        if (project.currentStage === ProjectStage.WORK_IN_PROGRESS) {
+          await this.projectStageService.transitionStage(projectId, ProjectStage.MILESTONE_PENDING);
+          await this.nextStepService.invalidateNextStepCache(projectId);
+        }
+      } catch (stageErr: any) {
+        console.error('[ProgressReportsService] Stage transition to MILESTONE_PENDING failed (non-fatal):', stageErr?.message || stageErr);
       }
     }
 
@@ -340,6 +364,17 @@ export class ProgressReportsService {
         where: { id: report.milestoneId },
         data: { signOffStatus: 'rejected', signOffRejectedAt: now, signOffRequested: false },
       });
+    }
+
+    // Transition project stage: MILESTONE_PENDING → WORK_IN_PROGRESS
+    // Non-fatal — sign-off decision is already persisted regardless of stage transition outcome.
+    try {
+      if (project.currentStage === ProjectStage.MILESTONE_PENDING) {
+        await this.projectStageService.transitionStage(report.projectId, ProjectStage.WORK_IN_PROGRESS);
+        await this.nextStepService.invalidateNextStepCache(report.projectId);
+      }
+    } catch (stageErr: any) {
+      console.error('[ProgressReportsService] Stage transition from MILESTONE_PENDING failed (non-fatal):', stageErr?.message || stageErr);
     }
 
     // Post a system message in the progress thread

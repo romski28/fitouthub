@@ -121,6 +121,15 @@ export class ProjectStageService {
       return true;
     }
 
+    // Multi-milestone support: allow MILESTONE_PENDING -> WORK_IN_PROGRESS
+    // (after client approves/rejects a milestone sign-off, return to active work)
+    if (
+      from === ProjectStage.MILESTONE_PENDING &&
+      to === ProjectStage.WORK_IN_PROGRESS
+    ) {
+      return true;
+    }
+
     // General validation: forward progress only (with exceptions above)
     const stageOrder: ProjectStage[] = [
       ProjectStage.CREATED,

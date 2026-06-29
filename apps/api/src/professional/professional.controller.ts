@@ -1609,6 +1609,7 @@ export class ProfessionalController {
                 projectScale: true,
                 currentStage: true,
                 isEmergency: true,
+                siteStartedAt: true,
                 budget: true,
                 notes: true,
                 tradesRequired: true,

@@ -725,7 +725,7 @@ export class MilestonesService {
 
       const existingFinancial = await tx.projectMilestone.findMany({
         where: {
-          projectId: assignment.projectId,
+          projectId: assignment.project.id,
           projectProfessionalId,
           isFinancial: true,
         },
@@ -787,7 +787,7 @@ export class MilestonesService {
 
           return tx.projectMilestone.create({
             data: {
-              projectId: assignment.projectId,
+              projectId: assignment.project.id,
               projectProfessionalId,
               title,
               sequence: index + 1,
@@ -833,7 +833,7 @@ export class MilestonesService {
         action: 'milestones_reset_to_default',
         resource: 'ProjectProfessional',
         resourceId: projectProfessionalId,
-        projectId: assignment.projectId,
+        projectId: assignment.project.id,
         projectTitle: assignment.project?.projectName,
         details: 'Project milestones reset to default schedule',
         metadata: {

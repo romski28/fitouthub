@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-06-30-065c2dd6",
+    "date": "2026-06-30T01:02:53+08:00",
+    "title": "feat: milestone sign-off stage transitions, milestone selector filtering, pro site-start celebration",
+    "summary": "feat: milestone sign-off stage transitions, milestone selector filtering, pro site-start celebration",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "065c2dd6",
+    "files": [
+      "MANUAL_SQL_BACKFILL_MILESTONE_PENDING.sql",
+      "apps/api/src/milestones/milestones.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/progress-reports/progress-reports.module.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/api/src/projects/project-stage.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-32bfab84",
     "date": "2026-06-29T23:20:38+08:00",
     "title": "Client schedule accept opens deposit escrow modal directly instead of financials tab",

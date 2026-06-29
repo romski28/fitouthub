@@ -21,6 +21,7 @@ type WorkMilestone = {
   status: string;
   plannedEndDate?: string | null;
   signOffRequested?: boolean;
+  signOffStatus?: string | null;  // pending | approved | rejected
 };
 
 type PaymentMilestone = {
@@ -369,6 +370,17 @@ function ComposeForm({
     return paymentPlan.milestones.find((pm) => pm.projectMilestoneId === selectedMilestoneId) ?? null;
   }, [selectedMilestoneId, paymentPlan?.milestones]);
 
+  // Map projectMilestoneId → payment milestone for status checks
+  const paymentMilestoneByProjectId = React.useMemo<Map<string, PaymentMilestone>>(() => {
+    const map = new Map<string, PaymentMilestone>();
+    if (paymentPlan?.milestones) {
+      for (const pm of paymentPlan.milestones) {
+        if (pm.projectMilestoneId) map.set(pm.projectMilestoneId, pm);
+      }
+    }
+    return map;
+  }, [paymentPlan?.milestones]);
+
   const handleSubmit = async () => {
     const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
     if (!selectedMilestoneId || !selectedMilestone) {
@@ -429,10 +441,26 @@ function ComposeForm({
           <option value="">— No milestone selected —</option>
           {milestones.map((m) => {
             const isCompleted = m.status === 'completed';
+            const signOffPending = (m as any).signOffStatus === 'pending';
+            const signOffApproved = (m as any).signOffStatus === 'approved';
+            const signOffRejected = (m as any).signOffStatus === 'rejected';
+            const linkedPm = paymentMilestoneByProjectId.get(m.id);
+            const pmPaidOrRequested = linkedPm && ['paid', 'release_requested'].includes(linkedPm.status);
+            const pmDisputed = linkedPm?.status === 'disputed';
+
+            const disabled = isCompleted || signOffPending || signOffApproved || pmPaidOrRequested || pmDisputed;
+
+            let suffix = '';
+            if (isCompleted) suffix = ' ✓ completed';
+            else if (signOffApproved) suffix = ' ✓ approved';
+            else if (signOffPending) suffix = ' ⏳ awaiting approval';
+            else if (pmPaidOrRequested) suffix = ' 💰 payment in progress';
+            else if (pmDisputed) suffix = ' ⚠️ in dispute';
+            else if (signOffRejected) suffix = ' ↩️ rejected — resubmit';
+
             return (
-              <option key={m.id} value={m.id} disabled={isCompleted}>
-                {m.sequence}. {m.title}
-                {isCompleted ? ' ✓ completed' : m.signOffRequested ? ' · sign-off pending' : ''}
+              <option key={m.id} value={m.id} disabled={disabled}>
+                {m.sequence}. {m.title}{suffix}
               </option>
             );
           })}

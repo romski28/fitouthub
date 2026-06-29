@@ -23,6 +23,7 @@ import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
+import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 import {
   buildQuoteBreakdownPayload,
   emptyQuoteBreakdownForm,
@@ -354,6 +355,9 @@ export default function ProjectDetailPage() {
   const [assistModalError, setAssistModalError] = useState<string | null>(null);
   const hasLoadedProjectRef = useRef(false);
   const lastProjectFetchAtRef = useRef(0);
+  const siteStartedCelebratedRef = useRef(false);
+  const lastSiteStartedAtRef = useRef<string | null>(null);
+  const [showSiteStartedCelebration, setShowSiteStartedCelebration] = useState(false);
   const quoteFormDirtyRef = useRef(false);
   const authPromptShownRef = useRef(false);
 
@@ -455,7 +459,18 @@ export default function ProjectDetailPage() {
       }
 
       const data = await response.json();
+      const prevSiteStarted = lastSiteStartedAtRef.current;
+      lastSiteStartedAtRef.current = data?.project?.siteStartedAt ?? null;
       setProject(data);
+      // Detect site start — client just scanned the pro's QR code
+      if (
+        !prevSiteStarted &&
+        data?.project?.siteStartedAt &&
+        !siteStartedCelebratedRef.current
+      ) {
+        siteStartedCelebratedRef.current = true;
+        setShowSiteStartedCelebration(true);
+      }
       hasLoadedProjectRef.current = true;
 
       if (!quoteFormDirtyRef.current && !submittingQuote) {
@@ -541,6 +556,33 @@ export default function ProjectDetailPage() {
       fetchMessages();
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, fetchProject, promptLoginInPlace]);
+
+  // Background polling — detect site-start when tab becomes visible
+  useEffect(() => {
+    if (!accessToken || !projectProfessionalId) return;
+
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchProject();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Poll every 30s while visible
+    interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchProject();
+      }
+    }, 30_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      if (interval) clearInterval(interval);
+    };
+  }, [accessToken, projectProfessionalId, fetchProject]);
 
   const reloadPaymentPlan = useCallback(async () => {
     if (!accessToken || !project?.project?.id) {
@@ -1822,6 +1864,14 @@ export default function ProjectDetailPage() {
         projectName={project?.project?.projectName}
         context="active"
         submitPrefix="Request"
+      />
+      <WorkflowCompletionModal
+        isOpen={showSiteStartedCelebration}
+        completedLabel="Project started!"
+        completedDescription="Welcome to your project. The client has confirmed the on-site start."
+        nextStep={null}
+        showConfetti
+        onClose={() => setShowSiteStartedCelebration(false)}
       />
     </>
   );
