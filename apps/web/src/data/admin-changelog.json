@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-29-3a70917e",
+    "date": "2026-06-29T10:56:28+08:00",
+    "title": "Wizard: warn when no images uploaded; rename Continue to Final checks",
+    "summary": "Wizard: warn when no images uploaded; rename Continue to Final checks",
+    "areas": [
+      "web"
+    ],
+    "commit": "3a70917e",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-29-124c78a9",
     "date": "2026-06-29T10:09:06+08:00",
     "title": "Bump auto-redirect countdown from 2s to 4s",

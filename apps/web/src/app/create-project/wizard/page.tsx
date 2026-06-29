@@ -358,6 +358,7 @@ export default function CreateProjectWizardPage() {
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [showNoImagesWarning, setShowNoImagesWarning] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
     if (typeof window === 'undefined') return 'map';
@@ -1750,11 +1751,17 @@ export default function CreateProjectWizardPage() {
                 {activeStep?.kind === 'images' ? (
                   <button
                     type="button"
-                    onClick={submitWizard}
+                    onClick={() => {
+                      if (existingImageUrls.length === 0 && !isUploadingImages) {
+                        setShowNoImagesWarning(true);
+                      } else {
+                        submitWizard();
+                      }
+                    }}
                     disabled={isUploadingImages}
                     className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    {isUploadingImages ? 'Uploading…' : 'Continue to Invite Professionals'}
+                    {isUploadingImages ? 'Uploading…' : 'Final checks'}
                   </button>
                 ) : currentStep < steps.length - 1 ? (
                   <button
@@ -1771,7 +1778,7 @@ export default function CreateProjectWizardPage() {
                     onClick={submitWizard}
                     className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    Continue to Invite Professionals
+                    Final checks
                   </button>
                 )}
               </div>
@@ -1901,6 +1908,34 @@ export default function CreateProjectWizardPage() {
                 className="flex-1 rounded-lg bg-[#F97362] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e8624f]"
               >
                 Skip date
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNoImagesWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNoImagesWarning(false); }}>
+          <div className="w-full max-w-sm rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] p-6 shadow-2xl text-center">
+            <p className="text-base font-semibold text-slate-800 leading-relaxed">
+              Images and documents are the easiest way to describe your project to our professionals. Please consider adding some now.
+            </p>
+            <div className="mt-5 flex gap-3 justify-center">
+              <button
+                type="button"
+                onClick={() => setShowNoImagesWarning(false)}
+                className="min-w-[100px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNoImagesWarning(false);
+                  submitWizard();
+                }}
+                className="min-w-[100px] rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+              >
+                Continue
               </button>
             </div>
           </div>
