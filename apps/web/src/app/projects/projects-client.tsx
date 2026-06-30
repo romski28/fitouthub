@@ -218,7 +218,9 @@ function NextStepModalButton({
       disabled={disabled}
       title={disabled ? disabledTitle : undefined}
       className={
-        variant === 'primary'
+        action.actionKey === 'UX_SURVEY'
+          ? 'rounded-lg bg-[#FF7F50] hover:bg-[#E67245] text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight'
+          : variant === 'primary'
           ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : variant === 'status'
             ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500 disabled:hover:bg-amber-500 text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'

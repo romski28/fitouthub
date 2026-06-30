@@ -1711,6 +1711,23 @@ export class NextStepService {
     }
     // ────────────────────────────────────────────────────────────────────────────────────────────
 
+    // Synthetic UX survey step — shown alongside "In warranty period" for completed projects
+    if (role === 'CLIENT' && effectiveStage === ProjectStage.COMPLETE) {
+      availableConfigSteps.push({
+        ...createSyntheticPrimaryStep(
+          'UX_SURVEY',
+          'Share your feedback',
+          true,
+          role,
+          effectiveStage,
+          'Help us improve MIMO — take a quick 2-minute survey about your renovation experience.',
+        ),
+        isPrimary: false,
+        isElective: true,
+        displayOrder: 2,
+      } as any);
+    }
+
     if (role === 'CLIENT' && effectiveStage === ProjectStage.MILESTONE_PENDING) {
       const hasApproveMilestone = availableConfigSteps.some(
         (step) => step.actionKey === 'APPROVE_MILESTONE',
