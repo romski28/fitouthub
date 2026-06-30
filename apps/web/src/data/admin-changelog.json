@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-30-728d177d",
+    "date": "2026-06-30T18:27:05+08:00",
+    "title": "fix: re-add visibility listener on pro detail page to catch QR site-start",
+    "summary": "fix: re-add visibility listener on pro detail page to catch QR site-start",
+    "areas": [
+      "web"
+    ],
+    "commit": "728d177d",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-30-9db2f993",
     "date": "2026-06-30T15:05:24+08:00",
     "title": "perf: single-fetch start proposals (4→2 queries at top), eliminate all duplicate plan/proposal fetches",

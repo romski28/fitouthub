@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { useAuth } from '@/context/auth-context';
 import { getClientTabForAction } from '@/lib/client-workflow';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 import { GeneralActionModal } from './general-action-modal';
@@ -36,6 +37,7 @@ export function ModalDispatcher({
   onDetailsNavigate,
 }: Omit<ModalDispatcherProps, 'projectId' | 'userId' | 'role'>) {
   const { state, closeModal } = useNextStepModal();
+  const { accessToken } = useAuth();
   const router = useRouter();
   const fallbackTab = (state.role || '').toUpperCase().includes('PROFESSIONAL')
     ? getProfessionalTabForAction(state.actionKey)
@@ -348,7 +350,7 @@ export function ModalDispatcher({
     return (
       <UxFeedbackModal
         projectId={state.projectId || ''}
-        accessToken={null}
+        accessToken={accessToken}
         onClose={closeModal}
       />
     );

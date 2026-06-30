@@ -557,6 +557,20 @@ export default function ProjectDetailPage() {
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, fetchProject, promptLoginInPlace]);
 
+  // Re-fetch when tab becomes visible — catches site-start from QR scan
+  useEffect(() => {
+    if (!accessToken || !projectProfessionalId) return;
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchProject();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [accessToken, projectProfessionalId, fetchProject]);
+
   const reloadPaymentPlan = useCallback(async () => {
     if (!accessToken || !project?.project?.id) {
       return;
