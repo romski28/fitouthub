@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-30-4fa96358",
+    "date": "2026-06-30T10:36:33+08:00",
+    "title": "fix: add REVIEW_AGREEMENT to contract modal dispatcher so sign agreement button opens modal",
+    "summary": "fix: add REVIEW_AGREEMENT to contract modal dispatcher so sign agreement button opens modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "4fa96358",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-06-30-5cb880fc",
     "date": "2026-06-30T01:11:07+08:00",
     "title": "fix: add AdminActionService to ProgressReportsModule for ProjectStageService DI",

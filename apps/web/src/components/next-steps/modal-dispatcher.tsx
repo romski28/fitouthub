@@ -386,6 +386,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
       'REVIEW_CONTRACT',
       'SIGN_CONTRACT',
       'SUBMIT_CONTRACT',
+      'REVIEW_AGREEMENT',
     ].includes(actionKey)
   ) {
     return 'contract';
