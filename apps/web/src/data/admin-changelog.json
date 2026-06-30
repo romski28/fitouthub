@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-30-6e34f571",
+    "date": "2026-06-30T22:05:52+08:00",
+    "title": "perf: batch materials counts + schedule confirmation queries with Promise.all",
+    "summary": "perf: batch materials counts + schedule confirmation queries with Promise.all",
+    "areas": [
+      "api"
+    ],
+    "commit": "6e34f571",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-30-728d177d",
     "date": "2026-06-30T18:27:05+08:00",
     "title": "fix: re-add visibility listener on pro detail page to catch QR site-start",

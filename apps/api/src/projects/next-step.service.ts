@@ -978,30 +978,34 @@ export class NextStepService {
           });
         }
 
-        // Check if professional has already confirmed the schedule
-        const scheduleActions = await this.prisma.nextStepAction.findMany({
-          where: {
-            projectId,
-            actionKey: 'CONFIRM_SCHEDULE',
-            projectStage: effectiveStage,
-            ...actionActorWhere,
-          },
-          select: { userAction: true },
-        });
+        // Check if professional + client have confirmed the schedule (parallel)
+        const [scheduleActions, clientScheduleAction] = await Promise.all([
+          this.prisma.nextStepAction.findMany({
+            where: {
+              projectId,
+              actionKey: 'CONFIRM_SCHEDULE',
+              projectStage: effectiveStage,
+              ...actionActorWhere,
+            },
+            select: { userAction: true },
+          }),
+          requiresClientScheduleAgreement && clientActorId
+            ? this.prisma.nextStepAction.findFirst({
+                where: {
+                  projectId,
+                  userId: clientActorId,
+                  actionKey: 'CONFIRM_SCHEDULE',
+                  userAction: 'COMPLETED',
+                  projectStage: effectiveStage,
+                },
+                select: { id: true },
+              })
+            : Promise.resolve(null),
+        ]);
         const scheduleConfirmed = scheduleActions.some((a) => a.userAction === 'COMPLETED');
 
         let clientScheduleConfirmed = false;
         if (requiresClientScheduleAgreement && clientActorId) {
-          const clientScheduleAction = await this.prisma.nextStepAction.findFirst({
-            where: {
-              projectId,
-              userId: clientActorId,
-              actionKey: 'CONFIRM_SCHEDULE',
-              userAction: 'COMPLETED',
-              projectStage: effectiveStage,
-            },
-            select: { id: true },
-          });
           clientScheduleConfirmed = Boolean(clientScheduleAction);
         }
 
@@ -1061,7 +1065,7 @@ export class NextStepService {
             isSingleMilestoneMaterial = allMilestones.length <= 1;
             const firstMilestoneId = allMilestones.find((m) => m.sequence === 1)?.id;
             if (firstMilestoneId) {
-              const [pendingCount, approvedCount] = await this.prisma.$transaction([
+              const [pendingCount, approvedCount] = await Promise.all([
                 (this.prisma as any).milestoneProcurementEvidence.count({
                   where: {
                     projectId,
@@ -1227,18 +1231,33 @@ export class NextStepService {
         let professionalScheduleConfirmed = true;
 
         if (startDateAgreed) {
-          // Check professional schedule confirmation (CLASS 2/3)
-          if (requiresProfessionalScheduleFirst) {
-            const profSched = await this.prisma.nextStepAction.findFirst({
+          // Fetch both schedule confirmations in parallel (pro + client)
+          const [profSched, clientSched] = await Promise.all([
+            requiresProfessionalScheduleFirst
+              ? this.prisma.nextStepAction.findFirst({
+                  where: {
+                    projectId,
+                    professionalId: project.awardedProjectProfessionalId || undefined,
+                    actionKey: 'CONFIRM_SCHEDULE',
+                    userAction: 'COMPLETED',
+                    projectStage: effectiveStage,
+                  },
+                  select: { id: true },
+                })
+              : Promise.resolve(null),
+            this.prisma.nextStepAction.findFirst({
               where: {
                 projectId,
-                professionalId: project.awardedProjectProfessionalId || undefined,
+                userId,
                 actionKey: 'CONFIRM_SCHEDULE',
                 userAction: 'COMPLETED',
-                projectStage: effectiveStage,
               },
               select: { id: true },
-            });
+            }),
+          ]);
+
+          // Check professional schedule confirmation (CLASS 2/3)
+          if (requiresProfessionalScheduleFirst) {
             professionalScheduleConfirmed = Boolean(profSched);
             if (!professionalScheduleConfirmed) {
               availableConfigSteps = [{
@@ -1259,15 +1278,6 @@ export class NextStepService {
 
           // Check client schedule confirmation (CLASS 1 & 2)
           if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && professionalScheduleConfirmed) {
-            const clientSched = await this.prisma.nextStepAction.findFirst({
-              where: {
-                projectId,
-                userId,
-                actionKey: 'CONFIRM_SCHEDULE',
-                userAction: 'COMPLETED',
-              },
-              select: { id: true },
-            });
             clientScheduleConfirmed = Boolean(clientSched);
             if (!clientScheduleConfirmed) {
               availableConfigSteps = [{
@@ -1340,7 +1350,7 @@ export class NextStepService {
             const m1Id = allMilestones.find((m) => m.sequence === 1)?.id;
             if (m1Id) {
               const [capCount, pendingEvidenceCount, procurementApprovedCount, capReturnedCount] =
-                await this.prisma.$transaction([
+                await Promise.all([
                   this.prisma.financialTransaction.count({
                     where: {
                       projectId,
@@ -1501,30 +1511,35 @@ export class NextStepService {
           const requiresClientSched = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
           const clientActorIdPreWork = (project as any).clientId || project.userId;
 
-          const schedActionsPreWork = await this.prisma.nextStepAction.findMany({
-            where: {
-              projectId,
-              actionKey: 'CONFIRM_SCHEDULE',
-              projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
-              ...actionActorWhere,
-            },
-            select: { userAction: true },
-          });
+          // Fetch pro + client schedule confirmations in parallel
+          const [schedActionsPreWork, clientSchedPreWork] = await Promise.all([
+            this.prisma.nextStepAction.findMany({
+              where: {
+                projectId,
+                actionKey: 'CONFIRM_SCHEDULE',
+                projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
+                ...actionActorWhere,
+              },
+              select: { userAction: true },
+            }),
+            requiresClientSched && clientActorIdPreWork
+              ? this.prisma.nextStepAction.findFirst({
+                  where: {
+                    projectId,
+                    userId: clientActorIdPreWork,
+                    actionKey: 'CONFIRM_SCHEDULE',
+                    userAction: 'COMPLETED',
+                    projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
+                  },
+                  select: { id: true },
+                })
+              : Promise.resolve(null),
+          ]);
           const schedConfirmedPreWork = schedActionsPreWork.some((a) => a.userAction === 'COMPLETED');
 
           let clientSchedConfirmedPreWork = false;
           if (requiresClientSched && clientActorIdPreWork) {
-            const csa = await this.prisma.nextStepAction.findFirst({
-              where: {
-                projectId,
-                userId: clientActorIdPreWork,
-                actionKey: 'CONFIRM_SCHEDULE',
-                userAction: 'COMPLETED',
-                projectStage: { in: [ProjectStage.CONTRACT_PHASE, ProjectStage.PRE_WORK] },
-              },
-              select: { id: true },
-            });
-            clientSchedConfirmedPreWork = Boolean(csa);
+            clientSchedConfirmedPreWork = Boolean(clientSchedPreWork);
           }
 
           const escrowPreWork = Number(project.escrowHeld ?? 0) > 0;
@@ -1557,7 +1572,7 @@ export class NextStepService {
               isSingleMilestonePreWork = allMilestonesPreWork.length <= 1;
               const m1 = allMilestonesPreWork.find((m) => m.sequence === 1)?.id;
               if (m1) {
-                const [pendingCountPw, approvedCountPw] = await this.prisma.$transaction([
+                const [pendingCountPw, approvedCountPw] = await Promise.all([
                   (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } }),
                   this.prisma.financialTransaction.count({
                     where: { projectId, type: 'milestone_procurement_approved', status: 'confirmed', notes: { contains: m1 } },
