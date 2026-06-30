@@ -48,6 +48,7 @@ import { UxFeedbackModule } from './ux-feedback/ux-feedback.module';
 import { AcProjectsModule } from './ac-projects/ac-projects.module';
 import { ProgressReportsModule } from './progress-reports/progress-reports.module';
 import { ReminderModule } from './reminders/reminder.module';
+import { HolidaysController } from './config/holidays.controller';
 import { PlatformFeeService } from './common/platform-fee.service';
 
 @Module({
@@ -96,6 +97,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     AdminI18nController,
     TradeDistrictMatrixController,
     NextStepCacheController,
+    HolidaysController,
   ],
   providers: [
     AppService,
