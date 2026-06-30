@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-30-bd4f1e70",
+    "date": "2026-06-30T14:55:15+08:00",
+    "title": "perf: parallelize project+pro fetch, single-fetch payment plan (4→1 queries)",
+    "summary": "perf: parallelize project+pro fetch, single-fetch payment plan (4→1 queries)",
+    "areas": [
+      "api"
+    ],
+    "commit": "bd4f1e70",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-06-30-92b8cbe3",
     "date": "2026-06-30T11:21:15+08:00",
     "title": "feat: add synthetic UX_SURVEY elective step on COMPLETE stage, coral button, modal dispatcher",

@@ -145,8 +145,9 @@ export class NextStepService {
 
   private async getProfessionalWalletTransferPrerequisiteStatus(
     projectId: string,
+    preFetchedPlan?: { projectScale?: string | null; milestones?: { id: string }[] } | null,
   ): Promise<'not_required' | 'pending' | 'completed' | 'skipped'> {
-    const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
+    const plan = preFetchedPlan ?? await this.prisma.projectPaymentPlan.findUnique({
       where: { projectId },
       select: {
         projectScale: true,
@@ -156,8 +157,8 @@ export class NextStepService {
       },
     });
 
-    const normalizedScale = String(paymentPlan?.projectScale || '').toUpperCase();
-    const milestones = paymentPlan?.milestones || [];
+    const normalizedScale = String(plan?.projectScale || '').toUpperCase();
+    const milestones = plan?.milestones || [];
     const firstMilestoneId = milestones[0]?.id;
 
     // Single-milestone projects don't have a milestone 1 wallet transfer
@@ -195,31 +196,59 @@ export class NextStepService {
     role: string,
   ): Promise<NextStepResult> {
     try {
-    // Get project with current stage + cache
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-      select: {
-        currentStage: true,
-        status: true,
-        projectScale: true,
-        userId: true,
-        clientId: true,
-        awardedProjectProfessionalId: true,
-        clientSignedAt: true,
-        professionalSignedAt: true,
-        escrowHeld: true,
-        startDate: true,
-        siteStartedAt: true,
-        siteInspectionAvailableOn: true,
-        nextStepCache: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            professionals: true,
+    // Get project + professional assignment in parallel (independent queries)
+    const [project, isProfessional] = await Promise.all([
+      this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: {
+          currentStage: true,
+          status: true,
+          projectScale: true,
+          userId: true,
+          clientId: true,
+          awardedProjectProfessionalId: true,
+          clientSignedAt: true,
+          professionalSignedAt: true,
+          escrowHeld: true,
+          startDate: true,
+          siteStartedAt: true,
+          siteInspectionAvailableOn: true,
+          nextStepCache: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              professionals: true,
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.projectProfessional.findFirst({
+        where: {
+          projectId,
+          OR: [
+            { professionalId: userId },
+            {
+              professional: {
+                userId,
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          status: true,
+          professionalId: true,
+          addressVisible: true,
+          addressVisibleAt: true,
+          siteVisitedAt: true,
+          professional: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      }),
+    ]);
 
     if (!project) {
       throw new Error('Project not found');
@@ -229,34 +258,6 @@ export class NextStepService {
     const isClient =
       (project.userId != null && project.userId === userId) ||
       ((project as any).clientId != null && (project as any).clientId === userId);
-
-    // Check if user is a professional on this project
-    const isProfessional = await this.prisma.projectProfessional.findFirst({
-      where: {
-        projectId,
-        OR: [
-          { professionalId: userId },
-          {
-            professional: {
-              userId,
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        status: true,
-        professionalId: true,
-        addressVisible: true,
-        addressVisibleAt: true,
-        siteVisitedAt: true,
-        professional: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-    });
 
     if (!isClient && !isProfessional && role !== 'ADMIN') {
       throw new Error('User does not have access to this project');
@@ -298,6 +299,19 @@ export class NextStepService {
       }).catch(() => {});
     };
     const returnWithCache = (r: NextStepResult): NextStepResult => { saveCache(r); return r; };
+
+    // ── Pre-fetch payment plan once (used in multiple branches) ──
+    const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
+      where: { projectId },
+      select: {
+        id: true,
+        projectScale: true,
+        milestones: {
+          select: { id: true, sequence: true, title: true, status: true },
+          orderBy: { sequence: 'asc' },
+        },
+      },
+    }).catch(() => null); // non-fatal — some projects may not have a plan yet
 
     const actionActorWhere =
       role === 'PROFESSIONAL'
@@ -999,7 +1013,7 @@ export class NextStepService {
 
         let walletTransferPrerequisite: 'not_required' | 'pending' | 'completed' | 'skipped' = 'not_required';
         if (escrowFunded) {
-          walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+          walletTransferPrerequisite = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId, paymentPlan);
         }
 
         const canStartProject = escrowFunded && walletTransferPrerequisite !== 'pending';
@@ -1047,14 +1061,6 @@ export class NextStepService {
           let procurementApproved = false;
           let isSingleMilestoneMaterial = false;
           if (escrowFunded && ['SCALE_1', 'SCALE_2'].includes(normalizedScale)) {
-            const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
-              where: { projectId },
-              select: {
-                milestones: {
-                  select: { id: true, sequence: true },
-                },
-              },
-            });
             const allMilestones = paymentPlan?.milestones || [];
             isSingleMilestoneMaterial = allMilestones.length <= 1;
             const firstMilestoneId = allMilestones.find((m) => m.sequence === 1)?.id;
@@ -1351,15 +1357,7 @@ export class NextStepService {
         if (escrowNowFunded && !pendingEscrowRequest && isPreCompletion && clientScheduleConfirmed) {
           const projectScale = String(project.projectScale || '').toUpperCase();
           if (['SCALE_1', 'SCALE_2'].includes(projectScale)) {
-            const procPlan = await this.prisma.projectPaymentPlan.findUnique({
-              where: { projectId },
-              select: {
-                milestones: {
-                  select: { id: true, sequence: true },
-                },
-              },
-            });
-            const allMilestones = procPlan?.milestones || [];
+            const allMilestones = paymentPlan?.milestones || [];
             const isSingleMilestone = allMilestones.length <= 1;
             const m1Id = allMilestones.find((m) => m.sequence === 1)?.id;
             if (m1Id) {
@@ -1561,7 +1559,7 @@ export class NextStepService {
 
           const escrowPreWork = Number(project.escrowHeld ?? 0) > 0;
           let walletPreWork: 'not_required' | 'pending' | 'completed' | 'skipped' = 'not_required';
-          if (escrowPreWork) walletPreWork = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId);
+          if (escrowPreWork) walletPreWork = await this.getProfessionalWalletTransferPrerequisiteStatus(projectId, paymentPlan);
           const canStartPreWork = escrowPreWork && walletPreWork !== 'pending';
 
           if (!schedConfirmedPreWork) {
@@ -1585,10 +1583,7 @@ export class NextStepService {
             let procurementApprovedPreWork = false;
             let isSingleMilestonePreWork = false;
             if (escrowPreWork && ['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
-              const pp = await this.prisma.projectPaymentPlan.findUnique({
-                where: { projectId }, select: { milestones: { select: { id: true, sequence: true } } },
-              });
-              const allMilestonesPreWork = pp?.milestones || [];
+              const allMilestonesPreWork = paymentPlan?.milestones || [];
               isSingleMilestonePreWork = allMilestonesPreWork.length <= 1;
               const m1 = allMilestonesPreWork.find((m) => m.sequence === 1)?.id;
               if (m1) {
