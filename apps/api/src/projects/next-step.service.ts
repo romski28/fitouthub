@@ -215,6 +215,7 @@ export class NextStepService {
           siteInspectionAvailableOn: true,
           nextStepCache: true,
           updatedAt: true,
+          stageStartedAt: true,
           _count: {
             select: {
               professionals: true,
@@ -280,9 +281,13 @@ export class NextStepService {
         : safeStage;
 
     // ── Cache check: keyed by userId+role+effectiveStage ──
+    // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
+    // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
+    // the cache via invalidateNextStepCache(), so they also trigger a recompute.
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
-    if (cache?.[cacheKey]?.computedAt && project.updatedAt && new Date(cache[cacheKey].computedAt) > new Date(project.updatedAt)) {
+    const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;
+    if (cache?.[cacheKey]?.computedAt && invalidationThreshold && new Date(cache[cacheKey].computedAt) > new Date(invalidationThreshold)) {
       return cache[cacheKey].result as NextStepResult;
     }
 
