@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-06-30-628cfa29",
+    "date": "2026-06-30T10:43:32+08:00",
+    "title": "fix: after pro signs agreement, open CONFIRM_SCHEDULE modal instead of navigating to schedule tab",
+    "summary": "fix: after pro signs agreement, open CONFIRM_SCHEDULE modal instead of navigating to schedule tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "628cfa29",
+    "files": [
+      "apps/web/src/components/next-steps/contract-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-06-30-4fa96358",
     "date": "2026-06-30T10:36:33+08:00",
     "title": "fix: add REVIEW_AGREEMENT to contract modal dispatcher so sign agreement button opens modal",

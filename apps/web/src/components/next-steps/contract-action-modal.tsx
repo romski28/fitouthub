@@ -71,7 +71,7 @@ export function ContractActionModal({
   onClose,
 }: ContractActionModalProps) {
   const router = useRouter();
-  const { state } = useNextStepModal();
+  const { state, openModal } = useNextStepModal();
   const { accessToken: clientAccessToken } = useAuth();
   const { accessToken: professionalAccessToken } = useProfessionalAuth();
 
@@ -82,6 +82,7 @@ export function ContractActionModal({
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
+  const [workflowModalNextActionKey, setWorkflowModalNextActionKey] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
   const roleUpper = (state.role || '').toUpperCase();
@@ -147,6 +148,7 @@ export function ContractActionModal({
       });
 
       setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextActionKey(next?.actionKey ?? null);
       setWorkflowModalNextStep(
         next
           ? {
@@ -161,6 +163,7 @@ export function ContractActionModal({
       setWorkflowModalOpen(true);
     } catch {
       setWorkflowModalCompletedLabel(completedLabel);
+      setWorkflowModalNextActionKey(null);
       setWorkflowModalNextStep(null);
       setWorkflowModalOpen(true);
     }
@@ -408,9 +411,18 @@ export function ContractActionModal({
         nextStep={workflowModalNextStep}
         showConfetti
         primaryActionLabel={workflowModalNextStep?.actionLabel ?? 'Open project'}
-        onNavigate={workflowModalNextStep?.tab ? () => {
-          navigateToNextStepTab();
-          onClose();
+        onNavigate={workflowModalNextActionKey ? () => {
+          openModal(
+            workflowModalNextActionKey,
+            state.projectId || '',
+            state.projectDetailsPath,
+            state.userId || '',
+            state.role || '',
+            state.modalContent,
+            state.projectStage,
+            state.onCompleted,
+          );
+          setWorkflowModalOpen(false);
         } : undefined}
         onClose={() => {
           setWorkflowModalOpen(false);
