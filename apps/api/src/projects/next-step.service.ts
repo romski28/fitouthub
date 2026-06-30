@@ -313,6 +313,18 @@ export class NextStepService {
       },
     }).catch(() => null); // non-fatal — some projects may not have a plan yet
 
+    // ── Pre-fetch start proposals once (used in CONTRACT_PHASE + PRE_WORK) ──
+    const [acceptedStartProposal, latestStartProposal] = await Promise.all([
+      this.prisma.projectStartProposal.findFirst({
+        where: { projectId, status: 'accepted' },
+        orderBy: { createdAt: 'desc' },
+      }).catch(() => null),
+      this.prisma.projectStartProposal.findFirst({
+        where: { projectId, status: 'proposed' },
+        orderBy: { createdAt: 'desc' },
+      }).catch(() => null),
+    ]);
+
     const actionActorWhere =
       role === 'PROFESSIONAL'
         ? { professionalId: isProfessional?.professionalId || userId }
@@ -920,22 +932,6 @@ export class NextStepService {
         const requiresClientScheduleAgreement = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
         const clientActorId = (project as any).clientId || project.userId;
 
-        const acceptedStartProposal = await this.prisma.projectStartProposal.findFirst({
-          where: {
-            projectId,
-            status: 'accepted',
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-
-        const latestStartProposal = await this.prisma.projectStartProposal.findFirst({
-          where: {
-            projectId,
-            status: 'proposed',
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-
         // Treat project.startDate being set as equivalent to an accepted proposal
         // (covers legacy projects that agreed the date before the proposal system existed)
         const startDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
@@ -1201,25 +1197,7 @@ export class NextStepService {
         Boolean(project.clientSignedAt) &&
         Boolean(project.professionalSignedAt);
 
-      const acceptedStartProposal = contractFullySigned
-        ? await this.prisma.projectStartProposal.findFirst({
-            where: {
-              projectId,
-              status: 'accepted',
-            },
-            orderBy: { createdAt: 'desc' },
-          })
-        : null;
-
-      const latestStartProposal = contractFullySigned
-        ? await this.prisma.projectStartProposal.findFirst({
-            where: {
-              projectId,
-              status: 'proposed',
-            },
-            orderBy: { createdAt: 'desc' },
-          })
-        : null;
+      // Use pre-fetched start proposals (already fetched at top of getNextSteps)
 
       if (!pendingPaymentRequest && latestStartProposal) {
         availableConfigSteps = [
@@ -1489,28 +1467,20 @@ export class NextStepService {
     if (effectiveStage === ProjectStage.PRE_WORK && project.status === 'awarded') {
       const preWorkNormalizedScale = String(project.projectScale || '').toUpperCase();
 
-      const preWorkAccepted = await this.prisma.projectStartProposal.findFirst({
-        where: { projectId, status: 'accepted' },
-        orderBy: { createdAt: 'desc' },
-      });
-      const preWorkProposed = await this.prisma.projectStartProposal.findFirst({
-        where: { projectId, status: 'proposed' },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      const preWorkStartDateAgreed = Boolean(preWorkAccepted) || Boolean(project.startDate);
+      // Use pre-fetched start proposals (already fetched at top of getNextSteps)
+      const preWorkStartDateAgreed = Boolean(acceptedStartProposal) || Boolean(project.startDate);
 
       if (role === 'PROFESSIONAL') {
-        if (preWorkProposed && !preWorkStartDateAgreed) {
+        if (latestStartProposal && !preWorkStartDateAgreed) {
           // Still negotiating start date
           availableConfigSteps = [
             createSyntheticPrimaryStep(
               'CONFIRM_START_DATE',
               'Agree start date',
-              preWorkProposed.proposedByRole === 'client',
+              latestStartProposal.proposedByRole === 'client',
               role,
               effectiveStage,
-              preWorkProposed.proposedByRole === 'client'
+              latestStartProposal.proposedByRole === 'client'
                 ? 'The client proposed an updated start date. Review it and confirm or counter.'
                 : 'Start date proposal sent. Waiting for the client to confirm or update.',
             ),
@@ -1635,7 +1605,7 @@ export class NextStepService {
       }
 
       if (role === 'CLIENT') {
-        if (!preWorkProposed && preWorkStartDateAgreed) {
+        if (!latestStartProposal && preWorkStartDateAgreed) {
           // Start date is agreed — don't show CONFIRM_START_DETAILS; show schedule review then escrow.
           const escrowClientPreWork = Number(project.escrowHeld ?? 0) > 0;
           if (!escrowClientPreWork) {
@@ -1701,7 +1671,7 @@ export class NextStepService {
             availableConfigSteps = availableConfigSteps.filter((s) => s.actionKey !== 'CONFIRM_START_DETAILS');
           }
         }
-        // If preWorkProposed and !preWorkStartDateAgreed → keep seed CONFIRM_START_DETAILS (fall through)
+        // If latestStartProposal and !preWorkStartDateAgreed → keep seed CONFIRM_START_DETAILS (fall through)
       }
     }
     // ────────────────────────────────────────────────────────────────────────────────────────────
