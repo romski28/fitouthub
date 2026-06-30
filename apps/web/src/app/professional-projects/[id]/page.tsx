@@ -557,33 +557,6 @@ export default function ProjectDetailPage() {
     }
   }, [isLoggedIn, accessToken, projectProfessionalId, fetchProject, promptLoginInPlace]);
 
-  // Background polling — detect site-start when tab becomes visible
-  useEffect(() => {
-    if (!accessToken || !projectProfessionalId) return;
-
-    let interval: ReturnType<typeof setInterval> | null = null;
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        void fetchProject();
-      }
-    };
-
-    document.addEventListener('visibilitychange', onVisible);
-
-    // Poll every 30s while visible
-    interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        void fetchProject();
-      }
-    }, 30_000);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      if (interval) clearInterval(interval);
-    };
-  }, [accessToken, projectProfessionalId, fetchProject]);
-
   const reloadPaymentPlan = useCallback(async () => {
     if (!accessToken || !project?.project?.id) {
       return;

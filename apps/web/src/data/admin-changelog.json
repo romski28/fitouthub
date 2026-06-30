@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-06-30-6ef7760c",
+    "date": "2026-06-30T11:00:02+08:00",
+    "title": "fix: remove detail page polling, add 60s next-step refresh on pro list page",
+    "summary": "fix: remove detail page polling, add 60s next-step refresh on pro list page",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ef7760c",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-06-30-628cfa29",
     "date": "2026-06-30T10:43:32+08:00",
     "title": "fix: after pro signs agreement, open CONFIRM_SCHEDULE modal instead of navigating to schedule tab",

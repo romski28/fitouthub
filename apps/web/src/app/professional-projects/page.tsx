@@ -367,9 +367,17 @@ export default function ProfessionalProjectsPage() {
     };
     document.addEventListener('visibilitychange', onVisible);
 
+    // Periodic refresh — re-fetch next steps every 60s while page is visible
+    const interval = setInterval(() => {
+      if (!cancelled && document.visibilityState === 'visible') {
+        loadNextSteps();
+      }
+    }, 60_000);
+
     return () => {
       cancelled = true;
       document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(interval);
     };
   }, [isLoggedIn, accessToken, projectIdsKey, nextStepCacheScope]);
 
