@@ -40,6 +40,8 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
   const scannerDivId = 'start-on-site-qr-scanner';
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [manualOtpMode, setManualOtpMode] = useState(false);
+  const [manualOtpCode, setManualOtpCode] = useState('');
 
   // ── Shared ────────────────────────────────────────────────────────────
   const [completionOpen, setCompletionOpen] = useState(false);
@@ -163,9 +165,17 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
     [state.projectId, accessToken, confirming],
   );
 
+  const handleManualOtpSubmit = useCallback(() => {
+    if (manualOtpCode.trim().length < 4) {
+      toast.error('Please enter the full code');
+      return;
+    }
+    confirmSiteStart(manualOtpCode.trim());
+  }, [manualOtpCode, confirmSiteStart]);
+
   // ── QR Scanner lifecycle (client) ────────────────────────────────────
   useEffect(() => {
-    if (!isOpen || isProfessional) return;
+    if (!isOpen || isProfessional || manualOtpMode) return;
 
     let stopped = false;
 
@@ -215,7 +225,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
         });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, isProfessional]);
+  }, [isOpen, isProfessional, manualOtpMode]);
 
   // ── Poll for confirmation on professional side ────────────────────────
   // (so their modal updates if the client scans while it's open)
@@ -254,6 +264,8 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
       setShowDetails(false);
       setScannerError(null);
       setConfirming(false);
+      setManualOtpMode(false);
+      setManualOtpCode('');
     }
   }, [isOpen]);
 
@@ -348,6 +360,28 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                     <>
                       <div className="w-fit mx-auto rounded-xl bg-white p-3">
                         <QRCodeSVG value={qrToken!} size={220} />
+                      </div>
+
+                      {/* OTP code — client can type this instead of scanning */}
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-xs text-[rgba(126,58,33,0.45)]">Or enter this code</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-mono font-bold tracking-[0.3em] text-[#4A3623] select-all">
+                            {qrToken!.slice(0, 6)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(qrToken!.slice(0, 6)).then(
+                                () => toast.success('Code copied'),
+                                () => toast.error('Failed to copy'),
+                              );
+                            }}
+                            className="rounded-md border border-[rgba(120,53,15,0.2)] px-2 py-1 text-xs font-semibold text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] transition"
+                          >
+                            Copy
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex flex-col items-center gap-1">
@@ -458,7 +492,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                   <img
                     src={modalImage}
                     alt="Step illustration"
-                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                    className="h-20 w-20 rounded-full border border-[rgba(120,53,15,0.14)] object-cover"
                   />
                 </div>
 
@@ -475,6 +509,27 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                       <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-[rgba(126,58,33,0.55)]">Confirming...</p>
                     </div>
+                  ) : manualOtpMode ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={manualOtpCode}
+                        onChange={(e) => setManualOtpCode(e.target.value.replace(/\D/g, ''))}
+                        placeholder="Enter code from pro's screen"
+                        autoFocus
+                        className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-4 py-3 text-center text-xl font-mono tracking-[0.3em] text-[#4A3623] placeholder-[rgba(126,58,33,0.3)] outline-none focus:border-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleManualOtpSubmit}
+                        disabled={manualOtpCode.trim().length < 4}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                      >
+                        Confirm start on site
+                      </button>
+                    </div>
                   ) : (
                     <div className="w-full rounded-xl overflow-hidden bg-black border border-[rgba(120,53,15,0.22)]" style={{ minHeight: 280 }}>
                       {/* html5-qrcode mounts its video into this div */}
@@ -483,9 +538,21 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                   )}
                 </div>
 
+                {!scannerError && !confirming && (
+                  <button
+                    type="button"
+                    onClick={() => { setManualOtpMode(!manualOtpMode); setScannerError(null); }}
+                    className="mt-3 text-xs font-semibold text-[rgba(126,58,33,0.55)] hover:text-[#4A3623] transition"
+                  >
+                    {manualOtpMode ? '← Scan QR code instead' : 'Enter code manually instead'}
+                  </button>
+                )}
+
+                {!manualOtpMode && (
                 <p className="mt-4 text-sm text-[rgba(126,58,33,0.55)]">
                   Point your camera at the QR code shown on the professional&apos;s screen.
                 </p>
+                )}
 
                 <p className="mt-2 text-xs text-[rgba(126,58,33,0.45)]">
                   If camera access is blocked, allow permission and reopen this step.
