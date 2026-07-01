@@ -204,16 +204,16 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(81,55,32,0.35)] backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl">
         {busy ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
             <MimoSpinner size="md" className="mb-4" />
-            <p className="text-slate-300">Loading...</p>
+            <p className="text-[rgba(126,58,33,0.55)]">Loading...</p>
           </div>
         ) : phase === 'confirm' ? (
           <>
@@ -222,24 +222,24 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
                 <img
                   src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
                   alt="Step illustration"
-                  className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                  className="h-20 w-20 rounded-full border border-[rgba(120,53,15,0.14)] object-cover"
                 />
               </div>
-              {title && <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>}
-              {body && <p className="mt-3 text-base leading-relaxed text-slate-100">{body}</p>}
+              {title && <h2 className="text-2xl font-bold text-[#FF7F50]">{title}</h2>}
+              {body && <p className="mt-3 text-base leading-relaxed text-stone-600">{body}</p>}
               {txError ? (
-                <p className="mt-4 rounded-lg bg-rose-900/40 px-4 py-2 text-sm text-rose-300">{txError}</p>
+                <p className="mt-4 rounded-lg bg-rose-50 border border-rose-200 px-4 py-2 text-sm text-rose-700">{txError}</p>
               ) : fmtAmount ? (
-                <p className="mt-4 text-lg font-semibold text-white">
-                  Amount to deposit: <span className="text-emerald-300">{fmtAmount}</span>
+                <p className="mt-4 text-lg font-semibold text-[#4A3623]">
+                  Amount to deposit: <span className="text-emerald-700">{fmtAmount}</span>
                 </p>
               ) : null}
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-[rgba(120,53,15,0.14)] px-5 py-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                className="min-w-[110px] rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
               >
                 Close
               </button>
@@ -256,8 +256,8 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
         ) : (
           <>
             <div className="px-6 pb-5 pt-8">
-              <h2 className="mb-1 text-xl font-bold text-emerald-300">Verify escrow payment</h2>
-              <p className="text-sm text-slate-300">
+              <h2 className="mb-1 text-xl font-bold text-[#FF7F50]">Verify escrow payment</h2>
+              <p className="text-sm text-stone-500">
                 Enter the 6-digit OTP sent to your email and preferred contact channel.
               </p>
               <input
@@ -269,14 +269,14 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
                 placeholder="Enter 6-digit OTP"
                 disabled={otpVerifying}
                 autoFocus
-                className="mt-4 w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none disabled:opacity-50"
+                className="mt-4 w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-[#4A3623] placeholder-[rgba(126,58,33,0.4)] focus:border-amber-500 focus:outline-none disabled:opacity-50"
               />
               <div className="mt-3 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => pendingTx && requestOtp(pendingTx.id)}
                   disabled={otpSending || otpVerifying || resendCooldown > 0}
-                  className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 disabled:text-slate-500"
+                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-600 disabled:text-stone-400"
                 >
                   {resendCooldown > 0
                     ? `Resend OTP in ${resendCooldown}s`
@@ -284,15 +284,15 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
                       ? 'Sending...'
                       : 'Resend OTP'}
                 </button>
-                <span className="text-xs text-slate-500">Code expires in 10 minutes</span>
+                <span className="text-xs text-[rgba(126,58,33,0.45)]">Code expires in 10 minutes</span>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-slate-700 px-5 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-[rgba(120,53,15,0.14)] px-5 py-4">
               <button
                 type="button"
                 onClick={() => setPhase('confirm')}
                 disabled={otpVerifying}
-                className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:opacity-50"
+                className="min-w-[110px] rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)] disabled:opacity-50"
               >
                 Back
               </button>
@@ -300,7 +300,7 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
                 type="button"
                 onClick={handleVerifyAndCheckout}
                 disabled={otpVerifying || otpSending || otpCode.trim().length !== 6}
-                className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
+                className="min-w-[110px] rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
               >
                 {otpVerifying ? 'Verifying...' : 'Verify & Pay'}
               </button>
