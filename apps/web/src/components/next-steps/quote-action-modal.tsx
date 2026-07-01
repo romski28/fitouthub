@@ -606,7 +606,6 @@ export function QuoteActionModal({
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label className="block md:col-span-2">
-                      <span className="mb-1 block text-sm font-semibold text-stone-700">{isEmergencyProject ? 'Be with you...' : 'I can start on'}</span>
                       {isEmergencyProject ? (
                         <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70">
                           {emergencyDateOptions.map((option) => {

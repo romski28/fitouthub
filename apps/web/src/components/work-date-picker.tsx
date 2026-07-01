@@ -50,6 +50,10 @@ function formatMonthYear(d: Date): string {
   return d.toLocaleDateString('en-HK', { month: 'long', year: 'numeric' });
 }
 
+function formatMonthShort(d: Date): string {
+  return d.toLocaleDateString('en-HK', { month: 'short' });
+}
+
 export function WorkDatePicker({
   value,
   onChange,
@@ -111,12 +115,12 @@ export function WorkDatePicker({
     for (let i = 0; i < totalDays; i++) days.push(addDays(startDate, i));
     const months = new Set(days.map((d) => d.getMonth()));
     if (months.size > 1) {
-      const nextMonthDate = days.find((d) => d.getMonth() !== startDate.getMonth());
-      if (nextMonthDate) {
-        return formatMonthYear(new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth()));
-      }
+      const firstMonth = formatMonthShort(startDate);
+      const lastDay = addDays(startDate, totalDays - 1);
+      const lastMonth = formatMonthShort(lastDay);
+      return `${firstMonth} / ${lastMonth}`;
     }
-    return '';
+    return formatMonthShort(startDate);
   }, [startDate, totalDays]);
 
   const disabledSet = useMemo(() => new Set(extraDisabled), [extraDisabled]);
@@ -202,7 +206,7 @@ export function WorkDatePicker({
 
   // Header text
   const headerText = value
-    ? `${headerPrefix}${value.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`
+    ? `${headerPrefix}${value.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long' })}`
     : 'Select a date';
 
   return (

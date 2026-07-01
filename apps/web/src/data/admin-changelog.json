@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-01-b84797d0",
+    "date": "2026-07-01T14:54:55+08:00",
+    "title": "fix: drop year from picker header, remove duplicate label, show Jun/Jul under grid",
+    "summary": "fix: drop year from picker header, remove duplicate label, show Jun/Jul under grid",
+    "areas": [
+      "web"
+    ],
+    "commit": "b84797d0",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/work-date-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-7b3b7c39",
     "date": "2026-07-01T14:24:01+08:00",
     "title": "feat: redesigned picker header (selected date + prefix), nav below grid, beige bg, hide arrows when no future dates",
