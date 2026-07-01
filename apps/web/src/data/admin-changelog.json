@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-01-7b3b7c39",
+    "date": "2026-07-01T14:24:01+08:00",
+    "title": "feat: redesigned picker header (selected date + prefix), nav below grid, beige bg, hide arrows when no future dates",
+    "summary": "feat: redesigned picker header (selected date + prefix), nav below grid, beige bg, hide arrows when no future dates",
+    "areas": [
+      "web"
+    ],
+    "commit": "7b3b7c39",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/work-date-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-8ec4c232",
     "date": "2026-07-01T11:53:06+08:00",
     "title": "fix: date picker spans full width in quote modal (md:col-span-2)",

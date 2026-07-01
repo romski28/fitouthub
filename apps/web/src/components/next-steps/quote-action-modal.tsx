@@ -640,6 +640,7 @@ export function QuoteActionModal({
                           maxDate={requestedCompletionDeadline ?? undefined}
                           weeks={Math.min(deadlineWeeks, 4)}
                           fullWidth
+                          headerPrefix="I can start on "
                         />
                           );
                         })()

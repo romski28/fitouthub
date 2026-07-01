@@ -17,6 +17,8 @@ interface WorkDatePickerProps {
   showNav?: boolean;
   /** Make cells fill available width (default false) */
   fullWidth?: boolean;
+  /** Prefix text shown before the selected date in the header (e.g. "I can start on ") */
+  headerPrefix?: string;
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -59,6 +61,7 @@ export function WorkDatePicker({
   weeks: totalWeeks = 4,
   showNav = true,
   fullWidth = false,
+  headerPrefix = '',
 }: WorkDatePickerProps) {
   const [holidays, setHolidays] = useState<Set<string>>(new Set());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -183,40 +186,32 @@ export function WorkDatePicker({
 
   const canGoBack = weekOffset > 0;
 
+  // Check if any pickable dates exist beyond the current window
+  const lastDayInView = addDays(startDate, totalDays - 1);
+  const hasFuturePickable = useMemo(() => {
+    // Check a few days past the visible window — if all disabled, hide forward arrow
+    for (let i = 1; i <= 7; i++) {
+      const d = addDays(lastDayInView, i);
+      if (!isDisabled(d)) return true;
+    }
+    return false;
+  }, [lastDayInView, isDisabled]);
+
+  // Should show nav at all?
+  const showNavigation = showNav && (canGoBack || hasFuturePickable);
+
+  // Header text
+  const headerText = value
+    ? `${headerPrefix}${value.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`
+    : 'Select a date';
+
   return (
-    <div className={`select-none ${className}`}>
-      {/* Header with navigation */}
-      <div className="mb-3 flex items-center justify-between">
-        {showNav ? (
-          <button
-            type="button"
-            onClick={navBack}
-            disabled={!canGoBack}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
-              canGoBack
-                ? 'text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] cursor-pointer'
-                : 'text-slate-300 cursor-not-allowed'
-            }`}
-            aria-label="Previous weeks"
-          >
-            ←
-          </button>
-        ) : (
-          <div className="w-8" />
-        )}
-        <p className="text-base font-bold text-[#4A3623]">{headerLabel}</p>
-        {showNav ? (
-          <button
-            type="button"
-            onClick={navForward}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] transition cursor-pointer"
-            aria-label="Next weeks"
-          >
-            →
-          </button>
-        ) : (
-          <div className="w-8" />
-        )}
+    <div className={`select-none rounded-xl bg-[#F5EEDE] p-4 ${className}`}>
+      {/* Header: selected date */}
+      <div className="mb-3 text-center">
+        <p className={`text-sm font-semibold ${value ? 'text-[#4A3623]' : 'text-[rgba(126,58,33,0.5)]'}`}>
+          {headerText}
+        </p>
       </div>
 
       {/* Day names */}
@@ -276,22 +271,43 @@ export function WorkDatePicker({
         ))}
       </div>
 
+      {/* Navigation arrows — below the grid */}
+      {showNavigation && (
+        <div className="mt-2 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={navBack}
+            disabled={!canGoBack}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
+              canGoBack
+                ? 'text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] cursor-pointer'
+                : 'text-slate-300 cursor-not-allowed'
+            }`}
+            aria-label="Previous weeks"
+          >
+            ←
+          </button>
+          <span className="text-xs text-[rgba(126,58,33,0.4)]">{headerLabel}</span>
+          <button
+            type="button"
+            onClick={navForward}
+            disabled={!hasFuturePickable}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
+              hasFuturePickable
+                ? 'text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] cursor-pointer'
+                : 'text-slate-300 cursor-not-allowed'
+            }`}
+            aria-label="Next weeks"
+          >
+            →
+          </button>
+        </div>
+      )}
+
       {/* Next month subtitle */}
       {nextMonthLabel && (
         <p className="mt-2 text-center text-xs font-medium text-[rgba(126,58,33,0.45)]">
           {nextMonthLabel} →
-        </p>
-      )}
-
-      {/* Selected date display */}
-      {value && (
-        <p className="mt-3 text-center text-sm font-semibold text-[#4A3623]">
-          {value.toLocaleDateString('en-HK', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
         </p>
       )}
     </div>
