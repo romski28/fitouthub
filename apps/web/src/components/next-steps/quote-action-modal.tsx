@@ -706,6 +706,7 @@ export function QuoteActionModal({
                         ))}
                       </div>
                     </div>
+                    </label>
                   </div>
 
                   <label className="block">
