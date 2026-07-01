@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-e9891030",
+    "date": "2026-07-01T21:36:09+08:00",
+    "title": "style: Mimo-ify agree milestone schedule modal (beige card, coral headline, charcoal text)",
+    "summary": "style: Mimo-ify agree milestone schedule modal (beige card, coral headline, charcoal text)",
+    "areas": [
+      "web"
+    ],
+    "commit": "e9891030",
+    "files": [
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-50312cd5",
     "date": "2026-07-01T15:54:08+08:00",
     "title": "fix: slate text for details panel, coral headline",

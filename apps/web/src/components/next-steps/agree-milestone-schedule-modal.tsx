@@ -267,7 +267,7 @@ export function AgreeMilestoneScheduleModal({
     <>
       <div
         className={`fixed inset-0 z-50 flex items-center justify-center transition-all ${
-          showMainModal ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
+          showMainModal ? 'visible bg-[rgba(81,55,32,0.35)] backdrop-blur-sm' : 'invisible bg-transparent'
         }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
@@ -276,10 +276,10 @@ export function AgreeMilestoneScheduleModal({
         <div className="w-full max-w-4xl max-h-[80vh] [perspective:1600px]">
           {/* Loading state - shown immediately */}
           {showLoadingInit && (
-            <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl">
               <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
                 <MimoSpinner size="md" className="mb-4" />
-                <p className="text-slate-300">Loading milestone schedule...</p>
+                <p className="text-[rgba(126,58,33,0.55)]">Loading milestone schedule...</p>
               </div>
             </div>
           )}
@@ -287,37 +287,37 @@ export function AgreeMilestoneScheduleModal({
           {/* Content state - shown when ready */}
           {!showLoadingInit && (
             <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
                 <div className="flex max-h-[80vh] flex-col">
                   {/* Header */}
-                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5">
+                  <div className="relative shrink-0 border-b border-[rgba(120,53,15,0.14)] px-6 py-5">
                     {hasDetails && (
                       <button
                         type="button"
                         onClick={() => setShowDetails(true)}
-                        className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                        className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.9)] text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,1)]"
                         aria-label="Show details"
                       >
                         i
                       </button>
                     )}
-                    <h2 className="text-2xl font-bold text-emerald-300">{title}</h2>
-                    <p className="text-sm text-slate-200 mt-1">{body}</p>
+                    <h2 className="text-2xl font-bold text-[#FF7F50]">{title}</h2>
+                    <p className="text-sm text-stone-600 mt-1">{body}</p>
                   </div>
 
                   <div className="next-step-scrollbar flex-1 space-y-4 overflow-y-auto px-6 py-5">
                     {error ? (
-                      <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                      <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                         {error}
                       </div>
                     ) : null}
 
                     {!projectDetails ? (
-                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                      <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                         Project details unavailable. Please try again.
                       </div>
                     ) : !resolvedProjectProfessionalId ? (
-                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                      <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                         Project schedule thread is not ready yet. Please refresh and try again.
                       </div>
                     ) : (
@@ -335,13 +335,13 @@ export function AgreeMilestoneScheduleModal({
                     )}
                   </div>
 
-                  <div className="shrink-0 flex flex-col gap-2 border-t border-slate-700 px-6 py-4">
-                    <p className="text-xs text-slate-400 italic text-center">Final payment may be different depending on materials claims.</p>
+                  <div className="shrink-0 flex flex-col gap-2 border-t border-[rgba(120,53,15,0.14)] px-6 py-4">
+                    <p className="text-xs text-[rgba(126,58,33,0.5)] italic text-center">Final payment may be different depending on materials claims.</p>
                     <div className="flex items-center justify-end gap-3">
                       <button
                         type="button"
                         onClick={onClose}
-                        className="min-w-[110px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                        className="min-w-[110px] rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
                       >
                         Close
                       </button>
@@ -350,27 +350,27 @@ export function AgreeMilestoneScheduleModal({
                 </div>
               </div>
 
-              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-white text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
                   aria-label="Hide details"
                 >
                   x
                 </button>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-                  <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
-                  <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">More information</p>
+                  <h3 className="mt-3 text-2xl font-bold text-[#FF7F50]">{title || 'Step details'}</h3>
+                  <p className="mt-5 text-sm leading-relaxed text-slate-600">{detailsBody}</p>
                 </div>
 
-                <div className="mt-auto border-t border-slate-700 px-5 py-4">
+                <div className="mt-auto border-t border-[rgba(120,53,15,0.14)] px-5 py-4">
                   <button
                     type="button"
                     onClick={() => setShowDetails(false)}
-                    className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                    className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
                   >
                     Back to schedule action
                   </button>
