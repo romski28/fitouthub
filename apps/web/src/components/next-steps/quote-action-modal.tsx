@@ -755,9 +755,9 @@ export function QuoteActionModal({
               </button>
 
               <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-                <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
-                <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">More information</p>
+                <h3 className="mt-3 text-2xl font-bold text-[#FF7F50]">{title || 'Step details'}</h3>
+                <p className="mt-5 text-sm leading-relaxed text-slate-600">{detailsBody}</p>
               </div>
 
               <div className="mt-auto border-t border-[rgba(120,53,15,0.12)] px-5 py-4">
