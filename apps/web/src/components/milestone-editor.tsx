@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, AlertCircle, Check } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
+import { WorkDatePicker } from "@/components/work-date-picker";
+import { toDateKey } from "@/lib/hk-holidays";
 
 interface MilestoneTemplate {
   id: string;
@@ -271,17 +273,15 @@ export function MilestoneEditor({
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 Start Date
               </label>
-              <input
-                type="date"
-                value={toDateInputFormat(currentMilestone.plannedStartDate)}
-                onChange={(e) =>
+              <WorkDatePicker
+                value={currentMilestone.plannedStartDate ? new Date(currentMilestone.plannedStartDate + 'T00:00:00') : null}
+                onChange={(d) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    plannedStartDate: e.target.value || undefined,
-                    plannedEndDate: e.target.value || undefined
+                    plannedStartDate: toDateKey(d),
+                    plannedEndDate: toDateKey(d)
                   }))
                 }
-                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -289,22 +289,21 @@ export function MilestoneEditor({
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 End Date
               </label>
-              <input
-                type="date"
-                value={toDateInputFormat(currentMilestone.plannedEndDate)}
-                onChange={(e) =>
+              <WorkDatePicker
+                value={currentMilestone.plannedEndDate ? new Date(currentMilestone.plannedEndDate + 'T00:00:00') : null}
+                onChange={(d) =>
                   setCurrentMilestone(prev => ({
                     ...prev,
-                    plannedEndDate: e.target.value || undefined,
-                    startTimeSlot: prev.plannedStartDate && e.target.value && prev.plannedStartDate !== e.target.value
+                    plannedEndDate: toDateKey(d),
+                    startTimeSlot: prev.plannedStartDate && toDateKey(d) && prev.plannedStartDate !== toDateKey(d)
                       ? "ALL_DAY"
                       : prev.startTimeSlot,
-                    endTimeSlot: prev.plannedStartDate && e.target.value && prev.plannedStartDate !== e.target.value
+                    endTimeSlot: prev.plannedStartDate && toDateKey(d) && prev.plannedStartDate !== toDateKey(d)
                       ? "ALL_DAY"
                       : prev.endTimeSlot,
                   }))
                 }
-                className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                minDate={currentMilestone.plannedStartDate ? new Date(currentMilestone.plannedStartDate + 'T00:00:00') : undefined}
               />
             </div>
           </div>

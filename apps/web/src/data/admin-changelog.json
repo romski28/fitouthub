@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-01-6d966b66",
+    "date": "2026-07-01T09:43:32+08:00",
+    "title": "feat: wire WorkDatePicker into quote modal, site access, start date panel, milestone editor",
+    "summary": "feat: wire WorkDatePicker into quote modal, site access, start date panel, milestone editor",
+    "areas": [
+      "web"
+    ],
+    "commit": "6d966b66",
+    "files": [
+      "apps/web/src/components/milestone-editor.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx",
+      "apps/web/src/components/start-date-negotiation-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-06-30-75e6987b",
     "date": "2026-06-30T23:14:40+08:00",
     "title": "feat: custom WorkDatePicker with HK holidays, 4-week rolling view, Sunday blocking",

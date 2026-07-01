@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { WorkDatePicker } from '@/components/work-date-picker';
+import { toDateKey } from '@/lib/hk-holidays';
 
 // ---------------------------------------------------------------------------
 // Shared start-date negotiation panel
@@ -202,7 +204,11 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
                   <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="text-sm text-slate-200">
                       <span className="mb-1 block text-xs">Start date</span>
-                      <input type="date" value={proposalDate} onChange={(e) => { setProposalDate?.(e.target.value); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }} className={inputClass} />
+                      <WorkDatePicker
+                        value={proposalDate ? new Date(proposalDate + 'T00:00:00') : null}
+                        onChange={(d) => { setProposalDate?.(toDateKey(d)); setPrefilledFromQuote?.(false); setProposalFormInitialized?.(true); }}
+                        minDate={new Date()}
+                      />
                     </label>
                     <label className="text-sm text-slate-200">
                       <span className="mb-1 block text-xs">Start time</span>
@@ -440,3 +446,4 @@ export const StartDateNegotiationPanel: React.FC<StartDateNegotiationPanelProps>
     </div>
   );
 };
+

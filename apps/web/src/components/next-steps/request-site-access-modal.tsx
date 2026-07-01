@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { WorkDatePicker } from '@/components/work-date-picker';
+import { toDateKey } from '@/lib/hk-holidays';
 import toast from 'react-hot-toast';
 
 interface RequestSiteAccessModalProps {
@@ -424,11 +426,10 @@ export function RequestSiteAccessModal({
                         <label className="mb-1 block text-xs font-semibold text-stone-600">
                           Preferred Date
                         </label>
-                        <input
-                          type="date"
-                          value={siteAccessRequestDate}
-                          onChange={(e) => setSiteAccessRequestDate(e.target.value)}
-                          className="w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-sm text-stone-800 focus:border-amber-500 focus:outline-none"
+                        <WorkDatePicker
+                          value={siteAccessRequestDate ? new Date(siteAccessRequestDate + 'T00:00:00') : null}
+                          onChange={(d) => setSiteAccessRequestDate(toDateKey(d))}
+                          minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
                         />
                       </div>
                       <div>

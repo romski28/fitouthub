@@ -6,6 +6,8 @@ import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
+import { WorkDatePicker } from '@/components/work-date-picker';
+import { toDateKey } from '@/lib/hk-holidays';
 import {
   buildQuoteBreakdownPayload,
   emptyQuoteBreakdownForm,
@@ -625,12 +627,12 @@ export function QuoteActionModal({
                           })}
                         </div>
                       ) : (
-                        <input
-                          type="date"
-                          value={estimatedStartDate}
-                          onChange={(e) => setEstimatedStartDate(e.target.value)}
-                          className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                          disabled={submitting}
+                        <WorkDatePicker
+                          value={estimatedStartDate ? new Date(estimatedStartDate + 'T00:00:00') : null}
+                          onChange={(d) => setEstimatedStartDate(toDateKey(d))}
+                          isEmergency={false}
+                          minDate={new Date()}
+                          className="rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 p-3"
                         />
                       )}
                     </label>
