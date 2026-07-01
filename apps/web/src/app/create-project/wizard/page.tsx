@@ -23,6 +23,8 @@ import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '
 import { RequirementChecklist } from '@/components/requirement-checklist';
 import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
+import { WorkDatePicker } from '@/components/work-date-picker';
+import { toDateKey } from '@/lib/hk-holidays';
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
@@ -1580,24 +1582,20 @@ export default function CreateProjectWizardPage() {
                         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                           <div className="grid gap-1.5">
                             <p className={panelNoteClass}>Date you can allow site inspection.</p>
-                            <input
-                              type="date"
-                              value={siteInspectionAvailableOn}
-                              min={new Date().toISOString().split('T')[0]}
-                              onChange={(e) => setSiteInspectionAvailableOn(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-3 text-base"
+                            <WorkDatePicker
+                              value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
+                              onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
+                              minDate={new Date()}
                             />
                           </div>
                           <div className="grid gap-1.5">
                             <p className={panelNoteClass}>When do you need this completed by?</p>
-                            <input
-                              type="date"
-                              value={endDate}
-                              min={siteInspectionAvailableOn
-                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000).toISOString().split('T')[0]
-                                : new Date().toISOString().split('T')[0]}
-                              onChange={(e) => setEndDate(e.target.value)}
-                              className="rounded-md border border-slate-300 px-3 py-3 text-base"
+                            <WorkDatePicker
+                              value={endDate ? new Date(endDate + 'T00:00:00') : null}
+                              onChange={(d) => setEndDate(toDateKey(d))}
+                              minDate={siteInspectionAvailableOn
+                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000)
+                                : new Date()}
                             />
                           </div>
                         </div>
