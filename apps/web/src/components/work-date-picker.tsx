@@ -15,6 +15,8 @@ interface WorkDatePickerProps {
   weeks?: number;
   /** Show forward/back navigation (default true) */
   showNav?: boolean;
+  /** Make cells fill available width (default false) */
+  fullWidth?: boolean;
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -56,6 +58,7 @@ export function WorkDatePicker({
   className = '',
   weeks: totalWeeks = 4,
   showNav = true,
+  fullWidth = false,
 }: WorkDatePickerProps) {
   const [holidays, setHolidays] = useState<Set<string>>(new Set());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -142,8 +145,9 @@ export function WorkDatePicker({
       const isSun = isSunday(key);
       const isHoliday = holidays.has(key);
 
-      const base =
-        'w-9 h-9 rounded-lg text-sm font-medium flex items-center justify-center transition select-none';
+      const base = fullWidth
+        ? 'w-full aspect-square rounded-lg text-sm font-medium flex items-center justify-center transition select-none'
+        : 'w-9 h-9 rounded-lg text-sm font-medium flex items-center justify-center transition select-none';
 
       if (disabled) return `${base} text-slate-300 cursor-not-allowed`;
       if (isSelected) return `${base} bg-emerald-600 text-white shadow-md cursor-pointer`;

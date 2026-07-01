@@ -639,7 +639,7 @@ export function QuoteActionModal({
                           minDate={new Date()}
                           maxDate={requestedCompletionDeadline ?? undefined}
                           weeks={Math.min(deadlineWeeks, 4)}
-                          className="w-full"
+                          fullWidth
                         />
                           );
                         })()

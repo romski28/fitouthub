@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-01-6c529049",
+    "date": "2026-07-01T11:24:05+08:00",
+    "title": "fix: add fullWidth prop to WorkDatePicker, use in quote modal",
+    "summary": "fix: add fullWidth prop to WorkDatePicker, use in quote modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c529049",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/work-date-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-de262657",
     "date": "2026-07-01T11:16:18+08:00",
     "title": "fix: quote modal date picker full-width, maxDate=client deadline, dynamic weeks",
