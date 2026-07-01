@@ -547,7 +547,7 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
                   <button
                     type="button"
                     onClick={() => { setManualOtpMode(!manualOtpMode); setScannerError(null); }}
-                    className="mt-3 text-xs font-semibold text-[rgba(126,58,33,0.55)] hover:text-[#4A3623] transition"
+                    className="mt-3 text-sm font-semibold text-[#FF7F50] hover:text-[#E67245] transition"
                   >
                     {manualOtpMode ? '← Scan QR code instead' : 'Enter code manually instead'}
                   </button>
