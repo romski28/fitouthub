@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-01-9287f7cb",
+    "date": "2026-07-01T22:50:37+08:00",
+    "title": "feat: 6-digit numeric OTP for site start, accepts both JWT (QR) and OTP (manual)",
+    "summary": "feat: 6-digit numeric OTP for site start, accepts both JWT (QR) and OTP (manual)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9287f7cb",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/start-on-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-a55e5e28",
     "date": "2026-07-01T22:13:31+08:00",
     "title": "feat: OTP code entry as alternative to QR scan for site start verification",

@@ -232,6 +232,9 @@ const HK_TIMEZONE_OFFSET_MS = HK_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
 @Injectable()
 export class ProjectsService {
+  // In-memory OTP cache for site-start manual code entry (15-min TTL)
+  private otpCache = new Map<string, { projectId: string; expiresAt: number }>();
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -10620,7 +10623,7 @@ Please review the project details and respond with your quote or decline the inv
     projectId: string,
     professionalUserId: string,
     purpose: string = 'site_start',
-  ): Promise<{ token: string; expiresAt: string }> {
+  ): Promise<{ token: string; otp: string; expiresAt: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
@@ -10650,16 +10653,24 @@ Please review the project details and respond with your quote or decline the inv
 
     const secret = process.env.JWT_SECRET || 'your-secret-key';
     const expiresInSeconds = 15 * 60; // 15 minutes
+
+    // Generate a 6-digit numeric OTP for manual entry
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
     const payload = {
       projectId,
       generatedByUserId: professionalUserId,
       purpose,
+      otp,
     };
 
     const token = jwt.sign(payload, secret, { expiresIn: expiresInSeconds });
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 
-    return { token, expiresAt };
+    // Cache OTP → projectId for quick lookup on confirm
+    this.otpCache.set(otp, { projectId, expiresAt: Date.now() + expiresInSeconds * 1000 });
+
+    return { token, otp, expiresAt };
   }
 
   /**
@@ -10674,19 +10685,35 @@ Please review the project details and respond with your quote or decline the inv
   ): Promise<{ siteStartedAt: Date; previousStage: string }> {
     const secret = process.env.JWT_SECRET || 'your-secret-key';
 
-    let decoded: { projectId: string; generatedByUserId: string; purpose: string };
-    try {
-      decoded = jwt.verify(token, secret) as typeof decoded;
-    } catch {
-      throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
-    }
+    // Support both JWT (QR scan) and 6-digit OTP (manual entry)
+    let decodedProjectId = projectId;
+    if (/^\d{6}$/.test(token)) {
+      // OTP lookup — find the cached entry
+      const cached = this.otpCache.get(token);
+      if (!cached || cached.expiresAt < Date.now()) {
+        this.otpCache.delete(token);
+        throw new BadRequestException('Code is invalid or has expired. Ask the professional to generate a new one.');
+      }
+      if (cached.projectId !== projectId) {
+        throw new BadRequestException('Code does not match this project');
+      }
+      // OTP verified — proceed to site start
+    } else {
+      // JWT verification (QR scan path)
+      let decoded: { projectId: string; generatedByUserId: string; purpose: string };
+      try {
+        decoded = jwt.verify(token, secret) as typeof decoded;
+      } catch {
+        throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
+      }
 
-    if (decoded.purpose !== 'site_start') {
-      throw new BadRequestException('Invalid QR code');
-    }
+      if (decoded.purpose !== 'site_start') {
+        throw new BadRequestException('Invalid QR code');
+      }
 
-    if (decoded.projectId !== projectId) {
-      throw new BadRequestException('QR code does not match this project');
+      if (decoded.projectId !== projectId) {
+        throw new BadRequestException('QR code does not match this project');
+      }
     }
 
     const project = await this.prisma.project.findUnique({
