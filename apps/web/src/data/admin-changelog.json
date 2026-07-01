@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-a6da606d",
+    "date": "2026-07-01T15:21:03+08:00",
+    "title": "fix: 4 equal-width time+duration columns on desktop, 2x2 on mobile",
+    "summary": "fix: 4 equal-width time+duration columns on desktop, 2x2 on mobile",
+    "areas": [
+      "web"
+    ],
+    "commit": "a6da606d",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-eff4517c",
     "date": "2026-07-01T15:10:23+08:00",
     "title": "fix: missing closing label tag in quote modal duration section",
