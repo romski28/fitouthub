@@ -343,16 +343,7 @@ export function QuoteActionModal({
       return;
     }
 
-    if (!estimatedDurationValue) {
-      setError('Please enter an estimated duration');
-      return;
-    }
-
     const durationValue = parseFloat(estimatedDurationValue);
-    if (Number.isNaN(durationValue) || durationValue <= 0) {
-      setError('Please enter a valid estimated duration');
-      return;
-    }
 
     if (!state.projectId) {
       setError('Missing project context. Please refresh and try again.');
@@ -685,6 +676,7 @@ export function QuoteActionModal({
                         className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                         placeholder="8"
                         disabled={submitting}
+                        required
                       />
                     </label>
                     <label className="block">
