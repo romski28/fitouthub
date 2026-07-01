@@ -319,16 +319,14 @@ export function StartOnSiteModal({ isOpen, onClose }: StartOnSiteModalProps) {
 
               <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-5 pt-10 text-center">
                 <div className="flex flex-col items-center text-center">
-                <div className="mb-4">
+                <div className="mb-4 flex items-center gap-4">
                   <img
                     src={modalImage}
                     alt="Step illustration"
-                    className="h-20 w-20 rounded-full border border-white/20 object-cover"
+                    className="h-12 w-12 rounded-full border border-[rgba(120,53,15,0.14)] object-cover flex-shrink-0"
                   />
-                </div>
-
                 <h2 className="text-2xl font-bold text-[#FF7F50]">{modalTitle}</h2>
-                <p className="mt-3 text-base leading-relaxed text-stone-600">{modalBody}</p>
+                </div>
 
                 <div className="mt-6 flex flex-col items-center gap-4">
                   {qrError ? (
