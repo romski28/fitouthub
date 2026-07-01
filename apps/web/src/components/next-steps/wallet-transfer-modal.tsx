@@ -10,6 +10,7 @@ import {
   applyNextStepModalTemplate,
   resolveNextStepModalContent,
 } from '@/lib/next-step-modal-content';
+import { MimoSpinner } from '@/components/mimo-spinner';
 
 type TransferKind = 'authorize_milestone_cap' | 'api_transfer';
 
@@ -293,7 +294,7 @@ export function WalletTransferModal({ isOpen, isLoading = false, onClose }: Wall
       <div className="relative w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         {(isLoading || loadingProjectData) ? (
           <div className="px-6 py-12 text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+            <MimoSpinner size="md" className="mx-auto mb-4" />
             <p className="text-slate-300">Loading...</p>
           </div>
         ) : (

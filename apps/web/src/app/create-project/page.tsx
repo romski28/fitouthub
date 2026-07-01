@@ -21,6 +21,7 @@ import {
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { getUploadResponseKeys } from '@/lib/media-assets';
 import { clearAiClientState } from '@/lib/client-session';
+import { MimoSpinner } from '@/components/mimo-spinner';
 
 interface ProjectDescriptionData {
   title?: string;
@@ -751,13 +752,13 @@ export default function CreateProjectPage() {
       </div>
 
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-[1px]">
-          <div className="mx-4 w-full max-w-md rounded-2xl border border-white/20 bg-slate-900/90 px-6 py-6 text-center text-white shadow-2xl">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" aria-hidden="true" />
-            <p className="text-base font-semibold">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(81,55,32,0.35)] backdrop-blur-[1px]">
+          <div className="mx-4 w-full max-w-md rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.92)] px-6 py-6 text-center shadow-2xl">
+            <MimoSpinner size="md" className="mx-auto mb-3" />
+            <p className="text-base font-bold text-[#4A3623]">
               {selectedProfessionals.length > 0 ? 'Requesting quotes...' : 'Saving project...'}
             </p>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-[rgba(126,58,33,0.65)]">
               {selectedProfessionals.length > 0
                 ? 'Inviting selected professionals and preparing your project dashboard.'
                 : 'Preparing your project dashboard.'}

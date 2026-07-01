@@ -25,6 +25,7 @@ import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
+import { MimoSpinner } from '@/components/mimo-spinner';
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
@@ -1802,11 +1803,11 @@ export default function CreateProjectWizardPage() {
       )}
 
       {isChatSendFinalizing && chatImageUploadBusy && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-white/70 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white/90 p-5 text-center shadow-xl">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-emerald-300 border-t-emerald-700" />
-            <p className="text-sm font-semibold text-slate-900">Preparing your photos</p>
-            <p className="mt-1 text-xs text-slate-700">Please wait while uploads complete. We will keep your message ready to send.</p>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(245,238,219,0.6)] backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.95)] p-5 text-center shadow-xl">
+            <MimoSpinner size="md" className="mx-auto mb-3" />
+            <p className="text-sm font-semibold text-[#4A3623]">Preparing your photos</p>
+            <p className="mt-1 text-xs text-[rgba(126,58,33,0.65)]">Please wait while uploads complete. We will keep your message ready to send.</p>
           </div>
         </div>
       )}

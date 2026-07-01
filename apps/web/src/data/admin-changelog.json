@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-07-01-c4e9e216",
+    "date": "2026-07-01T10:50:04+08:00",
+    "title": "feat: MimoSpinner shared component, Mimo-ify submission modal + standardize 7 spinners",
+    "summary": "feat: MimoSpinner shared component, Mimo-ify submission modal + standardize 7 spinners",
+    "areas": [
+      "web"
+    ],
+    "commit": "c4e9e216",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/mimo-spinner.tsx",
+      "apps/web/src/components/next-steps/agree-milestone-schedule-modal.tsx",
+      "apps/web/src/components/next-steps/deposit-escrow-modal.tsx",
+      "apps/web/src/components/next-steps/general-action-modal.tsx",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx",
+      "apps/web/src/components/next-steps/wallet-transfer-modal.tsx",
+      "apps/web/src/components/page-loading-state.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-febfda1e",
     "date": "2026-07-01T10:16:48+08:00",
     "title": "feat: week navigation + configurable weeks in WorkDatePicker, site inspection=2w, completion=4w",

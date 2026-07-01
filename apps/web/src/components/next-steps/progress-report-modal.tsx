@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth-context';
 import { WorkflowCompletionModal, type WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 import ProjectChat from '@/components/project-chat';
+import { MimoSpinner } from '@/components/mimo-spinner';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -901,7 +902,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                 {/* Body */}
                 {pageLoading ? (
                   <div className="px-6 py-12 text-center">
-                    <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
+                    <MimoSpinner size="md" className="mx-auto mb-4" />
                     <p className="text-slate-300">Loading…</p>
                   </div>
                 ) : mode === 'compose' ? (

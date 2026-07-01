@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNextStepModal } from '@/context/next-step-modal-context';
+import { MimoSpinner } from '@/components/mimo-spinner';
 
 interface GeneralActionModalProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export function GeneralActionModal({
         {isLoading ? (
           <div className="relative overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
             <div className="flex flex-col items-center justify-center px-6 py-14">
-              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[#D4C8A0] border-t-emerald-600" />
+              <MimoSpinner size="md" className="mb-4" />
               <p className="text-slate-700">Loading...</p>
             </div>
           </div>

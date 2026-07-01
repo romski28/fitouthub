@@ -10,6 +10,7 @@ import { completeNextStep, fetchPrimaryNextStep, invalidateNextStepCache } from 
 import { ScheduleTab } from '@/app/professional-projects/[id]/tabs/schedule-tab';
 import { WorkflowCompletionModal, type WaitingParty, type WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { getClientTabForAction } from '@/lib/client-workflow';
+import { MimoSpinner } from '@/components/mimo-spinner';
 import { getProfessionalTabForAction } from '@/lib/professional-workflow';
 
 interface AgreeMilestoneScheduleModalProps {
@@ -277,7 +278,7 @@ export function AgreeMilestoneScheduleModal({
           {showLoadingInit && (
             <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
               <div className="flex flex-col items-center justify-center px-6 py-14 min-h-[400px]">
-                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+                <MimoSpinner size="md" className="mb-4" />
                 <p className="text-slate-300">Loading milestone schedule...</p>
               </div>
             </div>

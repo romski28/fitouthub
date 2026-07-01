@@ -5,6 +5,7 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import toast from 'react-hot-toast';
+import { MimoSpinner } from '@/components/mimo-spinner';
 
 interface DepositEscrowModalProps {
   isOpen: boolean;
@@ -211,7 +212,7 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         {busy ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
-            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
+            <MimoSpinner size="md" className="mb-4" />
             <p className="text-slate-300">Loading...</p>
           </div>
         ) : phase === 'confirm' ? (
