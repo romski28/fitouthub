@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-8ec4c232",
+    "date": "2026-07-01T11:53:06+08:00",
+    "title": "fix: date picker spans full width in quote modal (md:col-span-2)",
+    "summary": "fix: date picker spans full width in quote modal (md:col-span-2)",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ec4c232",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-6c529049",
     "date": "2026-07-01T11:24:05+08:00",
     "title": "fix: add fullWidth prop to WorkDatePicker, use in quote modal",
