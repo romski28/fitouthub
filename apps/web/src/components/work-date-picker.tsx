@@ -50,8 +50,8 @@ function formatMonthYear(d: Date): string {
   return d.toLocaleDateString('en-HK', { month: 'long', year: 'numeric' });
 }
 
-function formatMonthShort(d: Date): string {
-  return d.toLocaleDateString('en-HK', { month: 'short' });
+function formatMonthLong(d: Date): string {
+  return d.toLocaleDateString('en-HK', { month: 'long' });
 }
 
 export function WorkDatePicker({
@@ -115,12 +115,12 @@ export function WorkDatePicker({
     for (let i = 0; i < totalDays; i++) days.push(addDays(startDate, i));
     const months = new Set(days.map((d) => d.getMonth()));
     if (months.size > 1) {
-      const firstMonth = formatMonthShort(startDate);
+      const firstMonth = formatMonthLong(startDate);
       const lastDay = addDays(startDate, totalDays - 1);
-      const lastMonth = formatMonthShort(lastDay);
+      const lastMonth = formatMonthLong(lastDay);
       return `${firstMonth} / ${lastMonth}`;
     }
-    return formatMonthShort(startDate);
+    return formatMonthLong(startDate);
   }, [startDate, totalDays]);
 
   const disabledSet = useMemo(() => new Set(extraDisabled), [extraDisabled]);
@@ -308,12 +308,10 @@ export function WorkDatePicker({
         </div>
       )}
 
-      {/* Next month subtitle */}
-      {nextMonthLabel && (
-        <p className="mt-2 text-center text-xs font-medium text-[rgba(126,58,33,0.45)]">
-          {nextMonthLabel} →
-        </p>
-      )}
+      {/* Month label */}
+      <p className="mt-2 text-center text-xs font-medium text-[rgba(126,58,33,0.45)]">
+        {nextMonthLabel}
+      </p>
     </div>
   );
 }

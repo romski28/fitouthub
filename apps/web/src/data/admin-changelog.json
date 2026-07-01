@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-b76bb9da",
+    "date": "2026-07-01T14:59:06+08:00",
+    "title": "fix: full month names at bottom, remove arrow",
+    "summary": "fix: full month names at bottom, remove arrow",
+    "areas": [
+      "web"
+    ],
+    "commit": "b76bb9da",
+    "files": [
+      "apps/web/src/components/work-date-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-b84797d0",
     "date": "2026-07-01T14:54:55+08:00",
     "title": "fix: drop year from picker header, remove duplicate label, show Jun/Jul under grid",
