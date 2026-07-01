@@ -689,7 +689,7 @@ export function QuoteActionModal({
                     </label>
                     <label className="block">
                       <span className="mb-1 block text-sm font-semibold text-stone-700 invisible">Duration</span>
-                      <div className="flex h-full overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)]">
+                      <div className="flex overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)]">
                         {(['hours', 'days'] as const).map((unit) => (
                           <button
                             key={unit}

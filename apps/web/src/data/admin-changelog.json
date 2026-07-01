@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-88a5c634",
+    "date": "2026-07-01T15:33:21+08:00",
+    "title": "fix: remove h-full from unit toggle so height matches other inputs",
+    "summary": "fix: remove h-full from unit toggle so height matches other inputs",
+    "areas": [
+      "web"
+    ],
+    "commit": "88a5c634",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-a6da606d",
     "date": "2026-07-01T15:21:03+08:00",
     "title": "fix: 4 equal-width time+duration columns on desktop, 2x2 on mobile",
