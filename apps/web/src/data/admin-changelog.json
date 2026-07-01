@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-cb0aa1b3",
+    "date": "2026-07-01T15:07:51+08:00",
+    "title": "fix: time+duration on one row desktop, stacked mobile, equal hour/minute width, compact duration field",
+    "summary": "fix: time+duration on one row desktop, stacked mobile, equal hour/minute width, compact duration field",
+    "areas": [
+      "web"
+    ],
+    "commit": "cb0aa1b3",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-b76bb9da",
     "date": "2026-07-01T14:59:06+08:00",
     "title": "fix: full month names at bottom, remove arrow",

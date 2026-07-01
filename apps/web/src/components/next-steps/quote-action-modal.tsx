@@ -646,6 +646,9 @@ export function QuoteActionModal({
                       )}
                     </label>
 
+                  </div>
+                  {/* Time + Duration on one row (desktop), stacked (mobile) */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <label className="block">
                       <span className="mb-1 block text-sm font-semibold text-stone-700">{isEmergencyProject ? 'at...' : 'Arriving at'}</span>
                       <div className="flex items-center gap-2">
@@ -663,7 +666,7 @@ export function QuoteActionModal({
                         <select
                           value={estimatedStartMinute}
                           onChange={(e) => setEstimatedStartMinute(e.target.value)}
-                          className="w-24 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
+                          className="flex-1 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           disabled={submitting}
                         >
                           <option value="00">00</option>
@@ -671,23 +674,22 @@ export function QuoteActionModal({
                         </select>
                       </div>
                     </label>
-                  </div>
 
-                  <div className="block">
-                    <span className="mb-1 block text-sm font-semibold text-stone-700">Duration</span>
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="number"
-                        min="0.1"
-                        step="0.1"
-                        value={estimatedDurationValue}
-                        onChange={(e) => setEstimatedDurationValue(e.target.value)}
-                        className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                        placeholder="e.g. 8"
-                        disabled={submitting}
-                      />
-                      <div className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)]">
-                        {(['hours', 'days'] as const).map((unit) => (
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-semibold text-stone-700">Duration</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={estimatedDurationValue}
+                          onChange={(e) => setEstimatedDurationValue(e.target.value)}
+                          className="w-20 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
+                          placeholder="8"
+                          disabled={submitting}
+                        />
+                        <div className="flex overflow-hidden rounded-lg border border-[rgba(120,53,15,0.22)]">
+                          {(['hours', 'days'] as const).map((unit) => (
                           <button
                             key={unit}
                             type="button"
