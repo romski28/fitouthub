@@ -11,6 +11,10 @@ interface WorkDatePickerProps {
   maxDate?: Date;
   disabledDates?: string[]; // YYYY-MM-DD strings
   className?: string;
+  /** Number of weeks to display (default 4) */
+  weeks?: number;
+  /** Show forward/back navigation (default true) */
+  showNav?: boolean;
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -18,10 +22,16 @@ const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 function getMondayOfWeek(d: Date): Date {
   const monday = new Date(d);
   const day = monday.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Sunday → back 6, else back to Monday
+  const diff = day === 0 ? -6 : 1 - day;
   monday.setDate(monday.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
   return monday;
+}
+
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
 }
 
 function sameDay(a: Date, b: Date): boolean {
@@ -32,6 +42,10 @@ function sameDay(a: Date, b: Date): boolean {
   );
 }
 
+function formatMonthYear(d: Date): string {
+  return d.toLocaleDateString('en-HK', { month: 'long', year: 'numeric' });
+}
+
 export function WorkDatePicker({
   value,
   onChange,
@@ -40,74 +54,78 @@ export function WorkDatePicker({
   maxDate,
   disabledDates: extraDisabled = [],
   className = '',
+  weeks: totalWeeks = 4,
+  showNav = true,
 }: WorkDatePickerProps) {
   const [holidays, setHolidays] = useState<Set<string>>(new Set());
-  const [currentMonth, setCurrentMonth] = useState<string>('');
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [animDir, setAnimDir] = useState<'left' | 'right' | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
   useEffect(() => {
     getHolidayDateSet().then(setHolidays);
   }, []);
 
-  const startDate = useMemo(() => getMondayOfWeek(new Date()), []);
   const todayKey = useMemo(() => toDateKey(new Date()), []);
 
-  // Generate 28 days (4 weeks)
+  // Starting Monday = this week's Monday + offset * displayed weeks
+  const startDate = useMemo(() => {
+    const base = getMondayOfWeek(new Date());
+    return addDays(base, weekOffset * 7 * totalWeeks);
+  }, [weekOffset, totalWeeks]);
+
+  const totalDays = totalWeeks * 7;
+
+  // Generate days
   const weeks = useMemo(() => {
     const days: Date[] = [];
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
-      days.push(d);
+    for (let i = 0; i < totalDays; i++) {
+      days.push(addDays(startDate, i));
     }
 
-    // Detect if we span two months
-    const months = new Set(days.map((d) => d.getMonth()));
-    if (months.size > 1) {
-      // Find the split point — last day of first month
-      const lastOfFirst = [...days].reverse().find((d) => d.getMonth() === startDate.getMonth());
-      const nextMonthDate = days.find((d) => d.getMonth() !== startDate.getMonth());
-      if (nextMonthDate) {
-        setCurrentMonth(
-          new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth()).toLocaleDateString(
-            'en-HK',
-            { month: 'long', year: 'numeric' },
-          ),
-        );
-      }
-    } else {
-      setCurrentMonth('');
-    }
-
-    // Group into weeks
     const rows: Date[][] = [];
     for (let i = 0; i < days.length; i += 7) {
       rows.push(days.slice(i, i + 7));
     }
     return rows;
-  }, [startDate]);
+  }, [startDate, totalDays]);
 
-  const disabledSet = useMemo(
-    () => new Set(extraDisabled),
-    [extraDisabled],
-  );
+  // Header label
+  const headerLabel = useMemo(() => {
+    const endDate = addDays(startDate, totalDays - 1);
+    const startMonth = formatMonthYear(startDate);
+    const endMonth = formatMonthYear(endDate);
+    if (startMonth === endMonth) return startMonth;
+    return `${startMonth} – ${endMonth}`;
+  }, [startDate, totalDays]);
+
+  // Next-month subtitle
+  const nextMonthLabel = useMemo(() => {
+    const days: Date[] = [];
+    for (let i = 0; i < totalDays; i++) days.push(addDays(startDate, i));
+    const months = new Set(days.map((d) => d.getMonth()));
+    if (months.size > 1) {
+      const nextMonthDate = days.find((d) => d.getMonth() !== startDate.getMonth());
+      if (nextMonthDate) {
+        return formatMonthYear(new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth()));
+      }
+    }
+    return '';
+  }, [startDate, totalDays]);
+
+  const disabledSet = useMemo(() => new Set(extraDisabled), [extraDisabled]);
 
   const isDisabled = useCallback(
     (d: Date): boolean => {
       const key = toDateKey(d);
-      // Min date check
       if (minDate && d < new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())) {
         return true;
       }
-      // Max date check
       if (maxDate && d > new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())) {
         return true;
       }
-      // Sunday check (skip for emergencies)
       if (!isEmergency && isSunday(key)) return true;
-      // Holiday check
       if (holidays.has(key)) return true;
-      // Extra disabled
       if (disabledSet.has(key)) return true;
       return false;
     },
@@ -127,30 +145,12 @@ export function WorkDatePicker({
       const base =
         'w-9 h-9 rounded-lg text-sm font-medium flex items-center justify-center transition select-none';
 
-      if (disabled) {
-        return `${base} text-slate-300 cursor-not-allowed`;
-      }
-
-      if (isSelected) {
-        return `${base} bg-emerald-600 text-white shadow-md cursor-pointer`;
-      }
-
-      if (isToday) {
-        return `${base} border-2 border-amber-500 text-[#4A3623] cursor-pointer hover:bg-amber-100`;
-      }
-
-      if (isSun && !isEmergency) {
-        return `${base} text-[#FF7F50]/50 line-through cursor-not-allowed`;
-      }
-
-      if (isHoliday) {
-        return `${base} text-[#FF7F50] cursor-not-allowed relative`;
-      }
-
-      if (isNextMonth) {
-        return `${base} text-[rgba(126,58,33,0.4)] cursor-pointer hover:bg-[rgba(245,238,219,0.6)]`;
-      }
-
+      if (disabled) return `${base} text-slate-300 cursor-not-allowed`;
+      if (isSelected) return `${base} bg-emerald-600 text-white shadow-md cursor-pointer`;
+      if (isToday) return `${base} border-2 border-amber-500 text-[#4A3623] cursor-pointer hover:bg-amber-100`;
+      if (isSun && !isEmergency) return `${base} text-[#FF7F50]/50 line-through cursor-not-allowed`;
+      if (isHoliday) return `${base} text-[#FF7F50] cursor-not-allowed relative`;
+      if (isNextMonth) return `${base} text-[rgba(126,58,33,0.4)] cursor-pointer hover:bg-[rgba(245,238,219,0.6)]`;
       return `${base} text-[#4A3623] cursor-pointer hover:bg-[rgba(245,238,219,0.8)]`;
     },
     [value, todayKey, startDate, isEmergency, holidays, isDisabled],
@@ -164,16 +164,55 @@ export function WorkDatePicker({
     [isDisabled, onChange],
   );
 
-  const headerMonth = startDate.toLocaleDateString('en-HK', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const navBack = useCallback(() => {
+    if (weekOffset <= 0) return;
+    setAnimDir('right');
+    setWeekOffset((o) => o - 1);
+    setTimeout(() => setAnimDir(null), 200);
+  }, [weekOffset]);
+
+  const navForward = useCallback(() => {
+    setAnimDir('left');
+    setWeekOffset((o) => o + 1);
+    setTimeout(() => setAnimDir(null), 200);
+  }, []);
+
+  const canGoBack = weekOffset > 0;
 
   return (
     <div className={`select-none ${className}`}>
-      {/* Header */}
-      <div className="mb-3 text-center">
-        <p className="text-base font-bold text-[#4A3623]">{headerMonth}</p>
+      {/* Header with navigation */}
+      <div className="mb-3 flex items-center justify-between">
+        {showNav ? (
+          <button
+            type="button"
+            onClick={navBack}
+            disabled={!canGoBack}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
+              canGoBack
+                ? 'text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] cursor-pointer'
+                : 'text-slate-300 cursor-not-allowed'
+            }`}
+            aria-label="Previous weeks"
+          >
+            ←
+          </button>
+        ) : (
+          <div className="w-8" />
+        )}
+        <p className="text-base font-bold text-[#4A3623]">{headerLabel}</p>
+        {showNav ? (
+          <button
+            type="button"
+            onClick={navForward}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#4A3623] hover:bg-[rgba(245,238,219,0.8)] transition cursor-pointer"
+            aria-label="Next weeks"
+          >
+            →
+          </button>
+        ) : (
+          <div className="w-8" />
+        )}
       </div>
 
       {/* Day names */}
@@ -190,11 +229,15 @@ export function WorkDatePicker({
         ))}
       </div>
 
-      {/* Day grid */}
-      <div className="space-y-0.5">
+      {/* Day grid with transition */}
+      <div
+        className={`space-y-0.5 transition-opacity duration-150 ${
+          animDir ? 'opacity-40' : 'opacity-100'
+        }`}
+      >
         {weeks.map((week, wi) => (
           <div key={wi} className="grid grid-cols-7 gap-0.5">
-            {week.map((d, di) => {
+            {week.map((d) => {
               const key = toDateKey(d);
               const disabled = isDisabled(d);
               const isHoliday = holidays.has(key);
@@ -219,7 +262,6 @@ export function WorkDatePicker({
                   }
                 >
                   {d.getDate()}
-                  {/* Holiday indicator dot */}
                   {isHoliday && (
                     <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[#FF7F50]" />
                   )}
@@ -230,10 +272,10 @@ export function WorkDatePicker({
         ))}
       </div>
 
-      {/* Subtitle for next month boundary */}
-      {currentMonth && (
+      {/* Next month subtitle */}
+      {nextMonthLabel && (
         <p className="mt-2 text-center text-xs font-medium text-[rgba(126,58,33,0.45)]">
-          {currentMonth} →
+          {nextMonthLabel} →
         </p>
       )}
 

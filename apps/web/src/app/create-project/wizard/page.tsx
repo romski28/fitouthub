@@ -1586,6 +1586,7 @@ export default function CreateProjectWizardPage() {
                               value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
                               onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
                               minDate={new Date()}
+                              weeks={2}
                             />
                           </div>
                           <div className="grid gap-1.5">

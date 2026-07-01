@@ -430,6 +430,7 @@ export function RequestSiteAccessModal({
                           value={siteAccessRequestDate ? new Date(siteAccessRequestDate + 'T00:00:00') : null}
                           onChange={(d) => setSiteAccessRequestDate(toDateKey(d))}
                           minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
+                          weeks={2}
                         />
                       </div>
                       <div>
