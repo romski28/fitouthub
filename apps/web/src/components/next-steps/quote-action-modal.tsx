@@ -627,13 +627,22 @@ export function QuoteActionModal({
                           })}
                         </div>
                       ) : (
+                        (() => {
+                          const deadlineWeeks = requestedCompletionDeadline
+                            ? Math.max(2, Math.ceil((requestedCompletionDeadline.getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))
+                            : 4;
+                          return (
                         <WorkDatePicker
                           value={estimatedStartDate ? new Date(estimatedStartDate + 'T00:00:00') : null}
                           onChange={(d) => setEstimatedStartDate(toDateKey(d))}
                           isEmergency={false}
                           minDate={new Date()}
-                          className="rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 p-3"
+                          maxDate={requestedCompletionDeadline ?? undefined}
+                          weeks={Math.min(deadlineWeeks, 4)}
+                          className="w-full"
                         />
+                          );
+                        })()
                       )}
                     </label>
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-01-de262657",
+    "date": "2026-07-01T11:16:18+08:00",
+    "title": "fix: quote modal date picker full-width, maxDate=client deadline, dynamic weeks",
+    "summary": "fix: quote modal date picker full-width, maxDate=client deadline, dynamic weeks",
+    "areas": [
+      "web"
+    ],
+    "commit": "de262657",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-01-c4e9e216",
     "date": "2026-07-01T10:50:04+08:00",
     "title": "feat: MimoSpinner shared component, Mimo-ify submission modal + standardize 7 spinners",
