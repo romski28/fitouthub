@@ -1,13 +1,13 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
+import confetti from 'canvas-confetti';
 import {
   buildQuoteBreakdownPayload,
   emptyQuoteBreakdownForm,
@@ -410,12 +410,6 @@ export function QuoteActionModal({
     }
   };
 
-  const successNextStep: WorkflowNextStep = {
-    actionLabel: 'Check back for the client response',
-    description: 'You will see updates in this project as soon as the client reviews your quote.',
-    requiresAction: true,
-  };
-
   const exceedsClientFinishDate = useMemo(() => {
     if (!requestedCompletionDeadline) return false;
 
@@ -460,36 +454,7 @@ export function QuoteActionModal({
   const enteredTotal = getQuoteBreakdownFormTotal(breakdown);
 
   if (showSuccess) {
-    return (
-      <WorkflowCompletionModal
-        isOpen={isOpen}
-        completedLabel="Your quote has gone to the client! Fingers crossed!"
-        completedDescription="Nice work. Your quote is now in the client's queue for review."
-        nextStep={successNextStep}
-        primaryActionLabel="Open project"
-        additionalActionLabel={showSiteVisitCta ? `📍 Book site visit (${siteInspectionAvailableOn})` : undefined}
-        secondaryActionLabel="Later"
-        showConfetti
-        onNavigate={() => {
-          if (state.projectDetailsPath) {
-            router.push(state.projectDetailsPath);
-            return;
-          }
-          if (state.projectId) {
-            router.push(`/projects/${state.projectId}?tab=overview`);
-          }
-        }}
-        onAdditionalAction={showSiteVisitCta ? () => {
-          const path = state.projectDetailsPath || (state.projectId ? `/professional-projects/${state.projectId}` : null);
-          if (path) {
-            const base = path.split('?')[0];
-            router.push(`${base}?tab=site-access`);
-          }
-          onClose();
-        } : undefined}
-        onClose={handleClose}
-      />
-    );
+    return <ProQuoteSuccessModal isOpen={isOpen} onClose={handleClose} />;
   }
 
   return (
@@ -772,6 +737,64 @@ export function QuoteActionModal({
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Pro Quote Success Modal ──────────────────────────────────────────────
+
+function ProQuoteSuccessModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const hasFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen || hasFiredRef.current) return;
+    hasFiredRef.current = true;
+    confetti({ particleCount: 110, spread: 80, origin: { y: 0.65 } });
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleOk = () => {
+    onClose();
+    router.push('/professional-projects');
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quote submitted"
+    >
+      <div className="w-full max-w-md rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
+        {/* Success header */}
+        <div className="flex items-start gap-3 rounded-t-2xl bg-emerald-100/80 border-b border-emerald-200 px-5 py-4">
+          <span className="mt-0.5 text-xl">✅</span>
+          <div>
+            <p className="text-base font-bold text-emerald-800">
+              Your quote has gone to the client! Fingers crossed!
+            </p>
+          </div>
+        </div>
+
+        {/* Single full-width OK button */}
+        <div className="px-5 py-4">
+          <button
+            type="button"
+            onClick={handleOk}
+            className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+          >
+            OK
+          </button>
+        </div>
       </div>
     </div>
   );

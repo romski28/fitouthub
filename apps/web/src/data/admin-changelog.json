@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-3b867c6b",
+    "date": "2026-07-02T15:06:37+08:00",
+    "title": "refactor: simplify pro quote success modal — remove second line, single full-width OK button, navigate to project list",
+    "summary": "refactor: simplify pro quote success modal — remove second line, single full-width OK button, navigate to project list",
+    "areas": [
+      "web"
+    ],
+    "commit": "3b867c6b",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-02-624a8ede",
     "date": "2026-07-02T14:57:19+08:00",
     "title": "docs: session change log for July 2 2026",
