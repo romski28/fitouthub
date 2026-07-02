@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-a826945b",
+    "date": "2026-07-02T13:44:08+08:00",
+    "title": "perf: stage-gate pre-fetches + client site access queries to skip irrelevant stages",
+    "summary": "perf: stage-gate pre-fetches + client site access queries to skip irrelevant stages",
+    "areas": [
+      "api"
+    ],
+    "commit": "a826945b",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-6c5cd243",
     "date": "2026-07-02T10:43:46+08:00",
     "title": "feat: Phase B RLS policies for 18 flagged tables + rollback + checklist update",

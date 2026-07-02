@@ -305,30 +305,41 @@ export class NextStepService {
     };
     const returnWithCache = (r: NextStepResult): NextStepResult => { saveCache(r); return r; };
 
-    // ── Pre-fetch payment plan once (used in multiple branches) ──
-    const paymentPlan = await this.prisma.projectPaymentPlan.findUnique({
-      where: { projectId },
-      select: {
-        id: true,
-        projectScale: true,
-        milestones: {
-          select: { id: true, sequence: true, title: true, status: true },
-          orderBy: { sequence: 'asc' },
-        },
-      },
-    }).catch(() => null); // non-fatal — some projects may not have a plan yet
+    // ── Pre-fetch payment plan once (used in multiple branches, only needed from CONTRACT_PHASE onward) ──
+    const needsPaymentPlan = effectiveStage !== ProjectStage.CREATED
+      && effectiveStage !== ProjectStage.BIDDING_ACTIVE
+      && effectiveStage !== ProjectStage.SITE_VISIT_SCHEDULED
+      && effectiveStage !== ProjectStage.SITE_VISIT_COMPLETE
+      && effectiveStage !== ProjectStage.QUOTE_RECEIVED
+      && effectiveStage !== ProjectStage.BIDDING_CLOSED;
+    const paymentPlan = needsPaymentPlan
+      ? await this.prisma.projectPaymentPlan.findUnique({
+          where: { projectId },
+          select: {
+            id: true,
+            projectScale: true,
+            milestones: {
+              select: { id: true, sequence: true, title: true, status: true },
+              orderBy: { sequence: 'asc' },
+            },
+          },
+        }).catch(() => null)
+      : null;
 
     // ── Pre-fetch start proposals once (used in CONTRACT_PHASE + PRE_WORK) ──
-    const [acceptedStartProposal, latestStartProposal] = await Promise.all([
-      this.prisma.projectStartProposal.findFirst({
-        where: { projectId, status: 'accepted' },
-        orderBy: { createdAt: 'desc' },
-      }).catch(() => null),
-      this.prisma.projectStartProposal.findFirst({
-        where: { projectId, status: 'proposed' },
-        orderBy: { createdAt: 'desc' },
-      }).catch(() => null),
-    ]);
+    const needsStartProposals = needsPaymentPlan;
+    const [acceptedStartProposal, latestStartProposal] = needsStartProposals
+      ? await Promise.all([
+          this.prisma.projectStartProposal.findFirst({
+            where: { projectId, status: 'accepted' },
+            orderBy: { createdAt: 'desc' },
+          }).catch(() => null),
+          this.prisma.projectStartProposal.findFirst({
+            where: { projectId, status: 'proposed' },
+            orderBy: { createdAt: 'desc' },
+          }).catch(() => null),
+        ])
+      : [null, null];
 
     const actionActorWhere =
       role === 'PROFESSIONAL'
@@ -588,7 +599,7 @@ export class NextStepService {
       } // end accepted-pros flow
     }
 
-    if (role === 'CLIENT') {
+    if (role === 'CLIENT' && project.status !== 'awarded') {
       let surveyBookingDescription: string | null = null;
 
       try {
