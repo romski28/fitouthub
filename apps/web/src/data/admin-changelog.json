@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-81f25af6",
+    "date": "2026-07-02T16:00:43+08:00",
+    "title": "fix: role detection for professionals in next-step controller — check professional.userId not just professionalId",
+    "summary": "fix: role detection for professionals in next-step controller — check professional.userId not just professionalId",
+    "areas": [
+      "api"
+    ],
+    "commit": "81f25af6",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-1114ecf2",
     "date": "2026-07-02T15:51:52+08:00",
     "title": "fix: client-removed trades no longer re-added from AI suggestion sources in project payload",

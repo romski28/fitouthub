@@ -1646,7 +1646,10 @@ export class ProjectsController {
         await this.prisma.projectProfessional.findFirst({
           where: {
             projectId,
-            professionalId: userId,
+            OR: [
+              { professionalId: userId },
+              { professional: { userId } },
+            ],
           },
           select: { id: true },
         }),
@@ -1690,7 +1693,10 @@ export class ProjectsController {
         await this.prisma.projectProfessional.findFirst({
           where: {
             projectId,
-            professionalId: userId,
+            OR: [
+              { professionalId: userId },
+              { professional: { userId } },
+            ],
           },
           select: { id: true },
         }),
@@ -1702,7 +1708,7 @@ export class ProjectsController {
           : looksProfessionalFromToken || isProfessionalOnProject
             ? 'PROFESSIONAL'
             : 'CLIENT';
-      const validActions = ['COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE'];
+      const validActions = ['COMPLETED', 'SKIPPED', 'DEFERRED', 'ALTERNATIVE']; // record action
 
       if (!validActions.includes(body.userAction)) {
         throw new BadRequestException('Invalid user action');
@@ -1742,7 +1748,10 @@ export class ProjectsController {
         await this.prisma.projectProfessional.findFirst({
           where: {
             projectId,
-            professionalId: userId,
+            OR: [
+              { professionalId: userId },
+              { professional: { userId } },
+            ],
           },
           select: { id: true },
         }),
