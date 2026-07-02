@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-02-7699f7c0",
+    "date": "2026-07-02T14:55:06+08:00",
+    "title": "feat: Stripe checkout — project name as title, project ID as internal ref; escrow completion modal shows pro start date",
+    "summary": "feat: Stripe checkout — project name as title, project ID as internal ref; escrow completion modal shows pro start date",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7699f7c0",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-02-83cb5612",
     "date": "2026-07-02T14:34:50+08:00",
     "title": "feat: skip CONFIRM_SCHEDULE for SCALE_1 projects (single milestone, no schedule to agree)",

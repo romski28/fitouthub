@@ -764,8 +764,8 @@ export class FinancialService {
           price_data: {
             currency: 'hkd',
             product_data: {
-              name: `Escrow deposit - ${projectName}`,
-              description: `Project ${projectId}`,
+              name: projectName,
+              description: `Escrow deposit — Project ${projectId}`,
             },
             unit_amount: amountInCents,
           },
@@ -774,6 +774,14 @@ export class FinancialService {
       metadata: {
         transactionId,
         projectId,
+        projectName,
+      },
+      payment_intent_data: {
+        metadata: {
+          transactionId,
+          projectId,
+          projectName,
+        },
       },
     });
 

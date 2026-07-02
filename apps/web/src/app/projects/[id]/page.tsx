@@ -471,6 +471,7 @@ export default function ClientProjectDetailPage() {
   const [openMaterialsWalletOnLoad, setOpenMaterialsWalletOnLoad] = useState(false);
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
   const [workflowModalCompletedLabel, setWorkflowModalCompletedLabel] = useState('');
+  const [workflowModalCompletedDescription, setWorkflowModalCompletedDescription] = useState('');
   const [workflowModalNextStep, setWorkflowModalNextStep] = useState<WorkflowNextStep | null>(null);
   const [workflowModalNextActionKey, setWorkflowModalNextActionKey] = useState<string | null>(null);
 
@@ -482,7 +483,7 @@ export default function ClientProjectDetailPage() {
   };
 
   const openPaymentWorkflowModal = useCallback(
-    async (completedLabel: string) => {
+    async (completedLabel: string, completedDescription?: string) => {
       if (!accessToken || !projectId) {
         return;
       }
@@ -495,6 +496,7 @@ export default function ClientProjectDetailPage() {
 
         const tab = next?.actionKey ? getClientTabForAction(next.actionKey) : undefined;
         setWorkflowModalCompletedLabel(completedLabel);
+        setWorkflowModalCompletedDescription(completedDescription || '');
         setWorkflowModalNextActionKey(next?.actionKey || null);
         setWorkflowModalNextStep(
           next
@@ -656,7 +658,11 @@ export default function ClientProjectDetailPage() {
 
     if (paymentStatus === 'success') {
       if (!accessToken) return;
-      void openPaymentWorkflowModal('Escrow funded successfully!');
+      const proStart = awardedPro?.quoteEstimatedStartAt;
+      const startDesc = proStart
+        ? `The project will start on ${new Date(proStart).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`
+        : '';
+      void openPaymentWorkflowModal('Escrow funded successfully!', startDesc);
       setActiveTab('financials');
     } else if (paymentStatus === 'cancelled') {
       toast.error('Payment was cancelled. You can retry when ready.');
@@ -666,7 +672,7 @@ export default function ClientProjectDetailPage() {
     url.searchParams.delete('payment');
     const query = url.searchParams.toString();
     window.history.replaceState({}, '', `${url.pathname}${query ? `?${query}` : ''}${url.hash}`);
-  }, [accessToken, openPaymentWorkflowModal, searchParams]);
+  }, [accessToken, openPaymentWorkflowModal, searchParams, awardedPro]);
 
   useEffect(() => {
     const launchNextStep = searchParams.get('launchNextStep');
@@ -2917,6 +2923,7 @@ export default function ClientProjectDetailPage() {
       <WorkflowCompletionModal
         isOpen={workflowModalOpen}
         completedLabel={workflowModalCompletedLabel}
+        completedDescription={workflowModalCompletedDescription || undefined}
         nextStep={workflowModalNextStep}
         showConfetti
         primaryActionLabel="Open next step"
