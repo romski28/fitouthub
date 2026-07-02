@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-1114ecf2",
+    "date": "2026-07-02T15:51:52+08:00",
+    "title": "fix: client-removed trades no longer re-added from AI suggestion sources in project payload",
+    "summary": "fix: client-removed trades no longer re-added from AI suggestion sources in project payload",
+    "areas": [
+      "web"
+    ],
+    "commit": "1114ecf2",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-02-d7f0819a",
     "date": "2026-07-02T15:28:38+08:00",
     "title": "fix: flush nextStepCache on signature + on award; ensure cached steps don't block post-signing progression",

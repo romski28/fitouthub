@@ -323,9 +323,6 @@ export default function CreateProjectPage() {
 
     const resolvedTradesRequired = normalizeUniqueStringList(
       formData.tradesRequired,
-      initialFormData.tradesRequired,
-      descriptionData?.tradesRequired,
-      descriptionData?.profession ? [descriptionData.profession] : [],
       professionalTradeScopes.flatMap((scope) => scope.requestedTrades || []),
     );
 
