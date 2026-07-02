@@ -63,8 +63,31 @@ This checklist applies to all tables in `public` schema exposed through PostgRES
 
 ## Current Project Scripts
 
-- `ENABLE_RLS_ON_PUBLIC_TABLES.sql`
-- `PHASE_A_BASELINE_RLS_POLICIES.sql`
+- `ENABLE_RLS_ON_PUBLIC_TABLES.sql` — Enables RLS on all public tables
+- `PHASE_A_BASELINE_RLS_POLICIES.sql` — Baseline: service_role + lookup table public reads
+- `PHASE_B_RLS_POLICIES.sql` — Phase B: app-level policies for flagged tables
+- `PHASE_B_RLS_POLICIES_ROLLBACK.sql` — Rollback for Phase B
 - `PHASE_A1_ADMIN_CRUD_POLICIES.sql`
 - `PHASE_A1_ADMIN_CRUD_POLICIES_ROLLBACK.sql`
 - `PHASE_A2_REMAINING_ADMIN_POLICIES.sql`
+
+## Policy Naming Convention
+
+| Prefix | Scope | Example |
+|---|---|---|
+| `p0_` | Service role (backend bypass) | `p0_service_role_all` |
+| `p1_` | Lookup/catalog (public read) | `p1_lookup_read` |
+| `p2_` | Ownership-scoped (user/pro) | `p2_pro_own`, `p2_user_own` |
+| `p3_` | System/internal (deny direct access) | `p3_system_internal` |
+
+## Phase B — Table Categories (2026-07-02)
+
+### Category 1: Lookup tables → `p1_lookup_read`
+`CertificationType`, `TradeCertificationRequirement`, `home_card_rail`, `ai_intake_image_insights`
+
+### Category 2: Owned tables → `p2_pro_own` / `p2_user_own`
+`ProfessionalCertification`, `ProfessionalAvailability`, `ProfessionalMedia` (pro-owned via `Professional.userId`)
+`PushSubscription`, `ux_feedback` (user-owned via direct `userId`)
+
+### Category 3: System tables → `p3_system_internal`
+`EscrowCheckoutOtpChallenge`, `ProspectiveLeadEvent`, `client_site_addresses`, `mimo_calendar_events`, `mimo_calendar_event_participants`, `mimo_project_extras`, `mimo_survey_assignments`, `mimo_survey_workspace_reports`, `project_sites` — accessed only through NestJS API, denied to direct client access.

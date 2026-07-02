@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-02-6c5cd243",
+    "date": "2026-07-02T10:43:46+08:00",
+    "title": "feat: Phase B RLS policies for 18 flagged tables + rollback + checklist update",
+    "summary": "feat: Phase B RLS policies for 18 flagged tables + rollback + checklist update",
+    "areas": [
+      "infra"
+    ],
+    "commit": "6c5cd243",
+    "files": [
+      "PHASE_B_RLS_POLICIES.sql",
+      "PHASE_B_RLS_POLICIES_ROLLBACK.sql",
+      "RLS_POLICY_CHECKLIST.md"
+    ]
+  },
+  {
     "id": "2026-07-01-a7d2ba2a",
     "date": "2026-07-01T23:34:17+08:00",
     "title": "fix: make scanner/OTP toggle text coral, larger",
