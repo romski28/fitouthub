@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-624a8ede",
+    "date": "2026-07-02T14:57:19+08:00",
+    "title": "docs: session change log for July 2 2026",
+    "summary": "docs: session change log for July 2 2026",
+    "areas": [
+      "infra"
+    ],
+    "commit": "624a8ede",
+    "files": [
+      "SESSION_CHANGES_JULY_2_2026.md"
+    ]
+  },
+  {
     "id": "2026-07-02-7699f7c0",
     "date": "2026-07-02T14:55:06+08:00",
     "title": "feat: Stripe checkout — project name as title, project ID as internal ref; escrow completion modal shows pro start date",
