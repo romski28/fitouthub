@@ -256,11 +256,9 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         nextStep={resolvedNextStep}
         showConfetti
         primaryActionLabel={resolvedNextStep?.actionLabel ?? 'Review agreement'}
-        additionalActionLabel="Open project"
         secondaryActionLabel="Later"
         showPrimaryActionOverride={Boolean(resolvedNextAction)}
         onNavigate={handleDoNextStep}
-        onAdditionalAction={handleOpenProject}
       />
     );
   }
