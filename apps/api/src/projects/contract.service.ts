@@ -312,10 +312,12 @@ By digitally signing this agreement in Mimo, each party acknowledges acceptance 
         ? {
             clientSignedAt: new Date(),
             clientSignedById: userId,
+            nextStepCache: null,
           }
         : {
             professionalSignedAt: new Date(),
             professionalSignedById: professionalSignerUserId,
+            nextStepCache: null,
           };
 
     const updatedProject = await this.prisma.project.update({

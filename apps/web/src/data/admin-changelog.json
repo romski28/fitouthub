@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-02-d7f0819a",
+    "date": "2026-07-02T15:28:38+08:00",
+    "title": "fix: flush nextStepCache on signature + on award; ensure cached steps don't block post-signing progression",
+    "summary": "fix: flush nextStepCache on signature + on award; ensure cached steps don't block post-signing progression",
+    "areas": [
+      "api"
+    ],
+    "commit": "d7f0819a",
+    "files": [
+      "apps/api/src/projects/contract.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-e53a1834",
     "date": "2026-07-02T15:21:11+08:00",
     "title": "fix: client next-step gap after both sign agreement — show Agree start date when start date not yet agreed",
