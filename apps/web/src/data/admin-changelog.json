@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-d19fe836",
+    "date": "2026-07-02T21:05:47+08:00",
+    "title": "fix: use Prisma.JsonNull instead of null for JSON column nextStepCache in awardQuote",
+    "summary": "fix: use Prisma.JsonNull instead of null for JSON column nextStepCache in awardQuote",
+    "areas": [
+      "api"
+    ],
+    "commit": "d19fe836",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-81f25af6",
     "date": "2026-07-02T16:00:43+08:00",
     "title": "fix: role detection for professionals in next-step controller — check professional.userId not just professionalId",

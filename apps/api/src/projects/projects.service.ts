@@ -8585,7 +8585,7 @@ Please review the project details and respond with your quote or decline the inv
           awardedProjectProfessionalId: awardedPP.id,
           startDate: hasValidQuoteStartAt ? (quoteStartAt as Date) : undefined,
           endDate: quoteEndAt || undefined,
-          nextStepCache: null,
+          nextStepCache: Prisma.JsonNull,
         },
       });
 
