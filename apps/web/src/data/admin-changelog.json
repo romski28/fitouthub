@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-e53a1834",
+    "date": "2026-07-02T15:21:11+08:00",
+    "title": "fix: client next-step gap after both sign agreement — show Agree start date when start date not yet agreed",
+    "summary": "fix: client next-step gap after both sign agreement — show Agree start date when start date not yet agreed",
+    "areas": [
+      "api"
+    ],
+    "commit": "e53a1834",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-39ce7f7b",
     "date": "2026-07-02T15:11:40+08:00",
     "title": "style: apply Mimo beige theme to ContractActionModal (front + back faces)",

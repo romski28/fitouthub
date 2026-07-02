@@ -1256,6 +1256,24 @@ export class NextStepService {
         let clientScheduleConfirmed = true; // default: no schedule gate needed
         let professionalScheduleConfirmed = true;
 
+        if (!startDateAgreed) {
+          // Contract is signed but no start date has been proposed or agreed yet.
+          // Prompt the client to propose/agree the kickoff date.
+          availableConfigSteps = [{
+            actionKey: 'CONFIRM_START_DETAILS',
+            actionLabel: 'Agree start date',
+            description: 'Both parties have signed the agreement. Now agree on a start date with the professional before funding escrow.',
+            isPrimary: true, isElective: false, requiresAction: true,
+            estimatedDurationMinutes: 5, displayOrder: 1,
+          } as any];
+          return returnWithCache({
+            PRIMARY: availableConfigSteps.map(toApiAction),
+            ELECTIVE: [],
+            status: project.status,
+            stage: effectiveStage,
+          });
+        }
+
         if (startDateAgreed) {
           // Fetch both schedule confirmations in parallel (pro + client)
           const [profSched, clientSched] = await Promise.all([
