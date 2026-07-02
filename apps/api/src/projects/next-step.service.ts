@@ -946,6 +946,7 @@ export class NextStepService {
 
         const normalizedScale = String(project.projectScale || '').toUpperCase();
         const requiresClientScheduleAgreement = ['SCALE_2', 'SCALE_3'].includes(normalizedScale);
+        const isScale1 = normalizedScale === 'SCALE_1';
         const clientActorId = (project as any).clientId || project.userId;
 
         // Treat project.startDate being set as equivalent to an accepted proposal
@@ -994,6 +995,14 @@ export class NextStepService {
           });
         }
 
+        // SCALE_1: no schedule to agree — skip schedule confirmation entirely
+        let scheduleConfirmed = false;
+        let clientScheduleConfirmed = false;
+
+        if (isScale1) {
+          scheduleConfirmed = true;
+          clientScheduleConfirmed = true;
+        } else {
         // Check if professional + client have confirmed the schedule (parallel)
         const [scheduleActions, clientScheduleAction] = await Promise.all([
           this.prisma.nextStepAction.findMany({
@@ -1024,6 +1033,7 @@ export class NextStepService {
         if (requiresClientScheduleAgreement && clientActorId) {
           clientScheduleConfirmed = Boolean(clientScheduleAction);
         }
+        } // end else (!isScale1)
 
         const escrowFunded = Number(project.escrowHeld ?? 0) > 0;
 
@@ -1292,8 +1302,8 @@ export class NextStepService {
             }
           }
 
-          // Check client schedule confirmation (CLASS 1 & 2)
-          if (['SCALE_1', 'SCALE_2'].includes(normalizedScale) && professionalScheduleConfirmed) {
+          // Check client schedule confirmation (CLASS 2 only — SCALE_1 skips)
+          if (['SCALE_2'].includes(normalizedScale) && professionalScheduleConfirmed) {
             clientScheduleConfirmed = Boolean(clientSched);
             if (!clientScheduleConfirmed) {
               availableConfigSteps = [{
@@ -1525,8 +1535,17 @@ export class NextStepService {
         } else {
           // Start date agreed — check schedule + escrow and show correct action(s)
           const requiresClientSched = ['SCALE_2', 'SCALE_3'].includes(preWorkNormalizedScale);
+          const isScale1PreWork = preWorkNormalizedScale === 'SCALE_1';
           const clientActorIdPreWork = (project as any).clientId || project.userId;
 
+          // SCALE_1: no schedule to agree
+          let schedConfirmedPreWork = false;
+          let clientSchedConfirmedPreWork = false;
+
+          if (isScale1PreWork) {
+            schedConfirmedPreWork = true;
+            clientSchedConfirmedPreWork = true;
+          } else {
           // Fetch pro + client schedule confirmations in parallel
           const [schedActionsPreWork, clientSchedPreWork] = await Promise.all([
             this.prisma.nextStepAction.findMany({
@@ -1551,12 +1570,13 @@ export class NextStepService {
                 })
               : Promise.resolve(null),
           ]);
-          const schedConfirmedPreWork = schedActionsPreWork.some((a) => a.userAction === 'COMPLETED');
+          schedConfirmedPreWork = schedActionsPreWork.some((a) => a.userAction === 'COMPLETED');
 
-          let clientSchedConfirmedPreWork = false;
+          clientSchedConfirmedPreWork = false;
           if (requiresClientSched && clientActorIdPreWork) {
             clientSchedConfirmedPreWork = Boolean(clientSchedPreWork);
           }
+          } // end else (!isScale1PreWork)
 
           const escrowPreWork = Number(project.escrowHeld ?? 0) > 0;
           let walletPreWork: 'not_required' | 'pending' | 'completed' | 'skipped' = 'not_required';
@@ -1664,9 +1684,10 @@ export class NextStepService {
               }
             }
 
-            // For CLASS 1 (always) and CLASS 2 (only after pro has confirmed):
+            // For CLASS 2 (only after pro has confirmed):
             // client must review and confirm the schedule before escrow.
-            if (['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale) && profSchedDone) {
+            // SCALE_1 skips this — no multi-milestone schedule to agree.
+            if (['SCALE_2'].includes(preWorkNormalizedScale) && profSchedDone) {
               const clientSchedConfirmed = await this.prisma.nextStepAction.findFirst({
                 where: {
                   projectId,

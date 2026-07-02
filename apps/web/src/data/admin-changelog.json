@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-83cb5612",
+    "date": "2026-07-02T14:34:50+08:00",
+    "title": "feat: skip CONFIRM_SCHEDULE for SCALE_1 projects (single milestone, no schedule to agree)",
+    "summary": "feat: skip CONFIRM_SCHEDULE for SCALE_1 projects (single milestone, no schedule to agree)",
+    "areas": [
+      "api"
+    ],
+    "commit": "83cb5612",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-a826945b",
     "date": "2026-07-02T13:44:08+08:00",
     "title": "perf: stage-gate pre-fetches + client site access queries to skip irrelevant stages",
