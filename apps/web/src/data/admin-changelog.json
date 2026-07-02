@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-02-39ce7f7b",
+    "date": "2026-07-02T15:11:40+08:00",
+    "title": "style: apply Mimo beige theme to ContractActionModal (front + back faces)",
+    "summary": "style: apply Mimo beige theme to ContractActionModal (front + back faces)",
+    "areas": [
+      "web"
+    ],
+    "commit": "39ce7f7b",
+    "files": [
+      "apps/web/src/components/next-steps/contract-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-02-9c3a023d",
     "date": "2026-07-02T15:08:13+08:00",
     "title": "refactor: remove Open project button from client Quote accepted modal",

@@ -273,22 +273,22 @@ export function ContractActionModal({
       >
         <div className="w-full max-w-2xl max-h-[80vh] [perspective:1600px]">
           {isLoading ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
               <div className="flex flex-col items-center justify-center px-6 py-14">
-                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-emerald-400" />
-                <p className="text-slate-300">Loading...</p>
+                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[rgba(120,53,15,0.15)] border-t-amber-600" />
+                <p className="text-stone-600">Loading...</p>
               </div>
             </div>
           ) : (
             <div className="relative grid max-h-[80vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
+              <div className="col-start-1 row-start-1 overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
                 <div className="flex max-h-[80vh] flex-col">
-                  <div className="relative shrink-0 border-b border-slate-700 px-6 py-5">
+                  <div className="relative shrink-0 border-b border-[#D4C8A0] px-6 py-5">
                     {hasDetails && (
                       <button
                         type="button"
                         onClick={() => setShowDetails(true)}
-                        className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                        className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
                         aria-label="Show details"
                       >
                         i
@@ -298,42 +298,42 @@ export function ContractActionModal({
                       <img
                         src={imageUrl || '/assets/images/chatbot-avatar-icon.webp'}
                         alt="Agreement"
-                        className="h-14 w-14 rounded-full border border-white/20 object-cover"
+                        className="h-14 w-14 rounded-full border border-[#D4C8A0] object-cover"
                       />
                       <div>
-                        <h2 className="text-2xl font-bold text-emerald-300">{agreementTitle}</h2>
-                        {agreementBody ? <p className="mt-1 text-sm text-slate-200">{agreementBody}</p> : null}
+                        <h2 className="text-2xl font-bold text-[#FF7F50]">{agreementTitle}</h2>
+                        {agreementBody ? <p className="mt-1 text-sm text-stone-600">{agreementBody}</p> : null}
                       </div>
                     </div>
                   </div>
 
                   <div className="next-step-scrollbar grid flex-1 gap-4 overflow-y-auto px-6 py-5">
                     {contractLoading ? (
-                      <div className="flex items-center gap-2 text-sm text-slate-300">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
+                      <div className="flex items-center gap-2 text-sm text-stone-500">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[rgba(120,53,15,0.2)] border-t-transparent" />
                         Loading agreement details...
                       </div>
                     ) : contract ? (
-                      <div className="grid gap-3 rounded-xl border border-slate-700 bg-slate-800/60 p-4 text-sm text-slate-200">
+                      <div className="grid gap-3 rounded-xl border border-[#D4C8A0] bg-white/70 p-4 text-sm text-stone-700">
                         <p>
-                          <span className="text-slate-400">Project:</span>{' '}
-                          <span className="font-semibold text-white">{contract.projectName || 'Agreement'}</span>
+                          <span className="text-stone-400">Project:</span>{' '}
+                          <span className="font-semibold text-stone-800">{contract.projectName || 'Agreement'}</span>
                         </p>
                         <p>
-                          <span className="text-slate-400">Generated:</span>{' '}
+                          <span className="text-stone-400">Generated:</span>{' '}
                           <span>{formatDate(contract.contractGeneratedAt)}</span>
                         </p>
                         <p>
-                          <span className="text-slate-400">Client signature:</span>{' '}
+                          <span className="text-stone-400">Client signature:</span>{' '}
                           <span>{formatDate(contract.clientSignedAt)}</span>
                         </p>
                         <p>
-                          <span className="text-slate-400">Professional signature:</span>{' '}
+                          <span className="text-stone-400">Professional signature:</span>{' '}
                           <span>{formatDate(contract.professionalSignedAt)}</span>
                         </p>
                         <p>
-                          <span className="text-slate-400">Status:</span>{' '}
-                          <span className={contract.isFullySigned ? 'text-emerald-300 font-semibold' : 'text-amber-300 font-semibold'}>
+                          <span className="text-stone-400">Status:</span>{' '}
+                          <span className={contract.isFullySigned ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-semibold'}>
                             {contract.isFullySigned ? 'Fully signed' : 'Pending signatures'}
                           </span>
                         </p>
@@ -341,24 +341,24 @@ export function ContractActionModal({
                     ) : null}
 
                     {error ? (
-                      <div className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+                      <div className="rounded-lg border border-rose-400 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                         {error}
                       </div>
                     ) : null}
 
                     {requestChangesAdminOnly ? (
-                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                      <div className="rounded-lg border border-amber-500/40 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                         Mimo admin handles formal agreement change requests. If amendments are needed, contact support and the admin team will coordinate updates.
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-700 px-6 py-4">
+                  <div className="shrink-0 flex items-center justify-end gap-3 border-t border-[#D4C8A0] px-6 py-4">
                     <button
                       type="button"
                       onClick={navigateToContractTab}
                       disabled={contractLoading || signing}
-                      className="min-w-[140px] rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="min-w-[140px] rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Review first
                     </button>
@@ -374,27 +374,27 @@ export function ContractActionModal({
                 </div>
               </div>
 
-              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
+              <div className="col-start-1 row-start-1 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }} aria-hidden={!showDetails}>
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
                   aria-label="Hide details"
                 >
                   x
                 </button>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-                  <h3 className="mt-3 text-2xl font-bold text-emerald-300">{agreementTitle || 'Step details'}</h3>
-                  <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-400">More information</p>
+                  <h3 className="mt-3 text-2xl font-bold text-[#FF7F50]">{agreementTitle || 'Step details'}</h3>
+                  <p className="mt-5 text-sm leading-relaxed text-stone-600">{detailsBody}</p>
                 </div>
 
-                <div className="mt-auto border-t border-slate-700 px-5 py-4">
+                <div className="mt-auto border-t border-[#D4C8A0] px-5 py-4">
                   <button
                     type="button"
                     onClick={() => setShowDetails(false)}
-                    className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                    className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)]"
                   >
                     Back to agreement
                   </button>
