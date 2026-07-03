@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-07-03-5c81e99d",
+    "date": "2026-07-03T16:20:22+08:00",
+    "title": "feat(web): extract About page from home, add nav link",
+    "summary": "feat(web): extract About page from home, add nav link",
+    "areas": [
+      "web"
+    ],
+    "commit": "5c81e99d",
+    "files": [
+      "apps/web/src/app/about/page.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/i18n/locales/en.json",
+      "apps/web/src/i18n/locales/zh-CN.json",
+      "apps/web/src/i18n/locales/zh-HK.json",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-CN.ts",
+      "apps/web/src/i18n/messages/zh-HK.json",
+      "apps/web/src/i18n/messages/zh-HK.ts",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-07-03-193f8224",
     "date": "2026-07-03T16:14:05+08:00",
     "title": "docs: new session onboarding prompt for AI continuity",

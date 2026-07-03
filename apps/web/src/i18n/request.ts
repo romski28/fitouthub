@@ -58,7 +58,8 @@ const _legacy = {
       "adminPortal": "Admin Portal",
       "professional": "Professional",
       "editProfessional": "Edit Professional Info",
-      "messaging": "Messaging"
+      "messaging": "Messaging",
+      "about": "About"
     },
     "auth": {
       "join": {
@@ -621,7 +622,8 @@ const _legacy = {
       "adminPortal": "管理員入口",
       "professional": "專業人士",
       "editProfessional": "編輯專業人士資料",
-      "messaging": "訊息"
+      "messaging": "訊息",
+      "about": "關於我們"
     },
     "auth": {
       "join": {

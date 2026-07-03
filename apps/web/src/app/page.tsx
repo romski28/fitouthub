@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
 import SearchFlow from '@/components/search-flow';
-import InformationSection from '@/components/information-section';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
@@ -18,7 +16,6 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
   
-  const t = useTranslations('home');
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
 
   // Redirect professionals to their dashboard
@@ -86,13 +83,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="why-choose-us" className="scroll-mt-20 -mx-6 px-6">
-          <div className="mx-auto max-w-6xl">
-            <InformationSection />
           </div>
         </section>
 

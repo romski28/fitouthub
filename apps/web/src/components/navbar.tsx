@@ -119,6 +119,9 @@ export const Navbar: React.FC = () => {
                 </Link>
               </>
             ) : null}
+            <Link className="hover:text-slate-900" href="/about">
+              {t('about')}
+            </Link>
             <Link className="hover:text-slate-900" href="/docs">
               {t('docs')}
             </Link>
@@ -369,6 +372,13 @@ export const Navbar: React.FC = () => {
                   </Link>
                 </>
               ) : null}
+              <Link
+                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                href="/about"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('about')}
+              </Link>
               <Link
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/docs"

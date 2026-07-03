@@ -34,7 +34,8 @@
     "login": "Login",
     "signup": "Sign Up",
     "admin": "Admin",
-    "messaging": "Messaging"
+    "messaging": "Messaging",
+    "about": "About"
   },
   "home": {
     "features": {

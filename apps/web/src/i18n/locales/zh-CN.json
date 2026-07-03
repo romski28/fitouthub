@@ -34,7 +34,8 @@
     "login": "登录",
     "signup": "注册",
     "admin": "管理员",
-    "messaging": "消息"
+    "messaging": "消息",
+    "about": "关于我们"
   },
   "auth": {
     "login": {
