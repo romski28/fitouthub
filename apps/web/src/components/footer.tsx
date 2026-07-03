@@ -11,15 +11,15 @@ export default function Footer() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   return (
-    <footer className="border-t border-slate-200 bg-white text-slate-500 mt-16">
+    <footer className="border-t border-slate-800 bg-slate-900 text-slate-300">
       <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col md:flex-row justify-between items-center text-sm">
         <p>{t('copyright', { year: currentYear })}</p>
         <div className="flex gap-6 mt-2 md:mt-0">
-          <button onClick={() => setShowTermsModal(true)} className="hover:text-slate-900 transition">Terms &amp; Conditions</button>
-          <button onClick={() => setShowSecurityModal(true)} className="hover:text-slate-900 transition">Security</button>
-          <a href="#" className="hover:text-slate-900 transition">{t('twitter')}</a>
-          <a href="#" className="hover:text-slate-900 transition">{t('linkedin')}</a>
-          <a href="#" className="hover:text-slate-900 transition">{t('instagram')}</a>
+          <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition">Terms &amp; Conditions</button>
+          <button onClick={() => setShowSecurityModal(true)} className="hover:text-white transition">Security</button>
+          <a href="#" className="hover:text-white transition">{t('twitter')}</a>
+          <a href="#" className="hover:text-white transition">{t('linkedin')}</a>
+          <a href="#" className="hover:text-white transition">{t('instagram')}</a>
         </div>
       </div>
 

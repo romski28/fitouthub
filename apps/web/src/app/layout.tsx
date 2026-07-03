@@ -82,7 +82,7 @@ export default async function RootLayout({
                 <Toaster position="top-right" />
                 <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">
                   <SiteWallpaperShell />
-                  <div className="relative z-10">
+                  <div className="relative z-10 flex flex-col min-h-screen">
                     <NavbarWrapper />
                     <MainWrapper>{children}</MainWrapper>
                     <FooterWrapper />

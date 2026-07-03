@@ -25,7 +25,7 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
 
   // Regular pages get standard padding and max-width
   return (
-    <main className={isHomePath ? 'mx-auto max-w-6xl px-6 pb-10' : 'mx-auto max-w-6xl px-6 py-10'}>
+    <main className={isHomePath ? 'flex-1 flex items-center justify-center mx-auto w-full max-w-6xl px-6 pb-10' : 'flex-1 mx-auto max-w-6xl px-6 py-10'}>
       {children}
     </main>
   );

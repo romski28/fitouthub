@@ -29,7 +29,7 @@ export default function Home() {
 
 
   return (
-      <div className="space-y-6 pb-8 pt-2">
+      <div className="w-full">
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -40,7 +40,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="relative -mx-4 px-4 sm:-mx-6 sm:px-6"
+          className="relative"
         >
           <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 sm:py-8">
             <div className="px-2 sm:px-4 lg:px-6">

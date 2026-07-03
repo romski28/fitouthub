@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-03-88d36961",
+    "date": "2026-07-03T16:35:16+08:00",
+    "title": "refactor(web): center home prompt, full-height layout, dark footer",
+    "summary": "refactor(web): center home prompt, full-height layout, dark footer",
+    "areas": [
+      "web"
+    ],
+    "commit": "88d36961",
+    "files": [
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/footer.tsx",
+      "apps/web/src/components/main-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-07-03-4fad9131",
     "date": "2026-07-03T16:24:02+08:00",
     "title": "refactor(web): simplify footer to thin clean bar",
