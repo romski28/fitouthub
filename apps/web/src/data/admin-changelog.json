@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-03-80abe7ac",
+    "date": "2026-07-03T16:10:32+08:00",
+    "title": "perf: drop frontend next-step cache TTL from 15min to 30s — polls hit API cache instead of stale memory",
+    "summary": "perf: drop frontend next-step cache TTL from 15min to 30s — polls hit API cache instead of stale memory",
+    "areas": [
+      "web"
+    ],
+    "commit": "80abe7ac",
+    "files": [
+      "apps/web/src/lib/next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-07-02-d19fe836",
     "date": "2026-07-02T21:05:47+08:00",
     "title": "fix: use Prisma.JsonNull instead of null for JSON column nextStepCache in awardQuote",

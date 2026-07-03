@@ -48,7 +48,7 @@ type NextStepFetchOptions = {
   maxAgeMs?: number;
 };
 
-export const NEXT_STEP_CACHE_TTL_MS = 15 * 60 * 1000;
+export const NEXT_STEP_CACHE_TTL_MS = 30 * 1000; // 30s — short TTL so polls hit the API cache (cheap JSON read), not stale memory
 const NEXT_STEP_ENDPOINT_BACKOFF_MS = 2 * 60 * 1000;
 
 const nextStepCache = new Map<string, NextStepCacheEntry>();
