@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-03-4fad9131",
+    "date": "2026-07-03T16:24:02+08:00",
+    "title": "refactor(web): simplify footer to thin clean bar",
+    "summary": "refactor(web): simplify footer to thin clean bar",
+    "areas": [
+      "web"
+    ],
+    "commit": "4fad9131",
+    "files": [
+      "apps/web/src/components/footer.tsx"
+    ]
+  },
+  {
     "id": "2026-07-03-5c81e99d",
     "date": "2026-07-03T16:20:22+08:00",
     "title": "feat(web): extract About page from home, add nav link",
