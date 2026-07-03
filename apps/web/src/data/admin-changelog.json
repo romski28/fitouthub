@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-03-193f8224",
+    "date": "2026-07-03T16:14:05+08:00",
+    "title": "docs: new session onboarding prompt for AI continuity",
+    "summary": "docs: new session onboarding prompt for AI continuity",
+    "areas": [
+      "infra"
+    ],
+    "commit": "193f8224",
+    "files": [
+      "NEW_SESSION_PROMPT.md"
+    ]
+  },
+  {
     "id": "2026-07-03-80abe7ac",
     "date": "2026-07-03T16:10:32+08:00",
     "title": "perf: drop frontend next-step cache TTL from 15min to 30s — polls hit API cache instead of stale memory",
