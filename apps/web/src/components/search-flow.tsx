@@ -2016,22 +2016,21 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               </>
             ) : (
               <div className="text-center">
-                <p className="text-lg font-semibold text-slate-900">Ready to continue?</p>
-                <p className="mt-1 text-sm text-slate-600">Create an account or log in to start your project.</p>
-                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                <p className="text-lg font-semibold text-slate-900">Let&apos;s start</p>
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
                     onClick={handleGuestJoin}
-                    className="rounded-lg border border-emerald-600 bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    className="flex-1 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
-                    Join to Continue
+                    New user
                   </button>
                   <button
                     type="button"
                     onClick={handleGuestLogin}
-                    className="rounded-lg border border-emerald-600 bg-white px-6 py-3 font-semibold text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-50"
+                    className="flex-1 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
-                    Login
+                    Existing user
                   </button>
                 </div>
               </div>

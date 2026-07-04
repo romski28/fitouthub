@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-04-12fdccb5",
+    "date": "2026-07-04T23:12:02+08:00",
+    "title": "refactor(web): simplify anonymous CTA — 'Let's start', equal emerald buttons",
+    "summary": "refactor(web): simplify anonymous CTA — 'Let's start', equal emerald buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "12fdccb5",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-04-e7af7939",
     "date": "2026-07-04T18:33:21+08:00",
     "title": "refactor(web): drop conversational AI text, extract TypewriterText component",
