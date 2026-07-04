@@ -46,7 +46,7 @@ export default function Home() {
             <div className="px-2 sm:px-4 lg:px-6">
               <div className="mb-4 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
-                    <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.<br />Welcome Home.
+                    <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.
                   </h2>
                 </div>
 

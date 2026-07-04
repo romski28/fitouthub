@@ -351,22 +351,14 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, matchCount, matchLoading, tradesLabel, trades, fullCoverageCompanyCount, specialistCount, showForgottenPrompt, isComplexProject, onSequenceStateChange, onRemoveTrade }: {
+function AiConversationalView({ conversationalText, trades, onSequenceStateChange, onRemoveTrade }: {
   conversationalText: string | null;
-  matchCount: number | null;
-  matchLoading: boolean;
-  tradesLabel: string;
   trades: string[];
-  fullCoverageCompanyCount: number;
-  specialistCount: number;
-  showForgottenPrompt: boolean;
-  isComplexProject: boolean;
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
 }) {
   const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
   const [visibleWordCount, setVisibleWordCount] = useState(0);
-  const [visibleMimoWordCount, setVisibleMimoWordCount] = useState(0);
 
   useEffect(() => {
     if (words.length === 0) return;
@@ -397,32 +389,8 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
     };
   }, [words.length]);
 
-  const mimoCountMsg = (() => {
-    if (trades.length === 0) {
-      return 'We have not found the right professional to sort your problem out, but get your project registered and MIMO will find you the right person to get things done.';
-    }
-
-    // While loading trades count, show a generic message
-    if (matchCount === null || matchLoading) {
-      return 'Searching for the right professionals in Hong Kong to match your project...';
-    }
-    if (matchCount === 0) {
-      return tradesLabel
-        ? `MIMO will widen the search to find the right ${tradesLabel.toLowerCase()} support across Hong Kong.`
-        : 'MIMO will widen the search to find the right professionals across Hong Kong.';
-    }
-
-    const tradeText = tradesLabel || 'professionals';
-    return trades.length > 1
-      ? fullCoverageCompanyCount > 0
-        ? `Luckily, MIMO has this covered. We found ${fullCoverageCompanyCount.toLocaleString()} pros in Hong Kong that can handle all required trades, plus ${specialistCount.toLocaleString()} professionals across individual services.`
-        : `Luckily, MIMO has this covered. While a single all-trades pro is less common for this scope, we found ${specialistCount.toLocaleString()} professionals across the required services in Hong Kong.`
-      : `Luckily, MIMO has this covered. With access to ${matchCount.toLocaleString()} ${tradeText} in Hong Kong, we can get this fixed in no time.`;
-  })();
-
   const showTradesBlock = words.length === 0 || visibleWordCount >= words.length;
-  const mimoWords = (mimoCountMsg || '').trim().split(/\s+/).filter(Boolean);
-  const isSequenceComplete = showTradesBlock && (mimoWords.length === 0 || visibleMimoWordCount >= mimoWords.length);
+  const isSequenceComplete = showTradesBlock;
 
   useEffect(() => {
     if (!onSequenceStateChange) return;
@@ -434,41 +402,12 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
 
     const timeoutId = window.setTimeout(() => {
       onSequenceStateChange(true);
-    }, 2000);
+    }, 600);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
   }, [isSequenceComplete, onSequenceStateChange]);
-
-  useEffect(() => {
-    if (!showTradesBlock || mimoWords.length === 0) return;
-
-    let cancelled = false;
-    let timeoutId: number | null = null;
-
-    const streamNextWord = () => {
-      if (cancelled) return;
-
-      setVisibleMimoWordCount((current) => {
-        const next = Math.min(current + 1, mimoWords.length);
-        if (next < mimoWords.length && !cancelled) {
-          const delayMs = 52 + ((next * 19) % 82);
-          timeoutId = window.setTimeout(streamNextWord, delayMs);
-        }
-        return next;
-      });
-    };
-
-    timeoutId = window.setTimeout(streamNextWord, 2200);
-
-    return () => {
-      cancelled = true;
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [showTradesBlock, mimoWords.length]);
 
   return (
     <div className="space-y-3 text-sm">
@@ -505,31 +444,12 @@ function AiConversationalView({ conversationalText, matchCount, matchLoading, tr
             ))}
           </div>
           {trades.length > 1 && onRemoveTrade && (
-            <p className="text-xs text-slate-400 mt-1">These are the trades we suggest — you can reduce the list by removing trades not required.</p>
+            <p className="text-xs text-slate-400 mt-1">Not quite right? AI can be eager — tap × to remove trades you don&apos;t need.</p>
           )}
         </div>
       )}
 
-      {showTradesBlock && mimoCountMsg && (
-        <p className="text-base leading-relaxed text-slate-700">
-          {mimoWords.slice(0, visibleMimoWordCount).join(' ')}
-          {visibleMimoWordCount < mimoWords.length && (
-            <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse bg-slate-400 align-[-2px]" />
-          )}
-        </p>
-      )}
 
-      {showForgottenPrompt && isSequenceComplete && (
-        <p id="ai-forgotten-prompt" className="text-sm font-semibold text-emerald-700">
-          Anything you have forgotten? Let MIMO know now.
-        </p>
-      )}
-
-      {showTradesBlock && isSequenceComplete && trades.length > 0 && (
-        <p className="text-sm text-slate-600">
-          Need help? Chat with Sarah at any time, she is just over to the right or ask her to book a free consultation.
-        </p>
-      )}
     </div>
   );
 }
@@ -1952,21 +1872,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       : aiRoundCount === 0 || showFollowUpComposer;
   const showPromptUploader = aiRoundCount === 0;
   const displayedTrades = activeTrades.length > 0 ? activeTrades : (aiStructured?.trades ?? []);
-  const isLargeProject = (() => {
-    if (!aiStructured?.size || aiStructured.size.value === null) return false;
-    const value = aiStructured.size.value;
-    const unitHint = `${aiStructured.size.unit || ''} ${aiStructured.size.rawText || ''}`.toLowerCase();
-    if (unitHint.includes('m2') || unitHint.includes('sqm') || unitHint.includes('sq m')) return value >= 120;
-    if (unitHint.includes('sqft') || unitHint.includes('sq ft') || unitHint.includes('ft2')) return value >= 1300;
-    return value >= 1300;
-  })();
-  const isComplexProject = Boolean(
-    aiStructured && (
-      aiStructured.projectScale === 'SCALE_3' ||
-      displayedTrades.length > 1 ||
-      isLargeProject
-    ),
-  );
 
   const handleRemoveTrade = (tradeToRemove: string) => {
     setActiveTrades((current) => {
@@ -2023,22 +1928,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               <AiConversationalView
                 key={aiConversationalText}
                 conversationalText={aiConversationalText}
-                matchCount={aiMatchCount}
-                matchLoading={aiCountLoading}
                 trades={displayedTrades}
-                isComplexProject={isComplexProject}
-                fullCoverageCompanyCount={aiFullCoverageCompanyCount}
-                specialistCount={aiSpecialistCount}
-                showForgottenPrompt={ENABLE_FOLLOW_UP_COMPOSER && aiRoundCount === 1}
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
-                tradesLabel={
-                  displayedTrades.length === 0
-                    ? ''
-                    : displayedTrades.length === 1
-                      ? displayedTrades[0]
-                      : 'project team members'
-                }
               />
             </div>
           )}
@@ -2198,6 +2090,25 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {hasAiResponse && isConversationSequenceComplete && displayedTrades.length > 0 && (
+        <div className="mt-3 space-y-2 text-center text-sm text-slate-500">
+          {(() => {
+            if (aiMatchCount === null || aiCountLoading) return null;
+            const tradesLabel = displayedTrades.length === 1 ? displayedTrades[0] : 'project team members';
+            if (aiMatchCount === 0) {
+              return <p>MIMO will widen the search to find the right {tradesLabel.toLowerCase()} support across Hong Kong.</p>;
+            }
+            if (displayedTrades.length > 1) {
+              return aiFullCoverageCompanyCount > 0
+                ? <p>MIMO has {aiFullCoverageCompanyCount.toLocaleString()} pros in Hong Kong that can handle all required trades, plus {aiSpecialistCount.toLocaleString()} specialists across individual services.</p>
+                : <p>MIMO has {aiSpecialistCount.toLocaleString()} professionals across the required services in Hong Kong.</p>;
+            }
+            return <p>MIMO has {aiMatchCount.toLocaleString()} {tradesLabel} in Hong Kong ready to help.</p>;
+          })()}
+          <p>Need help? Chat with Sarah at any time — she is just over to the right, or ask her to book a free consultation.</p>
         </div>
       )}
 

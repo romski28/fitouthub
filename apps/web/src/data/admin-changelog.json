@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-04-25e89f02",
+    "date": "2026-07-04T18:19:49+08:00",
+    "title": "refactor(web): trim AI response text, reposition count + chat below CTA",
+    "summary": "refactor(web): trim AI response text, reposition count + chat below CTA",
+    "areas": [
+      "web"
+    ],
+    "commit": "25e89f02",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-03-88d36961",
     "date": "2026-07-03T16:35:16+08:00",
     "title": "refactor(web): center home prompt, full-height layout, dark footer",
