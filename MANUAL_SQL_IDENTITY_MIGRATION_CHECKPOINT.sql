@@ -1,0 +1,20 @@
+-- ============================================================================
+-- CHECKPOINT: pre-identity-migration
+-- Date: 2026-07-04
+-- Git tag: pre-identity-migration
+--
+-- Current state:
+--   Users:        16 rows (real accounts to preserve)
+--   Professionals: 3 rows (test data, ok to rebuild)
+--   Projects:      0 rows
+--
+-- To rewind to this state:
+--   1. git checkout pre-identity-migration
+--   2. Run reverse SQL for any applied MANUAL_SQL steps in reverse order
+--   3. Restore DB from backup if available
+--
+-- Steps in this migration series:
+--   Step 1: MANUAL_SQL_ADD_IDENTITY_TABLE.sql        (forward)
+--           MANUAL_SQL_REVERSE_IDENTITY_TABLE.sql     (reverse)
+--   Step 2: [TBD]
+-- ============================================================================

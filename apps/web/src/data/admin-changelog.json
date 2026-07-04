@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-05-a5a11556",
+    "date": "2026-07-05T00:00:56+08:00",
+    "title": "feat(db): Step 1 — create Identity table (schema only, no data migration)",
+    "summary": "feat(db): Step 1 — create Identity table (schema only, no data migration)",
+    "areas": [
+      "infra"
+    ],
+    "commit": "a5a11556",
+    "files": [
+      "MANUAL_SQL_ADD_IDENTITY_TABLE.sql",
+      "MANUAL_SQL_IDENTITY_MIGRATION_CHECKPOINT.sql",
+      "MANUAL_SQL_REVERSE_IDENTITY_TABLE_STEP1.sql"
+    ]
+  },
+  {
     "id": "2026-07-04-d189776b",
     "date": "2026-07-04T23:17:36+08:00",
     "title": "refactor(web): remove 'Book a chat' from logged-in CTA",
