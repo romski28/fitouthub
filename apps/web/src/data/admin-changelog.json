@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-04-e7af7939",
+    "date": "2026-07-04T18:33:21+08:00",
+    "title": "refactor(web): drop conversational AI text, extract TypewriterText component",
+    "summary": "refactor(web): drop conversational AI text, extract TypewriterText component",
+    "areas": [
+      "web"
+    ],
+    "commit": "e7af7939",
+    "files": [
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/typewriter-text.tsx"
+    ]
+  },
+  {
     "id": "2026-07-04-25e89f02",
     "date": "2026-07-04T18:19:49+08:00",
     "title": "refactor(web): trim AI response text, reposition count + chat below CTA",

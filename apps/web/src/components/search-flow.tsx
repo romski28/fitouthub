@@ -351,55 +351,16 @@ function AiHumanView({ s, matchCount, matchLoading, isLoggedIn }: {
 }
 
 // Conversational view for anonymous users
-function AiConversationalView({ conversationalText, trades, onSequenceStateChange, onRemoveTrade }: {
-  conversationalText: string | null;
+function AiConversationalView({ trades, onSequenceStateChange, onRemoveTrade }: {
   trades: string[];
   onSequenceStateChange?: (done: boolean) => void;
   onRemoveTrade?: (trade: string) => void;
 }) {
-  const words = (conversationalText || '').trim().split(/\s+/).filter(Boolean);
-  const [visibleWordCount, setVisibleWordCount] = useState(0);
-
-  useEffect(() => {
-    if (words.length === 0) return;
-
-    let cancelled = false;
-    let timeoutId: number | null = null;
-
-    const streamNextWord = () => {
-      if (cancelled) return;
-
-      setVisibleWordCount((current) => {
-        const next = Math.min(current + 1, words.length);
-        if (next < words.length && !cancelled) {
-          const delayMs = 60 + ((next * 31) % 95);
-          timeoutId = window.setTimeout(streamNextWord, delayMs);
-        }
-        return next;
-      });
-    };
-
-    timeoutId = window.setTimeout(streamNextWord, 130);
-
-    return () => {
-      cancelled = true;
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [words.length]);
-
-  const showTradesBlock = words.length === 0 || visibleWordCount >= words.length;
-  const isSequenceComplete = showTradesBlock;
 
   useEffect(() => {
     if (!onSequenceStateChange) return;
 
-    if (!isSequenceComplete) {
-      onSequenceStateChange(false);
-      return;
-    }
-
+    // Trades appear immediately, CTA follows after a short delay
     const timeoutId = window.setTimeout(() => {
       onSequenceStateChange(true);
     }, 600);
@@ -407,25 +368,13 @@ function AiConversationalView({ conversationalText, trades, onSequenceStateChang
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isSequenceComplete, onSequenceStateChange]);
+  }, [onSequenceStateChange]);
 
   return (
     <div className="space-y-3 text-sm">
-      {/* Conversational narrative */}
-      {conversationalText && (
-        <div key={conversationalText}>
-          <p className="text-base leading-relaxed text-slate-700">
-            {words.slice(0, visibleWordCount).join(' ')}
-            {visibleWordCount < words.length && (
-              <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse bg-slate-400 align-[-2px]" />
-            )}
-          </p>
-        </div>
-      )}
-
       {trades.length > 0 && (
-        <div id="ai-trade-suggestions" className={`space-y-2 text-center transition-all duration-500 ${showTradesBlock ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}>
-          <p className="text-base font-semibold text-slate-700">Looks like you need...</p>
+        <div id="ai-trade-suggestions" className="space-y-2 text-center">
+          <p className="text-base font-semibold text-slate-700">Looks like you need a...</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {trades.map((trade) => (
               <span key={trade} className="inline-flex items-center gap-2 rounded-full border border-[#F5EEDE] bg-[#F97362] px-3 py-1 text-base font-semibold text-[#F5EEDE]">
@@ -1926,8 +1875,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
               )}
 
               <AiConversationalView
-                key={aiConversationalText}
-                conversationalText={aiConversationalText}
                 trades={displayedTrades}
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
