@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-04-d189776b",
+    "date": "2026-07-04T23:17:36+08:00",
+    "title": "refactor(web): remove 'Book a chat' from logged-in CTA",
+    "summary": "refactor(web): remove 'Book a chat' from logged-in CTA",
+    "areas": [
+      "web"
+    ],
+    "commit": "d189776b",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-04-12fdccb5",
     "date": "2026-07-04T23:12:02+08:00",
     "title": "refactor(web): simplify anonymous CTA — 'Let's start', equal emerald buttons",

@@ -901,19 +901,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     handleOpenWizardRoute('ai');
   }, [handleOpenWizardRoute]);
 
-  const handleTalkToPersonNow = useCallback(() => {
-    if (!aiStructured) return;
-    setAssistError(null);
-    persistTempAssistDraft();
-
-    if (!isLoggedIn || !accessToken) {
-      openJoinModal();
-      return;
-    }
-
-    setShowAssistModal(true);
-  }, [aiStructured, persistTempAssistDraft, isLoggedIn, accessToken, openJoinModal]);
-
   const handleGuestJoin = useCallback(() => {
     persistAiWizardHandoffForAuth();
     try {
@@ -2003,16 +1990,6 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                   </div>
                 )}
 
-                <div className="mt-5 text-center">
-                  <p className="text-sm text-slate-700">Prefer to talk to a person? We are here to help.</p>
-                  <button
-                    type="button"
-                    onClick={() => { setAutoRedirectCountdown(null); handleTalkToPersonNow(); }}
-                    className="mt-3 rounded-lg border border-emerald-600 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-50"
-                  >
-                    Book a chat
-                  </button>
-                </div>
               </>
             ) : (
               <div className="text-center">
