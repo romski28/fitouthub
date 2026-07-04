@@ -14,7 +14,9 @@
 --   3. Restore DB from backup if available
 --
 -- Steps in this migration series:
---   Step 1: MANUAL_SQL_ADD_IDENTITY_TABLE.sql        (forward)
---           MANUAL_SQL_REVERSE_IDENTITY_TABLE.sql     (reverse)
---   Step 2: [TBD]
+--   Step 1: MANUAL_SQL_ADD_IDENTITY_TABLE.sql              (forward)
+--           MANUAL_SQL_REVERSE_IDENTITY_TABLE_STEP1.sql     (reverse)
+--   Step 2: MANUAL_SQL_BACKFILL_IDENTITY_STEP2.sql          (forward)
+--           MANUAL_SQL_REVERSE_IDENTITY_BACKFILL_STEP2.sql   (reverse)
+--   Step 3: [TBD]
 -- ============================================================================
