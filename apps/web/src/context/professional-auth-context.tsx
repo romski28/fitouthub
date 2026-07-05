@@ -83,6 +83,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
   const refreshInFlightRef = useRef(false);
   const lastRefreshAttemptAtRef = useRef(0);
+  const initialMountRef = useRef(true);
 
   const normalizeLocale = (language?: string | null): 'en' | 'zh-HK' | 'zh-CN' => {
     if (language === 'zh-HK') return 'zh-HK';
@@ -352,11 +353,11 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (!response.ok) {
-        if (isAuthFailureStatus(response.status)) {
+        if (isAuthFailureStatus(response.status) && !initialMountRef.current) {
           logout();
           return;
         }
-        console.warn('Skipping forced logout on transient professional refresh failure:', response.status);
+        console.warn('Professional refresh failed:', response.status);
         return;
       }
 
@@ -367,8 +368,10 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
         result.refreshToken || storedRefreshToken,
       );
       setAccessToken(result.accessToken);
+      initialMountRef.current = false;
     } catch (err) {
       console.error('Token refresh failed:', err);
+      initialMountRef.current = false;
     } finally {
       refreshInFlightRef.current = false;
     }

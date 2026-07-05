@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-48b43e08",
+    "date": "2026-07-05T18:48:46+08:00",
+    "title": "fix: prevent professional auth redirect loop on initial mount",
+    "summary": "fix: prevent professional auth redirect loop on initial mount",
+    "areas": [
+      "web"
+    ],
+    "commit": "48b43e08",
+    "files": [
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-8ce9a428",
     "date": "2026-07-05T18:15:02+08:00",
     "title": "fix: call loginProfessional when unified login returns pro profile",
