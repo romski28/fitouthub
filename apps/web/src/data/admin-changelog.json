@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-e51be0e4",
+    "date": "2026-07-05T21:26:40+08:00",
+    "title": "fix: JwtProfessionalStrategy returns Professional.id, not Identity.id",
+    "summary": "fix: JwtProfessionalStrategy returns Professional.id, not Identity.id",
+    "areas": [
+      "api"
+    ],
+    "commit": "e51be0e4",
+    "files": [
+      "apps/api/src/auth/jwt-professional.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-88b7d6b6",
     "date": "2026-07-05T21:15:38+08:00",
     "title": "fix: import AuthModule in ProfessionalModule to enable JWT strategy",

@@ -25,30 +25,38 @@ export class JwtProfessionalStrategy extends PassportStrategy(Strategy, 'jwt-pro
       select: { id: true, sessionToken: true },
     });
 
-    if (!identity) {
-      // Fallback: check Professional table
-      const pro = await (this.prisma as any).professional.findUnique({
-        where: { id: payload.sub },
-        select: { id: true, email: true, identityId: true },
-      });
-      if (!pro) return null;
-
-      if (pro.identityId) {
-        const idCheck = await (this.prisma as any).identity.findUnique({
-          where: { id: pro.identityId },
-          select: { sessionToken: true },
-        });
-        if (idCheck?.sessionToken && payload.sessionToken !== idCheck.sessionToken) {
-          return null;
-        }
+    if (identity) {
+      if (identity.sessionToken && payload.sessionToken !== identity.sessionToken) {
+        return null;
       }
-      return { id: pro.id, email: pro.email, role: 'professional' };
+
+      // Find the Professional profile linked to this Identity
+      const persona = await (this.prisma as any).persona.findFirst({
+        where: { identityId: identity.id, type: 'PROFESSIONAL' },
+        select: { professionalId: true },
+      });
+
+      if (persona?.professionalId) {
+        return { id: persona.professionalId, email: null, role: 'professional' };
+      }
     }
 
-    if (identity.sessionToken && payload.sessionToken !== identity.sessionToken) {
-      return null;
-    }
+    // Fallback: check Professional table directly
+    const pro = await (this.prisma as any).professional.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, identityId: true },
+    });
+    if (!pro) return null;
 
-    return { id: identity.id, role: payload.role || 'professional' };
+    if (pro.identityId) {
+      const idCheck = await (this.prisma as any).identity.findUnique({
+        where: { id: pro.identityId },
+        select: { sessionToken: true },
+      });
+      if (idCheck?.sessionToken && payload.sessionToken !== idCheck.sessionToken) {
+        return null;
+      }
+    }
+    return { id: pro.id, email: pro.email, role: 'professional' };
   }
 }
