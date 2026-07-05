@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-015dcdad",
+    "date": "2026-07-05T22:16:42+08:00",
+    "title": "fix: JWT strategy resolves User.id for client role from Identity→Persona",
+    "summary": "fix: JWT strategy resolves User.id for client role from Identity→Persona",
+    "areas": [
+      "api"
+    ],
+    "commit": "015dcdad",
+    "files": [
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-9543faed",
     "date": "2026-07-05T21:56:44+08:00",
     "title": "refactor: replace all 'jwt-professional' guards with 'jwt', remove strategy",
