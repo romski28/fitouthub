@@ -84,6 +84,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       if (persona?.userId) resolvedId = persona.userId;
     }
 
-    return { id: resolvedId, role: payload.role || 'client' };
+    return {
+      id: resolvedId,
+      role: payload.role || 'client',
+      isProfessional: payload.role === 'professional',
+    };
   }
 }

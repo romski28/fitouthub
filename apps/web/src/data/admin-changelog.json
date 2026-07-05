@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-07a9b4e2",
+    "date": "2026-07-05T23:27:48+08:00",
+    "title": "fix: add isProfessional flag to JWT strategy for professional role",
+    "summary": "fix: add isProfessional flag to JWT strategy for professional role",
+    "areas": [
+      "api"
+    ],
+    "commit": "07a9b4e2",
+    "files": [
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-c188831c",
     "date": "2026-07-05T22:43:07+08:00",
     "title": "fix: add missing class closing brace in jwt.strategy.ts",
