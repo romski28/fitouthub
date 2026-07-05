@@ -126,7 +126,6 @@ export class AuthService {
       data: {
         email: dto.email,
         nickname: dto.nickname,
-        passwordHash: dto.password, // Plaintext for MVP
         firstName: dto.firstName,
         surname: dto.surname,
         chineseName: dto.chineseName,
@@ -487,18 +486,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Dual-read password: Identity first (unified auth), fall back to User table
-    let passwordValid = false;
-    if (user.identityId) {
-      passwordValid = await this.identityService.validatePassword(
-        user.identityId,
-        dto.password,
-      );
+    // Validate password against Identity only (legacy fallback removed — Step 8)
+    if (!user.identityId) {
+      throw new UnauthorizedException('Account migration required. Please use password reset.');
     }
-    // Fallback: check legacy User.passwordHash column
-    if (!passwordValid && user.passwordHash === dto.password) {
-      passwordValid = true;
-    }
+    const passwordValid = await this.identityService.validatePassword(
+      user.identityId,
+      dto.password,
+    );
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }

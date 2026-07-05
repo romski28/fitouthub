@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-05-7e608ce0",
+    "date": "2026-07-05T15:36:03+08:00",
+    "title": "feat(db): Step 8 — Identity-only auth, drop legacy columns",
+    "summary": "feat(db): Step 8 — Identity-only auth, drop legacy columns",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "7e608ce0",
+    "files": [
+      "MANUAL_SQL_CLEANUP_AUTH_COLUMNS_STEP8.sql",
+      "MANUAL_SQL_IDENTITY_MIGRATION_CHECKPOINT.sql",
+      "MANUAL_SQL_REVERSE_CLEANUP_AUTH_COLUMNS_STEP8.sql",
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-29111428",
     "date": "2026-07-05T15:04:25+08:00",
     "title": "revert: remove debug persona logging from navbar, verify via DB instead",

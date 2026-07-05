@@ -26,4 +26,7 @@
 --           MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6A.sql       (reverse)
 --   Step 6b: MANUAL_SQL_FK_MIGRATION_STEP6B.sql             (forward — professional-only tables)
 --           MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6B.sql       (reverse)
+--   Step 7: Auth bridge — persona in API + both auth contexts (code)
+--   Step 8: MANUAL_SQL_CLEANUP_AUTH_COLUMNS_STEP8.sql       (forward — drop old auth columns)
+--           MANUAL_SQL_REVERSE_CLEANUP_AUTH_COLUMNS_STEP8.sql (reverse)
 -- ============================================================================
