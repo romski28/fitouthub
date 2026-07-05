@@ -14,11 +14,10 @@ import { EmergencyModal } from './emergency-modal';
 
 export const Navbar: React.FC = () => {
   const t = useTranslations('nav');
-  const { isLoggedIn, user, persona, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const {
     isLoggedIn: profIsLoggedIn,
     professional,
-    persona: profPersona,
     logout: profLogout,
   } = useProfessionalAuth();
   const router = useRouter();
@@ -35,18 +34,6 @@ export const Navbar: React.FC = () => {
     const frameId = window.requestAnimationFrame(() => setHydrated(true));
     return () => window.cancelAnimationFrame(frameId);
   }, []);
-
-  // DEBUG: verify persona is flowing through auth context (remove after confirming)
-  useEffect(() => {
-    if (persona) {
-      console.log('[Navbar] 🧑 client persona:', persona);
-    }
-  }, [persona]);
-  useEffect(() => {
-    if (profPersona) {
-      console.log('[Navbar] 🔧 pro persona:', profPersona);
-    }
-  }, [profPersona]);
 
   useEffect(() => {
     setProfileMenuOpen(false);

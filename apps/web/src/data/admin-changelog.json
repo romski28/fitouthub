@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-29111428",
+    "date": "2026-07-05T15:04:25+08:00",
+    "title": "revert: remove debug persona logging from navbar, verify via DB instead",
+    "summary": "revert: remove debug persona logging from navbar, verify via DB instead",
+    "areas": [
+      "web"
+    ],
+    "commit": "29111428",
+    "files": [
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-4a628e79",
     "date": "2026-07-05T14:59:32+08:00",
     "title": "debug: temporary persona logging in navbar (remove after verification)",
