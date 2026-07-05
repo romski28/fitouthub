@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-0ba68ca6",
+    "date": "2026-07-05T17:42:49+08:00",
+    "title": "fix: seed professional localStorage on unified pro login",
+    "summary": "fix: seed professional localStorage on unified pro login",
+    "areas": [
+      "web"
+    ],
+    "commit": "0ba68ca6",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-5153f215",
     "date": "2026-07-05T17:32:04+08:00",
     "title": "fix: add professional to login return type",
