@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-28f1f227",
+    "date": "2026-07-05T15:54:04+08:00",
+    "title": "fix: close unclosed fragment in auth-modal login form",
+    "summary": "fix: close unclosed fragment in auth-modal login form",
+    "areas": [
+      "web"
+    ],
+    "commit": "28f1f227",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-66d3cedb",
     "date": "2026-07-05T15:50:25+08:00",
     "title": "feat(auth): unified login — credentials first, persona picker if multiple",
