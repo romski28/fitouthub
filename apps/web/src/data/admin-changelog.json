@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-05-2f0f7667",
+    "date": "2026-07-05T17:58:43+08:00",
+    "title": "fix(auth): create JwtProfessionalStrategy, unified JWT validation",
+    "summary": "fix(auth): create JwtProfessionalStrategy, unified JWT validation",
+    "areas": [
+      "api"
+    ],
+    "commit": "2f0f7667",
+    "files": [
+      "apps/api/src/auth/auth.module.ts",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/jwt-professional.strategy.ts",
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-0ba68ca6",
     "date": "2026-07-05T17:42:49+08:00",
     "title": "fix: seed professional localStorage on unified pro login",

@@ -14,33 +14,59 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    // Only allow regular user tokens (not professionals)
-    if (payload.type === 'professional') {
-      return null;
-    }
-
-    // Validate user exists
-    const user = await (this.prisma as any).user.findUnique({
+    // Unified auth: validate any valid JWT (client + professional)
+    // Check Identity for session token validity
+    const identity = await (this.prisma as any).identity.findFirst({
       where: { id: payload.sub },
+      select: { id: true, sessionToken: true },
     });
 
-    if (!user) {
+    // Fallback: if payload.sub isn't an identity ID, try user lookup
+    if (!identity) {
+      const user = await (this.prisma as any).user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, email: true, role: true, identityId: true },
+      });
+      if (user) {
+        // Check session via Identity
+        if (user.identityId) {
+          const idCheck = await (this.prisma as any).identity.findUnique({
+            where: { id: user.identityId },
+            select: { sessionToken: true },
+          });
+          if (idCheck?.sessionToken && payload.sessionToken !== idCheck.sessionToken) {
+            return null;
+          }
+        }
+        return { id: user.id, email: user.email, role: user.role };
+      }
+
+      // Try professional lookup
+      const pro = await (this.prisma as any).professional.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, email: true, identityId: true },
+      });
+      if (pro) {
+        if (pro.identityId) {
+          const idCheck = await (this.prisma as any).identity.findUnique({
+            where: { id: pro.identityId },
+            select: { sessionToken: true },
+          });
+          if (idCheck?.sessionToken && payload.sessionToken !== idCheck.sessionToken) {
+            return null;
+          }
+        }
+        return { id: pro.id, email: pro.email, role: 'professional' };
+      }
+
       return null;
     }
 
-    // Enforce single active session: reject if sessionToken in DB has been rotated
-    // (e.g. user logged in on another device after this token was issued)
-    if (user.sessionToken && payload.sessionToken !== user.sessionToken) {
+    // Session check via Identity
+    if (identity.sessionToken && payload.sessionToken !== identity.sessionToken) {
       return null;
     }
 
-    // Include role so downstream can authorize correctly (client vs admin)
-    return {
-      id: user.id,
-      email: user.email,
-      sub: user.id,
-      role: user.role,
-      isProfessional: false,
-    };
+    return { id: identity.id, role: payload.role || 'client' };
   }
 }

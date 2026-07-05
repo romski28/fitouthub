@@ -550,8 +550,8 @@ export class AuthService {
     const sessionToken = randomUUID();
     await this.identityService.setSessionToken(identity.id, sessionToken);
 
-    // 6. Generate tokens
-    const tokens = this.generateTokens(profileId, role, sessionToken);
+    // 6. Generate tokens — sub is identity.id for unified JWT validation
+    const tokens = this.generateTokens(identity.id, role, sessionToken);
 
     return {
       success: true,
