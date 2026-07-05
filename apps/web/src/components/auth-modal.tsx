@@ -91,12 +91,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     typeof error === 'string' &&
     error.toLowerCase().includes('please join first');
 
-  const getPostLoginPath = (role?: string | null) => {
+  const getPostLoginPath = (role?: string | null, hasProfessional?: boolean) => {
+    if (hasProfessional) return '/professional-projects';
     const normalizedRole = String(role || '').toLowerCase();
     if (normalizedRole === 'surveyor' || normalizedRole === 'mimo_boh') {
       return '/survey-ops';
     }
-    // Clients land on their projects page
     return '/projects';
   };
 
@@ -187,9 +187,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
-      const postLoginPath = result.user
-        ? getPostLoginPath(result.user.role)
-        : '/professional-projects';
+      const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
       onClose();
       setLoginEmail('');
       setLoginPassword('');
@@ -207,9 +205,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     try {
       const result = await login(loginEmail, loginPassword, personaId);
-      const postLoginPath = result.user
-        ? getPostLoginPath(result.user.role)
-        : '/professional-projects';
+      const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
       onClose();
       setLoginEmail('');
       setLoginPassword('');

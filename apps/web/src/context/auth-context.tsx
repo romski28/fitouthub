@@ -284,6 +284,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     if (result.professional) {
       localStorage.setItem('user', JSON.stringify(result.professional));
+      setRole('professional');
       applyPreferredLocale(result.professional?.preferredLanguage);
     }
 

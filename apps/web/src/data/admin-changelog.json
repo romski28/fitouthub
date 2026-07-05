@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-4866b5bb",
+    "date": "2026-07-05T17:25:53+08:00",
+    "title": "fix: redirect professionals to /professional-projects after unified login",
+    "summary": "fix: redirect professionals to /professional-projects after unified login",
+    "areas": [
+      "web"
+    ],
+    "commit": "4866b5bb",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-d2e5f215",
     "date": "2026-07-05T17:00:38+08:00",
     "title": "fix: route professional login through unified /auth/login endpoint",
