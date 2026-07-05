@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-05-88b7d6b6",
+    "date": "2026-07-05T21:15:38+08:00",
+    "title": "fix: import AuthModule in ProfessionalModule to enable JWT strategy",
+    "summary": "fix: import AuthModule in ProfessionalModule to enable JWT strategy",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "88b7d6b6",
+    "files": [
+      "apps/api/src/auth/auth.module.ts",
+      "apps/api/src/professional/professional.module.ts",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-2467d5e8",
     "date": "2026-07-05T20:42:07+08:00",
     "title": "debug: add console logs to trace professional auth bounce",

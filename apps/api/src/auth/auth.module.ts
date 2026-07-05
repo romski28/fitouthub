@@ -24,6 +24,6 @@ import { NotificationModule } from '../notifications/notification.module';
   ],
   providers: [AuthService, JwtStrategy, JwtProfessionalStrategy, IdentityService, PrismaService],
   controllers: [AuthController],
-  exports: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtStrategy, JwtProfessionalStrategy],
 })
 export class AuthModule {}
