@@ -111,11 +111,13 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (storedToken && storedProfessional) {
         const prof = JSON.parse(storedProfessional) as Professional;
+        console.log('[ProAuth] Init from localStorage — isLoggedIn: true, email:', prof.email);
         setAccessToken(storedToken);
         setProfessional(prof);
         applyPreferredLocale(prof?.preferredLanguage);
         setIsLoggedIn(true);
       } else {
+        console.log('[ProAuth] Init from localStorage — no tokens, isLoggedIn: false');
         setIsLoggedIn(false);
       }
     } catch (err) {
@@ -317,6 +319,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
+    console.log('[ProAuth] LOGOUT called — trace:', new Error().stack?.split('\n')[2]?.trim());
     // Clear all auth tokens (client and professional) to ensure clean slate
     localStorage.removeItem('professionalAccessToken');
     localStorage.removeItem('professionalRefreshToken');
@@ -353,6 +356,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (!response.ok) {
+        console.log('[ProAuth] Refresh FAILED:', response.status, 'initialMount:', initialMountRef.current);
         if (isAuthFailureStatus(response.status) && !initialMountRef.current) {
           logout();
           return;
@@ -362,6 +366,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const result = await response.json();
+      console.log('[ProAuth] Refresh OK');
       localStorage.setItem('professionalAccessToken', result.accessToken);
       localStorage.setItem(
         'professionalRefreshToken',
