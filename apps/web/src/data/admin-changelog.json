@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-05-c3cc5751",
+    "date": "2026-07-05T14:51:48+08:00",
+    "title": "feat(auth): Step 7 — add persona to API responses and auth contexts",
+    "summary": "feat(auth): Step 7 — add persona to API responses and auth contexts",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c3cc5751",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-188a1c2e",
     "date": "2026-07-05T14:05:45+08:00",
     "title": "fix(db): remove AiIntake, AcProject from Step 6a — tables don't exist yet",

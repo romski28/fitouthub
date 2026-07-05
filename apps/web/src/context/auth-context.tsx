@@ -27,9 +27,15 @@ interface User {
   locationTertiary?: string | null;
 }
 
+interface Persona {
+  id: string;
+  type: string; // 'CLIENT' | 'PROFESSIONAL' | 'LANDLORD' | 'PROPERTY_MANAGER'
+}
+
 interface AuthContextType {
-  isLoggedIn: boolean | undefined; // undefined = loading
+  isLoggedIn: boolean | undefined;
   user: User | null;
+  persona: Persona | null;
   accessToken: string | null;
   role: string | null;
   preferredLanguage: string;
@@ -103,6 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [userLocation, setUserLocationState] = useState<CanonicalLocation>({} as CanonicalLocation);
@@ -213,6 +220,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setAccessToken(result.accessToken);
     setUser(result.user);
+    setPersona(result.persona ?? null);
     setRole(result.user.role);
     applyPreferredLocale(result.user?.preferredLanguage);
     const derivedLoc = extractLocationFromUser(result.user);
@@ -260,6 +268,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setAccessToken(result.accessToken);
     setUser(result.user);
+    setPersona(result.persona ?? null);
     setRole(result.user.role);
     applyPreferredLocale(result.user?.preferredLanguage);
     const derivedLoc = extractLocationFromUser(result.user);
@@ -308,6 +317,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setAccessToken(result.accessToken);
     setUser(result.user);
+    setPersona(result.persona ?? null);
     setRole(result.user.role);
     applyPreferredLocale(result.user?.preferredLanguage);
     const derivedLoc = extractLocationFromUser(result.user);
@@ -336,6 +346,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearAiClientState();
     setAccessToken(null);
     setUser(null);
+    setPersona(null);
     setRole(null);
     setUserLocationState({} as CanonicalLocation);
     setIsLoggedIn(false);
@@ -420,6 +431,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         isLoggedIn,
         user,
+        persona,
         accessToken,
         role,
         preferredLanguage: user?.preferredLanguage ?? 'en',

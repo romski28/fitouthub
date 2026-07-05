@@ -190,10 +190,17 @@ export class AuthService {
 
     await this.markProspectiveConversion(user.id, 'register');
 
+    // Include persona from the Identity we just created (Step 7)
+    const personaRow = await (this.prisma as any).persona.findFirst({
+      where: { identityId: identity.id },
+      select: { id: true, type: true },
+    });
+
     return {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      persona: personaRow ?? null,
       user: this.buildAuthUserPayload(user, dto.preferredLanguage ?? 'en'),
     };
   }
@@ -516,10 +523,21 @@ export class AuthService {
 
     await this.markProspectiveConversion(user.id, 'login');
 
+    // Look up persona for unified auth response (Step 7)
+    let persona: { id: string; type: string } | null = null;
+    if (user.identityId) {
+      const personaRow = await (this.prisma as any).persona.findFirst({
+        where: { identityId: user.identityId },
+        select: { id: true, type: true },
+      });
+      if (personaRow) persona = personaRow;
+    }
+
     return {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      persona,
       user: this.buildAuthUserPayload(
         user,
         user.notificationPreference?.preferredLanguage ?? 'en',

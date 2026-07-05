@@ -22,9 +22,15 @@ export interface Professional {
   preferredLanguage?: string;
 }
 
+interface Persona {
+  id: string;
+  type: string;
+}
+
 interface ProfessionalAuthContextType {
-  isLoggedIn: boolean | undefined; // undefined = loading
+  isLoggedIn: boolean | undefined;
   professional: Professional | null;
+  persona: Persona | null;
   accessToken: string | null;
   loading: boolean;
   error: string | null;
@@ -71,6 +77,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
   const [professional, setProfessional] = useState<Professional | null>(null);
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,6 +176,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setAccessToken(result.accessToken);
       setProfessional(result.professional);
+      setPersona(result.persona ?? null);
       applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
@@ -221,6 +229,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setAccessToken(result.accessToken);
       setProfessional(result.professional);
+      setPersona(result.persona ?? null);
       applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
@@ -278,6 +287,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setAccessToken(result.accessToken);
       setProfessional(result.professional);
+      setPersona(result.persona ?? null);
       applyPreferredLocale(result.professional?.preferredLanguage);
       setIsLoggedIn(true);
 
@@ -308,6 +318,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     clearAiClientState();
     setAccessToken(null);
     setProfessional(null);
+    setPersona(null);
     setIsLoggedIn(false);
     setError(null);
   };
@@ -398,6 +409,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         isLoggedIn,
         professional,
+        persona,
         accessToken,
         loading,
         error,
