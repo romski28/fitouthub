@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-5153f215",
+    "date": "2026-07-05T17:32:04+08:00",
+    "title": "fix: add professional to login return type",
+    "summary": "fix: add professional to login return type",
+    "areas": [
+      "web"
+    ],
+    "commit": "5153f215",
+    "files": [
+      "apps/web/src/context/auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-4866b5bb",
     "date": "2026-07-05T17:25:53+08:00",
     "title": "fix: redirect professionals to /professional-projects after unified login",

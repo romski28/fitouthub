@@ -64,7 +64,7 @@ interface AuthContextType {
         preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
       }
   >;
-  login: (email: string, password: string, personaId?: string) => Promise<{ success: boolean; accessToken?: string; refreshToken?: string; user?: User; requiresPersonaSelection?: boolean; personas?: Persona[] }>;
+  login: (email: string, password: string, personaId?: string) => Promise<{ success: boolean; accessToken?: string; refreshToken?: string; user?: User; professional?: any; requiresPersonaSelection?: boolean; personas?: Persona[] }>;
   googleLogin: (idToken: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   logout: () => void;
   refreshToken: () => Promise<void>;
