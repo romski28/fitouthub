@@ -4,7 +4,6 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
-import { JwtProfessionalStrategy } from './jwt-professional.strategy';
 import { IdentityService } from './identity.service';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
@@ -22,8 +21,8 @@ import { NotificationModule } from '../notifications/notification.module';
       },
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtProfessionalStrategy, IdentityService, PrismaService],
+  providers: [AuthService, JwtStrategy, IdentityService, PrismaService],
   controllers: [AuthController],
-  exports: [AuthService, JwtStrategy, JwtProfessionalStrategy],
+  exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-9543faed",
+    "date": "2026-07-05T21:56:44+08:00",
+    "title": "refactor: replace all 'jwt-professional' guards with 'jwt', remove strategy",
+    "summary": "refactor: replace all 'jwt-professional' guards with 'jwt', remove strategy",
+    "areas": [
+      "api"
+    ],
+    "commit": "9543faed",
+    "files": [
+      "apps/api/src/auth/auth.module.ts",
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-18d313b5",
     "date": "2026-07-05T21:45:24+08:00",
     "title": "fix: use 'jwt' guard for pro projects, resolve Professional.id from Identity",

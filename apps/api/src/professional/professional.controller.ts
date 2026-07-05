@@ -606,14 +606,14 @@ export class ProfessionalController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async getProfile(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
     return this.loadResolvedProfessionalProfile(professionalId);
   }
 
   @Patch('me/notification-preferences')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateMyNotificationPreferences(
     @Request() req: any,
     @Body()
@@ -674,7 +674,7 @@ export class ProfessionalController {
   }
 
   @Put('me')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateProfile(
     @Request() req: any,
     @Body()
@@ -796,7 +796,7 @@ export class ProfessionalController {
   }
 
   @Get('certification-types')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async listCertificationTypes() {
     const rows = await (this.prisma as any).certificationType.findMany({
       where: { isActive: true },
@@ -808,7 +808,7 @@ export class ProfessionalController {
   }
 
   @Get('certification-requirements')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async listCertificationRequirements() {
     const rows = await (this.prisma as any).tradeCertificationRequirement.findMany({
       include: {
@@ -838,7 +838,7 @@ export class ProfessionalController {
   }
 
   @Get('certifications')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async listCertifications(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
     const rows = await (this.prisma as any).professionalCertification.findMany({
@@ -862,7 +862,7 @@ export class ProfessionalController {
   }
 
   @Post('certifications')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async createCertification(
     @Request() req: any,
     @Body()
@@ -940,7 +940,7 @@ export class ProfessionalController {
   }
 
   @Put('certifications/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateCertification(
     @Request() req: any,
     @Param('id') id: string,
@@ -1036,7 +1036,7 @@ export class ProfessionalController {
   }
 
   @Delete('certifications/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteCertification(@Request() req: any, @Param('id') id: string) {
     const professionalId = req.user.id || req.user.sub;
@@ -1055,7 +1055,7 @@ export class ProfessionalController {
   }
 
   @Put('me/password')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updatePassword(@Request() req: any, @Body() body: { password?: string }) {
     const professionalId = req.user.id || req.user.sub;
     if (!body?.password || body.password.length < 6) {
@@ -1071,7 +1071,7 @@ export class ProfessionalController {
   }
 
   @Get('media')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async listMedia(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
     const media = await (this.prisma as any).professionalMedia.findMany({
@@ -1096,7 +1096,7 @@ export class ProfessionalController {
   }
 
   @Post('media')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async createMedia(
     @Request() req: any,
     @Body()
@@ -1192,7 +1192,7 @@ export class ProfessionalController {
   }
 
   @Put('media/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateMedia(
     @Request() req: any,
     @Param('id') id: string,
@@ -1269,7 +1269,7 @@ export class ProfessionalController {
   }
 
   @Delete('media/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async deleteMedia(@Request() req: any, @Param('id') id: string) {
     const professionalId = req.user.id || req.user.sub;
 
@@ -1365,7 +1365,7 @@ export class ProfessionalController {
   }
 
   @Get('reference-projects')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async listReferenceProjects(@Request() req: any) {
     const professionalId = req.user.id || req.user.sub;
     const projects = await (this.prisma as any).professionalReferenceProject.findMany({
@@ -1384,7 +1384,7 @@ export class ProfessionalController {
   }
 
   @Post('reference-projects')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async createReferenceProject(
     @Request() req: any,
     @Body() body: { title: string; description?: string; imageUrls?: string[] },
@@ -1433,7 +1433,7 @@ export class ProfessionalController {
   }
 
   @Put('reference-projects/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateReferenceProject(
     @Request() req: any,
     @Param('id') id: string,
@@ -1490,7 +1490,7 @@ export class ProfessionalController {
   }
 
   @Delete('reference-projects/:id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async deleteReferenceProject(@Request() req: any, @Param('id') id: string) {
     try {
       const professionalId = req.user.id || req.user.sub;
@@ -1514,7 +1514,7 @@ export class ProfessionalController {
   }
 
   @Get('projects/:projectProfessionalId')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async getProjectDetail(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
@@ -1651,7 +1651,7 @@ export class ProfessionalController {
   }
 
   @Post('projects/:projectProfessionalId/quote-preview')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async previewQuoteFee(
     @Request() req: any,
@@ -1699,7 +1699,7 @@ export class ProfessionalController {
   }
 
   @Post('projects/:projectProfessionalId/quote')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async submitQuote(
     @Request() req: any,
@@ -1948,7 +1948,7 @@ export class ProfessionalController {
   }
 
   @Post('projects/:projectProfessionalId/accept')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async acceptProject(
     @Request() req: any,
@@ -2085,7 +2085,7 @@ export class ProfessionalController {
   }
 
   @Post('projects/:projectProfessionalId/reject')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async rejectProject(
     @Request() req: any,
@@ -2150,7 +2150,7 @@ export class ProfessionalController {
 
   // Messages: list with pagination (default 30 newest)
   @Get('projects/:projectProfessionalId/messages')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async getMessages(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
@@ -2180,7 +2180,7 @@ export class ProfessionalController {
 
   // Messages: send from professional
   @Post('projects/:projectProfessionalId/messages')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   async sendMessage(
     @Request() req: any,
@@ -2218,7 +2218,7 @@ export class ProfessionalController {
 
   // Messages: mark client messages as read by professional
   @Post('projects/:projectProfessionalId/messages/mark-read')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async markMessagesRead(
     @Request() req: any,
@@ -2233,7 +2233,7 @@ export class ProfessionalController {
 
   // Request advance payment for upfront costs
   @Post('projects/:projectProfessionalId/advance-payment-request')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async requestAdvancePayment(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
@@ -2487,7 +2487,7 @@ export class ProfessionalController {
    * Creates:     FinancialTransaction type=escrow_deposit_request with milestone metadata
    */
   @Post('projects/:projectProfessionalId/payment-plan/milestones/:milestoneId/request-funding')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async requestMilestoneFunding(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
