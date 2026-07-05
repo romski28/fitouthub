@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-c188831c",
+    "date": "2026-07-05T22:43:07+08:00",
+    "title": "fix: add missing class closing brace in jwt.strategy.ts",
+    "summary": "fix: add missing class closing brace in jwt.strategy.ts",
+    "areas": [
+      "api"
+    ],
+    "commit": "c188831c",
+    "files": [
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-015dcdad",
     "date": "2026-07-05T22:16:42+08:00",
     "title": "fix: JWT strategy resolves User.id for client role from Identity→Persona",

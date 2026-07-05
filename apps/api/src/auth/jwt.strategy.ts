@@ -85,4 +85,5 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     return { id: resolvedId, role: payload.role || 'client' };
+  }
 }
