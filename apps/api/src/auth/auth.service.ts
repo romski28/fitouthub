@@ -12,6 +12,7 @@ import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
 import { verifyGoogleIdToken } from '../common/google-id-token';
+import { IdentityService } from './identity.service';
 
 type ClientGoogleOnboardingPayload = {
   type: 'google_onboarding_client';
@@ -28,6 +29,7 @@ export class AuthService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private notificationService: NotificationService,
+    private identityService: IdentityService,
   ) {}
 
   private buildAuthUserPayload(
@@ -135,6 +137,16 @@ export class AuthService {
         agreedToSecurityStatementAt: new Date(),
         agreedToSecurityStatementVersion: '1.0',
       },
+    });
+
+    // Create parallel Identity row for unified auth (Step 4)
+    const identity = await this.identityService.create({
+      email: dto.email,
+      passwordHash: dto.password,
+    });
+    await (this.prisma as any).user.update({
+      where: { id: user.id },
+      data: { identityId: identity.id },
     });
 
     await this.prisma.notificationPreference.create({
@@ -468,8 +480,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Compare passwords (plaintext comparison for MVP)
-    if (user.passwordHash !== dto.password) {
+    // Dual-read password: Identity first (unified auth), fall back to User table
+    let passwordValid = false;
+    if (user.identityId) {
+      passwordValid = await this.identityService.validatePassword(
+        user.identityId,
+        dto.password,
+      );
+    }
+    // Fallback: check legacy User.passwordHash column
+    if (!passwordValid && user.passwordHash === dto.password) {
+      passwordValid = true;
+    }
+    if (!passwordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -479,6 +502,14 @@ export class AuthService {
       where: { id: user.id },
       data: { sessionToken },
     });
+    // Also write session token to Identity (Step 4 dual-write)
+    if (user.identityId) {
+      try {
+        await this.identityService.setSessionToken(user.identityId, sessionToken);
+      } catch {
+        // Non-fatal: Identity write can lag behind User during transition
+      }
+    }
 
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role, sessionToken);

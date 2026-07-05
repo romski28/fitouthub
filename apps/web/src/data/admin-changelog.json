@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-05-1d221adc",
+    "date": "2026-07-05T11:00:39+08:00",
+    "title": "feat(auth): Step 4 — unified IdentityService with dual-read login",
+    "summary": "feat(auth): Step 4 — unified IdentityService with dual-read login",
+    "areas": [
+      "api"
+    ],
+    "commit": "1d221adc",
+    "files": [
+      "apps/api/src/auth/auth.module.ts",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/identity.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-6743dfd0",
     "date": "2026-07-05T10:56:45+08:00",
     "title": "feat(db): Step 3 — add Identity model to Prisma schema",
