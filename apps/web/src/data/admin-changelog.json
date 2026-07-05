@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-05-66d3cedb",
+    "date": "2026-07-05T15:50:25+08:00",
+    "title": "feat(auth): unified login — credentials first, persona picker if multiple",
+    "summary": "feat(auth): unified login — credentials first, persona picker if multiple",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "66d3cedb",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/login.dto.ts",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-7e608ce0",
     "date": "2026-07-05T15:36:03+08:00",
     "title": "feat(db): Step 8 — Identity-only auth, drop legacy columns",

@@ -73,6 +73,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [professionalPreferredLanguage, setProfessionalPreferredLanguage] = useState<'en' | 'zh-HK'>(pageLanguage);
   const [professionType, setProfessionType] = useState<'company' | 'contractor' | 'reseller'>('company');
   const [professionalEmergencyCallout, setProfessionalEmergencyCallout] = useState(false);
+  const [showPersonaPicker, setShowPersonaPicker] = useState(false);
+  const [availablePersonas, setAvailablePersonas] = useState<{ id: string; type: string }[]>([]);
   const [pendingVerification, setPendingVerification] = useState<{
     email: string;
     userType: 'client' | 'professional';
@@ -176,21 +178,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
 
     try {
-      if (userType === 'professional') {
-        await loginProfessional(loginEmail, loginPassword);
-        onClose();
-        setLoginEmail('');
-        setLoginPassword('');
-      } else {
-        const result = await login(loginEmail, loginPassword);
-        const postLoginPath = getPostLoginPath(result?.user?.role);
-        onClose();
-        setLoginEmail('');
-        setLoginPassword('');
-        if (postLoginPath) {
-          router.push(postLoginPath);
-        }
+      const result = await login(loginEmail, loginPassword);
+
+      if (result.requiresPersonaSelection) {
+        setAvailablePersonas(result.personas);
+        setShowPersonaPicker(true);
+        setLoading(false);
+        return;
       }
+
+      const postLoginPath = result.user
+        ? getPostLoginPath(result.user.role)
+        : '/professional-projects';
+      onClose();
+      setLoginEmail('');
+      setLoginPassword('');
+      setShowPersonaPicker(false);
+      if (postLoginPath) router.push(postLoginPath);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : modalT('loginFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePersonaSelect = async (personaId: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await login(loginEmail, loginPassword, personaId);
+      const postLoginPath = result.user
+        ? getPostLoginPath(result.user.role)
+        : '/professional-projects';
+      onClose();
+      setLoginEmail('');
+      setLoginPassword('');
+      setShowPersonaPicker(false);
+      setAvailablePersonas([]);
+      if (postLoginPath) router.push(postLoginPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : modalT('loginFailed'));
     } finally {
@@ -548,41 +573,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
-              <p className="relative z-20 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in as</p>
-              <div className="relative z-10 mt-1 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setUserType('client')}
-                  className={`group relative rounded-2xl border pb-4 pl-24 pr-4 pt-4 text-left transition ${
-                    userType === 'client'
-                      ? 'border-[#0E7C3A]/60 bg-gradient-to-br from-[#0E7C3A]/12 to-[#0E7C3A]/20'
-                      : 'border-[#D9D9D9] bg-[#F3F4F6] hover:bg-[#E5E7EB]'
-                  }`}
-                >
-                  <div className="pointer-events-none absolute bottom-0 -left-5 w-24 select-none">
-                    <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={96} height={132} className="object-contain" />
+              {showPersonaPicker ? (
+                <>
+                  <p className="text-center text-sm font-semibold text-slate-700">Choose your account</p>
+                  <div className="space-y-2">
+                    {availablePersonas.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handlePersonaSelect(p.id)}
+                        disabled={loading}
+                        className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left font-medium text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
+                      >
+                        {p.type === 'CLIENT' ? '🏠 Client' : p.type === 'PROFESSIONAL' ? '🔧 Professional' : `👤 ${p.type}`}
+                      </button>
+                    ))}
                   </div>
-                  <p className={`text-[11px] uppercase tracking-[0.2em] ${userType === 'client' ? 'text-[#0E7C3A]' : 'text-slate-500'}`}>{modalT('client')}</p>
-                  <p className="mt-1 text-base font-bold text-[#1A1A1A]">Plan and control</p>
-                  <p className="mt-1 text-xs text-[#4E4A42]">Project owner sign-in</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('professional')}
-                  className={`group relative rounded-2xl border pb-4 pl-4 pr-24 pt-4 text-left transition ${
-                    userType === 'professional'
-                      ? 'border-[#0E7C3A]/60 bg-gradient-to-br from-[#0E7C3A]/12 to-[#0E7C3A]/20'
-                      : 'border-[#D9D9D9] bg-[#F3F4F6] hover:bg-[#E5E7EB]'
-                  }`}
-                >
-                  <div className="pointer-events-none absolute bottom-0 -right-5 w-24 select-none">
-                    <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={96} height={132} className="object-contain" />
-                  </div>
-                  <p className={`text-[11px] uppercase tracking-[0.2em] ${userType === 'professional' ? 'text-[#0E7C3A]' : 'text-slate-500'}`}>{modalT('professional')}</p>
-                  <p className="mt-1 text-base font-bold text-[#1A1A1A]">Run your jobs</p>
-                  <p className="mt-1 text-xs text-[#4E4A42]">Trade professional sign-in</p>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowPersonaPicker(false); setAvailablePersonas([]); }}
+                    className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    ← Back
+                  </button>
+                </>
+              ) : (
+                <>
+              <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in</p>
 
               <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
                 <button
@@ -663,6 +680,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </>
                 )}
               </div>
+              )}
             </form>
           ) : (
             <>

@@ -470,73 +470,94 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    // Find user by email
-    const user = await (this.prisma as any).user.findUnique({
-      where: { email: dto.email },
-      include: {
-        notificationPreference: {
-          select: {
-            preferredLanguage: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
+    // 1. Authenticate against Identity (unified credential store)
+    const identity = await this.identityService.findByEmail(dto.email);
+    if (!identity) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    if (identity.passwordHash !== dto.password) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Validate password against Identity only (legacy fallback removed — Step 8)
-    if (!user.identityId) {
-      throw new UnauthorizedException('Account migration required. Please use password reset.');
-    }
-    const passwordValid = await this.identityService.validatePassword(
-      user.identityId,
-      dto.password,
-    );
-    if (!passwordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+    // 2. Find all personas for this identity
+    const allPersonas = await (this.prisma as any).persona.findMany({
+      where: { identityId: identity.id },
+      select: { id: true, type: true },
+    });
+
+    if (allPersonas.length === 0) {
+      throw new UnauthorizedException('No account type found. Please contact support.');
     }
 
-    // Issue session token — invalidates any existing session on another device
-    const sessionToken = randomUUID();
-    await (this.prisma as any).user.update({
-      where: { id: user.id },
-      data: { sessionToken },
-    });
-    // Also write session token to Identity (Step 4 dual-write)
-    if (user.identityId) {
-      try {
-        await this.identityService.setSessionToken(user.identityId, sessionToken);
-      } catch {
-        // Non-fatal: Identity write can lag behind User during transition
+    // 3. Determine which persona to use
+    let selectedPersona: { id: string; type: string };
+    if (dto.personaId) {
+      selectedPersona = allPersonas.find((p: any) => p.id === dto.personaId);
+      if (!selectedPersona) {
+        throw new UnauthorizedException('Invalid persona selection.');
       }
+    } else if (allPersonas.length === 1) {
+      selectedPersona = allPersonas[0];
+    } else {
+      // Multiple personas — return list for frontend picker
+      return {
+        success: true,
+        requiresPersonaSelection: true,
+        personas: allPersonas,
+      };
     }
 
-    // Generate tokens
-    const tokens = this.generateTokens(user.id, user.role, sessionToken);
+    // 4. Load profile based on persona type
+    let profile: any;
+    let profileId: string;
+    let role: string;
+    let preferredLanguage = 'en';
 
-    await this.markProspectiveConversion(user.id, 'login');
-
-    // Look up persona for unified auth response (Step 7)
-    let persona: { id: string; type: string } | null = null;
-    if (user.identityId) {
-      const personaRow = await (this.prisma as any).persona.findFirst({
-        where: { identityId: user.identityId },
-        select: { id: true, type: true },
+    if (selectedPersona.type === 'CLIENT') {
+      const user = await (this.prisma as any).user.findUnique({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
       });
-      if (personaRow) persona = personaRow;
+      if (!user) throw new UnauthorizedException('Client profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = user.role || 'client';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'PROFESSIONAL') {
+      const pro = await (this.prisma as any).professional.findUnique({
+        where: { personaId: selectedPersona.id },
+      });
+      if (!pro) throw new UnauthorizedException('Professional profile not found.');
+      profile = {
+        id: pro.id,
+        email: pro.email,
+        fullName: pro.fullName,
+        businessName: pro.businessName,
+        professionType: pro.professionType,
+        status: pro.status,
+        preferredLanguage: 'en',
+      };
+      profileId = pro.id;
+      role = 'professional';
+    } else {
+      throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
+
+    // 5. Issue session token
+    const sessionToken = randomUUID();
+    await this.identityService.setSessionToken(identity.id, sessionToken);
+
+    // 6. Generate tokens
+    const tokens = this.generateTokens(profileId, role, sessionToken);
 
     return {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      persona,
-      user: this.buildAuthUserPayload(
-        user,
-        user.notificationPreference?.preferredLanguage ?? 'en',
-      ),
+      persona: selectedPersona,
+      personas: allPersonas,
+      user: selectedPersona.type === 'CLIENT' ? profile : undefined,
+      professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
     };
   }
 

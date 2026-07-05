@@ -64,7 +64,7 @@ interface AuthContextType {
         preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
       }
   >;
-  login: (email: string, password: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
+  login: (email: string, password: string, personaId?: string) => Promise<{ success: boolean; accessToken?: string; refreshToken?: string; user?: User; requiresPersonaSelection?: boolean; personas?: Persona[] }>;
   googleLogin: (idToken: string) => Promise<{ success: boolean; accessToken: string; refreshToken: string; user: User }>;
   logout: () => void;
   refreshToken: () => Promise<void>;
@@ -242,11 +242,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return result;
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, personaId?: string) => {
+    const body: any = { email, password };
+    if (personaId) body.personaId = personaId;
+
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -256,33 +259,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const result = await response.json();
 
-    console.log('[AuthContext.login] Login successful:', {
-      user: result.user,
-      hasAccessToken: !!result.accessToken,
-    });
+    // Persona selection required — return to caller for picker UI
+    if (result.requiresPersonaSelection) {
+      return result;
+    }
 
-    // Save tokens and user to localStorage
+    // Full auth — save and set state
     localStorage.setItem('accessToken', result.accessToken);
     localStorage.setItem('refreshToken', result.refreshToken);
-    localStorage.setItem('user', JSON.stringify(result.user));
-
-    setAccessToken(result.accessToken);
-    setUser(result.user);
-    setPersona(result.persona ?? null);
-    setRole(result.user.role);
-    applyPreferredLocale(result.user?.preferredLanguage);
-    const derivedLoc = extractLocationFromUser(result.user);
-    if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
-      persistLocation(derivedLoc);
-    } else {
-      const rememberedLoc = readStoredLocationForUser(result.user);
-      if (rememberedLoc.primary || rememberedLoc.secondary || rememberedLoc.tertiary) {
-        persistLocation(rememberedLoc);
+    if (result.user) {
+      localStorage.setItem('user', JSON.stringify(result.user));
+      setUser(result.user);
+      setRole(result.user.role);
+      applyPreferredLocale(result.user?.preferredLanguage);
+      const derivedLoc = extractLocationFromUser(result.user);
+      if (derivedLoc.primary || derivedLoc.secondary || derivedLoc.tertiary) {
+        persistLocation(derivedLoc);
+      } else {
+        const rememberedLoc = readStoredLocationForUser(result.user);
+        if (rememberedLoc.primary || rememberedLoc.secondary || rememberedLoc.tertiary) {
+          persistLocation(rememberedLoc);
+        }
       }
     }
+    if (result.professional) {
+      localStorage.setItem('user', JSON.stringify(result.professional));
+      applyPreferredLocale(result.professional?.preferredLanguage);
+    }
+
+    setAccessToken(result.accessToken);
+    setPersona(result.persona ?? null);
     setIsLoggedIn(true);
 
-    // Subscribe to push notifications (PWA)
     import("@/components/pwa-provider").then((m) =>
       m.subscribeToPushNotifications().catch(() => {})
     );
