@@ -68,4 +68,4 @@ WHERE p."identityId" IS NOT NULL
 -- SELECT "type", count(*) FROM "Persona" GROUP BY "type";
 -- SELECT count(*) AS user_linked FROM "User" WHERE "personaId" IS NOT NULL;
 -- SELECT count(*) AS pro_linked FROM "Professional" WHERE "personaId" IS NOT NULL;
--- SELECT pe.id, pe.type, u.email FROM "Persona" pe JOIN "Identity" i ON pe."identityId" = i."id" LEFT JOIN "User" u ON pe."userId" = u."id" LIMIT 5;
+-- SELECT pe.id, pe.type, i.email FROM "Persona" pe JOIN "Identity" i ON pe."identityId" = i."id" ORDER BY pe.type;

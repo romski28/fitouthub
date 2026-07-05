@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-f2a76f6e",
+    "date": "2026-07-05T13:21:30+08:00",
+    "title": "fix(db): correct Persona verification query — join via Identity for email",
+    "summary": "fix(db): correct Persona verification query — join via Identity for email",
+    "areas": [
+      "infra"
+    ],
+    "commit": "f2a76f6e",
+    "files": [
+      "MANUAL_SQL_ADD_PERSONA_TABLE_STEP5.sql"
+    ]
+  },
+  {
     "id": "2026-07-05-a2725a73",
     "date": "2026-07-05T13:17:50+08:00",
     "title": "feat(db): Step 5 — Persona table with backfill, Prisma model",
