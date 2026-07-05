@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-95ccb992",
+    "date": "2026-07-05T16:44:54+08:00",
+    "title": "fix: read sessionToken from Identity in refresh method",
+    "summary": "fix: read sessionToken from Identity in refresh method",
+    "areas": [
+      "api"
+    ],
+    "commit": "95ccb992",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-9da82ba0",
     "date": "2026-07-05T16:38:16+08:00",
     "title": "fix: use findFirst instead of findUnique for personaId (not a unique column)",
