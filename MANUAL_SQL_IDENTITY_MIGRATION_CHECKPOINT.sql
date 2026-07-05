@@ -18,5 +18,8 @@
 --           MANUAL_SQL_REVERSE_IDENTITY_TABLE_STEP1.sql     (reverse)
 --   Step 2: MANUAL_SQL_BACKFILL_IDENTITY_STEP2.sql          (forward)
 --           MANUAL_SQL_REVERSE_IDENTITY_BACKFILL_STEP2.sql   (reverse)
---   Step 3: [TBD]
+--   Step 3: Prisma schema — Identity model added, prisma generate (code)
+--   Step 4: Auth service — IdentityService, dual-read login (code)
+--   Step 5: MANUAL_SQL_ADD_PERSONA_TABLE_STEP5.sql          (forward)
+--           MANUAL_SQL_REVERSE_PERSONA_TABLE_STEP5.sql       (reverse)
 -- ============================================================================

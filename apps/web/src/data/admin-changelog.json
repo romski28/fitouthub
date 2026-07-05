@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-05-a2725a73",
+    "date": "2026-07-05T13:17:50+08:00",
+    "title": "feat(db): Step 5 — Persona table with backfill, Prisma model",
+    "summary": "feat(db): Step 5 — Persona table with backfill, Prisma model",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "a2725a73",
+    "files": [
+      "MANUAL_SQL_ADD_PERSONA_TABLE_STEP5.sql",
+      "MANUAL_SQL_IDENTITY_MIGRATION_CHECKPOINT.sql",
+      "MANUAL_SQL_REVERSE_PERSONA_TABLE_STEP5.sql",
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-07-05-1d221adc",
     "date": "2026-07-05T11:00:39+08:00",
     "title": "feat(auth): Step 4 — unified IdentityService with dual-read login",
