@@ -111,6 +111,8 @@ export class UsersService {
       });
     }
     return this.prisma.user.findUnique({
+      where: { id },
+      select: {
         id: true,
         email: true,
         firstName: true,

@@ -651,13 +651,20 @@ export class AuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await (this.prisma as any).identity.update({
-      where: { id: user.identityId },
-      data: {
-        verificationToken: code,
-        passwordResetExpiry: expiresAt,
-      },
+    // Find identityId for this user
+    const user = await (this.prisma as any).user.findUnique({
+      where: { id: userId },
+      select: { identityId: true },
     });
+    if (user?.identityId) {
+      await (this.prisma as any).identity.update({
+        where: { id: user.identityId },
+        data: {
+          verificationToken: code,
+          passwordResetExpiry: expiresAt,
+        },
+      });
+    }
 
     const message = `Your Mimo verification code is ${code}. It expires in 10 minutes.`;
 

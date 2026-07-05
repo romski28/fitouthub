@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-06f131d2",
+    "date": "2026-07-05T16:30:50+08:00",
+    "title": "fix: resolve user lookup in OTP + broken findUnique in users.service",
+    "summary": "fix: resolve user lookup in OTP + broken findUnique in users.service",
+    "areas": [
+      "api"
+    ],
+    "commit": "06f131d2",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/users/users.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-046d7776",
     "date": "2026-07-05T16:25:53+08:00",
     "title": "fix(db): migrate all remaining references to dropped columns → Identity",
