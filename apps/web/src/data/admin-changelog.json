@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-9da82ba0",
+    "date": "2026-07-05T16:38:16+08:00",
+    "title": "fix: use findFirst instead of findUnique for personaId (not a unique column)",
+    "summary": "fix: use findFirst instead of findUnique for personaId (not a unique column)",
+    "areas": [
+      "api"
+    ],
+    "commit": "9da82ba0",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-06f131d2",
     "date": "2026-07-05T16:30:50+08:00",
     "title": "fix: resolve user lookup in OTP + broken findUnique in users.service",

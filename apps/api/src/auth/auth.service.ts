@@ -517,7 +517,7 @@ export class AuthService {
     let preferredLanguage = 'en';
 
     if (selectedPersona.type === 'CLIENT') {
-      const user = await (this.prisma as any).user.findUnique({
+      const user = await (this.prisma as any).user.findFirst({
         where: { personaId: selectedPersona.id },
         include: { notificationPreference: { select: { preferredLanguage: true } } },
       });
@@ -527,7 +527,7 @@ export class AuthService {
       role = user.role || 'client';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else if (selectedPersona.type === 'PROFESSIONAL') {
-      const pro = await (this.prisma as any).professional.findUnique({
+      const pro = await (this.prisma as any).professional.findFirst({
         where: { personaId: selectedPersona.id },
       });
       if (!pro) throw new UnauthorizedException('Professional profile not found.');
