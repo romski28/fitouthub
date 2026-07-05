@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-4a628e79",
+    "date": "2026-07-05T14:59:32+08:00",
+    "title": "debug: temporary persona logging in navbar (remove after verification)",
+    "summary": "debug: temporary persona logging in navbar (remove after verification)",
+    "areas": [
+      "web"
+    ],
+    "commit": "4a628e79",
+    "files": [
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-c3cc5751",
     "date": "2026-07-05T14:51:48+08:00",
     "title": "feat(auth): Step 7 — add persona to API responses and auth contexts",
