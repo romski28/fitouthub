@@ -176,8 +176,33 @@ enum QuestionnaireSubmissionStatus {
   abandoned
 }
 
+model Identity {
+  id                                String    @id @default(cuid())
+  email                             String    @unique
+  passwordHash                      String?
+  passwordResetToken                String?
+  passwordResetExpiry               DateTime?
+  emailVerified                     Boolean   @default(false)
+  verificationToken                 String?
+  otpCode                           String?
+  otpExpiresAt                      DateTime?
+  otpVerifiedAt                     DateTime?
+  sessionToken                      String?
+  agreedToTermsAt                   DateTime?
+  agreedToTermsVersion              String?   @default("1.0")
+  agreedToSecurityStatementAt       DateTime?
+  agreedToSecurityStatementVersion  String?   @default("1.0")
+  createdAt                         DateTime  @default(now())
+  updatedAt                         DateTime  @updatedAt
+
+  users         User[]
+  professionals Professional[]
+}
+
 model User {
   id                              String                   @id @default(cuid())
+  identityId                      String?
+  identity                        Identity?                @relation(fields: [identityId], references: [id])
   nickname                        String                   @unique
   firstName                       String
   surname                         String
@@ -294,6 +319,8 @@ model MilestoneTemplate {
 
 model Professional {
   id                      String                         @id @default(cuid())
+  identityId              String?
+  identity                Identity?                      @relation(fields: [identityId], references: [id])
   userId                  String?                        @unique
   status                  String                         @default("pending")
   rating                  Float                          @default(0)

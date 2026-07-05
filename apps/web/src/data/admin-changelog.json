@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-6743dfd0",
+    "date": "2026-07-05T10:56:45+08:00",
+    "title": "feat(db): Step 3 — add Identity model to Prisma schema",
+    "summary": "feat(db): Step 3 — add Identity model to Prisma schema",
+    "areas": [
+      "api"
+    ],
+    "commit": "6743dfd0",
+    "files": [
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-07-05-f378d803",
     "date": "2026-07-05T00:03:04+08:00",
     "title": "feat(db): Step 2 — backfill Identity rows from User and Professional",
