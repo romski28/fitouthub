@@ -203,8 +203,24 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     setLoading(true);
     setError(null);
 
+    const completeLogin = (result: any) => {
+      localStorage.setItem('professionalAccessToken', result.accessToken);
+      localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
+      if (result.professional) {
+        localStorage.setItem('professional', JSON.stringify(result.professional));
+        setProfessional(result.professional);
+        applyPreferredLocale(result.professional?.preferredLanguage);
+      }
+      setAccessToken(result.accessToken);
+      setPersona(result.persona ?? null);
+      setIsLoggedIn(true);
+      import("@/components/pwa-provider").then((m) =>
+        m.subscribeToPushNotifications().catch(() => {})
+      );
+    };
+
     try {
-      const response = await fetch(`${API_BASE_URL}/professional/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -212,40 +228,33 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.message || 'Login failed. Please check your credentials.',
-        );
+        throw new Error(errorData.message || 'Login failed.');
       }
 
       const result = await response.json();
 
-      // Store tokens and professional data
-      localStorage.setItem('professionalAccessToken', result.accessToken);
-      localStorage.setItem(
-        'professionalRefreshToken',
-        result.refreshToken || '',
-      );
-      localStorage.setItem('professional', JSON.stringify(result.professional));
+      if (result.requiresPersonaSelection) {
+        const proPersona = result.personas?.find((p: any) => p.type === 'PROFESSIONAL');
+        if (!proPersona) throw new Error('No professional account found.');
+        const proResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, personaId: proPersona.id }),
+        });
+        if (!proResponse.ok) throw new Error('Professional login failed.');
+        const proResult = await proResponse.json();
+        if (!proResult.professional) throw new Error('No professional profile found.');
+        completeLogin(proResult);
+        return { success: true, accessToken: proResult.accessToken, refreshToken: proResult.refreshToken };
+      }
 
-      setAccessToken(result.accessToken);
-      setProfessional(result.professional);
-      setPersona(result.persona ?? null);
-      applyPreferredLocale(result.professional?.preferredLanguage);
-      setIsLoggedIn(true);
-
-      // Subscribe to push notifications (PWA)
-      import("@/components/pwa-provider").then((m) =>
-        m.subscribeToPushNotifications().catch(() => {})
-      );
-
-      return {
-        success: true,
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      };
+      if (!result.professional) {
+        throw new Error('No professional account found. Please use client login.');
+      }
+      completeLogin(result);
+      return { success: true, accessToken: result.accessToken, refreshToken: result.refreshToken };
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Login failed. Please try again.';
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(message);
       throw err;
     } finally {

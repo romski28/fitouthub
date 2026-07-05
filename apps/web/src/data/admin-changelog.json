@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-d2e5f215",
+    "date": "2026-07-05T17:00:38+08:00",
+    "title": "fix: route professional login through unified /auth/login endpoint",
+    "summary": "fix: route professional login through unified /auth/login endpoint",
+    "areas": [
+      "web"
+    ],
+    "commit": "d2e5f215",
+    "files": [
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-95ccb992",
     "date": "2026-07-05T16:44:54+08:00",
     "title": "fix: read sessionToken from Identity in refresh method",
