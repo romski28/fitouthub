@@ -189,11 +189,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
 
-      // If professional login, also seed professional localStorage
+      // If professional login, also initialize professional auth context
       if (result.professional && result.accessToken) {
         localStorage.setItem('professionalAccessToken', result.accessToken);
         localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
         localStorage.setItem('professional', JSON.stringify(result.professional));
+        try { await loginProfessional(loginEmail, loginPassword); } catch { /* already seeded */ }
       }
 
       onClose();
@@ -215,11 +216,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const result = await login(loginEmail, loginPassword, personaId);
       const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
 
-      // If professional login, also seed professional localStorage
+      // If professional login, also initialize professional auth context
       if (result.professional && result.accessToken) {
         localStorage.setItem('professionalAccessToken', result.accessToken);
         localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
         localStorage.setItem('professional', JSON.stringify(result.professional));
+        try { await loginProfessional(loginEmail, loginPassword); } catch { /* already seeded */ }
       }
 
       onClose();

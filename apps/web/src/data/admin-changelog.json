@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-8ce9a428",
+    "date": "2026-07-05T18:15:02+08:00",
+    "title": "fix: call loginProfessional when unified login returns pro profile",
+    "summary": "fix: call loginProfessional when unified login returns pro profile",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ce9a428",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-f340fdb4",
     "date": "2026-07-05T18:06:01+08:00",
     "title": "fix(auth): refresh now uses Identity directly, pro context uses /auth/refresh",
