@@ -22,4 +22,8 @@
 --   Step 4: Auth service — IdentityService, dual-read login (code)
 --   Step 5: MANUAL_SQL_ADD_PERSONA_TABLE_STEP5.sql          (forward)
 --           MANUAL_SQL_REVERSE_PERSONA_TABLE_STEP5.sql       (reverse)
+--   Step 6a: MANUAL_SQL_FK_MIGRATION_STEP6A.sql             (forward — cross-cutting tables)
+--           MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6A.sql       (reverse)
+--   Step 6b: MANUAL_SQL_FK_MIGRATION_STEP6B.sql             (forward — professional-only tables)
+--           MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6B.sql       (reverse)
 -- ============================================================================

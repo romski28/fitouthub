@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-05-2be47f9e",
+    "date": "2026-07-05T13:39:38+08:00",
+    "title": "feat(db): Step 6 — FK migration, personaId on all 22 downstream tables",
+    "summary": "feat(db): Step 6 — FK migration, personaId on all 22 downstream tables",
+    "areas": [
+      "infra"
+    ],
+    "commit": "2be47f9e",
+    "files": [
+      "MANUAL_SQL_FK_MIGRATION_STEP6A.sql",
+      "MANUAL_SQL_FK_MIGRATION_STEP6B.sql",
+      "MANUAL_SQL_IDENTITY_MIGRATION_CHECKPOINT.sql",
+      "MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6A.sql",
+      "MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6B.sql"
+    ]
+  },
+  {
     "id": "2026-07-05-f2a76f6e",
     "date": "2026-07-05T13:21:30+08:00",
     "title": "fix(db): correct Persona verification query — join via Identity for email",
