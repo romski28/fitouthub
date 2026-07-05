@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-00ec64e6",
+    "date": "2026-07-05T16:04:05+08:00",
+    "title": "fix: handle possibly-undefined personas in login response",
+    "summary": "fix: handle possibly-undefined personas in login response",
+    "areas": [
+      "web"
+    ],
+    "commit": "00ec64e6",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-28f1f227",
     "date": "2026-07-05T15:54:04+08:00",
     "title": "fix: close unclosed fragment in auth-modal login form",

@@ -181,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const result = await login(loginEmail, loginPassword);
 
       if (result.requiresPersonaSelection) {
-        setAvailablePersonas(result.personas);
+        setAvailablePersonas(result.personas ?? []);
         setShowPersonaPicker(true);
         setLoading(false);
         return;
