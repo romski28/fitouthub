@@ -228,11 +228,7 @@ model User {
   locationPrimary                 String?
   locationSecondary               String?
   locationTertiary                String?
-  passwordHash                    String
-  passwordResetToken              String?
-  passwordResetExpiry             DateTime?
   emailVerified                   Boolean                  @default(false)
-  verificationToken               String?
   role                            String                   @default("client")
   createdAt                       DateTime                 @default(now())
   updatedAt                       DateTime                 @updatedAt
@@ -255,15 +251,8 @@ model User {
   adminActionsAssigned            AdminAction[]           @relation("AdminActionAssigned")
   adminActionsCompleted           AdminAction[]           @relation("AdminActionCompleted")
   contractsSignedAsClient         Project[]               @relation("ClientContractSignature")
-  otpCode                         String?
-  otpExpiresAt                    DateTime?
-  otpVerifiedAt                   DateTime?
-  sessionToken                    String?
   contractsSignedAsProfessional   Project[]               @relation("ProfessionalContractSignature")
-  agreedToTermsAt                DateTime?
-  agreedToTermsVersion            String?                 @default("1.0")
-  agreedToSecurityStatementAt     DateTime?
-  agreedToSecurityStatementVersion String?                @default("1.0")
+
   supportRequests                 SupportRequest[]        @relation("SupportRequestAdmin")
   aiIntakes                       AiIntake[]
   claimedAdminMessages            AdminMessageAssignment[] @relation("AdminMessageClaimedBy")
@@ -367,7 +356,6 @@ model Professional {
   completedProjectsCount   Int                          @default(0)  @map("completedProjectsCount")
   avgResponseHours         Float?                       @map("avgResponseHours")
   awardRate                Float?                       @map("awardRate")
-  passwordHash            String?
   emailTokens             EmailToken[]
   user                    User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectProfessionals    ProjectProfessional[]
@@ -385,14 +373,6 @@ model Professional {
   notificationPreferences NotificationPreference?
   pushSubscriptions       PushSubscription[]
   nextStepActions         NextStepAction[]
-  agreedToTermsAt                DateTime?
-  agreedToTermsVersion            String?                 @default("1.0")
-  agreedToSecurityStatementAt     DateTime?
-  agreedToSecurityStatementVersion String?                @default("1.0")
-  otpCode                 String?
-  otpExpiresAt            DateTime?
-  otpVerifiedAt           DateTime?
-  sessionToken            String?
   regionCoverage          ProfessionalRegionCoverage[]
   acProjects              AcProject[]
   availability            ProfessionalAvailability[]

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-05-c35a46f4",
+    "date": "2026-07-05T16:18:59+08:00",
+    "title": "fix(db): remove dropped auth columns from Prisma schema",
+    "summary": "fix(db): remove dropped auth columns from Prisma schema",
+    "areas": [
+      "api"
+    ],
+    "commit": "c35a46f4",
+    "files": [
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-07-05-00ec64e6",
     "date": "2026-07-05T16:04:05+08:00",
     "title": "fix: handle possibly-undefined personas in login response",
