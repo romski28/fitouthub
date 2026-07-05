@@ -102,11 +102,15 @@ export class UsersService {
   }
 
   async updatePassword(id: string, password: string) {
-    // MVP stores plaintext in passwordHash; replace with bcrypt in production
-    return this.prisma.user.update({
-      where: { id },
-      data: { passwordHash: password },
-      select: {
+    // Write password to Identity table (unified auth)
+    const user = await this.prisma.user.findUnique({ where: { id }, select: { identityId: true } });
+    if (user?.identityId) {
+      await (this.prisma as any).identity.update({
+        where: { id: user.identityId },
+        data: { passwordHash: password },
+      });
+    }
+    return this.prisma.user.findUnique({
         id: true,
         email: true,
         firstName: true,

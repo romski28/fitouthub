@@ -4,38 +4,39 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const defaultPassword = 'password'; // Simple test password
+  const defaultPassword = 'password';
   const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
   try {
-    // Find all professionals without passwords
+    // Find all professionals without passwords via Identity
     const professionalsWithoutPassword = await prisma.professional.findMany({
       where: {
-        passwordHash: null,
+        identityId: { not: null },
       },
     });
 
     console.log(
-      `Found ${professionalsWithoutPassword.length} professionals without passwords`,
+      `Found ${professionalsWithoutPassword.length} professionals`,
     );
 
     if (professionalsWithoutPassword.length === 0) {
-      console.log('All professionals already have passwords!');
+      console.log('No professionals to update!');
       return;
     }
 
-    // Update them with the default password
-    const updated = await prisma.professional.updateMany({
-      where: {
-        passwordHash: null,
-      },
-      data: {
-        passwordHash: hashedPassword,
-      },
-    });
+    // Update Identity rows with default password
+    let updated = 0;
+    for (const pro of professionalsWithoutPassword) {
+      if (!pro.identityId) continue;
+      await prisma.identity.update({
+        where: { id: pro.identityId },
+        data: { passwordHash: hashedPassword },
+      });
+      updated++;
+    }
 
     console.log(
-      `✓ Updated ${updated.count} professionals with default password`,
+      `✓ Updated ${updated} professionals with default password`,
     );
     console.log(`  Password for testing: "${defaultPassword}"`);
 

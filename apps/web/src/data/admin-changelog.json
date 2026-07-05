@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-07-05-046d7776",
+    "date": "2026-07-05T16:25:53+08:00",
+    "title": "fix(db): migrate all remaining references to dropped columns → Identity",
+    "summary": "fix(db): migrate all remaining references to dropped columns → Identity",
+    "areas": [
+      "api"
+    ],
+    "commit": "046d7776",
+    "files": [
+      "apps/api/prisma/seed.ts",
+      "apps/api/src/assist/assist-requests.service.ts",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/realtime/realtime.controller.ts",
+      "apps/api/src/scripts/set-default-passwords.ts",
+      "apps/api/src/users/users.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-c35a46f4",
     "date": "2026-07-05T16:18:59+08:00",
     "title": "fix(db): remove dropped auth columns from Prisma schema",

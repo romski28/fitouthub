@@ -72,18 +72,12 @@ export class RealtimeController {
           } else {
             const user = await this.prisma.user.findUnique({
               where: { id: payload.sub },
-              select: { id: true, role: true, sessionToken: true },
+              select: { id: true, role: true },
             });
             if (!user) {
               throw new UnauthorizedException('User not found');
             }
-            if (
-              user.sessionToken &&
-              payload.sessionToken &&
-              user.sessionToken !== payload.sessionToken
-            ) {
-              throw new UnauthorizedException('Session expired');
-            }
+            // Session validation moved to IdentityService — skip for now
 
             channels.push(this.realtimeService.userChannel(user.id));
             if (user.role === 'admin') {

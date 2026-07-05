@@ -439,7 +439,6 @@ export class AssistRequestsService {
         surname,
         email: prospectiveEmail,
         mobile: mobile || null,
-        passwordHash: `prospective-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         role: 'client',
         emailVerified: false,
       },

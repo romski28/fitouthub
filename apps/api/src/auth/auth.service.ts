@@ -398,21 +398,27 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('User not found');
     }
+    if (!user.identityId) {
+      throw new BadRequestException('Account not fully set up. Please contact support.');
+    }
 
-    if (!user.verificationToken || !user.passwordResetExpiry) {
+    // Read OTP from Identity table
+    const identity = await this.identityService.findById(user.identityId);
+    if (!identity || !identity.verificationToken || !identity.passwordResetExpiry) {
       throw new BadRequestException('No OTP found. Please request a new code.');
     }
 
-    if (user.passwordResetExpiry.getTime() < Date.now()) {
+    if (new Date(identity.passwordResetExpiry).getTime() < Date.now()) {
       throw new BadRequestException('OTP has expired. Please request a new code.');
     }
 
-    if (user.verificationToken !== code) {
+    if (identity.verificationToken !== code) {
       throw new BadRequestException('Invalid OTP code');
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+    // Clear OTP and mark email verified on Identity
+    await (this.prisma as any).identity.update({
+      where: { id: user.identityId },
       data: {
         emailVerified: true,
         verificationToken: null,
@@ -421,19 +427,16 @@ export class AuthService {
     });
 
     const sessionToken = randomUUID();
-    await this.prisma.user.update({
-      where: { id: updatedUser.id },
-      data: { sessionToken } as any,
-    });
+    await this.identityService.setSessionToken(user.identityId, sessionToken);
 
-    const tokens = this.generateTokens(updatedUser.id, updatedUser.role, sessionToken);
+    const tokens = this.generateTokens(user.id, user.role, sessionToken);
 
     return {
       success: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       user: this.buildAuthUserPayload(
-        updatedUser,
+        user,
         user.notificationPreference?.preferredLanguage ?? 'en',
       ),
     };
@@ -648,8 +651,8 @@ export class AuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.prisma.user.update({
-      where: { id: userId },
+    await (this.prisma as any).identity.update({
+      where: { id: user.identityId },
       data: {
         verificationToken: code,
         passwordResetExpiry: expiresAt,

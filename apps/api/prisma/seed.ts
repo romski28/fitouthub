@@ -261,7 +261,6 @@ async function main() {
       surname: 'User',
       email: 'demo@fitouthub.com',
       mobile: '+852 9123 4567',
-      passwordHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8',
       emailVerified: true,
       role: 'client',
     },
