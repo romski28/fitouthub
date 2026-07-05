@@ -1302,7 +1302,7 @@ export class ProfessionalController {
   }
 
   @Get('projects')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async getProfessionalProjects(@Request() req: any) {
     try {
       const professionalId = req.user.id || req.user.sub;

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-18d313b5",
+    "date": "2026-07-05T21:45:24+08:00",
+    "title": "fix: use 'jwt' guard for pro projects, resolve Professional.id from Identity",
+    "summary": "fix: use 'jwt' guard for pro projects, resolve Professional.id from Identity",
+    "areas": [
+      "api"
+    ],
+    "commit": "18d313b5",
+    "files": [
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-e51be0e4",
     "date": "2026-07-05T21:26:40+08:00",
     "title": "fix: JwtProfessionalStrategy returns Professional.id, not Identity.id",

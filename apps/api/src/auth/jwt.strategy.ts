@@ -67,6 +67,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       return null;
     }
 
-    return { id: identity.id, role: payload.role || 'client' };
+    // For professional role, resolve Professional.id from Identity
+    let resolvedId = identity.id;
+    if (payload.role === 'professional') {
+      const persona = await (this.prisma as any).persona.findFirst({
+        where: { identityId: identity.id, type: 'PROFESSIONAL' },
+        select: { professionalId: true },
+      });
+      if (persona?.professionalId) {
+        resolvedId = persona.professionalId;
+      }
+    }
+
+    return { id: resolvedId, role: payload.role || 'client' };
   }
 }
