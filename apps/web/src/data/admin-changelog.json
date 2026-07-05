@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-ba42e3c4",
+    "date": "2026-07-05T18:57:46+08:00",
+    "title": "fix: clean client tokens on pro login, hide client projects in navbar",
+    "summary": "fix: clean client tokens on pro login, hide client projects in navbar",
+    "areas": [
+      "web"
+    ],
+    "commit": "ba42e3c4",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-48b43e08",
     "date": "2026-07-05T18:48:46+08:00",
     "title": "fix: prevent professional auth redirect loop on initial mount",

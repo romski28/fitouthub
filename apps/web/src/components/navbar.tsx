@@ -82,7 +82,7 @@ export const Navbar: React.FC = () => {
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const isAdmin = Boolean(user && user.role === 'admin');
-  const showProjectsLink = hydrated && isLoggedIn;
+  const showProjectsLink = hydrated && isLoggedIn && !profIsLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showPublicLinks = !showProfessionalAuthed;
   const navShellClassName = [

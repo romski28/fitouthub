@@ -189,12 +189,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
 
-      // If professional login, also initialize professional auth context
+      // If professional login, clear client tokens + seed professional
       if (result.professional && result.accessToken) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         localStorage.setItem('professionalAccessToken', result.accessToken);
         localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
         localStorage.setItem('professional', JSON.stringify(result.professional));
-        try { await loginProfessional(loginEmail, loginPassword); } catch { /* already seeded */ }
+        try { await loginProfessional(loginEmail, loginPassword); } catch { /* seeded */ }
       }
 
       onClose();
@@ -216,12 +219,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const result = await login(loginEmail, loginPassword, personaId);
       const postLoginPath = getPostLoginPath(result.user?.role, !!result.professional);
 
-      // If professional login, also initialize professional auth context
+      // If professional login, clear client tokens + seed professional
       if (result.professional && result.accessToken) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         localStorage.setItem('professionalAccessToken', result.accessToken);
         localStorage.setItem('professionalRefreshToken', result.refreshToken || '');
         localStorage.setItem('professional', JSON.stringify(result.professional));
-        try { await loginProfessional(loginEmail, loginPassword); } catch { /* already seeded */ }
+        try { await loginProfessional(loginEmail, loginPassword); } catch { /* seeded */ }
       }
 
       onClose();
