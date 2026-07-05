@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-05-188a1c2e",
+    "date": "2026-07-05T14:05:45+08:00",
+    "title": "fix(db): remove AiIntake, AcProject from Step 6a — tables don't exist yet",
+    "summary": "fix(db): remove AiIntake, AcProject from Step 6a — tables don't exist yet",
+    "areas": [
+      "infra"
+    ],
+    "commit": "188a1c2e",
+    "files": [
+      "MANUAL_SQL_FK_MIGRATION_STEP6A.sql",
+      "MANUAL_SQL_REVERSE_FK_MIGRATION_STEP6A.sql"
+    ]
+  },
+  {
     "id": "2026-07-05-2be47f9e",
     "date": "2026-07-05T13:39:38+08:00",
     "title": "feat(db): Step 6 — FK migration, personaId on all 22 downstream tables",

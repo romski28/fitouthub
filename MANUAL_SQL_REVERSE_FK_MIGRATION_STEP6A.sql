@@ -3,8 +3,6 @@
 -- ============================================================================
 
 ALTER TABLE "Project" DROP COLUMN IF EXISTS "personaId";
-ALTER TABLE "AcProject" DROP COLUMN IF EXISTS "personaId";
-ALTER TABLE "AiIntake" DROP COLUMN IF EXISTS "personaId";
 ALTER TABLE "ProjectAssistRequest" DROP COLUMN IF EXISTS "personaId";
 ALTER TABLE "PrivateChatThread" DROP COLUMN IF EXISTS "personaId";
 ALTER TABLE "NextStepAction" DROP COLUMN IF EXISTS "personaId";

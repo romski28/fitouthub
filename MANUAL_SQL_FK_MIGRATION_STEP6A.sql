@@ -47,18 +47,6 @@ UPDATE "ProjectAssistRequest" par SET "personaId" = (
   SELECT p."id" FROM "Persona" p WHERE p."userId" = par."userId" OR p."professionalId" = par."professionalId" LIMIT 1
 ) WHERE par."personaId" IS NULL AND (par."userId" IS NOT NULL OR par."professionalId" IS NOT NULL);
 
--- AiIntake
-ALTER TABLE "AiIntake" ADD COLUMN IF NOT EXISTS "personaId" TEXT;
-UPDATE "AiIntake" ai SET "personaId" = (
-  SELECT p."id" FROM "Persona" p WHERE p."userId" = ai."userId" LIMIT 1
-) WHERE ai."personaId" IS NULL AND ai."userId" IS NOT NULL;
-
--- AcProject (has both userId and professionalId)
-ALTER TABLE "AcProject" ADD COLUMN IF NOT EXISTS "personaId" TEXT;
-UPDATE "AcProject" ac SET "personaId" = (
-  SELECT p."id" FROM "Persona" p WHERE p."userId" = ac."userId" OR p."professionalId" = ac."professionalId" LIMIT 1
-) WHERE ac."personaId" IS NULL AND (ac."userId" IS NOT NULL OR ac."professionalId" IS NOT NULL);
-
 -- Project (0 rows, but schema prep)
 ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "personaId" TEXT;
 
@@ -72,6 +60,4 @@ ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "personaId" TEXT;
 -- SELECT 'NextStepAction', count(*) FROM "NextStepAction" WHERE "personaId" IS NOT NULL UNION ALL
 -- SELECT 'ChatThread', count(*) FROM "PrivateChatThread" WHERE "personaId" IS NOT NULL UNION ALL
 -- SELECT 'AssistReq', count(*) FROM "ProjectAssistRequest" WHERE "personaId" IS NOT NULL UNION ALL
--- SELECT 'AiIntake', count(*) FROM "AiIntake" WHERE "personaId" IS NOT NULL UNION ALL
--- SELECT 'AcProject', count(*) FROM "AcProject" WHERE "personaId" IS NOT NULL UNION ALL
 -- SELECT 'Project', count(*) FROM "Project" WHERE "personaId" IS NOT NULL;
