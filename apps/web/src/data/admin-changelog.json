@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-05-f340fdb4",
+    "date": "2026-07-05T18:06:01+08:00",
+    "title": "fix(auth): refresh now uses Identity directly, pro context uses /auth/refresh",
+    "summary": "fix(auth): refresh now uses Identity directly, pro context uses /auth/refresh",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f340fdb4",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-07-05-2f0f7667",
     "date": "2026-07-05T17:58:43+08:00",
     "title": "fix(auth): create JwtProfessionalStrategy, unified JWT validation",

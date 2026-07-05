@@ -345,7 +345,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       refreshInFlightRef.current = true;
 
-      const response = await fetch(`${API_BASE_URL}/professional/auth/refresh`, {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: storedRefreshToken }),

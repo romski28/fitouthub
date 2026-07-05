@@ -566,39 +566,26 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      // Verify refresh token
       const payload = jwt.verify(
         refreshToken,
         process.env.JWT_REFRESH_SECRET || 'refresh-secret-key',
-      ) as { sub: string };
+      ) as { sub: string; role?: string };
 
-      const userId = payload.sub;
-
-      // Verify user still exists
-      const user = await (this.prisma as any).user.findUnique({
-        where: { id: userId },
-        select: { id: true, role: true, identityId: true },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
+      // payload.sub is identity.id (unified auth)
+      const identity = await this.identityService.findById(payload.sub);
+      if (!identity) {
+        throw new UnauthorizedException('Session not found');
       }
 
-      // Read session token from Identity
-      let sessionToken: string | null = null;
-      if (user.identityId) {
-        const identity = await this.identityService.findById(user.identityId);
-        sessionToken = identity?.sessionToken ?? null;
-      }
+      // Validate session token
+      let sessionToken = identity.sessionToken;
       if (!sessionToken) {
         sessionToken = randomUUID();
-        if (user.identityId) {
-          await this.identityService.setSessionToken(user.identityId, sessionToken);
-        }
+        await this.identityService.setSessionToken(identity.id, sessionToken);
       }
 
       // Generate new tokens
-      const tokens = this.generateTokens(user.id, user.role, sessionToken);
+      const tokens = this.generateTokens(identity.id, payload.role || 'client', sessionToken);
 
       return {
         success: true,
