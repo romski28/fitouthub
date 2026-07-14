@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-74379156",
+    "date": "2026-07-14T18:19:45+08:00",
+    "title": "fix(ui): PhoneInput on professional profile page + transparent spinner",
+    "summary": "fix(ui): PhoneInput on professional profile page + transparent spinner",
+    "areas": [
+      "web"
+    ],
+    "commit": "74379156",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-4c73655c",
     "date": "2026-07-14T16:06:07+08:00",
     "title": "fix(ui): Mimo-theme PhoneInput — white bg, rounded border, full height",

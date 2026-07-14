@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import PhoneInput from '@/components/phone-input';
 import { HkZoneMap } from '@/components/hk-zone-map';
 import { HkZoneList } from '@/components/hk-zone-list';
 import { MapOrList } from '@/components/map-or-list';
@@ -505,7 +506,7 @@ export default function ProfessionalProfilePage() {
 
   if (loading || isLoggedIn === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
           <p className="mt-4 text-slate-600">Loading profile...</p>
@@ -617,12 +618,12 @@ export default function ProfessionalProfilePage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-800">Phone</label>
-              <input
-                type="text"
-                value={profile.phone || ''}
-                onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-                className={paperInputClassName}
-              />
+              <div className="mt-1">
+                <PhoneInput
+                  value={profile.phone || ''}
+                  onChange={(val) => setProfile((p) => ({ ...p, phone: val }))}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-800">Email</label>
