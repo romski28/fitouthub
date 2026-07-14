@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-9aaf53cd",
+    "date": "2026-07-14T15:50:21+08:00",
+    "title": "fix: add PhoneInput to /get-started join page (client + pro)",
+    "summary": "fix: add PhoneInput to /get-started join page (client + pro)",
+    "areas": [
+      "web"
+    ],
+    "commit": "9aaf53cd",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-dc58c9ba",
     "date": "2026-07-14T15:41:03+08:00",
     "title": "feat(ui): country-code phone input with flags on join forms",

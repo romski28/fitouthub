@@ -10,6 +10,7 @@ import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
+import PhoneInput from '@/components/phone-input';
 
 type Role = 'client' | 'professional';
 type SignInMethod = 'email' | 'google' | null;
@@ -794,11 +795,9 @@ export default function GetStartedPage() {
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
                             <span>Mobile (optional unless WhatsApp/SMS)</span>
-                            <input
-                              type="tel"
+                            <PhoneInput
                               value={clientForm.mobile}
-                              onChange={(e) => setClientForm((prev) => ({ ...prev, mobile: e.target.value }))}
-                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                              onChange={(val) => setClientForm((prev) => ({ ...prev, mobile: val }))}
                             />
                           </label>
                         </div>
@@ -978,11 +977,10 @@ export default function GetStartedPage() {
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact and availability</p>
                         <label className="space-y-1 text-sm">
                           <span>Phone {professionalForm.phone ? checkIcon : null}</span>
-                          <input
-                            type="tel"
+                          <PhoneInput
                             value={professionalForm.phone}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, phone: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            onChange={(val) => setProfessionalForm((prev) => ({ ...prev, phone: val }))}
+                            required
                           />
                         </label>
                         <label className="space-y-1 text-sm">
