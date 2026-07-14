@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-e5065000",
+    "date": "2026-07-14T13:25:43+08:00",
+    "title": "fix: use Supabase pgcrypto for bcrypt migration instead of Node script",
+    "summary": "fix: use Supabase pgcrypto for bcrypt migration instead of Node script",
+    "areas": [
+      "infra"
+    ],
+    "commit": "e5065000",
+    "files": [
+      "MANUAL_SQL_BCRYPT_MIGRATION.sql"
+    ]
+  },
+  {
     "id": "2026-07-14-10ebb123",
     "date": "2026-07-14T11:28:38+08:00",
     "title": "feat(auth): bcrypt dual-read — hash on write, bcrypt.compare with plaintext fallback",
