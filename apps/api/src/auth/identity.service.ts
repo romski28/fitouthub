@@ -116,12 +116,6 @@ export class IdentityService {
   async validatePassword(id: string, password: string): Promise<boolean> {
     const identity = await this.findById(id);
     if (!identity || !identity.passwordHash) return false;
-
-    // bcrypt first (post-migration)
-    if (identity.passwordHash.startsWith('$2')) {
-      return bcrypt.compare(password, identity.passwordHash);
-    }
-    // Plaintext fallback (pre-migration — remove after all passwords hashed)
-    return identity.passwordHash === password;
+    return bcrypt.compare(password, identity.passwordHash);
   }
 }

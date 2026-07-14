@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-14-b7916f77",
+    "date": "2026-07-14T14:36:08+08:00",
+    "title": "refactor(auth): remove plaintext password fallback — bcrypt only",
+    "summary": "refactor(auth): remove plaintext password fallback — bcrypt only",
+    "areas": [
+      "api"
+    ],
+    "commit": "b7916f77",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/identity.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-14-e5065000",
     "date": "2026-07-14T13:25:43+08:00",
     "title": "fix: use Supabase pgcrypto for bcrypt migration instead of Node script",

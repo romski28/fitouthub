@@ -479,12 +479,8 @@ export class AuthService {
     if (!identity) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    if (identity.passwordHash.startsWith('$2')) {
-      const valid = await bcrypt.compare(dto.password, identity.passwordHash);
-      if (!valid) throw new UnauthorizedException('Invalid email or password');
-    } else if (identity.passwordHash !== dto.password) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
+    const valid = await bcrypt.compare(dto.password, identity.passwordHash);
+    if (!valid) throw new UnauthorizedException('Invalid email or password');
 
     // 2. Find all personas for this identity
     const allPersonas = await (this.prisma as any).persona.findMany({
