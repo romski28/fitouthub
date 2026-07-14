@@ -30,11 +30,9 @@ import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
   | { kind: 'followups' }
-  | { kind: 'basics' }
-  | { kind: 'location' }
-  | { kind: 'scopeDates' }
+  | { kind: 'projectDetails' }
   | { kind: 'images' };
-  // REMOVED: { kind: 'review' } — review step was skipped, removed July 14
+  // REMOVED July 14 Phase 2: basics, location, scopeDates merged into projectDetails; review removed earlier
 
 
 type LocationInputMode = 'map' | 'list';
@@ -235,7 +233,6 @@ const stripSummaryPrefix = (value: string): string => {
 
 const MOTIVATION = [
   'Nice! Let\'s build this in under a minute.',
-  'You\'re on fire, one quick step at a time.',
   'Looking great. This is coming together.',
   'Final stretch, let\'s launch this.',
 ];
@@ -353,9 +350,10 @@ export default function CreateProjectWizardPage() {
   const [summaryConfirmationShown, setSummaryConfirmationShown] = useState(false);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
-  const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
-  const [aiRiskNotes, setAiRiskNotes] = useState<string[]>([]);
-  const [aiRiskLevel, setAiRiskLevel] = useState<string | null>(null);
+  // REMOVED (advisory disabled July 14 Phase 2): aiSafetyNotes, aiRiskNotes, aiRiskLevel
+  // const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
+  // const [aiRiskNotes, setAiRiskNotes] = useState<string[]>([]);
+  // const [aiRiskLevel, setAiRiskLevel] = useState<string | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -409,9 +407,9 @@ export default function CreateProjectWizardPage() {
     setSummaryConfirmationShown(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
-    setAiSafetyNotes([]);
-    setAiRiskNotes([]);
-    setAiRiskLevel(null);
+    // setAiSafetyNotes([]); // REMOVED (advisory disabled July 14 Phase 2)
+    // setAiRiskNotes([]);
+    // setAiRiskLevel(null);
   }, [hydrated, searchParams]);
 
   useEffect(() => {
@@ -509,9 +507,9 @@ export default function CreateProjectWizardPage() {
     setSurveyOfferPrompted(nextSurveyToggle !== null);
     setDesignOfferPrompted(nextDesignToggle !== null);
     setFollowUpQuestions(nextQuestions);
-    setAiSafetyNotes(Array.isArray(seedDescription?.safetyNotes) ? seedDescription.safetyNotes : []);
-    setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
-    setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
+    // setAiSafetyNotes(Array.isArray(seedDescription?.safetyNotes) ? seedDescription.safetyNotes : []); // REMOVED (advisory disabled July 14 Phase 2)
+    // setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
+    // setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
     setChatError(null);
     setChatImageError(null);
     setAiChatCanContinue(false);
@@ -596,21 +594,11 @@ export default function CreateProjectWizardPage() {
   };
 
   const steps = useMemo<WizardStep[]>(
-    () => {
-      const base: WizardStep[] = [
-        { kind: 'followups' },
-        { kind: 'basics' },
-        { kind: 'location' },
-      ];
-
-      base.push(
-        { kind: 'scopeDates' },
-        { kind: 'images' },
-      );
-      // REMOVED: { kind: 'review' } — review step was skipped, removed July 14
-
-      return base;
-    },
+    () => [
+      { kind: 'followups' },
+      { kind: 'projectDetails' },
+      { kind: 'images' },
+    ],
     [],
   );
 
@@ -628,12 +616,10 @@ export default function CreateProjectWizardPage() {
 
   const canGoNext = useMemo(() => {
     if (!activeStep) return false;
-    if (activeStep.kind === 'basics') return title.trim().length > 0;
-    if (activeStep.kind === 'location') return Boolean(location.primary || location.secondary || location.tertiary);
+    if (activeStep.kind === 'projectDetails') return title.trim().length > 0 && Boolean(location.primary || location.secondary || location.tertiary);
     if (activeStep.kind === 'followups') return true;
-    if (activeStep.kind === 'scopeDates') return summary.trim().length > 0;
     return true;
-  }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
+  }, [activeStep, title, location.primary, location.secondary, location.tertiary]);
 
   const progress = steps.length > 1 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
 
@@ -653,18 +639,6 @@ export default function CreateProjectWizardPage() {
 
   const goNext = () => {
     if (!canGoNext) return;
-
-    // Scope & Dates validation
-    if (activeStep?.kind === 'scopeDates') {
-      if (!siteInspectionAvailableOn) {
-        setSkipPrompt('site');
-        return;
-      }
-      if (!endDate) {
-        setSkipPrompt('end');
-        return;
-      }
-    }
 
     hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
@@ -880,28 +854,27 @@ export default function CreateProjectWizardPage() {
           ? payload.vision.usage.processedImageCount
           : turnImageUrls.length;
 
-      // Extract safety & risk notes from AI response
-      const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
-        ? (parsed.safetyAssessment as Record<string, unknown>)
-        : null;
-      const parsedRiskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel.toLowerCase() : null;
-      const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
-      const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
-      const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
-      const parsedDisclaimer = typeof safetyAssessment?.disclaimer === 'string' && safetyAssessment.disclaimer.trim().length > 0 ? safetyAssessment.disclaimer.trim() : null;
-
-      const safetyNotes: string[] = [
-        ...parsedConcerns,
-        ...parsedMitigations,
-        ...(parsedDisclaimer ? [parsedDisclaimer] : []),
-      ];
-      // Surface safety data whenever there are notes, risks, or a non-trivial risk level
-      const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
-      if (hasSafetyData) {
-        if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
-        if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
-        setAiRiskLevel(parsedRiskLevel);
-      }
+      // Extract safety & risk notes from AI response — DISABLED July 14 Phase 2 (advisory removed)
+      // const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
+      //   ? (parsed.safetyAssessment as Record<string, unknown>)
+      //   : null;
+      // const parsedRiskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel.toLowerCase() : null;
+      // const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
+      // const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
+      // const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
+      // const parsedDisclaimer = typeof safetyAssessment?.disclaimer === 'string' && safetyAssessment.disclaimer.trim().length > 0 ? safetyAssessment.disclaimer.trim() : null;
+      // const safetyNotes: string[] = [
+      //   ...parsedConcerns,
+      //   ...parsedMitigations,
+      //   ...(parsedDisclaimer ? [parsedDisclaimer] : []),
+      // ];
+      // Surface safety data — DISABLED July 14 Phase 2 (advisory removed from wizard)
+      // const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
+      // if (hasSafetyData) {
+      //   if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
+      //   if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
+      //   setAiRiskLevel(parsedRiskLevel);
+      // }
       // REMOVED (review step disabled July 14): imageConfidence, imageProvider, imageModel
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
@@ -1278,13 +1251,13 @@ export default function CreateProjectWizardPage() {
                     className={`flex h-full w-full shrink-0 flex-col p-3 pb-16 sm:p-4 ${
                       step.kind === 'followups' ? 'sm:pb-4' : 'sm:pb-16'
                     } ${
-                      step.kind === 'location' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
+                      step.kind === 'projectDetails' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
                   >
-                    {step.kind === 'basics' && (
+                    {step.kind === 'projectDetails' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📝</span><span>Project basics</span></h3>
-                        <p className={panelNoteClass}>Give your project a clear title and set urgency.</p>
+                        <h3 className={panelTitleClass}><span>📝</span><span>Project details</span></h3>
+                        <p className={panelNoteClass}>Give your project a clear title and pick a location.</p>
                         <input
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
@@ -1301,47 +1274,9 @@ export default function CreateProjectWizardPage() {
                           <span className="text-sm font-medium text-slate-900 sm:text-base">This is an emergency</span>
                         </label>
 
-                        {/* Safety advisory — shown when emergency is OFF */}
-                        {isEmergency !== true && (aiSafetyNotes.length > 0 || aiRiskNotes.length > 0 || (aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel))) && (
-                          <div className="rounded-lg border border-sky-300 bg-sky-50 p-4 space-y-3 text-sm text-sky-900">
-                            <p className="font-semibold text-sky-950">Help us help you — stay safe</p>
-                            {aiRiskLevel && ['medium', 'high', 'critical'].includes(aiRiskLevel) && (
-                              <p>
-                                ⚠️ {aiRiskLevel === 'critical' ? 'Critical' : aiRiskLevel === 'high' ? 'High' : 'Medium'} risk detected
-                                {(aiSafetyNotes.length > 0 || aiRiskNotes.length > 0) ? ' — please review the notes below.' : ' — proceed with caution.'}
-                              </p>
-                            )}
-                            {aiSafetyNotes.map((note, i) => (
-                              <p key={`safety-${i}`} className="flex gap-2">
-                                <span className="shrink-0 mt-0.5">🛡️</span>
-                                <span>{note}</span>
-                              </p>
-                            ))}
-                            {aiRiskNotes.map((note, i) => (
-                              <p key={`risk-${i}`} className="flex gap-2">
-                                <span className="shrink-0 mt-0.5">⚠️</span>
-                                <span>{note}</span>
-                              </p>
-                            ))}
-                          </div>
-                        )}
+                        {/* ADVISORY DISABLED July 14 Phase 2 — safety + emergency callout kept for later use */}
+                        {/* — safety advisory (sky-blue box) + emergency callout (amber box) — */}
 
-                        {/* Emergency callout — shown when emergency is ON */}
-                        {isEmergency === true && (
-                          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm text-amber-900">
-                            <p className="font-semibold text-amber-950">
-                              <span className="text-xl mr-1">🚨</span> Emergency callout notice
-                            </p>
-                            <p>Emergency callouts normally carry a specific callout charge, particularly if outside normal working hours — from <strong>HK$500</strong> up.</p>
-                            <p>Works undertaken outside of standard working hours will normally be charged at <strong>1.5 or 2 times</strong> normal rate or more.</p>
-                            <p>Please be sure that this is an emergency that warrants the extra money before you continue.</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {step.kind === 'location' && (
-                      <div className="flex h-full min-h-0 flex-col gap-4">
                         <div className="flex items-start justify-between gap-3">
                           <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
                           <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
@@ -1393,6 +1328,37 @@ export default function CreateProjectWizardPage() {
                             </div>
                           )}
                         </div>
+
+                        {/* SUMMARY TEXTAREA DISABLED July 14 Phase 2 — kept for later use */}
+                        {/* <p className={panelNoteClass}>Anything else you want to share before we lock in?</p>
+                        <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3}
+                          placeholder="Add any additional context or requirements..."
+                          className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
+                        /> */}
+
+                        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+                          <div className="grid gap-1.5">
+                            <p className={panelNoteClass}>Date you can allow site inspection.</p>
+                            <WorkDatePicker
+                              value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
+                              onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
+                              minDate={new Date()}
+                              weeks={2}
+                            />
+                          </div>
+                          {/* COMPLETION DATE DISABLED July 14 Phase 2 — kept for later use */}
+                          {/* <div className="grid gap-1.5">
+                            <p className={panelNoteClass}>When do you need this completed by?</p>
+                            <WorkDatePicker
+                              value={endDate ? new Date(endDate + 'T00:00:00') : null}
+                              onChange={(d) => setEndDate(toDateKey(d))}
+                              minDate={siteInspectionAvailableOn
+                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000)
+                                : new Date()}
+                            />
+                          </div> */}
+                        </div>
+                        <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                       </div>
                     )}
 
@@ -1568,42 +1534,6 @@ export default function CreateProjectWizardPage() {
                                 )}
                               </div>
                             </div>
-                      </div>
-                    )}
-
-                    {step.kind === 'scopeDates' && (
-                      <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>🧾</span><span>Scope and dates</span></h3>
-                        <p className={panelNoteClass}>Anything else you want to share before we lock in?</p>
-                        <textarea
-                          value={summary}
-                          onChange={(e) => setSummary(e.target.value)}
-                          rows={3}
-                          placeholder="Add any additional context or requirements..."
-                          className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
-                        />
-                        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-                          <div className="grid gap-1.5">
-                            <p className={panelNoteClass}>Date you can allow site inspection.</p>
-                            <WorkDatePicker
-                              value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
-                              onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
-                              minDate={new Date()}
-                              weeks={2}
-                            />
-                          </div>
-                          <div className="grid gap-1.5">
-                            <p className={panelNoteClass}>When do you need this completed by?</p>
-                            <WorkDatePicker
-                              value={endDate ? new Date(endDate + 'T00:00:00') : null}
-                              onChange={(d) => setEndDate(toDateKey(d))}
-                              minDate={siteInspectionAvailableOn
-                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000)
-                                : new Date()}
-                            />
-                          </div>
-                        </div>
-                        <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                       </div>
                     )}
 

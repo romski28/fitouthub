@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-ef71213f",
+    "date": "2026-07-14T22:31:37+08:00",
+    "title": "refactor(wizard): merge basics+location+scopeDates into single projectDetails step",
+    "summary": "refactor(wizard): merge basics+location+scopeDates into single projectDetails step",
+    "areas": [
+      "web"
+    ],
+    "commit": "ef71213f",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-d2545c2c",
     "date": "2026-07-14T22:07:39+08:00",
     "title": "refactor(wizard): reorder steps — followups first, drop review step",
