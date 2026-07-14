@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-14-88209fed",
+    "date": "2026-07-14T23:25:39+08:00",
+    "title": "refactor(wizard): promote site inspection to h3 title, center date cells",
+    "summary": "refactor(wizard): promote site inspection to h3 title, center date cells",
+    "areas": [
+      "web"
+    ],
+    "commit": "88209fed",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/work-date-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-035989f5",
     "date": "2026-07-14T23:19:59+08:00",
     "title": "refactor(wizard): unbold district names, simplify site inspection date",

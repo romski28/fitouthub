@@ -1341,7 +1341,7 @@ export default function CreateProjectWizardPage() {
                         /> */}
 
                         <div className="grid gap-1.5">
-                          <p className={panelNoteClass}><span className="mr-1">📅</span>Site inspection on</p>
+                        <h3 className={panelTitleClass}><span>📅</span><span>Site inspection on</span></h3>
                           <WorkDatePicker
                             value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
                             onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}

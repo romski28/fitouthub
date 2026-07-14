@@ -239,7 +239,7 @@ export function WorkDatePicker({
         }`}
       >
         {weeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 gap-0.5">
+          <div key={wi} className="grid grid-cols-7 gap-0.5 justify-items-center">
             {week.map((d) => {
               const key = toDateKey(d);
               const disabled = isDisabled(d);
