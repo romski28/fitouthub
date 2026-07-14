@@ -1251,7 +1251,7 @@ export default function CreateProjectWizardPage() {
                     className={`flex h-full w-full shrink-0 flex-col p-3 pb-16 sm:p-4 ${
                       step.kind === 'followups' ? 'sm:pb-4' : 'sm:pb-16'
                     } ${
-                      step.kind === 'projectDetails' || step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
+                      step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
                   >
                     {step.kind === 'projectDetails' && (

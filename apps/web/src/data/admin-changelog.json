@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-5a396970",
+    "date": "2026-07-14T22:38:28+08:00",
+    "title": "fix(wizard): enable scroll on projectDetails step",
+    "summary": "fix(wizard): enable scroll on projectDetails step",
+    "areas": [
+      "web"
+    ],
+    "commit": "5a396970",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-ef71213f",
     "date": "2026-07-14T22:31:37+08:00",
     "title": "refactor(wizard): merge basics+location+scopeDates into single projectDetails step",
