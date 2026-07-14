@@ -10,6 +10,7 @@ import { HkDistrictList } from '@/components/hk-district-list';
 import { MapOrList } from '@/components/map-or-list';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 import { toast } from 'react-hot-toast';
+import PhoneInput from '@/components/phone-input';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 
@@ -372,12 +373,9 @@ export default function ProfilePage() {
 
                 <div className="md:col-span-2">
                   <label className={sectionLabelClassName}>Mobile number</label>
-                  <input
-                    type="text"
+                  <PhoneInput
                     value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    className={paperInputClassName}
-                    placeholder="e.g. +852 9123 4567"
+                    onChange={setMobile}
                   />
                 </div>
               </div>

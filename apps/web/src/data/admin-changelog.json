@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-01326328",
+    "date": "2026-07-14T18:48:50+08:00",
+    "title": "fix(ui): PhoneInput on client profile page",
+    "summary": "fix(ui): PhoneInput on client profile page",
+    "areas": [
+      "web"
+    ],
+    "commit": "01326328",
+    "files": [
+      "apps/web/src/app/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-74379156",
     "date": "2026-07-14T18:19:45+08:00",
     "title": "fix(ui): PhoneInput on professional profile page + transparent spinner",
