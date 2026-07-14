@@ -59,7 +59,7 @@ const _legacy = {
       "professional": "Professional",
       "editProfessional": "Edit Professional Info",
       "messaging": "Messaging",
-      "about": "About"
+      "about": "Why Mimo"
     },
     "auth": {
       "join": {
@@ -623,7 +623,7 @@ const _legacy = {
       "professional": "專業人士",
       "editProfessional": "編輯專業人士資料",
       "messaging": "訊息",
-      "about": "關於我們"
+      "about": "為什麼選擇 Mimo"
     },
     "auth": {
       "join": {

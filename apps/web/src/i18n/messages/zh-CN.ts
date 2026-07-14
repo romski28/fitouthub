@@ -41,7 +41,7 @@ const zhCN = {
       "professional": "专业人士",
       "editProfessional": "编辑专业人士資料",
       "messaging": "消息",
-      "about": "关于我们"
+      "about": "为什么选择 Mimo"
     },
     "auth": {
       "join": {

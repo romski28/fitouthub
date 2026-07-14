@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-07-14-20bdaf0d",
+    "date": "2026-07-14T19:36:17+08:00",
+    "title": "chore(i18n): rename 'About' to 'Why Mimo' in navbar",
+    "summary": "chore(i18n): rename 'About' to 'Why Mimo' in navbar",
+    "areas": [
+      "web"
+    ],
+    "commit": "20bdaf0d",
+    "files": [
+      "apps/web/src/i18n/locales/en.json",
+      "apps/web/src/i18n/locales/zh-CN.json",
+      "apps/web/src/i18n/locales/zh-HK.json",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-CN.ts",
+      "apps/web/src/i18n/messages/zh-HK.json",
+      "apps/web/src/i18n/messages/zh-HK.ts",
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-07-14-01326328",
     "date": "2026-07-14T18:48:50+08:00",
     "title": "fix(ui): PhoneInput on client profile page",
