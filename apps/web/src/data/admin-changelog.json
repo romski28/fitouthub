@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-6bbf538c",
+    "date": "2026-07-14T23:02:55+08:00",
+    "title": "refactor(wizard): polish projectDetails step UI",
+    "summary": "refactor(wizard): polish projectDetails step UI",
+    "areas": [
+      "web"
+    ],
+    "commit": "6bbf538c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-5a396970",
     "date": "2026-07-14T22:38:28+08:00",
     "title": "fix(wizard): enable scroll on projectDetails step",

@@ -1256,7 +1256,20 @@ export default function CreateProjectWizardPage() {
                   >
                     {step.kind === 'projectDetails' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📝</span><span>Project details</span></h3>
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className={panelTitleClass}><span>📝</span><span>Project brief</span></h3>
+                          <button
+                            type="button"
+                            onClick={() => setIsEmergency(v => !v)}
+                            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold text-white transition ${
+                              isEmergency
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-emerald-600 hover:bg-emerald-700'
+                            }`}
+                          >
+                            {isEmergency ? '🚨 Emergency' : 'Standard'}
+                          </button>
+                        </div>
                         <p className={panelNoteClass}>Give your project a clear title and pick a location.</p>
                         <input
                           value={title}
@@ -1264,26 +1277,17 @@ export default function CreateProjectWizardPage() {
                           placeholder="e.g. Bathroom leak repair"
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm sm:text-base"
                         />
-                        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5 hover:bg-slate-50 sm:px-4 sm:py-3">
-                          <input
-                            type="checkbox"
-                            checked={isEmergency === true}
-                            onChange={(e) => setIsEmergency(e.target.checked)}
-                            className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <span className="text-sm font-medium text-slate-900 sm:text-base">This is an emergency</span>
-                        </label>
 
                         {/* ADVISORY DISABLED July 14 Phase 2 — safety + emergency callout kept for later use */}
                         {/* — safety advisory (sky-blue box) + emergency callout (amber box) — */}
 
                         <div className="flex items-start justify-between gap-3">
                           <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
-                          <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                          <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-1">
                             <button
                               type="button"
                               onClick={() => handleLocationInputMode('map')}
-                              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:py-1.5 sm:text-xs ${
+                              className={`rounded-md px-2.5 py-1 text-[11px] transition sm:px-3 sm:py-1.5 sm:text-xs ${
                                 locationInputMode === 'map'
                                   ? 'bg-orange-600 text-amber-50 shadow-md'
                                   : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
@@ -1294,7 +1298,7 @@ export default function CreateProjectWizardPage() {
                             <button
                               type="button"
                               onClick={() => handleLocationInputMode('list')}
-                              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:py-1.5 sm:text-xs ${
+                              className={`rounded-md px-2.5 py-1 text-[11px] transition sm:px-3 sm:py-1.5 sm:text-xs ${
                                 locationInputMode === 'list'
                                   ? 'bg-orange-600 text-amber-50 shadow-md'
                                   : 'bg-slate-400 text-amber-50 hover:bg-slate-500'
@@ -1359,6 +1363,8 @@ export default function CreateProjectWizardPage() {
                           </div> */}
                         </div>
                         <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
+                        {/* Spacer so content clears the prev/next buttons when scrolled */}
+                        <div className="shrink-0 h-24" />
                       </div>
                     )}
 
