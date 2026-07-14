@@ -49,7 +49,7 @@ export function HkDistrictList({
                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            <div className="font-semibold">{district.name} · {getDistrictNameZh(district.areaCode)}</div>
+            <div>{district.name} · {getDistrictNameZh(district.areaCode)}</div>
           </button>
         );
       })}

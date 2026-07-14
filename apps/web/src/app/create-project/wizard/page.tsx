@@ -1340,27 +1340,14 @@ export default function CreateProjectWizardPage() {
                           className="w-full min-h-[110px] rounded-lg border border-slate-300 bg-white px-3 py-3 text-base"
                         /> */}
 
-                        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-                          <div className="grid gap-1.5">
-                            <p className={panelNoteClass}>Date you can allow site inspection.</p>
-                            <WorkDatePicker
-                              value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
-                              onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
-                              minDate={new Date()}
-                              weeks={2}
-                            />
-                          </div>
-                          {/* COMPLETION DATE DISABLED July 14 Phase 2 — kept for later use */}
-                          {/* <div className="grid gap-1.5">
-                            <p className={panelNoteClass}>When do you need this completed by?</p>
-                            <WorkDatePicker
-                              value={endDate ? new Date(endDate + 'T00:00:00') : null}
-                              onChange={(d) => setEndDate(toDateKey(d))}
-                              minDate={siteInspectionAvailableOn
-                                ? new Date(new Date(siteInspectionAvailableOn).getTime() + 86400000)
-                                : new Date()}
-                            />
-                          </div> */}
+                        <div className="grid gap-1.5">
+                          <p className={panelNoteClass}><span className="mr-1">📅</span>Site inspection on</p>
+                          <WorkDatePicker
+                            value={siteInspectionAvailableOn ? new Date(siteInspectionAvailableOn + 'T00:00:00') : null}
+                            onChange={(d) => setSiteInspectionAvailableOn(toDateKey(d))}
+                            minDate={new Date()}
+                            weeks={2}
+                          />
                         </div>
                         <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
                         {/* Spacer so content clears the prev/next buttons when scrolled */}
