@@ -423,3 +423,33 @@ body {
     padding-right: 2rem;
   }
 }
+
+/* ── Phone input (react-phone-number-input) Mimo theme ── */
+.PhoneInput {
+  align-items: center;
+  gap: 0;
+}
+.PhoneInputCountry {
+  padding: 0.5rem 0.25rem 0.5rem 0.75rem;
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+.PhoneInputCountryIcon {
+  border-radius: 2px;
+}
+.PhoneInputCountrySelectArrow {
+  margin-left: 0.25rem;
+  opacity: 0.5;
+}
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem 0.5rem 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--mimo-ink);
+  font-size: 0.875rem;
+  outline: none;
+}
+.PhoneInputInput::placeholder {
+  color: #9ca3af;
+}

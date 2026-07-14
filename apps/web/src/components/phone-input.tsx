@@ -13,6 +13,9 @@ interface PhoneInputProps {
 /**
  * Mimo-themed phone input with country flag + dial code dropdown.
  * Uses E.164 format internally (+85291234567). Default country: HK.
+ *
+ * Matches the /get-started form inputs:
+ *   rounded-lg border border-[#E8DFD5] bg-white/80 text-[#1A1A1A]
  */
 export default function PhoneInput({ value, onChange, required, disabled }: PhoneInputProps) {
   return (
@@ -24,7 +27,14 @@ export default function PhoneInput({ value, onChange, required, disabled }: Phon
       onChange={(val) => onChange(val || '')}
       required={required}
       disabled={disabled}
-      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+      className="flex rounded-lg border border-[#E8DFD5] bg-white/80 text-[#1A1A1A] focus-within:border-[#0E7C3A] focus-within:ring-1 focus-within:ring-[#0E7C3A]"
+      style={
+        {
+          '--PhoneInputCountrySelectArrow-color': '#5B5851',
+          '--PhoneInputCountrySelectArrow-opacity': '0.6',
+        } as React.CSSProperties
+      }
     />
   );
 }
+
