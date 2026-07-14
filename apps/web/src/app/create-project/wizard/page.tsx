@@ -29,12 +29,13 @@ import { MimoSpinner } from '@/components/mimo-spinner';
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
+  | { kind: 'followups' }
   | { kind: 'basics' }
   | { kind: 'location' }
-  | { kind: 'followups' }
   | { kind: 'scopeDates' }
-  | { kind: 'images' }
-  | { kind: 'review' };
+  | { kind: 'images' };
+  // REMOVED: { kind: 'review' } — review step was skipped, removed July 14
+
 
 type LocationInputMode = 'map' | 'list';
 
@@ -64,16 +65,17 @@ interface WizardChatMessage {
   text: string;
 }
 
-interface AiVisionReviewSnapshot {
-  summary: string;
-  conditionFindings: string[];
-  safetyFlags: string[];
-  followUpQuestions: string[];
-  confidence: number | null;
-  processedImageCount: number;
-  provider: string | null;
-  model: string | null;
-}
+// REMOVED (review step disabled July 14)
+// interface AiVisionReviewSnapshot {
+//   summary: string;
+//   conditionFindings: string[];
+//   safetyFlags: string[];
+//   followUpQuestions: string[];
+//   confidence: number | null;
+//   processedImageCount: number;
+//   provider: string | null;
+//   model: string | null;
+// }
 
 type ServiceOfferType = 'survey' | 'design';
 
@@ -341,8 +343,9 @@ export default function CreateProjectWizardPage() {
     }
   }, [chatMessages, listenMode, ttsSpeak]);
 
-  const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
-  const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
+  // REMOVED (review step disabled July 14): aiVisionReview, reviewTab
+  // const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
+  // const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
   const [requiresSurveyService, setRequiresSurveyService] = useState<boolean | null>(null);
   const [requiresDesignService, setRequiresDesignService] = useState<boolean | null>(null);
   const [surveyOfferPrompted, setSurveyOfferPrompted] = useState(false);
@@ -398,7 +401,7 @@ export default function CreateProjectWizardPage() {
     hasManualStepNavigationRef.current = false;
     setAiChatCanContinue(false);
     setCurrentStep(0);
-    setAiVisionReview(null);
+    // setAiVisionReview(null); // REMOVED (review step disabled July 14)
     setRequiresSurveyService(null);
     setRequiresDesignService(null);
     setSurveyOfferPrompted(false);
@@ -595,24 +598,20 @@ export default function CreateProjectWizardPage() {
   const steps = useMemo<WizardStep[]>(
     () => {
       const base: WizardStep[] = [
+        { kind: 'followups' },
         { kind: 'basics' },
         { kind: 'location' },
       ];
 
-      // Skip follow-up questions in emergency mode — go straight to scoping
-      if (!isEmergency) {
-        base.push({ kind: 'followups' });
-      }
-
       base.push(
         { kind: 'scopeDates' },
         { kind: 'images' },
-        { kind: 'review' },
       );
+      // REMOVED: { kind: 'review' } — review step was skipped, removed July 14
 
       return base;
     },
-    [isEmergency],
+    [],
   );
 
   const activeStep = steps[currentStep];
@@ -636,7 +635,7 @@ export default function CreateProjectWizardPage() {
     return true;
   }, [activeStep, title, location.primary, location.secondary, location.tertiary, summary]);
 
-  const progress = steps.length > 1 ? Math.round(((currentStep + 1) / (steps.length - 1)) * 100) : 0;
+  const progress = steps.length > 1 ? Math.round(((currentStep + 1) / steps.length) * 100) : 0;
 
   useEffect(() => {
     if (activeStep?.kind !== 'followups') return;
@@ -866,7 +865,8 @@ export default function CreateProjectWizardPage() {
           ? ((parsed.project as Record<string, unknown>).imageInsights as Record<string, unknown> | undefined)
           : undefined;
       const imageInsightSummary = typeof imageInsights?.summary === 'string' ? imageInsights.summary.trim() : '';
-      const imageConditionFindings = Array.isArray(imageInsights?.conditionFindings)
+      // REMOVED (review step disabled July 14): imageConditionFindings, imageSafetyFlags, imageFollowUpQuestions
+      /* const imageConditionFindings = Array.isArray(imageInsights?.conditionFindings)
         ? imageInsights.conditionFindings.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
         : [];
       const imageSafetyFlags = Array.isArray(imageInsights?.safetyFlags)
@@ -874,7 +874,7 @@ export default function CreateProjectWizardPage() {
         : [];
       const imageFollowUpQuestions = Array.isArray(imageInsights?.followUpQuestions)
         ? imageInsights.followUpQuestions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
-        : [];
+        : []; */
       const processedImageCount =
         payload?.vision?.usage && typeof payload.vision.usage === 'object' && typeof payload.vision.usage.processedImageCount === 'number'
           ? payload.vision.usage.processedImageCount
@@ -902,9 +902,10 @@ export default function CreateProjectWizardPage() {
         if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
         setAiRiskLevel(parsedRiskLevel);
       }
-      const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
+      // REMOVED (review step disabled July 14): imageConfidence, imageProvider, imageModel
+      /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
-      const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null;
+      const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null; */
       const imageWorkflowNote = turnImageUrls.length > 0
         ? (imageInsightSummary
             ? `Images ready in project photos. AI vision reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'}. ${imageInsightSummary}`
@@ -1012,7 +1013,8 @@ export default function CreateProjectWizardPage() {
 
       if (turnImageUrls.length > 0) {
         setExistingImageUrls((prev) => Array.from(new Set([...prev, ...turnImageUrls])));
-        setAiVisionReview({
+        // REMOVED (review step disabled July 14): setAiVisionReview
+        /* setAiVisionReview({
           summary: imageInsightSummary,
           conditionFindings: imageConditionFindings,
           safetyFlags: imageSafetyFlags,
@@ -1021,7 +1023,7 @@ export default function CreateProjectWizardPage() {
           processedImageCount,
           provider: imageProvider,
           model: imageModel,
-        });
+        }); */
       }
 
       let nextPendingOffer: ServiceOfferType | null = null;
@@ -1646,92 +1648,6 @@ export default function CreateProjectWizardPage() {
                       </div>
                     )}
 
-                    {step.kind === 'review' && (
-                      <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>✅</span><span>Review and save</span></h3>
-                        {aiVisionReview && (
-                          <div className="inline-flex w-fit rounded-lg border border-slate-200 bg-white p-1">
-                            <button
-                              type="button"
-                              onClick={() => setReviewTab('summary')}
-                              className={`rounded-md px-3 py-1 text-xs font-semibold ${reviewTab === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-                            >
-                              Summary
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setReviewTab('vision')}
-                              className={`rounded-md px-3 py-1 text-xs font-semibold ${reviewTab === 'vision' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-                            >
-                              Image analysis
-                            </button>
-                          </div>
-                        )}
-
-                        {(!aiVisionReview || reviewTab === 'summary') && (
-                          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                            <div className="overflow-x-auto text-sm">
-                              {[
-                                ['Title', title || 'N/A'],
-                                ['Emergency', isEmergency ? 'Yes' : 'No'],
-                                ['Follow-up questions', followUpStepQuestions.length ? `${followUpStepQuestions.length}` : 'None'],
-                                ['Site inspection', siteInspectionAvailableOn || 'Not set'],
-                                ['Completion date', endDate || 'Not set'],
-                                ['Photos', `${existingImageUrls.length}`],
-                                ['Survey service', requiresSurveyService === null ? 'Not asked' : requiresSurveyService ? 'Yes' : 'No'],
-                                ['Design service', requiresDesignService === null ? 'Not asked' : requiresDesignService ? 'Yes' : 'No'],
-                              ].map(([label, value], rowIndex, rows) => (
-                                <div
-                                  key={label}
-                                  className={`grid grid-cols-2 sm:grid-cols-[180px_minmax(0,1fr)] ${rowIndex < rows.length - 1 ? 'border-b border-slate-200' : ''}`}
-                                >
-                                  <div className="border-r border-slate-200 bg-slate-50 px-4 py-3 text-right font-semibold text-slate-700">{label}</div>
-                                  <div className="px-4 py-3 text-left text-slate-900">{value}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {aiVisionReview && reviewTab === 'vision' && (
-                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">AI image analysis</p>
-                            <p className="mt-1 text-xs text-slate-600">
-                              Processed {aiVisionReview.processedImageCount} image{aiVisionReview.processedImageCount === 1 ? '' : 's'}
-                              {aiVisionReview.provider ? ` via ${aiVisionReview.provider}` : ''}
-                              {aiVisionReview.model ? ` (${aiVisionReview.model})` : ''}.
-                              {typeof aiVisionReview.confidence === 'number' ? ` Confidence ${Math.round(Math.max(0, Math.min(1, aiVisionReview.confidence)) * 100)}%.` : ''}
-                            </p>
-
-                            {aiVisionReview.summary && (
-                              <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">{aiVisionReview.summary}</p>
-                            )}
-
-                            {aiVisionReview.conditionFindings.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs font-semibold text-slate-800">Condition findings</p>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                                  {aiVisionReview.conditionFindings.map((item, index) => (
-                                    <li key={`vision-cond-${index}`}>{item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {aiVisionReview.safetyFlags.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs font-semibold text-rose-700">Safety Flags</p>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                                  {aiVisionReview.safetyFlags.map((item, index) => (
-                                    <li key={`vision-flag-${index}`}>{item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

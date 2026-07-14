@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-d2545c2c",
+    "date": "2026-07-14T22:07:39+08:00",
+    "title": "refactor(wizard): reorder steps — followups first, drop review step",
+    "summary": "refactor(wizard): reorder steps — followups first, drop review step",
+    "areas": [
+      "web"
+    ],
+    "commit": "d2545c2c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-20bdaf0d",
     "date": "2026-07-14T19:36:17+08:00",
     "title": "chore(i18n): rename 'About' to 'Why Mimo' in navbar",
