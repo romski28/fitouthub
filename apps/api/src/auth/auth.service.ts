@@ -13,6 +13,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
 import { verifyGoogleIdToken } from '../common/google-id-token';
 import { IdentityService } from './identity.service';
+import * as bcrypt from 'bcrypt';
 
 type ClientGoogleOnboardingPayload = {
   type: 'google_onboarding_client';
@@ -478,7 +479,10 @@ export class AuthService {
     if (!identity) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    if (identity.passwordHash !== dto.password) {
+    if (identity.passwordHash.startsWith('$2')) {
+      const valid = await bcrypt.compare(dto.password, identity.passwordHash);
+      if (!valid) throw new UnauthorizedException('Invalid email or password');
+    } else if (identity.passwordHash !== dto.password) {
       throw new UnauthorizedException('Invalid email or password');
     }
 

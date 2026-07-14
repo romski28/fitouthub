@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-07-14-10ebb123",
+    "date": "2026-07-14T11:28:38+08:00",
+    "title": "feat(auth): bcrypt dual-read — hash on write, bcrypt.compare with plaintext fallback",
+    "summary": "feat(auth): bcrypt dual-read — hash on write, bcrypt.compare with plaintext fallback",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "10ebb123",
+    "files": [
+      "MANUAL_SQL_BCRYPT_MIGRATION.sql",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/identity.service.ts",
+      "apps/api/src/scripts/bcrypt-migrate-passwords.ts",
+      "apps/api/src/users/users.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-05-07a9b4e2",
     "date": "2026-07-05T23:27:48+08:00",
     "title": "fix: add isProfessional flag to JWT strategy for professional role",

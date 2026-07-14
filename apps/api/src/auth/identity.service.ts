@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import * as bcrypt from 'bcrypt';
 
 /**
  * Unified identity service — reads/writes the Identity table.
@@ -43,7 +44,9 @@ export class IdentityService {
     return (this.prisma as any).identity.create({
       data: {
         email: data.email,
-        passwordHash: data.passwordHash ?? null,
+        passwordHash: data.passwordHash
+          ? await bcrypt.hash(data.passwordHash, 10)
+          : null,
         emailVerified: data.emailVerified ?? false,
         agreedToTermsAt: new Date(),
         agreedToTermsVersion: data.agreedToTermsVersion ?? '1.0',
@@ -69,9 +72,10 @@ export class IdentityService {
    * Update password hash on Identity row.
    */
   async setPasswordHash(id: string, passwordHash: string) {
+    const hashed = await bcrypt.hash(passwordHash, 10);
     return (this.prisma as any).identity.update({
       where: { id },
-      data: { passwordHash },
+      data: { passwordHash: hashed },
     });
   }
 
@@ -111,7 +115,13 @@ export class IdentityService {
   /** Validate password against Identity row. Returns true if match. */
   async validatePassword(id: string, password: string): Promise<boolean> {
     const identity = await this.findById(id);
-    if (!identity) return false;
-    return identity.passwordHash === password; // plaintext MVP — upgrade to bcrypt
+    if (!identity || !identity.passwordHash) return false;
+
+    // bcrypt first (post-migration)
+    if (identity.passwordHash.startsWith('$2')) {
+      return bcrypt.compare(password, identity.passwordHash);
+    }
+    // Plaintext fallback (pre-migration — remove after all passwords hashed)
+    return identity.passwordHash === password;
   }
 }

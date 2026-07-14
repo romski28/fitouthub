@@ -1,0 +1,10 @@
+-- ============================================================================
+-- MANUAL SQL + SCRIPT: bcrypt-hash all existing plaintext passwords in Identity
+-- Run BEFORE deploying the bcrypt code changes.
+--
+-- This is a Node.js script (not raw SQL) because bcrypt runs in JS.
+-- Run from the API directory:
+--   npx ts-node src/scripts/bcrypt-migrate-passwords.ts
+--
+-- Reverse: re-run set-default-passwords.ts or restore from backup.
+-- ============================================================================
