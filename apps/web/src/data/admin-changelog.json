@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-14-dc58c9ba",
+    "date": "2026-07-14T15:41:03+08:00",
+    "title": "feat(ui): country-code phone input with flags on join forms",
+    "summary": "feat(ui): country-code phone input with flags on join forms",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "dc58c9ba",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/phone-input.tsx",
+      "package.json",
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-07-14-81577231",
     "date": "2026-07-14T15:27:35+08:00",
     "title": "feat(auth): enforce single-persona — block duplicate email + mobile",

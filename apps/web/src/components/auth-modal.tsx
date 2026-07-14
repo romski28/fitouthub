@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import { API_BASE_URL } from '@/config/api';
+import PhoneInput from '@/components/phone-input';
 import confetti from 'canvas-confetti';
 
 declare global {
@@ -836,12 +837,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.mobile')} ({commonT('optional')})
                     </label>
-                    <input
-                      type="tel"
-                      value={clientForm.mobile}
-                      onChange={(e) => setClientForm({ ...clientForm, mobile: e.target.value })}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
+                    <div className="mt-1">
+                      <PhoneInput
+                        value={clientForm.mobile}
+                        onChange={(val) => setClientForm({ ...clientForm, mobile: val })}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -1035,13 +1036,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {modalT('phone')}
                     </label>
-                    <input
-                      type="tel"
-                      value={professionalForm.phone}
-                      onChange={(e) => setProfessionalForm({ ...professionalForm, phone: e.target.value })}
-                      required
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
+                    <div className="mt-1">
+                      <PhoneInput
+                        value={professionalForm.phone}
+                        onChange={(val) => setProfessionalForm({ ...professionalForm, phone: val })}
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div>
