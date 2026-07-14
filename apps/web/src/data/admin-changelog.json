@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-14-81577231",
+    "date": "2026-07-14T15:27:35+08:00",
+    "title": "feat(auth): enforce single-persona — block duplicate email + mobile",
+    "summary": "feat(auth): enforce single-persona — block duplicate email + mobile",
+    "areas": [
+      "api"
+    ],
+    "commit": "81577231",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-14-b7916f77",
     "date": "2026-07-14T14:36:08+08:00",
     "title": "refactor(auth): remove plaintext password fallback — bcrypt only",

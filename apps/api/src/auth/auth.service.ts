@@ -91,13 +91,30 @@ export class AuthService {
       );
     }
 
-    // Check if user already exists
+    // Check if email already registered (Identity level — one email = one persona)
+    const existingIdentity = await this.identityService.findByEmail(dto.email);
+    if (existingIdentity) {
+      throw new BadRequestException('An account with this email already exists. Please log in instead.');
+    }
+
+    // Check if user already exists (legacy guard)
     const existingUser = await (this.prisma as any).user.findUnique({
       where: { email: dto.email },
     });
 
     if (existingUser) {
       throw new BadRequestException('Email already registered');
+    }
+
+    // Check if mobile already in use
+    if (dto.mobile) {
+      const existingMobile = await (this.prisma as any).user.findFirst({
+        where: { mobile: dto.mobile },
+        select: { id: true },
+      });
+      if (existingMobile) {
+        throw new BadRequestException('A mobile number can only be used with one account.');
+      }
     }
 
     // Check if nickname is taken
