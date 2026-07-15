@@ -54,6 +54,14 @@ export function ProjectImageModal({
     }
   }, [isOpen, photo?.id, photo?.note]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [isOpen]);
+
   if (!isOpen || !photo) return null;
 
   const handleSave = async () => {
@@ -69,7 +77,7 @@ export function ProjectImageModal({
   const fileUrl = resolveMediaAssetUrl(photo.url);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden animate-in fade-in">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur"

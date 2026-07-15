@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-62902b09",
+    "date": "2026-07-15T15:28:02+08:00",
+    "title": "fix(media): lock body scroll when file detail modal is open",
+    "summary": "fix(media): lock body scroll when file detail modal is open",
+    "areas": [
+      "web"
+    ],
+    "commit": "62902b09",
+    "files": [
+      "apps/web/src/components/project-image-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-ef9329eb",
     "date": "2026-07-15T15:21:00+08:00",
     "title": "feat(media): PDF embedded viewer, open-in-tab for non-image files",
