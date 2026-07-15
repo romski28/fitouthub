@@ -618,26 +618,37 @@ export function ProjectForm({
           )}
           {existingPhotos.length > 0 && (
             <div className="mt-3 space-y-2 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">Existing photos</div>
+              <div className="font-semibold text-slate-900">Existing files</div>
               <div className="flex flex-wrap gap-2">
-                {existingPhotos.map((photo) => (
+                {existingPhotos.map((photo) => {
+                  const ext = (photo.url || '').split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+                  const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                  return (
                   <div
                     key={photo.id || photo.url}
                     className="relative h-16 w-20 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                    title={photo.url.split('/').pop() || ''}
                   >
-                    <img src={resolveMediaAssetUrl(photo.url)} alt="Project photo" className="h-full w-full object-cover" />
+                    {isImage ? (
+                      <img src={resolveMediaAssetUrl(photo.url)} alt="Project file" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                      </div>
+                    )}
                     {!isReadOnly && (
                       <button
                         type="button"
                         className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
                         onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
-                        aria-label="Remove photo"
+                        aria-label="Remove file"
                       >
                         Remove
                       </button>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

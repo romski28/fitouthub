@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-15-af12fb4b",
+    "date": "2026-07-15T14:34:22+08:00",
+    "title": "refactor(create-project): align FileUploader and photos section with any-file system",
+    "summary": "refactor(create-project): align FileUploader and photos section with any-file system",
+    "areas": [
+      "web"
+    ],
+    "commit": "af12fb4b",
+    "files": [
+      "apps/web/src/components/file-uploader.tsx",
+      "apps/web/src/components/project-form.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-8d0a5869",
     "date": "2026-07-15T14:31:58+08:00",
     "title": "refactor(wizard): align step 3 with deferred-upload system",
