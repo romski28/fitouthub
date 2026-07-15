@@ -1182,7 +1182,7 @@ export default function CreateProjectWizardPage() {
   return (
     <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
       <section className="-mx-6 px-6">
-        <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
+        <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 w-full max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
@@ -1207,7 +1207,7 @@ export default function CreateProjectWizardPage() {
                 {steps.map((step, index) => (
                   <div
                     key={`${step.kind}-${index}`}
-                    className={`flex h-full w-full shrink-0 flex-col p-3 pb-16 sm:p-4 ${
+                    className={`flex h-full w-full shrink-0 flex-col overflow-x-hidden p-3 pb-16 sm:p-4 ${
                       step.kind === 'followups' ? 'pb-4 sm:pb-4' : 'pb-16 sm:pb-16'
                     } ${
                       step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
@@ -1215,18 +1215,19 @@ export default function CreateProjectWizardPage() {
                   >
                     {step.kind === 'projectDetails' && (
                       <div className={panelContentClass}>
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3">
                           <h3 className={panelTitleClass}><span>📝</span><span>Project brief</span></h3>
                           <button
                             type="button"
                             onClick={() => setIsEmergency(v => !v)}
-                            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold text-white transition ${
+                            className={`shrink-0 rounded-full px-2.5 py-1.5 text-xs font-semibold text-white transition sm:px-4 ${
                               isEmergency
                                 ? 'bg-red-600 hover:bg-red-700'
                                 : 'bg-emerald-600 hover:bg-emerald-700'
                             }`}
                           >
-                            {isEmergency ? '🚨 Emergency' : 'Standard'}
+                            <span className="hidden sm:inline">{isEmergency ? '🚨 Emergency' : 'Standard'}</span>
+                            <span className="sm:hidden">{isEmergency ? '🚨' : '✓'}</span>
                           </button>
                         </div>
                         <p className={panelNoteClass}>Give your project a clear title and pick a location.</p>
@@ -1240,8 +1241,8 @@ export default function CreateProjectWizardPage() {
                         {/* ADVISORY DISABLED July 14 Phase 2 — safety + emergency callout kept for later use */}
                         {/* — safety advisory (sky-blue box) + emergency callout (amber box) — */}
 
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className={panelTitleClass}><span>📍</span><span>Where is this project located?</span></h3>
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                          <h3 className={panelTitleClass}><span>📍</span><span className="hidden sm:inline">Where is this project located?</span><span className="sm:hidden">Project location</span></h3>
                           <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-1">
                             <button
                               type="button"
@@ -1373,10 +1374,10 @@ export default function CreateProjectWizardPage() {
                               )}
 
                               {/* Main input row: paperclip + textarea + mic */}
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
                                 {/* Paperclip — attach any file */}
                                 <label
-                                  className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${
+                                  className={`relative inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${
                                     chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN ? 'pointer-events-none opacity-50' : ''
                                   }`}
                                   title="Attach files (max 5 MB each)"
@@ -1396,7 +1397,7 @@ export default function CreateProjectWizardPage() {
 
                                 {/* Camera — mobile only */}
                                 <label
-                                  className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 sm:hidden ${
+                                  className={`relative inline-flex h-8 w-8 sm:hidden shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${
                                     chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN ? 'pointer-events-none opacity-50' : ''
                                   }`}
                                   title="Take a photo"

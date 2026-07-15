@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-9140ad33",
+    "date": "2026-07-15T15:31:16+08:00",
+    "title": "fix(wizard): mobile layout — prevent panel overflow on small screens",
+    "summary": "fix(wizard): mobile layout — prevent panel overflow on small screens",
+    "areas": [
+      "web"
+    ],
+    "commit": "9140ad33",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-62902b09",
     "date": "2026-07-15T15:28:02+08:00",
     "title": "fix(media): lock body scroll when file detail modal is open",
