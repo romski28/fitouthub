@@ -77,31 +77,31 @@ export function ProjectImageModal({
   const fileUrl = resolveMediaAssetUrl(photo.url);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="relative max-h-[90vh] max-w-3xl w-full bg-white rounded-xl shadow-xl overflow-hidden flex flex-col animate-in zoom-in duration-200">
+      <div className="relative max-h-[85vh] max-w-3xl w-full bg-white rounded-xl shadow-xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900 truncate mr-2" title={fileName}>{fileName}</h2>
+        <div className="shrink-0 border-b border-slate-200 px-5 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-2">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate" title={fileName}>{fileName}</h2>
           <button
             onClick={onClose}
-            className="shrink-0 text-slate-400 hover:text-slate-600 transition"
-            aria-label="Close modal"
+            className="shrink-0 text-slate-400 hover:text-slate-600 transition p-1"
+            aria-label="Close"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6 space-y-4">
+        <div className="flex-1 min-h-0 overflow-auto p-4 sm:p-6 space-y-4">
           {/* File preview */}
           {isImage ? (
             <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden">
@@ -110,28 +110,28 @@ export function ProjectImageModal({
                 alt={fileName}
                 width={800}
                 height={600}
-                className="w-full h-auto object-contain max-h-[60vh]"
+                className="w-full h-auto object-contain max-h-[50vh]"
                 unoptimized
               />
             </div>
           ) : isPdf ? (
-            <div className="w-full rounded-lg overflow-hidden border border-slate-200" style={{ minHeight: '60vh' }}>
+            <div className="w-full flex-1 min-h-[40vh] rounded-lg overflow-hidden border border-slate-200">
               <iframe
                 src={fileUrl}
                 title={fileName}
-                className="w-full"
-                style={{ height: '60vh', border: 'none' }}
+                className="w-full h-full min-h-[40vh]"
+                style={{ border: 'none' }}
               />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-100 p-8">
-              <span className="text-5xl font-bold uppercase text-slate-300">{ext || 'FILE'}</span>
+            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-100 p-6 sm:p-8">
+              <span className="text-4xl sm:text-5xl font-bold uppercase text-slate-300">{ext || 'FILE'}</span>
               <p className="mt-3 text-sm font-medium text-slate-600 break-all text-center">{fileName}</p>
               <p className="mt-1 text-xs text-slate-400">.{ext} file — preview not available</p>
             </div>
           )}
 
-          {/* Open file button — always visible for non-images */}
+          {/* Open file button — for non-images */}
           {!isImage && (
             <a
               href={fileUrl}
@@ -165,7 +165,7 @@ export function ProjectImageModal({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Add notes about this file..."
-                rows={4}
+                rows={3}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
               />
             </div>
@@ -183,18 +183,18 @@ export function ProjectImageModal({
 
         {/* Footer */}
         {onSave && (
-          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex gap-3">
+          <div className="shrink-0 border-t border-slate-200 px-5 py-3 sm:px-6 sm:py-4 flex gap-3">
             <button
               onClick={onClose}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-semibold text-sm hover:bg-slate-50 transition disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-700 transition disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save Notes'}
             </button>

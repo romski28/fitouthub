@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-841b8932",
+    "date": "2026-07-15T15:38:20+08:00",
+    "title": "fix(media): restructure file detail modal — fixed header/footer, scrollable content",
+    "summary": "fix(media): restructure file detail modal — fixed header/footer, scrollable content",
+    "areas": [
+      "web"
+    ],
+    "commit": "841b8932",
+    "files": [
+      "apps/web/src/components/project-image-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-9140ad33",
     "date": "2026-07-15T15:31:16+08:00",
     "title": "fix(wizard): mobile layout — prevent panel overflow on small screens",
