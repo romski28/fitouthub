@@ -831,9 +831,16 @@ export default function CreateProjectWizardPage() {
       // Surface safety data whenever there are notes, risks, or a non-trivial risk level
       const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
       if (hasSafetyData) {
-        if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
-        if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
-        setAiRiskLevel(parsedRiskLevel);
+        if (safetyNotes.length > 0) setAiSafetyNotes((prev) => Array.from(new Set([...prev, ...safetyNotes])));
+        if (parsedRisks.length > 0) setAiRiskNotes((prev) => Array.from(new Set([...prev, ...parsedRisks])));
+        if (parsedRiskLevel) {
+          setAiRiskLevel((prev) => {
+            const order: string[] = ['low', 'medium', 'high', 'critical'];
+            const prevIdx = order.indexOf(prev === null ? '' : prev);
+            const newIdx = order.indexOf(parsedRiskLevel!);
+            return newIdx > prevIdx ? parsedRiskLevel : prev;
+          });
+        }
         console.log('[wizard][safety] extracted safetyNotes:', safetyNotes, 'riskNotes:', parsedRisks, 'riskLevel:', parsedRiskLevel);
       }
       // REMOVED (review step disabled July 14): imageConfidence, imageProvider, imageModel

@@ -3,7 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+
+// Module-level safety data — survives all React re-renders and state clearing
+let _safetyNotes: string[] = [];
+let _riskNotes: string[] = [];
+let _riskLevel: string | null = null;
 import { API_BASE_URL } from '@/config/api';
 import toast from 'react-hot-toast';
 import { ProjectForm } from '@/components/project-form';
@@ -115,10 +120,6 @@ export default function CreateProjectPage() {
   const [safetyNotes, setSafetyNotes] = useState<string[]>([]);
   const [riskNotes, setRiskNotes] = useState<string[]>([]);
   const [riskLevel, setRiskLevel] = useState<string | null>(null);
-  // Refs as stable backup — immune to re-render clearing
-  const safetyNotesRef = useRef<string[]>([]);
-  const riskNotesRef = useRef<string[]>([]);
-  const riskLevelRef = useRef<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -188,13 +189,11 @@ export default function CreateProjectPage() {
         if (mergedDraft.aiIntakeId) {
           setAiIntakeId(mergedDraft.aiIntakeId);
         }
-        // Safety data from AI wizard
+        // Safety data from AI wizard — stored at module level to survive re-renders
         console.log('[create-project][safety] mergedDraft safetyNotes:', mergedDraft.safetyNotes);
-        console.log('[create-project][safety] mergedDraft riskNotes:', mergedDraft.riskNotes);
-        console.log('[create-project][safety] mergedDraft riskLevel:', mergedDraft.riskLevel);
-        if (mergedDraft.safetyNotes?.length) { setSafetyNotes(mergedDraft.safetyNotes); safetyNotesRef.current = mergedDraft.safetyNotes; }
-        if (mergedDraft.riskNotes?.length) { setRiskNotes(mergedDraft.riskNotes); riskNotesRef.current = mergedDraft.riskNotes; }
-        if (mergedDraft.riskLevel) { setRiskLevel(mergedDraft.riskLevel); riskLevelRef.current = mergedDraft.riskLevel; }
+        if (mergedDraft.safetyNotes?.length) { setSafetyNotes(mergedDraft.safetyNotes); _safetyNotes = mergedDraft.safetyNotes; }
+        if (mergedDraft.riskNotes?.length) { setRiskNotes(mergedDraft.riskNotes); _riskNotes = mergedDraft.riskNotes; }
+        if (mergedDraft.riskLevel) { setRiskLevel(mergedDraft.riskLevel); _riskLevel = mergedDraft.riskLevel; }
       }
 
       // Check if we have description data from sessionStorage (from projects list)
@@ -785,22 +784,22 @@ export default function CreateProjectPage() {
             </p>
 
             {/* Safety tips from AI */}
-            {(() => { console.log('[create-project][modal] safetyNotes:', safetyNotes, 'riskNotes:', riskNotes, 'riskLevel:', riskLevel); return null; })()}
-            {(safetyNotes.length > 0 || riskNotes.length > 0 || safetyNotesRef.current.length > 0 || riskNotesRef.current.length > 0) && (
+            {(() => { console.log('[create-project][modal] safetyNotes:', safetyNotes, '_safetyNotes:', _safetyNotes, 'riskNotes:', riskNotes, 'riskLevel:', riskLevel); return null; })()}
+            {(safetyNotes.length > 0 || riskNotes.length > 0 || _safetyNotes.length > 0 || _riskNotes.length > 0) && (
               <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left">
                 <p className="text-xs font-semibold text-sky-800 mb-2">🛡️ Safety notes from your brief</p>
-                {(riskLevel || riskLevelRef.current) && ['medium', 'high', 'critical'].includes((riskLevel || riskLevelRef.current)!) && (
+                {(riskLevel || _riskLevel) && ['medium', 'high', 'critical'].includes((riskLevel || _riskLevel)!) && (
                   <p className="text-xs font-medium text-amber-700 mb-1">
-                    ⚠️ {(riskLevel || riskLevelRef.current) === 'critical' ? 'Critical' : (riskLevel || riskLevelRef.current) === 'high' ? 'High' : 'Medium'} risk detected
+                    ⚠️ {(riskLevel || _riskLevel) === 'critical' ? 'Critical' : (riskLevel || _riskLevel) === 'high' ? 'High' : 'Medium'} risk detected
                   </p>
                 )}
-                {(safetyNotes.length > 0 ? safetyNotes : safetyNotesRef.current).map((note, i) => (
+                {(safetyNotes.length > 0 ? safetyNotes : _safetyNotes).map((note, i) => (
                   <p key={`safety-${i}`} className="text-xs text-sky-700 mt-1 flex gap-1.5">
                     <span className="shrink-0">🛡️</span>
                     <span>{note}</span>
                   </p>
                 ))}
-                {(riskNotes.length > 0 ? riskNotes : riskNotesRef.current).map((note, i) => (
+                {(riskNotes.length > 0 ? riskNotes : _riskNotes).map((note, i) => (
                   <p key={`risk-${i}`} className="text-xs text-amber-700 mt-1 flex gap-1.5">
                     <span className="shrink-0">⚠️</span>
                     <span>{note}</span>
