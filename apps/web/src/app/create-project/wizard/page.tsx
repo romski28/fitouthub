@@ -1180,7 +1180,7 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
+    <div className="min-h-screen overflow-x-hidden pb-1 pt-0 sm:pb-2 sm:pt-0.5">
       <section className="-mx-6 px-6">
         <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 w-full max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">

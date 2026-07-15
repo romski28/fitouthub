@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-9f729b03",
+    "date": "2026-07-15T15:40:02+08:00",
+    "title": "fix(wizard): add overflow-x-hidden to prevent mobile horizontal scroll",
+    "summary": "fix(wizard): add overflow-x-hidden to prevent mobile horizontal scroll",
+    "areas": [
+      "web"
+    ],
+    "commit": "9f729b03",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-841b8932",
     "date": "2026-07-15T15:38:20+08:00",
     "title": "fix(media): restructure file detail modal — fixed header/footer, scrollable content",
