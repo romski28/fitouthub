@@ -1180,13 +1180,13 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden pb-1 pt-0 sm:pb-2 sm:pt-0.5">
-      <section className="-mx-6 px-6">
+    <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
+      <section className="sm:-mx-6 sm:px-6">
         <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 w-full max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
           <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
-                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length - 1)} of {steps.length - 1}
+                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-slate-600 sm:text-xs">{currentMotivation}</p>
             </div>
@@ -1651,7 +1651,7 @@ export default function CreateProjectWizardPage() {
       </section>
 
       {seedLoaded && !title && !summary && followUpQuestions.length === 0 && (
-        <section className="-mx-6 mt-6 px-6">
+        <section className="mt-6 sm:-mx-6 sm:px-6">
           <div className="mx-auto max-w-6xl rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 sm:p-8">
             <p className="text-sm text-slate-800">No AI wizard data was found. Start from the home AI panel and try again.</p>
             <button

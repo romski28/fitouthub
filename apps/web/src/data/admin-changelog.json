@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-2d65243a",
+    "date": "2026-07-15T15:49:48+08:00",
+    "title": "fix(wizard): constrain -mx-6 negative margin to desktop, fix step counter",
+    "summary": "fix(wizard): constrain -mx-6 negative margin to desktop, fix step counter",
+    "areas": [
+      "web"
+    ],
+    "commit": "2d65243a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-42936391",
     "date": "2026-07-15T15:46:27+08:00",
     "title": "fix(media): render file detail modal via portal to document.body",
