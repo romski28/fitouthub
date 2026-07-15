@@ -20,7 +20,7 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
   }
 
   if (isCreateProjectWizardPath) {
-    return <main className="mx-auto max-w-6xl px-6 py-2">{children}</main>;
+    return <main className="mx-auto w-full max-w-6xl overflow-x-hidden py-2">{children}</main>;
   }
 
   // Regular pages get standard padding and max-width

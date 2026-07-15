@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-3ccba90f",
+    "date": "2026-07-15T16:11:07+08:00",
+    "title": "fix(wizard): remove px-6 from MainWrapper for wizard route",
+    "summary": "fix(wizard): remove px-6 from MainWrapper for wizard route",
+    "areas": [
+      "web"
+    ],
+    "commit": "3ccba90f",
+    "files": [
+      "apps/web/src/components/main-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-fe266570",
     "date": "2026-07-15T16:03:59+08:00",
     "title": "fix(wizard): shorten chat title on mobile to prevent overflow",
