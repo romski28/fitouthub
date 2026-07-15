@@ -732,16 +732,25 @@ export default function CreateProjectWizardPage() {
 
   const uploadChatImages = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
     const pending = Array.from(files);
+
+    // Size check
+    const oversized = pending.filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      setChatImageError(`File${oversized.length === 1 ? '' : 's'} too large: ${oversized.map(f => f.name).join(', ')}. Max 5 MB per file.`);
+      return;
+    }
+
     const remainingSlots = Math.max(0, AI_CHAT_MAX_IMAGES_PER_TURN - chatImageUrls.length);
     if (remainingSlots <= 0) {
-      setChatImageError(`You can attach up to ${AI_CHAT_MAX_IMAGES_PER_TURN} images per message.`);
+      setChatImageError(`You can attach up to ${AI_CHAT_MAX_IMAGES_PER_TURN} files per message.`);
       return;
     }
 
     const filesToUpload = pending.slice(0, remainingSlots);
     if (filesToUpload.length < pending.length) {
-      setChatImageError(`Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
+      setChatImageError(`Only ${remainingSlots} more file${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
     } else {
       setChatImageError(null);
     }
@@ -758,14 +767,14 @@ export default function CreateProjectWizardPage() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload?.message || `Image upload failed (${response.status})`);
+        throw new Error(payload?.message || `Upload failed (${response.status})`);
       }
       const uploadedUrls = getUploadResponseKeys(payload);
       if (uploadedUrls.length > 0) {
         setChatImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])).slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
       }
     } catch (error) {
-      setChatImageError((error as Error).message || 'Failed to upload chat images');
+      setChatImageError((error as Error).message || 'Failed to upload files');
     } finally {
       setChatImageUploadBusy(false);
       setChatPendingUploadCount(0);
@@ -782,7 +791,7 @@ export default function CreateProjectWizardPage() {
     if (!prompt || chatBusy) return;
     if (includeAttachedImages && chatImageUploadBusy) {
       setIsChatSendFinalizing(true);
-      setChatImageError('Still uploading photos. Please wait until upload completes before sending.');
+      setChatImageError('Still uploading files. Please wait until upload completes before sending.');
       return;
     }
 
@@ -1401,7 +1410,7 @@ export default function CreateProjectWizardPage() {
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
                             )}
 
-                            <div className="shrink-0 rounded-lg border border-slate-200 bg-white/85 p-2">
+                            <div className="shrink-0 rounded-lg border border-slate-200 bg-white p-2">
 
                               {chatImageError && (
                                 <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
@@ -1409,123 +1418,118 @@ export default function CreateProjectWizardPage() {
 
                               {chatImageUploadBusy && (
                                 <p className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
-                                  Uploading {chatPendingUploadCount} photo{chatPendingUploadCount === 1 ? '' : 's'}... Send is temporarily locked.
+                                  Uploading {chatPendingUploadCount} file{chatPendingUploadCount === 1 ? '' : 's'}...
                                 </p>
                               )}
 
-                              <div className={`flex gap-2 ${chatImageUrls.length > 0 ? 'flex-col sm:flex-row' : 'flex-col'}`}>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-end gap-2">
-                                    {/* Image upload — left of textarea */}
-                                    <label
-                                      className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-white transition ${
-                                        chatImageUploadBusy
-                                          ? 'cursor-progress border-emerald-700 bg-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
-                                          : 'cursor-pointer border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700'
-                                      }`}
-                                      title={chatImageUploadBusy ? 'Uploading images' : 'Add images'}
-                                    >
-                                      {chatImageUploadBusy ? (
-                                        <>
-                                          <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                          </svg>
-                                          <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-emerald-700">
-                                            {Math.max(1, chatPendingUploadCount)}
-                                          </span>
-                                        </>
-                                      ) : (
-                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
-                                          <circle cx="8.5" cy="10.5" r="1.5" />
-                                          <path d="M21 15l-5-5L5 21" />
-                                        </svg>
-                                      )}
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        className="hidden"
-                                        onChange={(e) => uploadChatImages(e.target.files)}
-                                        disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
-                                      />
-                                    </label>
+                              {/* Main input row: paperclip + textarea + mic */}
+                              <div className="flex items-center gap-2">
+                                {/* Paperclip — attach any file */}
+                                <label
+                                  className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${
+                                    chatImageUploadBusy ? 'pointer-events-none opacity-50' : ''
+                                  }`}
+                                  title="Attach files (max 5 MB each)"
+                                >
+                                  {chatImageUploadBusy ? (
+                                    <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                    </svg>
+                                  ) : (
+                                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                    </svg>
+                                  )}
+                                  <input
+                                    type="file"
+                                    accept="*/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => uploadChatImages(e.target.files)}
+                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                  />
+                                </label>
 
-                                    <VoiceInputButton
-                                      lang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
-                                      onTranscript={(text) => setChatInput(prev => prev ? `${prev} ${text}` : text)}
-                                    />
+                                {/* Camera — mobile only */}
+                                <label
+                                  className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 sm:hidden ${
+                                    chatImageUploadBusy ? 'pointer-events-none opacity-50' : ''
+                                  }`}
+                                  title="Take a photo"
+                                >
+                                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                  </svg>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => uploadChatImages(e.target.files)}
+                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                  />
+                                </label>
 
-                                    <textarea
-                                      value={chatInput}
-                                      onChange={(e) => setChatInput(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                          e.preventDefault();
-                                          if (chatInput.trim()) {
-                                            void sendWizardAiTurn();
-                                          } else if (aiChatCanContinue) {
-                                            handleAiContinue();
-                                          }
-                                        }
-                                      }}
-                                      rows={2}
-                                      placeholder={aiChatCanContinue ? 'Type to keep refining, or send empty to move on…' : 'Reply to MIMO... (Enter to send, Shift+Enter for new line)'}
-                                      className="w-full min-h-[56px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:min-h-[64px] sm:text-sm"
-                                    />
+                                <textarea
+                                  value={chatInput}
+                                  onChange={(e) => setChatInput(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      if (chatInput.trim()) {
+                                        void sendWizardAiTurn();
+                                      } else if (aiChatCanContinue) {
+                                        handleAiContinue();
+                                      }
+                                    }
+                                  }}
+                                  rows={1}
+                                  placeholder="Reply here..."
+                                  className="min-h-[44px] w-full resize-none rounded-lg border-0 bg-transparent px-1 py-2.5 text-sm placeholder:text-slate-400 focus:outline-none"
+                                />
 
-                                    {/* Dual-mode send button */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (chatInput.trim()) {
-                                          void sendWizardAiTurn();
-                                        } else if (aiChatCanContinue) {
-                                          handleAiContinue();
-                                        }
-                                      }}
-                                      disabled={chatBusy || chatImageUploadBusy || (!chatInput.trim() && !aiChatCanContinue)}
-                                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                                      title={aiChatCanContinue && !chatInput.trim() ? 'Continue to next step' : 'Send'}
-                                    >
-                                      {aiChatCanContinue && !chatInput.trim() ? (
-                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M5 12h14M12 5l7 7-7 7" />
-                                        </svg>
-                                      ) : (
-                                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M22 2L11 13" />
-                                          <path d="M22 2l-7 20-4-9-9-4z" />
-                                        </svg>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {chatImageUrls.length > 0 && (
-                                  <div className="sm:w-[188px] sm:shrink-0">
-                                    <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:max-h-[96px] sm:grid-cols-2 sm:overflow-y-auto sm:overflow-x-hidden">
-                                      {chatImageUrls.map((url) => (
-                                        <div key={`chat-img-${url}`} className="relative w-20 shrink-0 rounded-md border border-slate-200 bg-white p-1.5 sm:w-auto">
-                                          <div className="relative h-14 overflow-hidden rounded">
-                                            <Image src={resolveMediaAssetUrl(url)} alt="Chat reference" fill className="object-cover" unoptimized />
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => removeChatImageUrl(url)}
-                                            className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700"
-                                            title="Remove image"
-                                          >
-                                            <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                              <path d="M6 6l12 12M18 6L6 18" />
-                                            </svg>
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
+                                <VoiceInputButton
+                                  lang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
+                                  onTranscript={(text) => setChatInput(prev => prev ? `${prev} ${text}` : text)}
+                                  className="!border-[#FF7F50] !bg-[#FF7F50] !text-white hover:!bg-[#e86840] hover:!border-[#e86840]"
+                                />
                               </div>
+
+                              {/* "Skip →" when AI says ready to continue */}
+                              {aiChatCanContinue && !chatInput.trim() && (
+                                <button
+                                  type="button"
+                                  onClick={handleAiContinue}
+                                  className="ml-1 mt-1 text-xs font-medium text-slate-400 transition hover:text-emerald-600"
+                                >
+                                  Skip →
+                                </button>
+                              )}
+
+                              {/* Attached file thumbnails */}
+                              {chatImageUrls.length > 0 && (
+                                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                                  {chatImageUrls.map((url) => (
+                                    <div key={`chat-img-${url}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1">
+                                      <div className="relative h-full overflow-hidden rounded">
+                                        <Image src={resolveMediaAssetUrl(url)} alt="Attachment" fill className="object-cover" unoptimized />
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeChatImageUrl(url)}
+                                        className="absolute -right-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700"
+                                        title="Remove"
+                                      >
+                                        <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                          <path d="M6 6l12 12M18 6L6 18" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                       </div>
                     )}

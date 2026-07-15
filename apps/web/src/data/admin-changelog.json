@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-5f1932fc",
+    "date": "2026-07-15T12:45:51+08:00",
+    "title": "refactor(wizard): redesign chat input bar — cleaner single-row layout",
+    "summary": "refactor(wizard): redesign chat input bar — cleaner single-row layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "5f1932fc",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-14-88209fed",
     "date": "2026-07-14T23:25:39+08:00",
     "title": "refactor(wizard): promote site inspection to h3 title, center date cells",
