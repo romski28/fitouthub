@@ -33,6 +33,9 @@ type CreateProjectDraftValue = {
   }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 };
 
 const CREATE_PROJECT_DRAFT_KEY = 'createProjectDraft';
@@ -96,6 +99,9 @@ const compactCreateProjectDraft = (value: CreateProjectDraftValue): CreateProjec
       : undefined,
     aiIntakeId: value.aiIntakeId,
     followUpQuestions: toLimitedStringArray(value.followUpQuestions, 12, 220),
+    safetyNotes: toLimitedStringArray(value.safetyNotes, 12, 220),
+    riskNotes: toLimitedStringArray(value.riskNotes, 12, 220),
+    riskLevel: value.riskLevel,
   };
 };
 
@@ -121,6 +127,9 @@ export const writeCreateProjectDraftSafely = (value: CreateProjectDraftValue): b
       },
       aiIntakeId: value.aiIntakeId,
       followUpQuestions: toLimitedStringArray(value.followUpQuestions, 8, 220),
+      safetyNotes: toLimitedStringArray(value.safetyNotes, 8, 220),
+      riskNotes: toLimitedStringArray(value.riskNotes, 8, 220),
+      riskLevel: value.riskLevel,
     },
   ];
 

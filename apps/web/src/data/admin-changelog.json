@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-8ff913cc",
+    "date": "2026-07-15T17:50:58+08:00",
+    "title": "fix(draft-storage): preserve safety fields in compact and fallback serialization",
+    "summary": "fix(draft-storage): preserve safety fields in compact and fallback serialization",
+    "areas": [
+      "web"
+    ],
+    "commit": "8ff913cc",
+    "files": [
+      "apps/web/src/lib/draft-storage.ts"
+    ]
+  },
+  {
     "id": "2026-07-15-9543ae31",
     "date": "2026-07-15T17:37:29+08:00",
     "title": "feat(create-project): show AI safety tips in 'Requesting quotes' modal",
