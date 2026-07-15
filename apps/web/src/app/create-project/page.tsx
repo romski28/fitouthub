@@ -32,6 +32,9 @@ interface ProjectDescriptionData {
   location?: CanonicalLocation;
   tradesRequired: string[];
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 }
 
 interface AssistDraft {
@@ -45,6 +48,9 @@ interface CreateProjectDraft {
   selectedProfessionals?: Array<Professional & { requestedTrades?: string[] }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 }
 
 type SelectedProfessionalWithScope = Professional & { requestedTrades?: string[] };
@@ -106,6 +112,9 @@ export default function CreateProjectPage() {
   const [openTenderCount, setOpenTenderCount] = useState<number | null>(null);
   const [openTenderProgress, setOpenTenderProgress] = useState('');
   const [countLoading, setCountLoading] = useState(false);
+  const [safetyNotes, setSafetyNotes] = useState<string[]>([]);
+  const [riskNotes, setRiskNotes] = useState<string[]>([]);
+  const [riskLevel, setRiskLevel] = useState<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -159,6 +168,9 @@ export default function CreateProjectPage() {
               memoryDraft?.followUpQuestions?.length
                 ? memoryDraft.followUpQuestions
                 : parsedStoredDraft?.followUpQuestions,
+            safetyNotes: memoryDraft?.safetyNotes || parsedStoredDraft?.safetyNotes,
+            riskNotes: memoryDraft?.riskNotes || parsedStoredDraft?.riskNotes,
+            riskLevel: memoryDraft?.riskLevel || parsedStoredDraft?.riskLevel,
           }
         : null;
 
@@ -172,6 +184,10 @@ export default function CreateProjectPage() {
         if (mergedDraft.aiIntakeId) {
           setAiIntakeId(mergedDraft.aiIntakeId);
         }
+        // Safety data from AI wizard
+        if (mergedDraft.safetyNotes?.length) setSafetyNotes(mergedDraft.safetyNotes);
+        if (mergedDraft.riskNotes?.length) setRiskNotes(mergedDraft.riskNotes);
+        if (mergedDraft.riskLevel) setRiskLevel(mergedDraft.riskLevel);
       }
 
       // Check if we have description data from sessionStorage (from projects list)
@@ -760,6 +776,30 @@ export default function CreateProjectPage() {
                 ? 'Inviting selected professionals and preparing your project dashboard.'
                 : 'Preparing your project dashboard.'}
             </p>
+
+            {/* Safety tips from AI */}
+            {(safetyNotes.length > 0 || riskNotes.length > 0) && (
+              <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left">
+                <p className="text-xs font-semibold text-sky-800 mb-2">🛡️ Safety notes from your brief</p>
+                {riskLevel && ['medium', 'high', 'critical'].includes(riskLevel) && (
+                  <p className="text-xs font-medium text-amber-700 mb-1">
+                    ⚠️ {riskLevel === 'critical' ? 'Critical' : riskLevel === 'high' ? 'High' : 'Medium'} risk detected
+                  </p>
+                )}
+                {safetyNotes.map((note, i) => (
+                  <p key={`safety-${i}`} className="text-xs text-sky-700 mt-1 flex gap-1.5">
+                    <span className="shrink-0">🛡️</span>
+                    <span>{note}</span>
+                  </p>
+                ))}
+                {riskNotes.map((note, i) => (
+                  <p key={`risk-${i}`} className="text-xs text-amber-700 mt-1 flex gap-1.5">
+                    <span className="shrink-0">⚠️</span>
+                    <span>{note}</span>
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

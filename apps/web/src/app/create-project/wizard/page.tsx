@@ -56,6 +56,9 @@ interface CreateProjectDraft {
   selectedProfessionals?: Professional[];
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 }
 
 interface WizardChatMessage {
@@ -348,10 +351,9 @@ export default function CreateProjectWizardPage() {
   const [summaryConfirmationShown, setSummaryConfirmationShown] = useState(false);
   const [pendingServiceOffer, setPendingServiceOffer] = useState<ServiceOfferType | null>(null);
   const [expandedServiceOffer, setExpandedServiceOffer] = useState<ServiceOfferType | null>(null);
-  // REMOVED (advisory disabled July 14 Phase 2): aiSafetyNotes, aiRiskNotes, aiRiskLevel
-  // const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
-  // const [aiRiskNotes, setAiRiskNotes] = useState<string[]>([]);
-  // const [aiRiskLevel, setAiRiskLevel] = useState<string | null>(null);
+  const [aiSafetyNotes, setAiSafetyNotes] = useState<string[]>([]);
+  const [aiRiskNotes, setAiRiskNotes] = useState<string[]>([]);
+  const [aiRiskLevel, setAiRiskLevel] = useState<string | null>(null);
   const [aiSessionId, setAiSessionId] = useState<string | null>(null);
   const [currentAiIntakeId, setCurrentAiIntakeId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -405,9 +407,9 @@ export default function CreateProjectWizardPage() {
     setSummaryConfirmationShown(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
-    // setAiSafetyNotes([]); // REMOVED (advisory disabled July 14 Phase 2)
-    // setAiRiskNotes([]);
-    // setAiRiskLevel(null);
+    setAiSafetyNotes([]);
+    setAiRiskNotes([]);
+    setAiRiskLevel(null);
   }, [hydrated, searchParams]);
 
   useEffect(() => {
@@ -505,9 +507,9 @@ export default function CreateProjectWizardPage() {
     setSurveyOfferPrompted(nextSurveyToggle !== null);
     setDesignOfferPrompted(nextDesignToggle !== null);
     setFollowUpQuestions(nextQuestions);
-    // setAiSafetyNotes(Array.isArray(seedDescription?.safetyNotes) ? seedDescription.safetyNotes : []); // REMOVED (advisory disabled July 14 Phase 2)
-    // setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
-    // setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
+    setAiSafetyNotes(Array.isArray(seedDescription?.safetyNotes) ? seedDescription.safetyNotes : []);
+    setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
+    setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
     setChatError(null);
     setChatFileError(null);
     setAiChatCanContinue(false);
@@ -811,27 +813,28 @@ export default function CreateProjectWizardPage() {
           ? payload.vision.usage.processedImageCount
           : turnImageUrls.length; */
 
-      // Extract safety & risk notes from AI response — DISABLED July 14 Phase 2 (advisory removed)
-      // const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
-      //   ? (parsed.safetyAssessment as Record<string, unknown>)
-      //   : null;
-      // const parsedRiskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel.toLowerCase() : null;
-      // const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
-      // const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
-      // const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
-      // const parsedDisclaimer = typeof safetyAssessment?.disclaimer === 'string' && safetyAssessment.disclaimer.trim().length > 0 ? safetyAssessment.disclaimer.trim() : null;
-      // const safetyNotes: string[] = [
-      //   ...parsedConcerns,
-      //   ...parsedMitigations,
-      //   ...(parsedDisclaimer ? [parsedDisclaimer] : []),
-      // ];
-      // Surface safety data — DISABLED July 14 Phase 2 (advisory removed from wizard)
-      // const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
-      // if (hasSafetyData) {
-      //   if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
-      //   if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
-      //   setAiRiskLevel(parsedRiskLevel);
-      // }
+      // Extract safety & risk notes from AI response
+      const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
+        ? (parsed.safetyAssessment as Record<string, unknown>)
+        : null;
+      const parsedRiskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel.toLowerCase() : null;
+      const parsedConcerns = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : [];
+      const parsedMitigations = Array.isArray(safetyAssessment?.temporaryMitigations) ? safetyAssessment.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0) : [];
+      const parsedRisks = Array.isArray(parsed?.risks) ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0) : [];
+      const parsedDisclaimer = typeof safetyAssessment?.disclaimer === 'string' && safetyAssessment.disclaimer.trim().length > 0 ? safetyAssessment.disclaimer.trim() : null;
+
+      const safetyNotes: string[] = [
+        ...parsedConcerns,
+        ...parsedMitigations,
+        ...(parsedDisclaimer ? [parsedDisclaimer] : []),
+      ];
+      // Surface safety data whenever there are notes, risks, or a non-trivial risk level
+      const hasSafetyData = safetyNotes.length > 0 || parsedRisks.length > 0 || (parsedRiskLevel && parsedRiskLevel !== 'none' && parsedRiskLevel !== 'low');
+      if (hasSafetyData) {
+        if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
+        if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
+        setAiRiskLevel(parsedRiskLevel);
+      }
       // REMOVED (review step disabled July 14): imageConfidence, imageProvider, imageModel
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
@@ -1130,6 +1133,9 @@ export default function CreateProjectWizardPage() {
       selectedProfessionals: seedDraft?.selectedProfessionals || [],
       aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
       followUpQuestions: followUpStepQuestions,
+      safetyNotes: aiSafetyNotes,
+      riskNotes: aiRiskNotes,
+      riskLevel: aiRiskLevel,
     };
 
     writeCreateProjectDraftSafely(nextDraft);
@@ -1144,6 +1150,9 @@ export default function CreateProjectWizardPage() {
       location: nextDraft.initialData?.location,
       tradesRequired: nextDraft.initialData?.tradesRequired || [],
       followUpQuestions: followUpStepQuestions,
+      safetyNotes: aiSafetyNotes,
+      riskNotes: aiRiskNotes,
+      riskLevel: aiRiskLevel,
     };
 
     setProjectDescriptionHandoff(nextDescription);

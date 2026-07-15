@@ -7,6 +7,9 @@ export interface CreateProjectDraftHandoff {
   selectedProfessionals?: Array<Professional & { requestedTrades?: string[] }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  safetyNotes?: string[];
+  riskNotes?: string[];
+  riskLevel?: string | null;
 }
 
 export interface ProjectDescriptionHandoff {
