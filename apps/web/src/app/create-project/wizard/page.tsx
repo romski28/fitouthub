@@ -25,7 +25,7 @@ import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
-import { MimoSpinner } from '@/components/mimo-spinner';
+// import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
 type WizardStep =
@@ -317,12 +317,8 @@ export default function CreateProjectWizardPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [chatImageUrls, setChatImageUrls] = useState<string[]>([]);
-  const [chatFileNames, setChatFileNames] = useState<Record<string, string>>({});
-  const [chatImageUploadBusy, setChatImageUploadBusy] = useState(false);
-  const [chatPendingUploadCount, setChatPendingUploadCount] = useState(0);
-  const [isChatSendFinalizing, setIsChatSendFinalizing] = useState(false);
-  const [chatImageError, setChatImageError] = useState<string | null>(null);
+  const [chatAttachedFiles, setChatAttachedFiles] = useState<File[]>([]);
+  const [chatFileError, setChatFileError] = useState<string | null>(null);
   const [aiChatCanContinue, setAiChatCanContinue] = useState(false);
   const [listenMode, setListenMode] = useState(false);
   const ttsLang = preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'zh-HK' : 'en-HK';
@@ -512,7 +508,7 @@ export default function CreateProjectWizardPage() {
     // setAiRiskNotes(Array.isArray(seedDescription?.riskNotes) ? seedDescription.riskNotes : []);
     // setAiRiskLevel(typeof seedDescription?.riskLevel === 'string' ? seedDescription.riskLevel : null);
     setChatError(null);
-    setChatImageError(null);
+    setChatFileError(null);
     setAiChatCanContinue(false);
     setCurrentAiIntakeId(seedDraft?.aiIntakeId || null);
     setExpandedServiceOffer(null);
@@ -631,13 +627,6 @@ export default function CreateProjectWizardPage() {
     node.scrollTop = node.scrollHeight;
   }, [activeStep, chatMessages, chatBusy]);
 
-  useEffect(() => {
-    if (chatImageUploadBusy) return;
-    if (isChatSendFinalizing) {
-      setIsChatSendFinalizing(false);
-    }
-  }, [chatImageUploadBusy, isChatSendFinalizing]);
-
   const goNext = () => {
     if (!canGoNext) return;
 
@@ -680,7 +669,7 @@ export default function CreateProjectWizardPage() {
       const aiPrompt = offerType === 'survey'
         ? 'The room size and site conditions will be confirmed by the MIMO survey team. Based on everything we\'ve discussed so far, what should we figure out next to keep this project moving forward?'
         : 'The design details will be worked out by the MIMO design team. Based on everything we\'ve discussed so far, what should we figure out next to keep this project moving forward?';
-      void sendWizardAiTurn(aiPrompt, { includeAttachedImages: false });
+      void sendWizardAiTurn(aiPrompt);
     }
     // Decline: just close the modal — user continues typing naturally
   };
@@ -727,95 +716,46 @@ export default function CreateProjectWizardPage() {
     }
   };
 
-  const removeChatImageUrl = (url: string) => {
-    setChatImageUrls((prev) => prev.filter((item) => item !== url));
-    setChatFileNames((prev) => {
-      const next = { ...prev };
-      delete next[url];
-      return next;
-    });
+  const removeChatFile = (index: number) => {
+    setChatAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const uploadChatImages = async (files: FileList | null) => {
+  const addChatFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
     const pending = Array.from(files);
 
-    // Size check
     const oversized = pending.filter((f) => f.size > MAX_FILE_SIZE);
     if (oversized.length > 0) {
-      setChatImageError(`File${oversized.length === 1 ? '' : 's'} too large: ${oversized.map(f => f.name).join(', ')}. Max 5 MB per file.`);
+      setChatFileError(`File${oversized.length === 1 ? '' : 's'} too large: ${oversized.map(f => f.name).join(', ')}. Max 5 MB per file.`);
       return;
     }
 
-    const remainingSlots = Math.max(0, AI_CHAT_MAX_IMAGES_PER_TURN - chatImageUrls.length);
+    const remainingSlots = Math.max(0, AI_CHAT_MAX_IMAGES_PER_TURN - chatAttachedFiles.length);
     if (remainingSlots <= 0) {
-      setChatImageError(`You can attach up to ${AI_CHAT_MAX_IMAGES_PER_TURN} files per message.`);
+      setChatFileError(`You can attach up to ${AI_CHAT_MAX_IMAGES_PER_TURN} files per message.`);
       return;
     }
 
-    const filesToUpload = pending.slice(0, remainingSlots);
-    if (filesToUpload.length < pending.length) {
-      setChatImageError(`Only ${remainingSlots} more file${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
+    const filesToAdd = pending.slice(0, remainingSlots);
+    if (filesToAdd.length < pending.length) {
+      setChatFileError(`Only ${remainingSlots} more file${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
     } else {
-      setChatImageError(null);
+      setChatFileError(null);
     }
 
-    setChatImageUploadBusy(true);
-    setChatPendingUploadCount(filesToUpload.length);
-    try {
-      const formData = new FormData();
-      filesToUpload.forEach((file) => formData.append('files', file));
-      const response = await fetch(`${API_BASE_URL}/uploads`, {
-        method: 'POST',
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        body: formData,
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message || `Upload failed (${response.status})`);
-      }
-      const uploadedUrls = getUploadResponseKeys(payload);
-      if (uploadedUrls.length > 0) {
-        setChatImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])).slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
-        // Store original filenames for hover tooltips
-        const fileList: Array<{ url?: string; originalName?: string }> = Array.isArray(payload?.files) ? payload.files : [];
-        setChatFileNames((prev) => {
-          const next = { ...prev };
-          fileList.forEach((f) => {
-            const fileUrl = String(f?.url || '');
-            const name = String(f?.originalName || '');
-            if (fileUrl && name) next[fileUrl] = name;
-          });
-          return next;
-        });
-      }
-    } catch (error) {
-      setChatImageError((error as Error).message || 'Failed to upload files');
-    } finally {
-      setChatImageUploadBusy(false);
-      setChatPendingUploadCount(0);
-    }
+    setChatAttachedFiles((prev) => [...prev, ...filesToAdd].slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
   };
 
   const sendWizardAiTurn = async (
     promptOverride?: string,
-    options?: { includeAttachedImages?: boolean },
   ) => {
     const prompt = (promptOverride ?? chatInput).trim();
-    const includeAttachedImages = options?.includeAttachedImages ?? true;
 
     if (!prompt || chatBusy) return;
-    if (includeAttachedImages && chatImageUploadBusy) {
-      setIsChatSendFinalizing(true);
-      setChatImageError('Still uploading files. Please wait until upload completes before sending.');
-      return;
-    }
 
-    setIsChatSendFinalizing(false);
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
-    const turnImageUrls = includeAttachedImages ? chatImageUrls.slice(0, AI_CHAT_MAX_IMAGES_PER_TURN) : [];
     const effectiveSessionId = aiSessionId || createAiSessionId();
 
     if (!aiSessionId) {
@@ -841,7 +781,6 @@ export default function CreateProjectWizardPage() {
           prompt,
           sessionId: effectiveSessionId,
           intakeId: currentAiIntakeId || undefined,
-          imageUrls: turnImageUrls,
         }),
       });
 
@@ -860,11 +799,12 @@ export default function CreateProjectWizardPage() {
             ? parsed.conversationalText.trim()
             : 'Nice update. I captured that. We are building a strong brief together.');
 
-      const imageInsights =
+      // REMOVED (vision review pipeline disabled July 14-15): imageInsights imageInsightSummary processedImageCount
+      /* const imageInsights =
         parsed?.project && typeof parsed.project === 'object' && !Array.isArray(parsed.project)
           ? ((parsed.project as Record<string, unknown>).imageInsights as Record<string, unknown> | undefined)
           : undefined;
-      const imageInsightSummary = typeof imageInsights?.summary === 'string' ? imageInsights.summary.trim() : '';
+      const imageInsightSummary = typeof imageInsights?.summary === 'string' ? imageInsights.summary.trim() : ''; */
       // REMOVED (review step disabled July 14): imageConditionFindings, imageSafetyFlags, imageFollowUpQuestions
       /* const imageConditionFindings = Array.isArray(imageInsights?.conditionFindings)
         ? imageInsights.conditionFindings.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
@@ -875,10 +815,10 @@ export default function CreateProjectWizardPage() {
       const imageFollowUpQuestions = Array.isArray(imageInsights?.followUpQuestions)
         ? imageInsights.followUpQuestions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
         : []; */
-      const processedImageCount =
+      /* const processedImageCount =
         payload?.vision?.usage && typeof payload.vision.usage === 'object' && typeof payload.vision.usage.processedImageCount === 'number'
           ? payload.vision.usage.processedImageCount
-          : turnImageUrls.length;
+          : turnImageUrls.length; */
 
       // Extract safety & risk notes from AI response — DISABLED July 14 Phase 2 (advisory removed)
       // const safetyAssessment = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
@@ -905,15 +845,9 @@ export default function CreateProjectWizardPage() {
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null; */
-      const imageWorkflowNote = turnImageUrls.length > 0
-        ? (imageInsightSummary
-            ? `Images ready in project photos. AI vision reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'}. ${imageInsightSummary}`
-            : `Images ready in project photos. AI vision reviewed ${processedImageCount} image${processedImageCount === 1 ? '' : 's'}.`)
-        : null;
-
       setChatMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: imageWorkflowNote ? `${nextConversationalText}\n\n${imageWorkflowNote}` : nextConversationalText },
+        { role: 'assistant', text: nextConversationalText },
       ]);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
@@ -1008,21 +942,6 @@ export default function CreateProjectWizardPage() {
         : null;
       if (nextIntakeId) {
         setCurrentAiIntakeId(nextIntakeId);
-      }
-
-      if (turnImageUrls.length > 0) {
-        setExistingImageUrls((prev) => Array.from(new Set([...prev, ...turnImageUrls])));
-        // REMOVED (review step disabled July 14): setAiVisionReview
-        /* setAiVisionReview({
-          summary: imageInsightSummary,
-          conditionFindings: imageConditionFindings,
-          safetyFlags: imageSafetyFlags,
-          followUpQuestions: imageFollowUpQuestions,
-          confidence: imageConfidence,
-          processedImageCount,
-          provider: imageProvider,
-          model: imageModel,
-        }); */
       }
 
       let nextPendingOffer: ServiceOfferType | null = null;
@@ -1126,11 +1045,7 @@ export default function CreateProjectWizardPage() {
         }
       }
 
-      if (includeAttachedImages) {
-        setChatImageUrls([]);
-        setChatFileNames({});
-        setChatImageError(null);
-      }
+      // Files persist until wizard submission — no premature clearing
     } catch (error) {
       setChatError((error as Error).message || 'Unable to continue AI chat right now.');
     } finally {
@@ -1436,14 +1351,8 @@ export default function CreateProjectWizardPage() {
 
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white p-1.5">
 
-                              {chatImageError && (
-                                <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>
-                              )}
-
-                              {chatImageUploadBusy && (
-                                <p className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
-                                  Uploading {chatPendingUploadCount} file{chatPendingUploadCount === 1 ? '' : 's'}...
-                                </p>
+                              {chatFileError && (
+                                <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatFileError}</p>
                               )}
 
                               {/* Main input row: paperclip + textarea + mic */}
@@ -1451,33 +1360,27 @@ export default function CreateProjectWizardPage() {
                                 {/* Paperclip — attach any file */}
                                 <label
                                   className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${
-                                    chatImageUploadBusy ? 'pointer-events-none opacity-50' : ''
+                                    chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN ? 'pointer-events-none opacity-50' : ''
                                   }`}
                                   title="Attach files (max 5 MB each)"
                                 >
-                                  {chatImageUploadBusy ? (
-                                    <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                    </svg>
-                                  ) : (
-                                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                                    </svg>
-                                  )}
+                                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                  </svg>
                                   <input
                                     type="file"
                                     accept="*/*"
                                     multiple
                                     className="hidden"
-                                    onChange={(e) => uploadChatImages(e.target.files)}
-                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                    onChange={(e) => addChatFiles(e.target.files)}
+                                    disabled={chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
                                   />
                                 </label>
 
                                 {/* Camera — mobile only */}
                                 <label
                                   className={`relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-700 sm:hidden ${
-                                    chatImageUploadBusy ? 'pointer-events-none opacity-50' : ''
+                                    chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN ? 'pointer-events-none opacity-50' : ''
                                   }`}
                                   title="Take a photo"
                                 >
@@ -1491,8 +1394,8 @@ export default function CreateProjectWizardPage() {
                                     capture="environment"
                                     multiple
                                     className="hidden"
-                                    onChange={(e) => uploadChatImages(e.target.files)}
-                                    disabled={chatImageUploadBusy || chatBusy || chatImageUrls.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
+                                    onChange={(e) => addChatFiles(e.target.files)}
+                                    disabled={chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN}
                                   />
                                 </label>
 
@@ -1533,17 +1436,18 @@ export default function CreateProjectWizardPage() {
                               )}
 
                               {/* Attached file thumbnails */}
-                              {chatImageUrls.length > 0 && (
+                              {chatAttachedFiles.length > 0 && (
                                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                                  {chatImageUrls.map((url) => {
-                                    const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+                                  {chatAttachedFiles.map((file, index) => {
+                                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
                                     const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                                    const previewUrl = isImage ? URL.createObjectURL(file) : null;
 
                                     return (
-                                    <div key={`chat-img-${url}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1" title={chatFileNames[url] || url.split('/').pop() || ''}>
-                                      {isImage ? (
+                                    <div key={`${file.name}-${index}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1" title={file.name}>
+                                      {isImage && previewUrl ? (
                                         <div className="relative h-full overflow-hidden rounded">
-                                          <Image src={resolveMediaAssetUrl(url)} alt="Attachment" fill className="object-cover" unoptimized />
+                                          <Image src={previewUrl} alt={file.name} fill className="object-cover" unoptimized />
                                         </div>
                                       ) : (
                                         <div className="flex h-full flex-col items-center justify-center rounded bg-slate-100">
@@ -1552,7 +1456,7 @@ export default function CreateProjectWizardPage() {
                                       )}
                                       <button
                                         type="button"
-                                        onClick={() => removeChatImageUrl(url)}
+                                        onClick={() => removeChatFile(index)}
                                         className="absolute -right-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700"
                                         title="Remove"
                                       >
@@ -1678,16 +1582,6 @@ export default function CreateProjectWizardPage() {
             </button>
           </div>
         </section>
-      )}
-
-      {isChatSendFinalizing && chatImageUploadBusy && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(245,238,219,0.6)] backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.95)] p-5 text-center shadow-xl">
-            <MimoSpinner size="md" className="mx-auto mb-3" />
-            <p className="text-sm font-semibold text-[#4A3623]">Preparing your photos</p>
-            <p className="mt-1 text-xs text-[rgba(126,58,33,0.65)]">Please wait while uploads complete. We will keep your message ready to send.</p>
-          </div>
-        </div>
       )}
 
       {expandedServiceOffer && (

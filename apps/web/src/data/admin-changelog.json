@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-eeb17fd7",
+    "date": "2026-07-15T14:10:35+08:00",
+    "title": "refactor(wizard): defer file upload to wizard submit, use local File state",
+    "summary": "refactor(wizard): defer file upload to wizard submit, use local File state",
+    "areas": [
+      "web"
+    ],
+    "commit": "eeb17fd7",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-6e874693",
     "date": "2026-07-15T13:47:03+08:00",
     "title": "refactor(wizard): tighten chat UI, hide checklist, simplify listen toggle",
