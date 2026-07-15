@@ -1044,13 +1044,14 @@ export default function CreateProjectWizardPage() {
   };
 
   const submitWizard = async () => {
-    // Upload any project files that haven't been uploaded yet
+    // Upload all pending files (chat + project step) to R2
+    const allPendingFiles = [...chatAttachedFiles, ...projectFiles];
     let finalPhotoUrls = [...existingImageUrls];
-    if (projectFiles.length > 0) {
+    if (allPendingFiles.length > 0) {
       setProjectFileError(null);
       try {
         const formData = new FormData();
-        projectFiles.forEach((file) => formData.append('files', file));
+        allPendingFiles.forEach((file) => formData.append('files', file));
         const response = await fetch(`${API_BASE_URL}/uploads`, {
           method: 'POST',
           headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
@@ -1507,7 +1508,7 @@ export default function CreateProjectWizardPage() {
 
                         {projectFileError && <p className="text-sm text-rose-700">{projectFileError}</p>}
 
-                        {(existingImageUrls.length > 0 || projectFiles.length > 0) && (
+                        {(existingImageUrls.length > 0 || chatAttachedFiles.length > 0 || projectFiles.length > 0) && (
                         <div className="space-y-2">
                           <p className={panelNoteClass}>Files already attached.</p>
                           <div className="flex gap-3 overflow-x-auto pb-1">
@@ -1536,7 +1537,33 @@ export default function CreateProjectWizardPage() {
                               </div>
                               );
                             })}
-                            {/* New local files (not yet uploaded) */}
+                            {/* Files from chat (step 1) */}
+                            {chatAttachedFiles.map((file, index) => {
+                              const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                              const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                              const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                              return (
+                              <div key={`cf-${index}`} className="relative min-w-32 rounded-lg border border-emerald-200 bg-emerald-50/50 p-2" title={`From chat: ${file.name}`}>
+                                {isImage && previewUrl ? (
+                                  <div className="relative h-24 overflow-hidden rounded">
+                                    <Image src={previewUrl} alt={file.name} fill className="object-cover" unoptimized />
+                                  </div>
+                                ) : (
+                                  <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                                    <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setChatAttachedFiles((prev) => prev.filter((_, i) => i !== index))}
+                                  className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              );
+                            })}
+                            {/* Files added on this step */}
                             {projectFiles.map((file, index) => {
                               const ext = file.name.split('.').pop()?.toLowerCase() || '';
                               const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
@@ -1588,7 +1615,7 @@ export default function CreateProjectWizardPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (existingImageUrls.length === 0 && projectFiles.length === 0) {
+                      if (existingImageUrls.length === 0 && chatAttachedFiles.length === 0 && projectFiles.length === 0) {
                         setShowNoFilesWarning(true);
                       } else {
                         submitWizard();

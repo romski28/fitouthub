@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-344299cf",
+    "date": "2026-07-15T14:41:15+08:00",
+    "title": "feat(wizard): show chat files on step 3, merge on submit",
+    "summary": "feat(wizard): show chat files on step 3, merge on submit",
+    "areas": [
+      "web"
+    ],
+    "commit": "344299cf",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-af12fb4b",
     "date": "2026-07-15T14:34:22+08:00",
     "title": "refactor(create-project): align FileUploader and photos section with any-file system",
