@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-5d31f16d",
+    "date": "2026-07-15T23:03:20+08:00",
+    "title": "feat(create-project): safety review modal with Read more + auto-redirect",
+    "summary": "feat(create-project): safety review modal with Read more + auto-redirect",
+    "areas": [
+      "web"
+    ],
+    "commit": "5d31f16d",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-70f1c0cd",
     "date": "2026-07-15T22:24:18+08:00",
     "title": "fix(wizard): accumulate safety/risk notes across AI turns, keep highest risk level",

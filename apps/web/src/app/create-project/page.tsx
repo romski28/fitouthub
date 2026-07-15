@@ -121,6 +121,41 @@ export default function CreateProjectPage() {
   const [riskNotes, setRiskNotes] = useState<string[]>([]);
   const [riskLevel, setRiskLevel] = useState<string | null>(null);
 
+  // Safety review phase state
+  const [submissionComplete, setSubmissionComplete] = useState(false);
+  const [safetyExpanded, setSafetyExpanded] = useState(false);
+  const [completedProjectId, setCompletedProjectId] = useState<string | null>(null);
+  const [completedSurveyStep, setCompletedSurveyStep] = useState(false);
+  const autoRedirectTimerRef = { current: null as ReturnType<typeof setTimeout> | null };
+
+  // Auto-redirect effect: kicks in 10s after submission completes, unless user expanded safety
+  useEffect(() => {
+    if (submissionComplete && completedProjectId && !safetyExpanded) {
+      const timer = setTimeout(() => {
+        console.log('[create-project][redirect] auto-redirect after 10s dwell');
+        router.push(
+          completedSurveyStep
+            ? `/projects/${completedProjectId}?launchNextStep=BOOK_MIMO_SURVEY`
+            : `/projects/${completedProjectId}`,
+        );
+      }, 10000);
+      autoRedirectTimerRef.current = timer;
+      return () => { clearTimeout(timer); };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionComplete, completedProjectId, safetyExpanded, completedSurveyStep, router]);
+
+  // Redirect when user clicks OK in expanded safety view
+  const handleSafetyDismiss = () => {
+    if (!completedProjectId || !submissionComplete) return;
+    if (autoRedirectTimerRef.current) clearTimeout(autoRedirectTimerRef.current);
+    router.push(
+      completedSurveyStep
+        ? `/projects/${completedProjectId}?launchNextStep=BOOK_MIMO_SURVEY`
+        : `/projects/${completedProjectId}`,
+    );
+  };
+
   useEffect(() => {
     setHydrated(true);
   }, []);
@@ -411,8 +446,11 @@ export default function CreateProjectPage() {
 
   const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
     setError(null);
-
     setIsSubmitting(true);
+    setSubmissionComplete(false);
+    setSafetyExpanded(false);
+    setCompletedProjectId(null);
+
     try {
       const uploadedPhotoUrls = await uploadPendingFiles(pendingFiles);
       const photoUrls = getPersistedPhotoUrls(formData, uploadedPhotoUrls);
@@ -435,23 +473,34 @@ export default function CreateProjectPage() {
       clearCreateProjectDraftHandoff();
       clearProjectDescriptionHandoff();
       clearAiClientState();
+
+      const surveyStep = payload.requiresSurveyService === true;
+      setCompletedProjectId(project.id);
+      setCompletedSurveyStep(surveyStep);
+      setSubmissionComplete(true);
+
       toast.success(
         selectedProfessionals.length > 0
           ? 'Project created and bidding is now open to your selected professionals.'
           : 'Project saved. You can request quotes when you are ready.',
       );
-      const shouldLaunchSurveyStep = payload.requiresSurveyService === true;
-      router.push(
-        shouldLaunchSurveyStep
-          ? `/projects/${project.id}?launchNextStep=BOOK_MIMO_SURVEY`
-          : `/projects/${project.id}`,
-      );
+
+      // If no safety data, redirect immediately (no review phase needed)
+      const hasSafetyData = (safetyNotes.length > 0 || _safetyNotes.length > 0 || riskNotes.length > 0 || _riskNotes.length > 0);
+      if (!hasSafetyData) {
+        setIsSubmitting(false);
+        router.push(
+          surveyStep
+            ? `/projects/${project.id}?launchNextStep=BOOK_MIMO_SURVEY`
+            : `/projects/${project.id}`,
+        );
+      }
+      // With safety data: modal stays open, useEffect handles 10s auto-redirect
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create project';
       console.error('[create-project] Error:', err);
       setError(message);
       toast.error(message);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -773,40 +822,95 @@ export default function CreateProjectPage() {
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(81,55,32,0.35)] backdrop-blur-[1px]">
           <div className="mx-4 w-full max-w-md rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.92)] px-6 py-6 text-center shadow-2xl">
-            <MimoSpinner size="md" className="mx-auto mb-3" />
-            <p className="text-base font-bold text-[#4A3623]">
-              {selectedProfessionals.length > 0 ? 'Requesting quotes...' : 'Saving project...'}
-            </p>
-            <p className="mt-1 text-sm text-[rgba(126,58,33,0.65)]">
-              {selectedProfessionals.length > 0
-                ? 'Inviting selected professionals and preparing your project dashboard.'
-                : 'Preparing your project dashboard.'}
-            </p>
-
-            {/* Safety tips from AI */}
-            {(() => { console.log('[create-project][modal] safetyNotes:', safetyNotes, '_safetyNotes:', _safetyNotes, 'riskNotes:', riskNotes, 'riskLevel:', riskLevel); return null; })()}
-            {(safetyNotes.length > 0 || riskNotes.length > 0 || _safetyNotes.length > 0 || _riskNotes.length > 0) && (
-              <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left">
-                <p className="text-xs font-semibold text-sky-800 mb-2">🛡️ Safety notes from your brief</p>
-                {(riskLevel || _riskLevel) && ['medium', 'high', 'critical'].includes((riskLevel || _riskLevel)!) && (
-                  <p className="text-xs font-medium text-amber-700 mb-1">
-                    ⚠️ {(riskLevel || _riskLevel) === 'critical' ? 'Critical' : (riskLevel || _riskLevel) === 'high' ? 'High' : 'Medium'} risk detected
-                  </p>
-                )}
-                {(safetyNotes.length > 0 ? safetyNotes : _safetyNotes).map((note, i) => (
-                  <p key={`safety-${i}`} className="text-xs text-sky-700 mt-1 flex gap-1.5">
-                    <span className="shrink-0">🛡️</span>
-                    <span>{note}</span>
-                  </p>
-                ))}
-                {(riskNotes.length > 0 ? riskNotes : _riskNotes).map((note, i) => (
-                  <p key={`risk-${i}`} className="text-xs text-amber-700 mt-1 flex gap-1.5">
-                    <span className="shrink-0">⚠️</span>
-                    <span>{note}</span>
-                  </p>
-                ))}
-              </div>
+            {/* Spinner + status text — hidden when expanded */}
+            {!safetyExpanded && (
+              <>
+                <MimoSpinner size="md" className="mx-auto mb-3" />
+                <p className="text-base font-bold text-[#4A3623]">
+                  {selectedProfessionals.length > 0 ? 'Requesting quotes...' : 'Saving project...'}
+                </p>
+                <p className="mt-1 text-sm text-[rgba(126,58,33,0.65)]">
+                  {selectedProfessionals.length > 0
+                    ? 'Inviting selected professionals and preparing your project dashboard.'
+                    : 'Preparing your project dashboard.'}
+                </p>
+              </>
             )}
+
+            {/* Safety tips from AI — always visible when data exists */}
+            {(() => {
+              const resolvedSafety = safetyNotes.length > 0 ? safetyNotes : _safetyNotes;
+              const resolvedRisks = riskNotes.length > 0 ? riskNotes : _riskNotes;
+              const resolvedRiskLevel = riskLevel || _riskLevel;
+              const hasSafety = resolvedSafety.length > 0 || resolvedRisks.length > 0;
+              if (!hasSafety) return null;
+
+              const displaySafety = safetyExpanded ? resolvedSafety : resolvedSafety.slice(0, 3);
+              const displayRisks = safetyExpanded ? resolvedRisks : resolvedRisks.slice(0, 3);
+              const totalItems = resolvedSafety.length + resolvedRisks.length;
+              const hasMore = totalItems > 6 && !safetyExpanded;
+
+              return (
+                <>
+                  {/* Expanded state: scrollable container */}
+                  <div className={safetyExpanded
+                    ? 'mt-4 max-h-[40vh] overflow-y-auto rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left'
+                    : 'mt-4 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left relative'
+                  }>
+                    <p className="text-xs font-semibold text-sky-800 mb-2">
+                      🛡️ Safety notes from your brief
+                    </p>
+                    {resolvedRiskLevel && ['medium', 'high', 'critical'].includes(resolvedRiskLevel) && (
+                      <p className="text-xs font-medium text-amber-700 mb-1">
+                        ⚠️ {resolvedRiskLevel === 'critical' ? 'Critical' : resolvedRiskLevel === 'high' ? 'High' : 'Medium'} risk detected
+                      </p>
+                    )}
+                    {displaySafety.map((note, i) => (
+                      <p key={`safety-${i}`} className="text-xs text-sky-700 mt-1 flex gap-1.5">
+                        <span className="shrink-0">🛡️</span>
+                        <span>{note}</span>
+                      </p>
+                    ))}
+                    {displayRisks.map((note, i) => (
+                      <p key={`risk-${i}`} className="text-xs text-amber-700 mt-1 flex gap-1.5">
+                        <span className="shrink-0">⚠️</span>
+                        <span>{note}</span>
+                      </p>
+                    ))}
+                    {/* Fade-out gradient when truncated */}
+                    {hasMore && (
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-sky-50/95 to-transparent rounded-b-xl pointer-events-none" />
+                    )}
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="mt-3">
+                    {!safetyExpanded && hasMore && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (autoRedirectTimerRef.current) clearTimeout(autoRedirectTimerRef.current);
+                          setSafetyExpanded(true);
+                        }}
+                        className="w-full rounded-lg border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+                      >
+                        Read more
+                      </button>
+                    )}
+                    {safetyExpanded && (
+                      <button
+                        type="button"
+                        disabled={!submissionComplete}
+                        onClick={handleSafetyDismiss}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {submissionComplete ? 'OK, take me to my project' : 'Finalizing your project...'}
+                      </button>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
