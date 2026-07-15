@@ -20,7 +20,7 @@ import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
-import { RequirementChecklist } from '@/components/requirement-checklist';
+// import { RequirementChecklist } from '@/components/requirement-checklist'; // DISABLED July 15
 import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
@@ -361,7 +361,7 @@ export default function CreateProjectWizardPage() {
   const [endDate, setEndDate] = useState('');
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-  const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]);
+  // const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]); // DISABLED July 15 (RequirementChecklist hidden)
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [showNoImagesWarning, setShowNoImagesWarning] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -547,7 +547,7 @@ export default function CreateProjectWizardPage() {
     setSiteInspectionAvailableOn(nextSiteInspection);
     setExistingImageUrls(seededPhotos);
     setAnswers({});
-    setWizardCoveredTopics([]);
+    // setWizardCoveredTopics([]); // DISABLED July 15
     setCurrentStep(0);
     hasInitializedFromSeedRef.current = true;
   }, [seedLoaded, seedDraft, seedDescription, userLocation]);
@@ -945,10 +945,10 @@ export default function CreateProjectWizardPage() {
         ),
       );
 
-      const nextCoveredTopics = Array.isArray(parsed?.coveredTopics)
-        ? parsed.coveredTopics.filter((item): item is string => typeof item === 'string')
-        : [];
-      if (nextCoveredTopics.length > 0) setWizardCoveredTopics(nextCoveredTopics);
+      // const nextCoveredTopics = Array.isArray(parsed?.coveredTopics)
+      //   ? parsed.coveredTopics.filter((item): item is string => typeof item === 'string')
+      //   : [];
+      // if (nextCoveredTopics.length > 0) setWizardCoveredTopics(nextCoveredTopics); // DISABLED July 15
 
       const priorAssistantQuestions = [
         ...chatMessages
@@ -1383,27 +1383,33 @@ export default function CreateProjectWizardPage() {
                     )}
 
                     {step.kind === 'followups' && (
-                      <div className="flex h-full min-h-0 flex-col gap-2.5 sm:gap-3">
-                            <h3 className={panelTitleClass}><span>💬</span><span>Chat with MIMO</span>{ttsSupported && (
-                              <button
-                                type="button"
-                                onClick={() => { setListenMode(v => !v); if (listenMode) ttsStop(); }}
-                                className={`ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition ${
-                                  listenMode
-                                    ? 'border-amber-400 bg-amber-50 text-amber-700'
-                                    : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50'
-                                }`}
-                                title={listenMode ? 'Stop reading aloud' : 'Read messages aloud'}
-                              >
-                                {listenMode ? '🔊 On' : '🔇 Listen'}
-                              </button>
-                            )}</h3>
-                            <p className={panelNoteClass}>Answer MIMO&apos;s questions to build a complete brief. The more you share, the better pros can quote.</p>
+                      <div className="flex h-full min-h-0 flex-col gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className={panelTitleClass}><span>Chat with MIMO to build a complete brief.</span></h3>
+                              {ttsSupported && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setListenMode(v => !v); if (listenMode) ttsStop(); }}
+                                  className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
+                                    listenMode
+                                      ? 'bg-emerald-600 text-white'
+                                      : 'bg-slate-300 text-slate-500'
+                                  }`}
+                                  title={listenMode ? 'Stop reading aloud' : 'Read messages aloud'}
+                                >
+                                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="currentColor">
+                                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8.5v7a4.47 4.47 0 0 0 2.5-3.5zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                            <p className={panelNoteClass}>The more you share, the better the quote.</p>
 
-                            <RequirementChecklist
+                            {/* REQUIREMENT CHECKLIST DISABLED July 15 — hidden to simplify chat UI */}
+                            {/* <RequirementChecklist
                               trades={seedDraft?.initialData?.tradesRequired || seedDescription?.tradesRequired || []}
                               coveredTopics={wizardCoveredTopics}
-                            />
+                            /> */}
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
@@ -1428,7 +1434,7 @@ export default function CreateProjectWizardPage() {
                               <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{chatError}</p>
                             )}
 
-                            <div className="shrink-0 rounded-lg border border-slate-200 bg-white p-2">
+                            <div className="shrink-0 rounded-lg border border-slate-200 bg-white p-1.5">
 
                               {chatImageError && (
                                 <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatImageError}</p>

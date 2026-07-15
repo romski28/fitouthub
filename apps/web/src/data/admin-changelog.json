@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-6e874693",
+    "date": "2026-07-15T13:47:03+08:00",
+    "title": "refactor(wizard): tighten chat UI, hide checklist, simplify listen toggle",
+    "summary": "refactor(wizard): tighten chat UI, hide checklist, simplify listen toggle",
+    "areas": [
+      "web"
+    ],
+    "commit": "6e874693",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-6224dbe5",
     "date": "2026-07-15T13:11:19+08:00",
     "title": "feat(wizard): hybrid file thumbnails, preserve original filenames",
