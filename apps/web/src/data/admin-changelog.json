@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-15-398b6efc",
+    "date": "2026-07-15T18:06:06+08:00",
+    "title": "debug(wizard): add console logs to trace safety data pipeline",
+    "summary": "debug(wizard): add console logs to trace safety data pipeline",
+    "areas": [
+      "web"
+    ],
+    "commit": "398b6efc",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-8ff913cc",
     "date": "2026-07-15T17:50:58+08:00",
     "title": "fix(draft-storage): preserve safety fields in compact and fallback serialization",

@@ -834,6 +834,7 @@ export default function CreateProjectWizardPage() {
         if (safetyNotes.length > 0) setAiSafetyNotes(safetyNotes);
         if (parsedRisks.length > 0) setAiRiskNotes(parsedRisks);
         setAiRiskLevel(parsedRiskLevel);
+        console.log('[wizard][safety] extracted safetyNotes:', safetyNotes, 'riskNotes:', parsedRisks, 'riskLevel:', parsedRiskLevel);
       }
       // REMOVED (review step disabled July 14): imageConfidence, imageProvider, imageModel
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
@@ -1137,6 +1138,7 @@ export default function CreateProjectWizardPage() {
       riskNotes: aiRiskNotes,
       riskLevel: aiRiskLevel,
     };
+    console.log('[wizard][submit] safetyNotes:', aiSafetyNotes, 'riskNotes:', aiRiskNotes, 'riskLevel:', aiRiskLevel);
 
     writeCreateProjectDraftSafely(nextDraft);
     setCreateProjectDraftHandoff(nextDraft);

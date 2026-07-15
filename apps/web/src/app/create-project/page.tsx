@@ -185,6 +185,9 @@ export default function CreateProjectPage() {
           setAiIntakeId(mergedDraft.aiIntakeId);
         }
         // Safety data from AI wizard
+        console.log('[create-project][safety] mergedDraft safetyNotes:', mergedDraft.safetyNotes);
+        console.log('[create-project][safety] mergedDraft riskNotes:', mergedDraft.riskNotes);
+        console.log('[create-project][safety] mergedDraft riskLevel:', mergedDraft.riskLevel);
         if (mergedDraft.safetyNotes?.length) setSafetyNotes(mergedDraft.safetyNotes);
         if (mergedDraft.riskNotes?.length) setRiskNotes(mergedDraft.riskNotes);
         if (mergedDraft.riskLevel) setRiskLevel(mergedDraft.riskLevel);
@@ -778,6 +781,7 @@ export default function CreateProjectPage() {
             </p>
 
             {/* Safety tips from AI */}
+            {(() => { console.log('[create-project][modal] safetyNotes:', safetyNotes, 'riskNotes:', riskNotes, 'riskLevel:', riskLevel); return null; })()}
             {(safetyNotes.length > 0 || riskNotes.length > 0) && (
               <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-left">
                 <p className="text-xs font-semibold text-sky-800 mb-2">🛡️ Safety notes from your brief</p>
