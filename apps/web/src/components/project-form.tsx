@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import LocationSelect, { CanonicalLocation } from './location-select';
 import FileUploader from './file-uploader';
@@ -603,7 +604,7 @@ export function ProjectForm({
 
         {/* File Upload */}
         <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-800">Photos (optional but recommended)</label>
+          <label className="text-sm font-medium text-slate-800">Files (optional but recommended)</label>
           <FileUploader
             maxFiles={MAX_FILES}
             maxFileSize={MAX_FILE_SIZE}
@@ -626,22 +627,23 @@ export function ProjectForm({
                   return (
                   <div
                     key={photo.id || photo.url}
-                    className="relative h-16 w-20 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                    className="relative min-w-32 rounded-lg border border-slate-200 bg-white p-2"
                     title={photo.url.split('/').pop() || ''}
                   >
                     {isImage ? (
-                      <img src={resolveMediaAssetUrl(photo.url)} alt="Project file" className="h-full w-full object-cover" />
+                      <div className="relative h-24 overflow-hidden rounded">
+                        <Image src={resolveMediaAssetUrl(photo.url)} alt="Project file" fill className="object-cover" unoptimized />
+                      </div>
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-slate-100">
-                        <span className="text-[10px] font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                      <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                        <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
                       </div>
                     )}
                     {!isReadOnly && (
                       <button
                         type="button"
-                        className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
+                        className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
                         onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
-                        aria-label="Remove file"
                       >
                         Remove
                       </button>
@@ -653,7 +655,7 @@ export function ProjectForm({
             </div>
           )}
           {pendingFiles.length === 0 && existingPhotos.length === 0 && (
-            <p className="text-xs text-slate-500 italic">Please share any images, documents or other information that can help our professionals support you better.</p>
+            <p className="text-xs text-slate-500 italic">Please share any files, documents or images that can help our professionals support you better.</p>
           )}
         </div>
 
@@ -1222,13 +1224,22 @@ export function ProjectForm({
 
               {pendingFilePreviews.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm leading-relaxed text-slate-700">New images selected ({pendingFilePreviews.length})</p>
+                  <p className="text-sm leading-relaxed text-slate-700">New files selected ({pendingFilePreviews.length})</p>
                   <div className="flex gap-3 overflow-x-auto pb-1">
-                    {pendingFilePreviews.map(({ key, file, previewUrl }) => (
+                    {pendingFilePreviews.map(({ key, file, previewUrl }) => {
+                      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                      const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                      return (
                       <div key={key} className="min-w-32 rounded-lg border border-slate-200 bg-white p-2">
-                        <div className="relative h-24 overflow-hidden rounded">
-                          <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" />
-                        </div>
+                        {isImage ? (
+                          <div className="relative h-24 overflow-hidden rounded">
+                            <Image src={previewUrl} alt={file.name} fill className="object-cover" unoptimized />
+                          </div>
+                        ) : (
+                          <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                            <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => removePendingFile(file)}
@@ -1237,7 +1248,8 @@ export function ProjectForm({
                           Remove
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1278,21 +1290,31 @@ export function ProjectForm({
             }`}>
               <div className={`font-semibold ${
                 usesDarkCreateSurface ? 'text-white' : 'text-slate-900'
-              }`}>Existing photos</div>
+              }`}>Existing files</div>
               <div className="flex flex-wrap gap-2">
                 {existingPhotos.map((photo) => {
+                  const ext = (photo.url || '').split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+                  const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
                   return (
                     <div
                       key={photo.id || photo.url}
-                      className="relative h-20 w-24 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                      className="relative min-w-32 rounded-lg border border-slate-200 bg-white p-2"
+                      title={photo.url.split('/').pop() || ''}
                     >
-                      <img src={resolveMediaAssetUrl(photo.url)} alt="Project photo" className="h-full w-full object-cover" />
+                      {isImage ? (
+                        <div className="relative h-24 overflow-hidden rounded">
+                          <Image src={resolveMediaAssetUrl(photo.url)} alt="Project file" fill className="object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                          <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                        </div>
+                      )}
                       {!isReadOnly && (
                         <button
                           type="button"
-                          className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white"
+                          className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
                           onClick={() => handleRemoveExistingPhoto(photo.id || photo.url)}
-                          aria-label="Remove photo"
                         >
                           Remove
                         </button>
@@ -1304,7 +1326,7 @@ export function ProjectForm({
             </div>
           )}
           {pendingFiles.length === 0 && pendingFilePreviews.length === 0 && existingPhotos.length === 0 && (
-            <p className="text-xs text-slate-500 italic">Please share any images, documents or other information that can help our professionals support you better.</p>
+            <p className="text-xs text-slate-500 italic">Please share any files, documents or images that can help our professionals support you better.</p>
           )}
         </div>
       )}
