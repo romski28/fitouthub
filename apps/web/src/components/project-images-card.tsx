@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { ProjectImageModal } from './project-image-modal';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
@@ -114,14 +115,17 @@ export function ProjectImagesCard({
         </div>
       </div>
 
-      {/* Image Detail Modal */}
-      <ProjectImageModal
-        isOpen={!!selectedPhoto}
-        photo={selectedPhoto}
-        onClose={() => setSelectedPhoto(null)}
-        onSave={onPhotoNoteUpdate ? handleSaveNote : undefined}
-        isSaving={isSaving}
-      />
+      {/* Image Detail Modal — rendered to document.body via portal */}
+      {typeof document !== 'undefined' && createPortal(
+        <ProjectImageModal
+          isOpen={!!selectedPhoto}
+          photo={selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+          onSave={onPhotoNoteUpdate ? handleSaveNote : undefined}
+          isSaving={isSaving}
+        />,
+        document.body
+      )}
     </>
   );
 }

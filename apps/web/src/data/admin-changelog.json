@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-42936391",
+    "date": "2026-07-15T15:46:27+08:00",
+    "title": "fix(media): render file detail modal via portal to document.body",
+    "summary": "fix(media): render file detail modal via portal to document.body",
+    "areas": [
+      "web"
+    ],
+    "commit": "42936391",
+    "files": [
+      "apps/web/src/components/project-images-card.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-9f729b03",
     "date": "2026-07-15T15:40:02+08:00",
     "title": "fix(wizard): add overflow-x-hidden to prevent mobile horizontal scroll",
