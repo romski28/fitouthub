@@ -1318,7 +1318,10 @@ export default function CreateProjectWizardPage() {
                     {step.kind === 'followups' && (
                       <div className="flex h-full min-h-0 flex-col gap-2">
                             <div className="flex items-center justify-between gap-2">
-                              <h3 className={panelTitleClass}><span>Chat with MIMO to build a complete brief.</span></h3>
+                              <h3 className={`${panelTitleClass} min-w-0`}>
+                                <span className="sm:hidden">Chat with MIMO</span>
+                                <span className="hidden sm:inline">Chat with MIMO to build a complete brief.</span>
+                              </h3>
                               {ttsSupported && (
                                 <button
                                   type="button"

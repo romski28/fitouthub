@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-fe266570",
+    "date": "2026-07-15T16:03:59+08:00",
+    "title": "fix(wizard): shorten chat title on mobile to prevent overflow",
+    "summary": "fix(wizard): shorten chat title on mobile to prevent overflow",
+    "areas": [
+      "web"
+    ],
+    "commit": "fe266570",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-2d65243a",
     "date": "2026-07-15T15:49:48+08:00",
     "title": "fix(wizard): constrain -mx-6 negative margin to desktop, fix step counter",
