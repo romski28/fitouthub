@@ -231,11 +231,12 @@ const stripSummaryPrefix = (value: string): string => {
   return value;
 };
 
-const MOTIVATION = [
-  'Nice! Let\'s build this in under a minute.',
-  'Looking great. This is coming together.',
-  'Final stretch, let\'s launch this.',
-];
+// REMOVED — header simplified, no more motivation text
+// const MOTIVATION = [
+//   'Nice! Let\'s build this in under a minute.',
+//   'Looking great. This is coming together.',
+//   'Final stretch, let\'s launch this.',
+// ];
 
 const panelTitleClass = 'flex items-start gap-2 text-lg font-semibold text-slate-900 sm:text-xl';
 const panelNoteClass = 'text-xs leading-relaxed text-slate-700 sm:text-sm';
@@ -600,7 +601,7 @@ export default function CreateProjectWizardPage() {
   );
 
   const activeStep = steps[currentStep];
-  const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1];
+  // const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1]; // REMOVED — header simplified
   const selectedProjectAreaCode = useMemo(
     () => deriveProjectAreaCodeFromLocation(location),
     [location],
@@ -1183,20 +1184,6 @@ export default function CreateProjectWizardPage() {
     <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
       <section className="sm:-mx-6 sm:px-6">
         <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 w-full max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
-          <div className="mb-1.5 flex items-start justify-between gap-2 sm:mb-2 sm:items-center sm:gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 sm:text-xs sm:tracking-[0.1em]">
-                MIMO Project Wizard · Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
-              </p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-600 sm:text-xs">{currentMotivation}</p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <p className="text-[11px] font-semibold text-slate-700 sm:text-xs">{progress}%</p>
-              <div className="h-1 w-14 overflow-hidden rounded-full bg-white/80 sm:w-16">
-                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
-              </div>
-            </div>
-          </div>
 
           <div className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
             <div className="min-h-0 flex-1 overflow-hidden">
@@ -1207,9 +1194,7 @@ export default function CreateProjectWizardPage() {
                 {steps.map((step, index) => (
                   <div
                     key={`${step.kind}-${index}`}
-                    className={`flex h-full w-full shrink-0 flex-col overflow-x-hidden p-3 pb-16 sm:p-4 ${
-                      step.kind === 'followups' ? 'pb-4 sm:pb-4' : 'pb-16 sm:pb-16'
-                    } ${
+                    className={`flex h-full w-full shrink-0 flex-col overflow-x-hidden p-3 sm:p-4 ${
                       step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
                   >
@@ -1310,8 +1295,6 @@ export default function CreateProjectWizardPage() {
                           />
                         </div>
                         <p className="text-sm italic text-slate-600">Allowing access for site inspection will ensure more complete project understanding and so higher quality, more reliable quotations, without surprises.</p>
-                        {/* Spacer so content clears the prev/next buttons when scrolled */}
-                        <div className="shrink-0 h-24" />
                       </div>
                     )}
 
@@ -1604,13 +1587,18 @@ export default function CreateProjectWizardPage() {
               </div>
             </div>
 
-            {activeStep?.kind !== 'followups' ? (
-              <div className="pointer-events-none absolute inset-x-3 bottom-2 flex items-center justify-between gap-2 sm:bottom-2.5 sm:gap-3">
+            <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-2">
+              {/* Progress bar */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full bg-emerald-500 transition-all duration-500 rounded-full" style={{ width: `${progress}%` }} />
+              </div>
+              {/* Navigation */}
+              <div className="mt-2 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={goBack}
                   disabled={currentStep === 0}
-                  className="pointer-events-auto rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
                 >
                   Back
                 </button>
@@ -1625,7 +1613,7 @@ export default function CreateProjectWizardPage() {
                         submitWizard();
                       }
                     }}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                    className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
                   >
                     Submit project
                   </button>
@@ -1634,7 +1622,7 @@ export default function CreateProjectWizardPage() {
                     type="button"
                     onClick={goNext}
                     disabled={!canGoNext}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                    className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
                   >
                     Next
                   </button>
@@ -1642,13 +1630,13 @@ export default function CreateProjectWizardPage() {
                   <button
                     type="button"
                     onClick={submitWizard}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                    className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
                   >
                     Final checks
                   </button>
                 )}
               </div>
-            ) : null}
+            </div>
           </div>
         </div>
       </section>

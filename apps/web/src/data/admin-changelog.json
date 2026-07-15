@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-3c143e2c",
+    "date": "2026-07-15T16:21:19+08:00",
+    "title": "refactor(wizard): replace header with bottom progress bar",
+    "summary": "refactor(wizard): replace header with bottom progress bar",
+    "areas": [
+      "web"
+    ],
+    "commit": "3c143e2c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-3ccba90f",
     "date": "2026-07-15T16:11:07+08:00",
     "title": "fix(wizard): remove px-6 from MainWrapper for wizard route",
