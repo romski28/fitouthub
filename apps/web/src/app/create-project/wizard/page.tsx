@@ -1258,7 +1258,7 @@ export default function CreateProjectWizardPage() {
                   <div
                     key={`${step.kind}-${index}`}
                     className={`flex h-full w-full shrink-0 flex-col p-3 pb-16 sm:p-4 ${
-                      step.kind === 'followups' ? 'sm:pb-4' : 'sm:pb-16'
+                      step.kind === 'followups' ? 'pb-4 sm:pb-4' : 'pb-16 sm:pb-16'
                     } ${
                       step.kind === 'followups' ? 'overflow-hidden' : 'overflow-y-auto'
                     }`}
@@ -1387,7 +1387,7 @@ export default function CreateProjectWizardPage() {
                               coveredTopics={wizardCoveredTopics}
                             />
 
-                            <div ref={chatContainerRef} className="flex-1 min-h-[150px] sm:min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
+                            <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
                                 <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}

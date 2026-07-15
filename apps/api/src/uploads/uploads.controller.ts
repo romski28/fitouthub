@@ -60,10 +60,8 @@ export class UploadsController {
   @Post()
   @UseInterceptors(
     FilesInterceptor('files', 10, {
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          return cb(null, false);
-        }
+      fileFilter: (_req, _file, cb) => {
+        // Accept all file types — frontend validates size per use case
         cb(null, true);
       },
       limits: {

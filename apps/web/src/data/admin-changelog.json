@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-15-f4902a15",
+    "date": "2026-07-15T12:53:51+08:00",
+    "title": "fix(wizard): accept all file types in upload API, fix chat layout",
+    "summary": "fix(wizard): accept all file types in upload API, fix chat layout",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f4902a15",
+    "files": [
+      "apps/api/src/uploads/uploads.controller.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-5f1932fc",
     "date": "2026-07-15T12:45:51+08:00",
     "title": "refactor(wizard): redesign chat input bar — cleaner single-row layout",
