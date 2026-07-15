@@ -318,6 +318,7 @@ export default function CreateProjectWizardPage() {
   const [chatBusy, setChatBusy] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatImageUrls, setChatImageUrls] = useState<string[]>([]);
+  const [chatFileNames, setChatFileNames] = useState<Record<string, string>>({});
   const [chatImageUploadBusy, setChatImageUploadBusy] = useState(false);
   const [chatPendingUploadCount, setChatPendingUploadCount] = useState(0);
   const [isChatSendFinalizing, setIsChatSendFinalizing] = useState(false);
@@ -728,6 +729,11 @@ export default function CreateProjectWizardPage() {
 
   const removeChatImageUrl = (url: string) => {
     setChatImageUrls((prev) => prev.filter((item) => item !== url));
+    setChatFileNames((prev) => {
+      const next = { ...prev };
+      delete next[url];
+      return next;
+    });
   };
 
   const uploadChatImages = async (files: FileList | null) => {
@@ -772,6 +778,17 @@ export default function CreateProjectWizardPage() {
       const uploadedUrls = getUploadResponseKeys(payload);
       if (uploadedUrls.length > 0) {
         setChatImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])).slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
+        // Store original filenames for hover tooltips
+        const fileList: Array<{ url?: string; originalName?: string }> = Array.isArray(payload?.files) ? payload.files : [];
+        setChatFileNames((prev) => {
+          const next = { ...prev };
+          fileList.forEach((f) => {
+            const fileUrl = String(f?.url || '');
+            const name = String(f?.originalName || '');
+            if (fileUrl && name) next[fileUrl] = name;
+          });
+          return next;
+        });
       }
     } catch (error) {
       setChatImageError((error as Error).message || 'Failed to upload files');
@@ -1111,6 +1128,7 @@ export default function CreateProjectWizardPage() {
 
       if (includeAttachedImages) {
         setChatImageUrls([]);
+        setChatFileNames({});
         setChatImageError(null);
       }
     } catch (error) {
@@ -1511,11 +1529,21 @@ export default function CreateProjectWizardPage() {
                               {/* Attached file thumbnails */}
                               {chatImageUrls.length > 0 && (
                                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                                  {chatImageUrls.map((url) => (
-                                    <div key={`chat-img-${url}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1">
-                                      <div className="relative h-full overflow-hidden rounded">
-                                        <Image src={resolveMediaAssetUrl(url)} alt="Attachment" fill className="object-cover" unoptimized />
-                                      </div>
+                                  {chatImageUrls.map((url) => {
+                                    const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+                                    const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+
+                                    return (
+                                    <div key={`chat-img-${url}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1" title={chatFileNames[url] || url.split('/').pop() || ''}>
+                                      {isImage ? (
+                                        <div className="relative h-full overflow-hidden rounded">
+                                          <Image src={resolveMediaAssetUrl(url)} alt="Attachment" fill className="object-cover" unoptimized />
+                                        </div>
+                                      ) : (
+                                        <div className="flex h-full flex-col items-center justify-center rounded bg-slate-100">
+                                          <span className="text-[10px] font-bold uppercase leading-tight text-slate-500">{ext || 'FILE'}</span>
+                                        </div>
+                                      )}
                                       <button
                                         type="button"
                                         onClick={() => removeChatImageUrl(url)}
@@ -1527,7 +1555,8 @@ export default function CreateProjectWizardPage() {
                                         </svg>
                                       </button>
                                     </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>

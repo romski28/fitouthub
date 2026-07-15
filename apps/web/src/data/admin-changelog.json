@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-15-6224dbe5",
+    "date": "2026-07-15T13:11:19+08:00",
+    "title": "feat(wizard): hybrid file thumbnails, preserve original filenames",
+    "summary": "feat(wizard): hybrid file thumbnails, preserve original filenames",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6224dbe5",
+    "files": [
+      "apps/api/src/uploads/uploads.controller.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-f4902a15",
     "date": "2026-07-15T12:53:51+08:00",
     "title": "fix(wizard): accept all file types in upload API, fix chat layout",

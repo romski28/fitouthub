@@ -86,6 +86,7 @@ export class UploadsController {
 
     const keys: string[] = [];
     const urls: string[] = [];
+    const originalNames: string[] = [];
 
     try {
       for (const file of files) {
@@ -103,12 +104,14 @@ export class UploadsController {
 
         keys.push(objectKey);
         urls.push(buildPublicAssetUrl(objectKey));
+        originalNames.push(file.originalname || '');
       }
 
       return {
         keys,
         urls,
-        files: keys.map((key, index) => ({ key, url: urls[index] })),
+        originalNames,
+        files: keys.map((key, index) => ({ key, url: urls[index], originalName: originalNames[index] })),
       };
     } catch (error) {
       console.error('Failed to upload to R2:', error);
