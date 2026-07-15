@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-15-90634d6d",
+    "date": "2026-07-15T15:13:03+08:00",
+    "title": "refactor(media): hybrid rendering for project media tab and modal",
+    "summary": "refactor(media): hybrid rendering for project media tab and modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "90634d6d",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx",
+      "apps/web/src/components/project-image-modal.tsx",
+      "apps/web/src/components/project-images-card.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-509de7e7",
     "date": "2026-07-15T14:53:16+08:00",
     "title": "refactor(project-form): match file gallery rendering to wizard style",

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
 interface ProjectPhoto {
@@ -16,6 +17,12 @@ interface ProjectImageModalProps {
   onClose: () => void;
   onSave?: (photo: ProjectPhoto) => Promise<void>;
   isSaving?: boolean;
+}
+
+function getFileInfo(url: string) {
+  const ext = (url || '').split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+  const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+  return { ext, isImage };
 }
 
 function formatDate(dateString?: string): string {
@@ -56,6 +63,9 @@ export function ProjectImageModal({
     });
   };
 
+  const { ext, isImage } = getFileInfo(photo.url);
+  const fileName = photo.url.split('/').pop() || 'File';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in">
       {/* Backdrop */}
@@ -68,7 +78,7 @@ export function ProjectImageModal({
       <div className="relative max-h-[90vh] max-w-2xl w-full bg-white rounded-xl shadow-xl overflow-auto animate-in zoom-in duration-200">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">Image Details</h2>
+          <h2 className="text-lg font-bold text-slate-900">File Details</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition"
@@ -82,16 +92,27 @@ export function ProjectImageModal({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Image */}
+          {/* File preview */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-600">Image</p>
-            <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden">
-              <img
-                src={resolveMediaAssetUrl(photo.url)}
-                alt="Project image"
-                className="w-full h-auto object-contain max-h-96"
-              />
-            </div>
+            <p className="text-sm font-medium text-slate-600">{isImage ? 'Image' : 'File'}</p>
+            {isImage ? (
+              <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden">
+                <Image
+                  src={resolveMediaAssetUrl(photo.url)}
+                  alt={fileName}
+                  width={800}
+                  height={600}
+                  className="w-full h-auto object-contain max-h-96"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-lg bg-slate-100 p-8">
+                <span className="text-4xl font-bold uppercase text-slate-400">{ext || 'FILE'}</span>
+                <p className="mt-3 text-sm font-medium text-slate-600 break-all text-center">{fileName}</p>
+                <p className="mt-1 text-xs text-slate-400">.{ext} file</p>
+              </div>
+            )}
           </div>
 
           {/* Upload Date */}
@@ -110,7 +131,7 @@ export function ProjectImageModal({
                 id="imageNote"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Add notes about this image..."
+                placeholder="Add notes about this file..."
                 rows={4}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
               />

@@ -25,7 +25,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
     return (
       <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-sm p-6">
         <h2 className="text-lg font-bold text-slate-900">Project Media</h2>
-        <p className="text-sm text-slate-700 mt-2">No media has been uploaded yet.</p>
+        <p className="text-sm text-slate-700 mt-2">No files have been uploaded yet.</p>
       </div>
     );
   }
