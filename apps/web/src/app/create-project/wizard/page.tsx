@@ -357,10 +357,10 @@ export default function CreateProjectWizardPage() {
   const [endDate, setEndDate] = useState('');
   const [siteInspectionAvailableOn, setSiteInspectionAvailableOn] = useState('');
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [projectFiles, setProjectFiles] = useState<File[]>([]);
   // const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]); // DISABLED July 15 (RequirementChecklist hidden)
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [showNoImagesWarning, setShowNoImagesWarning] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showNoFilesWarning, setShowNoFilesWarning] = useState(false);
+  const [projectFileError, setProjectFileError] = useState<string | null>(null);
   const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
     if (typeof window === 'undefined') return 'map';
     try {
@@ -687,33 +687,23 @@ export default function CreateProjectWizardPage() {
     setExistingImageUrls((prev) => prev.filter((item) => item !== url));
   };
 
-  const uploadImages = async (files: FileList | null) => {
+  const removeProjectFile = (index: number) => {
+    setProjectFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addProjectFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     const pending = Array.from(files);
 
-    setIsUploadingImages(true);
-    setUploadError(null);
-    try {
-      const formData = new FormData();
-      pending.forEach((file) => formData.append('files', file));
-      const response = await fetch(`${API_BASE_URL}/uploads`, {
-        method: 'POST',
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        body: formData,
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message || `Image upload failed (${response.status})`);
-      }
-      const uploadedUrls = getUploadResponseKeys(payload);
-      if (uploadedUrls.length > 0) {
-        setExistingImageUrls((prev) => Array.from(new Set([...prev, ...uploadedUrls])));
-      }
-    } catch (error) {
-      setUploadError((error as Error).message || 'Failed to upload images');
-    } finally {
-      setIsUploadingImages(false);
+    const oversized = pending.filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      setProjectFileError(`File${oversized.length === 1 ? '' : 's'} too large: ${oversized.map(f => f.name).join(', ')}. Max 5 MB per file.`);
+      return;
     }
+
+    setProjectFileError(null);
+    setProjectFiles((prev) => [...prev, ...pending]);
   };
 
   const removeChatFile = (index: number) => {
@@ -1053,7 +1043,33 @@ export default function CreateProjectWizardPage() {
     }
   };
 
-  const submitWizard = () => {
+  const submitWizard = async () => {
+    // Upload any project files that haven't been uploaded yet
+    let finalPhotoUrls = [...existingImageUrls];
+    if (projectFiles.length > 0) {
+      setProjectFileError(null);
+      try {
+        const formData = new FormData();
+        projectFiles.forEach((file) => formData.append('files', file));
+        const response = await fetch(`${API_BASE_URL}/uploads`, {
+          method: 'POST',
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+          body: formData,
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.message || `Upload failed (${response.status})`);
+        }
+        const uploadedUrls = getUploadResponseKeys(payload);
+        if (uploadedUrls.length > 0) {
+          finalPhotoUrls = Array.from(new Set([...existingImageUrls, ...uploadedUrls]));
+        }
+      } catch (error) {
+        setProjectFileError((error as Error).message || 'Failed to upload files');
+        return;
+      }
+    }
+
     const firstResolvedTrades = firstNonEmptyStringArray(
       seedDraft?.initialData?.tradesRequired,
       seedDescription?.tradesRequired,
@@ -1105,7 +1121,7 @@ export default function CreateProjectWizardPage() {
         tradesRequired: resolvedTradesRequired,
         endDate: endDate || undefined,
         siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
-        photoUrls: existingImageUrls,
+        photoUrls: finalPhotoUrls,
         requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : undefined,
         requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : undefined,
       },
@@ -1475,31 +1491,41 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'images' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>📷</span><span>Photos, documents and other information.</span></h3>
-                        <p className={panelNoteClass}>Please share photos of the site, plans, and any other documents you think might help your team understand the project better.</p>
+                        <h3 className={panelTitleClass}><span>�</span><span>Files, photos & documents</span></h3>
+                        <p className={panelNoteClass}>Attach any photos, plans, or documents that will help pros understand your project.</p>
 
                         <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
-                          {isUploadingImages ? 'Uploading...' : 'Upload images, documents or photos'}
+                          Add files
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="*/*"
                             multiple
                             className="hidden"
-                            onChange={(e) => uploadImages(e.target.files)}
-                            disabled={isUploadingImages}
+                            onChange={(e) => addProjectFiles(e.target.files)}
                           />
                         </label>
 
-                        {uploadError && <p className="text-sm text-rose-700">{uploadError}</p>}
+                        {projectFileError && <p className="text-sm text-rose-700">{projectFileError}</p>}
 
+                        {(existingImageUrls.length > 0 || projectFiles.length > 0) && (
                         <div className="space-y-2">
-                          <p className={panelNoteClass}>Filmstrip of images already associated.</p>
+                          <p className={panelNoteClass}>Files already attached.</p>
                           <div className="flex gap-3 overflow-x-auto pb-1">
-                            {existingImageUrls.map((url) => (
-                              <div key={url} className="min-w-32 rounded-lg border border-slate-200 bg-white p-2">
-                                <div className="relative h-24 overflow-hidden rounded">
-                                  <Image src={resolveMediaAssetUrl(url)} alt="Project image" fill className="object-cover" unoptimized />
-                                </div>
+                            {/* Previously uploaded files (from drafts) */}
+                            {existingImageUrls.map((url) => {
+                              const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+                              const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                              return (
+                              <div key={url} className="relative min-w-32 rounded-lg border border-slate-200 bg-white p-2" title={url.split('/').pop() || url}>
+                                {isImage ? (
+                                  <div className="relative h-24 overflow-hidden rounded">
+                                    <Image src={resolveMediaAssetUrl(url)} alt="Project file" fill className="object-cover" unoptimized />
+                                  </div>
+                                ) : (
+                                  <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                                    <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                                  </div>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => removeImageUrl(url)}
@@ -1508,9 +1534,37 @@ export default function CreateProjectWizardPage() {
                                   Remove
                                 </button>
                               </div>
-                            ))}
+                              );
+                            })}
+                            {/* New local files (not yet uploaded) */}
+                            {projectFiles.map((file, index) => {
+                              const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                              const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                              const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                              return (
+                              <div key={`pf-${index}`} className="relative min-w-32 rounded-lg border border-slate-200 bg-white p-2" title={file.name}>
+                                {isImage && previewUrl ? (
+                                  <div className="relative h-24 overflow-hidden rounded">
+                                    <Image src={previewUrl} alt={file.name} fill className="object-cover" unoptimized />
+                                  </div>
+                                ) : (
+                                  <div className="flex h-24 flex-col items-center justify-center rounded bg-slate-100">
+                                    <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeProjectFile(index)}
+                                  className="mt-2 w-full rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              );
+                            })}
                           </div>
                         </div>
+                        )}
                       </div>
                     )}
 
@@ -1534,16 +1588,15 @@ export default function CreateProjectWizardPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (existingImageUrls.length === 0 && !isUploadingImages) {
-                        setShowNoImagesWarning(true);
+                      if (existingImageUrls.length === 0 && projectFiles.length === 0) {
+                        setShowNoFilesWarning(true);
                       } else {
                         submitWizard();
                       }
                     }}
-                    disabled={isUploadingImages}
-                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                    className="pointer-events-auto rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    {isUploadingImages ? 'Uploading…' : 'Final checks'}
+                    Submit project
                   </button>
                 ) : currentStep < steps.length - 1 ? (
                   <button
@@ -1685,16 +1738,16 @@ export default function CreateProjectWizardPage() {
           </div>
         </div>
       )}
-      {showNoImagesWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNoImagesWarning(false); }}>
+      {showNoFilesWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNoFilesWarning(false); }}>
           <div className="w-full max-w-sm rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] p-6 shadow-2xl text-center">
             <p className="text-base font-semibold text-slate-800 leading-relaxed">
-              Images and documents are the easiest way to describe your project to our professionals. Please consider adding some now.
+              Images and documents help pros understand your project. Consider adding some now.
             </p>
             <div className="mt-5 flex gap-3 justify-center">
               <button
                 type="button"
-                onClick={() => setShowNoImagesWarning(false)}
+                onClick={() => setShowNoFilesWarning(false)}
                 className="min-w-[100px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
                 OK
@@ -1702,7 +1755,7 @@ export default function CreateProjectWizardPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setShowNoImagesWarning(false);
+                  setShowNoFilesWarning(false);
                   submitWizard();
                 }}
                 className="min-w-[100px] rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"

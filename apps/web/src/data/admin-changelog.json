@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-15-8d0a5869",
+    "date": "2026-07-15T14:31:58+08:00",
+    "title": "refactor(wizard): align step 3 with deferred-upload system",
+    "summary": "refactor(wizard): align step 3 with deferred-upload system",
+    "areas": [
+      "web"
+    ],
+    "commit": "8d0a5869",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-eeb17fd7",
     "date": "2026-07-15T14:10:35+08:00",
     "title": "refactor(wizard): defer file upload to wizard submit, use local File state",
