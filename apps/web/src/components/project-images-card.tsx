@@ -21,7 +21,8 @@ interface ProjectImagesCardProps {
 function getFileInfo(url: string) {
   const ext = (url || '').split('.').pop()?.split('?')[0]?.toLowerCase() || '';
   const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
-  return { ext, isImage };
+  const isPdf = ext === 'pdf';
+  return { ext, isImage, isPdf };
 }
 
 export function ProjectImagesCard({
@@ -59,7 +60,7 @@ export function ProjectImagesCard({
         {/* Files Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {photos.map((photo) => {
-            const { ext, isImage } = getFileInfo(photo.url);
+            const { ext, isImage, isPdf } = getFileInfo(photo.url);
 
             return (
             <button
@@ -89,8 +90,12 @@ export function ProjectImagesCard({
                   </div>
                 </>
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 p-2">
-                  <span className="text-lg font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                <div className={`flex h-full w-full flex-col items-center justify-center p-2 ${
+                  isPdf ? 'bg-red-50' : 'bg-slate-100'
+                }`}>
+                  <span className={`text-lg font-bold uppercase ${
+                    isPdf ? 'text-red-500' : 'text-slate-500'
+                  }`}>{ext || 'FILE'}</span>
                   <span className="mt-1 text-[10px] text-slate-400 truncate max-w-full">
                     {photo.url.split('/').pop()}
                   </span>

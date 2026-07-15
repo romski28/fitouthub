@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-15-ef9329eb",
+    "date": "2026-07-15T15:21:00+08:00",
+    "title": "feat(media): PDF embedded viewer, open-in-tab for non-image files",
+    "summary": "feat(media): PDF embedded viewer, open-in-tab for non-image files",
+    "areas": [
+      "web"
+    ],
+    "commit": "ef9329eb",
+    "files": [
+      "apps/web/src/components/project-image-modal.tsx",
+      "apps/web/src/components/project-images-card.tsx"
+    ]
+  },
+  {
     "id": "2026-07-15-90634d6d",
     "date": "2026-07-15T15:13:03+08:00",
     "title": "refactor(media): hybrid rendering for project media tab and modal",
