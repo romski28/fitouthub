@@ -5394,36 +5394,6 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
-    // Post AI brief as the first chat message if AI intake context is available
-    if (aiIntakeContext) {
-      try {
-        const brief = this.buildAiProjectBrief(aiIntakeContext, project);
-        if (brief) {
-          const thread = await (this.prisma as any).projectChatThread.upsert({
-            where: { projectId: project.id },
-            create: { projectId: project.id },
-            update: {},
-          });
-          await (this.prisma as any).projectChatMessage.create({
-            data: {
-              threadId: thread.id,
-              senderType: 'system',
-              senderUserId: null,
-              senderProId: null,
-              content: brief,
-              attachments: [],
-            },
-          });
-          console.log(`[ProjectsService.create] AI brief posted to project chat thread=${thread.id}`);
-        }
-      } catch (err) {
-        console.warn('[ProjectsService.create] Failed to post AI brief to chat:', {
-          projectId: project.id,
-          error: (err as Error)?.message,
-        });
-      }
-    }
-
     // Fire-and-forget: auto-generate initial AI scope for the new project.
     // Runs non-blocking so project creation is never delayed or blocked.
     this.aiService
@@ -6130,56 +6100,6 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     return project;
-  }
-
-  /**
-   * Build a one-line AI project brief for the project chat from AI intake context.
-   */
-  private buildAiProjectBrief(aiIntakeContext: any, project: any): string | null {
-    try {
-      const summary = typeof aiIntakeContext?.summary === 'string'
-        ? aiIntakeContext.summary.trim()
-        : null;
-      const title = typeof aiIntakeContext?.title === 'string'
-        ? aiIntakeContext.title.trim()
-        : project?.projectName || 'New Project';
-      const trades: string[] = Array.isArray(project?.tradesRequired)
-        ? project.tradesRequired.filter(Boolean)
-        : [];
-      const projectJson =
-        aiIntakeContext?.project && typeof aiIntakeContext.project === 'object' && !Array.isArray(aiIntakeContext.project)
-          ? aiIntakeContext.project
-          : null;
-      const safetyAssessment = projectJson?.safetyAssessment || null;
-      const riskLevel = typeof safetyAssessment?.riskLevel === 'string' ? safetyAssessment.riskLevel : null;
-      const concerns: string[] = Array.isArray(safetyAssessment?.concerns) ? safetyAssessment.concerns : [];
-      const risks = Array.isArray(aiIntakeContext?.risks) ? aiIntakeContext.risks : [];
-
-      const lines: string[] = [];
-      lines.push(`🤖 **AI Project Brief**`);
-      if (summary) {
-        lines.push(`> ${summary}`);
-      } else if (title && title !== project?.projectName) {
-        lines.push(`> ${title}`);
-      }
-      if (trades.length > 0) {
-        lines.push(`Trades: ${trades.join(', ')}`);
-      }
-      if (riskLevel && riskLevel !== 'none') {
-        const badge = riskLevel === 'critical' ? '🔴' : riskLevel === 'high' ? '🟠' : '🟡';
-        lines.push(`${badge} Safety: **${riskLevel}** risk`);
-        if (concerns.length > 0) {
-          lines.push(`— ${concerns.slice(0, 3).join('; ')}`);
-        }
-      }
-      if (risks.length > 0) {
-        lines.push(`⚠️ Risks: ${risks.slice(0, 3).join('; ')}`);
-      }
-
-      return lines.join('\n');
-    } catch {
-      return null;
-    }
   }
 
   private normalizeDateInput(value: unknown): Date | undefined {

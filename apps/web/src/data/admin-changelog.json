@@ -1,15 +1,17 @@
 [
   {
-    "id": "2026-07-16-c3ea3133",
-    "date": "2026-07-16T14:33:25+08:00",
-    "title": "feat(projects): post AI brief as first chat message on project create",
-    "summary": "feat(projects): post AI brief as first chat message on project create",
+    "id": "2026-07-16-36152cd0",
+    "date": "2026-07-16T14:36:01+08:00",
+    "title": "Revert \"feat(projects): post AI brief as first chat message on project create\"",
+    "summary": "Revert \"feat(projects): post AI brief as first chat message on project create\"",
     "areas": [
-      "api"
+      "api",
+      "web"
     ],
-    "commit": "c3ea3133",
+    "commit": "36152cd0",
     "files": [
-      "apps/api/src/projects/projects.service.ts"
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/data/admin-changelog.json"
     ]
   },
   {
