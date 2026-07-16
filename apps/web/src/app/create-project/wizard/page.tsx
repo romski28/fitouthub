@@ -11,6 +11,8 @@ import type { ProjectFormData } from '@/components/project-form';
 import type { Professional } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import {
+  clearCreateProjectDraftHandoff,
+  clearProjectDescriptionHandoff,
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
   setCreateProjectDraftHandoff,
@@ -19,6 +21,7 @@ import {
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
+import { clearAiClientState } from '@/lib/client-session';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 // import { RequirementChecklist } from '@/components/requirement-checklist'; // DISABLED July 15
 import { VoiceInputButton } from '@/components/voice-input-button';
@@ -27,6 +30,7 @@ import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
 // import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
+import toast from 'react-hot-toast';
 
 type WizardStep =
   | { kind: 'followups' }
@@ -305,7 +309,7 @@ const SERVICE_OFFER_COPY: Record<ServiceOfferType, ServiceOfferCopy> = {
 export default function CreateProjectWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoggedIn, userLocation, accessToken, preferredLanguage } = useAuth();
+  const { isLoggedIn, userLocation, accessToken, preferredLanguage, user } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
@@ -364,6 +368,7 @@ export default function CreateProjectWizardPage() {
   // const [wizardCoveredTopics, setWizardCoveredTopics] = useState<string[]>([]); // DISABLED July 15 (RequirementChecklist hidden)
   const [showNoFilesWarning, setShowNoFilesWarning] = useState(false);
   const [projectFileError, setProjectFileError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [locationInputMode, setLocationInputMode] = useState<LocationInputMode>(() => {
     if (typeof window === 'undefined') return 'map';
     try {
@@ -1082,8 +1087,7 @@ export default function CreateProjectWizardPage() {
     }
   };
 
-  const submitWizard = async () => {
-    // Upload all pending files (chat + project step) to R2
+  const buildWizardPayload = async () => {
     const allPendingFiles = [...chatAttachedFiles, ...projectFiles];
     let finalPhotoUrls = [...existingImageUrls];
     if (allPendingFiles.length > 0) {
@@ -1106,7 +1110,7 @@ export default function CreateProjectWizardPage() {
         }
       } catch (error) {
         setProjectFileError((error as Error).message || 'Failed to upload files');
-        return;
+        return null;
       }
     }
 
@@ -1146,45 +1150,54 @@ export default function CreateProjectWizardPage() {
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
 
-    const nextDraft: CreateProjectDraft = {
-      initialData: {
-        ...(seedDraft?.initialData || {}),
-        projectName: title.trim(),
-        notes: mergedSummary,
-        location,
-        region: resolvedRegion || seedDraft?.initialData?.region || '',
-        isEmergency: Boolean(isEmergency),
-        projectScale:
-          normalizeProjectScale(seedDraft?.initialData?.projectScale) ||
-          normalizeProjectScale(seedDescription?.projectScale) ||
-          undefined,
-        tradesRequired: resolvedTradesRequired,
-        endDate: endDate || undefined,
-        siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
-        photoUrls: finalPhotoUrls,
-        requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : undefined,
-        requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : undefined,
-      },
-      selectedProfessionals: seedDraft?.selectedProfessionals || [],
+    const resolvedClientName =
+      user?.firstName && user?.surname
+        ? `${user.firstName} ${user.surname}`
+        : seedDraft?.initialData?.clientName || '';
+
+    return {
+      projectName: title.trim(),
+      clientName: resolvedClientName,
+      region: resolvedRegion || seedDraft?.initialData?.region || '',
+      notes: mergedSummary,
+      isEmergency: Boolean(isEmergency),
+      projectScale: normalizeProjectScale(seedDraft?.initialData?.projectScale) ||
+        normalizeProjectScale(seedDescription?.projectScale) || undefined,
+      tradesRequired: resolvedTradesRequired,
+      endDate: endDate || undefined,
+      siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
+      photoUrls: finalPhotoUrls,
+      requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : false,
+      requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : false,
       aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
+    };
+  };
+
+  const submitWizard = async () => {
+    const data = await buildWizardPayload();
+    if (!data) return;
+
+    const nextDraft: CreateProjectDraft = {
+      initialData: { ...(seedDraft?.initialData || {}), ...data },
+      selectedProfessionals: seedDraft?.selectedProfessionals || [],
+      aiIntakeId: data.aiIntakeId,
       followUpQuestions: followUpStepQuestions,
       safetyNotes: aiSafetyNotes,
       riskNotes: aiRiskNotes,
       riskLevel: aiRiskLevel,
     };
-    console.log('[wizard][submit] safetyNotes:', aiSafetyNotes, 'riskNotes:', aiRiskNotes, 'riskLevel:', aiRiskLevel);
 
     writeCreateProjectDraftSafely(nextDraft);
     setCreateProjectDraftHandoff(nextDraft);
 
     const nextDescription: ProjectDescriptionData = {
-      title: nextDraft.initialData?.projectName || '',
-      description: nextDraft.initialData?.notes || '',
-      projectScale: normalizeProjectScale(nextDraft.initialData?.projectScale),
-      isEmergency: Boolean(nextDraft.initialData?.isEmergency),
-      profession: nextDraft.initialData?.tradesRequired?.[0],
-      location: nextDraft.initialData?.location,
-      tradesRequired: nextDraft.initialData?.tradesRequired || [],
+      title: data.projectName,
+      description: data.notes || '',
+      projectScale: (normalizeProjectScale(data.projectScale) || undefined) as ProjectDescriptionData['projectScale'],
+      isEmergency: data.isEmergency,
+      profession: data.tradesRequired?.[0],
+      location,
+      tradesRequired: data.tradesRequired || [],
       followUpQuestions: followUpStepQuestions,
       safetyNotes: aiSafetyNotes,
       riskNotes: aiRiskNotes,
@@ -1192,33 +1205,119 @@ export default function CreateProjectWizardPage() {
     };
 
     setProjectDescriptionHandoff(nextDescription);
-    try {
-      sessionStorage.setItem('projectDescription', JSON.stringify(nextDescription));
-    } catch {
-      // best effort
-    }
+    try { sessionStorage.setItem('projectDescription', JSON.stringify(nextDescription)); } catch { /* best effort */ }
 
     const params = new URLSearchParams();
-    const selectedTrades = nextDraft.initialData?.tradesRequired || [];
-    if (selectedTrades[0]) params.set('trade', selectedTrades[0]);
-    if (selectedTrades.length > 0) params.set('trades', selectedTrades.join(','));
+    if (data.tradesRequired[0]) params.set('trade', data.tradesRequired[0]);
+    if (data.tradesRequired.length > 0) params.set('trades', data.tradesRequired.join(','));
     if (location.tertiary) params.set('location', location.tertiary);
     else if (location.secondary) params.set('location', location.secondary);
     else if (location.primary) params.set('location', location.primary);
     else params.set('askRegion', '1');
-    if (nextDraft.initialData?.projectName) {
-      params.set('aiTitle', nextDraft.initialData.projectName.slice(0, 180));
-    }
-    if (nextDraft.initialData?.notes) {
-      params.set('aiScope', nextDraft.initialData.notes.slice(0, 1800));
-    }
-    if (nextDraft.initialData?.projectScale) {
-      params.set('aiScale', nextDraft.initialData.projectScale);
-    }
-    params.set('aiEmergency', nextDraft.initialData?.isEmergency ? '1' : '0');
+    if (data.projectName) params.set('aiTitle', data.projectName.slice(0, 180));
+    if (data.notes) params.set('aiScope', data.notes.slice(0, 1800));
+    if (data.projectScale) params.set('aiScale', data.projectScale);
+    params.set('aiEmergency', data.isEmergency ? '1' : '0');
     params.set('source', 'ai-wizard');
 
     router.push(`/create-project?${params.toString()}`);
+  };
+
+  const submitAndOpenTender = async () => {
+    const data = await buildWizardPayload();
+    if (!data) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        projectName: data.projectName,
+        clientName: data.clientName,
+        region: data.region,
+        notes: data.notes,
+        tradesRequired: data.tradesRequired,
+        isEmergency: data.isEmergency,
+        projectScale: data.projectScale ?? undefined,
+        endDate: data.endDate ?? undefined,
+        siteInspectionAvailableOn: data.siteInspectionAvailableOn ?? undefined,
+        requiresSurveyService: data.requiresSurveyService,
+        requiresDesignService: data.requiresDesignService,
+        photos: data.photoUrls.map((url: string) => ({ url })),
+        userPrompt: data.notes,
+        aiIntakeId: data.aiIntakeId || undefined,
+        userId: user?.id,
+      };
+
+      const res = await fetch(`${API_BASE_URL}/projects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: 'Failed to create project' }));
+        throw new Error(errData.message || `Server error: ${res.status}`);
+      }
+      const project = await res.json();
+
+      // Open tender
+      await fetch(`${API_BASE_URL}/projects/${project.id}/open-tender`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+
+      clearAiClientState();
+      clearCreateProjectDraftHandoff();
+      clearProjectDescriptionHandoff();
+      toast.success('Project created! Bidding is now open to all matching professionals.');
+      router.push(`/projects/${project.id}`);
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || 'Failed to create project');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const submitAndChoosePros = () => {
+    // Build the draft synchronously (trades, location) and navigate to professionals page
+    const resolvedTrades = normalizeUniqueStringList(
+      firstNonEmptyStringArray(seedDraft?.initialData?.tradesRequired, seedDescription?.tradesRequired),
+    );
+    const resolvedRegion = [location.secondary, location.primary]
+      .filter((item): item is string => Boolean(item && item.trim()))
+      .join(', ');
+
+    const draft: CreateProjectDraft = {
+      initialData: {
+        ...(seedDraft?.initialData || {}),
+        projectName: title.trim(),
+        notes: summary.trim(),
+        location,
+        region: resolvedRegion || seedDraft?.initialData?.region || '',
+        isEmergency: Boolean(isEmergency),
+        tradesRequired: resolvedTrades,
+        endDate: endDate || undefined,
+        siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
+        photoUrls: existingImageUrls,
+        requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : undefined,
+        requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : undefined,
+      },
+      aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
+      followUpQuestions: followUpStepQuestions,
+      safetyNotes: aiSafetyNotes,
+      riskNotes: aiRiskNotes,
+      riskLevel: aiRiskLevel,
+    };
+
+    writeCreateProjectDraftSafely(draft);
+    setCreateProjectDraftHandoff(draft);
+
+    const params = new URLSearchParams();
+    if (resolvedTrades.length > 0) params.set('trades', resolvedTrades.join(','));
+    if (location.secondary) params.set('location', location.secondary);
+    else if (location.primary) params.set('location', location.primary);
+    params.set('source', 'ai-wizard');
+    router.push(`/professionals?${params.toString()}`);
   };
 
   if (!hydrated || isLoggedIn === undefined) {
@@ -1348,10 +1447,11 @@ export default function CreateProjectWizardPage() {
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
                               <button
                                 type="button"
-                                onClick={() => submitWizard()}
-                                className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                                onClick={() => submitAndOpenTender()}
+                                disabled={isSubmitting}
+                                className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
                               >
-                                Get prices from everyone
+                                {isSubmitting ? 'Creating project...' : 'Get prices from everyone'}
                               </button>
                               <p className="text-xs text-slate-600">
                                 {"We'll ask all local matching trades to send in pricing for your project."}
@@ -1360,8 +1460,9 @@ export default function CreateProjectWizardPage() {
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
                               <button
                                 type="button"
-                                onClick={() => submitWizard()}
-                                className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                                onClick={() => submitAndChoosePros()}
+                                disabled={isSubmitting}
+                                className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50 disabled:opacity-40"
                               >
                                 {"I'll choose who sends prices"}
                               </button>

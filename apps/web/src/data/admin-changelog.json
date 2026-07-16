@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-2885ae04",
+    "date": "2026-07-16T16:36:37+08:00",
+    "title": "feat(wizard): short-circuit create-project — direct submit from wizard",
+    "summary": "feat(wizard): short-circuit create-project — direct submit from wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "2885ae04",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-82861548",
     "date": "2026-07-16T16:25:56+08:00",
     "title": "fix(wizard): move pricing panel into scrollable body, remove footer duplicate",
