@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-5e0b779f",
+    "date": "2026-07-16T14:17:37+08:00",
+    "title": "feat(admin): AI conversation logs page in analytics section",
+    "summary": "feat(admin): AI conversation logs page in analytics section",
+    "areas": [
+      "web"
+    ],
+    "commit": "5e0b779f",
+    "files": [
+      "apps/web/src/app/admin/analytics/conversation-logs/page.tsx",
+      "apps/web/src/app/admin/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-7cbe7f08",
     "date": "2026-07-16T14:04:43+08:00",
     "title": "fix(db): use TEXT instead of UUID for ai_conversation_logs FK columns",

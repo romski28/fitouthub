@@ -820,6 +820,12 @@ export default function AdminDashboardPage() {
       stat: "Primary analytics page",
     },
     {
+      title: "AI Conversation Logs",
+      description: "Every wizard conversation turn — prompt, response, safety assessment. Grouped by session for LLM training dataset review.",
+      href: "/admin/analytics/conversation-logs",
+      stat: "LLM training data",
+    },
+    {
       title: "Trade × District Matrix",
       description: "Heatmap grid showing professional coverage by district and trade. Spot coverage gaps.",
       href: "/admin/trade-district-matrix",
