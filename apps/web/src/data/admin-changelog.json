@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-6cf998d6",
+    "date": "2026-07-16T16:54:29+08:00",
+    "title": "feat(submit): intermediate page with safety modal for open tender",
+    "summary": "feat(submit): intermediate page with safety modal for open tender",
+    "areas": [
+      "web"
+    ],
+    "commit": "6cf998d6",
+    "files": [
+      "apps/web/src/app/create-project/submitting/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-63ad1b2a",
     "date": "2026-07-16T16:44:06+08:00",
     "title": "fix(wizard): restore no-files warning on images step for both flows",

@@ -11,8 +11,6 @@ import type { ProjectFormData } from '@/components/project-form';
 import type { Professional } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import {
-  clearCreateProjectDraftHandoff,
-  clearProjectDescriptionHandoff,
   getCreateProjectDraftHandoff,
   getProjectDescriptionHandoff,
   setCreateProjectDraftHandoff,
@@ -21,7 +19,6 @@ import {
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { API_BASE_URL } from '@/config/api';
 import { getUploadResponseKeys, resolveMediaAssetUrl } from '@/lib/media-assets';
-import { clearAiClientState } from '@/lib/client-session';
 import { areaCodeToCanonicalLocation, deriveProjectAreaCodeFromLocation } from '@/lib/hk-districts';
 // import { RequirementChecklist } from '@/components/requirement-checklist'; // DISABLED July 15
 import { VoiceInputButton } from '@/components/voice-input-button';
@@ -30,7 +27,6 @@ import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
 // import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
-import toast from 'react-hot-toast';
 
 type WizardStep =
   | { kind: 'followups' }
@@ -1227,55 +1223,23 @@ export default function CreateProjectWizardPage() {
     const data = await buildWizardPayload();
     if (!data) return;
     setIsSubmitting(true);
-    try {
-      const payload = {
-        projectName: data.projectName,
-        clientName: data.clientName,
-        region: data.region,
-        notes: data.notes,
-        tradesRequired: data.tradesRequired,
-        isEmergency: data.isEmergency,
-        projectScale: data.projectScale ?? undefined,
-        endDate: data.endDate ?? undefined,
-        siteInspectionAvailableOn: data.siteInspectionAvailableOn ?? undefined,
-        requiresSurveyService: data.requiresSurveyService,
-        requiresDesignService: data.requiresDesignService,
-        photos: data.photoUrls.map((url: string) => ({ url })),
-        userPrompt: data.notes,
-        aiIntakeId: data.aiIntakeId || undefined,
-        userId: user?.id,
-      };
 
-      const res = await fetch(`${API_BASE_URL}/projects`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({ message: 'Failed to create project' }));
-        throw new Error(errData.message || `Server error: ${res.status}`);
-      }
-      const project = await res.json();
+    const nextDraft: CreateProjectDraft = {
+      initialData: { ...(seedDraft?.initialData || {}), ...data },
+      selectedProfessionals: seedDraft?.selectedProfessionals || [],
+      aiIntakeId: data.aiIntakeId,
+      followUpQuestions: followUpStepQuestions,
+      safetyNotes: aiSafetyNotes,
+      riskNotes: aiRiskNotes,
+      riskLevel: aiRiskLevel,
+    };
 
-      // Open tender
-      await fetch(`${API_BASE_URL}/projects/${project.id}/open-tender`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      });
+    writeCreateProjectDraftSafely(nextDraft);
+    setCreateProjectDraftHandoff(nextDraft);
+    // Also persist photo URLs so the submitting page can read them
+    try { sessionStorage.setItem('createProjectDraft', JSON.stringify(nextDraft)); } catch { /* best effort */ }
 
-      clearAiClientState();
-      clearCreateProjectDraftHandoff();
-      clearProjectDescriptionHandoff();
-      toast.success('Project created! Bidding is now open to all matching professionals.');
-      router.push(`/projects/${project.id}`);
-    } catch (err: unknown) {
-      toast.error((err as Error)?.message || 'Failed to create project');
-    } finally {
-      setIsSubmitting(false);
-    }
+    router.push('/create-project/submitting');
   };
 
   const submitAndChoosePros = () => {
