@@ -1884,11 +1884,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
           initialQuery={initialPrompt}
           imageActions={
-            false ? (
+            (false as boolean) && visionQuota ? (
               <ChatImageUploader
                 onFilesSelected={setPromptImages}
                 maxImages={promptImageLimit}
-                disabled={aiLoading || Boolean(visionQuota && !visionQuota.canUseVision)}
+                disabled={aiLoading || !visionQuota.canUseVision}
                 isUploading={aiLoading && promptImages.length > 0}
                 uploadingCount={promptImages.length}
                 clearKey={promptUploaderClearKey}
@@ -1898,20 +1898,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           }
         />
 
-        {false && (
+        {visionQuota && false ? (
           <div className="mt-1 flex items-center justify-between px-1">
             <div>
               {!visionQuotaLoading && (
                 <p className="text-[10px] text-slate-400">
-                  {visionQuota
-                    ? 'Images: ' + visionQuota.remainingToday + '/' + visionQuota.maxImagesPerDay + ' remaining (' + visionQuota.maxImagesPerPrompt + '/prompt)'
-                    : 'Max ' + promptImageLimit + ' images'}
+                  Images: {visionQuota!.remainingToday}/{visionQuota!.maxImagesPerDay} remaining ({visionQuota!.maxImagesPerPrompt}/prompt)
                 </p>
               )}
             </div>
             <p className="text-[10px] text-slate-400">{promptCharCount}/5000</p>
           </div>
-        )}
+        ) : null}
 
         {isAdminTester && deepSeekSandboxEnabled && searchMode === 'ai' && !hasAiResponse && (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">

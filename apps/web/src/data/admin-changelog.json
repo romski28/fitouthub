@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-64bdfa68",
+    "date": "2026-07-16T15:09:13+08:00",
+    "title": "fix(build): suppress null-check errors in hidden image upload code",
+    "summary": "fix(build): suppress null-check errors in hidden image upload code",
+    "areas": [
+      "web"
+    ],
+    "commit": "64bdfa68",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-14e0e89d",
     "date": "2026-07-16T14:57:10+08:00",
     "title": "feat(wizard): conditional images step based on chat attachments",
