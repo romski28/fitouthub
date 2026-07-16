@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-c3ea3133",
+    "date": "2026-07-16T14:33:25+08:00",
+    "title": "feat(projects): post AI brief as first chat message on project create",
+    "summary": "feat(projects): post AI brief as first chat message on project create",
+    "areas": [
+      "api"
+    ],
+    "commit": "c3ea3133",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-16-5e0b779f",
     "date": "2026-07-16T14:17:37+08:00",
     "title": "feat(admin): AI conversation logs page in analytics section",
