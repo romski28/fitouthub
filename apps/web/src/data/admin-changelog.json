@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-28218537",
+    "date": "2026-07-16T22:08:30+08:00",
+    "title": "feat(admin): add password visibility toggle to user/pro CRUD",
+    "summary": "feat(admin): add password visibility toggle to user/pro CRUD",
+    "areas": [
+      "web"
+    ],
+    "commit": "28218537",
+    "files": [
+      "apps/web/src/app/admin/professionals/page.tsx",
+      "apps/web/src/components/edit-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-1841fc0a",
     "date": "2026-07-16T17:47:27+08:00",
     "title": "docs: comprehensive MD reference for new project creation flow",
