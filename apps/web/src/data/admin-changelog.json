@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-16-edc8588f",
+    "date": "2026-07-16T17:09:57+08:00",
+    "title": "feat(submit): handle selected pros path, disable buttons until location",
+    "summary": "feat(submit): handle selected pros path, disable buttons until location",
+    "areas": [
+      "web"
+    ],
+    "commit": "edc8588f",
+    "files": [
+      "apps/web/src/app/create-project/submitting/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-6cf998d6",
     "date": "2026-07-16T16:54:29+08:00",
     "title": "feat(submit): intermediate page with safety modal for open tender",

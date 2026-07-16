@@ -114,6 +114,10 @@ export default function SubmittingPage() {
           mergedInitial.location?.secondary,
         ].filter(Boolean).join(', ');
 
+        const selectedProfessionals: any[] = Array.isArray(draft?.selectedProfessionals) ? draft.selectedProfessionals
+          : Array.isArray(storedDraft?.selectedProfessionals) ? storedDraft.selectedProfessionals : [];
+        const hasSelectedPros = selectedProfessionals.length > 0;
+
         const payload: any = {
           projectName: mergedInitial.projectName || 'New Project',
           clientName: mergedInitial.clientName || (user?.firstName && user?.surname ? `${user.firstName} ${user.surname}` : ''),
@@ -130,7 +134,14 @@ export default function SubmittingPage() {
           userPrompt: mergedInitial.notes || null,
           aiIntakeId: draft?.aiIntakeId || storedDraft?.aiIntakeId || undefined,
           userId: user.id,
-          onlySelectedProfessionalsCanBid: false,
+          onlySelectedProfessionalsCanBid: hasSelectedPros,
+          ...(hasSelectedPros ? {
+            professionalIds: selectedProfessionals.map((p: any) => p.id),
+            professionalTradeScopes: selectedProfessionals.map((p: any) => ({
+              professionalId: p.id,
+              requestedTrades: Array.isArray(p.requestedTrades) ? p.requestedTrades : [],
+            })),
+          } : {}),
         };
 
         const res = await fetch(`${API_BASE_URL}/projects`, {
@@ -144,10 +155,17 @@ export default function SubmittingPage() {
         }
         const project = await res.json();
 
-        // Open tender
-        try {
-          await fetch(`${API_BASE_URL}/projects/${project.id}/open-tender`, {
-            method: 'POST',
+        // Open tender only if no specific professionals were selected
+        if (!hasSelectedPros) {
+          try {
+            await fetch(`${API_BASE_URL}/projects/${project.id}/open-tender`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            });
+          } catch (err) {
+            console.warn('[submitting] open-tender failed (non-fatal):', (err as Error)?.message);
+          }
+        }
             headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           });
         } catch (err) {
@@ -166,7 +184,9 @@ export default function SubmittingPage() {
         setCompletedProjectId(project.id);
         setCompletedSurveyStep(payload.requiresSurveyService === true);
         setSubmissionComplete(true);
-        toast.success('Project created! Bidding is now open to all matching professionals.');
+        toast.success(hasSelectedPros
+          ? 'Project created and bidding is now open to your selected professionals.'
+          : 'Project created! Bidding is now open to all matching professionals.');
       } catch (err: any) {
         setError(err.message || 'Failed to create project');
         toast.error(err.message || 'Failed to create project');

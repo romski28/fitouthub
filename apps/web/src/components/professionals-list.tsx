@@ -1886,7 +1886,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       console.warn('[professionals-list] Unable to persist full createProjectDraft due to storage limits.');
     }
 
-    router.push('/create-project');
+    router.push('/create-project/submitting');
   };
 
   const openDetails = (pro: Professional) => {
@@ -2509,7 +2509,7 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
               className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={t('actions.shareProjectAria')}
             >
-              {source === 'create-project' ? 'Confirm my selection' : 'Finish creating your project →'}
+              {source === 'create-project' ? 'Get prices from selected' : 'Finish creating your project →'}
             </button>
           </div>
         </div>

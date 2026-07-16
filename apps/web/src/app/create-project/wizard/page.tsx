@@ -1407,12 +1407,15 @@ export default function CreateProjectWizardPage() {
                         {/* Now, get your prices — inline in scrollable body */}
                         <div className="mt-6 pt-4 border-t border-slate-200">
                           <h2 className="text-base font-bold text-slate-900 mb-3">Now, get your prices</h2>
+                          {(!location.primary && !location.secondary) && (
+                            <p className="text-xs text-amber-600 mb-2">Select a location above to continue.</p>
+                          )}
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
                               <button
                                 type="button"
                                 onClick={() => submitAndOpenTender()}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || (!location.primary && !location.secondary)}
                                 className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
                               >
                                 {isSubmitting ? 'Creating project...' : 'Get prices from everyone'}
@@ -1425,7 +1428,7 @@ export default function CreateProjectWizardPage() {
                               <button
                                 type="button"
                                 onClick={() => submitAndChoosePros()}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || (!location.primary && !location.secondary)}
                                 className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50 disabled:opacity-40"
                               >
                                 {"I'll choose who sends prices"}
