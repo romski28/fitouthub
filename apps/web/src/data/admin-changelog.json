@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-12960ea5",
+    "date": "2026-07-16T23:21:55+08:00",
+    "title": "fix(ui): fixed-height panel on home page",
+    "summary": "fix(ui): fixed-height panel on home page",
+    "areas": [
+      "web"
+    ],
+    "commit": "12960ea5",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-21acc70f",
     "date": "2026-07-16T23:11:35+08:00",
     "title": "feat(ui): center home page panel vertically + horizontally",

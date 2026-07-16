@@ -40,18 +40,18 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="w-full max-w-6xl"
+          className="w-full max-w-6xl h-[calc(100vh-104px)] sm:h-[calc(100vh-128px)]"
         >
-          <div className="mimo-panel relative overflow-hidden py-6 sm:py-8">
-            <div className="px-4 sm:px-6 lg:px-8">
-              <div className="mb-4 text-center">
+          <div className="mimo-panel relative h-full flex flex-col overflow-hidden py-6 sm:py-8">
+            <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
+              <div className="shrink-0 mb-4 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
                     <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.
                   </h2>
                 </div>
 
                 {/* 3-col: Sarah | Prompt | Mike */}
-                <div className="flex items-start gap-2">
+                <div className="flex-1 min-h-0 flex items-start gap-2">
                   {/* Sarah — left, hidden below md */}
                   <div className="hidden md:flex items-start justify-end w-[120px] shrink-0 sticky top-4">
                     <Image
@@ -65,9 +65,13 @@ export default function Home() {
                   </div>
 
                   {/* Prompt box — center, flexes to fill */}
-                  <div className="min-w-0 flex-1 space-y-5">
-                    <VideoTeaser />
-                    <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+                  <div className="min-w-0 flex-1 min-h-0 flex flex-col">
+                    <div className="shrink-0">
+                      <VideoTeaser />
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                      <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+                    </div>
                   </div>
 
                   {/* Mike — right, hidden below lg */}
