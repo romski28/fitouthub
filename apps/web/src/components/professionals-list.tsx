@@ -1710,6 +1710,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
         existingDraft = JSON.parse(rawDraft) as {
           initialData?: Partial<ProjectFormData>;
           aiIntakeId?: string;
+          safetyNotes?: string[];
+          riskNotes?: string[];
+          riskLevel?: string | null;
         };
       }
 
@@ -1872,6 +1875,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ...(memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId
         ? { aiIntakeId: memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId }
         : {}),
+      safetyNotes: memoryDraft?.safetyNotes || existingDraft?.safetyNotes,
+      riskNotes: memoryDraft?.riskNotes || existingDraft?.riskNotes,
+      riskLevel: memoryDraft?.riskLevel || existingDraft?.riskLevel,
     });
 
     setCreateProjectDraftHandoff({
@@ -1880,6 +1886,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
       ...(memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId
         ? { aiIntakeId: memoryDraft?.aiIntakeId || existingDraft?.aiIntakeId }
         : {}),
+      safetyNotes: memoryDraft?.safetyNotes || existingDraft?.safetyNotes,
+      riskNotes: memoryDraft?.riskNotes || existingDraft?.riskNotes,
+      riskLevel: memoryDraft?.riskLevel || existingDraft?.riskLevel,
     });
 
     if (!saved) {
