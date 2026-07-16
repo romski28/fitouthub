@@ -29,7 +29,7 @@ export default function Home() {
 
 
   return (
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-5 py-5 sm:px-8 sm:py-8">
+      <div className="flex justify-center px-5 py-5 sm:px-8 sm:py-8">
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -40,7 +40,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="w-full max-w-6xl h-[calc(100vh-104px)] sm:h-[calc(100vh-128px)]"
+          className="w-full max-w-6xl h-[calc(100vh-160px)] sm:h-[calc(100vh-128px)]"
         >
           <div className="mimo-panel relative h-full flex flex-col overflow-hidden py-6 sm:py-8">
             <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">

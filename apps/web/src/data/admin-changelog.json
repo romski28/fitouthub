@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-ade2c47f",
+    "date": "2026-07-16T23:28:09+08:00",
+    "title": "fix(ui): reduce mobile home panel height to 100vh-160px",
+    "summary": "fix(ui): reduce mobile home panel height to 100vh-160px",
+    "areas": [
+      "web"
+    ],
+    "commit": "ade2c47f",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-12960ea5",
     "date": "2026-07-16T23:21:55+08:00",
     "title": "fix(ui): fixed-height panel on home page",
