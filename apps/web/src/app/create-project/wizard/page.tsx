@@ -1649,19 +1649,29 @@ export default function CreateProjectWizardPage() {
                 </button>
 
                 {activeStep?.kind === 'images' ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (existingImageUrls.length === 0 && chatAttachedFiles.length === 0 && projectFiles.length === 0) {
-                        setShowNoFilesWarning(true);
-                      } else {
-                        submitWizard();
-                      }
-                    }}
-                    className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
-                  >
-                    Submit project
-                  </button>
+                  currentStep < steps.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={goNext}
+                      className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (existingImageUrls.length === 0 && chatAttachedFiles.length === 0 && projectFiles.length === 0) {
+                          setShowNoFilesWarning(true);
+                        } else {
+                          submitWizard();
+                        }
+                      }}
+                      className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition sm:px-3 sm:py-2 sm:text-sm"
+                    >
+                      Submit project
+                    </button>
+                  )
                 ) : currentStep < steps.length - 1 ? (
                   <button
                     type="button"

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-6c80e64b",
+    "date": "2026-07-16T15:24:45+08:00",
+    "title": "fix(wizard): images step shows Next instead of Submit when not final",
+    "summary": "fix(wizard): images step shows Next instead of Submit when not final",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c80e64b",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-64bdfa68",
     "date": "2026-07-16T15:09:13+08:00",
     "title": "fix(build): suppress null-check errors in hidden image upload code",
