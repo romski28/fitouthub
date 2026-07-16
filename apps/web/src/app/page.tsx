@@ -40,7 +40,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="w-full max-w-6xl h-[calc(100vh-160px)] md:h-[calc(100vh-144px)] lg:h-[calc(100vh-128px)]"
+          className="w-full max-w-6xl h-[calc(100vh-160px)] md:h-[calc(100vh-160px)] lg:h-[calc(100vh-128px)]"
         >
           <div className="mimo-panel relative h-full flex flex-col overflow-hidden py-6 sm:py-8">
             <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">

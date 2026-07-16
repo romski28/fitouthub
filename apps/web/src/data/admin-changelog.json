@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-97bcd5b6",
+    "date": "2026-07-16T23:48:09+08:00",
+    "title": "fix(ui): match tablet panel height to mobile (100vh-160px)",
+    "summary": "fix(ui): match tablet panel height to mobile (100vh-160px)",
+    "areas": [
+      "web"
+    ],
+    "commit": "97bcd5b6",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-487a04f8",
     "date": "2026-07-16T23:31:36+08:00",
     "title": "fix(ui): add tablet breakpoint for home panel height",
