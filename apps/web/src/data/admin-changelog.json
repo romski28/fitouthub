@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-1841fc0a",
+    "date": "2026-07-16T17:47:27+08:00",
+    "title": "docs: comprehensive MD reference for new project creation flow",
+    "summary": "docs: comprehensive MD reference for new project creation flow",
+    "areas": [
+      "infra"
+    ],
+    "commit": "1841fc0a",
+    "files": [
+      "PROJECT_CREATION_FLOW_JULY_2026.md"
+    ]
+  },
+  {
     "id": "2026-07-16-5b5f471b",
     "date": "2026-07-16T17:39:59+08:00",
     "title": "fix(build): update existingDraft declaration type to include safety fields",
