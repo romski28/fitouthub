@@ -166,11 +166,6 @@ export default function SubmittingPage() {
             console.warn('[submitting] open-tender failed (non-fatal):', (err as Error)?.message);
           }
         }
-            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          });
-        } catch (err) {
-          console.warn('[submitting] open-tender failed (non-fatal):', (err as Error)?.message);
-        }
 
         clearCreateProjectDraftHandoff();
         clearProjectDescriptionHandoff();

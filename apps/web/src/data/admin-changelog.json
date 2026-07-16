@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-6fdccd8c",
+    "date": "2026-07-16T17:12:11+08:00",
+    "title": "fix(submit): remove duplicate open-tender block causing build failure",
+    "summary": "fix(submit): remove duplicate open-tender block causing build failure",
+    "areas": [
+      "web"
+    ],
+    "commit": "6fdccd8c",
+    "files": [
+      "apps/web/src/app/create-project/submitting/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-edc8588f",
     "date": "2026-07-16T17:09:57+08:00",
     "title": "feat(submit): handle selected pros path, disable buttons until location",
