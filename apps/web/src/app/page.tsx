@@ -65,7 +65,7 @@ export default function Home() {
                   </div>
 
                   {/* Prompt box — center, flexes to fill */}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 space-y-5">
                     <VideoTeaser />
                     <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
                   </div>

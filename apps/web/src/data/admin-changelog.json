@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-19e17648",
+    "date": "2026-07-16T23:05:05+08:00",
+    "title": "fix(ui): use parent space-y-5 for nav-to-prompt spacing",
+    "summary": "fix(ui): use parent space-y-5 for nav-to-prompt spacing",
+    "areas": [
+      "web"
+    ],
+    "commit": "19e17648",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-fbbe6f21",
     "date": "2026-07-16T22:58:13+08:00",
     "title": "fix(ui): add 20px margin between nav and prompt box on home page",
