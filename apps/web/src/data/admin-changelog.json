@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-5b5f471b",
+    "date": "2026-07-16T17:39:59+08:00",
+    "title": "fix(build): update existingDraft declaration type to include safety fields",
+    "summary": "fix(build): update existingDraft declaration type to include safety fields",
+    "areas": [
+      "web"
+    ],
+    "commit": "5b5f471b",
+    "files": [
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-2bf057f4",
     "date": "2026-07-16T17:37:55+08:00",
     "title": "fix(pros): show 5 trade badges + ..., add safety debug logging",

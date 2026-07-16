@@ -1696,6 +1696,9 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
     let existingDraft: {
       initialData?: Partial<ProjectFormData>;
       aiIntakeId?: string;
+      safetyNotes?: string[];
+      riskNotes?: string[];
+      riskLevel?: string | null;
     } | null = null;
     let existingProjectDescription: {
       title?: string;
