@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-497e5751",
+    "date": "2026-07-16T17:20:07+08:00",
+    "title": "fix(wizard): use source=create-project when navigating to pros page",
+    "summary": "fix(wizard): use source=create-project when navigating to pros page",
+    "areas": [
+      "web"
+    ],
+    "commit": "497e5751",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-6fdccd8c",
     "date": "2026-07-16T17:12:11+08:00",
     "title": "fix(submit): remove duplicate open-tender block causing build failure",

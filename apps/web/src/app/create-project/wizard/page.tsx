@@ -1280,7 +1280,7 @@ export default function CreateProjectWizardPage() {
     if (resolvedTrades.length > 0) params.set('trades', resolvedTrades.join(','));
     if (location.secondary) params.set('location', location.secondary);
     else if (location.primary) params.set('location', location.primary);
-    params.set('source', 'ai-wizard');
+    params.set('source', 'create-project');
     router.push(`/professionals?${params.toString()}`);
   };
 
