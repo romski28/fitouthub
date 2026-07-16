@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-82861548",
+    "date": "2026-07-16T16:25:56+08:00",
+    "title": "fix(wizard): move pricing panel into scrollable body, remove footer duplicate",
+    "summary": "fix(wizard): move pricing panel into scrollable body, remove footer duplicate",
+    "areas": [
+      "web"
+    ],
+    "commit": "82861548",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-b5b7371d",
     "date": "2026-07-16T16:16:56+08:00",
     "title": "feat(wizard): add 'Now, get your prices' panel to final step",
