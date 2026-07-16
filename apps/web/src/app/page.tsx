@@ -29,7 +29,7 @@ export default function Home() {
 
 
   return (
-      <div className="w-full">
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-5 py-5 sm:px-8 sm:py-8">
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -40,10 +40,10 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="relative"
+          className="w-full max-w-6xl"
         >
-          <div className="mimo-panel relative mx-auto max-w-6xl overflow-hidden py-6 sm:py-8">
-            <div className="px-2 sm:px-4 lg:px-6">
+          <div className="mimo-panel relative overflow-hidden py-6 sm:py-8">
+            <div className="px-4 sm:px-6 lg:px-8">
               <div className="mb-4 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
                     <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut, Everything in Between.

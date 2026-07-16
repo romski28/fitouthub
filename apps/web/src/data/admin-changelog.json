@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-21acc70f",
+    "date": "2026-07-16T23:11:35+08:00",
+    "title": "feat(ui): center home page panel vertically + horizontally",
+    "summary": "feat(ui): center home page panel vertically + horizontally",
+    "areas": [
+      "web"
+    ],
+    "commit": "21acc70f",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-19e17648",
     "date": "2026-07-16T23:05:05+08:00",
     "title": "fix(ui): use parent space-y-5 for nav-to-prompt spacing",
