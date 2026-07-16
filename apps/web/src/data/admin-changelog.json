@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-7cbe7f08",
+    "date": "2026-07-16T14:04:43+08:00",
+    "title": "fix(db): use TEXT instead of UUID for ai_conversation_logs FK columns",
+    "summary": "fix(db): use TEXT instead of UUID for ai_conversation_logs FK columns",
+    "areas": [
+      "infra"
+    ],
+    "commit": "7cbe7f08",
+    "files": [
+      "MANUAL_SQL_ADD_AI_CONVERSATION_LOG.sql"
+    ]
+  },
+  {
     "id": "2026-07-16-a0c66092",
     "date": "2026-07-16T14:03:10+08:00",
     "title": "feat(ai): per-turn conversation logging for LLM training dataset",

@@ -4,11 +4,11 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS ai_conversation_logs (
-  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "sessionId"       UUID NOT NULL,
+  id                TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  "sessionId"       TEXT NOT NULL,
   turn              INT NOT NULL,
   role              TEXT NOT NULL CHECK (role IN ('user','assistant')),
-  "projectId"       UUID REFERENCES "Project"(id) ON DELETE SET NULL,
+  "projectId"       TEXT REFERENCES "Project"(id) ON DELETE SET NULL,
   "aiIntakeId"      TEXT REFERENCES ai_intakes(id) ON DELETE SET NULL,
   prompt            TEXT,
   "userResponse"    TEXT,
