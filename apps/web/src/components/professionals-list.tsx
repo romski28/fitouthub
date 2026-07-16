@@ -651,7 +651,7 @@ const ProfessionalCard = memo(({
 
   const visibleAreas = showAllAreas ? serviceAreas : serviceAreas.slice(0, 3);
   const hiddenAreasCount = Math.max(0, serviceAreas.length - visibleAreas.length);
-  const visibleTrades = showAllTrades ? tradeBadges : tradeBadges.slice(0, 3);
+  const visibleTrades = showAllTrades ? tradeBadges : tradeBadges.slice(0, 5);
   const hiddenTradesCount = Math.max(0, tradeBadges.length - visibleTrades.length);
   const refCount = pro.referenceProjects?.length || 0;
   const photoCount = pro.profileImages?.length || 0;
@@ -710,7 +710,7 @@ const ProfessionalCard = memo(({
                     +{hiddenTradesCount} more
                   </button>
                 )}
-                {showAllTrades && tradeBadges.length > 3 && (
+                {showAllTrades && tradeBadges.length > 5 && (
                   <button
                     type="button"
                     onClick={() => setShowAllTrades(false)}
@@ -1734,6 +1734,17 @@ export default function ProfessionalsList({ professionals, initialLocation, proj
 
     const memoryDraft = getCreateProjectDraftHandoff();
     const memoryProjectDescription = getProjectDescriptionHandoff();
+
+    console.log('[professionals-list][invite] memoryDraft safety:', {
+      safetyNotes: memoryDraft?.safetyNotes,
+      riskNotes: memoryDraft?.riskNotes,
+      riskLevel: memoryDraft?.riskLevel,
+    });
+    console.log('[professionals-list][invite] existingDraft safety:', {
+      safetyNotes: existingDraft?.safetyNotes,
+      riskNotes: existingDraft?.riskNotes,
+      riskLevel: existingDraft?.riskLevel,
+    });
 
     const resolvedTradesRequired = activeRequiredTrades.length > 0
       ? normalizeUniqueList(activeRequiredTrades)

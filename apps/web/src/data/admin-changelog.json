@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-2bf057f4",
+    "date": "2026-07-16T17:37:55+08:00",
+    "title": "fix(pros): show 5 trade badges + ..., add safety debug logging",
+    "summary": "fix(pros): show 5 trade badges + ..., add safety debug logging",
+    "areas": [
+      "web"
+    ],
+    "commit": "2bf057f4",
+    "files": [
+      "apps/web/src/app/create-project/submitting/page.tsx",
+      "apps/web/src/components/professionals-list.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-8b8b923c",
     "date": "2026-07-16T17:27:30+08:00",
     "title": "fix(pros): carry safety/risk data through professionals selection flow",

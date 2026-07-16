@@ -88,6 +88,14 @@ export default function SubmittingPage() {
     const mergedRisks = draft?.riskNotes || storedDraft?.riskNotes;
     const mergedRiskLevel = draft?.riskLevel || storedDraft?.riskLevel;
 
+    console.log('[submitting][safety] draft:', {
+      handoffSafety: draft?.safetyNotes,
+      storedSafety: storedDraft?.safetyNotes,
+      mergedSafety,
+      mergedRisks,
+      mergedRiskLevel,
+    });
+
     if (mergedSafety?.length) { setSafetyNotes(mergedSafety); _safetyNotes = mergedSafety; }
     if (mergedRisks?.length) { setRiskNotes(mergedRisks); _riskNotes = mergedRisks; }
     if (mergedRiskLevel) { setRiskLevel(mergedRiskLevel); _riskLevel = mergedRiskLevel; }
