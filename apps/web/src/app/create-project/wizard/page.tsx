@@ -1681,7 +1681,7 @@ export default function CreateProjectWizardPage() {
                   >
                     Next
                   </button>
-                ) : (
+                ) : activeStep?.kind !== 'projectDetails' ? (
                   <button
                     type="button"
                     onClick={submitWizard}
@@ -1689,8 +1689,46 @@ export default function CreateProjectWizardPage() {
                   >
                     Final checks
                   </button>
+                ) : (
+                  <div />
                 )}
               </div>
+
+              {/* Now, get your prices — final step action panel */}
+              {currentStep === steps.length - 1 && activeStep?.kind !== 'images' && (
+                <div className="mt-4">
+                  <h2 className="text-base font-bold text-slate-900 mb-3">Now, get your prices</h2>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {/* Open tender card */}
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => submitWizard()}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        Get prices from everyone
+                      </button>
+                      <p className="text-xs text-slate-600">
+                        {"We'll ask all local matching trades to send in pricing for your project."}
+                      </p>
+                    </div>
+
+                    {/* Limited tender card */}
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => submitWizard()}
+                        className="w-full rounded-lg border border-[#b94e2d] bg-white px-4 py-2.5 text-sm font-semibold text-[#b94e2d] transition hover:bg-orange-50"
+                      >
+                        {"I'll choose who sends prices"}
+                      </button>
+                      <p className="text-xs text-slate-600">
+                        Select from qualified local professionals who you want to price your project.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

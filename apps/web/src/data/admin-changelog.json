@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-b5b7371d",
+    "date": "2026-07-16T16:16:56+08:00",
+    "title": "feat(wizard): add 'Now, get your prices' panel to final step",
+    "summary": "feat(wizard): add 'Now, get your prices' panel to final step",
+    "areas": [
+      "web"
+    ],
+    "commit": "b5b7371d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-6c80e64b",
     "date": "2026-07-16T15:24:45+08:00",
     "title": "fix(wizard): images step shows Next instead of Submit when not final",
