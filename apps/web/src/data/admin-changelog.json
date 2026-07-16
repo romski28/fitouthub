@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-16-3fab0f08",
+    "date": "2026-07-16T14:41:13+08:00",
+    "title": "feat(ui): coral voice button on home page, hide image upload",
+    "summary": "feat(ui): coral voice button on home page, hide image upload",
+    "areas": [
+      "web"
+    ],
+    "commit": "3fab0f08",
+    "files": [
+      "apps/web/src/components/search-box.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-36152cd0",
     "date": "2026-07-16T14:36:01+08:00",
     "title": "Revert \"feat(projects): post AI brief as first chat message on project create\"",

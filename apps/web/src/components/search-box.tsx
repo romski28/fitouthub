@@ -195,6 +195,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
                   const base = prev.replace(/\s*\[⋯\].*$/, '').trim();
                   return base ? `${base} [⋯] ${text}` : `[⋯] ${text}`;
                 })}
+                className="!border-[#FF7F50] !bg-[#FF7F50] !text-white hover:!bg-[#e86840] hover:!border-[#e86840]"
               />
               {imageActions}
               {query.trim().length > 0 && (

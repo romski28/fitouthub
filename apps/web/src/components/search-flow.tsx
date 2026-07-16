@@ -1884,7 +1884,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           voiceLang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'yue-Hant-HK' : 'en-HK'}
           initialQuery={initialPrompt}
           imageActions={
-            !isAdminTester && deepSeekSandboxEnabled && showPromptUploader ? (
+            false ? (
               <ChatImageUploader
                 onFilesSelected={setPromptImages}
                 maxImages={promptImageLimit}
@@ -1898,25 +1898,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           }
         />
 
-        {!isAdminTester && deepSeekSandboxEnabled && showPromptUploader && (
+        {false && (
           <div className="mt-1 flex items-center justify-between px-1">
             <div>
               {!visionQuotaLoading && (
                 <p className="text-[10px] text-slate-400">
                   {visionQuota
-                    ? t('imageQuota', { remaining: visionQuota.remainingToday, max: visionQuota.maxImagesPerDay, perPrompt: visionQuota.maxImagesPerPrompt })
-                    : t('imageQuotaMax', { max: promptImageLimit })}
-                </p>
-              )}
-              {visionQuotaLoading && (
-                <p className="text-[10px] text-slate-400">{t('checkingQuota')}</p>
-              )}
-              {visionQuotaError && (
-                <p className="text-[10px] text-rose-500">{visionQuotaError}</p>
-              )}
-              {visionQuota && !visionQuota.canUseVision && (
-                <p className="text-[10px] text-amber-600">
-                  {t('dailyQuotaReached')}
+                    ? 'Images: ' + visionQuota.remainingToday + '/' + visionQuota.maxImagesPerDay + ' remaining (' + visionQuota.maxImagesPerPrompt + '/prompt)'
+                    : 'Max ' + promptImageLimit + ' images'}
                 </p>
               )}
             </div>
