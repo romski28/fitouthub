@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-fbbe6f21",
+    "date": "2026-07-16T22:58:13+08:00",
+    "title": "fix(ui): add 20px margin between nav and prompt box on home page",
+    "summary": "fix(ui): add 20px margin between nav and prompt box on home page",
+    "areas": [
+      "web"
+    ],
+    "commit": "fbbe6f21",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-40dd2ea3",
     "date": "2026-07-16T22:41:21+08:00",
     "title": "feat(ui): password visibility toggle across login + profile pages",
