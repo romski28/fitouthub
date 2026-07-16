@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-16-40dd2ea3",
+    "date": "2026-07-16T22:41:21+08:00",
+    "title": "feat(ui): password visibility toggle across login + profile pages",
+    "summary": "feat(ui): password visibility toggle across login + profile pages",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "40dd2ea3",
+    "files": [
+      "apps/api/src/professional-auth/professional-auth.service.ts",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/password-input.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-838042fc",
     "date": "2026-07-16T22:15:57+08:00",
     "title": "fix(api): update professionals password via Identity table",

@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast';
 import PhoneInput from '@/components/phone-input';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+import { PasswordInput } from '@/components/password-input';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
@@ -564,10 +565,9 @@ export default function ProfilePage() {
               <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
                 <div>
                   <label className={sectionLabelClassName}>New password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={passwordDraft}
-                    onChange={(e) => setPasswordDraft(e.target.value)}
+                    onChange={setPasswordDraft}
                     className={paperInputClassName}
                     placeholder={t('passwordHint')}
                     autoFocus
@@ -577,10 +577,9 @@ export default function ProfilePage() {
 
                 <div>
                   <label className={sectionLabelClassName}>Confirm new password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    onChange={setPasswordConfirm}
                     className={paperInputClassName}
                     placeholder="Re-enter your new password"
                   />

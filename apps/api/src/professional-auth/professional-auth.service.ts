@@ -450,15 +450,26 @@ export class ProfessionalAuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const professional = await (this.prisma as any).professional.update({
+    // Find the professional to get their identityId
+    const professional = await (this.prisma as any).professional.findUnique({
       where: { id: professionalId },
+      select: { identityId: true, email: true, fullName: true },
+    });
+
+    if (!professional?.identityId) {
+      throw new BadRequestException('Professional has no linked identity record');
+    }
+
+    // Update password on the Identity table
+    await (this.prisma as any).identity.update({
+      where: { id: professional.identityId },
       data: { passwordHash: hashedPassword },
     });
 
     return {
       success: true,
       professional: {
-        id: professional.id,
+        id: professionalId,
         email: professional.email,
         fullName: professional.fullName,
       },

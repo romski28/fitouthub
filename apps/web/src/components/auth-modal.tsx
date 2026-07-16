@@ -8,6 +8,7 @@ import Script from 'next/script';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
+import { PasswordInput } from '@/components/password-input';
 import { API_BASE_URL } from '@/config/api';
 import PhoneInput from '@/components/phone-input';
 import confetti from 'canvas-confetti';
@@ -682,11 +683,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           {t('login.password')}
                         </label>
-                        <input
-                          type="password"
+                        <PasswordInput
                           value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          required
+                          onChange={setLoginPassword}
+                          placeholder=""
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </div>
@@ -870,12 +870,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.password')}
                     </label>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
+                    <PasswordInput
                       value={clientForm.password}
-                      onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
-                      required
+                      onChange={(v) => setClientForm({ ...clientForm, password: v })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -883,12 +880,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.confirmPassword')}
                     </label>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
+                    <PasswordInput
                       value={clientForm.confirmPassword}
-                      onChange={(e) => setClientForm({ ...clientForm, confirmPassword: e.target.value })}
-                      required
+                      onChange={(v) => setClientForm({ ...clientForm, confirmPassword: v })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -1154,12 +1148,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.password')}
                     </label>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
+                    <PasswordInput
                       value={professionalForm.password}
-                      onChange={(e) => setProfessionalForm({ ...professionalForm, password: e.target.value })}
-                      required
+                      onChange={(v) => setProfessionalForm({ ...professionalForm, password: v })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -1167,12 +1158,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       {t('signup.confirmPassword')}
                     </label>
-                    <input
-                      type="password"
-                      autoComplete="new-password"
+                    <PasswordInput
                       value={professionalForm.confirmPassword}
-                      onChange={(e) => setProfessionalForm({ ...professionalForm, confirmPassword: e.target.value })}
-                      required
+                      onChange={(v) => setProfessionalForm({ ...professionalForm, confirmPassword: v })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
