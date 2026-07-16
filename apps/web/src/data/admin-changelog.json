@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-838042fc",
+    "date": "2026-07-16T22:15:57+08:00",
+    "title": "fix(api): update professionals password via Identity table",
+    "summary": "fix(api): update professionals password via Identity table",
+    "areas": [
+      "api"
+    ],
+    "commit": "838042fc",
+    "files": [
+      "apps/api/src/professionals/professionals.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-16-28218537",
     "date": "2026-07-16T22:08:30+08:00",
     "title": "feat(admin): add password visibility toggle to user/pro CRUD",

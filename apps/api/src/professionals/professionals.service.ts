@@ -852,8 +852,20 @@ export class ProfessionalsService {
   async updatePassword(id: string, password: string) {
     const bcrypt = require('bcrypt');
     const hash = await bcrypt.hash(password, 10);
-    return (this.prisma as any).professional.update({
+
+    // Find the professional to get their identityId
+    const professional = await (this.prisma as any).professional.findUnique({
       where: { id },
+      select: { identityId: true },
+    });
+
+    if (!professional?.identityId) {
+      throw new Error('Professional has no linked identity record');
+    }
+
+    // Update password on the Identity table
+    return (this.prisma as any).identity.update({
+      where: { id: professional.identityId },
       data: { passwordHash: hash },
     });
   }
