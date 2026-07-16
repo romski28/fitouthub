@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-16-14e0e89d",
+    "date": "2026-07-16T14:57:10+08:00",
+    "title": "feat(wizard): conditional images step based on chat attachments",
+    "summary": "feat(wizard): conditional images step based on chat attachments",
+    "areas": [
+      "web"
+    ],
+    "commit": "14e0e89d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-3fab0f08",
     "date": "2026-07-16T14:41:13+08:00",
     "title": "feat(ui): coral voice button on home page, hide image upload",

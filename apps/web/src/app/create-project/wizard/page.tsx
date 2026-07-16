@@ -593,14 +593,41 @@ export default function CreateProjectWizardPage() {
     );
   };
 
+  const hasImagesFromChat = chatAttachedFiles.length > 0 || projectFiles.length > 0;
+
   const steps = useMemo<WizardStep[]>(
-    () => [
-      { kind: 'followups' },
-      { kind: 'projectDetails' },
-      { kind: 'images' },
-    ],
-    [],
+    () => {
+      // If AI is done and user shared images in chat, skip the images step entirely
+      if (summaryConfirmationShown && hasImagesFromChat) {
+        return [
+          { kind: 'followups' as const },
+          { kind: 'projectDetails' as const },
+        ];
+      }
+      // No images shared — insert images step before projectDetails so they get a chance
+      if (summaryConfirmationShown && !hasImagesFromChat) {
+        return [
+          { kind: 'followups' as const },
+          { kind: 'images' as const },
+          { kind: 'projectDetails' as const },
+        ];
+      }
+      // AI still running — default layout (all 3, images last)
+      return [
+        { kind: 'followups' as const },
+        { kind: 'projectDetails' as const },
+        { kind: 'images' as const },
+      ];
+    },
+    [summaryConfirmationShown, hasImagesFromChat],
   );
+
+  // Safety: clamp currentStep if the steps array shrank (e.g. images shared mid-chat)
+  useEffect(() => {
+    if (currentStep >= steps.length) {
+      setCurrentStep(steps.length - 1);
+    }
+  }, [steps.length, currentStep]);
 
   const activeStep = steps[currentStep];
   // const currentMotivation = MOTIVATION[Math.min(currentStep, MOTIVATION.length - 1)] || MOTIVATION[MOTIVATION.length - 1]; // REMOVED — header simplified
