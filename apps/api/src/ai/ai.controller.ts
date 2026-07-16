@@ -310,4 +310,33 @@ export class AiController {
     if (!Array.isArray(body?.entryIds)) throw new BadRequestException('entryIds must be an array');
     return this.aiService.reorderScopeEntries(projectId, actor, body.entryIds);
   }
+
+  // ── Admin: AI Conversation Logs ──
+
+  @Get('admin/conversation-logs')
+  @UseGuards(CombinedAuthGuard)
+  async listConversationLogs(
+    @Query('projectId') projectId?: string,
+    @Query('sessionId') sessionId?: string,
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Request() req?: any,
+  ) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.aiService.listConversationLogs({
+      projectId,
+      sessionId,
+      skip: skip ? parseInt(skip, 10) : 0,
+      take: take ? Math.min(parseInt(take, 10), 250) : 50,
+    });
+  }
+
+  @Delete('admin/conversation-logs/:id')
+  @UseGuards(CombinedAuthGuard)
+  async deleteConversationLog(@Param('id') id: string, @Request() req: any) {
+    const actor = this.resolveActor(req);
+    if (actor.role !== 'admin') throw new ForbiddenException('Admin access required');
+    return this.aiService.deleteConversationLog(id);
+  }
 }

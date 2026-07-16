@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-07-16-a0c66092",
+    "date": "2026-07-16T14:03:10+08:00",
+    "title": "feat(ai): per-turn conversation logging for LLM training dataset",
+    "summary": "feat(ai): per-turn conversation logging for LLM training dataset",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "a0c66092",
+    "files": [
+      "MANUAL_SQL_ADD_AI_CONVERSATION_LOG.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-15-5d31f16d",
     "date": "2026-07-15T23:03:20+08:00",
     "title": "feat(create-project): safety review modal with Read more + auto-redirect",

@@ -2061,6 +2061,30 @@ model AiIntakeImageInsight {
 }
 
 // ============================================================
+// AI Conversation Log — per-turn wizard logging for LLM training
+// ============================================================
+
+model AiConversationLog {
+  id              String    @id @default(cuid())
+  sessionId       String
+  turn            Int
+  role            String
+  projectId       String?
+  aiIntakeId      String?
+  prompt          String?
+  userResponse    String?
+  structuredJson  Json?
+  safetyJson      Json?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  @@index([sessionId])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("ai_conversation_logs")
+}
+
+// ============================================================
 // UX Feedback — post-project-creation survey
 // ============================================================
 

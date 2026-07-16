@@ -5362,10 +5362,33 @@ Please review the project details and respond with your quote or decline the inv
           },
         });
       } catch (err) {
-        // Silently fail AI intake linking - project was already created successfully
         console.warn('[ProjectsService.create] Failed to link AI intake:', {
           aiIntakeId,
           projectId: project.id,
+          error: (err as Error)?.message,
+        });
+      }
+    }
+
+    // Backfill projectId on any conversation log turns that share the wizard session
+    if (aiIntakeId) {
+      try {
+        const intake = await this.prisma.aiIntake.findUnique({
+          where: { id: aiIntakeId },
+          select: { sessionId: true },
+        });
+        if (intake?.sessionId) {
+          const updated = await (this.prisma as any).aiConversationLog.updateMany({
+            where: { sessionId: intake.sessionId },
+            data: { projectId: project.id },
+          });
+          if (updated?.count > 0) {
+            console.log(`[ProjectsService.create] Backfilled projectId on ${updated.count} conversation log(s) for session=${intake.sessionId}`);
+          }
+        }
+      } catch (err) {
+        console.warn('[ProjectsService.create] Failed to backfill conversation logs:', {
+          aiIntakeId,
           error: (err as Error)?.message,
         });
       }

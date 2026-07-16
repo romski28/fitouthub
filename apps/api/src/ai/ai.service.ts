@@ -701,6 +701,74 @@ export class AiService {
     return parsedObject;
   }
 
+  /**
+   * Log a single conversation turn to ai_conversation_logs for LLM training.
+   * Non-blocking — failures are caught and logged without affecting the user response.
+   */
+  private async logConversationTurn(params: {
+    sessionId: string;
+    intakeId: string;
+    prompt: string;
+    parsedOutput: unknown;
+    requestId: string;
+  }) {
+    const { sessionId, intakeId, prompt, parsedOutput, requestId } = params;
+    const po = parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
+      ? (parsedOutput as Record<string, unknown>)
+      : null;
+
+    // Count existing turns for this session to determine turn number
+    const existingCount = await this.prisma.aiConversationLog.count({
+      where: { sessionId },
+    });
+
+    // Extract safety assessment from parsed output
+    const project = po?.project && typeof po.project === 'object' && !Array.isArray(po.project)
+      ? (po.project as Record<string, unknown>)
+      : null;
+    const safetyAssessment = project?.safetyAssessment ?? po?.safetyAssessment ?? null;
+
+    // Extract conversational text as the assistant "response"
+    const conversationalText = typeof po?.conversationalText === 'string'
+      ? po.conversationalText.trim()
+      : null;
+
+    await this.prisma.aiConversationLog.create({
+      data: {
+        sessionId,
+        turn: existingCount + 1,
+        role: 'user',
+        prompt,
+        userResponse: null,
+        aiIntakeId: intakeId,
+        structuredJson: po ? (po as any) : undefined,
+        safetyJson: safetyAssessment as any ?? undefined,
+        metadata: { requestId },
+      },
+    });
+
+    // Also log the assistant turn if conversational text exists
+    if (conversationalText) {
+      await this.prisma.aiConversationLog.create({
+        data: {
+          sessionId,
+          turn: existingCount + 2,
+          role: 'assistant',
+          prompt: null,
+          userResponse: conversationalText,
+          aiIntakeId: intakeId,
+          structuredJson: po ? (po as any) : undefined,
+          safetyJson: safetyAssessment as any ?? undefined,
+          metadata: { requestId, turnLabel: 'response' },
+        },
+      });
+    }
+
+    this.logger.log(
+      `[${requestId}] Conversation turn logged sessionId=${sessionId} turn=${existingCount + 1} hasAssistant=${!!conversationalText}`,
+    );
+  }
+
   private async persistAiIntakeImageInsights(params: {
     intakeId: string;
     imageUrls: string[];
@@ -3227,6 +3295,21 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         intakeId = intake.id;
         this.logger.log(`[${requestId}] Intake saved id=${intakeId}`);
 
+        // Log conversation turn for LLM training dataset
+        if (sessionId) {
+          try {
+            await this.logConversationTurn({
+              sessionId,
+              intakeId,
+              prompt: trimmedPrompt,
+              parsedOutput,
+              requestId,
+            });
+          } catch (logErr) {
+            this.logger.warn(`[${requestId}] Conversation log failed: ${(logErr as Error).message}`);
+          }
+        }
+
         if (requestedImageCount > 0) {
           await this.persistAiIntakeImageInsights({
             intakeId,
@@ -3674,6 +3757,51 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     });
 
     return updated;
+  }
+
+  // ── Admin: AI Conversation Log CRUD ──
+
+  async listConversationLogs(params: {
+    projectId?: string;
+    sessionId?: string;
+    skip?: number;
+    take?: number;
+  }) {
+    const where: any = {};
+    if (params.projectId) where.projectId = params.projectId;
+    if (params.sessionId) where.sessionId = params.sessionId;
+
+    const [logs, total] = await Promise.all([
+      this.prisma.aiConversationLog.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        skip: params.skip ?? 0,
+        take: params.take ?? 50,
+        select: {
+          id: true,
+          sessionId: true,
+          turn: true,
+          role: true,
+          projectId: true,
+          aiIntakeId: true,
+          prompt: true,
+          userResponse: true,
+          safetyJson: true,
+          metadata: true,
+          createdAt: true,
+        },
+      }),
+      (this.prisma as any).aiConversationLog.count({ where }),
+    ]);
+
+    return { logs, total, skip: params.skip ?? 0, take: params.take ?? 50 };
+  }
+
+  async deleteConversationLog(id: string) {
+    const log = await this.prisma.aiConversationLog.findUnique({ where: { id } });
+    if (!log) throw new NotFoundException('Conversation log not found');
+    await this.prisma.aiConversationLog.delete({ where: { id } });
+    return { success: true, id };
   }
 
   private toScopeContainer(projectJson: Record<string, unknown>): ScopeContainer {
