@@ -1818,7 +1818,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
 
   return (
-    <div className={`transition-opacity duration-500 ${pageExiting ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`min-w-0 overflow-hidden transition-opacity duration-500 ${pageExiting ? 'opacity-0' : 'opacity-100'}`}>
     <div className="space-y-3 min-w-0 overflow-hidden">
       {!isAdminTester && deepSeekSandboxEnabled && (
         <div className="space-y-3">
@@ -1943,7 +1943,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
       {hasAiResponse && (
         <div id="ai-path-fork" className={`pt-3 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0 overflow-hidden'}`}>
-          <div className="rounded-xl border border-[#E8D5B0] bg-[#FBF7EF] px-3 py-4 shadow-sm">
+          <div className="rounded-xl border border-[#E8D5B0] bg-[#FBF7EF] px-3 py-4">
             {isLoggedIn === true ? (
               <>
                 <div className="text-center">

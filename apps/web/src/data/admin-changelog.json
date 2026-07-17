@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-035f7617",
+    "date": "2026-07-17T15:28:57+08:00",
+    "title": "fix(ui): clamp search-flow outer wrapper, remove CTA shadow, collapse video during AI thinking",
+    "summary": "fix(ui): clamp search-flow outer wrapper, remove CTA shadow, collapse video during AI thinking",
+    "areas": [
+      "web"
+    ],
+    "commit": "035f7617",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-67ac1326",
     "date": "2026-07-17T15:21:31+08:00",
     "title": "fix(ui): hard-clip panel width chain, restore video guest gate",
