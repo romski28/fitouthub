@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-8a062eef",
+    "date": "2026-07-17T14:19:52+08:00",
+    "title": "fix(ui): fix panel position, VideoTeaser flash, CTA border flash",
+    "summary": "fix(ui): fix panel position, VideoTeaser flash, CTA border flash",
+    "areas": [
+      "web"
+    ],
+    "commit": "8a062eef",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-ef4fe765",
     "date": "2026-07-17T14:11:46+08:00",
     "title": "fix(ui): collapse SearchBox when hidden, preventing layout gap",

@@ -1942,7 +1942,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       )}
 
       {hasAiResponse && (
-        <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0'}`}>
+        <div id="ai-path-fork" className={`transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'border-t border-emerald-100 pt-2 translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0 overflow-hidden'}`}>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-5 shadow-sm">
             {isLoggedIn === true ? (
               <>

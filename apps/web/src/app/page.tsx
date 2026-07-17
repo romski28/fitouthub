@@ -35,7 +35,7 @@ export default function Home() {
 
 
   return (
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-5 pt-8 pb-5 sm:px-8 sm:pt-10 sm:pb-8">
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-5 pt-20 pb-5 sm:px-8 sm:pt-24 sm:pb-8">
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -73,7 +73,7 @@ export default function Home() {
 
                   {/* Prompt box — center, flexes to fill */}
                   <div className="min-w-0 flex-1 min-h-0 flex flex-col">
-                    <div className="shrink-0">
+                    <div className="shrink-0" style={{ minHeight: '280px' }}>
                       <VideoTeaser />
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto">
