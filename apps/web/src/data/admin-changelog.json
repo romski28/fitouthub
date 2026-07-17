@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-51f4649c",
+    "date": "2026-07-17T10:51:52+08:00",
+    "title": "fix(ui): use max-height + vertical centering for home panel",
+    "summary": "fix(ui): use max-height + vertical centering for home panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "51f4649c",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-16-97bcd5b6",
     "date": "2026-07-16T23:48:09+08:00",
     "title": "fix(ui): match tablet panel height to mobile (100vh-160px)",
