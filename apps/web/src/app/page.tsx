@@ -93,9 +93,6 @@ export default function Home() {
                     />
                   </div>
                 </div>
-
-                {/* CTA portal target — outside 3-col, spans full panel width */}
-                <div id="search-cta-portal" className="shrink-0" />
               </div>
           </div>
         </section>

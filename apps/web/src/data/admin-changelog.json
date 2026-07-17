@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-cdd93dcd",
+    "date": "2026-07-17T15:06:28+08:00",
+    "title": "revert: portal CTA approach, tighten CTA padding to fit column",
+    "summary": "revert: portal CTA approach, tighten CTA padding to fit column",
+    "areas": [
+      "web"
+    ],
+    "commit": "cdd93dcd",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-6c0a35fb",
     "date": "2026-07-17T14:52:53+08:00",
     "title": "fix(ui): portal CTA to span full panel width; video portrait text",
