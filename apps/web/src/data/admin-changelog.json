@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-ef4fe765",
+    "date": "2026-07-17T14:11:46+08:00",
+    "title": "fix(ui): collapse SearchBox when hidden, preventing layout gap",
+    "summary": "fix(ui): collapse SearchBox when hidden, preventing layout gap",
+    "areas": [
+      "web"
+    ],
+    "commit": "ef4fe765",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-ba813b92",
     "date": "2026-07-17T13:55:55+08:00",
     "title": "fix(ui): push panel below navbar + add slide-down with fade",

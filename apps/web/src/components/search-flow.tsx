@@ -1871,7 +1871,8 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         </div>
       )}
 
-      <div className={`transition-opacity duration-500 ${showPromptComposer ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {showPromptComposer && (
+        <div className="transition-opacity duration-500 opacity-100">
         <SearchBox
           onSubmit={handleSearch}
           autoFocus={autoFocusPrompt || !!initialPrompt || !!initialImages?.length}
@@ -1938,6 +1939,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           </div>
         )}
       </div>
+      )}
 
       {hasAiResponse && (
         <div id="ai-path-fork" className={`border-t border-emerald-100 pt-2 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0'}`}>
