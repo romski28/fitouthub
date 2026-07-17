@@ -552,6 +552,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState<number | null>(null);
   const [promptCharCount, setPromptCharCount] = useState(0);
   const [searchBoxClearKey, setSearchBoxClearKey] = useState(0);
+  const [ctaPortalTarget, setCtaPortalTarget] = useState<HTMLElement | null>(null);
   const hasClearedForgottenPromptRef = useRef(false);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
@@ -579,6 +580,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   useEffect(() => {
     onAiLoadingChange?.(aiLoading);
   }, [aiLoading, onAiLoadingChange]);
+
+  // Capture portal target for CTA — allows it to span full panel width
+  useEffect(() => {
+    setCtaPortalTarget(document.getElementById('search-cta-portal'));
+  }, []);
 
   // Photo path: auto-submit when images are pre-loaded from intake
   const photoAutoSubmitRef = useRef(false);
@@ -1941,7 +1947,70 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       </div>
       )}
 
-      {hasAiResponse && (
+      {hasAiResponse && (ctaPortalTarget ? createPortal(
+        <div id="ai-path-fork" className={`pt-3 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0 overflow-hidden'}`}>
+          <div className="rounded-2xl border border-[#E8D5B0] bg-[#FBF7EF] px-4 py-5 shadow-sm">
+            {isLoggedIn === true ? (
+              <>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-slate-900">
+                    {autoRedirectCountdown !== null && autoRedirectCountdown > 0
+                      ? `Taking you to project setup in ${autoRedirectCountdown}...`
+                      : 'Ready to continue?'}
+                  </p>
+                </div>
+
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAutoRedirectCountdown(null);
+                      handleStartAiWizard();
+                    }}
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-lg"
+                  >
+                    {autoRedirectCountdown !== null && autoRedirectCountdown > 0 ? 'Go now' : 'Continue with MIMO'}
+                  </button>
+                </div>
+
+                {autoRedirectCountdown !== null && autoRedirectCountdown > 0 && (
+                  <div className="mt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setAutoRedirectCountdown(null)}
+                      className="text-xs text-slate-400 underline hover:text-slate-600"
+                    >
+                      Cancel auto-redirect
+                    </button>
+                  </div>
+                )}
+
+              </>
+            ) : (
+              <div className="text-center">
+                <p className="text-lg font-semibold text-slate-900">Let&apos;s start</p>
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleGuestJoin}
+                    className="flex-1 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    New user
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGuestLogin}
+                    className="flex-1 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                  >
+                    Existing user
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        ctaPortalTarget
+      ) : (
         <div id="ai-path-fork" className={`pt-3 transition-all duration-700 ease-out ${isConversationSequenceComplete ? 'translate-y-0 opacity-100 delay-300' : 'pointer-events-none translate-y-2 opacity-0 overflow-hidden'}`}>
           <div className="rounded-2xl border border-[#E8D5B0] bg-[#FBF7EF] px-4 py-5 shadow-sm">
             {isLoggedIn === true ? (
@@ -2003,7 +2072,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             )}
           </div>
         </div>
-      )}
+      ))}
 
       {hasAiResponse && isConversationSequenceComplete && displayedTrades.length > 0 && (
         <div className="mt-3 space-y-2 text-center text-sm text-slate-500">

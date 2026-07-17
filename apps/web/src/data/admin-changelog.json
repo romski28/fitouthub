@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-17-6c0a35fb",
+    "date": "2026-07-17T14:52:53+08:00",
+    "title": "fix(ui): portal CTA to span full panel width; video portrait text",
+    "summary": "fix(ui): portal CTA to span full panel width; video portrait text",
+    "areas": [
+      "web"
+    ],
+    "commit": "6c0a35fb",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-ece51b82",
     "date": "2026-07-17T14:41:42+08:00",
     "title": "fix(ui): neutral CTA box, remove green separator line",
