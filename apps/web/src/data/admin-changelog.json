@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-3cdc2898",
+    "date": "2026-07-17T16:14:51+08:00",
+    "title": "fix(ui): add w-full to mimo-panel, max-w-full to CTA fork",
+    "summary": "fix(ui): add w-full to mimo-panel, max-w-full to CTA fork",
+    "areas": [
+      "web"
+    ],
+    "commit": "3cdc2898",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-0c51404f",
     "date": "2026-07-17T16:08:43+08:00",
     "title": "fix(ui): CTA back to sm:flex-row; ThinkingIndicator fades out on complete",

@@ -55,7 +55,7 @@ export default function Home() {
           className={`w-full max-w-6xl mx-auto min-w-0 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}
         >
-          <div className="mimo-panel relative h-full flex flex-col overflow-hidden py-6 sm:py-8">
+          <div className="mimo-panel relative h-full w-full flex flex-col overflow-hidden py-6 sm:py-8">
             <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
               <div className="shrink-0 mb-4 text-center">
                   <h2 className="text-2xl font-bold text-slate-900">
