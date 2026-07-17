@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-06e23bb9",
+    "date": "2026-07-17T15:56:06+08:00",
+    "title": "fix(ui): video stays hidden after AI starts; CTA buttons stack w-full",
+    "summary": "fix(ui): video stays hidden after AI starts; CTA buttons stack w-full",
+    "areas": [
+      "web"
+    ],
+    "commit": "06e23bb9",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-035f7617",
     "date": "2026-07-17T15:28:57+08:00",
     "title": "fix(ui): clamp search-flow outer wrapper, remove CTA shadow, collapse video during AI thinking",

@@ -1983,18 +1983,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             ) : (
               <div className="text-center">
                 <p className="text-lg font-semibold text-slate-900">Let&apos;s start</p>
-                <div className="mt-4 flex flex-col sm:flex-row gap-3 min-w-0">
+                <div className="mt-4 flex flex-col gap-3">
                   <button
                     type="button"
                     onClick={handleGuestJoin}
-                    className="flex-1 min-w-0 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 truncate"
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     New user
                   </button>
                   <button
                     type="button"
                     onClick={handleGuestLogin}
-                    className="flex-1 min-w-0 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 truncate"
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     Existing user
                   </button>

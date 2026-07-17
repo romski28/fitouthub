@@ -15,7 +15,13 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
+  const [aiHasStarted, setAiHasStarted] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const handleAiLoadingChange = (loading: boolean) => {
+    setMimoThinking(loading);
+    if (loading) setAiHasStarted(true);
+  };
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
@@ -73,11 +79,11 @@ export default function Home() {
 
                   {/* Prompt box — center, flexes to fill */}
                   <div className="min-w-0 flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
-                    <div className={`shrink-0 transition-all duration-500 ease-out ${mimoThinking ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-44 opacity-100'}`}>
+                    <div className={`shrink-0 transition-all duration-500 ease-out ${aiHasStarted ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-44 opacity-100'}`}>
                       <VideoTeaser />
                     </div>
                     <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-                      <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={setMimoThinking} />
+                      <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={handleAiLoadingChange} />
                     </div>
                   </div>
 
