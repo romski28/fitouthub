@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-3540a858",
+    "date": "2026-07-17T11:41:41+08:00",
+    "title": "feat(ui): fade-in panel + simple opacity transition for prompt",
+    "summary": "feat(ui): fade-in panel + simple opacity transition for prompt",
+    "areas": [
+      "web"
+    ],
+    "commit": "3540a858",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-51f4649c",
     "date": "2026-07-17T10:51:52+08:00",
     "title": "fix(ui): use max-height + vertical centering for home panel",

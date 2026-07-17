@@ -15,6 +15,12 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
 
@@ -40,7 +46,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className="w-full max-w-6xl"
+          className={`w-full max-w-6xl transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
           style={{ maxHeight: 'calc(100vh - 128px)' }}
         >
           <div className="mimo-panel relative h-full flex flex-col overflow-hidden py-6 sm:py-8">

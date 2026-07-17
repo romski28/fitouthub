@@ -1871,7 +1871,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         </div>
       )}
 
-      <div className={`origin-top transition-all duration-[900ms] ${showPromptComposer ? 'max-h-[720px] scale-y-100 opacity-100' : 'pointer-events-none max-h-0 scale-y-95 opacity-0'} overflow-hidden`}>
+      <div className={`transition-opacity duration-500 ${showPromptComposer ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <SearchBox
           onSubmit={handleSearch}
           autoFocus={autoFocusPrompt || !!initialPrompt || !!initialImages?.length}
