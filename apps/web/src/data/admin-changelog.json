@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-08f33113",
+    "date": "2026-07-17T14:34:08+08:00",
+    "title": "fix(ui): fixed-height panel with proper header/panel/footer spacing",
+    "summary": "fix(ui): fixed-height panel with proper header/panel/footer spacing",
+    "areas": [
+      "web"
+    ],
+    "commit": "08f33113",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-c2312a23",
     "date": "2026-07-17T14:27:25+08:00",
     "title": "fix(ui): stabilize VideoTeaser — fixed height + fade-in",
