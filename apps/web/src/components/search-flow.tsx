@@ -1976,7 +1976,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                       setAutoRedirectCountdown(null);
                       handleStartAiWizard();
                     }}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-lg"
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     {autoRedirectCountdown !== null && autoRedirectCountdown > 0 ? 'Go now' : 'Continue with MIMO'}
                   </button>
@@ -2002,14 +2002,14 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                   <button
                     type="button"
                     onClick={handleGuestJoin}
-                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     New user
                   </button>
                   <button
                     type="button"
                     onClick={handleGuestLogin}
-                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     Existing user
                   </button>

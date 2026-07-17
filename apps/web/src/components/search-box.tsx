@@ -152,7 +152,7 @@ export default function SearchBox({ onSubmit, autoFocus = false, onClear, submit
   return (
     <div className="relative w-full">
       <form onSubmit={handleSubmit} className="relative">
-        <div className="bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <div className="relative px-3 sm:px-4 pt-3 sm:pt-4">
             <textarea
               ref={textareaRef}

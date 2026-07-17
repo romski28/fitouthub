@@ -52,7 +52,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className={`w-full max-w-6xl mx-auto min-w-0 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`w-full max-w-6xl mx-auto overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}
         >
           <div className="mimo-panel relative h-full w-full flex flex-col overflow-hidden py-6 sm:py-8">
