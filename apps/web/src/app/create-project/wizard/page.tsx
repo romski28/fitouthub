@@ -308,6 +308,7 @@ export default function CreateProjectWizardPage() {
   const { isLoggedIn, userLocation, accessToken, preferredLanguage, user } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [seedDraft, setSeedDraft] = useState<CreateProjectDraft | null>(null);
   const [seedDescription, setSeedDescription] = useState<ProjectDescriptionData | null>(null);
   const [seedLoaded, setSeedLoaded] = useState(false);
@@ -389,6 +390,11 @@ export default function CreateProjectWizardPage() {
 
   useEffect(() => {
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
@@ -1289,9 +1295,9 @@ export default function CreateProjectWizardPage() {
   }
 
   return (
-    <div className="min-h-screen pb-1 pt-0 sm:pb-2 sm:pt-0.5">
-      <section className="sm:-mx-6 sm:px-6">
-        <div className="mx-auto flex h-[calc(100dvh-6rem)] max-h-[calc(100dvh-6rem)] min-h-0 w-full max-w-6xl flex-col rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-2.5 sm:h-[calc(100dvh-6.25rem)] sm:max-h-[calc(100dvh-6.25rem)] sm:p-3">
+    <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+      <section className={`w-full max-w-6xl mx-auto overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}>
+        <div className="mimo-panel relative h-full w-full flex flex-col overflow-hidden py-6 sm:py-8">
 
           <div className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-hidden rounded-2xl border border-slate-300/60 bg-white/70">
             <div className="min-h-0 flex-1 overflow-hidden">

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-8f0d7330",
+    "date": "2026-07-17T16:55:11+08:00",
+    "title": "feat(ui): match wizard container to home page, fade-in transition",
+    "summary": "feat(ui): match wizard container to home page, fade-in transition",
+    "areas": [
+      "web"
+    ],
+    "commit": "8f0d7330",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-39af0dae",
     "date": "2026-07-17T16:32:03+08:00",
     "title": "fix(ui): stabilize three-column layout with explicit basis and w-full",
