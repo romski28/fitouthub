@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-17-67ac1326",
+    "date": "2026-07-17T15:21:31+08:00",
+    "title": "fix(ui): hard-clip panel width chain, restore video guest gate",
+    "summary": "fix(ui): hard-clip panel width chain, restore video guest gate",
+    "areas": [
+      "web"
+    ],
+    "commit": "67ac1326",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-905b5bdc",
     "date": "2026-07-17T15:18:11+08:00",
     "title": "fix(ui): show video teaser for all users, not just guests",
