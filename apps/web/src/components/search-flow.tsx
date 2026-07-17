@@ -1819,7 +1819,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
 
   return (
     <div className={`transition-opacity duration-500 ${pageExiting ? 'opacity-0' : 'opacity-100'}`}>
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0 overflow-hidden">
       {!isAdminTester && deepSeekSandboxEnabled && (
         <div className="space-y-3">
           {aiRoundNotice && (

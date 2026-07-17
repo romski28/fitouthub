@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-bd8aebc7",
+    "date": "2026-07-17T15:15:50+08:00",
+    "title": "fix(ui): add overflow-hidden to center column chain to prevent CTA width bleed",
+    "summary": "fix(ui): add overflow-hidden to center column chain to prevent CTA width bleed",
+    "areas": [
+      "web"
+    ],
+    "commit": "bd8aebc7",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-cdd93dcd",
     "date": "2026-07-17T15:06:28+08:00",
     "title": "revert: portal CTA approach, tighten CTA padding to fit column",
