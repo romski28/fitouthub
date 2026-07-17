@@ -556,6 +556,17 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; status: string } | null>(null);
+  const [showThinking, setShowThinking] = useState(false);
+
+  // Keep ThinkingIndicator mounted briefly after aiLoading ends for fade-out
+  useEffect(() => {
+    if (aiLoading) {
+      setShowThinking(true);
+    } else if (showThinking) {
+      const t = setTimeout(() => setShowThinking(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [aiLoading, showThinking]);
   const [visionLoading, setVisionLoading] = useState(false);
   const [visionError, setVisionError] = useState<string | null>(null);
   const [promptImages, setPromptImages] = useState<File[]>(initialImages || []);
@@ -1825,7 +1836,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           {aiRoundNotice && (
             <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">{aiRoundNotice}</p>
           )}
-          {aiLoading && <ThinkingIndicator />}
+          {showThinking && (
+            <div className={`transition-all duration-500 ease-out ${aiLoading ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+              <ThinkingIndicator />
+            </div>
+          )}
           {!aiLoading && aiError && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{aiError}</p>}
 
           {hasAiResponse && aiStructured && aiConversationalText && (
@@ -1983,18 +1998,18 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             ) : (
               <div className="text-center">
                 <p className="text-lg font-semibold text-slate-900">Let&apos;s start</p>
-                <div className="mt-4 flex flex-col gap-3">
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
                     onClick={handleGuestJoin}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     New user
                   </button>
                   <button
                     type="button"
                     onClick={handleGuestLogin}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:bg-emerald-700"
                   >
                     Existing user
                   </button>
@@ -2172,7 +2187,11 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
           )}
 
           {healthError && <p className="text-rose-600">{healthError}</p>}
-          {aiLoading && <ThinkingIndicator />}
+          {showThinking && (
+            <div className={`transition-all duration-500 ease-out ${aiLoading ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+              <ThinkingIndicator />
+            </div>
+          )}
           {!aiLoading && aiError && <p className="text-rose-600">{aiError}</p>}
 
           {aiDebug && isAdminTester && (

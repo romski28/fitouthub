@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-0c51404f",
+    "date": "2026-07-17T16:08:43+08:00",
+    "title": "fix(ui): CTA back to sm:flex-row; ThinkingIndicator fades out on complete",
+    "summary": "fix(ui): CTA back to sm:flex-row; ThinkingIndicator fades out on complete",
+    "areas": [
+      "web"
+    ],
+    "commit": "0c51404f",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-06e23bb9",
     "date": "2026-07-17T15:56:06+08:00",
     "title": "fix(ui): video stays hidden after AI starts; CTA buttons stack w-full",
