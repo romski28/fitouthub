@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-ece51b82",
+    "date": "2026-07-17T14:41:42+08:00",
+    "title": "fix(ui): neutral CTA box, remove green separator line",
+    "summary": "fix(ui): neutral CTA box, remove green separator line",
+    "areas": [
+      "web"
+    ],
+    "commit": "ece51b82",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-08f33113",
     "date": "2026-07-17T14:34:08+08:00",
     "title": "fix(ui): fixed-height panel with proper header/panel/footer spacing",
