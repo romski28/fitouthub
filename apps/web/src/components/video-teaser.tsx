@@ -35,7 +35,7 @@ export function VideoTeaser() {
   return (
     <>
       {/* Compact inline teaser: text left, video right */}
-      <div className="relative mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-opacity duration-500 opacity-0" ref={(el) => { if (el) requestAnimationFrame(() => { el.style.opacity = '1'; }); }}>
         <button
           type="button"
           onClick={() => setDismissed(true)}
@@ -54,7 +54,7 @@ export function VideoTeaser() {
             <p className="mt-1 text-xs text-slate-500">Watch a quick 60-second intro to the platform.</p>
           </div>
           {/* Video thumbnail */}
-          <div className="relative h-20 w-full shrink-0 overflow-hidden bg-slate-900 sm:h-auto sm:w-40">
+          <div className="relative w-full shrink-0 overflow-hidden bg-slate-900 sm:w-40" style={{ height: '80px' }}>
             <video
               ref={videoRef}
               src="/assets/video/FitOut-Hub-CIP-Animation-v2.mp4"

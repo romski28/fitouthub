@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-17-c2312a23",
+    "date": "2026-07-17T14:27:25+08:00",
+    "title": "fix(ui): stabilize VideoTeaser — fixed height + fade-in",
+    "summary": "fix(ui): stabilize VideoTeaser — fixed height + fade-in",
+    "areas": [
+      "web"
+    ],
+    "commit": "c2312a23",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-8a062eef",
     "date": "2026-07-17T14:19:52+08:00",
     "title": "fix(ui): fix panel position, VideoTeaser flash, CTA border flash",

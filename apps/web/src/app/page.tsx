@@ -72,8 +72,8 @@ export default function Home() {
                   </div>
 
                   {/* Prompt box — center, flexes to fill */}
-                  <div className="min-w-0 flex-1 min-h-0 flex flex-col">
-                    <div className="shrink-0" style={{ minHeight: '280px' }}>
+                  <div className="min-w-0 flex-1 min-h-0 flex flex-col gap-3">
+                    <div className="shrink-0">
                       <VideoTeaser />
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto">
