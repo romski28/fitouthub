@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-ba813b92",
+    "date": "2026-07-17T13:55:55+08:00",
+    "title": "fix(ui): push panel below navbar + add slide-down with fade",
+    "summary": "fix(ui): push panel below navbar + add slide-down with fade",
+    "areas": [
+      "web"
+    ],
+    "commit": "ba813b92",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-3540a858",
     "date": "2026-07-17T11:41:41+08:00",
     "title": "feat(ui): fade-in panel + simple opacity transition for prompt",
