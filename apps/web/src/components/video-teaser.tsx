@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
 
 export function VideoTeaser() {
-  const { isLoggedIn } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -29,8 +27,7 @@ export function VideoTeaser() {
   }, [modalOpen]);
 
   if (!mounted) return null;
-  // Only for non-logged-in users, dismissible per session
-  if (isLoggedIn !== false || dismissed) return null;
+  if (dismissed) return null;
 
   return (
     <>

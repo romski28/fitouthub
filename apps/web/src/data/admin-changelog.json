@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-905b5bdc",
+    "date": "2026-07-17T15:18:11+08:00",
+    "title": "fix(ui): show video teaser for all users, not just guests",
+    "summary": "fix(ui): show video teaser for all users, not just guests",
+    "areas": [
+      "web"
+    ],
+    "commit": "905b5bdc",
+    "files": [
+      "apps/web/src/components/video-teaser.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-bd8aebc7",
     "date": "2026-07-17T15:15:50+08:00",
     "title": "fix(ui): add overflow-hidden to center column chain to prevent CTA width bleed",
