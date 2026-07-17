@@ -41,7 +41,7 @@ export default function Home() {
 
 
   return (
-      <div className="flex flex-col justify-between px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+      <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">
@@ -64,9 +64,9 @@ export default function Home() {
                 </div>
 
                 {/* 3-col: Sarah | Prompt | Mike */}
-                <div className="flex-1 min-h-0 flex items-start gap-2">
+                <div className="flex-1 min-h-0 w-full flex items-start gap-2">
                   {/* Sarah — left, hidden below md */}
-                  <div className="hidden md:flex items-start justify-end w-[120px] shrink-0 sticky top-4">
+                  <div className="hidden md:flex items-start justify-end w-[120px] min-w-[120px] basis-[120px] shrink-0 sticky top-4">
                     <Image
                       src="/assets/images/sarah-800_cropped.webp"
                       alt="Sarah"
@@ -88,7 +88,7 @@ export default function Home() {
                   </div>
 
                   {/* Mike — right, hidden below lg */}
-                  <div className="hidden lg:flex items-start justify-start w-[120px] shrink-0 sticky top-4">
+                  <div className="hidden lg:flex items-start justify-start w-[120px] min-w-[120px] basis-[120px] shrink-0 sticky top-4">
                     <Image
                       src="/assets/images/mike-800_cropped.webp"
                       alt="Mike"

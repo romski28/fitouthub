@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-17-39af0dae",
+    "date": "2026-07-17T16:32:03+08:00",
+    "title": "fix(ui): stabilize three-column layout with explicit basis and w-full",
+    "summary": "fix(ui): stabilize three-column layout with explicit basis and w-full",
+    "areas": [
+      "web"
+    ],
+    "commit": "39af0dae",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-7e211039",
     "date": "2026-07-17T16:18:27+08:00",
     "title": "fix(ui): add overflow-hidden to section, strip all shadows from panel interior",
