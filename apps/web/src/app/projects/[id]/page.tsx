@@ -2347,6 +2347,7 @@ export default function ClientProjectDetailPage() {
             onTabChange={setActiveTab}
             tabs={isAwarded ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'media', label: 'Files', icon: '📁' },
               { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
@@ -2354,22 +2355,21 @@ export default function ClientProjectDetailPage() {
               { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
-              { id: 'media', label: 'Media', icon: '🖼️' },
             ] : hasPostAwardLifecycleAccess ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'media', label: 'Files', icon: '📁' },
               { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
-              { id: 'media', label: 'Media', icon: '🖼️' },
             ] : [
               { id: 'overview', label: 'Overview', icon: '📋' },
+              { id: 'media', label: 'Files', icon: '📁' },
               { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'chat', label: 'Chat', icon: '💬' },
-              { id: 'media', label: 'Media', icon: '🖼️' },
             ]}
           />
         </div>
@@ -2580,6 +2580,8 @@ export default function ClientProjectDetailPage() {
             <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
               <MediaTab
                 photos={(project as any).photos || []}
+                projectId={projectId}
+                accessToken={accessToken || ''}
                 onPhotoNoteUpdate={handleSaveImageNote}
                 isLoading={loading}
               />

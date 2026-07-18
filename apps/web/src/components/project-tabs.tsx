@@ -30,7 +30,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeTab, onTabChange
     { id: 'site-access', label: 'Site Access', icon: '📍' },
     { id: 'professionals', label: 'Professionals', icon: '👥' },
     { id: 'chat', label: 'Chat', icon: '💬' },
-    { id: 'media', label: 'Media', icon: '🖼️' },
+    { id: 'media', label: 'Files', icon: '📁' },
   ];
 
   const resolvedTabs = tabs && tabs.length > 0 ? tabs : defaultTabs;

@@ -1654,6 +1654,7 @@ export default function ProjectDetailPage() {
                   // Build tabs array conditionally
                   const tabsArray = [
                     { id: 'overview', label: 'Overview', icon: '📋' },
+                    { id: 'media', label: 'Files', icon: '📁' },
                     { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
                   ];
                   
@@ -1671,7 +1672,6 @@ export default function ProjectDetailPage() {
                   // Always show financials and chat
                   tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
                   tabsArray.push({ id: 'ac-plans', label: 'AC Plans', icon: '❄️' });
-                  tabsArray.push({ id: 'media', label: 'Media', icon: '🖼️' });
                   tabsArray.push({ id: 'chat', label: 'Chat', icon: '💬' });
                   
                   return tabsArray;
@@ -1814,7 +1814,10 @@ export default function ProjectDetailPage() {
             <TabPanel tab="media">
                 <MediaTab
                   photos={project.project.photos || []}
+                  projectId={project.project.id}
+                  accessToken={accessToken || ''}
                   onPhotoNoteUpdate={handleSaveImageNote}
+                  onPhotosChanged={() => fetchProject({ force: true })}
                   isLoading={loading}
                 />
             </TabPanel>
