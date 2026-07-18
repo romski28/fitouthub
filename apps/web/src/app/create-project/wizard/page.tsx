@@ -1269,31 +1269,34 @@ export default function CreateProjectWizardPage() {
     router.push('/create-project/submitting');
   };
 
-  const submitAndChoosePros = () => {
-    // Build the draft synchronously (trades, location) and navigate to professionals page
+  const submitAndChoosePros = async () => {
+    // Upload any pending files first so they aren't dropped
+    const data = await buildWizardPayload();
+    if (!data) return;
+
     const resolvedTrades = normalizeUniqueStringList(
-      firstNonEmptyStringArray(seedDraft?.initialData?.tradesRequired, seedDescription?.tradesRequired),
+      data.tradesRequired || firstNonEmptyStringArray(seedDraft?.initialData?.tradesRequired, seedDescription?.tradesRequired),
     );
-    const resolvedRegion = [location.secondary, location.primary]
+    const resolvedRegion = data.region || [location.secondary, location.primary]
       .filter((item): item is string => Boolean(item && item.trim()))
       .join(', ');
 
     const draft: CreateProjectDraft = {
       initialData: {
         ...(seedDraft?.initialData || {}),
-        projectName: title.trim(),
-        notes: summary.trim(),
+        projectName: data.projectName || title.trim(),
+        notes: data.notes || summary.trim(),
         location,
         region: resolvedRegion || seedDraft?.initialData?.region || '',
         isEmergency: Boolean(isEmergency),
         tradesRequired: resolvedTrades,
         endDate: endDate || undefined,
         siteInspectionAvailableOn: siteInspectionAvailableOn || undefined,
-        photoUrls: existingImageUrls,
+        photoUrls: data.photoUrls,
         requiresSurveyService: typeof requiresSurveyService === 'boolean' ? requiresSurveyService : undefined,
         requiresDesignService: typeof requiresDesignService === 'boolean' ? requiresDesignService : undefined,
       },
-      aiIntakeId: currentAiIntakeId || seedDraft?.aiIntakeId,
+      aiIntakeId: data.aiIntakeId,
       followUpQuestions: followUpStepQuestions,
       safetyNotes: aiSafetyNotes,
       riskNotes: aiRiskNotes,

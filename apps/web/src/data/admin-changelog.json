@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-a99ff252",
+    "date": "2026-07-18T14:30:44+08:00",
+    "title": "fix(wizard): upload files in 'I'll choose' path, was dropping attachments",
+    "summary": "fix(wizard): upload files in 'I'll choose' path, was dropping attachments",
+    "areas": [
+      "web"
+    ],
+    "commit": "a99ff252",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-a547ba80",
     "date": "2026-07-18T11:42:58+08:00",
     "title": "fix(wizard): move file error to nav gallery, auto-fade 5s, crimson max count",
