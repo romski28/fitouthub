@@ -1263,8 +1263,11 @@ export class ProjectsController {
   async update(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
+    @Request() req: any,
   ) {
-    return this.projectsService.update(id, updateProjectDto);
+    const actorId = req.user?.id || req.user?.sub || null;
+    const actorRole = req.user?.role || null;
+    return this.projectsService.update(id, updateProjectDto, actorId, actorRole);
   }
 
   @Delete(':id')
@@ -1409,8 +1412,11 @@ export class ProjectsController {
   async deletePhoto(
     @Param('projectId') projectId: string,
     @Param('photoId') photoId: string,
+    @Request() req: any,
   ) {
-    return this.projectsService.deletePhoto(projectId, photoId);
+    const actorId = req.user?.id || req.user?.sub || null;
+    const actorRole = req.user?.role || null;
+    return this.projectsService.deletePhoto(projectId, photoId, actorId, actorRole);
   }
 
   /**

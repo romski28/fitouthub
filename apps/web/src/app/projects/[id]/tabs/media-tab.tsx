@@ -11,6 +11,7 @@ interface ProjectPhoto {
   id: string;
   url: string;
   note?: string | null;
+  uploadedById?: string | null;
   createdAt?: string;
 }
 
@@ -18,6 +19,7 @@ interface MediaTabProps {
   photos: ProjectPhoto[];
   projectId: string;
   accessToken: string;
+  currentUserId?: string | null;
   onPhotoNoteUpdate?: (photoId: string, note: string) => Promise<void>;
   onPhotoDelete?: (photoId: string) => Promise<void>;
   onPhotosChanged?: () => void;
@@ -35,6 +37,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   photos,
   projectId,
   accessToken,
+  currentUserId,
   onPhotoNoteUpdate,
   onPhotoDelete,
   onPhotosChanged,
@@ -277,8 +280,8 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
                       </div>
                     )}
-                    {/* Delete button — top-right */}
-                    {onPhotoDelete && (
+                    {/* Delete button — top-right, only for owner */}
+                    {onPhotoDelete && (!photo.uploadedById || photo.uploadedById === currentUserId) && (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleDelete(photo); }}

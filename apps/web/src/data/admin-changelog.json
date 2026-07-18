@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-07-18-4a14b9b0",
+    "date": "2026-07-18T15:33:11+08:00",
+    "title": "feat(files): author tracking on photos, owner-gated delete",
+    "summary": "feat(files): author tracking on photos, owner-gated delete",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "4a14b9b0",
+    "files": [
+      "MANUAL_SQL_ADD_PHOTO_OWNERSHIP.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-082d56ab",
     "date": "2026-07-18T15:19:15+08:00",
     "title": "fix(files): portal modal to body, trash icon top-right, proper image sizing",

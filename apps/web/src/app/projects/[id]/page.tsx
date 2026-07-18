@@ -2592,6 +2592,7 @@ export default function ClientProjectDetailPage() {
                 photos={(project as any).photos || []}
                 projectId={projectId}
                 accessToken={accessToken || ''}
+                currentUserId={user?.id || null}
                 onPhotoNoteUpdate={handleSaveImageNote}
                 onPhotoDelete={handleDeleteImage}
                 isLoading={loading}

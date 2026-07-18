@@ -302,7 +302,7 @@ export default function ProjectDetailPage() {
   const searchParams = useSearchParams();
   const projectProfessionalId = params.id as string;
 
-  const { isLoggedIn, accessToken } = useProfessionalAuth();
+  const { isLoggedIn, accessToken, professional } = useProfessionalAuth();
   const { openLoginModal } = useAuthModalControl();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1826,6 +1826,7 @@ export default function ProjectDetailPage() {
                   photos={project.project.photos || []}
                   projectId={project.project.id}
                   accessToken={accessToken || ''}
+                  currentUserId={professional?.id || null}
                   onPhotoNoteUpdate={handleSaveImageNote}
                   onPhotoDelete={handleDeleteImage}
                   onPhotosChanged={() => fetchProject({ force: true })}

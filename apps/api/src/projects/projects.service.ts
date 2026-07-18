@@ -4989,7 +4989,7 @@ Please review the project details and respond with your quote or decline the inv
 
     if (normalizedPhotos.length > 0) {
       createData.photos = {
-        create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note })),
+        create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note, uploadedById: userId || null, uploadedByRole: 'client' })),
       };
     }
 
@@ -5006,7 +5006,7 @@ Please review the project details and respond with your quote or decline the inv
 
       if (normalizedPhotos.length > 0) {
         enriched.photos = {
-          create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note })),
+          create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note, uploadedById: userId || null, uploadedByRole: 'client' })),
         };
       }
 
@@ -5417,7 +5417,7 @@ Please review the project details and respond with your quote or decline the inv
     } as any;
   }
 
-  async update(id: string, updateProjectDto: UpdateProjectDto) {
+  async update(id: string, updateProjectDto: UpdateProjectDto, actorId?: string | null, actorRole?: string | null) {
     const { photos, photoUrls, ...rest } = updateProjectDto;
     const hasPhotoUpdate = photos !== undefined || photoUrls !== undefined;
     const normalizedPhotos = hasPhotoUpdate
@@ -5434,10 +5434,34 @@ Please review the project details and respond with your quote or decline the inv
 
     return this.prisma.$transaction(async (tx) => {
       if (hasPhotoUpdate) {
-        await tx.projectPhoto.deleteMany({ where: { projectId: id } });
-        if (normalizedPhotos.length > 0) {
+        // Get existing photo URLs to determine which are new
+        const existingPhotos = await tx.projectPhoto.findMany({
+          where: { projectId: id },
+          select: { url: true },
+        });
+        const existingUrls = new Set(existingPhotos.map((p) => p.url));
+        const newPhotos = normalizedPhotos.filter((p) => !existingUrls.has(p.url));
+
+        if (newPhotos.length > 0) {
           await tx.projectPhoto.createMany({
-            data: normalizedPhotos.map((p) => ({ projectId: id, url: p.url, note: p.note })),
+            data: newPhotos.map((p) => ({
+              projectId: id,
+              url: p.url,
+              note: p.note,
+              uploadedById: actorId || null,
+              uploadedByRole: actorRole || null,
+            })),
+          });
+        }
+        // Remove photos that are no longer in the updated list
+        const updatedUrls = new Set(normalizedPhotos.map((p) => p.url));
+        const toRemove = existingPhotos.filter((p) => !updatedUrls.has(p.url));
+        if (toRemove.length > 0) {
+          await tx.projectPhoto.deleteMany({
+            where: {
+              projectId: id,
+              url: { in: toRemove.map((p) => p.url) },
+            },
           });
         }
       }
@@ -5497,8 +5521,8 @@ Please review the project details and respond with your quote or decline the inv
   /**
    * Delete a specific photo and remove it from Cloudflare R2
    */
-  async deletePhoto(projectId: string, photoId: string) {
-    // Get photo to extract filename
+  async deletePhoto(projectId: string, photoId: string, actorId?: string | null, actorRole?: string | null) {
+    // Get photo to extract filename and check ownership
     const photo = await this.prisma.projectPhoto.findUnique({
       where: { id: photoId },
     });
@@ -5509,6 +5533,13 @@ Please review the project details and respond with your quote or decline the inv
 
     if (photo.projectId !== projectId) {
       throw new BadRequestException('Photo does not belong to this project');
+    }
+
+    // Ownership check: legacy photos (null uploadedById) are client-owned
+    const isOwner = !photo.uploadedById || photo.uploadedById === actorId;
+    const isAdmin = actorRole === 'admin';
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('You can only delete files you uploaded');
     }
 
     try {
