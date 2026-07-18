@@ -134,7 +134,7 @@ export class AuthService {
       );
     }
 
-    // Create user with plaintext password (MVP only - upgrade to bcrypt in production)
+    // Create user (terms agreement tracked on Identity, not User)
     const user = await (this.prisma as any).user.create({
       data: {
         email: dto.email,
@@ -144,10 +144,6 @@ export class AuthService {
         chineseName: dto.chineseName,
         mobile: dto.mobile,
         role: dto.role || 'client',
-        agreedToTermsAt: new Date(),
-        agreedToTermsVersion: '1.0',
-        agreedToSecurityStatementAt: new Date(),
-        agreedToSecurityStatementVersion: '1.0',
       },
     });
 
@@ -190,12 +186,9 @@ export class AuthService {
       };
     }
 
-    // Issue session token (last-writer-wins: new login invalidates older sessions)
+    // Issue session token on Identity (last-writer-wins)
     const sessionToken = randomUUID();
-    await (this.prisma as any).user.update({
-      where: { id: user.id },
-      data: { sessionToken },
-    });
+    await this.identityService.setSessionToken(identity.id, sessionToken);
 
     // Generate tokens
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
@@ -240,13 +233,13 @@ export class AuthService {
 
     if (existingUser) {
       const sessionToken = randomUUID();
-      await (this.prisma as any).user.update({
-        where: { id: existingUser.id },
-        data: {
-          sessionToken,
-          emailVerified: true,
-        },
-      });
+      if (existingUser.identityId) {
+        await this.identityService.setSessionToken(existingUser.identityId, sessionToken);
+        await (this.prisma as any).identity.update({
+          where: { id: existingUser.identityId },
+          data: { emailVerified: true },
+        });
+      }
 
       const tokens = this.generateTokens(existingUser.id, existingUser.role, sessionToken);
 
@@ -349,16 +342,11 @@ export class AuthService {
       data: {
         email: payload.email,
         nickname: dto.nickname,
-        passwordHash: `google-oauth-${randomUUID()}`,
         firstName: dto.firstName || payload.givenName || 'Member',
         surname: dto.surname || payload.familyName || 'User',
         mobile: dto.mobile,
         role: 'client',
         emailVerified: true,
-        agreedToTermsAt: new Date(),
-        agreedToTermsVersion: '1.0',
-        agreedToSecurityStatementAt: new Date(),
-        agreedToSecurityStatementVersion: '1.0',
       },
     });
 
@@ -380,11 +368,26 @@ export class AuthService {
       },
     });
 
-    const sessionToken = randomUUID();
+    // Create parallel Identity + Persona for unified auth (Google OAuth)
+    const identity = await this.identityService.create({
+      email: payload.email,
+      passwordHash: null, // Google OAuth — no password
+      emailVerified: true,
+    });
     await (this.prisma as any).user.update({
       where: { id: user.id },
-      data: { sessionToken },
+      data: { identityId: identity.id },
     });
+    await (this.prisma as any).persona.create({
+      data: {
+        identityId: identity.id,
+        type: 'CLIENT',
+        userId: user.id,
+      },
+    });
+
+    const sessionToken = randomUUID();
+    await this.identityService.setSessionToken(identity.id, sessionToken);
 
     const tokens = this.generateTokens(user.id, user.role, sessionToken);
 

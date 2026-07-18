@@ -64,7 +64,7 @@ export class ProfessionalAuthService {
       otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     }
 
-    // Create professional account
+    // Create professional account (auth fields live on Identity)
     const professional = await (this.prisma as any).professional.create({
       data: {
         email: dto.email,
@@ -73,14 +73,7 @@ export class ProfessionalAuthService {
         fullName: dto.fullName,
         businessName: dto.businessName,
         additionalData: dto.nickname ? { nickname: dto.nickname } : undefined,
-        passwordHash: hashedPassword,
         status: 'pending',
-        agreedToTermsAt: new Date(),
-        agreedToTermsVersion: '1.0',
-        agreedToSecurityStatementAt: new Date(),
-        agreedToSecurityStatementVersion: '1.0',
-        otpCode,
-        otpExpiresAt,
         emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
       },
     });
@@ -123,8 +116,12 @@ export class ProfessionalAuthService {
       },
     });
 
-    // Send OTP if verification is required
+    // Store OTP on Identity if verification is required
     if (otpCode && dto.requireOtpVerification) {
+      await (this.prisma as any).identity.update({
+        where: { id: identity.id },
+        data: { otpCode, otpExpiresAt },
+      });
       await this.sendProfessionalOtp(
         professional.id,
         professional.email,
@@ -134,10 +131,10 @@ export class ProfessionalAuthService {
       );
     }
 
-    // Generate tokens
+    // Generate tokens — session token stored on Identity
     const sessionToken = randomUUID();
-    await (this.prisma as any).professional.update({
-      where: { id: professional.id },
+    await (this.prisma as any).identity.update({
+      where: { id: identity.id },
       data: { sessionToken },
     });
     const tokens = this.generateTokens(professional.id, sessionToken);
@@ -279,12 +276,7 @@ export class ProfessionalAuthService {
           'Professional',
         businessName: dto.businessName,
         additionalData: dto.nickname ? { nickname: dto.nickname } : undefined,
-        passwordHash: null,
         status: 'pending',
-        agreedToTermsAt: new Date(),
-        agreedToTermsVersion: '1.0',
-        agreedToSecurityStatementAt: new Date(),
-        agreedToSecurityStatementVersion: '1.0',
         emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
       },
     });
@@ -328,8 +320,8 @@ export class ProfessionalAuthService {
     });
 
     const sessionToken = randomUUID();
-    await (this.prisma as any).professional.update({
-      where: { id: professional.id },
+    await (this.prisma as any).identity.update({
+      where: { id: identity.id },
       data: { sessionToken },
     });
 

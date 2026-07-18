@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-18-5caf11e7",
+    "date": "2026-07-18T22:05:21+08:00",
+    "title": "fix(api): remove fields that moved from User/Professional to Identity",
+    "summary": "fix(api): remove fields that moved from User/Professional to Identity",
+    "areas": [
+      "api"
+    ],
+    "commit": "5caf11e7",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-18-3eba5f3c",
     "date": "2026-07-18T21:36:24+08:00",
     "title": "fix(api): remove blocking mobile uniqueness check, add APP_NOTIFICATIONS to DTO",
