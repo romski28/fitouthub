@@ -80,16 +80,21 @@ export const MediaTab: React.FC<MediaTabProps> = ({
         return `${API_BASE_URL.replace(/\/$/, '')}/uploads/${key.replace(/^\//, '')}`;
       });
 
-      const attachRes = await fetch(`${API_BASE_URL}/projects/${projectId}/photos`, {
-        method: 'POST',
+      // Merge with existing photos and update project via PUT
+      const existingEntries = photos.map((p) => ({ url: p.url, note: p.note || '' }));
+      const newEntries = photoUrls.map((url) => ({ url, note: '' }));
+      const merged = [...existingEntries, ...newEntries];
+
+      const updateRes = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ photoUrls }),
+        body: JSON.stringify({ photos: merged }),
       });
 
-      if (!attachRes.ok) {
+      if (!updateRes.ok) {
         toast.success('Files uploaded but could not attach to project.');
       } else {
         toast.success(`${files.length} file${files.length > 1 ? 's' : ''} uploaded!`);
@@ -175,12 +180,12 @@ export const MediaTab: React.FC<MediaTabProps> = ({
           <p className="text-sm font-semibold text-slate-700">
             {dragOver ? 'Drop files here' : 'Drag & drop files here'}
           </p>
-          <p className="text-xs text-slate-500">or click to browse — images, PDFs, documents</p>
+          <p className="text-xs text-slate-500">or click to browse — any file type supported</p>
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip"
+            accept="*/*"
             onChange={handleFileSelect}
             className="hidden"
           />

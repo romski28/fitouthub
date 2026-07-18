@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-4d53c4f4",
+    "date": "2026-07-18T11:10:36+08:00",
+    "title": "fix(ui): use PUT /projects/:id for file attach, accept any file type",
+    "summary": "fix(ui): use PUT /projects/:id for file attach, accept any file type",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d53c4f4",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-62d927eb",
     "date": "2026-07-18T11:06:59+08:00",
     "title": "feat(ui): rewrite MediaTab with upload+drag-drop, rename to Files",
