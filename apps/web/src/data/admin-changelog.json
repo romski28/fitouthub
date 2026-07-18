@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-55c5bfd7",
+    "date": "2026-07-18T11:28:27+08:00",
+    "title": "fix(wizard): move file attachment gallery to nav bar, reclaim chat space",
+    "summary": "fix(wizard): move file attachment gallery to nav bar, reclaim chat space",
+    "areas": [
+      "web"
+    ],
+    "commit": "55c5bfd7",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-4d53c4f4",
     "date": "2026-07-18T11:10:36+08:00",
     "title": "fix(ui): use PUT /projects/:id for file attach, accept any file type",

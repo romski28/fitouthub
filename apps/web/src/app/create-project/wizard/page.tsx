@@ -1587,40 +1587,6 @@ export default function CreateProjectWizardPage() {
 
 
 
-                              {/* Attached file thumbnails */}
-                              {chatAttachedFiles.length > 0 && (
-                                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                                  {chatAttachedFiles.map((file, index) => {
-                                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-                                    const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
-                                    const previewUrl = isImage ? URL.createObjectURL(file) : null;
-
-                                    return (
-                                    <div key={`${file.name}-${index}`} className="relative h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white p-1" title={file.name}>
-                                      {isImage && previewUrl ? (
-                                        <div className="relative h-full overflow-hidden rounded">
-                                          <Image src={previewUrl} alt={file.name} fill className="object-cover" unoptimized />
-                                        </div>
-                                      ) : (
-                                        <div className="flex h-full flex-col items-center justify-center rounded bg-slate-100">
-                                          <span className="text-[10px] font-bold uppercase leading-tight text-slate-500">{ext || 'FILE'}</span>
-                                        </div>
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => removeChatFile(index)}
-                                        className="absolute -right-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700"
-                                        title="Remove"
-                                      >
-                                        <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                          <path d="M6 6l12 12M18 6L6 18" />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
                             </div>
                       </div>
                     )}
@@ -1751,7 +1717,28 @@ export default function CreateProjectWizardPage() {
                   Back
                 </button>
                 )}
-                {currentStep === 0 && <div />}
+                {currentStep === 0 && chatAttachedFiles.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60%]">
+                  {chatAttachedFiles.map((file, index) => {
+                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                    const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                    const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                    return (
+                    <div key={`nav-file-${index}`} className="relative h-8 w-8 shrink-0 rounded border border-slate-200 bg-white" title={file.name}>
+                      {isImage && previewUrl ? (
+                        <Image src={previewUrl} alt={file.name} fill className="rounded object-cover" unoptimized />
+                      ) : (
+                        <div className="flex h-full items-center justify-center rounded bg-slate-100">
+                          <span className="text-[8px] font-bold uppercase text-slate-500">{ext || 'F'}</span>
+                        </div>
+                      )}
+                    </div>
+                    );
+                  })}
+                  <span className="text-[10px] text-slate-400 shrink-0">{chatAttachedFiles.length} file{chatAttachedFiles.length !== 1 ? 's' : ''}</span>
+                </div>
+                )}
+                {currentStep === 0 && chatAttachedFiles.length === 0 && <div />}
 
                 {activeStep?.kind === 'images' ? (
                   currentStep < steps.length - 1 ? (
