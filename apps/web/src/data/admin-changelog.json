@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-07-18-b8851c6d",
+    "date": "2026-07-18T20:21:33+08:00",
+    "title": "refactor(get-started): remove language/contact questions, default to APP_NOTIFICATIONS",
+    "summary": "refactor(get-started): remove language/contact questions, default to APP_NOTIFICATIONS",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "b8851c6d",
+    "files": [
+      "MANUAL_SQL_ADD_APP_NOTIFICATIONS_CHANNEL.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional-auth/professional-auth.service.ts",
+      "apps/api/src/users/users.controller.ts",
+      "apps/api/src/users/users.service.ts",
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-c55e3a77",
     "date": "2026-07-18T20:10:08+08:00",
     "title": "refactor(get-started): remove redundant three-bar step indicator",

@@ -218,7 +218,7 @@ export class ProfessionalAuthService {
     businessName?: string;
     phone?: string;
     nickname?: string;
-    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+    preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
     preferredLanguage?: string;
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -72,6 +73,7 @@ export default function GetStartedPage() {
   const { openLoginModal } = useAuthModalControl();
   const { login: clientLogin } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
+  const locale = useLocale();
   const [role, setRole] = useState<Role | null>(null);
   const [step, setStep] = useState(0);
   const [method, setMethod] = useState<SignInMethod>(null);
@@ -281,13 +283,6 @@ export default function GetStartedPage() {
         if (!clientForm.firstName || !clientForm.surname) {
           return 'First name and surname are required.';
         }
-        if (
-          (clientForm.preferredContactMethod === 'WHATSAPP' ||
-            clientForm.preferredContactMethod === 'SMS') &&
-          !clientForm.mobile
-        ) {
-          return 'Mobile is required when WhatsApp or SMS is selected.';
-        }
       }
       if (step === 2) {
         if (!clientForm.nickname) return 'Nickname is required.';
@@ -355,8 +350,8 @@ export default function GetStartedPage() {
             firstName: clientForm.firstName,
             surname: clientForm.surname,
             mobile: clientForm.mobile || undefined,
-            preferredLanguage: clientForm.preferredLanguage,
-            preferredContactMethod: clientForm.preferredContactMethod,
+            preferredLanguage: locale,
+            preferredContactMethod: 'APP_NOTIFICATIONS',
             allowPartnerOffers: clientForm.allowPartnerOffers,
             allowPlatformUpdates: clientForm.allowPlatformUpdates,
           }),
@@ -376,8 +371,8 @@ export default function GetStartedPage() {
           surname: clientForm.surname,
           email: clientForm.email,
           mobile: clientForm.mobile || undefined,
-          preferredContactMethod: clientForm.preferredContactMethod,
-          preferredLanguage: clientForm.preferredLanguage,
+          preferredContactMethod: 'APP_NOTIFICATIONS',
+          preferredLanguage: locale,
           allowPartnerOffers: clientForm.allowPartnerOffers,
           allowPlatformUpdates: clientForm.allowPlatformUpdates,
           requireOtpVerification: true,
@@ -758,35 +753,7 @@ export default function GetStartedPage() {
                             />
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
-                            <span>Preferred language</span>
-                            <select
-                              value={clientForm.preferredLanguage}
-                              onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                            >
-                              <option value="en">English</option>
-                              <option value="zh-HK">Chinese (Hong Kong)</option>
-                            </select>
-                          </label>
-                          <label className="space-y-1 text-sm sm:col-span-2">
-                            <span>Preferred contact</span>
-                            <select
-                              value={clientForm.preferredContactMethod}
-                              onChange={(e) =>
-                                setClientForm((prev) => ({
-                                  ...prev,
-                                  preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
-                                }))
-                              }
-                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                            >
-                              <option value="EMAIL">Email</option>
-                              <option value="WHATSAPP">WhatsApp</option>
-                              <option value="SMS">SMS</option>
-                            </select>
-                          </label>
-                          <label className="space-y-1 text-sm sm:col-span-2">
-                            <span>Mobile (optional unless WhatsApp/SMS)</span>
+                            <span>Mobile (optional)</span>
                             <PhoneInput
                               value={clientForm.mobile}
                               onChange={(val) => setClientForm((prev) => ({ ...prev, mobile: val }))}

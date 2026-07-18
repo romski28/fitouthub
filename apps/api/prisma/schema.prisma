@@ -1658,6 +1658,7 @@ enum NotificationChannel {
   WHATSAPP
   WECHAT
   EMAIL
+  APP_NOTIFICATIONS
 }
 
 enum NotificationStatus {

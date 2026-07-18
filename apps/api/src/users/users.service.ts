@@ -130,7 +130,7 @@ export class UsersService {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
-      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
     },
   ) {
     const preferredContactMethod = preferences.preferredContactMethod?.toUpperCase() as
@@ -138,11 +138,12 @@ export class UsersService {
       | 'WHATSAPP'
       | 'SMS'
       | 'WECHAT'
+      | 'APP_NOTIFICATIONS'
       | undefined;
 
     if (
       preferredContactMethod &&
-      !['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT'].includes(preferredContactMethod)
+      !['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT', 'APP_NOTIFICATIONS'].includes(preferredContactMethod)
     ) {
       throw new Error('Invalid preferred contact method');
     }

@@ -76,7 +76,7 @@ export class UsersController {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
-      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
     },
   ) {
     return this.usersService.updateNotificationPreferences(req.user.id, body);
@@ -90,7 +90,7 @@ export class UsersController {
       allowPartnerOffers?: boolean;
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
-      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
+      preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
     },
   ) {
     return this.usersService.updateNotificationPreferences(id, body);
