@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-52cd05fe",
+    "date": "2026-07-18T10:07:58+08:00",
+    "title": "fix(wizard): hide back button on first step, remove skip, update prose",
+    "summary": "fix(wizard): hide back button on first step, remove skip, update prose",
+    "areas": [
+      "web"
+    ],
+    "commit": "52cd05fe",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-17-8f0d7330",
     "date": "2026-07-17T16:55:11+08:00",
     "title": "feat(ui): match wizard container to home page, fade-in transition",

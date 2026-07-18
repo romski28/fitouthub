@@ -1032,7 +1032,7 @@ export default function CreateProjectWizardPage() {
         if (nextQuestion) {
           const prefix = summaryConfirmationShown
             ? 'Another question, if you have the time.'
-            : 'OK, we have enough project information to proceed. If you have time, please continue answering questions, or just send with no text to move on.';
+            : 'Thanks, we have enough information to proceed. Click Next to move on or continue answering questions if you have time.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
         } else {
@@ -1578,16 +1578,7 @@ export default function CreateProjectWizardPage() {
                                 />
                               </div>
 
-                              {/* "Skip →" when AI says ready to continue */}
-                              {aiChatCanContinue && !chatInput.trim() && (
-                                <button
-                                  type="button"
-                                  onClick={handleAiContinue}
-                                  className="ml-1 mt-1 text-xs font-medium text-slate-400 transition hover:text-emerald-600"
-                                >
-                                  Skip →
-                                </button>
-                              )}
+
 
                               {/* Attached file thumbnails */}
                               {chatAttachedFiles.length > 0 && (
@@ -1744,14 +1735,16 @@ export default function CreateProjectWizardPage() {
               </div>
               {/* Navigation */}
               <div className="mt-2 flex items-center justify-between gap-2">
+                {currentStep > 0 && (
                 <button
                   type="button"
                   onClick={goBack}
-                  disabled={currentStep === 0}
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 sm:px-3 sm:py-2 sm:text-sm"
                 >
                   Back
                 </button>
+                )}
+                {currentStep === 0 && <div />}
 
                 {activeStep?.kind === 'images' ? (
                   currentStep < steps.length - 1 ? (
