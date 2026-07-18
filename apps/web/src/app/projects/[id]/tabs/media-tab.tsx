@@ -4,6 +4,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
+import { FileViewerModal } from '@/components/file-viewer-modal';
 import { API_BASE_URL } from '@/config/api';
 
 interface ProjectPhoto {
@@ -18,6 +19,7 @@ interface MediaTabProps {
   projectId: string;
   accessToken: string;
   onPhotoNoteUpdate?: (photoId: string, note: string) => Promise<void>;
+  onPhotoDelete?: (photoId: string) => Promise<void>;
   onPhotosChanged?: () => void;
   isLoading?: boolean;
 }
@@ -34,6 +36,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   projectId,
   accessToken,
   onPhotoNoteUpdate,
+  onPhotoDelete,
   onPhotosChanged,
   isLoading: externalLoading = false,
 }) => {
@@ -42,6 +45,8 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNote, setEditingNote] = useState('');
   const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
+  const [viewingFile, setViewingFile] = useState<ProjectPhoto | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleUploadFiles = useCallback(async (files: FileList | File[]) => {
@@ -157,6 +162,20 @@ export const MediaTab: React.FC<MediaTabProps> = ({
     }
   };
 
+  const handleDelete = async (photo: ProjectPhoto) => {
+    if (!onPhotoDelete) return;
+    setDeletingId(photo.id);
+    try {
+      await onPhotoDelete(photo.id);
+      toast.success('File deleted');
+      onPhotosChanged?.();
+    } catch {
+      toast.error('Failed to delete file');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const hasPhotos = photos && photos.length > 0;
   const isLoading = externalLoading || uploading;
 
@@ -217,7 +236,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Project Files ({photos.length})</h2>
-              <p className="text-sm text-slate-500 mt-1">Click a file to add or edit notes</p>
+              <p className="text-sm text-slate-500 mt-1">Click a file to view, or use the icons to edit notes / delete</p>
             </div>
           </div>
 
@@ -230,7 +249,12 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                   key={photo.id}
                   className="group relative overflow-hidden rounded-lg border border-[rgba(120,53,15,0.15)] bg-white"
                 >
-                  <div className="relative aspect-video bg-slate-100">
+                  {/* Thumbnail — click to view */}
+                  <button
+                    type="button"
+                    onClick={() => setViewingFile(photo)}
+                    className="relative aspect-video w-full bg-slate-100 cursor-pointer hover:ring-2 hover:ring-emerald-400 transition"
+                  >
                     {isImage ? (
                       <Image
                         src={resolveMediaAssetUrl(photo.url)}
@@ -253,7 +277,40 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
                       </div>
                     )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607zM10.5 7.5v6m3-3h-6" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Action bar */}
+                  <div className="flex items-center gap-0.5 border-t border-slate-100">
+                    {/* Edit note */}
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditNote(photo)}
+                      className="flex-1 py-1.5 text-[11px] text-slate-500 hover:bg-slate-50 transition"
+                      title="Edit note"
+                    >
+                      ✎
+                    </button>
+                    {/* Delete */}
+                    {onPhotoDelete && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(photo)}
+                        disabled={deletingId === photo.id}
+                        className="py-1.5 px-2 text-[11px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
+                        title="Delete file"
+                      >
+                        {deletingId === photo.id ? '…' : '✕'}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Note preview */}
                   <div className="p-2">
                     {editingNoteId === photo.id ? (
                       <div className="space-y-1.5">
@@ -308,6 +365,12 @@ export const MediaTab: React.FC<MediaTabProps> = ({
           </div>
         </div>
       )}
+
+      <FileViewerModal
+        isOpen={!!viewingFile}
+        onClose={() => setViewingFile(null)}
+        file={viewingFile}
+      />
     </div>
   );
 };

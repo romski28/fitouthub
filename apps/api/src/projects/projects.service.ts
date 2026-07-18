@@ -2939,7 +2939,9 @@ export class ProjectsService {
 
   private resolveProjectPhotos(photos: any[]): any[] {
     if (!Array.isArray(photos)) return photos;
-    return photos.map((p) => ({ ...p, url: buildPublicAssetUrl(p.url) }));
+    return photos
+      .filter((p) => !p.deletedAt)
+      .map((p) => ({ ...p, url: buildPublicAssetUrl(p.url) }));
   }
 
   async findCanonical(userId?: string) {
@@ -5536,9 +5538,10 @@ Please review the project details and respond with your quote or decline the inv
         }
       }
 
-      // Delete from database
-      await this.prisma.projectPhoto.delete({
+      // Soft-delete: mark as deleted instead of removing from DB (for record keeping)
+      await this.prisma.projectPhoto.update({
         where: { id: photoId },
+        data: { deletedAt: new Date() },
       });
 
       return { success: true, photoId };

@@ -607,13 +607,14 @@ model AcRoom {
 }
 
 model ProjectPhoto {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   projectId String
   url       String
   note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }

@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-07-18-8fc5bf05",
+    "date": "2026-07-18T14:52:49+08:00",
+    "title": "feat(files): add viewer modal, soft-delete, click-to-view in Files tab",
+    "summary": "feat(files): add viewer modal, soft-delete, click-to-view in Files tab",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "8fc5bf05",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_PHOTO_DELETED_AT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx",
+      "apps/web/src/components/file-viewer-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-a75fb7c8",
     "date": "2026-07-18T14:41:13+08:00",
     "title": "fix(wizard): set summaryConfirmationShown when AI has no more questions",

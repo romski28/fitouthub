@@ -2016,6 +2016,16 @@ export default function ClientProjectDetailPage() {
     }
   };
 
+  const handleDeleteImage = async (photoId: string) => {
+    if (!accessToken || !projectId) return;
+    const res = await fetch(`${API_BASE_URL}/projects/${projectId}/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete file');
+    await fetchProject();
+  };
+
   const handleRemindPro = async (pp: ProjectProfessional) => {
     if (!accessToken || !projectId) return;
     setRemindingPros((prev) => new Set([...prev, pp.id]));
@@ -2583,6 +2593,7 @@ export default function ClientProjectDetailPage() {
                 projectId={projectId}
                 accessToken={accessToken || ''}
                 onPhotoNoteUpdate={handleSaveImageNote}
+                onPhotoDelete={handleDeleteImage}
                 isLoading={loading}
               />
             </div>

@@ -1495,6 +1495,16 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDeleteImage = async (photoId: string) => {
+    if (!accessToken || !project?.project?.id) return;
+    const res = await fetch(`${API_BASE_URL}/projects/${project.project.id}/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete file');
+    await fetchProject({ force: true });
+  };
+
   useEffect(() => {
     const projectId = project?.project?.id;
     const projectName = project?.project?.projectName?.trim();
@@ -1817,6 +1827,7 @@ export default function ProjectDetailPage() {
                   projectId={project.project.id}
                   accessToken={accessToken || ''}
                   onPhotoNoteUpdate={handleSaveImageNote}
+                  onPhotoDelete={handleDeleteImage}
                   onPhotosChanged={() => fetchProject({ force: true })}
                   isLoading={loading}
                 />
