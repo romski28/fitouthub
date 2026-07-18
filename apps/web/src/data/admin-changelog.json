@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-f993f8e3",
+    "date": "2026-07-18T20:31:59+08:00",
+    "title": "refactor(get-started): remove nickname, partner offers, platform updates from client step 2",
+    "summary": "refactor(get-started): remove nickname, partner offers, platform updates from client step 2",
+    "areas": [
+      "web"
+    ],
+    "commit": "f993f8e3",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-b8851c6d",
     "date": "2026-07-18T20:21:33+08:00",
     "title": "refactor(get-started): remove language/contact questions, default to APP_NOTIFICATIONS",

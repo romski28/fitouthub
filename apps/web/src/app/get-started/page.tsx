@@ -64,7 +64,7 @@ function passwordStrength(password: string): number {
 }
 
 const stepsByRole: Record<Role, string[]> = {
-  client: ['Sign in method', 'About you', 'Nickname and preferences'],
+  client: ['Sign in method', 'About you', 'Terms and verification'],
   professional: ['Sign in method', 'Your business', 'Contact and availability', 'Your account', 'Terms and verification'],
 };
 
@@ -285,7 +285,6 @@ export default function GetStartedPage() {
         }
       }
       if (step === 2) {
-        if (!clientForm.nickname) return 'Nickname is required.';
         if (!clientForm.agreeToTerms || !clientForm.agreeToSecurity) {
           return 'Please accept Terms and Security Statement.';
         }
@@ -346,14 +345,14 @@ export default function GetStartedPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             onboardingToken: googleOnboardingToken,
-            nickname: clientForm.nickname,
+            nickname: clientForm.firstName || 'User',
             firstName: clientForm.firstName,
             surname: clientForm.surname,
             mobile: clientForm.mobile || undefined,
             preferredLanguage: locale,
             preferredContactMethod: 'APP_NOTIFICATIONS',
-            allowPartnerOffers: clientForm.allowPartnerOffers,
-            allowPlatformUpdates: clientForm.allowPlatformUpdates,
+            allowPartnerOffers: false,
+            allowPlatformUpdates: true,
           }),
         });
         const data = await response.json();
@@ -366,15 +365,15 @@ export default function GetStartedPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nickname: clientForm.nickname,
+          nickname: clientForm.firstName || 'User',
           firstName: clientForm.firstName,
           surname: clientForm.surname,
           email: clientForm.email,
           mobile: clientForm.mobile || undefined,
           preferredContactMethod: 'APP_NOTIFICATIONS',
           preferredLanguage: locale,
-          allowPartnerOffers: clientForm.allowPartnerOffers,
-          allowPlatformUpdates: clientForm.allowPlatformUpdates,
+          allowPartnerOffers: false,
+          allowPlatformUpdates: true,
           requireOtpVerification: true,
           password: clientForm.password,
           role: 'client',
@@ -765,32 +764,7 @@ export default function GetStartedPage() {
 
                     {role === 'client' && step === 2 && (
                       <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Nickname and preferences</p>
-                        <label className="space-y-1 text-sm">
-                          <span>Nickname {clientForm.nickname ? checkIcon : null}</span>
-                          <input
-                            type="text"
-                            value={clientForm.nickname}
-                            onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          />
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={clientForm.allowPartnerOffers}
-                            onChange={(e) => setClientForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))}
-                          />
-                          Receive partner offers
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={clientForm.allowPlatformUpdates}
-                            onChange={(e) => setClientForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))}
-                          />
-                          Receive platform updates
-                        </label>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms and verification</p>
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="checkbox"
