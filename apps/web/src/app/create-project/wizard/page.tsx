@@ -1036,8 +1036,15 @@ export default function CreateProjectWizardPage() {
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
         } else {
-          // No more questions — all done
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, you have answered all our questions. Click → to continue and upload images.' }]);
+          // No more questions — all done. Auto-advance after 5s
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, we are done here. Let\'s move on.' }]);
+          setTimeout(() => {
+            if (currentStep < steps.length - 1) {
+              goNext();
+            } else {
+              submitWizard();
+            }
+          }, 5000);
         }
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
@@ -1482,10 +1489,10 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => (
-                                <div key={`chat-${idx}`} className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
+                                <div key={`chat-${idx}`} className={`relative max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 pr-8 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
                                   {message.role === 'assistant' && (
-                                    <div className="mt-1 flex justify-end">
+                                    <div className="absolute right-1 top-1">
                                       <ListenButton
                                         text={message.text}
                                         lang={preferredLanguage === 'zh-CN' ? 'zh-CN' : preferredLanguage === 'zh-HK' ? 'zh-HK' : 'en-HK'}

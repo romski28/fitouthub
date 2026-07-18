@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-c6823a1f",
+    "date": "2026-07-18T10:20:17+08:00",
+    "title": "feat(wizard): auto-advance after 5s when all questions done, reposition listen btn",
+    "summary": "feat(wizard): auto-advance after 5s when all questions done, reposition listen btn",
+    "areas": [
+      "web"
+    ],
+    "commit": "c6823a1f",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-52cd05fe",
     "date": "2026-07-18T10:07:58+08:00",
     "title": "fix(wizard): hide back button on first step, remove skip, update prose",
