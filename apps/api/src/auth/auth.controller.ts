@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
@@ -69,5 +69,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logoutAll(@Request() req: any) {
     return this.authService.logoutAll(req.user.sub);
+  }
+
+  @Get('check-email')
+  async checkEmail(@Query('email') email: string) {
+    return this.authService.checkEmail(email);
+  }
+
+  @Get('check-mobile')
+  async checkMobile(@Query('mobile') mobile: string) {
+    return this.authService.checkMobile(mobile);
   }
 }

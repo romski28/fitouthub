@@ -697,4 +697,17 @@ export class AuthService {
       minutesValid: 10,
     });
   }
+
+  async checkEmail(email: string) {
+    const identity = await this.identityService.findByEmail(email);
+    return { exists: !!identity };
+  }
+
+  async checkMobile(mobile: string) {
+    const existing = await (this.prisma as any).user.findFirst({
+      where: { mobile },
+      select: { id: true },
+    });
+    return { exists: !!existing };
+  }
 }

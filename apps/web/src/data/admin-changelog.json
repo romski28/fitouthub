@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-07-18-1676acf8",
+    "date": "2026-07-18T21:12:24+08:00",
+    "title": "feat(get-started): add duplicate email/mobile checks before registration",
+    "summary": "feat(get-started): add duplicate email/mobile checks before registration",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1676acf8",
+    "files": [
+      "apps/api/src/auth/auth.controller.ts",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/components/phone-input.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-4e400d85",
     "date": "2026-07-18T21:02:10+08:00",
     "title": "refactor(get-started): replace 'Change path' with 'Cancel' button on step 0",

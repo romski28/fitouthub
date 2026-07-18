@@ -6,6 +6,7 @@ import 'react-phone-number-input/style.css';
 interface PhoneInputProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   required?: boolean;
   disabled?: boolean;
 }
@@ -17,8 +18,9 @@ interface PhoneInputProps {
  * Matches the /get-started form inputs:
  *   rounded-lg border border-[#E8DFD5] bg-white/80 text-[#1A1A1A]
  */
-export default function PhoneInput({ value, onChange, required, disabled }: PhoneInputProps) {
+export default function PhoneInput({ value, onChange, onBlur, required, disabled }: PhoneInputProps) {
   return (
+    <div onBlur={onBlur}>
     <PhoneInputBase
       international
       defaultCountry="HK"
@@ -35,6 +37,7 @@ export default function PhoneInput({ value, onChange, required, disabled }: Phon
         } as React.CSSProperties
       }
     />
+    </div>
   );
 }
 

@@ -87,6 +87,7 @@ export default function GetStartedPage() {
   const [googleScriptReady, setGoogleScriptReady] = useState(false);
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   const googleContainerRef = useRef<HTMLDivElement | null>(null);
+  const [mobileWarning, setMobileWarning] = useState<string | null>(null);
 
   const [clientForm, setClientForm] = useState({
     email: '',
@@ -466,6 +467,28 @@ export default function GetStartedPage() {
     setError(null);
 
     if (!role) return;
+
+    // Check duplicate email before advancing from step 0
+    if (step === 0 && method === 'email') {
+      const email = role === 'client' ? clientForm.email : professionalForm.email;
+      if (email) {
+        setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`);
+          const data = await res.json();
+          if (data.exists) {
+            setError('An account with this email already exists. Please log in instead.');
+            setLoading(false);
+            return;
+          }
+        } catch {
+          // If check fails, allow to proceed — backend will catch duplicates
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+
     const isLast = step >= stepsByRole[role].length - 1;
     if (isLast) {
       if (role === 'client') await submitClient();
@@ -478,6 +501,26 @@ export default function GetStartedPage() {
   const handleBack = () => {
     setError(null);
     setStep((prev) => Math.max(0, prev - 1));
+  };
+
+  const checkMobileDuplicate = async (mobile: string) => {
+    // Only check when it looks like a valid HK number (8+ digits after stripping)
+    const digits = mobile.replace(/\D/g, '');
+    if (digits.length < 8) {
+      setMobileWarning(null);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/check-mobile?mobile=${encodeURIComponent(mobile)}`);
+      const data = await res.json();
+      if (data.exists) {
+        setMobileWarning('This mobile number is already registered to another account.');
+      } else {
+        setMobileWarning(null);
+      }
+    } catch {
+      setMobileWarning(null);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -746,8 +789,15 @@ export default function GetStartedPage() {
                             <span>Mobile (optional)</span>
                             <PhoneInput
                               value={clientForm.mobile}
-                              onChange={(val) => setClientForm((prev) => ({ ...prev, mobile: val }))}
+                              onChange={(val) => {
+                                setClientForm((prev) => ({ ...prev, mobile: val }));
+                                setMobileWarning(null);
+                              }}
+                              onBlur={() => checkMobileDuplicate(clientForm.mobile)}
                             />
+                            {mobileWarning && (
+                              <p className="mt-1 text-xs text-amber-600">{mobileWarning}</p>
+                            )}
                           </label>
                         </div>
                         <div className="space-y-3 pt-2">
