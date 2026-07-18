@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-6adf3267",
+    "date": "2026-07-18T19:47:19+08:00",
+    "title": "refactor(join): remove classic ClientSignupFlow, use shared AuthModal instead",
+    "summary": "refactor(join): remove classic ClientSignupFlow, use shared AuthModal instead",
+    "areas": [
+      "web"
+    ],
+    "commit": "6adf3267",
+    "files": [
+      "apps/web/src/app/join/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-7413501a",
     "date": "2026-07-18T16:00:00+08:00",
     "title": "feat(files): restrict pro file uploads to awarded projects only",
