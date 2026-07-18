@@ -729,6 +729,7 @@ export default function GetStartedPage() {
                               <span>Email</span>
                               <input
                                 type="email"
+                                autoComplete="off"
                                 value={clientForm.email}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, email: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -738,6 +739,7 @@ export default function GetStartedPage() {
                               <span>Password strength {clientPwStrength >= 3 ? checkIcon : null}</span>
                               <input
                                 type="password"
+                                autoComplete="new-password"
                                 value={clientForm.password}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, password: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -753,6 +755,7 @@ export default function GetStartedPage() {
                               <span>Confirm password {clientForm.confirmPassword && clientForm.confirmPassword === clientForm.password ? checkIcon : null}</span>
                               <input
                                 type="password"
+                                autoComplete="new-password"
                                 value={clientForm.confirmPassword}
                                 onChange={(e) => setClientForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -872,6 +875,7 @@ export default function GetStartedPage() {
                               <span>Email</span>
                               <input
                                 type="email"
+                                autoComplete="off"
                                 value={professionalForm.email}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, email: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -881,6 +885,7 @@ export default function GetStartedPage() {
                               <span>Password strength {professionalPwStrength >= 3 ? checkIcon : null}</span>
                               <input
                                 type="password"
+                                autoComplete="new-password"
                                 value={professionalForm.password}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, password: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -896,6 +901,7 @@ export default function GetStartedPage() {
                               <span>Confirm password {professionalForm.confirmPassword && professionalForm.confirmPassword === professionalForm.password ? checkIcon : null}</span>
                               <input
                                 type="password"
+                                autoComplete="new-password"
                                 value={professionalForm.confirmPassword}
                                 onChange={(e) => setProfessionalForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"

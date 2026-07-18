@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-a07d9afa",
+    "date": "2026-07-18T21:29:20+08:00",
+    "title": "fix(get-started): disable browser autofill on email/password fields",
+    "summary": "fix(get-started): disable browser autofill on email/password fields",
+    "areas": [
+      "web"
+    ],
+    "commit": "a07d9afa",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-1676acf8",
     "date": "2026-07-18T21:12:24+08:00",
     "title": "feat(get-started): add duplicate email/mobile checks before registration",
