@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';

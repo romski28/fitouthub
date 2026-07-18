@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-ed4aaa7c",
+    "date": "2026-07-18T15:38:30+08:00",
+    "title": "fix(build): add missing ForbiddenException import",
+    "summary": "fix(build): add missing ForbiddenException import",
+    "areas": [
+      "api"
+    ],
+    "commit": "ed4aaa7c",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-18-4a14b9b0",
     "date": "2026-07-18T15:33:11+08:00",
     "title": "feat(files): author tracking on photos, owner-gated delete",
