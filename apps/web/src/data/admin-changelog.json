@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-07-18-b243c4f4",
+    "date": "2026-07-18T20:50:01+08:00",
+    "title": "fix: unify auth — wire pros into Identity/Persona, demote nickname",
+    "summary": "fix: unify auth — wire pros into Identity/Persona, demote nickname",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "b243c4f4",
+    "files": [
+      "MANUAL_SQL_REMOVE_NICKNAME_UNIQUE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/professional-auth/professional-auth.module.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-18-122fe1fb",
     "date": "2026-07-18T20:39:37+08:00",
     "title": "refactor(get-started): merge step 2 into step 1 for client flow",

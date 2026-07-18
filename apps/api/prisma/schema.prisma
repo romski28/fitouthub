@@ -219,7 +219,7 @@ model User {
   identity                        Identity?                @relation(fields: [identityId], references: [id])
   personaId                       String?
   persona                         Persona?                 @relation("PersonaToUser")
-  nickname                        String                   @unique
+  nickname                        String
   firstName                       String
   surname                         String
   chineseName                     String?

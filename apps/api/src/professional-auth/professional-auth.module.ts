@@ -7,6 +7,7 @@ import { JwtProfessionalStrategy } from './jwt-professional.strategy';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 import { NotificationModule } from '../notifications/notification.module';
+import { IdentityService } from '../auth/identity.service';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { NotificationModule } from '../notifications/notification.module';
       },
     }),
   ],
-  providers: [ProfessionalAuthService, JwtProfessionalStrategy, PrismaService],
+  providers: [ProfessionalAuthService, JwtProfessionalStrategy, IdentityService, PrismaService],
   controllers: [ProfessionalAuthController],
   exports: [ProfessionalAuthService],
 })

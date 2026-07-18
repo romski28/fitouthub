@@ -13,6 +13,7 @@ import { EmailService } from '../email/email.service';
 import { NotificationService } from '../notifications/notification.service';
 import { NotificationChannel } from '@prisma/client';
 import { verifyGoogleIdToken } from '../common/google-id-token';
+import { IdentityService } from '../auth/identity.service';
 
 type ProfessionalGoogleOnboardingPayload = {
   type: 'google_onboarding_professional';
@@ -29,6 +30,7 @@ export class ProfessionalAuthService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private notificationService: NotificationService,
+    private identityService: IdentityService,
   ) {}
 
   async register(dto: ProfessionalRegisterDto) {
@@ -80,6 +82,23 @@ export class ProfessionalAuthService {
         otpCode,
         otpExpiresAt,
         emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
+      },
+    });
+
+    // Create parallel Identity + Persona for unified auth
+    const identity = await this.identityService.create({
+      email: dto.email,
+      passwordHash: dto.password,
+    });
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { identityId: identity.id },
+    });
+    await (this.prisma as any).persona.create({
+      data: {
+        identityId: identity.id,
+        type: 'PROFESSIONAL',
+        professionalId: professional.id,
       },
     });
 
@@ -267,6 +286,23 @@ export class ProfessionalAuthService {
         agreedToSecurityStatementAt: new Date(),
         agreedToSecurityStatementVersion: '1.0',
         emergencyCalloutAvailable: dto.emergencyCalloutAvailable ?? false,
+      },
+    });
+
+    // Create parallel Identity + Persona for unified auth (Google OAuth)
+    const identity = await this.identityService.create({
+      email: payload.email,
+      passwordHash: null, // Google OAuth — no password
+    });
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { identityId: identity.id },
+    });
+    await (this.prisma as any).persona.create({
+      data: {
+        identityId: identity.id,
+        type: 'PROFESSIONAL',
+        professionalId: professional.id,
       },
     });
 

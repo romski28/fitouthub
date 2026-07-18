@@ -117,14 +117,8 @@ export class AuthService {
       }
     }
 
-    // Check if nickname is taken
-    const existingNickname = await (this.prisma as any).user.findUnique({
-      where: { nickname: dto.nickname },
-    });
-
-    if (existingNickname) {
-      throw new BadRequestException('Nickname already taken');
-    }
+    // Check if nickname is taken (demoted — no longer unique, skip duplicate check)
+    // Nickname is now just a user self-reference, not a unique identifier
 
     const preferredContactMethod =
       dto.preferredContactMethod || NotificationChannel.EMAIL;
