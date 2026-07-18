@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
+import { ProjectSummaryCard } from '@/components/project-summary-card';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
 import { API_BASE_URL } from '@/config/api';
@@ -789,6 +790,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       )}
 
       <AccordionGroup>
+        {/* Project Summary */}
+        <ProjectSummaryCard
+          projectName={project.projectName}
+          location={project.region}
+          trades={project.tradesRequired}
+          scope={project.notes}
+          isEmergency={(project as any)?.isEmergency}
+          siteInspectionDate={(project as any)?.siteInspectionAvailableOn}
+          completionTarget={project.endDate}
+          projectScale={project.projectScale}
+          budget={project.budget}
+        />
+
         {/* Project Details */}
         <AccordionItem
           id="project-details"

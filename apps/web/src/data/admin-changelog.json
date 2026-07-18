@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-18-b1ba8d57",
+    "date": "2026-07-18T10:55:24+08:00",
+    "title": "feat(ui): add ProjectSummaryCard to client and pro overview tabs",
+    "summary": "feat(ui): add ProjectSummaryCard to client and pro overview tabs",
+    "areas": [
+      "web"
+    ],
+    "commit": "b1ba8d57",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-summary-card.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-c6823a1f",
     "date": "2026-07-18T10:20:17+08:00",
     "title": "feat(wizard): auto-advance after 5s when all questions done, reposition listen btn",

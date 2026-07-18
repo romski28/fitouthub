@@ -3,6 +3,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { ProjectSummaryCard } from '@/components/project-summary-card';
 import { API_BASE_URL } from '@/config/api';
 import {
   buildQuoteBreakdownPayload,
@@ -377,6 +378,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
+      <ProjectSummaryCard
+        projectName={project.project.projectName}
+        location={project.project.region}
+        trades={project.projectTradesSnapshot || project.quoteRequestedTrades}
+        scope={project.project.notes}
+        isEmergency={project.project.isEmergency}
+        budget={project.project.budget}
+        compact
+      />
+
       {(isAwardedProject || requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
           <h2 className="mb-3 text-lg font-bold text-slate-900">{isAwardedProject ? 'Trades Awarded' : 'Your Trade Scope'}</h2>
