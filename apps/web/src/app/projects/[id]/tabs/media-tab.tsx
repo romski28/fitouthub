@@ -20,6 +20,7 @@ interface MediaTabProps {
   projectId: string;
   accessToken: string;
   currentUserId?: string | null;
+  allowUpload?: boolean;
   onPhotoNoteUpdate?: (photoId: string, note: string) => Promise<void>;
   onPhotoDelete?: (photoId: string) => Promise<void>;
   onPhotosChanged?: () => void;
@@ -38,6 +39,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   projectId,
   accessToken,
   currentUserId,
+  allowUpload = true,
   onPhotoNoteUpdate,
   onPhotoDelete,
   onPhotosChanged,
@@ -184,7 +186,8 @@ export const MediaTab: React.FC<MediaTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Upload zone */}
+      {/* Upload zone — only when allowed */}
+      {allowUpload && (
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -221,6 +224,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
           </button>
         </div>
       </div>
+      )}
 
       {/* Empty state */}
       {!hasPhotos && !isLoading && (

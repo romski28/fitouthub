@@ -1827,6 +1827,7 @@ export default function ProjectDetailPage() {
                   projectId={project.project.id}
                   accessToken={accessToken || ''}
                   currentUserId={professional?.id || null}
+                  allowUpload={['awarded','started','completed','rated'].includes(project.status)}
                   onPhotoNoteUpdate={handleSaveImageNote}
                   onPhotoDelete={handleDeleteImage}
                   onPhotosChanged={() => fetchProject({ force: true })}

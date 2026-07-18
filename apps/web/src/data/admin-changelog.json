@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-18-7413501a",
+    "date": "2026-07-18T16:00:00+08:00",
+    "title": "feat(files): restrict pro file uploads to awarded projects only",
+    "summary": "feat(files): restrict pro file uploads to awarded projects only",
+    "areas": [
+      "web"
+    ],
+    "commit": "7413501a",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-ed4aaa7c",
     "date": "2026-07-18T15:38:30+08:00",
     "title": "fix(build): add missing ForbiddenException import",
