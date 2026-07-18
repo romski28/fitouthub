@@ -1051,6 +1051,7 @@ export default function CreateProjectWizardPage() {
           setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
         } else {
           // No more questions — all done. Auto-advance after 5s
+          if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, we are done here. Let\'s move on.' }]);
           setTimeout(() => {
             if (currentStep < steps.length - 1) {

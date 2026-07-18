@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-a75fb7c8",
+    "date": "2026-07-18T14:41:13+08:00",
+    "title": "fix(wizard): set summaryConfirmationShown when AI has no more questions",
+    "summary": "fix(wizard): set summaryConfirmationShown when AI has no more questions",
+    "areas": [
+      "web"
+    ],
+    "commit": "a75fb7c8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-a99ff252",
     "date": "2026-07-18T14:30:44+08:00",
     "title": "fix(wizard): upload files in 'I'll choose' path, was dropping attachments",
