@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-7e1a5ebb",
+    "date": "2026-07-18T11:38:02+08:00",
+    "title": "fix(wizard): raise chat file limit to 5, skip oversized files gracefully",
+    "summary": "fix(wizard): raise chat file limit to 5, skip oversized files gracefully",
+    "areas": [
+      "web"
+    ],
+    "commit": "7e1a5ebb",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-55c5bfd7",
     "date": "2026-07-18T11:28:27+08:00",
     "title": "fix(wizard): move file attachment gallery to nav bar, reclaim chat space",

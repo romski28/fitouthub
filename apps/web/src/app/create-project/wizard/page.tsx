@@ -90,7 +90,7 @@ interface ServiceOfferCopy {
 }
 
 const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
-const AI_CHAT_MAX_IMAGES_PER_TURN = 2;
+const AI_CHAT_MAX_IMAGES_PER_TURN = 5;
 const SERVICE_OFFER_MARKER_PREFIX = '[[service-offer:';
 
 const firstNonEmptyStringArray = (...inputs: unknown[]): string[] => {
@@ -753,7 +753,9 @@ export default function CreateProjectWizardPage() {
     const pending = Array.from(files);
 
     const oversized = pending.filter((f) => f.size > MAX_FILE_SIZE);
-    if (oversized.length > 0) {
+    const valid = pending.filter((f) => f.size <= MAX_FILE_SIZE);
+
+    if (valid.length === 0) {
       setChatFileError(`File${oversized.length === 1 ? '' : 's'} too large: ${oversized.map(f => f.name).join(', ')}. Max 5 MB per file.`);
       return;
     }
@@ -764,12 +766,17 @@ export default function CreateProjectWizardPage() {
       return;
     }
 
-    const filesToAdd = pending.slice(0, remainingSlots);
-    if (filesToAdd.length < pending.length) {
-      setChatFileError(`Only ${remainingSlots} more file${remainingSlots === 1 ? '' : 's'} can be attached for this message.`);
-    } else {
-      setChatFileError(null);
+    const filesToAdd = valid.slice(0, remainingSlots);
+    const skipped = valid.length - filesToAdd.length;
+
+    let msg = '';
+    if (oversized.length > 0) {
+      msg = `${oversized.length} file${oversized.length === 1 ? '' : 's'} skipped (over 5 MB). `;
     }
+    if (skipped > 0) {
+      msg += `Only ${remainingSlots} slot${remainingSlots === 1 ? '' : 's'} left — ${skipped} file${skipped === 1 ? '' : 's'} skipped.`;
+    }
+    setChatFileError(msg || null);
 
     setChatAttachedFiles((prev) => [...prev, ...filesToAdd].slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
   };
