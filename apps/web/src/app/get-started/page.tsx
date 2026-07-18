@@ -655,14 +655,6 @@ export default function GetStartedPage() {
                     <div className="h-2 overflow-hidden rounded-full bg-white/20">
                       <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                     </div>
-                    <div className="flex gap-2">
-                      {stepsByRole[role].map((name, idx) => (
-                        <div
-                          key={name}
-                          className={`h-2 flex-1 rounded-full transition ${idx <= step ? 'bg-[#0E7C3A]' : 'bg-white/20'}`}
-                        />
-                      ))}
-                    </div>
                   </div>
 
                   <div className="min-h-[280px] rounded-2xl border border-[#E8DFD5] bg-[#EFE7CF]/78 p-4 transition-all duration-300 sm:p-6">

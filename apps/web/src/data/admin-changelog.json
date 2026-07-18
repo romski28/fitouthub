@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-c55e3a77",
+    "date": "2026-07-18T20:10:08+08:00",
+    "title": "refactor(get-started): remove redundant three-bar step indicator",
+    "summary": "refactor(get-started): remove redundant three-bar step indicator",
+    "areas": [
+      "web"
+    ],
+    "commit": "c55e3a77",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-6adf3267",
     "date": "2026-07-18T19:47:19+08:00",
     "title": "refactor(join): remove classic ClientSignupFlow, use shared AuthModal instead",
