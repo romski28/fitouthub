@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-18-a547ba80",
+    "date": "2026-07-18T11:42:58+08:00",
+    "title": "fix(wizard): move file error to nav gallery, auto-fade 5s, crimson max count",
+    "summary": "fix(wizard): move file error to nav gallery, auto-fade 5s, crimson max count",
+    "areas": [
+      "web"
+    ],
+    "commit": "a547ba80",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/app/globals.css"
+    ]
+  },
+  {
     "id": "2026-07-18-7e1a5ebb",
     "date": "2026-07-18T11:38:02+08:00",
     "title": "fix(wizard): raise chat file limit to 5, skip oversized files gracefully",

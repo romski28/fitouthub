@@ -277,6 +277,15 @@ body {
   transform-origin: top center;
 }
 
+@keyframes fadeOut {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-fadeOut {
+  animation: fadeOut 5s ease-out forwards;
+}
+
 .browse-page-shell {
   min-height: 100%;
   background:

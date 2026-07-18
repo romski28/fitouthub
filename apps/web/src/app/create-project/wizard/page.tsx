@@ -342,6 +342,13 @@ export default function CreateProjectWizardPage() {
     }
   }, [chatMessages, listenMode, ttsSpeak]);
 
+  // Auto-clear file error after 5 seconds
+  useEffect(() => {
+    if (!chatFileError) return;
+    const timer = setTimeout(() => setChatFileError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [chatFileError]);
+
   // REMOVED (review step disabled July 14): aiVisionReview, reviewTab
   // const [aiVisionReview, setAiVisionReview] = useState<AiVisionReviewSnapshot | null>(null);
   // const [reviewTab, setReviewTab] = useState<'summary' | 'vision'>('summary');
@@ -1519,10 +1526,6 @@ export default function CreateProjectWizardPage() {
 
                             <div className="shrink-0 rounded-lg border border-slate-200 bg-white p-1.5">
 
-                              {chatFileError && (
-                                <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{chatFileError}</p>
-                              )}
-
                               {/* Main input row: paperclip + textarea + mic */}
                               <div className="flex items-center gap-1.5 sm:gap-2">
                                 {/* Paperclip — attach any file */}
@@ -1725,24 +1728,29 @@ export default function CreateProjectWizardPage() {
                 </button>
                 )}
                 {currentStep === 0 && chatAttachedFiles.length > 0 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60%]">
-                  {chatAttachedFiles.map((file, index) => {
-                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-                    const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
-                    const previewUrl = isImage ? URL.createObjectURL(file) : null;
-                    return (
-                    <div key={`nav-file-${index}`} className="relative h-8 w-8 shrink-0 rounded border border-slate-200 bg-white" title={file.name}>
-                      {isImage && previewUrl ? (
-                        <Image src={previewUrl} alt={file.name} fill className="rounded object-cover" unoptimized />
-                      ) : (
-                        <div className="flex h-full items-center justify-center rounded bg-slate-100">
-                          <span className="text-[8px] font-bold uppercase text-slate-500">{ext || 'F'}</span>
-                        </div>
-                      )}
-                    </div>
-                    );
-                  })}
-                  <span className="text-[10px] text-slate-400 shrink-0">{chatAttachedFiles.length} file{chatAttachedFiles.length !== 1 ? 's' : ''}</span>
+                <div className="flex flex-col gap-1 max-w-[60%]">
+                  {chatFileError && (
+                    <p className="text-[10px] leading-tight text-amber-700 animate-fadeOut">{chatFileError}</p>
+                  )}
+                  <div className="flex items-center gap-1.5 overflow-x-auto">
+                    {chatAttachedFiles.map((file, index) => {
+                      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                      const isImage = ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext);
+                      const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                      return (
+                      <div key={`nav-file-${index}`} className="relative h-8 w-8 shrink-0 rounded border border-slate-200 bg-white" title={file.name}>
+                        {isImage && previewUrl ? (
+                          <Image src={previewUrl} alt={file.name} fill className="rounded object-cover" unoptimized />
+                        ) : (
+                          <div className="flex h-full items-center justify-center rounded bg-slate-100">
+                            <span className="text-[8px] font-bold uppercase text-slate-500">{ext || 'F'}</span>
+                          </div>
+                        )}
+                      </div>
+                      );
+                    })}
+                    <span className={`text-[10px] shrink-0 ${chatAttachedFiles.length >= AI_CHAT_MAX_IMAGES_PER_TURN ? 'text-rose-600 font-semibold' : 'text-slate-400'}`}>{chatAttachedFiles.length}/{AI_CHAT_MAX_IMAGES_PER_TURN} file{chatAttachedFiles.length !== 1 ? 's' : ''}</span>
+                  </div>
                 </div>
                 )}
                 {currentStep === 0 && chatAttachedFiles.length === 0 && <div />}
