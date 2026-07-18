@@ -277,38 +277,31 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
                       </div>
                     )}
-                    {/* Hover overlay */}
+                    {/* Delete button — top-right */}
+                    {onPhotoDelete && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(photo); }}
+                        disabled={deletingId === photo.id}
+                        className="absolute top-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white shadow hover:bg-rose-700 transition disabled:opacity-50"
+                        title="Delete file"
+                      >
+                        {deletingId === photo.id ? (
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    {/* Hover zoom overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
                       <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607zM10.5 7.5v6m3-3h-6" />
                       </svg>
                     </div>
                   </button>
-
-                  {/* Action bar */}
-                  <div className="flex items-center gap-0.5 border-t border-slate-100">
-                    {/* Edit note */}
-                    <button
-                      type="button"
-                      onClick={() => handleStartEditNote(photo)}
-                      className="flex-1 py-1.5 text-[11px] text-slate-500 hover:bg-slate-50 transition"
-                      title="Edit note"
-                    >
-                      ✎
-                    </button>
-                    {/* Delete */}
-                    {onPhotoDelete && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(photo)}
-                        disabled={deletingId === photo.id}
-                        className="py-1.5 px-2 text-[11px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
-                        title="Delete file"
-                      >
-                        {deletingId === photo.id ? '…' : '✕'}
-                      </button>
-                    )}
-                  </div>
 
                   {/* Note preview */}
                   <div className="p-2">

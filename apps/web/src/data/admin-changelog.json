@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-18-082d56ab",
+    "date": "2026-07-18T15:19:15+08:00",
+    "title": "fix(files): portal modal to body, trash icon top-right, proper image sizing",
+    "summary": "fix(files): portal modal to body, trash icon top-right, proper image sizing",
+    "areas": [
+      "web"
+    ],
+    "commit": "082d56ab",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx",
+      "apps/web/src/components/file-viewer-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-8fc5bf05",
     "date": "2026-07-18T14:52:49+08:00",
     "title": "feat(files): add viewer modal, soft-delete, click-to-view in Files tab",

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 
@@ -49,12 +50,12 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
   if (!isOpen || !file) return null;
 
   const fileUrl = resolveMediaAssetUrl(file.url);
-  const { ext, isImage, isPdf, isOfficeDoc, isViewable } = getFileInfo(file.url);
+  const { ext, isImage, isPdf, isOfficeDoc } = getFileInfo(file.url);
   const encodedUrl = encodeURIComponent(fileUrl);
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-8"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
@@ -93,21 +94,22 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-100">
+        <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-100 p-6">
           {isImage ? (
-            <div className="relative w-full h-full flex items-center justify-center p-4">
+            <div className="relative flex items-center justify-center w-full h-full">
               <Image
                 src={fileUrl}
                 alt={file.url.split('/').pop() || 'File'}
-                fill
-                className="object-contain"
+                width={1200}
+                height={900}
+                className="max-w-full max-h-[65vh] w-auto h-auto object-contain rounded"
                 unoptimized
               />
             </div>
-          ) : isViewable ? (
+          ) : (isPdf || isOfficeDoc) ? (
             <iframe
               src={`https://docs.google.com/viewer?url=${encodedUrl}&embedded=true`}
-              className="w-full h-full border-0"
+              className="w-full h-full min-h-[60vh] border-0 rounded"
               title="File viewer"
               sandbox="allow-scripts allow-same-origin allow-popups"
             />
@@ -144,4 +146,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return modal;
+  return createPortal(modal, document.body);
 };
