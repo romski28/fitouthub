@@ -477,13 +477,6 @@ export default function GetStartedPage() {
 
   const handleBack = () => {
     setError(null);
-    if (step === 0) {
-      setRole(null);
-      setMethod(null);
-      setGoogleOnboardingToken(null);
-      setGoogleButtonRendered(false);
-      return;
-    }
     setStep((prev) => Math.max(0, prev - 1));
   };
 
@@ -1037,13 +1030,23 @@ export default function GetStartedPage() {
                   )}
 
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={handleBack}
-                      className="rounded-xl border border-[#0E7C3A] bg-[#0E7C3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A5D2D]"
-                    >
-                      {step === 0 ? 'Change path' : 'Back'}
-                    </button>
+                    {step === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => router.push('/')}
+                        className="rounded-xl bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#E06940]"
+                      >
+                        Cancel
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleBack}
+                        className="rounded-xl border border-[#0E7C3A] bg-[#0E7C3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A5D2D]"
+                      >
+                        Back
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={loading}

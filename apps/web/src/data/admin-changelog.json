@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-4e400d85",
+    "date": "2026-07-18T21:02:10+08:00",
+    "title": "refactor(get-started): replace 'Change path' with 'Cancel' button on step 0",
+    "summary": "refactor(get-started): replace 'Change path' with 'Cancel' button on step 0",
+    "areas": [
+      "web"
+    ],
+    "commit": "4e400d85",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-b243c4f4",
     "date": "2026-07-18T20:50:01+08:00",
     "title": "fix: unify auth — wire pros into Identity/Persona, demote nickname",
