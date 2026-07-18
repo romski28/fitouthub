@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-18-122fe1fb",
+    "date": "2026-07-18T20:39:37+08:00",
+    "title": "refactor(get-started): merge step 2 into step 1 for client flow",
+    "summary": "refactor(get-started): merge step 2 into step 1 for client flow",
+    "areas": [
+      "web"
+    ],
+    "commit": "122fe1fb",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-f993f8e3",
     "date": "2026-07-18T20:31:59+08:00",
     "title": "refactor(get-started): remove nickname, partner offers, platform updates from client step 2",

@@ -64,7 +64,7 @@ function passwordStrength(password: string): number {
 }
 
 const stepsByRole: Record<Role, string[]> = {
-  client: ['Sign in method', 'About you', 'Terms and verification'],
+  client: ['Sign in method', 'About you'],
   professional: ['Sign in method', 'Your business', 'Contact and availability', 'Your account', 'Terms and verification'],
 };
 
@@ -283,8 +283,6 @@ export default function GetStartedPage() {
         if (!clientForm.firstName || !clientForm.surname) {
           return 'First name and surname are required.';
         }
-      }
-      if (step === 2) {
         if (!clientForm.agreeToTerms || !clientForm.agreeToSecurity) {
           return 'Please accept Terms and Security Statement.';
         }
@@ -555,7 +553,7 @@ export default function GetStartedPage() {
   const pageTitle = useMemo(() => {
     if (!role) return "Let's get you in.";
     if (role === 'client') {
-      const titles = ['How do you want in?', 'Tell us about you.', 'Almost done!'];
+      const titles = ['How do you want in?', 'Tell us about you.'];
       return titles[step] ?? 'Almost done!';
     }
     const titles = ['How do you want in?', 'Your business.', 'Stay reachable.', 'Your account.', 'Last step.'];
@@ -759,34 +757,30 @@ export default function GetStartedPage() {
                             />
                           </label>
                         </div>
-                      </div>
-                    )}
-
-                    {role === 'client' && step === 2 && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms and verification</p>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={clientForm.agreeToTerms}
-                            onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
-                          />
-                          I agree to the Terms and Conditions
-                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
-                            Read
-                          </button>
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={clientForm.agreeToSecurity}
-                            onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))}
-                          />
-                          I agree to the Security Statement
-                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
-                            Read
-                          </button>
-                        </label>
+                        <div className="space-y-3 pt-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={clientForm.agreeToTerms}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
+                            />
+                            I agree to the Terms and Conditions
+                            <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
+                              Read
+                            </button>
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={clientForm.agreeToSecurity}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))}
+                            />
+                            I agree to the Security Statement
+                            <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
+                              Read
+                            </button>
+                          </label>
+                        </div>
                       </div>
                     )}
 
