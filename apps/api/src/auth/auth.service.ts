@@ -106,14 +106,15 @@ export class AuthService {
       throw new BadRequestException('Email already registered');
     }
 
-    // Check if mobile already in use
+    // Check if mobile already in use (soft check — log but don't block)
+    // One person may have multiple personas, so duplicate mobiles are allowed
     if (dto.mobile) {
       const existingMobile = await (this.prisma as any).user.findFirst({
         where: { mobile: dto.mobile },
         select: { id: true },
       });
       if (existingMobile) {
-        throw new BadRequestException('A mobile number can only be used with one account.');
+        console.warn('[AuthService] Mobile number already in use by another account:', dto.mobile);
       }
     }
 

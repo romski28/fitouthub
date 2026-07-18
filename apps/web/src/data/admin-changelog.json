@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-18-3eba5f3c",
+    "date": "2026-07-18T21:36:24+08:00",
+    "title": "fix(api): remove blocking mobile uniqueness check, add APP_NOTIFICATIONS to DTO",
+    "summary": "fix(api): remove blocking mobile uniqueness check, add APP_NOTIFICATIONS to DTO",
+    "areas": [
+      "api"
+    ],
+    "commit": "3eba5f3c",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts"
+    ]
+  },
+  {
     "id": "2026-07-18-a07d9afa",
     "date": "2026-07-18T21:29:20+08:00",
     "title": "fix(get-started): disable browser autofill on email/password fields",
