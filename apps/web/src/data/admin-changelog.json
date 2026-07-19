@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-8fe67783",
+    "date": "2026-07-19T17:40:50+08:00",
+    "title": "refactor(get-started): combine professional steps 1-4 into single scrollable page",
+    "summary": "refactor(get-started): combine professional steps 1-4 into single scrollable page",
+    "areas": [
+      "web"
+    ],
+    "commit": "8fe67783",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-06789b3b",
     "date": "2026-07-19T17:33:06+08:00",
     "title": "chore(get-started): rename 'Emergency availability' to 'We are available'",

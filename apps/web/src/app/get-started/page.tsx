@@ -65,7 +65,7 @@ function passwordStrength(password: string): number {
 
 const stepsByRole: Record<Role, string[]> = {
   client: ['Sign in method', 'About you'],
-  professional: ['Sign in method', 'Your business', 'Contact and availability', 'Your account', 'Terms and verification'],
+  professional: ['Sign in method', 'About your business'],
 };
 
 export default function GetStartedPage() {
@@ -305,18 +305,12 @@ export default function GetStartedPage() {
       }
       if (step === 1) {
         if (!professionalForm.professionType || !professionalForm.businessName || !professionalForm.fullName) {
-          return 'Profession type, business name, and full name are required.';
+          return 'Profession type, business name, and primary contact are required.';
         }
-      }
-      if (step === 2) {
         if (!professionalForm.phone) return 'Phone is required for professionals.';
-      }
-      if (step === 3) {
         if (method === 'email' && !professionalForm.password) {
           return 'Password is required when using email sign-up.';
         }
-      }
-      if (step === 4) {
         if (!professionalForm.agreeToTerms || !professionalForm.agreeToSecurity) {
           return 'Please accept Terms and Security Statement.';
         }
@@ -591,8 +585,8 @@ export default function GetStartedPage() {
       const titles = ['How do you want in?', 'Tell us about you.'];
       return titles[step] ?? 'Almost done!';
     }
-    const titles = ['How do you want in?', 'Your business.', 'Stay reachable.', 'Your account.', 'Last step.'];
-    return titles[step] ?? 'Last step.';
+    const titles = ['How do you want in?', 'About your business'];
+    return titles[step] ?? 'About your business';
   }, [role, step]);
 
   const checkIcon = <span className="text-amber-400">✓</span>;
@@ -628,15 +622,20 @@ export default function GetStartedPage() {
 
           {!pendingOtp && (
             <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
-              <div className="flex items-center gap-3 px-6 pt-6">
+              <div className="flex items-center justify-between gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={144} height={144} className="rounded-xl" />
                 </Link>
+                {role === 'professional' && step === 1 && (
+                  <span className="text-lg font-black text-[#1A1A1A]">Join us</span>
+                )}
               </div>
-              <div className="px-6 pb-2 pt-3">
-                <h1 className="text-2xl font-black text-[#1A1A1A]">{pageTitle}</h1>
-                <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
-              </div>
+              {!(role === 'professional' && step === 1) && (
+                <div className="px-6 pb-2 pt-3">
+                  <h1 className="text-2xl font-black text-[#1A1A1A]">{pageTitle}</h1>
+                  <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
+                </div>
+              )}
               <div className="px-5 pb-6 sm:px-8">
               {!role && (
                 <div className="space-y-4">
@@ -673,18 +672,24 @@ export default function GetStartedPage() {
               {role && (
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-[#5B5851]">
-                      <span>{stepsByRole[role][step]}</span>
-                      <span>
-                        Step {step + 1} / {totalSteps}
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                      <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                    </div>
+                    {role === 'professional' && step === 1 ? (
+                      <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                        <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-[#5B5851]">
+                          <span>{stepsByRole[role][step]}</span>
+                          <span>Step {step + 1} / {totalSteps}</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                          <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className="min-h-[280px] rounded-2xl border border-[#E8DFD5] bg-[#EFE7CF]/78 p-4 transition-all duration-300 sm:p-6">
+                  <div className={`rounded-2xl border border-[#E8DFD5] bg-[#EFE7CF]/78 p-4 transition-all duration-300 sm:p-6 ${role === 'professional' && step === 1 ? 'max-h-[55vh] overflow-y-auto' : 'min-h-[280px]'}`}>
                     {role === 'client' && step === 0 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in method</p>
@@ -912,144 +917,109 @@ export default function GetStartedPage() {
                     )}
 
                     {role === 'professional' && step === 1 && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your business</p>
-                        <label className="space-y-1 text-sm">
-                          <span>Profession type {professionalForm.professionType ? checkIcon : null}</span>
-                          <select
-                            value={professionalForm.professionType}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, professionType: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          >
-                            <option value="company">Company</option>
-                            <option value="contractor">Contractor</option>
-                            <option value="reseller">Reseller</option>
-                          </select>
-                        </label>
-                        <label className="space-y-1 text-sm">
-                          <span>Business name {professionalForm.businessName ? checkIcon : null}</span>
-                          <input
-                            type="text"
-                            value={professionalForm.businessName}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, businessName: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          />
-                        </label>
-                        <label className="space-y-1 text-sm">
-                          <span>Primary contact {professionalForm.fullName ? checkIcon : null}</span>
-                          <input
-                            type="text"
-                            value={professionalForm.fullName}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          />
-                        </label>
-                      </div>
-                    )}
+                      <div className="space-y-6">
+                        {/* Your business */}
+                        <div className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your business</p>
+                          <label className="space-y-1 text-sm">
+                            <span>Profession type {professionalForm.professionType ? checkIcon : null}</span>
+                            <select
+                              value={professionalForm.professionType}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, professionType: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            >
+                              <option value="company">Company</option>
+                              <option value="contractor">Contractor</option>
+                              <option value="reseller">Reseller</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Business name {professionalForm.businessName ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              value={professionalForm.businessName}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, businessName: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Primary contact {professionalForm.fullName ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              value={professionalForm.fullName}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            />
+                          </label>
+                        </div>
 
-                    {role === 'professional' && step === 2 && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact and availability</p>
-                        <label className="space-y-1 text-sm">
-                          <span>Phone {professionalForm.phone ? checkIcon : null}</span>
-                          <PhoneInput
-                            value={professionalForm.phone}
-                            onChange={(val) => {
-                              setProfessionalForm((prev) => ({ ...prev, phone: val }));
-                              setMobileWarning(null);
-                            }}
-                            onBlur={() => checkMobileDuplicate(professionalForm.phone)}
-                            required
-                          />
-                          {mobileWarning && (
-                            <p className="mt-1 text-xs text-amber-600">{mobileWarning}</p>
-                          )}
-                        </label>
-                        {professionalForm.professionType !== 'reseller' && (
-                          <div>
-                            <p className="text-sm mb-2">We are available</p>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setProfessionalForm((prev) => ({
-                                    ...prev,
-                                    emergencyCalloutAvailable: false,
-                                  }))
-                                }
-                                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                                  professionalForm.emergencyCalloutAvailable === false
-                                    ? 'bg-[#0E7C3A] text-white'
-                                    : 'bg-white/20 text-[#5B5851] hover:bg-white/30'
-                                }`}
-                              >
-                                Working Hours
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setProfessionalForm((prev) => ({
-                                    ...prev,
-                                    emergencyCalloutAvailable: true,
-                                  }))
-                                }
-                                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                                  professionalForm.emergencyCalloutAvailable === true
-                                    ? 'bg-[#0E7C3A] text-white'
-                                    : 'bg-white/20 text-[#5B5851] hover:bg-white/30'
-                                }`}
-                              >
-                                24 Hours
-                              </button>
+                        {/* Contact and availability */}
+                        <div className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact</p>
+                          <label className="space-y-1 text-sm">
+                            <span>Phone {professionalForm.phone ? checkIcon : null}</span>
+                            <PhoneInput
+                              value={professionalForm.phone}
+                              onChange={(val) => {
+                                setProfessionalForm((prev) => ({ ...prev, phone: val }));
+                                setMobileWarning(null);
+                              }}
+                              onBlur={() => checkMobileDuplicate(professionalForm.phone)}
+                              required
+                            />
+                            {mobileWarning && (
+                              <p className="mt-1 text-xs text-amber-600">{mobileWarning}</p>
+                            )}
+                          </label>
+                          {professionalForm.professionType !== 'reseller' && (
+                            <div>
+                              <p className="text-sm mb-2">We are available</p>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setProfessionalForm((prev) => ({ ...prev, emergencyCalloutAvailable: false }))}
+                                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${professionalForm.emergencyCalloutAvailable === false ? 'bg-[#0E7C3A] text-white' : 'bg-white/20 text-[#5B5851] hover:bg-white/30'}`}
+                                >
+                                  Working Hours
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setProfessionalForm((prev) => ({ ...prev, emergencyCalloutAvailable: true }))}
+                                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${professionalForm.emergencyCalloutAvailable === true ? 'bg-[#0E7C3A] text-white' : 'bg-white/20 text-[#5B5851] hover:bg-white/30'}`}
+                                >
+                                  24 Hours
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
 
-                    {role === 'professional' && step === 3 && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your account</p>
+                        {/* Account note */}
                         {method === 'google' && (
-                          <p className="rounded-lg border border-green-400/30 bg-green-500/10 px-3 py-2 text-sm text-green-100">
+                          <p className="rounded-lg border border-green-400/30 bg-green-500/10 px-3 py-2 text-xs text-green-100">
                             Google account selected. Password setup can be done later if needed.
                           </p>
                         )}
-                      </div>
-                    )}
 
-                    {role === 'professional' && step === 4 && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms and verification</p>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={professionalForm.agreeToTerms}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
-                          />
-                          I agree to the Terms and Conditions
-                          <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
-                            Read
-                          </button>
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={professionalForm.agreeToSecurity}
-                            onChange={(e) =>
-                              setProfessionalForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))
-                            }
-                          />
-                          I agree to the Security Statement
-                          <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
-                            Read
-                          </button>
-                        </label>
-                        {method === 'email' && (
-                          <p className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-100">
-                            Email sign-up will send OTP verification before activating your account.
-                          </p>
-                        )}
+                        {/* Terms */}
+                        <div className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms</p>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" checked={professionalForm.agreeToTerms} onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))} />
+                            I agree to the Terms and Conditions
+                            <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">Read</button>
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" checked={professionalForm.agreeToSecurity} onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))} />
+                            I agree to the Security Statement
+                            <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">Read</button>
+                          </label>
+                          {method === 'email' && (
+                            <p className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+                              Email sign-up will send OTP verification before activating your account.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
