@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-671d9dee",
+    "date": "2026-07-20T00:25:27+08:00",
+    "title": "fix(wizard): fix fallback options — check nextQuestions, improve 'or' parsing",
+    "summary": "fix(wizard): fix fallback options — check nextQuestions, improve 'or' parsing",
+    "areas": [
+      "web"
+    ],
+    "commit": "671d9dee",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-cf1cdf0e",
     "date": "2026-07-19T22:34:31+08:00",
     "title": "feat(wizard): add client-side fallback option generation when AI omits options",

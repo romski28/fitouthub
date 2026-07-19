@@ -803,16 +803,24 @@ export default function CreateProjectWizardPage() {
       ];
     }
 
-    // "Or" in question — split into options
-    const orMatch = text.match(/\b(\w[\w\s,]{2,40}?)\s+or\s+(\w[\w\s]{2,40}?)[?.]/i);
-    if (orMatch) {
-      const opts = [
-        { label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() },
-        { label: orMatch[2].trim().replace(/[?.]$/, '').trim(), value: orMatch[2].trim().replace(/[?.]$/, '').trim().toLowerCase() },
-      ];
-      if (opts.length === 2 && opts[0].label.length > 1 && opts[1].label.length > 1) {
-        opts.push({ label: 'Something else', value: 'something else' });
-        return opts;
+    // "Or" in question — split into options (handles "X, Y, or Z" and "X or Y")
+    const endsWithPunct = /[?.]$/.test(text.trim());
+    if (endsWithPunct) {
+      const questionBody = text.replace(/[?.]$/, '').trim();
+      // Try comma-separated list before "or": "standard mixer, separate hot and cold, or something else"
+      const commaSplit = questionBody.split(/,\s*(?:or\s+)?/i).filter(s => s.trim().length > 0).slice(-5);
+      if (commaSplit.length >= 3) {
+        const opts = commaSplit.map(s => ({ label: s.trim(), value: s.trim().toLowerCase() }));
+        return opts.slice(0, 5);
+      }
+      // Simple X or Y pattern: "standard mixer or something else"
+      const simpleOr = questionBody.match(/(.+)\s+or\s+(.+)/i);
+      if (simpleOr) {
+        return [
+          { label: simpleOr[1].trim(), value: simpleOr[1].trim().toLowerCase() },
+          { label: simpleOr[2].trim(), value: simpleOr[2].trim().toLowerCase() },
+          { label: 'Other', value: 'something else' },
+        ];
       }
     }
 
@@ -952,12 +960,14 @@ export default function CreateProjectWizardPage() {
         })
         .slice(0, 5);
 
-      // Fallback: generate options from followUpQuestions or conversationalText
+      // Fallback: generate options from nextQuestions/followUpQuestions or conversationalText
       if (!answerOptions?.length) {
-        const followUps: string[] = Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions : [];
+        const followUps: string[] = Array.isArray(parsed?.nextQuestions) ? parsed.nextQuestions as string[]
+          : Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions as string[]
+          : [];
         const questionSource = followUps.length > 0 ? followUps[0] : nextConversationalText;
         answerOptions = generateFallbackOptions(questionSource);
-        console.log('[wizard][options] fallback generated:', answerOptions?.length);
+        console.log('[wizard][options] fallback generated:', answerOptions?.length, 'source:', questionSource.slice(0, 80));
       }
 
       setChatMessages((prev) => [
