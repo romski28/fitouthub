@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-47f5ce4e",
+    "date": "2026-07-19T10:36:50+08:00",
+    "title": "fix(api): add missing Persona creation in email registration path",
+    "summary": "fix(api): add missing Persona creation in email registration path",
+    "areas": [
+      "api"
+    ],
+    "commit": "47f5ce4e",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-19-2c53af3b",
     "date": "2026-07-19T10:28:41+08:00",
     "title": "fix(api): add cleanup on failed registration, remove duplicate Identity creation",

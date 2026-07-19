@@ -159,13 +159,21 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
+      await (this.prisma as any).persona.create({
+        data: {
+          identityId: identity.id,
+          type: 'CLIENT',
+          userId: user.id,
+        },
+      });
     } catch (err) {
       // Clean up partial records on failure
+      if (identity?.id) {
+        await (this.prisma as any).persona.deleteMany({ where: { identityId: identity.id } }).catch(() => {});
+        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
+      }
       if (user?.id) {
         await (this.prisma as any).user.delete({ where: { id: user.id } }).catch(() => {});
-      }
-      if (identity?.id) {
-        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
       }
       throw err;
     }
@@ -384,11 +392,12 @@ export class AuthService {
         },
       });
     } catch (err) {
+      if (identity?.id) {
+        await (this.prisma as any).persona.deleteMany({ where: { identityId: identity.id } }).catch(() => {});
+        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
+      }
       if (user?.id) {
         await (this.prisma as any).user.delete({ where: { id: user.id } }).catch(() => {});
-      }
-      if (identity?.id) {
-        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
       }
       throw err;
     }
