@@ -3,10 +3,17 @@
  * Used as a fallback when the AI doesn't include options in its JSON response.
  */
 export function generateAiOptions(text: string): { label: string; value: string }[] | null {
-  if (!text?.trim()) return null;
+  const trimmed = text?.trim() || '';
 
-  const lower = text.toLowerCase();
-  const trimmed = text.trim();
+  // Always return at least the default options, even for empty/statement-only responses
+  if (!trimmed) {
+    return [
+      { label: 'Tell me more', value: 'let me give you more details' },
+      { label: 'That covers it', value: 'that covers everything' },
+    ];
+  }
+
+  const lower = trimmed.toLowerCase();
 
   // 1. Yes/No question detection
   if (

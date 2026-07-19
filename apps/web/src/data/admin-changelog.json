@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-e3ef3e10",
+    "date": "2026-07-20T02:00:00+08:00",
+    "title": "fix(ai-options): always return default buttons, even for short/empty AI responses",
+    "summary": "fix(ai-options): always return default buttons, even for short/empty AI responses",
+    "areas": [
+      "web"
+    ],
+    "commit": "e3ef3e10",
+    "files": [
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-3a2190d7",
     "date": "2026-07-20T01:40:24+08:00",
     "title": "refactor(ai): extract shared options logic to lib/ai-options.ts",
