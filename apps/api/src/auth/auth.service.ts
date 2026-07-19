@@ -135,27 +135,40 @@ export class AuthService {
     }
 
     // Create user (terms agreement tracked on Identity, not User)
-    const user = await (this.prisma as any).user.create({
-      data: {
-        email: dto.email,
-        nickname: dto.nickname,
-        firstName: dto.firstName,
-        surname: dto.surname,
-        chineseName: dto.chineseName,
-        mobile: dto.mobile,
-        role: dto.role || 'client',
-      },
-    });
+    let user: any;
+    let identity: any;
+    try {
+      user = await (this.prisma as any).user.create({
+        data: {
+          email: dto.email,
+          nickname: dto.nickname,
+          firstName: dto.firstName,
+          surname: dto.surname,
+          chineseName: dto.chineseName,
+          mobile: dto.mobile,
+          role: dto.role || 'client',
+        },
+      });
 
-    // Create parallel Identity row for unified auth (Step 4)
-    const identity = await this.identityService.create({
-      email: dto.email,
-      passwordHash: dto.password,
-    });
-    await (this.prisma as any).user.update({
-      where: { id: user.id },
-      data: { identityId: identity.id },
-    });
+      // Create parallel Identity row for unified auth
+      identity = await this.identityService.create({
+        email: dto.email,
+        passwordHash: dto.password,
+      });
+      await (this.prisma as any).user.update({
+        where: { id: user.id },
+        data: { identityId: identity.id },
+      });
+    } catch (err) {
+      // Clean up partial records on failure
+      if (user?.id) {
+        await (this.prisma as any).user.delete({ where: { id: user.id } }).catch(() => {});
+      }
+      if (identity?.id) {
+        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
+      }
+      throw err;
+    }
 
     await this.prisma.notificationPreference.create({
       data: {
@@ -338,17 +351,47 @@ export class AuthService {
       );
     }
 
-    const user = await (this.prisma as any).user.create({
-      data: {
+    let user: any;
+    let identity: any;
+    try {
+      user = await (this.prisma as any).user.create({
+        data: {
+          email: payload.email,
+          nickname: dto.nickname,
+          firstName: dto.firstName || payload.givenName || 'Member',
+          surname: dto.surname || payload.familyName || 'User',
+          mobile: dto.mobile,
+          role: 'client',
+          emailVerified: true,
+        },
+      });
+
+      // Create parallel Identity + Persona for unified auth (Google OAuth)
+      identity = await this.identityService.create({
         email: payload.email,
-        nickname: dto.nickname,
-        firstName: dto.firstName || payload.givenName || 'Member',
-        surname: dto.surname || payload.familyName || 'User',
-        mobile: dto.mobile,
-        role: 'client',
+        passwordHash: null,
         emailVerified: true,
-      },
-    });
+      });
+      await (this.prisma as any).user.update({
+        where: { id: user.id },
+        data: { identityId: identity.id },
+      });
+      await (this.prisma as any).persona.create({
+        data: {
+          identityId: identity.id,
+          type: 'CLIENT',
+          userId: user.id,
+        },
+      });
+    } catch (err) {
+      if (user?.id) {
+        await (this.prisma as any).user.delete({ where: { id: user.id } }).catch(() => {});
+      }
+      if (identity?.id) {
+        await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
+      }
+      throw err;
+    }
 
     await this.prisma.notificationPreference.create({
       data: {
@@ -365,24 +408,6 @@ export class AuthService {
         enableWeChat: false,
         allowPartnerOffers: dto.allowPartnerOffers ?? false,
         allowPlatformUpdates: dto.allowPlatformUpdates ?? true,
-      },
-    });
-
-    // Create parallel Identity + Persona for unified auth (Google OAuth)
-    const identity = await this.identityService.create({
-      email: payload.email,
-      passwordHash: null, // Google OAuth — no password
-      emailVerified: true,
-    });
-    await (this.prisma as any).user.update({
-      where: { id: user.id },
-      data: { identityId: identity.id },
-    });
-    await (this.prisma as any).persona.create({
-      data: {
-        identityId: identity.id,
-        type: 'CLIENT',
-        userId: user.id,
       },
     });
 
