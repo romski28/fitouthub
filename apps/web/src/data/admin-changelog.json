@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-c75294bd",
+    "date": "2026-07-19T10:50:43+08:00",
+    "title": "fix(get-started): fix JSX nesting in OTP celebration conditional",
+    "summary": "fix(get-started): fix JSX nesting in OTP celebration conditional",
+    "areas": [
+      "web"
+    ],
+    "commit": "c75294bd",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-c6713048",
     "date": "2026-07-19T10:39:34+08:00",
     "title": "fix(get-started): close unclosed fragment in OTP celebration view",
