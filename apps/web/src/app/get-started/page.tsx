@@ -967,7 +967,7 @@ export default function GetStartedPage() {
                         </label>
                         {professionalForm.professionType !== 'reseller' && (
                           <div>
-                            <p className="text-sm mb-2">Emergency availability</p>
+                            <p className="text-sm mb-2">We are available</p>
                             <div className="flex gap-2">
                               <button
                                 type="button"

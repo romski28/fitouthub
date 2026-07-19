@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-06789b3b",
+    "date": "2026-07-19T17:33:06+08:00",
+    "title": "chore(get-started): rename 'Emergency availability' to 'We are available'",
+    "summary": "chore(get-started): rename 'Emergency availability' to 'We are available'",
+    "areas": [
+      "web"
+    ],
+    "commit": "06789b3b",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-734a438d",
     "date": "2026-07-19T17:26:19+08:00",
     "title": "feat(get-started): add mobile check + toggle buttons for pro emergency callouts",
