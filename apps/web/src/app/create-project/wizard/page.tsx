@@ -846,6 +846,8 @@ export default function CreateProjectWizardPage() {
 
     if (!prompt || chatBusy) return;
 
+    console.log('🔵 [wizard-turn] START', { promptOverride: !!promptOverride, promptLen: prompt.length });
+
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
     const effectiveSessionId = aiSessionId || createAiSessionId();
@@ -891,7 +893,7 @@ export default function CreateProjectWizardPage() {
             ? parsed.conversationalText.trim()
             : 'Nice update. I captured that. We are building a strong brief together.');
 
-      // REMOVED (vision review pipeline disabled July 14-15): imageInsights imageInsightSummary processedImageCount
+      console.log('🟢 [wizard-turn] RESPONSE', { hasParsed: !!parsed, parsedKeys: parsed ? Object.keys(parsed).slice(0, 10) : [], hasOptions: !!(parsed?.options), textLen: nextConversationalText.length });
       /* const imageInsights =
         parsed?.project && typeof parsed.project === 'object' && !Array.isArray(parsed.project)
           ? ((parsed.project as Record<string, unknown>).imageInsights as Record<string, unknown> | undefined)

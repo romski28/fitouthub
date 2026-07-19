@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-7b5711b6",
+    "date": "2026-07-20T01:09:39+08:00",
+    "title": "debug(wizard): add trace logs to confirm code execution path",
+    "summary": "debug(wizard): add trace logs to confirm code execution path",
+    "areas": [
+      "web"
+    ],
+    "commit": "7b5711b6",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-671d9dee",
     "date": "2026-07-20T00:25:27+08:00",
     "title": "fix(wizard): fix fallback options — check nextQuestions, improve 'or' parsing",
