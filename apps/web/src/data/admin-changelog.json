@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-cf1cdf0e",
+    "date": "2026-07-19T22:34:31+08:00",
+    "title": "feat(wizard): add client-side fallback option generation when AI omits options",
+    "summary": "feat(wizard): add client-side fallback option generation when AI omits options",
+    "areas": [
+      "web"
+    ],
+    "commit": "cf1cdf0e",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-8a173cb5",
     "date": "2026-07-19T22:10:20+08:00",
     "title": "fix(ai): make options unconditional, add fallback options, ban questions in conversationalText",

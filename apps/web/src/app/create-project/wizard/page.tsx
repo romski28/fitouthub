@@ -789,6 +789,48 @@ export default function CreateProjectWizardPage() {
     setChatAttachedFiles((prev) => [...prev, ...filesToAdd].slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
   };
 
+  /** Generate simple answer buttons when the AI doesn't provide them */
+  const generateFallbackOptions = (text: string): { label: string; value: string }[] | undefined => {
+    if (!text) return undefined;
+    const lower = text.toLowerCase();
+
+    // Yes/No question detection
+    if (/\b(yes|no)\b/.test(lower) || /\?$/.test(text.trim()) && /\b(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower)) {
+      return [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+        { label: 'Not sure', value: 'I am not sure' },
+      ];
+    }
+
+    // "Or" in question — split into options
+    const orMatch = text.match(/\b(\w[\w\s,]{2,40}?)\s+or\s+(\w[\w\s]{2,40}?)[?.]/i);
+    if (orMatch) {
+      const opts = [
+        { label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() },
+        { label: orMatch[2].trim().replace(/[?.]$/, '').trim(), value: orMatch[2].trim().replace(/[?.]$/, '').trim().toLowerCase() },
+      ];
+      if (opts.length === 2 && opts[0].label.length > 1 && opts[1].label.length > 1) {
+        opts.push({ label: 'Something else', value: 'something else' });
+        return opts;
+      }
+    }
+
+    // Type/what/which question — generic fallback
+    if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(text.trim())) {
+      return [
+        { label: 'Tell me more', value: 'let me give you more details' },
+        { label: 'Not sure yet', value: 'I am not sure yet' },
+      ];
+    }
+
+    // Default: encouragement buttons
+    return [
+      { label: 'Tell me more', value: 'let me give you more details' },
+      { label: 'That covers it', value: 'that covers everything' },
+    ];
+  };
+
   const sendWizardAiTurn = async (
     promptOverride?: string,
   ) => {
@@ -899,7 +941,7 @@ export default function CreateProjectWizardPage() {
       // Extract answer options from AI response (for button UI)
       const rawOptions: unknown[] | null = Array.isArray(parsed?.options) ? parsed.options as unknown[] : (Array.isArray(payload?.options) ? payload.options as unknown[] : null);
       console.log('[wizard][options] parsed keys:', parsed ? Object.keys(parsed) : 'null', 'has options:', !!rawOptions, 'count:', rawOptions?.length);
-      const answerOptions: { label: string; value: string }[] | undefined = rawOptions
+      let answerOptions: { label: string; value: string }[] | undefined = rawOptions
         ?.filter((o: unknown) => {
           const obj = o as Record<string, unknown>;
           return typeof obj?.label === 'string' && typeof obj?.value === 'string' && (obj.label as string).trim() && (obj.value as string).trim();
@@ -908,7 +950,15 @@ export default function CreateProjectWizardPage() {
           const obj = o as Record<string, string>;
           return { label: obj.label.trim(), value: obj.value.trim() };
         })
-        .slice(0, 5); // Max 5 buttons
+        .slice(0, 5);
+
+      // Fallback: generate options from followUpQuestions or conversationalText
+      if (!answerOptions?.length) {
+        const followUps: string[] = Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions : [];
+        const questionSource = followUps.length > 0 ? followUps[0] : nextConversationalText;
+        answerOptions = generateFallbackOptions(questionSource);
+        console.log('[wizard][options] fallback generated:', answerOptions?.length);
+      }
 
       setChatMessages((prev) => [
         ...prev,
