@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-19-b9fb6c5f",
+    "date": "2026-07-19T11:06:48+08:00",
+    "title": "fix(api): set personaId back on User/Professional after Persona creation",
+    "summary": "fix(api): set personaId back on User/Professional after Persona creation",
+    "areas": [
+      "api"
+    ],
+    "commit": "b9fb6c5f",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-19-c75294bd",
     "date": "2026-07-19T10:50:43+08:00",
     "title": "fix(get-started): fix JSX nesting in OTP celebration conditional",

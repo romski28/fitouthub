@@ -159,12 +159,16 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
-      await (this.prisma as any).persona.create({
+      const persona = await (this.prisma as any).persona.create({
         data: {
           identityId: identity.id,
           type: 'CLIENT',
           userId: user.id,
         },
+      });
+      await (this.prisma as any).user.update({
+        where: { id: user.id },
+        data: { personaId: persona.id },
       });
     } catch (err) {
       // Clean up partial records on failure
@@ -384,12 +388,16 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
-      await (this.prisma as any).persona.create({
+      const persona = await (this.prisma as any).persona.create({
         data: {
           identityId: identity.id,
           type: 'CLIENT',
           userId: user.id,
         },
+      });
+      await (this.prisma as any).user.update({
+        where: { id: user.id },
+        data: { personaId: persona.id },
       });
     } catch (err) {
       if (identity?.id) {

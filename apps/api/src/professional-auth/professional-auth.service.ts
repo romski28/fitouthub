@@ -87,12 +87,16 @@ export class ProfessionalAuthService {
       where: { id: professional.id },
       data: { identityId: identity.id },
     });
-    await (this.prisma as any).persona.create({
+    const persona = await (this.prisma as any).persona.create({
       data: {
         identityId: identity.id,
         type: 'PROFESSIONAL',
         professionalId: professional.id,
       },
+    });
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { personaId: persona.id },
     });
 
     // Create notification preference for the professional
@@ -290,12 +294,16 @@ export class ProfessionalAuthService {
       where: { id: professional.id },
       data: { identityId: identity.id },
     });
-    await (this.prisma as any).persona.create({
+    const persona = await (this.prisma as any).persona.create({
       data: {
         identityId: identity.id,
         type: 'PROFESSIONAL',
         professionalId: professional.id,
       },
+    });
+    await (this.prisma as any).professional.update({
+      where: { id: professional.id },
+      data: { personaId: persona.id },
     });
 
     const preferredChannel =
