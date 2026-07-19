@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-526cf5b9",
+    "date": "2026-07-19T17:14:48+08:00",
+    "title": "fix(get-started): remove duplicate /> from client password strength bar",
+    "summary": "fix(get-started): remove duplicate /> from client password strength bar",
+    "areas": [
+      "web"
+    ],
+    "commit": "526cf5b9",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-2afbbd26",
     "date": "2026-07-19T17:13:36+08:00",
     "title": "feat(get-started): add profile reminder to celebration for both client and pro",

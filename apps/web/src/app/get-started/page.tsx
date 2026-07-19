@@ -748,7 +748,6 @@ export default function GetStartedPage() {
                                   className="h-full rounded bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 transition-all"
                                   style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
                                 />
-                                />
                               </div>
                             </label>
                             <label className="space-y-1 text-sm">
