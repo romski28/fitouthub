@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-c6713048",
+    "date": "2026-07-19T10:39:34+08:00",
+    "title": "fix(get-started): close unclosed fragment in OTP celebration view",
+    "summary": "fix(get-started): close unclosed fragment in OTP celebration view",
+    "areas": [
+      "web"
+    ],
+    "commit": "c6713048",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-47f5ce4e",
     "date": "2026-07-19T10:36:50+08:00",
     "title": "fix(api): add missing Persona creation in email registration path",

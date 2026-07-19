@@ -1187,6 +1187,7 @@ export default function GetStartedPage() {
                   Resend code
                 </button>
               </div>
+              </>
               )}
               </div>
             </div>
