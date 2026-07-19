@@ -898,6 +898,7 @@ export default function CreateProjectWizardPage() {
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null; */
       // Extract answer options from AI response (for button UI)
       const rawOptions: unknown[] | null = Array.isArray(parsed?.options) ? parsed.options as unknown[] : (Array.isArray(payload?.options) ? payload.options as unknown[] : null);
+      console.log('[wizard][options] parsed keys:', parsed ? Object.keys(parsed) : 'null', 'has options:', !!rawOptions, 'count:', rawOptions?.length);
       const answerOptions: { label: string; value: string }[] | undefined = rawOptions
         ?.filter((o: unknown) => {
           const obj = o as Record<string, unknown>;
