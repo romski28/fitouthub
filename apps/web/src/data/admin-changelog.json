@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-19-952318c7",
+    "date": "2026-07-19T21:33:12+08:00",
+    "title": "feat(wizard): add AI answer buttons for yes/no and simple-choice questions",
+    "summary": "feat(wizard): add AI answer buttons for yes/no and simple-choice questions",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "952318c7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-bdf5ad30",
     "date": "2026-07-19T18:20:21+08:00",
     "title": "fix(api): fix remaining Professional sessionToken references, use Identity",

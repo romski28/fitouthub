@@ -64,6 +64,7 @@ interface CreateProjectDraft {
 interface WizardChatMessage {
   role: 'assistant' | 'user';
   text: string;
+  options?: { label: string; value: string }[];
 }
 
 // REMOVED (review step disabled July 14)
@@ -895,9 +896,22 @@ export default function CreateProjectWizardPage() {
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null; */
+      // Extract answer options from AI response (for button UI)
+      const rawOptions: unknown[] | null = Array.isArray(parsed?.options) ? parsed.options as unknown[] : (Array.isArray(payload?.options) ? payload.options as unknown[] : null);
+      const answerOptions: { label: string; value: string }[] | undefined = rawOptions
+        ?.filter((o: unknown) => {
+          const obj = o as Record<string, unknown>;
+          return typeof obj?.label === 'string' && typeof obj?.value === 'string' && (obj.label as string).trim() && (obj.value as string).trim();
+        })
+        .map((o: unknown) => {
+          const obj = o as Record<string, string>;
+          return { label: obj.label.trim(), value: obj.value.trim() };
+        })
+        .slice(0, 5); // Max 5 buttons
+
       setChatMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: nextConversationalText },
+        { role: 'assistant', text: nextConversationalText, options: answerOptions?.length ? answerOptions : undefined },
       ]);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0
@@ -1506,8 +1520,11 @@ export default function CreateProjectWizardPage() {
                             /> */}
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
-                              {chatMessages.map((message, idx) => (
-                                <div key={`chat-${idx}`} className={`relative max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 pr-8 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
+                              {chatMessages.map((message, idx) => {
+                                const isLastAssistant = message.role === 'assistant' && idx === chatMessages.length - 1;
+                                return (
+                                <div key={`chat-${idx}`}>
+                                <div className={`relative max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 pr-8 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
                                   {renderChatMessageBody(message)}
                                   {message.role === 'assistant' && (
                                     <div className="absolute right-1 top-1">
@@ -1518,7 +1535,32 @@ export default function CreateProjectWizardPage() {
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                                {isLastAssistant && message.options && message.options.length > 0 && !chatBusy && (
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {message.options.map((opt) => (
+                                      <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => sendWizardAiTurn(opt.value)}
+                                        className="rounded-full border border-[#FF7F50]/30 bg-[#FFF5F0] px-3 py-1.5 text-xs font-medium text-[#B94E2D] transition hover:border-[#FF7F50] hover:bg-[#FFE8DD]"
+                                      >
+                                        {opt.label}
+                                      </button>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setChatInput('');
+                                        document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Reply here..."]')?.focus();
+                                      }}
+                                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                                    >
+                                      Other…
+                                    </button>
+                                  </div>
+                                )}
+                                </div>
+                              )})}
                               {chatBusy && (
                                 <p className="text-xs text-slate-500">MIMO is thinking...</p>
                               )}
