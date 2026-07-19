@@ -732,7 +732,7 @@ export default function GetStartedPage() {
                         )}
                         {method === 'email' && (
                           <div className="grid gap-3 sm:grid-cols-2">
-                            <label className="space-y-1 text-sm">
+                            <label className="space-y-1 text-sm sm:col-span-2">
                               <span>Email</span>
                               <input
                                 type="email"
@@ -742,7 +742,7 @@ export default function GetStartedPage() {
                                 className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                               />
                             </label>
-                            <div className="space-y-1 text-sm">
+                            <label className="space-y-1 text-sm">
                               <span>Password strength {clientPwStrength >= 3 ? checkIcon : null}</span>
                               <input
                                 type="password"
@@ -757,8 +757,8 @@ export default function GetStartedPage() {
                                   style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
                                 />
                               </div>
-                            </div>
-                            <label className="space-y-1 text-sm sm:col-span-2">
+                            </label>
+                            <label className="space-y-1 text-sm">
                               <span>Confirm password {clientForm.confirmPassword && clientForm.confirmPassword === clientForm.password ? checkIcon : null}</span>
                               <input
                                 type="password"
