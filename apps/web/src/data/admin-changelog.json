@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-20-3a2190d7",
+    "date": "2026-07-20T01:40:24+08:00",
+    "title": "refactor(ai): extract shared options logic to lib/ai-options.ts",
+    "summary": "refactor(ai): extract shared options logic to lib/ai-options.ts",
+    "areas": [
+      "web"
+    ],
+    "commit": "3a2190d7",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-1aaa6d4d",
     "date": "2026-07-20T01:24:17+08:00",
     "title": "feat(search-flow): add answer buttons for AI conversational responses",

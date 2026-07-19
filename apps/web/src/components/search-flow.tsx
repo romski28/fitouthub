@@ -18,6 +18,7 @@ import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
 import { matchMultipleServices } from '@/lib/service-matcher';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
+import { extractAiOptions } from '@/lib/ai-options';
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -504,28 +505,6 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
       </div>
     </div>
   );
-}
-
-function generateSearchFlowOptions(text: string): { label: string; value: string }[] | null {
-  if (!text) return null;
-  const lower = text.toLowerCase();
-
-  // Yes/No
-  if (/\b(yes|no)\b/.test(lower) || /\?$/.test(text.trim()) && /\b(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower)) {
-    return [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'I am not sure' }];
-  }
-  // Comma-separated list: "standard mixer, separate hot and cold, or something else?"
-  const q = text.replace(/[?.]$/, '').trim();
-  const parts = q.split(/,\s*(?:or\s+)?/i).filter(s => s.trim().length > 0).slice(-5);
-  if (parts.length >= 3) return parts.map(s => ({ label: s.trim(), value: s.trim().toLowerCase() })).slice(0, 5);
-  // Simple "X or Y"
-  const orMatch = q.match(/(.+)\s+or\s+(.+)/i);
-  if (orMatch) return [{ label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() }, { label: orMatch[2].trim(), value: orMatch[2].trim().toLowerCase() }];
-  // What/which/how question
-  if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(text.trim())) {
-    return [{ label: 'Tell me more', value: 'let me give you more details' }, { label: 'Not sure yet', value: 'I am not sure yet' }];
-  }
-  return null;
 }
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange, initialPrompt, initialImages, sourceMode }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void; initialPrompt?: string; initialImages?: File[]; sourceMode?: 'photos' | 'words' }) {
@@ -1559,30 +1538,15 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         setAiConversationalText(payload.conversationalText);
       }
 
-      // Extract answer options from AI response (or generate fallback)
-      const parsedOpts: unknown = (payload.parsedOutput as Record<string, unknown>)?.options;
-      const rawOpts: unknown = (payload as Record<string, unknown>).options;
-      const rawOptions: unknown[] | null = Array.isArray(parsedOpts) ? parsedOpts as unknown[] : Array.isArray(rawOpts) ? rawOpts as unknown[] : null;
-      if (rawOptions?.length) {
-        setAiOptions(
-          rawOptions
-            .filter((o: unknown) => {
-              const obj = o as Record<string, unknown>;
-              return typeof obj?.label === 'string' && typeof obj?.value === 'string';
-            })
-            .map((o: unknown) => {
-              const obj = o as Record<string, string>;
-              return { label: obj.label, value: obj.value };
-            })
-            .slice(0, 5),
-        );
-      } else {
-        // Fallback: generate from nextQuestions or conversationalText
-        const nextQ = payload.parsedOutput?.nextQuestions?.[0] || payload.parsedOutput?.followUpQuestions?.[0] || payload.contractDocumentation?.nextQuestions?.[0];
-        const source = nextQ || payload.conversationalText || '';
-        const opts = generateSearchFlowOptions(source);
-        setAiOptions(opts?.length ? opts : null);
-      }
+      // Extract answer options from AI response (shared with wizard)
+      const nextQ = payload.parsedOutput?.nextQuestions?.[0] || payload.parsedOutput?.followUpQuestions?.[0] || payload.contractDocumentation?.nextQuestions?.[0];
+      const fallbackText = nextQ || payload.conversationalText || '';
+      const opts = extractAiOptions(
+        payload.parsedOutput as Record<string, unknown> | null | undefined,
+        (payload as Record<string, unknown>).options,
+        fallbackText,
+      );
+      setAiOptions(opts);
 
       setAiDebug({
         apiPath,

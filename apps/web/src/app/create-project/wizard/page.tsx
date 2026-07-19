@@ -25,6 +25,7 @@ import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
+import { extractAiOptions } from '@/lib/ai-options';
 // import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
@@ -789,56 +790,6 @@ export default function CreateProjectWizardPage() {
     setChatAttachedFiles((prev) => [...prev, ...filesToAdd].slice(0, AI_CHAT_MAX_IMAGES_PER_TURN));
   };
 
-  /** Generate simple answer buttons when the AI doesn't provide them */
-  const generateFallbackOptions = (text: string): { label: string; value: string }[] | undefined => {
-    if (!text) return undefined;
-    const lower = text.toLowerCase();
-
-    // Yes/No question detection
-    if (/\b(yes|no)\b/.test(lower) || /\?$/.test(text.trim()) && /\b(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower)) {
-      return [
-        { label: 'Yes', value: 'yes' },
-        { label: 'No', value: 'no' },
-        { label: 'Not sure', value: 'I am not sure' },
-      ];
-    }
-
-    // "Or" in question — split into options (handles "X, Y, or Z" and "X or Y")
-    const endsWithPunct = /[?.]$/.test(text.trim());
-    if (endsWithPunct) {
-      const questionBody = text.replace(/[?.]$/, '').trim();
-      // Try comma-separated list before "or": "standard mixer, separate hot and cold, or something else"
-      const commaSplit = questionBody.split(/,\s*(?:or\s+)?/i).filter(s => s.trim().length > 0).slice(-5);
-      if (commaSplit.length >= 3) {
-        const opts = commaSplit.map(s => ({ label: s.trim(), value: s.trim().toLowerCase() }));
-        return opts.slice(0, 5);
-      }
-      // Simple X or Y pattern: "standard mixer or something else"
-      const simpleOr = questionBody.match(/(.+)\s+or\s+(.+)/i);
-      if (simpleOr) {
-        return [
-          { label: simpleOr[1].trim(), value: simpleOr[1].trim().toLowerCase() },
-          { label: simpleOr[2].trim(), value: simpleOr[2].trim().toLowerCase() },
-          { label: 'Other', value: 'something else' },
-        ];
-      }
-    }
-
-    // Type/what/which question — generic fallback
-    if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(text.trim())) {
-      return [
-        { label: 'Tell me more', value: 'let me give you more details' },
-        { label: 'Not sure yet', value: 'I am not sure yet' },
-      ];
-    }
-
-    // Default: encouragement buttons
-    return [
-      { label: 'Tell me more', value: 'let me give you more details' },
-      { label: 'That covers it', value: 'that covers everything' },
-    ];
-  };
-
   const sendWizardAiTurn = async (
     promptOverride?: string,
   ) => {
@@ -948,29 +899,17 @@ export default function CreateProjectWizardPage() {
       /* const imageConfidence = typeof imageInsights?.confidence === 'number' ? imageInsights.confidence : null;
       const imageProvider = typeof imageInsights?.provider === 'string' ? imageInsights.provider : null;
       const imageModel = typeof imageInsights?.model === 'string' ? imageInsights.model : null; */
-      // Extract answer options from AI response (for button UI)
-      const rawOptions: unknown[] | null = Array.isArray(parsed?.options) ? parsed.options as unknown[] : (Array.isArray(payload?.options) ? payload.options as unknown[] : null);
-      console.log('[wizard][options] parsed keys:', parsed ? Object.keys(parsed) : 'null', 'has options:', !!rawOptions, 'count:', rawOptions?.length);
-      let answerOptions: { label: string; value: string }[] | undefined = rawOptions
-        ?.filter((o: unknown) => {
-          const obj = o as Record<string, unknown>;
-          return typeof obj?.label === 'string' && typeof obj?.value === 'string' && (obj.label as string).trim() && (obj.value as string).trim();
-        })
-        .map((o: unknown) => {
-          const obj = o as Record<string, string>;
-          return { label: obj.label.trim(), value: obj.value.trim() };
-        })
-        .slice(0, 5);
-
-      // Fallback: generate options from nextQuestions/followUpQuestions or conversationalText
-      if (!answerOptions?.length) {
-        const followUps: string[] = Array.isArray(parsed?.nextQuestions) ? parsed.nextQuestions as string[]
-          : Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions as string[]
-          : [];
-        const questionSource = followUps.length > 0 ? followUps[0] : nextConversationalText;
-        answerOptions = generateFallbackOptions(questionSource);
-        console.log('[wizard][options] fallback generated:', answerOptions?.length, 'source:', questionSource.slice(0, 80));
-      }
+      // Extract answer options from AI response (shared with search-flow)
+      const followUps: string[] = Array.isArray(parsed?.nextQuestions) ? parsed.nextQuestions as string[]
+        : Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions as string[]
+        : [];
+      const fallbackText = followUps[0] || nextConversationalText;
+      const answerOptions = extractAiOptions(
+        parsed as Record<string, unknown> | null,
+        payload?.options,
+        fallbackText,
+      ) ?? undefined;
+      console.log('[wizard][options] generated:', answerOptions?.length, 'source:', fallbackText.slice(0, 80));
 
       setChatMessages((prev) => [
         ...prev,
