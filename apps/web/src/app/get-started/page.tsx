@@ -954,23 +954,56 @@ export default function GetStartedPage() {
                           <span>Phone {professionalForm.phone ? checkIcon : null}</span>
                           <PhoneInput
                             value={professionalForm.phone}
-                            onChange={(val) => setProfessionalForm((prev) => ({ ...prev, phone: val }))}
+                            onChange={(val) => {
+                              setProfessionalForm((prev) => ({ ...prev, phone: val }));
+                              setMobileWarning(null);
+                            }}
+                            onBlur={() => checkMobileDuplicate(professionalForm.phone)}
                             required
                           />
+                          {mobileWarning && (
+                            <p className="mt-1 text-xs text-amber-600">{mobileWarning}</p>
+                          )}
                         </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={professionalForm.emergencyCalloutAvailable}
-                            onChange={(e) =>
-                              setProfessionalForm((prev) => ({
-                                ...prev,
-                                emergencyCalloutAvailable: e.target.checked,
-                              }))
-                            }
-                          />
-                          Available for emergency callouts
-                        </label>
+                        {professionalForm.professionType !== 'reseller' && (
+                          <div>
+                            <p className="text-sm mb-2">Emergency availability</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setProfessionalForm((prev) => ({
+                                    ...prev,
+                                    emergencyCalloutAvailable: false,
+                                  }))
+                                }
+                                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                                  professionalForm.emergencyCalloutAvailable === false
+                                    ? 'bg-[#0E7C3A] text-white'
+                                    : 'bg-white/20 text-[#5B5851] hover:bg-white/30'
+                                }`}
+                              >
+                                Working Hours
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setProfessionalForm((prev) => ({
+                                    ...prev,
+                                    emergencyCalloutAvailable: true,
+                                  }))
+                                }
+                                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                                  professionalForm.emergencyCalloutAvailable === true
+                                    ? 'bg-[#0E7C3A] text-white'
+                                    : 'bg-white/20 text-[#5B5851] hover:bg-white/30'
+                                }`}
+                              >
+                                24 Hours
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-734a438d",
+    "date": "2026-07-19T17:26:19+08:00",
+    "title": "feat(get-started): add mobile check + toggle buttons for pro emergency callouts",
+    "summary": "feat(get-started): add mobile check + toggle buttons for pro emergency callouts",
+    "areas": [
+      "web"
+    ],
+    "commit": "734a438d",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-526cf5b9",
     "date": "2026-07-19T17:14:48+08:00",
     "title": "fix(get-started): remove duplicate /> from client password strength bar",
