@@ -557,10 +557,15 @@ export class ProfessionalAuthService {
     const preferredChannel =
       preference?.primaryChannel || NotificationChannel.EMAIL;
 
+    const pro = await (this.prisma as any).professional.findFirst({
+      where: { identityId },
+      select: { id: true, email: true, phone: true },
+    });
+
     await this.sendProfessionalOtp(
-      professional.id,
-      professional.email,
-      professional.phone,
+      pro?.id || identityId,
+      identity.email,
+      pro?.phone || '',
       preferredChannel,
       otpCode,
     );
@@ -574,15 +579,22 @@ export class ProfessionalAuthService {
   async validateProfessional(id: string, sessionToken?: string) {
     const professional = await (this.prisma as any).professional.findUnique({
       where: { id },
+      select: { id: true, identityId: true },
     });
 
     if (!professional) {
       throw new UnauthorizedException('Professional not found');
     }
 
-    // Enforce single active session
-    if (sessionToken !== undefined && professional.sessionToken && sessionToken !== professional.sessionToken) {
-      throw new UnauthorizedException('Session expired — please log in again');
+    // Enforce single active session via Identity
+    if (sessionToken !== undefined && professional.identityId) {
+      const identity = await (this.prisma as any).identity.findUnique({
+        where: { id: professional.identityId },
+        select: { sessionToken: true },
+      });
+      if (identity?.sessionToken && sessionToken !== identity.sessionToken) {
+        throw new UnauthorizedException('Session expired — please log in again');
+      }
     }
 
     return professional;
@@ -616,21 +628,30 @@ export class ProfessionalAuthService {
       // Validate professional still exists
       const professional = await (this.prisma as any).professional.findUnique({
         where: { id: decoded.sub },
-        select: { id: true, sessionToken: true },
+        select: { id: true, identityId: true },
       });
 
       if (!professional) {
         throw new UnauthorizedException('Professional not found');
       }
 
-      // Keep existing session token during refresh; initialize only if missing.
-      let sessionToken = professional.sessionToken;
+      // Use Identity for session token
+      let sessionToken: string | null = null;
+      if (professional.identityId) {
+        const identity = await (this.prisma as any).identity.findUnique({
+          where: { id: professional.identityId },
+          select: { sessionToken: true },
+        });
+        sessionToken = identity?.sessionToken || null;
+      }
       if (!sessionToken) {
         sessionToken = randomUUID();
-        await (this.prisma as any).professional.update({
-          where: { id: decoded.sub },
-          data: { sessionToken },
-        });
+        if (professional.identityId) {
+          await (this.prisma as any).identity.update({
+            where: { id: professional.identityId },
+            data: { sessionToken },
+          });
+        }
       }
 
       // Generate new tokens

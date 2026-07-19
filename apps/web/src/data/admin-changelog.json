@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-bdf5ad30",
+    "date": "2026-07-19T18:20:21+08:00",
+    "title": "fix(api): fix remaining Professional sessionToken references, use Identity",
+    "summary": "fix(api): fix remaining Professional sessionToken references, use Identity",
+    "areas": [
+      "api"
+    ],
+    "commit": "bdf5ad30",
+    "files": [
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-19-21055dab",
     "date": "2026-07-19T18:09:03+08:00",
     "title": "fix(api): migrate professional OTP and login to use Identity table",
