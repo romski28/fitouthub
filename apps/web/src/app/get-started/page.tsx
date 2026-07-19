@@ -1014,11 +1014,6 @@ export default function GetStartedPage() {
                             I agree to the Security Statement
                             <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">Read</button>
                           </label>
-                          {method === 'email' && (
-                            <p className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
-                              Email sign-up will send OTP verification before activating your account.
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}

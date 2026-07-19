@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-c69f342a",
+    "date": "2026-07-19T17:49:38+08:00",
+    "title": "chore(get-started): remove OTP notice from professional combined step",
+    "summary": "chore(get-started): remove OTP notice from professional combined step",
+    "areas": [
+      "web"
+    ],
+    "commit": "c69f342a",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-8fe67783",
     "date": "2026-07-19T17:40:50+08:00",
     "title": "refactor(get-started): combine professional steps 1-4 into single scrollable page",
