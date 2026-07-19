@@ -83,6 +83,7 @@ export default function GetStartedPage() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [pendingOtp, setPendingOtp] = useState<null | { email: string; role: Role; password?: string }> (null);
   const [otpCode, setOtpCode] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [googleOnboardingToken, setGoogleOnboardingToken] = useState<string | null>(null);
   const [googleScriptReady, setGoogleScriptReady] = useState(false);
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
@@ -547,11 +548,17 @@ export default function GetStartedPage() {
       if (pendingOtp.role === 'client') {
         if (!pendingOtp.password) throw new Error('Missing password for login.');
         await clientLogin(pendingOtp.email, pendingOtp.password);
-        router.push(consumePostLoginRedirect() || '/projects');
+        setVerificationSuccess(true);
+        setTimeout(() => {
+          router.push(consumePostLoginRedirect() || '/projects');
+        }, 2000);
       } else {
         if (!pendingOtp.password) throw new Error('Missing password for login.');
         await professionalLogin(pendingOtp.email, pendingOtp.password);
-        router.push('/professional-projects');
+        setVerificationSuccess(true);
+        setTimeout(() => {
+          router.push('/professional-projects');
+        }, 2000);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed.');
@@ -1124,6 +1131,17 @@ export default function GetStartedPage() {
 
           {pendingOtp && (
             <div className="rounded-3xl border border-[#EFE7CF]/70 bg-[#EFE7CF]/90 text-[#1A1A1A] shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-sm">
+              {verificationSuccess ? (
+                <div className="flex flex-col items-center justify-center px-6 py-16 space-y-4">
+                  <div className="text-6xl animate-bounce">🎉</div>
+                  <h2 className="text-2xl font-black text-[#1A1A1A]">You're all set!</h2>
+                  <p className="text-sm text-[#5B5851]">Taking you to your dashboard…</p>
+                  <div className="w-48 h-1.5 rounded-full overflow-hidden bg-white/20">
+                    <div className="h-full rounded-full bg-[#0E7C3A] animate-pulse" style={{ width: '100%' }} />
+                  </div>
+                </div>
+              ) : (
+              <>
               <div className="flex items-center gap-3 px-6 pt-6">
                 <Link href="/">
                   <Image src="/assets/lockup-horizontal-ink.webp" alt="Mimo" width={144} height={144} className="rounded-xl" />
@@ -1169,6 +1187,7 @@ export default function GetStartedPage() {
                   Resend code
                 </button>
               </div>
+              )}
               </div>
             </div>
           )}
@@ -1178,10 +1197,6 @@ export default function GetStartedPage() {
             <button onClick={openLoginModal} className="font-semibold text-orange-300 underline underline-offset-2">
               Sign in
             </button>
-            <span className="mx-2">|</span>
-            <Link href="/join" className="font-semibold text-orange-300 underline underline-offset-2">
-              Classic join form
-            </Link>
           </div>
         </div>
       </section>

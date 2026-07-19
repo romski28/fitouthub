@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-49d82de4",
+    "date": "2026-07-19T10:24:43+08:00",
+    "title": "feat(get-started): add celebration animation after successful OTP verification",
+    "summary": "feat(get-started): add celebration animation after successful OTP verification",
+    "areas": [
+      "web"
+    ],
+    "commit": "49d82de4",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-18-5caf11e7",
     "date": "2026-07-18T22:05:21+08:00",
     "title": "fix(api): remove fields that moved from User/Professional to Identity",
