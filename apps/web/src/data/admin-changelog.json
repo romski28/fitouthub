@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-1aaa6d4d",
+    "date": "2026-07-20T01:24:17+08:00",
+    "title": "feat(search-flow): add answer buttons for AI conversational responses",
+    "summary": "feat(search-flow): add answer buttons for AI conversational responses",
+    "areas": [
+      "web"
+    ],
+    "commit": "1aaa6d4d",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-7b5711b6",
     "date": "2026-07-20T01:09:39+08:00",
     "title": "debug(wizard): add trace logs to confirm code execution path",

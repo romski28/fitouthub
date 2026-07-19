@@ -506,6 +506,28 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
   );
 }
 
+function generateSearchFlowOptions(text: string): { label: string; value: string }[] | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+
+  // Yes/No
+  if (/\b(yes|no)\b/.test(lower) || /\?$/.test(text.trim()) && /\b(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower)) {
+    return [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'I am not sure' }];
+  }
+  // Comma-separated list: "standard mixer, separate hot and cold, or something else?"
+  const q = text.replace(/[?.]$/, '').trim();
+  const parts = q.split(/,\s*(?:or\s+)?/i).filter(s => s.trim().length > 0).slice(-5);
+  if (parts.length >= 3) return parts.map(s => ({ label: s.trim(), value: s.trim().toLowerCase() })).slice(0, 5);
+  // Simple "X or Y"
+  const orMatch = q.match(/(.+)\s+or\s+(.+)/i);
+  if (orMatch) return [{ label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() }, { label: orMatch[2].trim(), value: orMatch[2].trim().toLowerCase() }];
+  // What/which/how question
+  if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(text.trim())) {
+    return [{ label: 'Tell me more', value: 'let me give you more details' }, { label: 'Not sure yet', value: 'I am not sure yet' }];
+  }
+  return null;
+}
+
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange, initialPrompt, initialImages, sourceMode }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void; initialPrompt?: string; initialImages?: File[]; sourceMode?: 'photos' | 'words' }) {
   const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
   const MAX_AI_ROUNDS = 2;
@@ -534,6 +556,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
   const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
   const [initialAiImageUrls, setInitialAiImageUrls] = useState<string[]>([]);
   const [aiConversationalText, setAiConversationalText] = useState<string | null>(null);
+  const [aiOptions, setAiOptions] = useState<{ label: string; value: string }[] | null>(null);
   const [aiDebug, setAiDebug] = useState<{
     apiPath: string;
     modeRequested: 'structured' | 'conversational' | null;
@@ -697,6 +720,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     setAiPromptHistory([]);
     setInitialAiImageUrls([]);
     setAiConversationalText(null);
+    setAiOptions(null);
     setAiMatchCount(null);
     setAiCountLoading(false);
     setAiFullCoverageCompanyCount(0);
@@ -1535,6 +1559,31 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
         setAiConversationalText(payload.conversationalText);
       }
 
+      // Extract answer options from AI response (or generate fallback)
+      const parsedOpts: unknown = (payload.parsedOutput as Record<string, unknown>)?.options;
+      const rawOpts: unknown = (payload as Record<string, unknown>).options;
+      const rawOptions: unknown[] | null = Array.isArray(parsedOpts) ? parsedOpts as unknown[] : Array.isArray(rawOpts) ? rawOpts as unknown[] : null;
+      if (rawOptions?.length) {
+        setAiOptions(
+          rawOptions
+            .filter((o: unknown) => {
+              const obj = o as Record<string, unknown>;
+              return typeof obj?.label === 'string' && typeof obj?.value === 'string';
+            })
+            .map((o: unknown) => {
+              const obj = o as Record<string, string>;
+              return { label: obj.label, value: obj.value };
+            })
+            .slice(0, 5),
+        );
+      } else {
+        // Fallback: generate from nextQuestions or conversationalText
+        const nextQ = payload.parsedOutput?.nextQuestions?.[0] || payload.parsedOutput?.followUpQuestions?.[0] || payload.contractDocumentation?.nextQuestions?.[0];
+        const source = nextQ || payload.conversationalText || '';
+        const opts = generateSearchFlowOptions(source);
+        setAiOptions(opts?.length ? opts : null);
+      }
+
       setAiDebug({
         apiPath,
         modeRequested: mode,
@@ -1881,6 +1930,21 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 onSequenceStateChange={handleSequenceStateChange}
                 onRemoveTrade={handleRemoveTrade}
               />
+
+              {aiOptions && aiOptions.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {aiOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => { handleSearch(opt.value); setAiOptions(null); }}
+                      className="rounded-full border border-[#FF7F50]/30 bg-[#FFF5F0] px-3 py-1.5 text-xs font-medium text-[#B94E2D] transition hover:border-[#FF7F50] hover:bg-[#FFE8DD]"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
