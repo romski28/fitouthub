@@ -629,8 +629,11 @@ export default function GetStartedPage() {
                 {role === 'professional' && step === 1 && (
                   <span className="text-lg font-black text-[#1A1A1A]">Join us</span>
                 )}
+                {role === 'client' && step === 1 && (
+                  <span className="text-lg font-black text-[#1A1A1A]">Tell us about you</span>
+                )}
               </div>
-              {!(role === 'professional' && step === 1) && (
+              {!(role && step >= 1) && (
                 <div className="px-6 pb-2 pt-3">
                   <h1 className="text-2xl font-black text-[#1A1A1A]">{pageTitle}</h1>
                   <p className="mt-1 text-sm text-[#FF6B5B]">&nbsp;</p>
@@ -671,8 +674,8 @@ export default function GetStartedPage() {
 
               {role && (
                 <div className="space-y-6">
-                  <div className="space-y-3">
-                    {role === 'professional' && step === 1 ? (
+                  <div className={`space-y-3 ${role && step >= 1 ? 'pt-2' : ''}`}>
+                    {(role === 'client' && step === 1) || (role === 'professional' && step === 1) ? (
                       <div className="h-2 overflow-hidden rounded-full bg-white/20">
                         <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                       </div>

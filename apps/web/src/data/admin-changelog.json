@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-87c2ab6a",
+    "date": "2026-07-19T18:00:25+08:00",
+    "title": "refactor(get-started): unify step 1 header layout for client and professional",
+    "summary": "refactor(get-started): unify step 1 header layout for client and professional",
+    "areas": [
+      "web"
+    ],
+    "commit": "87c2ab6a",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-c69f342a",
     "date": "2026-07-19T17:49:38+08:00",
     "title": "chore(get-started): remove OTP notice from professional combined step",
