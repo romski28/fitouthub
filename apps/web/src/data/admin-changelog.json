@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-2afbbd26",
+    "date": "2026-07-19T17:13:36+08:00",
+    "title": "feat(get-started): add profile reminder to celebration for both client and pro",
+    "summary": "feat(get-started): add profile reminder to celebration for both client and pro",
+    "areas": [
+      "web"
+    ],
+    "commit": "2afbbd26",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-19-1314e1a6",
     "date": "2026-07-19T17:11:16+08:00",
     "title": "refactor(get-started): simplify professional wizard steps to match client patterns",

@@ -1072,6 +1072,7 @@ export default function GetStartedPage() {
                   <div className="text-6xl animate-bounce">🎉</div>
                   <h2 className="text-2xl font-black text-[#1A1A1A]">You're all set!</h2>
                   <p className="text-sm text-[#5B5851]">Taking you to your dashboard…</p>
+                  <p className="text-xs text-[#5B5851]">Please complete your profile as soon as you can.</p>
                   <div className="w-48 h-1.5 rounded-full overflow-hidden bg-white/20">
                     <div className="h-full rounded-full bg-[#0E7C3A] animate-pulse" style={{ width: '100%' }} />
                   </div>
