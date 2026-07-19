@@ -310,16 +310,8 @@ export default function GetStartedPage() {
       }
       if (step === 2) {
         if (!professionalForm.phone) return 'Phone is required for professionals.';
-        if (
-          (professionalForm.preferredContactMethod === 'WHATSAPP' ||
-            professionalForm.preferredContactMethod === 'SMS') &&
-          !professionalForm.phone
-        ) {
-          return 'Phone is required when WhatsApp or SMS is selected.';
-        }
       }
       if (step === 3) {
-        if (!professionalForm.nickname) return 'Nickname is required.';
         if (method === 'email' && !professionalForm.password) {
           return 'Password is required when using email sign-up.';
         }
@@ -408,11 +400,11 @@ export default function GetStartedPage() {
             fullName: professionalForm.fullName,
             businessName: professionalForm.businessName,
             phone: professionalForm.phone,
-            nickname: professionalForm.nickname,
-            preferredContactMethod: professionalForm.preferredContactMethod,
-            preferredLanguage: professionalForm.preferredLanguage,
-            allowPartnerOffers: professionalForm.allowPartnerOffers,
-            allowPlatformUpdates: professionalForm.allowPlatformUpdates,
+            nickname: professionalForm.fullName || professionalForm.businessName || 'Pro',
+            preferredContactMethod: 'APP_NOTIFICATIONS',
+            preferredLanguage: locale,
+            allowPartnerOffers: false,
+            allowPlatformUpdates: true,
             emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
           }),
         });
@@ -432,11 +424,11 @@ export default function GetStartedPage() {
           professionType: professionalForm.professionType,
           fullName: professionalForm.fullName,
           businessName: professionalForm.businessName,
-          nickname: professionalForm.nickname,
-          preferredContactMethod: professionalForm.preferredContactMethod,
-          preferredLanguage: professionalForm.preferredLanguage,
-          allowPartnerOffers: professionalForm.allowPartnerOffers,
-          allowPlatformUpdates: professionalForm.allowPlatformUpdates,
+          nickname: professionalForm.fullName || professionalForm.businessName || 'Pro',
+          preferredContactMethod: 'APP_NOTIFICATIONS',
+          preferredLanguage: locale,
+          allowPartnerOffers: false,
+          allowPlatformUpdates: true,
           requireOtpVerification: true,
           emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
         }),
@@ -753,8 +745,9 @@ export default function GetStartedPage() {
                               />
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-white/20">
                                 <div
-                                  className="h-full rounded bg-[#0E7C3A] transition-all"
+                                  className="h-full rounded bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 transition-all"
                                   style={{ width: `${Math.min((clientPwStrength / 5) * 100, 100)}%` }}
+                                />
                                 />
                               </div>
                             </label>
@@ -944,7 +937,7 @@ export default function GetStartedPage() {
                           />
                         </label>
                         <label className="space-y-1 text-sm">
-                          <span>Full name {professionalForm.fullName ? checkIcon : null}</span>
+                          <span>Primary contact {professionalForm.fullName ? checkIcon : null}</span>
                           <input
                             type="text"
                             value={professionalForm.fullName}
@@ -966,23 +959,6 @@ export default function GetStartedPage() {
                             required
                           />
                         </label>
-                        <label className="space-y-1 text-sm">
-                          <span>Preferred contact</span>
-                          <select
-                            value={professionalForm.preferredContactMethod}
-                            onChange={(e) =>
-                              setProfessionalForm((prev) => ({
-                                ...prev,
-                                preferredContactMethod: e.target.value as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT',
-                              }))
-                            }
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          >
-                            <option value="EMAIL">Email</option>
-                            <option value="WHATSAPP">WhatsApp</option>
-                            <option value="SMS">SMS</option>
-                          </select>
-                        </label>
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="checkbox"
@@ -1002,26 +978,6 @@ export default function GetStartedPage() {
                     {role === 'professional' && step === 3 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Your account</p>
-                        <label className="space-y-1 text-sm">
-                          <span>Nickname {professionalForm.nickname ? checkIcon : null}</span>
-                          <input
-                            type="text"
-                            value={professionalForm.nickname}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          />
-                        </label>
-                        <label className="space-y-1 text-sm">
-                          <span>Preferred language</span>
-                          <select
-                            value={professionalForm.preferredLanguage}
-                            onChange={(e) => setProfessionalForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
-                            className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
-                          >
-                            <option value="en">English</option>
-                            <option value="zh-HK">Chinese (Hong Kong)</option>
-                          </select>
-                        </label>
                         {method === 'google' && (
                           <p className="rounded-lg border border-green-400/30 bg-green-500/10 px-3 py-2 text-sm text-green-100">
                             Google account selected. Password setup can be done later if needed.
@@ -1033,26 +989,6 @@ export default function GetStartedPage() {
                     {role === 'professional' && step === 4 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms and verification</p>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={professionalForm.allowPartnerOffers}
-                            onChange={(e) =>
-                              setProfessionalForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))
-                            }
-                          />
-                          Receive partner offers
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={professionalForm.allowPlatformUpdates}
-                            onChange={(e) =>
-                              setProfessionalForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))
-                            }
-                          />
-                          Receive platform updates
-                        </label>
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="checkbox"
