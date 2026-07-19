@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-19-21055dab",
+    "date": "2026-07-19T18:09:03+08:00",
+    "title": "fix(api): migrate professional OTP and login to use Identity table",
+    "summary": "fix(api): migrate professional OTP and login to use Identity table",
+    "areas": [
+      "api"
+    ],
+    "commit": "21055dab",
+    "files": [
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-19-87c2ab6a",
     "date": "2026-07-19T18:00:25+08:00",
     "title": "refactor(get-started): unify step 1 header layout for client and professional",

@@ -355,16 +355,16 @@ export class ProfessionalAuthService {
       throw new BadRequestException('Email and code are required');
     }
 
-    const professional = await (this.prisma as any).professional.findUnique({
+    const identity = await (this.prisma as any).identity.findUnique({
       where: { email },
       select: { id: true },
     });
 
-    if (!professional) {
-      throw new BadRequestException('Professional not found');
+    if (!identity) {
+      throw new BadRequestException('No account found for this email');
     }
 
-    return this.verifyOtp(professional.id, code);
+    return this.verifyOtp(identity.id, code);
   }
 
   async resendRegistrationOtp(email: string) {
@@ -372,16 +372,16 @@ export class ProfessionalAuthService {
       throw new BadRequestException('Email is required');
     }
 
-    const professional = await (this.prisma as any).professional.findUnique({
+    const identity = await (this.prisma as any).identity.findUnique({
       where: { email },
       select: { id: true },
     });
 
-    if (!professional) {
-      throw new BadRequestException('Professional not found');
+    if (!identity) {
+      throw new BadRequestException('No account found for this email');
     }
 
-    return this.resendOtp(professional.id);
+    return this.resendOtp(identity.id);
   }
 
   async login(dto: ProfessionalLoginDto) {
@@ -401,44 +401,26 @@ export class ProfessionalAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Check if password hash exists (professional must have set password)
-    if (!professional.passwordHash) {
-      throw new UnauthorizedException(
-        'Professional account not fully set up. Please set a password first.',
-      );
+    // Authenticate against Identity (unified credential store)
+    const identity = await (this.prisma as any).identity.findUnique({
+      where: { id: professional.identityId },
+    });
+    if (!identity || !identity.passwordHash) {
+      throw new UnauthorizedException('Account not fully set up. Please set a password first.');
     }
 
-    let isPasswordValid = false;
-
-    try {
-      isPasswordValid = await bcrypt.compare(dto.password, professional.passwordHash);
-    } catch {
-      isPasswordValid = false;
-    }
-
-    const isLegacyPlaintextMatch = professional.passwordHash === dto.password;
-
-    if (!isPasswordValid && isLegacyPlaintextMatch) {
-      const rehashedPassword = await bcrypt.hash(dto.password, 10);
-      await (this.prisma as any).professional.update({
-        where: { id: professional.id },
-        data: { passwordHash: rehashedPassword },
-      });
-      isPasswordValid = true;
-    }
+    const isPasswordValid = await bcrypt.compare(dto.password, identity.passwordHash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Issue session token — invalidates any existing session on another device
+    // Issue session token on Identity — invalidates any existing session
     const sessionToken = randomUUID();
-    await (this.prisma as any).professional.update({
-      where: { id: professional.id },
+    await (this.prisma as any).identity.update({
+      where: { id: identity.id },
       data: { sessionToken },
     });
-
-    // Generate tokens
     const tokens = this.generateTokens(professional.id, sessionToken);
 
     try {
@@ -512,30 +494,30 @@ export class ProfessionalAuthService {
     };
   }
 
-  async verifyOtp(professionalId: string, otpCode: string) {
-    const professional = await (this.prisma as any).professional.findUnique({
-      where: { id: professionalId },
+  async verifyOtp(identityId: string, otpCode: string) {
+    const identity = await (this.prisma as any).identity.findUnique({
+      where: { id: identityId },
     });
 
-    if (!professional) {
-      throw new UnauthorizedException('Professional not found');
+    if (!identity) {
+      throw new UnauthorizedException('Account not found');
     }
 
-    if (!professional.otpCode) {
+    if (!identity.otpCode) {
       throw new BadRequestException('No OTP request found for this account');
     }
 
-    if (professional.otpCode !== otpCode) {
+    if (identity.otpCode !== otpCode) {
       throw new BadRequestException('Invalid OTP code');
     }
 
-    if (professional.otpExpiresAt && professional.otpExpiresAt < new Date()) {
+    if (identity.otpExpiresAt && identity.otpExpiresAt < new Date()) {
       throw new BadRequestException('OTP has expired');
     }
 
-    // Mark OTP as verified and clear OTP fields
-    await (this.prisma as any).professional.update({
-      where: { id: professionalId },
+    // Mark OTP as verified and clear OTP fields on Identity
+    await (this.prisma as any).identity.update({
+      where: { id: identityId },
       data: {
         otpVerifiedAt: new Date(),
         otpCode: null,
@@ -549,31 +531,28 @@ export class ProfessionalAuthService {
     };
   }
 
-  async resendOtp(professionalId: string) {
-    const professional = await (this.prisma as any).professional.findUnique({
-      where: { id: professionalId },
+  async resendOtp(identityId: string) {
+    const identity = await (this.prisma as any).identity.findUnique({
+      where: { id: identityId },
     });
 
-    if (!professional) {
-      throw new UnauthorizedException('Professional not found');
+    if (!identity) {
+      throw new UnauthorizedException('Account not found');
     }
 
     // Generate new OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Update OTP in database
-    await (this.prisma as any).professional.update({
-      where: { id: professionalId },
-      data: {
-        otpCode,
-        otpExpiresAt,
-      },
+    // Update OTP on Identity
+    await (this.prisma as any).identity.update({
+      where: { id: identityId },
+      data: { otpCode, otpExpiresAt },
     });
 
     // Send OTP via preferred channel
-    const preference = await (this.prisma as any).notificationPreference.findUnique({
-      where: { professionalId },
+    const preference = await (this.prisma as any).notificationPreference.findFirst({
+      where: { professional: { identityId } },
     });
     const preferredChannel =
       preference?.primaryChannel || NotificationChannel.EMAIL;
