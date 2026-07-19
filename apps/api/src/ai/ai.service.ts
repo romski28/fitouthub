@@ -1394,15 +1394,16 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics, options
-3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs. Do NOT end with a question or include questions — put those in nextQuestions/followUpQuestions only. Always address the reader as "you" — never refer to them as "the user."
-4) ANSWER OPTIONS — YOU MUST include an "options" array in your JSON for EVERY follow-up question unless it is genuinely open-ended. This is NOT optional. The user will see buttons instead of typing. Rules:
-  - If your next question can be answered with yes/no → MUST include: [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }]
-  - If your next question asks about rooms, areas, or scope → MUST include options like: [{ label: "Kitchen", value: "kitchen" }, { label: "Bathroom", value: "bathroom" }, { label: "Both", value: "kitchen and bathroom" }]
-  - If your next question asks about fixtures, materials, or types → MUST include 2-4 specific options: [{ label: "Tiles", value: "ceramic wall tiles" }, { label: "Paint", value: "repainting walls" }]
-  - Scale/size questions → MUST include: [{ label: "Small", value: "a small room" }, { label: "Medium", value: "a medium-sized room" }, { label: "Large", value: "a large room" }]
-  - Urgency questions → MUST include: [{ label: "Urgent", value: "this is urgent, I need it done quickly" }, { label: "Not urgent", value: "no rush, I am planning ahead" }]
-  - The value MUST be a short phrase that works as a complete reply (2-6 words).
-  - Max 4 options. No duplicates. No generic labels like "Option A".
+3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs. This is a STATEMENT, NOT a question. Do NOT end conversationalText with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing anywhere in conversationalText. Put ALL questions in nextQuestions/followUpQuestions ONLY.
+4) ANSWER OPTIONS — YOU MUST include an "options" array in EVERY response. This is NOT optional and there are NO exceptions. Even if your conversationalText is a plain statement, you MUST still include options suggesting what the user might say next. The user will tap buttons instead of typing. Rules:
+  - If your next question can be answered with yes/no → [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }]
+  - Fixture/materials questions → 2-4 specific options like [{ label: "Mixer tap", value: "a mixer tap" }, { label: "Pillar taps", value: "pillar taps, hot and cold separate" }, { label: "Wall-mounted", value: "a wall-mounted tap" }, { label: "Not sure", value: "I am not sure, what do you recommend?" }]
+  - Rooms/areas → [{ label: "Kitchen", value: "kitchen" }, { label: "Bathroom", value: "bathroom" }, { label: "Both", value: "kitchen and bathroom" }]
+  - Scale/size → [{ label: "Small", value: "a small room" }, { label: "Medium", value: "a medium-sized room" }, { label: "Large", value: "a large room" }]
+  - Urgency → [{ label: "Urgent", value: "this is urgent, I need it done quickly" }, { label: "Not urgent", value: "no rush, I am planning ahead" }]
+  - If none of the above fit, ALWAYS include: [{ label: "Tell me more", value: "let me give you more details" }, { label: "That's all", value: "that covers everything" }]
+  - Values MUST be short phrases that work as standalone replies (2-8 words).
+  - Max 4 options, no duplicates, no generic labels like "Option A".
   - ONLY skip options if the next question requires a complex descriptive answer (e.g. "Describe the damage").
 5) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
