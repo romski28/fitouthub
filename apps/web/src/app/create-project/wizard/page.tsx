@@ -392,6 +392,8 @@ export default function CreateProjectWizardPage() {
   const hasInitializedFromSeedRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -683,7 +685,7 @@ export default function CreateProjectWizardPage() {
     if (!canGoNext) return;
 
     hasManualStepNavigationRef.current = true;
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    setCurrentStep((prev) => Math.min(prev + 1, stepsRef.current.length - 1));
   };
 
   const goBack = () => {
@@ -1080,7 +1082,7 @@ export default function CreateProjectWizardPage() {
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, we are done here. Let\'s move on.' }]);
           setTimeout(() => {
-            if (currentStep < steps.length - 1) {
+            if (currentStep < stepsRef.current.length - 1) {
               goNext();
             } else {
               submitWizard();
@@ -1117,7 +1119,7 @@ export default function CreateProjectWizardPage() {
           setAiChatCanContinue(false);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer), options: answerOptions }]);
         } else {
-          const completionText = 'OK, we have enough project information to proceed. Send with no text to move on.';
+          const completionText = 'OK, we have enough project information to proceed. Just click Next to move on.';
           setAiChatCanContinue(true);
           setChatMessages((prev) => {
             const lastMessage = prev[prev.length - 1];

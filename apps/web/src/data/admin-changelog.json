@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-2491cacf",
+    "date": "2026-07-20T15:03:08+08:00",
+    "title": "fix(wizard): use stepsRef to prevent stale closure skipping images step",
+    "summary": "fix(wizard): use stepsRef to prevent stale closure skipping images step",
+    "areas": [
+      "web"
+    ],
+    "commit": "2491cacf",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-da18584c",
     "date": "2026-07-20T14:48:24+08:00",
     "title": "fix(ai): add wrap-up rule — stop asking when confidence is high",
