@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-7c83e7ce",
+    "date": "2026-07-20T13:40:25+08:00",
+    "title": "fix(ai): enforce single-question turns, ban generic options when specific ones exist",
+    "summary": "fix(ai): enforce single-question turns, ban generic options when specific ones exist",
+    "areas": [
+      "api"
+    ],
+    "commit": "7c83e7ce",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-f5d88afb",
     "date": "2026-07-20T13:34:36+08:00",
     "title": "style(wizard): polish answer buttons, remove debug chrome",
