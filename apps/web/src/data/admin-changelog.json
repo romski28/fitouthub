@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-950e6c9c",
+    "date": "2026-07-20T20:53:23+08:00",
+    "title": "fix(pro): remove early return from QuoteActionModal, use CSS visibility instead",
+    "summary": "fix(pro): remove early return from QuoteActionModal, use CSS visibility instead",
+    "areas": [
+      "web"
+    ],
+    "commit": "950e6c9c",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-ae9b4579",
     "date": "2026-07-20T20:48:31+08:00",
     "title": "fix(pro): move early return after all hooks to fix React error #310",

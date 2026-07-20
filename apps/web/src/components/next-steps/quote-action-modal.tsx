@@ -302,8 +302,6 @@ export function QuoteActionModal({
     return () => clearTimeout(timeoutId);
   }, [accessToken, breakdown, isOpen, projectProfessionalId]);
 
-  if (!isOpen) return null;
-
   const handleClose = () => {
     if (submitting) return;
     setError(null);
