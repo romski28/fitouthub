@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-da18584c",
+    "date": "2026-07-20T14:48:24+08:00",
+    "title": "fix(ai): add wrap-up rule — stop asking when confidence is high",
+    "summary": "fix(ai): add wrap-up rule — stop asking when confidence is high",
+    "areas": [
+      "api"
+    ],
+    "commit": "da18584c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-29754bf0",
     "date": "2026-07-20T14:28:29+08:00",
     "title": "fix(ai): tighten conversationalText to exactly one sentence",
