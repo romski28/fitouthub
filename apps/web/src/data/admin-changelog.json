@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-f5d88afb",
+    "date": "2026-07-20T13:34:36+08:00",
+    "title": "style(wizard): polish answer buttons, remove debug chrome",
+    "summary": "style(wizard): polish answer buttons, remove debug chrome",
+    "areas": [
+      "web"
+    ],
+    "commit": "f5d88afb",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-7f70f287",
     "date": "2026-07-20T11:45:05+08:00",
     "title": "feat(wizard): thread AI options from home page draft to wizard seed question",

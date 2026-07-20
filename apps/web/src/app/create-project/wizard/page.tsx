@@ -803,8 +803,6 @@ export default function CreateProjectWizardPage() {
 
     if (!prompt || chatBusy) return;
 
-    console.log('🔵 [wizard-turn] START', { promptOverride: !!promptOverride, promptLen: prompt.length });
-
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
     const effectiveSessionId = aiSessionId || createAiSessionId();
@@ -850,7 +848,6 @@ export default function CreateProjectWizardPage() {
             ? parsed.conversationalText.trim()
             : 'Nice update. I captured that. We are building a strong brief together.');
 
-      console.log('🟢 [wizard-turn] RESPONSE', { hasParsed: !!parsed, parsedKeys: parsed ? Object.keys(parsed).slice(0, 10) : [], hasOptions: !!(parsed?.options), textLen: nextConversationalText.length });
       /* const imageInsights =
         parsed?.project && typeof parsed.project === 'object' && !Array.isArray(parsed.project)
           ? ((parsed.project as Record<string, unknown>).imageInsights as Record<string, unknown> | undefined)
@@ -921,10 +918,8 @@ export default function CreateProjectWizardPage() {
             { label: 'Tell me more', value: 'let me give you more details' },
             { label: 'That covers it', value: 'that covers everything' },
           ];
-      console.log('[wizard][options] generated:', answerOptions.length, 'source:', fallbackText.slice(0, 80));
 
       const msgWithOptions = { role: 'assistant' as const, text: nextConversationalText };
-      console.log('🔴 [wizard][setChat] main msg (no options — question options are on follow-up)');
 
       setChatMessages((prev) => [
         ...prev,
@@ -1538,9 +1533,6 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => {
-                                if (message.role === 'assistant') {
-                                  console.log('🔶 [wizard-render] msg', idx, 'hasOptions:', !!message.options, 'len:', message.options?.length, 'text:', message.text.slice(0, 40));
-                                }
                                 const showButtons = message.role === 'assistant' && message.options && message.options.length > 0;
                                 return (
                                 <div key={`chat-${idx}`}>
@@ -1556,14 +1548,13 @@ export default function CreateProjectWizardPage() {
                                   )}
                                 </div>
                                 {showButtons && !chatBusy && message.options && (
-                                  <div className="mt-2 flex flex-wrap gap-2 border border-dashed border-amber-400 rounded-lg p-2">
-                                    <span className="w-full text-[10px] text-amber-600 font-mono">DEBUG: {message.options.length} options</span>
+                                  <div className="mt-2 flex flex-wrap gap-2">
                                     {message.options.map((opt) => (
                                       <button
                                         key={opt.value}
                                         type="button"
                                         onClick={() => sendWizardAiTurn(opt.value)}
-                                        className="rounded-full border border-[#FF7F50]/30 bg-[#FFF5F0] px-3 py-1.5 text-xs font-medium text-[#B94E2D] transition hover:border-[#FF7F50] hover:bg-[#FFE8DD]"
+                                        className="rounded-lg bg-[#FF7F50] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#E86A3E] active:bg-[#D15A2E]"
                                       >
                                         {opt.label}
                                       </button>
@@ -1574,9 +1565,9 @@ export default function CreateProjectWizardPage() {
                                         setChatInput('');
                                         document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Reply here..."]')?.focus();
                                       }}
-                                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                                      className="rounded-lg border border-[#FF7F50]/40 bg-white px-3 py-1.5 text-xs font-medium text-[#FF7F50] transition hover:border-[#FF7F50] hover:bg-[#FFF5F0]"
                                     >
-                                      Other…
+                                      Or something else?
                                     </button>
                                   </div>
                                 )}
