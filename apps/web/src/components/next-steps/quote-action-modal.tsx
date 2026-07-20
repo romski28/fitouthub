@@ -158,8 +158,6 @@ export function QuoteActionModal({
     [projectProfessionalIdProp, state.projectDetailsPath],
   );
 
-  if (!isOpen) return null;
-
   const modalContent = state.modalContent || {};
   const {
     title = 'Submit your quote',
@@ -303,6 +301,8 @@ export function QuoteActionModal({
 
     return () => clearTimeout(timeoutId);
   }, [accessToken, breakdown, isOpen, projectProfessionalId]);
+
+  if (!isOpen) return null;
 
   const handleClose = () => {
     if (submitting) return;

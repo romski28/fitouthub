@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-ae9b4579",
+    "date": "2026-07-20T20:48:31+08:00",
+    "title": "fix(pro): move early return after all hooks to fix React error #310",
+    "summary": "fix(pro): move early return after all hooks to fix React error #310",
+    "areas": [
+      "web"
+    ],
+    "commit": "ae9b4579",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-010c88fd",
     "date": "2026-07-20T20:38:53+08:00",
     "title": "fix(pro): pass projectProfessionalId to QuoteActionModal so it loads existing quote data",
