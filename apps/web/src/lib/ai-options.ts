@@ -15,19 +15,7 @@ export function generateAiOptions(text: string): { label: string; value: string 
 
   const lower = trimmed.toLowerCase();
 
-  // 1. Yes/No question detection
-  if (
-    /\b(yes|no)\b/.test(lower) ||
-    (/\?$/.test(trimmed) && /\b(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower))
-  ) {
-    return [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-      { label: 'Not sure', value: 'I am not sure' },
-    ];
-  }
-
-  // 2. Comma-separated list with optional trailing "or": "X, Y, or Z?"
+  // 1. Comma-separated list with optional trailing "or": "X, Y, or Z?"
   const questionBody = trimmed.replace(/[?.]$/, '').trim();
   const parts = questionBody
     .split(/,\s*(?:or\s+)?/i)
@@ -38,7 +26,7 @@ export function generateAiOptions(text: string): { label: string; value: string 
     return parts.map((s) => ({ label: s.trim(), value: s.trim().toLowerCase() })).slice(0, 5);
   }
 
-  // 3. Simple "X or Y" pattern
+  // 2. Simple "X or Y" pattern (e.g. "indoor or outdoor?")
   const orMatch = questionBody.match(/(.+)\s+or\s+(.+)/i);
   if (orMatch) {
     return [
@@ -48,11 +36,23 @@ export function generateAiOptions(text: string): { label: string; value: string 
     ];
   }
 
-  // 4. What/which/how question — generic fallback
+  // 3. What/which/how questions — checked BEFORE yes/no so "What type … are you …" doesn't falsely match yes/no
   if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(trimmed)) {
     return [
       { label: 'Tell me more', value: 'let me give you more details' },
       { label: 'Not sure yet', value: 'I am not sure yet' },
+    ];
+  }
+
+  // 4. Yes/No question detection — only when the question STARTS with a yes/no auxiliary
+  if (
+    /\b(yes|no)\b/.test(lower) ||
+    (/\?$/.test(trimmed) && /^(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower))
+  ) {
+    return [
+      { label: 'Yes', value: 'yes' },
+      { label: 'No', value: 'no' },
+      { label: 'Not sure', value: 'I am not sure' },
     ];
   }
 

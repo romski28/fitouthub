@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-20-7f4dce28",
+    "date": "2026-07-20T11:02:48+08:00",
+    "title": "fix(wizard): reorder regex checks, remove home-page options, drop seed-message options",
+    "summary": "fix(wizard): reorder regex checks, remove home-page options, drop seed-message options",
+    "areas": [
+      "web"
+    ],
+    "commit": "7f4dce28",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-3f006962",
     "date": "2026-07-20T10:34:08+08:00",
     "title": "fix(wizard): add options to seed messages and follow-up prompts",

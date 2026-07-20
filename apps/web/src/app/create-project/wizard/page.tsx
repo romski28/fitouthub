@@ -554,8 +554,8 @@ export default function CreateProjectWizardPage() {
       if (firstQuestionOfferType === 'design') setDesignOfferPrompted(true);
     }
 
-    const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText, options: generateAiOptions(starterText) ?? undefined }];
-    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion, options: generateAiOptions(firstQuestion) ?? undefined });
+    const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText }];
+    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion });
     setChatMessages(seedMessages);
 
     setEndDate(nextEndDate);

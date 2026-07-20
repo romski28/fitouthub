@@ -1895,20 +1895,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
                 onRemoveTrade={handleRemoveTrade}
               />
 
-              {aiOptions && aiOptions.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {aiOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => { handleSearch(opt.value); setAiOptions(null); }}
-                      className="rounded-full border border-[#FF7F50]/30 bg-[#FFF5F0] px-3 py-1.5 text-xs font-medium text-[#B94E2D] transition hover:border-[#FF7F50] hover:bg-[#FFE8DD]"
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* aiOptions intentionally omitted from home page — wizard-only feature */}
             </div>
           )}
         </div>
