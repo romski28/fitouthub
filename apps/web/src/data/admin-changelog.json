@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-634c4768",
+    "date": "2026-07-20T20:26:34+08:00",
+    "title": "fix(pro): broaden Your Quote card gating to include awarded and any quoted status",
+    "summary": "fix(pro): broaden Your Quote card gating to include awarded and any quoted status",
+    "areas": [
+      "web"
+    ],
+    "commit": "634c4768",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-a490798e",
     "date": "2026-07-20T20:21:47+08:00",
     "title": "refactor(pro): replace inline quote form with slim status card + modal",

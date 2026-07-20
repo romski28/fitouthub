@@ -187,7 +187,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isDeclinedOrRejected = project.status === 'declined' || project.status === 'rejected';
   const isCounterRequested = project.status === 'counter_requested';
   const isEmergencyProject = project.project.isEmergency === true;
-  const showQuoteCard = ['pending', 'accepted', 'counter_requested', 'quoted'].includes(project.status) && !isDeclinedOrRejected;
+  const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
 
   const overviewSummaryLines = extractOverviewSummaryLines(project.project.notes);
   const isAwardedProject = String(project.status || '').toLowerCase() === 'awarded';
