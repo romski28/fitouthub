@@ -911,9 +911,12 @@ export default function CreateProjectWizardPage() {
       ) ?? undefined;
       console.log('[wizard][options] generated:', answerOptions?.length, 'source:', fallbackText.slice(0, 80));
 
+      const msgWithOptions = { role: 'assistant' as const, text: nextConversationalText, options: answerOptions?.length ? answerOptions : undefined };
+      console.log('🔴 [wizard][setChat] options on message:', !!msgWithOptions.options, 'count:', msgWithOptions.options?.length);
+
       setChatMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: nextConversationalText, options: answerOptions?.length ? answerOptions : undefined },
+        msgWithOptions,
       ]);
 
       const nextTitle = typeof parsed?.title === 'string' && parsed.title.trim().length > 0

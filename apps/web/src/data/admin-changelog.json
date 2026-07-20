@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-18b21df8",
+    "date": "2026-07-20T10:28:28+08:00",
+    "title": "debug(wizard): log options at message creation point before setState",
+    "summary": "debug(wizard): log options at message creation point before setState",
+    "areas": [
+      "web"
+    ],
+    "commit": "18b21df8",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-b36f5653",
     "date": "2026-07-20T10:19:13+08:00",
     "title": "fix(wizard): add null guard on message.options in render block",
