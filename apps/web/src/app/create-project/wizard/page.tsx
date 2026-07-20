@@ -47,6 +47,7 @@ interface ProjectDescriptionData {
   location?: CanonicalLocation;
   tradesRequired?: string[];
   followUpQuestions?: string[];
+  aiOptions?: { label: string; value: string }[];
   safetyNotes?: string[];
   riskNotes?: string[];
   riskLevel?: string | null;
@@ -57,6 +58,7 @@ interface CreateProjectDraft {
   selectedProfessionals?: Professional[];
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  aiOptions?: { label: string; value: string }[];
   safetyNotes?: string[];
   riskNotes?: string[];
   riskLevel?: string | null;
@@ -555,7 +557,11 @@ export default function CreateProjectWizardPage() {
     }
 
     const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText }];
-    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion });
+    if (firstQuestion) {
+      // Use AI-generated options from the home page draft if available; fall back to none
+      const seedOptions = seedDraft?.aiOptions ?? seedDescription?.aiOptions;
+      seedMessages.push({ role: 'assistant', text: firstQuestion, options: seedOptions });
+    }
     setChatMessages(seedMessages);
 
     setEndDate(nextEndDate);

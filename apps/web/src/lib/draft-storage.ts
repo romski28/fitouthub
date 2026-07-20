@@ -33,6 +33,7 @@ type CreateProjectDraftValue = {
   }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  aiOptions?: { label: string; value: string }[];
   safetyNotes?: string[];
   riskNotes?: string[];
   riskLevel?: string | null;

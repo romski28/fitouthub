@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-20-7f70f287",
+    "date": "2026-07-20T11:45:05+08:00",
+    "title": "feat(wizard): thread AI options from home page draft to wizard seed question",
+    "summary": "feat(wizard): thread AI options from home page draft to wizard seed question",
+    "areas": [
+      "web"
+    ],
+    "commit": "7f70f287",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx",
+      "apps/web/src/lib/create-project-handoff.ts",
+      "apps/web/src/lib/draft-storage.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-1e82445d",
     "date": "2026-07-20T11:28:17+08:00",
     "title": "fix(wizard): remove options from summary msg, add to fallback path, harden answerOptions",

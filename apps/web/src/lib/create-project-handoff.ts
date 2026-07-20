@@ -7,6 +7,7 @@ export interface CreateProjectDraftHandoff {
   selectedProfessionals?: Array<Professional & { requestedTrades?: string[] }>;
   aiIntakeId?: string;
   followUpQuestions?: string[];
+  aiOptions?: { label: string; value: string }[];
   safetyNotes?: string[];
   riskNotes?: string[];
   riskLevel?: string | null;
@@ -21,6 +22,7 @@ export interface ProjectDescriptionHandoff {
   location?: CanonicalLocation;
   tradesRequired?: string[];
   followUpQuestions?: string[];
+  aiOptions?: { label: string; value: string }[];
   safetyNotes?: string[];
   riskNotes?: string[];
   riskLevel?: string | null;

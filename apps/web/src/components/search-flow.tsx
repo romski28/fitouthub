@@ -849,6 +849,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       },
       ...(aiStructured.intakeId ? { aiIntakeId: aiStructured.intakeId } : {}),
       followUpQuestions,
+      aiOptions: aiOptions && aiOptions.length > 0 ? aiOptions : undefined,
     };
 
     writeCreateProjectDraftSafely(aiDraft);
@@ -863,6 +864,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       location: aiDraft.initialData.location,
       tradesRequired: aiDraft.initialData.tradesRequired || [],
       followUpQuestions,
+      aiOptions: aiOptions && aiOptions.length > 0 ? aiOptions : undefined,
       safetyNotes: [
         ...(Array.isArray(aiStructured.safetyAssessment?.concerns)
           ? aiStructured.safetyAssessment.concerns.filter(Boolean) : []),
@@ -891,7 +893,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     }
 
     return true;
-  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput]);
+  }, [aiStructured, activeTrades, aiConversationalText, initialAiPrompt, initialAiImageUrls, userLocation, aiOutput, aiOptions]);
 
   const [pageExiting, setPageExiting] = useState(false);
 
