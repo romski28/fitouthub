@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-6b2634cc",
+    "date": "2026-07-20T15:09:36+08:00",
+    "title": "fix(wizard): move stepsRef after steps declaration",
+    "summary": "fix(wizard): move stepsRef after steps declaration",
+    "areas": [
+      "web"
+    ],
+    "commit": "6b2634cc",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-2491cacf",
     "date": "2026-07-20T15:03:08+08:00",
     "title": "fix(wizard): use stepsRef to prevent stale closure skipping images step",

@@ -392,8 +392,6 @@ export default function CreateProjectWizardPage() {
   const hasInitializedFromSeedRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
-  const stepsRef = useRef(steps);
-  stepsRef.current = steps;
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -645,6 +643,9 @@ export default function CreateProjectWizardPage() {
     },
     [summaryConfirmationShown, hasImagesFromChat],
   );
+
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
 
   // Safety: clamp currentStep if the steps array shrank (e.g. images shared mid-chat)
   useEffect(() => {
