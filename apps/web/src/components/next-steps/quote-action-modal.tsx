@@ -22,6 +22,7 @@ interface QuoteActionModalProps {
   isLoading?: boolean;
   onClose: () => void;
   onSubmitted?: () => void;
+  projectId?: string;
 }
 
 const toDateInput = (value: Date) => {
@@ -121,10 +122,12 @@ export function QuoteActionModal({
   isLoading = false,
   onClose,
   onSubmitted,
+  projectId: projectIdProp,
 }: QuoteActionModalProps) {
   const router = useRouter();
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
+  const projectId = projectIdProp || state.projectId;
   const [breakdown, setBreakdown] = useState<QuoteBreakdownFormValues>(emptyQuoteBreakdownForm());
   const [estimatedStartDate, setEstimatedStartDate] = useState(() => toDateInput(tomorrowAtNine()));
   const [estimatedStartHour, setEstimatedStartHour] = useState('09');
@@ -215,10 +218,10 @@ export function QuoteActionModal({
         }
 
         // Check whether this professional already has an active site access request
-        if (inspectionDateRaw && state.projectId) {
+        if (inspectionDateRaw && projectId) {
           try {
             const accessRes = await fetch(
-              `${API_BASE_URL}/projects/${state.projectId}/site-access/status?_ts=${Date.now()}`,
+              `${API_BASE_URL}/projects/${projectId}/site-access/status?_ts=${Date.now()}`,
               {
                 cache: 'no-store',
                 headers: { Authorization: `Bearer ${accessToken}` },
@@ -246,7 +249,7 @@ export function QuoteActionModal({
     };
 
     void loadRequestedCompletionBy();
-  }, [accessToken, isOpen, projectProfessionalId, state.projectId]);
+  }, [accessToken, isOpen, projectProfessionalId, projectId]);
 
   useEffect(() => {
     const amount = getQuoteBreakdownFormTotal(breakdown);
@@ -345,7 +348,7 @@ export function QuoteActionModal({
 
     const durationValue = parseFloat(estimatedDurationValue);
 
-    if (!state.projectId) {
+    if (!projectId) {
       setError('Missing project context. Please refresh and try again.');
       return;
     }
@@ -367,7 +370,7 @@ export function QuoteActionModal({
 
     const isRevisedQuote = state.actionKey === 'PREPARE_REVISED_QUOTE';
     const endpoint = isRevisedQuote
-      ? `${API_BASE_URL}/projects/${state.projectId}/update-quote`
+      ? `${API_BASE_URL}/projects/${projectId}/update-quote`
       : projectProfessionalId
         ? `${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote`
         : null;

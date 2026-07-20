@@ -1872,6 +1872,7 @@ export default function ProjectDetailPage() {
           setShowQuoteModal(false);
           fetchProject();
         }}
+        projectId={project?.project?.id}
       />
     </>
   );

@@ -322,7 +322,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <button
                 type="button"
                 onClick={onOpenQuoteModal}
-                className="rounded-xl bg-[rgba(126,58,33,0.92)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgba(100,45,26,0.96)]"
+                className="rounded-xl bg-[#FF7F50] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E86A3E]"
               >
                 Submit Quote
               </button>
@@ -396,7 +396,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <button
                   type="button"
                   onClick={onOpenQuoteModal}
-                  className="min-w-40 flex-1 rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(100,45,26,0.96)]"
+                  className="min-w-40 flex-1 rounded-xl bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#E86A3E]"
                 >
                   Edit Quote
                 </button>
