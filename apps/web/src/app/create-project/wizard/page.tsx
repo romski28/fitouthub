@@ -1523,7 +1523,8 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => {
-                                const isLastAssistant = message.role === 'assistant' && idx === chatMessages.length - 1;
+                                const isLastAssistantWithOptions = message.role === 'assistant' && message.options && message.options.length > 0
+                                  && !chatMessages.slice(idx + 1).some(m => m.role === 'assistant' && m.options && m.options.length > 0);
                                 return (
                                 <div key={`chat-${idx}`}>
                                 <div className={`relative max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-2 pr-8 text-sm leading-relaxed ${message.role === 'assistant' ? 'border border-[#F7D2C5] bg-[#FFF2EB] text-slate-800' : 'ml-auto bg-emerald-600 text-white'}`}>
@@ -1537,7 +1538,7 @@ export default function CreateProjectWizardPage() {
                                     </div>
                                   )}
                                 </div>
-                                {isLastAssistant && message.options && message.options.length > 0 && !chatBusy && (
+                                {isLastAssistantWithOptions && !chatBusy && (
                                   <div className="mt-2 flex flex-wrap gap-2 border border-dashed border-amber-400 rounded-lg p-2">
                                     <span className="w-full text-[10px] text-amber-600 font-mono">DEBUG: {message.options.length} options</span>
                                     {message.options.map((opt) => (

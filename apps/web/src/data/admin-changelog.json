@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-270d44b7",
+    "date": "2026-07-20T09:54:33+08:00",
+    "title": "fix(wizard): show buttons for last assistant message with options, not absolute last",
+    "summary": "fix(wizard): show buttons for last assistant message with options, not absolute last",
+    "areas": [
+      "web"
+    ],
+    "commit": "270d44b7",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-5f9f5b64",
     "date": "2026-07-20T09:44:46+08:00",
     "title": "debug(wizard): add visible border marker to confirm button rendering",
