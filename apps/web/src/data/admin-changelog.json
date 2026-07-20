@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-6ce13f1a",
+    "date": "2026-07-20T10:15:55+08:00",
+    "title": "fix(wizard): add render debug log to trace options at render time",
+    "summary": "fix(wizard): add render debug log to trace options at render time",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ce13f1a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-c7d05346",
     "date": "2026-07-20T10:08:07+08:00",
     "title": "fix(wizard): show buttons for ALL assistant messages with options, no filtering",

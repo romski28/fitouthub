@@ -1523,6 +1523,9 @@ export default function CreateProjectWizardPage() {
 
                             <div ref={chatContainerRef} className="flex-1 min-h-[80px] sm:min-h-[150px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2.5 space-y-2">
                               {chatMessages.map((message, idx) => {
+                                if (message.role === 'assistant') {
+                                  console.log('🔶 [wizard-render] msg', idx, 'hasOptions:', !!message.options, 'len:', message.options?.length, 'text:', message.text.slice(0, 40));
+                                }
                                 const showButtons = message.role === 'assistant' && message.options && message.options.length > 0;
                                 return (
                                 <div key={`chat-${idx}`}>
