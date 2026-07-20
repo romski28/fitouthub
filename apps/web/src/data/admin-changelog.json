@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-6b213d8e",
+    "date": "2026-07-20T21:05:36+08:00",
+    "title": "fix(pro): pre-fill start date, duration, and notes when editing existing quote",
+    "summary": "fix(pro): pre-fill start date, duration, and notes when editing existing quote",
+    "areas": [
+      "web"
+    ],
+    "commit": "6b213d8e",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-950e6c9c",
     "date": "2026-07-20T20:53:23+08:00",
     "title": "fix(pro): remove early return from QuoteActionModal, use CSS visibility instead",

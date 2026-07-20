@@ -211,11 +211,30 @@ export function QuoteActionModal({
         setSiteInspectionRawDate(inspectionDateRaw);
         setIsEmergencyProject(detail?.project?.isEmergency === true);
         setProjectScale(detail?.projectScale || detail?.project?.projectScale || null);
-        if (!detail?.quoteEstimatedStartAt) {
+        if (detail?.quoteEstimatedStartAt) {
+          const existingStart = new Date(detail.quoteEstimatedStartAt);
+          if (!Number.isNaN(existingStart.getTime())) {
+            setEstimatedStartDate(toDateInput(existingStart));
+            setEstimatedStartHour(String(existingStart.getHours()).padStart(2, '0'));
+            setEstimatedStartMinute(String(existingStart.getMinutes()).padStart(2, '0'));
+          }
+        } else {
           const defaultStart = detail?.project?.isEmergency === true ? nextQuarterHour() : tomorrowAtNine();
           setEstimatedStartDate(toDateInput(defaultStart));
           setEstimatedStartHour(String(defaultStart.getHours()).padStart(2, '0'));
           setEstimatedStartMinute(String(defaultStart.getMinutes()).padStart(2, '0'));
+        }
+        if (detail?.quoteEstimatedDurationMinutes) {
+          if (detail.quoteEstimatedDurationUnit === 'days') {
+            setEstimatedDurationValue(String(detail.quoteEstimatedDurationMinutes / (8 * 60)));
+            setEstimatedDurationUnit('days');
+          } else {
+            setEstimatedDurationValue(String(detail.quoteEstimatedDurationMinutes / 60));
+            setEstimatedDurationUnit('hours');
+          }
+        }
+        if (typeof detail?.quoteNotes === 'string') {
+          setNotes(detail.quoteNotes);
         }
 
         // Check whether this professional already has an active site access request
