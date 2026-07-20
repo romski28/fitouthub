@@ -24,6 +24,7 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
+import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
 import {
   buildQuoteBreakdownPayload,
   emptyQuoteBreakdownForm,
@@ -308,6 +309,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
   const [submittingQuote, setSubmittingQuote] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
     breakdown: emptyQuoteBreakdownForm() as QuoteBreakdownFormValues,
     notes: '',
@@ -1690,23 +1692,9 @@ export default function ProjectDetailPage() {
             <OverviewTab
               tab="overview"
               project={project}
-              quoteForm={quoteForm}
-              onUpdateQuoteForm={(patch) =>
-                {
-                  quoteFormDirtyRef.current = true;
-                  setQuoteForm((prev) => ({
-                    ...prev,
-                    ...patch,
-                  }));
-                }
-              }
-              onSubmitQuote={handleSubmitQuote}
-              onAccept={handleAccept}
-              onReject={handleReject}
+              onOpenQuoteModal={() => setShowQuoteModal(true)}
               onKeepCurrentQuote={handleKeepCurrentQuote}
               onOpenAccessSchedule={() => setActiveTab('site-access')}
-              submittingQuote={submittingQuote}
-              accessToken={accessToken}
             />
 
             <TabPanel tab="ai-scope">
@@ -1875,6 +1863,15 @@ export default function ProjectDetailPage() {
         nextStep={null}
         showConfetti
         onClose={() => setShowSiteStartedCelebration(false)}
+      />
+      <QuoteActionModal
+        isOpen={showQuoteModal}
+        isLoading={submittingQuote}
+        onClose={() => setShowQuoteModal(false)}
+        onSubmitted={() => {
+          setShowQuoteModal(false);
+          fetchProject();
+        }}
       />
     </>
   );

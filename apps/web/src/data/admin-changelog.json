@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-20-a490798e",
+    "date": "2026-07-20T20:21:47+08:00",
+    "title": "refactor(pro): replace inline quote form with slim status card + modal",
+    "summary": "refactor(pro): replace inline quote form with slim status card + modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "a490798e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-4aa002b7",
     "date": "2026-07-20T17:22:45+08:00",
     "title": "docs: full implementation record for AI chat answer options",
