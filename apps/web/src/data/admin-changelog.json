@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-b36f5653",
+    "date": "2026-07-20T10:19:13+08:00",
+    "title": "fix(wizard): add null guard on message.options in render block",
+    "summary": "fix(wizard): add null guard on message.options in render block",
+    "areas": [
+      "web"
+    ],
+    "commit": "b36f5653",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-6ce13f1a",
     "date": "2026-07-20T10:15:55+08:00",
     "title": "fix(wizard): add render debug log to trace options at render time",
