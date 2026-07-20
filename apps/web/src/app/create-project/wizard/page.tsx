@@ -25,7 +25,7 @@ import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
-import { extractAiOptions, generateAiOptions } from '@/lib/ai-options';
+import { extractAiOptions } from '@/lib/ai-options';
 // import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
@@ -1067,7 +1067,7 @@ export default function CreateProjectWizardPage() {
             ? 'Another question, if you have the time.'
             : 'Thanks, we have enough information to proceed. Click Next to move on or continue answering questions if you have time.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}`, options: generateAiOptions(nextQuestion) ?? undefined }]);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}`, options: answerOptions }]);
         } else {
           // No more questions — all done. Auto-advance after 5s
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
@@ -1082,7 +1082,7 @@ export default function CreateProjectWizardPage() {
         }
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer), options: generateAiOptions(nextUnaskedQuestion) ?? undefined }]);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer), options: answerOptions }]);
       } else {
         const fallbackQuestion = getNextBestMissingBriefQuestion({
           title: nextTitle || title,

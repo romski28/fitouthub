@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-24c1d339",
+    "date": "2026-07-20T11:08:38+08:00",
+    "title": "fix(wizard): use AI-generated options for follow-up messages, not regex fallback",
+    "summary": "fix(wizard): use AI-generated options for follow-up messages, not regex fallback",
+    "areas": [
+      "web"
+    ],
+    "commit": "24c1d339",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-7f4dce28",
     "date": "2026-07-20T11:02:48+08:00",
     "title": "fix(wizard): reorder regex checks, remove home-page options, drop seed-message options",
