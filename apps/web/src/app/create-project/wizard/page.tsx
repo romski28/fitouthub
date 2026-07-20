@@ -904,15 +904,21 @@ export default function CreateProjectWizardPage() {
         : Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions as string[]
         : [];
       const fallbackText = followUps[0] || nextConversationalText;
-      const answerOptions = extractAiOptions(
+      const answerOptionsRaw = extractAiOptions(
         parsed as Record<string, unknown> | null,
         payload?.options,
         fallbackText,
-      ) ?? undefined;
-      console.log('[wizard][options] generated:', answerOptions?.length, 'source:', fallbackText.slice(0, 80));
+      );
+      const answerOptions: { label: string; value: string }[] = (answerOptionsRaw && answerOptionsRaw.length > 0)
+        ? answerOptionsRaw
+        : [
+            { label: 'Tell me more', value: 'let me give you more details' },
+            { label: 'That covers it', value: 'that covers everything' },
+          ];
+      console.log('[wizard][options] generated:', answerOptions.length, 'source:', fallbackText.slice(0, 80));
 
-      const msgWithOptions = { role: 'assistant' as const, text: nextConversationalText, options: answerOptions?.length ? answerOptions : undefined };
-      console.log('🔴 [wizard][setChat] options on message:', !!msgWithOptions.options, 'count:', msgWithOptions.options?.length);
+      const msgWithOptions = { role: 'assistant' as const, text: nextConversationalText };
+      console.log('🔴 [wizard][setChat] main msg (no options — question options are on follow-up)');
 
       setChatMessages((prev) => [
         ...prev,
@@ -1108,7 +1114,7 @@ export default function CreateProjectWizardPage() {
           }
 
           setAiChatCanContinue(false);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer) }]);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(fallbackQuestion, nextPendingOffer), options: answerOptions }]);
         } else {
           const completionText = 'OK, we have enough project information to proceed. Send with no text to move on.';
           setAiChatCanContinue(true);

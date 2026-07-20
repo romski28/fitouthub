@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-1e82445d",
+    "date": "2026-07-20T11:28:17+08:00",
+    "title": "fix(wizard): remove options from summary msg, add to fallback path, harden answerOptions",
+    "summary": "fix(wizard): remove options from summary msg, add to fallback path, harden answerOptions",
+    "areas": [
+      "web"
+    ],
+    "commit": "1e82445d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-24c1d339",
     "date": "2026-07-20T11:08:38+08:00",
     "title": "fix(wizard): use AI-generated options for follow-up messages, not regex fallback",
