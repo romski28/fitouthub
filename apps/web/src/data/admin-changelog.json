@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-29754bf0",
+    "date": "2026-07-20T14:28:29+08:00",
+    "title": "fix(ai): tighten conversationalText to exactly one sentence",
+    "summary": "fix(ai): tighten conversationalText to exactly one sentence",
+    "areas": [
+      "api"
+    ],
+    "commit": "29754bf0",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-35ad5171",
     "date": "2026-07-20T14:02:42+08:00",
     "title": "fix(ai): enforce fresh options per turn, filter stale/generic options in frontend",

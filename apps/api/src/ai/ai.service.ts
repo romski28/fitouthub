@@ -1394,7 +1394,7 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics, options
-3) "conversationalText" is MANDATORY - warm, friendly narrative (3-5 sentences) acknowledging their project and validating their needs. This is a STATEMENT, NOT a question. Do NOT end conversationalText with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing anywhere in conversationalText. Put ALL questions in nextQuestions/followUpQuestions ONLY.
+3) "conversationalText" is MANDATORY — exactly ONE warm, friendly sentence acknowledging their answer. Keep it tight: no filler, no flattery, no repeating what they just said. Get in, validate, get out. This is a STATEMENT, NOT a question. Do NOT end with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing. Put ALL questions in nextQuestions/followUpQuestions ONLY.
 4) ANSWER OPTIONS — YOU MUST include an "options" array in EVERY response. This is NOT optional and there are NO exceptions. Even if your conversationalText is a plain statement, you MUST still include options suggesting what the user might say next. The user will tap buttons instead of typing. Rules:
   - If your next question can be answered with yes/no → [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }, { label: "Not sure", value: "I am not sure" }]
   - Fixture/materials questions → 2-4 specific options like [{ label: "Mixer tap", value: "a mixer tap" }, { label: "Pillar taps", value: "pillar taps, hot and cold separate" }, { label: "Wall-mounted", value: "a wall-mounted tap" }, { label: "Not sure", value: "I am not sure, what do you recommend?" }]
@@ -1447,7 +1447,7 @@ HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
 
 OUTPUT FORMAT (JSON only)
 {
-  "conversationalText": "Warm, friendly narrative response here. Acknowledge the project, validate their needs, and express optimism about connecting them with professionals.",
+  "conversationalText": "Got it — a mixer tap it is. That'll look great in the kitchen.",
   "trades": ["Trade1", "Trade2"],
   "location": {
     "primary": "string|null (GEOGRAPHIC only — HK district/zone, NOT room/fixture)",
