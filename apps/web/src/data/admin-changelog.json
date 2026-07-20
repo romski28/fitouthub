@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-4aa002b7",
+    "date": "2026-07-20T17:22:45+08:00",
+    "title": "docs: full implementation record for AI chat answer options",
+    "summary": "docs: full implementation record for AI chat answer options",
+    "areas": [
+      "infra"
+    ],
+    "commit": "4aa002b7",
+    "files": [
+      "AI_CHAT_OPTIONS_IMPLEMENTATION.md"
+    ]
+  },
+  {
     "id": "2026-07-20-6b2634cc",
     "date": "2026-07-20T15:09:36+08:00",
     "title": "fix(wizard): move stepsRef after steps declaration",
