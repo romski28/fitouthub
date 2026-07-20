@@ -1538,7 +1538,8 @@ export default function CreateProjectWizardPage() {
                                   )}
                                 </div>
                                 {isLastAssistant && message.options && message.options.length > 0 && !chatBusy && (
-                                  <div className="mt-2 flex flex-wrap gap-2">
+                                  <div className="mt-2 flex flex-wrap gap-2 border border-dashed border-amber-400 rounded-lg p-2">
+                                    <span className="w-full text-[10px] text-amber-600 font-mono">DEBUG: {message.options.length} options</span>
                                     {message.options.map((opt) => (
                                       <button
                                         key={opt.value}
