@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-20-3f006962",
+    "date": "2026-07-20T10:34:08+08:00",
+    "title": "fix(wizard): add options to seed messages and follow-up prompts",
+    "summary": "fix(wizard): add options to seed messages and follow-up prompts",
+    "areas": [
+      "web"
+    ],
+    "commit": "3f006962",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-18b21df8",
     "date": "2026-07-20T10:28:28+08:00",
     "title": "debug(wizard): log options at message creation point before setState",

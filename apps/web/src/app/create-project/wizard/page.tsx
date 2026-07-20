@@ -25,7 +25,7 @@ import { VoiceInputButton } from '@/components/voice-input-button';
 import { ListenButton } from '@/components/listen-button';
 import { WorkDatePicker } from '@/components/work-date-picker';
 import { toDateKey } from '@/lib/hk-holidays';
-import { extractAiOptions } from '@/lib/ai-options';
+import { extractAiOptions, generateAiOptions } from '@/lib/ai-options';
 // import { MimoSpinner } from '@/components/mimo-spinner'; // REMOVED (upload overlay disabled July 15)
 import { useTextToSpeech } from '@/hooks/use-text-to-speech';
 
@@ -554,8 +554,8 @@ export default function CreateProjectWizardPage() {
       if (firstQuestionOfferType === 'design') setDesignOfferPrompted(true);
     }
 
-    const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText }];
-    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion });
+    const seedMessages: WizardChatMessage[] = [{ role: 'assistant', text: starterText, options: generateAiOptions(starterText) ?? undefined }];
+    if (firstQuestion) seedMessages.push({ role: 'assistant', text: firstQuestion, options: generateAiOptions(firstQuestion) ?? undefined });
     setChatMessages(seedMessages);
 
     setEndDate(nextEndDate);
@@ -1067,7 +1067,7 @@ export default function CreateProjectWizardPage() {
             ? 'Another question, if you have the time.'
             : 'Thanks, we have enough information to proceed. Click Next to move on or continue answering questions if you have time.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}` }]);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}`, options: generateAiOptions(nextQuestion) ?? undefined }]);
         } else {
           // No more questions — all done. Auto-advance after 5s
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
@@ -1082,7 +1082,7 @@ export default function CreateProjectWizardPage() {
         }
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
-        setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer) }]);
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer), options: generateAiOptions(nextUnaskedQuestion) ?? undefined }]);
       } else {
         const fallbackQuestion = getNextBestMissingBriefQuestion({
           title: nextTitle || title,
