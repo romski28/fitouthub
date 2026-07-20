@@ -90,7 +90,17 @@ export function extractAiOptions(
         return { label: obj.label.trim(), value: obj.value.trim() };
       })
       .filter((o) => o.label && o.value)
-      .slice(0, 5);
+      // Filter out generic fallback options the UI already provides
+      .filter((o) => {
+        const lower = o.label.toLowerCase();
+        return !/^(other|something else|or something else|tell me more|that'?s all|none of the above)$/i.test(lower);
+      })
+      // Trim overly long labels (full sentences aren't button-friendly)
+      .map((o) => ({
+        label: o.label.length > 40 ? o.label.slice(0, 37) + '…' : o.label,
+        value: o.value,
+      }))
+      .slice(0, 4);
 
     if (valid.length) return valid;
   }

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-20-35ad5171",
+    "date": "2026-07-20T14:02:42+08:00",
+    "title": "fix(ai): enforce fresh options per turn, filter stale/generic options in frontend",
+    "summary": "fix(ai): enforce fresh options per turn, filter stale/generic options in frontend",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "35ad5171",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-07-20-7c83e7ce",
     "date": "2026-07-20T13:40:25+08:00",
     "title": "fix(ai): enforce single-question turns, ban generic options when specific ones exist",
