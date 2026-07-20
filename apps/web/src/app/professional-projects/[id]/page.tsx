@@ -1873,6 +1873,7 @@ export default function ProjectDetailPage() {
           fetchProject();
         }}
         projectId={project?.project?.id}
+        projectProfessionalId={projectProfessionalId}
       />
     </>
   );

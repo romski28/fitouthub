@@ -23,6 +23,7 @@ interface QuoteActionModalProps {
   onClose: () => void;
   onSubmitted?: () => void;
   projectId?: string;
+  projectProfessionalId?: string;
 }
 
 const toDateInput = (value: Date) => {
@@ -123,6 +124,7 @@ export function QuoteActionModal({
   onClose,
   onSubmitted,
   projectId: projectIdProp,
+  projectProfessionalId: projectProfessionalIdProp,
 }: QuoteActionModalProps) {
   const router = useRouter();
   const { accessToken } = useProfessionalAuth();
@@ -152,12 +154,13 @@ export function QuoteActionModal({
   const [loadingFeePreview, setLoadingFeePreview] = useState(false);
 
   const projectProfessionalId = useMemo(
-    () => inferProjectProfessionalId(state.projectDetailsPath),
-    [state.projectDetailsPath],
+    () => projectProfessionalIdProp || inferProjectProfessionalId(state.projectDetailsPath),
+    [projectProfessionalIdProp, state.projectDetailsPath],
   );
 
-  if (!isOpen || !state.modalContent) return null;
+  if (!isOpen) return null;
 
+  const modalContent = state.modalContent || {};
   const {
     title = 'Submit your quote',
     body,
@@ -165,7 +168,7 @@ export function QuoteActionModal({
     imageUrl,
     primaryButtonLabel = 'Submit quote',
     secondaryButtonLabel = 'Cancel',
-  } = state.modalContent;
+  } = modalContent;
   const hasDetails = Boolean(detailsBody);
 
   useEffect(() => {

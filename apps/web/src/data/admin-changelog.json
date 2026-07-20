@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-20-010c88fd",
+    "date": "2026-07-20T20:38:53+08:00",
+    "title": "fix(pro): pass projectProfessionalId to QuoteActionModal so it loads existing quote data",
+    "summary": "fix(pro): pass projectProfessionalId to QuoteActionModal so it loads existing quote data",
+    "areas": [
+      "web"
+    ],
+    "commit": "010c88fd",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-53df9c62",
     "date": "2026-07-20T20:33:16+08:00",
     "title": "fix(pro): wire projectId to QuoteActionModal, coral button styling",
