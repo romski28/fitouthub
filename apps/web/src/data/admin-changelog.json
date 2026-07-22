@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-07-22-4ecf2b8e",
+    "date": "2026-07-22T15:15:02+08:00",
+    "title": "feat(pro): hide projects from list (DB-backed), skip overdue next steps",
+    "summary": "feat(pro): hide projects from list (DB-backed), skip overdue next steps",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "4ecf2b8e",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_PROFESSIONAL_HIDDEN_AT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-58b852f3",
     "date": "2026-07-22T14:59:14+08:00",
     "title": "feat(pro): disable MISSED DEADLINE button after 48 hours overdue",

@@ -13,6 +13,7 @@ import {
   HttpStatus,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
@@ -1312,6 +1313,7 @@ export class ProfessionalController {
       ).projectProfessional.findMany({
         where: {
           professionalId,
+          hiddenAt: null,
           status: { in: this.visibleProfessionalStatuses },
           project: {
             status: { not: 'archived' },
@@ -1360,6 +1362,31 @@ export class ProfessionalController {
       return mapped;
     } catch (error) {
       console.error('Error fetching professional projects:', error);
+      throw error;
+    }
+  }
+
+  @Patch('projects/:id/hide')
+  @UseGuards(AuthGuard('jwt'))
+  async hideProject(@Param('id') id: string, @Request() req: any) {
+    try {
+      const professionalId = req.user.id || req.user.sub;
+
+      // Verify ownership
+      const pp = await (this.prisma as any).projectProfessional.findFirst({
+        where: { id, professionalId },
+      });
+      if (!pp) throw new NotFoundException('Project assignment not found');
+
+      const updated = await (this.prisma as any).projectProfessional.update({
+        where: { id },
+        data: { hiddenAt: pp.hiddenAt ? null : new Date() },
+      });
+
+      return { hidden: !!updated.hiddenAt };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error toggling project hide:', error);
       throw error;
     }
   }

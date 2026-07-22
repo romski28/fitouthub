@@ -157,7 +157,10 @@ export default function ProfessionalProjectsPage() {
   const [declineReason, setDeclineReason] = useState('');
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(
-    () => projects.filter((p) => !p.accessRestricted).map((p) => p.project.id),
+    () => projects
+      .filter((p) => !p.accessRestricted)
+      .filter((p) => !getQuoteDeadlineState(p)?.isOverdue)
+      .map((p) => p.project.id),
     [projects],
   );
   const projectIdsKey = useMemo(() => projectIds.join('|'), [projectIds]);
@@ -465,6 +468,26 @@ export default function ProfessionalProjectsPage() {
     setNextStepsLoading(false);
   };
 
+  const hideProject = async (projectProfessionalId: string) => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}/hide`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        // Remove from local state so it disappears immediately
+        setProjects((prev) => prev.filter((p) => p.id !== projectProfessionalId));
+        toast.success('Project hidden');
+      }
+    } catch {
+      toast.error('Failed to hide project');
+    }
+  };
+
   if (isLoggedIn === undefined || loading) {
     return <PageLoadingState message="Loading projects..." />;
   }
@@ -768,6 +791,18 @@ export default function ProfessionalProjectsPage() {
                               )}
                             </>
                           )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              hideProject(projectProf.id);
+                            }}
+                            className="ml-auto shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                            title="Hide this project from your list"
+                          >
+                            Hide
+                          </button>
                         </div>
                     </div>
                   </div>
