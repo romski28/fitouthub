@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-8cac9d1c",
+    "date": "2026-07-22T15:45:55+08:00",
+    "title": "style(pro): bold slate Hide Project with loading feedback",
+    "summary": "style(pro): bold slate Hide Project with loading feedback",
+    "areas": [
+      "web"
+    ],
+    "commit": "8cac9d1c",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-6f46d8ef",
     "date": "2026-07-22T15:22:45+08:00",
     "title": "fix(pro): move Hide Project button next to MISSED DEADLINE",

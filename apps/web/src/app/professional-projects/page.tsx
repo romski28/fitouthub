@@ -155,6 +155,7 @@ export default function ProfessionalProjectsPage() {
   const [skipLoading, setSkipLoading] = useState(false);
   const [declineProject, setDeclineProject] = useState<ProjectProfessional | null>(null);
   const [declineReason, setDeclineReason] = useState('');
+  const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(
     () => projects
@@ -470,6 +471,7 @@ export default function ProfessionalProjectsPage() {
 
   const hideProject = async (projectProfessionalId: string) => {
     if (!accessToken) return;
+    setHidingIds((prev) => new Set(prev).add(projectProfessionalId));
     try {
       const res = await fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}/hide`, {
         method: 'PATCH',
@@ -485,6 +487,12 @@ export default function ProfessionalProjectsPage() {
       }
     } catch {
       toast.error('Failed to hide project');
+    } finally {
+      setHidingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectProfessionalId);
+        return next;
+      });
     }
   };
 
@@ -718,10 +726,11 @@ export default function ProfessionalProjectsPage() {
                                   e.stopPropagation();
                                   hideProject(projectProf.id);
                                 }}
-                                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                                disabled={hidingIds.has(projectProf.id)}
+                                className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
                                 title="Hide this project from your list"
                               >
-                                Hide Project
+                                {hidingIds.has(projectProf.id) ? 'Hiding…' : 'Hide Project'}
                               </button>
                             </div>
                           ) : nextStepsLoading ? (
