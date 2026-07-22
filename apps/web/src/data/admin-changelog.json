@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-e0207fa8",
+    "date": "2026-07-22T15:18:19+08:00",
+    "title": "fix(pro): close inner ternary before outer chain in action buttons",
+    "summary": "fix(pro): close inner ternary before outer chain in action buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "e0207fa8",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-4ecf2b8e",
     "date": "2026-07-22T15:15:02+08:00",
     "title": "feat(pro): hide projects from list (DB-backed), skip overdue next steps",

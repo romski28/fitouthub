@@ -709,7 +709,8 @@ export default function ProfessionalProjectsPage() {
                               >
                                 MISSED DEADLINE
                               </Link>
-                            ) : nextStepsLoading ? (
+                            )
+                          ) : nextStepsLoading ? (
                             <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                           ) : (
                             <>
