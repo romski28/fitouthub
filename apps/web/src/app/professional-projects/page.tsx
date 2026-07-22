@@ -638,11 +638,14 @@ export default function ProfessionalProjectsPage() {
                           </div>
                         </div>
                         {/* Project scope/notes */}
-                        {(projectProf.project.notes || projectProf.project.endDate) && (
+                        {(projectProf.project.notes || projectProf.project.endDate || projectProf.project.region) && (
                           <p className={`text-xs leading-relaxed line-clamp-2 ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-500'}`}>
                             {projectProf.project.notes}
+                            {projectProf.project.region && (
+                              <> {projectProf.project.notes ? '· ' : ''}({projectProf.project.region})</>
+                            )}
                             {projectProf.project.endDate && (
-                              <> {projectProf.project.notes ? '· ' : ''}Proposed completion {new Date(projectProf.project.endDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })}</>
+                              <> {projectProf.project.notes || projectProf.project.region ? ' · ' : ''}Proposed completion {new Date(projectProf.project.endDate).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })}</>
                             )}
                           </p>
                         )}
@@ -650,33 +653,16 @@ export default function ProfessionalProjectsPage() {
                       
                       {/* Details Row */}
                       <div className="flex flex-wrap items-center gap-2 text-xs min-w-0">
-                        {projectProf.project.region ? (
-                          <span className={quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}>
-                            {projectProf.project.region}
-                          </span>
-                        ) : null}
                         {!isRestricted && (projectProf.quoteBaseAmount || projectProf.quoteAmount) && (
                           <span className={`font-medium ${quoteOverdue || isStopStatus ? 'text-white' : 'text-slate-900'}`}>
                             ${Number(projectProf.quoteBaseAmount || projectProf.quoteAmount).toLocaleString()}
                           </span>
                         )}
-                        {quoteOverdue && quoteDeadlineState ? (
-                          <Link
-                            href={`/professional-projects/${projectProf.id}?tab=chat`}
-                            className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-2 py-1 text-xs font-semibold text-rose-50 hover:bg-white/15"
-                          >
-                            Quote overdue ({quoteDeadlineState.windowLongLabel})
-                          </Link>
-                        ) : null}
-                        {isRestricted ? (
+                        {isRestricted && (
                           <p className={`text-xs ${quoteOverdue || isStopStatus ? 'text-slate-200' : 'text-slate-600'}`}>
                             {projectProf.project.notes || 'Bidding has concluded for this project.'}
                           </p>
-                        ) : quoteOverdue ? (
-                          <p className="text-xs text-rose-100">
-                            No quote was submitted within the allowed window.
-                          </p>
-                        ) : null}
+                        )}
                       </div>
 
                       {/* Action buttons */}
@@ -685,6 +671,13 @@ export default function ProfessionalProjectsPage() {
                             <span className="rounded-lg border border-rose-300/40 px-4 py-2 text-sm font-semibold text-rose-100">
                               Bidding closed
                             </span>
+                          ) : quoteOverdue ? (
+                            <Link
+                              href={`/professional-projects/${projectProf.id}?tab=chat`}
+                              className="rounded-lg bg-[#DC143C] px-4 py-2 text-sm font-bold text-yellow-300 transition hover:bg-[#B01030]"
+                            >
+                              MISSED DEADLINE
+                            </Link>
                           ) : nextStepsLoading ? (
                             <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                           ) : (
