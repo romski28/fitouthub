@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-cd580404",
+    "date": "2026-07-22T16:33:10+08:00",
+    "title": "fix(pro): move Decline project outside primary actions block",
+    "summary": "fix(pro): move Decline project outside primary actions block",
+    "areas": [
+      "web"
+    ],
+    "commit": "cd580404",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-f992eb69",
     "date": "2026-07-22T16:17:28+08:00",
     "title": "style(pro): close button + emerald Book inspection in site access modal",

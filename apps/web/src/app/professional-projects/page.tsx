@@ -789,20 +789,29 @@ export default function ProfessionalProjectsPage() {
                                       {action.actionLabel}
                                     </button>
                                   ))}
-                                  {projectProf.status === 'pending' && !electiveActions.some(a => a.actionKey === 'DECLINE_PROJECT') && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        void openProfessionalNextStepModal(
-                                          { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.', isPrimary: false, isElective: true, requiresAction: true },
-                                          projectProf.project.id,
-                                          projectProf.id,
-                                        )
-                                      }
-                                      className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
-                                    >
-                                      Decline project
-                                    </button>
+                                </div>
+                              ) : (
+                                <Link
+                                  href={primaryActionHref}
+                                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                >
+                                  Open project
+                                </Link>
+                              )}
+                              {projectProf.status === 'pending' && !electiveActions.some(a => a.actionKey === 'DECLINE_PROJECT') && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void openProfessionalNextStepModal(
+                                      { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.', isPrimary: false, isElective: true, requiresAction: true },
+                                      projectProf.project.id,
+                                      projectProf.id,
+                                    )
+                                  }
+                                  className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                >
+                                  Decline project
+                                </button>
                                   )}
                                 </div>
                               ) : (
