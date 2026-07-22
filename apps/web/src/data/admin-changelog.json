@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-7795efa9",
+    "date": "2026-07-22T19:00:57+08:00",
+    "title": "fix(pro): hide booking form when site access request is pending",
+    "summary": "fix(pro): hide booking form when site access request is pending",
+    "areas": [
+      "web"
+    ],
+    "commit": "7795efa9",
+    "files": [
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-cd580404",
     "date": "2026-07-22T16:33:10+08:00",
     "title": "fix(pro): move Decline project outside primary actions block",

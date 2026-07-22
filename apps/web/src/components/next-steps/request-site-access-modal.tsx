@@ -273,7 +273,7 @@ export function RequestSiteAccessModal({
     isRescheduleRequired(status?.visitDetails);
   const requestPending = status?.requestStatus === 'pending' && !rescheduleRequired;
   const hasAccess = Boolean(status?.hasAccess);
-  const canRequestNewVisit = !hasAccess || rescheduleRequired;
+  const canRequestNewVisit = (!hasAccess || rescheduleRequired) && !requestPending;
   const isBusy = isLoading || loadingStatus;
 
   if (!isOpen) return null;
