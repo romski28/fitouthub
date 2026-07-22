@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-418eaa70",
+    "date": "2026-07-22T21:24:09+08:00",
+    "title": "fix(pro): restore Decline project button on project cards",
+    "summary": "fix(pro): restore Decline project button on project cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "418eaa70",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-f18daca4",
     "date": "2026-07-22T19:26:42+08:00",
     "title": "fix(api): use numeric date comparison for inspection date gate",

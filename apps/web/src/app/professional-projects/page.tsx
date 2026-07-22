@@ -800,6 +800,21 @@ export default function ProfessionalProjectsPage() {
                               )}
                             </>
                           )}
+                          {projectProf.status === 'pending' && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void openProfessionalNextStepModal(
+                                  { actionKey: 'DECLINE_PROJECT', actionLabel: 'Decline project', description: 'Decline this project invitation.', isPrimary: false, isElective: true, requiresAction: true },
+                                  projectProf.project.id,
+                                  projectProf.id,
+                                )
+                              }
+                              className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                            >
+                              Decline project
+                            </button>
+                          )}
                         </div>
                     </div>
                   </div>
