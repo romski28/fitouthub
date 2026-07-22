@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-6f46d8ef",
+    "date": "2026-07-22T15:22:45+08:00",
+    "title": "fix(pro): move Hide Project button next to MISSED DEADLINE",
+    "summary": "fix(pro): move Hide Project button next to MISSED DEADLINE",
+    "areas": [
+      "web"
+    ],
+    "commit": "6f46d8ef",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-e0207fa8",
     "date": "2026-07-22T15:18:19+08:00",
     "title": "fix(pro): close inner ternary before outer chain in action buttons",

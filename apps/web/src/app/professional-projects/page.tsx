@@ -698,18 +698,32 @@ export default function ProfessionalProjectsPage() {
                               Bidding closed
                             </span>
                           ) : quoteOverdue ? (
-                            quoteDeadlineState && quoteDeadlineState.overdueHours > 48 ? (
-                              <span className="rounded-lg border border-rose-400/50 bg-rose-900/60 px-4 py-2 text-sm font-semibold text-rose-200">
-                                Deadline missed · {Math.round(quoteDeadlineState.overdueHours / 24)}d ago
-                              </span>
-                            ) : (
-                              <Link
-                                href={`/professional-projects/${projectProf.id}?tab=chat`}
-                                className="rounded-lg bg-[#DC143C] px-4 py-2 text-sm font-bold text-yellow-300 transition hover:bg-[#B01030]"
+                            <div className="flex flex-wrap gap-2">
+                              {quoteDeadlineState && quoteDeadlineState.overdueHours > 48 ? (
+                                <span className="rounded-lg border border-rose-400/50 bg-rose-900/60 px-4 py-2 text-sm font-semibold text-rose-200">
+                                  Deadline missed · {Math.round(quoteDeadlineState.overdueHours / 24)}d ago
+                                </span>
+                              ) : (
+                                <Link
+                                  href={`/professional-projects/${projectProf.id}?tab=chat`}
+                                  className="rounded-lg bg-[#DC143C] px-4 py-2 text-sm font-bold text-yellow-300 transition hover:bg-[#B01030]"
+                                >
+                                  MISSED DEADLINE
+                                </Link>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  hideProject(projectProf.id);
+                                }}
+                                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                                title="Hide this project from your list"
                               >
-                                MISSED DEADLINE
-                              </Link>
-                            )
+                                Hide Project
+                              </button>
+                            </div>
                           ) : nextStepsLoading ? (
                             <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                           ) : (
@@ -792,18 +806,6 @@ export default function ProfessionalProjectsPage() {
                               )}
                             </>
                           )}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              hideProject(projectProf.id);
-                            }}
-                            className="ml-auto shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
-                            title="Hide this project from your list"
-                          >
-                            Hide
-                          </button>
                         </div>
                     </div>
                   </div>
