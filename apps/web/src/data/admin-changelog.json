@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-60fa4b93",
+    "date": "2026-07-22T19:02:55+08:00",
+    "title": "fix(pro): remove duplicate decline button block causing parse error",
+    "summary": "fix(pro): remove duplicate decline button block causing parse error",
+    "areas": [
+      "web"
+    ],
+    "commit": "60fa4b93",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-7795efa9",
     "date": "2026-07-22T19:00:57+08:00",
     "title": "fix(pro): hide booking form when site access request is pending",
