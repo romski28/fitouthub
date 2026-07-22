@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-6fe1a302",
+    "date": "2026-07-22T14:24:10+08:00",
+    "title": "feat(pro): instant placeholder, per-project refresh, refresh-all, remove auto-polling",
+    "summary": "feat(pro): instant placeholder, per-project refresh, refresh-all, remove auto-polling",
+    "areas": [
+      "web"
+    ],
+    "commit": "6fe1a302",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-20-6b213d8e",
     "date": "2026-07-20T21:05:36+08:00",
     "title": "fix(pro): pre-fill start date, duration, and notes when editing existing quote",

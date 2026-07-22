@@ -133,7 +133,17 @@ export default function ProfessionalProjectsPage() {
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>({});
+  const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem(`ns_list_v2_professional:${professional?.id || 'anonymous'}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, NextStepAction[]>;
+        if (Object.keys(parsed).length > 0) return parsed;
+      }
+    } catch { /* ignore */ }
+    return {};
+  });
   const [nextStepLoadingMap, setNextStepLoadingMap] = useState<Record<string, boolean>>({});
   const [nextStepsLoading, setNextStepsLoading] = useState(false);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
@@ -367,17 +377,9 @@ export default function ProfessionalProjectsPage() {
     };
     document.addEventListener('visibilitychange', onVisible);
 
-    // Periodic refresh — re-fetch next steps every 60s while page is visible
-    const interval = setInterval(() => {
-      if (!cancelled && document.visibilityState === 'visible') {
-        loadNextSteps();
-      }
-    }, 60_000);
-
     return () => {
       cancelled = true;
       document.removeEventListener('visibilitychange', onVisible);
-      clearInterval(interval);
     };
   }, [isLoggedIn, accessToken, projectIdsKey, nextStepCacheScope]);
 
@@ -414,6 +416,50 @@ export default function ProfessionalProjectsPage() {
     }
   };
 
+  const refreshSingleProject = async (projectId: string) => {
+    if (!accessToken) return;
+    setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: true }));
+    try {
+      const refreshed = await fetchPrimaryNextSteps(projectId, accessToken, {
+        cacheScope: nextStepCacheScope,
+        forceRefresh: true,
+      });
+      setNextStepMap((prev) => {
+        const updated = { ...prev, [projectId]: refreshed };
+        try {
+          localStorage.setItem(`ns_list_v2_${nextStepCacheScope}`, JSON.stringify(updated));
+        } catch { /* ignore */ }
+        return updated;
+      });
+    } catch { /* silently fail */ }
+    finally {
+      setNextStepLoadingMap((prev) => ({ ...prev, [projectId]: false }));
+    }
+  };
+
+  const refreshAll = async () => {
+    if (!accessToken || projectIds.length === 0) return;
+    setNextStepsLoading(true);
+    const fetches = projectIds.map((projectId) =>
+      fetchPrimaryNextSteps(projectId, accessToken, { cacheScope: nextStepCacheScope, forceRefresh: true })
+        .then((actions) => ({ id: projectId, actions }))
+        .catch(() => ({ id: projectId, actions: [] })),
+    );
+    const resolved = await Promise.allSettled(fetches);
+    const batch: Record<string, NextStepAction[]> = {};
+    resolved.forEach((result) => {
+      if (result.status === 'fulfilled') batch[result.value.id] = result.value.actions;
+    });
+    setNextStepMap((prev) => {
+      const merged = { ...prev, ...batch };
+      try {
+        localStorage.setItem(`ns_list_v2_${nextStepCacheScope}`, JSON.stringify(merged));
+      } catch { /* ignore */ }
+      return merged;
+    });
+    setNextStepsLoading(false);
+  };
+
   if (isLoggedIn === undefined || loading) {
     return <PageLoadingState message="Loading projects..." />;
   }
@@ -436,11 +482,22 @@ export default function ProfessionalProjectsPage() {
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight text-slate-900">My Projects</h1>
-              {nextStepsLoading && (
-                <p className="text-xs text-slate-400 animate-pulse">
-                  Syncing next steps...
-                </p>
-              )}
+              <div className="flex items-center gap-3">
+                {nextStepsLoading && (
+                  <p className="text-xs text-slate-400 animate-pulse">
+                    Syncing next steps...
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={refreshAll}
+                  disabled={nextStepsLoading}
+                  className="rounded-lg border border-[rgba(120,53,15,0.2)] bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                  title="Refresh all projects"
+                >
+                  ↻ Refresh all
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
@@ -563,6 +620,19 @@ export default function ProfessionalProjectsPage() {
                               iconOnly
                               size="lg"
                             />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                refreshSingleProject(projectProf.project.id);
+                              }}
+                              disabled={nextStepLoadingMap[projectProf.project.id]}
+                              className="ml-auto shrink-0 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
+                              title="Refresh this project"
+                            >
+                              <span className={`text-sm ${nextStepLoadingMap[projectProf.project.id] ? 'animate-spin inline-block' : ''}`}>↻</span>
+                            </button>
                           </div>
                         </div>
                         {/* Project scope/notes */}
