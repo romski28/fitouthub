@@ -97,23 +97,6 @@ export function ModalDispatcher({
     [closeModal, onDetailsNavigate, router, state.projectDetailsPath, state.projectId, state.role]
   );
 
-  const handleOpenProjectInformation = useCallback(() => {
-    const secondaryTarget = state.modalContent?.secondaryActionTarget;
-    const primaryTarget = state.modalContent?.primaryActionTarget;
-    const rawTarget = secondaryTarget || primaryTarget;
-    const target = rawTarget
-      ? rawTarget.trim().startsWith('{')
-        ? rawTarget
-        : JSON.stringify({ tab: rawTarget })
-      : JSON.stringify({ tab: 'site-access' });
-
-    handleDetailsNavigation(target);
-  }, [
-    handleDetailsNavigation,
-    state.modalContent?.primaryActionTarget,
-    state.modalContent?.secondaryActionTarget,
-  ]);
-
   // Route to correct modal based on actionKey
   const modalType = getModalType(state.actionKey || '');
 
@@ -305,7 +288,6 @@ export function ModalDispatcher({
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
-        onOpenProjectInformation={handleOpenProjectInformation}
       />
     );
   }

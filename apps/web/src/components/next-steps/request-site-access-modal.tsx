@@ -12,7 +12,6 @@ interface RequestSiteAccessModalProps {
   isOpen: boolean;
   isLoading?: boolean;
   onClose: () => void;
-  onOpenProjectInformation: () => void;
 }
 
 interface SiteAccessData {
@@ -97,7 +96,6 @@ export function RequestSiteAccessModal({
   isOpen,
   isLoading = false,
   onClose,
-  onOpenProjectInformation,
 }: RequestSiteAccessModalProps) {
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
@@ -111,13 +109,8 @@ export function RequestSiteAccessModal({
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipLoading, setSkipLoading] = useState(false);
 
-  const title = state.modalContent?.title || 'Book a site visit';
-  const body =
-    state.modalContent?.body ||
-    'Choose your preferred inspection slot so the client can review your request.';
-  const primaryButtonLabel = state.modalContent?.primaryButtonLabel || 'Book site visit';
-  const secondaryButtonLabel =
-    state.modalContent?.secondaryButtonLabel || 'Open project information';
+  const title = 'Book a site inspection slot';
+  const primaryButtonLabel = 'Book inspection';
 
   const offeredInspectionDate = status?.siteInspectionAvailableOn || '';
   const bookedInspectionTimes = useMemo(
@@ -297,7 +290,6 @@ export function RequestSiteAccessModal({
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl backdrop-blur">
         <div className="border-b border-[rgba(120,53,15,0.12)] px-6 py-4">
           <h2 className="text-xl font-bold text-amber-800">{title}</h2>
-          <p className="mt-2 text-sm text-stone-600">{body}</p>
         </div>
 
         <div className="next-step-scrollbar max-h-[60vh] space-y-4 overflow-y-auto px-6 py-5">
@@ -313,13 +305,6 @@ export function RequestSiteAccessModal({
             <p className="text-sm text-stone-500">No site access data available.</p>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-stone-700">
-                <span className="font-semibold">Status:</span>{' '}
-                {status.requestStatus === 'none'
-                  ? 'No request yet'
-                  : status.requestStatus.replace('_', ' ')}
-              </div>
-
               {offeredInspectionDate ? (
                 <div className="rounded-md border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">
                   Client inspection date available:{' '}
@@ -376,7 +361,7 @@ export function RequestSiteAccessModal({
 
               {canRequestNewVisit ? (
                 <div className="space-y-3 rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.55)] p-4">
-                  <p className="text-sm font-semibold text-stone-800">Request Site Access</p>
+                  <p className="text-sm font-semibold text-stone-800">Site inspection slot selector</p>
                   <p className="text-xs text-stone-600">
                     {offeredInspectionDate
                       ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
@@ -453,21 +438,6 @@ export function RequestSiteAccessModal({
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-[rgba(120,53,15,0.12)] px-6 py-4">
-          <button
-            type="button"
-            onClick={onOpenProjectInformation}
-            className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)]"
-          >
-            {secondaryButtonLabel}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSkipConfirm(true)}
-            disabled={actionLoading || requestPending || isBusy}
-            className="rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-[rgba(245,238,219,0.9)] disabled:opacity-50"
-          >
-            No need for site visit
-          </button>
           <button
             type="button"
             onClick={handleSubmitRequest}
