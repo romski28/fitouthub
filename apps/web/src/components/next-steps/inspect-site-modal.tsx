@@ -16,6 +16,11 @@ interface SiteAccessStatus {
   visitScheduledAt: string | null;
   formattedVisitTime: string | null;
   hasAccess: boolean;
+  siteInspectionAvailableOn?: string | null;
+  bookedInspectionTimes?: string[];
+  rescheduleRequired?: boolean | null;
+  requiresReschedule?: boolean | null;
+  visitDetails?: string | null;
   siteAccessData: {
     addressFull: string;
     unitNumber?: string;
@@ -40,6 +45,10 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
   const [status, setStatus] = useState<SiteAccessStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Booking form state
+  const [selectedTime, setSelectedTime] = useState("");
+  const [requestingSlot, setRequestingSlot] = useState(false);
 
   // Message to client
   const [messageText, setMessageText] = useState("");
@@ -176,6 +185,45 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
+  const INSPECTION_TIME_OPTIONS = Array.from({ length: 11 }, (_, i) => `${String(8 + i).padStart(2, "0")}:00`);
+
+  const formatInspectionDate = (value?: string | null) => {
+    if (!value) return '';
+    const d = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const offeredDate = status?.siteInspectionAvailableOn || '';
+  const bookedTimes = new Set(status?.bookedInspectionTimes || []);
+  const reqStatus = (status?.requestStatus || 'none').toLowerCase();
+  const needsReschedule = status?.rescheduleRequired === true || status?.requiresReschedule === true;
+  const showBookingForm = !status?.requestId || needsReschedule;
+  const canRequest = Boolean(offeredDate && selectedTime);
+
+  const handleRequestSlot = async () => {
+    if (!canRequest || !projectId || !accessToken) return;
+    setRequestingSlot(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-access/request`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitScheduledFor: offeredDate, visitScheduledAt: selectedTime }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to request slot');
+      }
+      toast.success('Inspection slot requested');
+      setSelectedTime('');
+      fetchStatus(); // refresh
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to request slot');
+    } finally {
+      setRequestingSlot(false);
+    }
+  };
+
   const address = status?.siteAccessData;
   const visitLabel = status?.formattedVisitTime || null;
 
@@ -202,6 +250,63 @@ export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
 
           {error && (
             <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          {!loading && !error && showBookingForm && (
+            <div className="rounded-lg border border-[#D4C8A0] bg-white p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-slate-900">Select inspection slot</h3>
+              <p className="text-xs text-slate-600">
+                {offeredDate
+                  ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
+                  : 'Client has not offered an inspection date yet.'}
+              </p>
+              {offeredDate ? (
+                <>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold text-slate-700">Inspection Date</p>
+                    <div className="rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-2 text-sm text-slate-900">
+                      {formatInspectionDate(offeredDate)}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">Choose an hourly time</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {INSPECTION_TIME_OPTIONS.map((timeOption) => {
+                        const isBooked = bookedTimes.has(timeOption);
+                        const isSelected = selectedTime === timeOption;
+                        return (
+                          <button
+                            key={timeOption}
+                            type="button"
+                            onClick={() => setSelectedTime(timeOption)}
+                            disabled={isBooked || requestingSlot}
+                            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                              isSelected
+                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                                : isBooked
+                                ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'border-[#D4C8A0] bg-white text-slate-700 hover:border-[rgba(126,58,33,0.4)]'
+                            }`}
+                          >
+                            {timeOption}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestSlot}
+                    disabled={requestingSlot || !canRequest}
+                    className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                  >
+                    {requestingSlot ? 'Requesting...' : needsReschedule ? 'Request Reschedule' : 'Request Slot'}
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-slate-500 italic">Waiting for client to offer a site inspection date.</p>
+              )}
+            </div>
           )}
 
           {!loading && !error && address && (

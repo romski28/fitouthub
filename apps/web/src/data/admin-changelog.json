@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-2669ae71",
+    "date": "2026-07-22T15:59:11+08:00",
+    "title": "feat(pro): add inspection slot booking to InspectSiteModal",
+    "summary": "feat(pro): add inspection slot booking to InspectSiteModal",
+    "areas": [
+      "web"
+    ],
+    "commit": "2669ae71",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-8cac9d1c",
     "date": "2026-07-22T15:45:55+08:00",
     "title": "style(pro): bold slate Hide Project with loading feedback",
