@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-f18daca4",
+    "date": "2026-07-22T19:26:42+08:00",
+    "title": "fix(api): use numeric date comparison for inspection date gate",
+    "summary": "fix(api): use numeric date comparison for inspection date gate",
+    "areas": [
+      "api"
+    ],
+    "commit": "f18daca4",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-22-60fa4b93",
     "date": "2026-07-22T19:02:55+08:00",
     "title": "fix(pro): remove duplicate decline button block causing parse error",

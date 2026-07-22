@@ -486,10 +486,16 @@ export class NextStepService {
       } as any;
 
       // Date-gate: check if inspection date has passed without pro engagement
+      const inspectionDateObj = inspectionDate ? new Date(inspectionDate) : null;
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const inspectionDayStart = inspectionDateObj ? new Date(inspectionDateObj) : null;
+      if (inspectionDayStart) inspectionDayStart.setHours(0, 0, 0, 0);
+
       if (
-        inspectionDate &&
+        inspectionDayStart &&
         !isProfessional.siteVisitedAt &&
-        new Date(inspectionDate).toDateString() < new Date().toDateString()
+        inspectionDayStart.getTime() < todayStart.getTime()
       ) {
         const existingAccessReq = await this.prisma.siteAccessRequest.findFirst({
           where: {
