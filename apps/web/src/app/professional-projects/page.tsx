@@ -359,11 +359,13 @@ export default function ProfessionalProjectsPage() {
           batch[result.value.id] = result.value.actions;
         }
       });
-      setNextStepMap((prev) => ({ ...prev, ...batch }));
-      try {
-        const merged = { ...nextStepMap, ...batch };
-        localStorage.setItem(cacheKey, JSON.stringify(merged));
-      } catch { /* ignore quota */ }
+      setNextStepMap((prev) => {
+        const merged = { ...prev, ...batch };
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(merged));
+        } catch { /* ignore quota */ }
+        return merged;
+      });
       setNextStepsLoading(false);
     };
 

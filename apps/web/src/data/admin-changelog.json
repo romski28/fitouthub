@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-ae704d4a",
+    "date": "2026-07-22T14:38:20+08:00",
+    "title": "fix(pro): fix stale closure in nextStepMap cache write",
+    "summary": "fix(pro): fix stale closure in nextStepMap cache write",
+    "areas": [
+      "web"
+    ],
+    "commit": "ae704d4a",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-6fe1a302",
     "date": "2026-07-22T14:24:10+08:00",
     "title": "feat(pro): instant placeholder, per-project refresh, refresh-all, remove auto-polling",
