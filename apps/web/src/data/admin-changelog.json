@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-f992eb69",
+    "date": "2026-07-22T16:17:28+08:00",
+    "title": "style(pro): close button + emerald Book inspection in site access modal",
+    "summary": "style(pro): close button + emerald Book inspection in site access modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "f992eb69",
+    "files": [
+      "apps/web/src/components/next-steps/request-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-a9ae4040",
     "date": "2026-07-22T16:12:21+08:00",
     "title": "refactor(pro): clean up RequestSiteAccessModal per review",

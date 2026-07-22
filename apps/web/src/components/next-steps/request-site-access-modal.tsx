@@ -440,6 +440,13 @@ export function RequestSiteAccessModal({
         <div className="flex items-center justify-end gap-3 border-t border-[rgba(120,53,15,0.12)] px-6 py-4">
           <button
             type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#E86A3E]"
+          >
+            Close
+          </button>
+          <button
+            type="button"
             onClick={handleSubmitRequest}
             disabled={
               actionLoading ||
@@ -448,7 +455,7 @@ export function RequestSiteAccessModal({
               !canRequestSiteAccess ||
               isBusy
             }
-            className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:opacity-50"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             title={
               !canRequestSiteAccess
                 ? offeredInspectionDate
