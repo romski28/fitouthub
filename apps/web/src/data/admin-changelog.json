@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-ab32ace8",
+    "date": "2026-07-22T23:07:30+08:00",
+    "title": "fix(pro): prevent double Decline when already in electiveActions",
+    "summary": "fix(pro): prevent double Decline when already in electiveActions",
+    "areas": [
+      "web"
+    ],
+    "commit": "ab32ace8",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-418eaa70",
     "date": "2026-07-22T21:24:09+08:00",
     "title": "fix(pro): restore Decline project button on project cards",
