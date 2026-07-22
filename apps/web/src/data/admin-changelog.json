@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-22-58b852f3",
+    "date": "2026-07-22T14:59:14+08:00",
+    "title": "feat(pro): disable MISSED DEADLINE button after 48 hours overdue",
+    "summary": "feat(pro): disable MISSED DEADLINE button after 48 hours overdue",
+    "areas": [
+      "web"
+    ],
+    "commit": "58b852f3",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-22-484d722d",
     "date": "2026-07-22T14:56:30+08:00",
     "title": "feat(pro): replace overdue next-step buttons with MISSED DEADLINE, clean up row",

@@ -57,6 +57,7 @@ type QuoteDeadlineState = {
   isOverdue: boolean;
   remainingLabel: string | null;
   windowLongLabel: string;
+  overdueHours: number;
 };
 
 const professionalCardBorderByStatus: Record<string, string> = {
@@ -103,6 +104,7 @@ const getQuoteDeadlineState = (projectProfessional: ProjectProfessional): QuoteD
       isOverdue: true,
       remainingLabel: null,
       windowLongLabel,
+      overdueHours: Math.abs(remainingMs) / (60 * 60 * 1000),
     };
   }
 
@@ -118,6 +120,7 @@ const getQuoteDeadlineState = (projectProfessional: ProjectProfessional): QuoteD
         ? `${hoursLeft}h left`
         : `${minutesLeft}m left`,
     windowLongLabel,
+    overdueHours: 0,
   };
 };
 
@@ -672,13 +675,18 @@ export default function ProfessionalProjectsPage() {
                               Bidding closed
                             </span>
                           ) : quoteOverdue ? (
-                            <Link
-                              href={`/professional-projects/${projectProf.id}?tab=chat`}
-                              className="rounded-lg bg-[#DC143C] px-4 py-2 text-sm font-bold text-yellow-300 transition hover:bg-[#B01030]"
-                            >
-                              MISSED DEADLINE
-                            </Link>
-                          ) : nextStepsLoading ? (
+                            quoteDeadlineState && quoteDeadlineState.overdueHours > 48 ? (
+                              <span className="rounded-lg border border-rose-400/50 bg-rose-900/60 px-4 py-2 text-sm font-semibold text-rose-200">
+                                Deadline missed · {Math.round(quoteDeadlineState.overdueHours / 24)}d ago
+                              </span>
+                            ) : (
+                              <Link
+                                href={`/professional-projects/${projectProf.id}?tab=chat`}
+                                className="rounded-lg bg-[#DC143C] px-4 py-2 text-sm font-bold text-yellow-300 transition hover:bg-[#B01030]"
+                              >
+                                MISSED DEADLINE
+                              </Link>
+                            ) : nextStepsLoading ? (
                             <div className="h-9 w-36 animate-pulse rounded-lg bg-slate-200" />
                           ) : (
                             <>
