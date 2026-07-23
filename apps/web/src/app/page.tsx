@@ -53,18 +53,12 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
   const [aiHasStarted, setAiHasStarted] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const handleAiLoadingChange = (loading: boolean) => {
     setMimoThinking(loading);
     if (loading) setAiHasStarted(true);
   };
 
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-  
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
 
   // Redirect professionals to their dashboard
@@ -89,7 +83,7 @@ export default function Home() {
 {/* AI Prompt + Response Panel */}
         <section
           id="project-prompt"
-          className={`w-full max-w-6xl mx-auto overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className="w-full max-w-6xl mx-auto overflow-hidden opacity-100 translate-y-0"
           style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}
         >
           <div className="mimo-panel relative h-full w-full flex flex-col overflow-hidden py-6 sm:py-8">

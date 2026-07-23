@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-23-b61262aa",
+    "date": "2026-07-23T23:32:29+08:00",
+    "title": "fix(home): remove requestAnimationFrame opacity gate that hides content on iOS",
+    "summary": "fix(home): remove requestAnimationFrame opacity gate that hides content on iOS",
+    "areas": [
+      "web"
+    ],
+    "commit": "b61262aa",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-23-6510c291",
     "date": "2026-07-23T22:55:26+08:00",
     "title": "fix(home): inline safeExtractAiOptions in search-flow to remove module import",
