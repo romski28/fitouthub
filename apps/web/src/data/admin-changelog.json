@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-23-6510c291",
+    "date": "2026-07-23T22:55:26+08:00",
+    "title": "fix(home): inline safeExtractAiOptions in search-flow to remove module import",
+    "summary": "fix(home): inline safeExtractAiOptions in search-flow to remove module import",
+    "areas": [
+      "web"
+    ],
+    "commit": "6510c291",
+    "files": [
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-23-79508471",
     "date": "2026-07-23T22:10:52+08:00",
     "title": "fix(home): add error boundary around SearchFlow, harden extractAiOptions",

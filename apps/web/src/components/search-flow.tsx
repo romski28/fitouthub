@@ -18,7 +18,38 @@ import { buildStructuredChatEventMessage } from '@/lib/chat-event-parser';
 import { matchMultipleServices } from '@/lib/service-matcher';
 import { writeCreateProjectDraftSafely } from '@/lib/draft-storage';
 import { setCreateProjectDraftHandoff, setProjectDescriptionHandoff } from '@/lib/create-project-handoff';
-import { extractAiOptions } from '@/lib/ai-options';
+
+// Inlined safe fallback — avoids module import failure on iOS/Safari
+function safeExtractAiOptions(
+  parsedOutput: Record<string, unknown> | null | undefined,
+  payloadOptions: unknown,
+): { label: string; value: string }[] | null {
+  try {
+    const raw: unknown[] | null =
+      Array.isArray(parsedOutput?.options)
+        ? (parsedOutput!.options as unknown[])
+        : Array.isArray(payloadOptions)
+          ? (payloadOptions as unknown[])
+          : null;
+    if (raw?.length) {
+      const valid = raw
+        .filter((o: unknown) => {
+          const obj = o as Record<string, unknown>;
+          return typeof obj?.label === 'string' && typeof obj?.value === 'string';
+        })
+        .map((o: unknown) => {
+          const obj = o as Record<string, string>;
+          return { label: obj.label.trim(), value: obj.value.trim() };
+        })
+        .filter((o: Record<string, string>) => o.label && o.value)
+        .slice(0, 5);
+      if (valid.length) return valid;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 interface IntentModalProps {
   intent: IntentResult | null;
@@ -1541,12 +1572,9 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
       }
 
       // Extract answer options from AI response (shared with wizard)
-      const nextQ = payload.parsedOutput?.nextQuestions?.[0] || payload.parsedOutput?.followUpQuestions?.[0] || payload.contractDocumentation?.nextQuestions?.[0];
-      const fallbackText = nextQ || payload.conversationalText || '';
-      const opts = extractAiOptions(
+      const opts = safeExtractAiOptions(
         payload.parsedOutput as Record<string, unknown> | null | undefined,
         (payload as Record<string, unknown>).options,
-        fallbackText,
       );
       setAiOptions(opts);
 
