@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-6073a7d7",
+    "date": "2026-07-24T00:15:21+08:00",
+    "title": "fix(auth): use unsafe-none COOP to fully allow Google OAuth postMessage",
+    "summary": "fix(auth): use unsafe-none COOP to fully allow Google OAuth postMessage",
+    "areas": [
+      "web"
+    ],
+    "commit": "6073a7d7",
+    "files": [
+      "apps/web/next.config.ts"
+    ]
+  },
+  {
     "id": "2026-07-23-dcdce2d4",
     "date": "2026-07-23T23:48:59+08:00",
     "title": "fix(auth): prevent multiple Google initialize, relax COOP for OAuth popups",
