@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-23-dcdce2d4",
+    "date": "2026-07-23T23:48:59+08:00",
+    "title": "fix(auth): prevent multiple Google initialize, relax COOP for OAuth popups",
+    "summary": "fix(auth): prevent multiple Google initialize, relax COOP for OAuth popups",
+    "areas": [
+      "web"
+    ],
+    "commit": "dcdce2d4",
+    "files": [
+      "apps/web/next.config.ts",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-23-b61262aa",
     "date": "2026-07-23T23:32:29+08:00",
     "title": "fix(home): remove requestAnimationFrame opacity gate that hides content on iOS",

@@ -87,6 +87,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [googleScriptReady, setGoogleScriptReady] = useState(false);
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   const googleContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const googleInitializedRef = React.useRef(false);
   const shouldShowJoinShortcut =
     activeTab === 'login' &&
     loginMethod === 'google' &&
@@ -278,6 +279,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
       if (!window.google?.accounts?.id) return;
+      if (googleInitializedRef.current) {
+        // Already initialized — just re-render the button
+        if (googleContainerRef.current) {
+          googleContainerRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleContainerRef.current, {
+            theme: 'outline',
+            size: 'large',
+            width: 320,
+            text: 'continue_with',
+            shape: 'pill',
+          });
+          setGoogleButtonRendered(true);
+        }
+        return;
+      }
 
       googleContainerRef.current.innerHTML = '';
       window.google.accounts.id.initialize({
@@ -291,6 +307,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         },
       });
 
+      googleInitializedRef.current = true;
       window.google.accounts.id.renderButton(googleContainerRef.current, {
         theme: 'outline',
         size: 'large',
