@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-23-611ad822",
+    "date": "2026-07-23T21:51:34+08:00",
+    "title": "fix(pwa): bump service worker cache version to v2",
+    "summary": "fix(pwa): bump service worker cache version to v2",
+    "areas": [
+      "web"
+    ],
+    "commit": "611ad822",
+    "files": [
+      "apps/web/public/sw.js"
+    ]
+  },
+  {
     "id": "2026-07-22-ab32ace8",
     "date": "2026-07-22T23:07:30+08:00",
     "title": "fix(pro): prevent double Decline when already in electiveActions",
