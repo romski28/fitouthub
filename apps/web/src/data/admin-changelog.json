@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-23-79508471",
+    "date": "2026-07-23T22:10:52+08:00",
+    "title": "fix(home): add error boundary around SearchFlow, harden extractAiOptions",
+    "summary": "fix(home): add error boundary around SearchFlow, harden extractAiOptions",
+    "areas": [
+      "web"
+    ],
+    "commit": "79508471",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-07-23-611ad822",
     "date": "2026-07-23T21:51:34+08:00",
     "title": "fix(pwa): bump service worker cache version to v2",

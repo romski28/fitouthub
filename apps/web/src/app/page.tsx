@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import SearchFlow from '@/components/search-flow';
@@ -8,6 +8,43 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { VideoTeaser } from '@/components/video-teaser';
+
+class SearchFlowErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMessage: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error.message || String(error) };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 max-w-md text-center">
+            <p className="font-semibold mb-1">Something went wrong</p>
+            <p className="text-xs opacity-75">{this.state.errorMessage}</p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, errorMessage: '' });
+                window.location.reload();
+              }}
+              className="mt-3 rounded bg-red-600 px-3 py-1 text-xs text-white"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
@@ -83,7 +120,9 @@ export default function Home() {
                       <VideoTeaser />
                     </div>
                     <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-                      <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={handleAiLoadingChange} />
+                      <SearchFlowErrorBoundary>
+                        <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={handleAiLoadingChange} />
+                      </SearchFlowErrorBoundary>
                     </div>
                   </div>
 

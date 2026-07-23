@@ -71,40 +71,44 @@ export function extractAiOptions(
   payloadOptions: unknown,
   fallbackText: string,
 ): { label: string; value: string }[] | null {
-  // Try AI-generated options first
-  const raw: unknown[] | null =
-    Array.isArray(parsedOutput?.options)
-      ? (parsedOutput!.options as unknown[])
-      : Array.isArray(payloadOptions)
-        ? (payloadOptions as unknown[])
-        : null;
+  try {
+    // Try AI-generated options first
+    const raw: unknown[] | null =
+      Array.isArray(parsedOutput?.options)
+        ? (parsedOutput!.options as unknown[])
+        : Array.isArray(payloadOptions)
+          ? (payloadOptions as unknown[])
+          : null;
 
-  if (raw?.length) {
-    const valid = raw
-      .filter((o: unknown) => {
-        const obj = o as Record<string, unknown>;
-        return typeof obj?.label === 'string' && typeof obj?.value === 'string';
-      })
-      .map((o: unknown) => {
-        const obj = o as Record<string, string>;
-        return { label: obj.label.trim(), value: obj.value.trim() };
-      })
-      .filter((o) => o.label && o.value)
-      // Filter out generic fallback options the UI already provides
-      .filter((o) => {
-        const lower = o.label.toLowerCase();
-        return !/^(other|something else|or something else|tell me more|that'?s all|none of the above)$/i.test(lower);
-      })
-      // Trim overly long labels (full sentences aren't button-friendly)
-      .map((o) => ({
-        label: o.label.length > 40 ? o.label.slice(0, 37) + '…' : o.label,
-        value: o.value,
-      }))
-      .slice(0, 4);
+    if (raw?.length) {
+      const valid = raw
+        .filter((o: unknown) => {
+          const obj = o as Record<string, unknown>;
+          return typeof obj?.label === 'string' && typeof obj?.value === 'string';
+        })
+        .map((o: unknown) => {
+          const obj = o as Record<string, string>;
+          return { label: obj.label.trim(), value: obj.value.trim() };
+        })
+        .filter((o) => o.label && o.value)
+        .filter((o) => {
+          const lower = o.label.toLowerCase();
+          return !/^(other|something else|or something else|tell me more|that'?s all|none of the above)$/i.test(lower);
+        })
+        .map((o) => ({
+          label: o.label.length > 40 ? o.label.slice(0, 37) + '\u2026' : o.label,
+          value: o.value,
+        }))
+        .slice(0, 4);
 
-    if (valid.length) return valid;
+      if (valid.length) return valid;
+    }
+
+    return generateAiOptions(fallbackText);
+  } catch {
+    return [
+      { label: 'Tell me more', value: 'let me give you more details' },
+      { label: 'That covers it', value: 'that covers everything' },
+    ];
   }
-
-  // Fallback: generate from text
-  return generateAiOptions(fallbackText);
 }
