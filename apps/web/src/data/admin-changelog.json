@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-44a5e528",
+    "date": "2026-07-24T14:28:09+08:00",
+    "title": "docs: platform handover — architecture, skills, mobile path",
+    "summary": "docs: platform handover — architecture, skills, mobile path",
+    "areas": [
+      "infra"
+    ],
+    "commit": "44a5e528",
+    "files": [
+      "PLATFORM_HANDOVER.md"
+    ]
+  },
+  {
     "id": "2026-07-24-8d7d865a",
     "date": "2026-07-24T14:20:37+08:00",
     "title": "fix(auth): disable React Compiler to test Google login stale closure",
