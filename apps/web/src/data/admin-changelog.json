@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-9c29f3fe",
+    "date": "2026-07-24T15:11:11+08:00",
+    "title": "fix(auth): use identity.id as JWT sub in Google login and register",
+    "summary": "fix(auth): use identity.id as JWT sub in Google login and register",
+    "areas": [
+      "api"
+    ],
+    "commit": "9c29f3fe",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-24-f8351658",
     "date": "2026-07-24T15:00:13+08:00",
     "title": "fix(auth): add debug logging, use hard navigation for Google login",

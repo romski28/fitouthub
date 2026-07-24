@@ -215,8 +215,8 @@ export class AuthService {
     const sessionToken = randomUUID();
     await this.identityService.setSessionToken(identity.id, sessionToken);
 
-    // Generate tokens
-    const tokens = this.generateTokens(user.id, user.role, sessionToken);
+    // Generate tokens — sub is identity.id for unified JWT validation
+    const tokens = this.generateTokens(identity.id, user.role, sessionToken);
 
     await this.markProspectiveConversion(user.id, 'register');
 
@@ -266,7 +266,11 @@ export class AuthService {
         });
       }
 
-      const tokens = this.generateTokens(existingUser.id, existingUser.role, sessionToken);
+      const tokens = this.generateTokens(
+        existingUser.identityId || existingUser.id,
+        existingUser.role,
+        sessionToken,
+      );
 
       await this.markProspectiveConversion(existingUser.id, 'google_start_existing');
 
@@ -431,7 +435,7 @@ export class AuthService {
     const sessionToken = randomUUID();
     await this.identityService.setSessionToken(identity.id, sessionToken);
 
-    const tokens = this.generateTokens(user.id, user.role, sessionToken);
+    const tokens = this.generateTokens(identity.id, user.role, sessionToken);
 
     await this.markProspectiveConversion(user.id, 'google_complete');
 
@@ -487,7 +491,7 @@ export class AuthService {
     const sessionToken = randomUUID();
     await this.identityService.setSessionToken(user.identityId, sessionToken);
 
-    const tokens = this.generateTokens(user.id, user.role, sessionToken);
+    const tokens = this.generateTokens(user.identityId, user.role, sessionToken);
 
     return {
       success: true,
