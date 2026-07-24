@@ -238,13 +238,12 @@ The REST API is already mobile-ready:
 
 | Issue | Severity | Notes |
 |-------|----------|-------|
-| Google OAuth broken | Critical | React Compiler disabled for testing; needs investigation |
+| Google OAuth token sub mismatch | Fixed | googleStart used User.id instead of identity.id as JWT sub; refresh endpoint expected Identity ID — fixed 2026-07-24 |
 | React Compiler disabled | Medium | Was `reactCompiler: true`; may need re-enabling with fixes |
 | PWA iOS blank page | Medium | Fixed (opacity gate); verify after deploy |
 | Manual SQL migrations | Medium | No automated migration system; discipline required |
 | Dead code in page.tsx | Low | handleSubmitQuote, handleAccept, handleReject unused |
-| COOP header may not apply | Low | `unsafe-none` set; verify Google OAuth fix first |
-| AI prompt pending Render deploy | Low | Rules 3,4,11-13,19 need Render redeploy |
+| AI prompt pending Render redeploy | Low | Rules 3,4,11-13,19 need Render redeploy |
 
 ---
 

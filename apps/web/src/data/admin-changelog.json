@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-24-8465ce81",
+    "date": "2026-07-24T15:24:25+08:00",
+    "title": "chore: clean up Google auth debug logging, update handover doc",
+    "summary": "chore: clean up Google auth debug logging, update handover doc",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "8465ce81",
+    "files": [
+      "PLATFORM_HANDOVER.md",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-9c29f3fe",
     "date": "2026-07-24T15:11:11+08:00",
     "title": "fix(auth): use identity.id as JWT sub in Google login and register",
