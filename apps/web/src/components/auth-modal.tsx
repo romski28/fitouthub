@@ -238,7 +238,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoginPassword('');
       setShowPersonaPicker(false);
       setAvailablePersonas([]);
-      if (postLoginPath) router.push(postLoginPath);
+      if (postLoginPath) setTimeout(() => router.push(postLoginPath), 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : modalT('loginFailed'));
     } finally {
@@ -258,7 +258,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         const postLoginPath = getPostLoginPath(result?.user?.role);
         onClose();
         if (postLoginPath) {
-          router.push(postLoginPath);
+          // Brief delay to let auth context update before navigation
+          setTimeout(() => router.push(postLoginPath), 100);
         }
       }
     } catch (err) {

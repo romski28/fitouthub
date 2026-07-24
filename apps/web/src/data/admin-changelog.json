@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-7fd07d2d",
+    "date": "2026-07-24T12:16:37+08:00",
+    "title": "fix(auth): add 100ms delay before post-login navigation",
+    "summary": "fix(auth): add 100ms delay before post-login navigation",
+    "areas": [
+      "web"
+    ],
+    "commit": "7fd07d2d",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-6073a7d7",
     "date": "2026-07-24T00:15:21+08:00",
     "title": "fix(auth): use unsafe-none COOP to fully allow Google OAuth postMessage",
