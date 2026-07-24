@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-8d7d865a",
+    "date": "2026-07-24T14:20:37+08:00",
+    "title": "fix(auth): disable React Compiler to test Google login stale closure",
+    "summary": "fix(auth): disable React Compiler to test Google login stale closure",
+    "areas": [
+      "web"
+    ],
+    "commit": "8d7d865a",
+    "files": [
+      "apps/web/next.config.ts"
+    ]
+  },
+  {
     "id": "2026-07-24-badb8e85",
     "date": "2026-07-24T14:00:26+08:00",
     "title": "fix(build): use effectiveToken in setProjectsCache call",
