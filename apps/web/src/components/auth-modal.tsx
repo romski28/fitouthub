@@ -254,24 +254,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         await googleLoginProfessional(credential);
         onClose();
       } else {
-        // Call Google OAuth API directly (bypass auth context to rule out stale closures)
-        const response = await fetch(`${API_BASE_URL}/auth/oauth/google/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken: credential }),
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Google login failed');
-        if (!result.accessToken || !result.refreshToken || !result.user) {
-          throw new Error('Google login response is missing authentication tokens');
-        }
-        localStorage.setItem('accessToken', result.accessToken);
-        localStorage.setItem('refreshToken', result.refreshToken);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        const result = await googleLogin(credential);
         const postLoginPath = getPostLoginPath(result?.user?.role);
         onClose();
         if (postLoginPath) {
-          // Brief delay to let auth context update before navigation
           setTimeout(() => router.push(postLoginPath), 100);
         }
       }

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-83d9236f",
+    "date": "2026-07-24T14:49:21+08:00",
+    "title": "fix(auth): revert to auth-context googleLogin for state updates",
+    "summary": "fix(auth): revert to auth-context googleLogin for state updates",
+    "areas": [
+      "web"
+    ],
+    "commit": "83d9236f",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-69b4dfa4",
     "date": "2026-07-24T14:36:44+08:00",
     "title": "fix(auth): call Google OAuth API directly from auth modal",
