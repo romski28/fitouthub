@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-24-7e12dee0",
+    "date": "2026-07-24T18:48:21+08:00",
+    "title": "fix(ios): add hydration indicator, explicit pointer-events, touch-action",
+    "summary": "fix(ios): add hydration indicator, explicit pointer-events, touch-action",
+    "areas": [
+      "web"
+    ],
+    "commit": "7e12dee0",
+    "files": [
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/components/hydration-indicator.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/site-wallpaper-shell.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-b42acfe7",
     "date": "2026-07-24T18:27:57+08:00",
     "title": "fix(ios): remove backdrop-blur from sticky navbar, add error overlay",

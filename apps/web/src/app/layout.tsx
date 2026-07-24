@@ -18,6 +18,7 @@ import { MainWrapper } from "@/components/main-wrapper";
 import { AdminFab } from "@/components/admin-fab";
 import { SiteWallpaperShell } from "@/components/site-wallpaper-shell";
 import { PwaProvider } from "@/components/pwa-provider";
+import { HydrationIndicator } from "@/components/hydration-indicator";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -71,13 +72,19 @@ export default async function RootLayout({
   const messages = await getMessages();
   
   return (
-    <html lang="en" translate="no">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" translate="no" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ touchAction: 'manipulation' }}>
+        <noscript>
+          <div style={{background:'#dc2626',color:'white',padding:8,textAlign:'center',fontSize:14}}>
+            JavaScript is required. Please enable JavaScript in your browser settings.
+          </div>
+        </noscript>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <ProfessionalAuthProvider>
               <AuthModalControlProvider>
                 <NextStepModalProvider>
+                <HydrationIndicator />
                 <PwaProvider />
                 <Toaster position="top-right" />
                 <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">

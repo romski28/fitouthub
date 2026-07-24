@@ -39,10 +39,10 @@ export function SiteWallpaperShell() {
       className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
     >
       <div
-        className="h-full w-full bg-cover bg-center bg-no-repeat"
+        className="h-full w-full bg-cover bg-center bg-no-repeat pointer-events-none"
         style={{ backgroundImage: `url('${wallpaper.imagePath}')` }}
       />
-      <div className={`absolute inset-0 ${wallpaper.overlayClassName}`} />
+      <div className={`absolute inset-0 pointer-events-none ${wallpaper.overlayClassName}`} />
     </div>
   );
 }

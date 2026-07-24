@@ -264,12 +264,14 @@ export const Navbar: React.FC = () => {
                 // Keep button container stable to avoid hydration diffs
                 <div className="flex min-h-10 items-center gap-3">
                   <button
+                    type="button"
                     onClick={openLoginModal}
                     className="text-slate-700 hover:text-slate-900 font-medium"
                   >
                     {t('login')}
                   </button>
                   <button
+                    type="button"
                     onClick={openJoinModal}
                     className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
                   >
