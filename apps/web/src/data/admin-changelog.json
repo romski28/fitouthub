@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-24-3238396e",
+    "date": "2026-07-24T22:03:56+08:00",
+    "title": "fix(sw): fix cache-first fallthrough bug, bump to v3",
+    "summary": "fix(sw): fix cache-first fallthrough bug, bump to v3",
+    "areas": [
+      "web"
+    ],
+    "commit": "3238396e",
+    "files": [
+      "apps/web/next.config.ts",
+      "apps/web/public/sw.js"
+    ]
+  },
+  {
     "id": "2026-07-24-7e12dee0",
     "date": "2026-07-24T18:48:21+08:00",
     "title": "fix(ios): add hydration indicator, explicit pointer-events, touch-action",

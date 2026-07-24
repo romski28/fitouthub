@@ -1,7 +1,7 @@
 // Mimo Service Worker
 // Handles: offline caching, push notifications, install lifecycle
-const CACHE_NAME = "mimo-v2";
-const RUNTIME_CACHE = "mimo-runtime-v2";
+const CACHE_NAME = "mimo-v3";
+const RUNTIME_CACHE = "mimo-runtime-v3";
 
 // ── Assets to pre-cache on install ──────────────────────────────
 const PRECACHE_URLS = [
@@ -12,7 +12,7 @@ const PRECACHE_URLS = [
 
 // ── Install ─────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing Mimo SW v2");
+  console.log("[SW] Installing Mimo SW v3");
   event.waitUntil(
     caches
       .open(CACHE_NAME)
@@ -23,7 +23,7 @@ self.addEventListener("install", (event) => {
 
 // ── Activate — clean old caches ─────────────────────────────────
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating Mimo SW v2");
+  console.log("[SW] Activating Mimo SW v3");
   event.waitUntil(
     caches
       .keys()
@@ -73,12 +73,12 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const fetched = fetch(request).then((response) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
           const clone = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone));
           return response;
         });
-        return cached || fetched;
       })
     );
   }
