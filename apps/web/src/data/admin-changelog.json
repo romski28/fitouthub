@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-69b4dfa4",
+    "date": "2026-07-24T14:36:44+08:00",
+    "title": "fix(auth): call Google OAuth API directly from auth modal",
+    "summary": "fix(auth): call Google OAuth API directly from auth modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "69b4dfa4",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-44a5e528",
     "date": "2026-07-24T14:28:09+08:00",
     "title": "docs: platform handover — architecture, skills, mobile path",
