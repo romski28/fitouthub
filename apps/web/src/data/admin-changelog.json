@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-badb8e85",
+    "date": "2026-07-24T14:00:26+08:00",
+    "title": "fix(build): use effectiveToken in setProjectsCache call",
+    "summary": "fix(build): use effectiveToken in setProjectsCache call",
+    "areas": [
+      "web"
+    ],
+    "commit": "badb8e85",
+    "files": [
+      "apps/web/src/app/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-2757d387",
     "date": "2026-07-24T13:34:32+08:00",
     "title": "fix(auth): fallback to localStorage in projects page if context hasn't updated",

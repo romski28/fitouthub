@@ -54,7 +54,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
         if (response.ok) {
           const data = await response.json();
           setProjects(data);
-          setProjectsCache(accessToken, data, params?.clientId);
+          setProjectsCache(effectiveToken, data, params?.clientId);
         } else {
           const errorText = await response.text();
           console.error('[ProjectsPage] Non-ok response:', {
