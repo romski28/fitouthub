@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-2757d387",
+    "date": "2026-07-24T13:34:32+08:00",
+    "title": "fix(auth): fallback to localStorage in projects page if context hasn't updated",
+    "summary": "fix(auth): fallback to localStorage in projects page if context hasn't updated",
+    "areas": [
+      "web"
+    ],
+    "commit": "2757d387",
+    "files": [
+      "apps/web/src/app/projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-7fd07d2d",
     "date": "2026-07-24T12:16:37+08:00",
     "title": "fix(auth): add 100ms delay before post-login navigation",

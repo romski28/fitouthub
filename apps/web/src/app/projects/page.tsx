@@ -30,11 +30,14 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
 
   useEffect(() => {
     const loadProjects = async () => {
-      if (!accessToken || !isLoggedIn) {
+      // Fallback: check localStorage directly if context hasn't updated yet
+      const effectiveToken = accessToken || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+      const effectiveLoggedIn = isLoggedIn || Boolean(effectiveToken);
+      if (!effectiveToken || !effectiveLoggedIn) {
         return;
       }
 
-      const freshCache = getFreshProjectsCache(accessToken, params?.clientId);
+      const freshCache = getFreshProjectsCache(effectiveToken, params?.clientId);
       if (freshCache) {
         setProjects(freshCache.projects);
         setLoading(false);
@@ -45,7 +48,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
       
       try {
         const response = await fetchWithRetry(url, {
-          headers: { Authorization: `Bearer ${accessToken}` } 
+          headers: { Authorization: `Bearer ${effectiveToken}` } 
         });
         
         if (response.ok) {
