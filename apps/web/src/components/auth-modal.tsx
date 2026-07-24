@@ -250,18 +250,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
     setLoading(true);
     try {
+      console.error('[GoogleLogin] Starting, userType:', userType, 'credential length:', credential?.length);
       if (userType === 'professional') {
         await googleLoginProfessional(credential);
         onClose();
       } else {
+        console.error('[GoogleLogin] Calling googleLogin from auth context...');
         const result = await googleLogin(credential);
+        console.error('[GoogleLogin] googleLogin succeeded, result keys:', Object.keys(result || {}));
         const postLoginPath = getPostLoginPath(result?.user?.role);
-        onClose();
+        console.error('[GoogleLogin] postLoginPath:', postLoginPath, 'role:', result?.user?.role);
+        // Use hard navigation to force a full auth state reload
         if (postLoginPath) {
-          setTimeout(() => router.push(postLoginPath), 100);
+          window.location.href = postLoginPath;
+        } else {
+          onClose();
         }
       }
     } catch (err) {
+      console.error('[GoogleLogin] FAILED:', err instanceof Error ? err.message : err);
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     } finally {
       setLoading(false);

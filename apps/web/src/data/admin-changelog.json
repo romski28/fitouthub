@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-24-f8351658",
+    "date": "2026-07-24T15:00:13+08:00",
+    "title": "fix(auth): add debug logging, use hard navigation for Google login",
+    "summary": "fix(auth): add debug logging, use hard navigation for Google login",
+    "areas": [
+      "web"
+    ],
+    "commit": "f8351658",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-83d9236f",
     "date": "2026-07-24T14:49:21+08:00",
     "title": "fix(auth): revert to auth-context googleLogin for state updates",
