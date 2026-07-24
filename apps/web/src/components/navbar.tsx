@@ -86,7 +86,7 @@ export const Navbar: React.FC = () => {
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showPublicLinks = !showProfessionalAuthed;
   const navShellClassName = [
-    'sticky top-0 z-40 border-b border-slate-200/80 bg-white/78 backdrop-blur-md transition-transform duration-300',
+    'sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 transition-transform duration-300',
     navVisible ? 'translate-y-0' : '-translate-y-full',
     hasScrolled ? 'shadow-[0_10px_30px_rgba(15,23,42,0.08)]' : 'shadow-sm',
   ].join(' ');

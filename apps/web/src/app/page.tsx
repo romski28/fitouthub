@@ -9,6 +9,26 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { UpdatesButton } from '@/components/updates-button';
 import { VideoTeaser } from '@/components/video-teaser';
 
+// Debug: catch JS errors and display them on-screen for iOS debugging
+function useErrorDisplay() {
+  const [errors, setErrors] = useState<string[]>([]);
+  useEffect(() => {
+    const handler = (e: ErrorEvent) => {
+      setErrors(prev => [...prev.slice(-9), `${e.filename?.split('/').pop()}:${e.lineno} — ${e.message}`]);
+    };
+    const rejectionHandler = (e: PromiseRejectionEvent) => {
+      setErrors(prev => [...prev.slice(-9), `Promise: ${e.reason?.message || String(e.reason)}`]);
+    };
+    window.addEventListener('error', handler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+    return () => {
+      window.removeEventListener('error', handler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+    };
+  }, []);
+  return errors;
+}
+
 class SearchFlowErrorBoundary extends Component<
   { children: React.ReactNode },
   { hasError: boolean; errorMessage: string }
@@ -53,6 +73,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [mimoThinking, setMimoThinking] = useState(false);
   const [aiHasStarted, setAiHasStarted] = useState(false);
+  const errors = useErrorDisplay();
 
   const handleAiLoadingChange = (loading: boolean) => {
     setMimoThinking(loading);
@@ -72,7 +93,15 @@ export default function Home() {
 
 
   return (
-      <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+      <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 64px)', WebkitOverflowScrolling: 'touch' }}>
+        {/* Debug: show JS errors on-screen for iOS troubleshooting */}
+        {errors.length > 0 && (
+          <div className="fixed top-16 right-4 z-[9999] max-w-xs bg-red-950 text-red-200 text-[10px] rounded-lg p-2 shadow-xl overflow-auto max-h-48">
+            {errors.map((e, i) => (
+              <div key={i} className="border-b border-red-800 py-0.5">{e}</div>
+            ))}
+          </div>
+        )}
         {/* Updates button fixed on right for thumb access, same as project list pages */}
         {(isLoggedIn || profIsLoggedIn) && (
           <div className="fixed bottom-[260px] right-6 z-30">

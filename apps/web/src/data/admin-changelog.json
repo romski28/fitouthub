@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-24-b42acfe7",
+    "date": "2026-07-24T18:27:57+08:00",
+    "title": "fix(ios): remove backdrop-blur from sticky navbar, add error overlay",
+    "summary": "fix(ios): remove backdrop-blur from sticky navbar, add error overlay",
+    "areas": [
+      "web"
+    ],
+    "commit": "b42acfe7",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-8465ce81",
     "date": "2026-07-24T15:24:25+08:00",
     "title": "chore: clean up Google auth debug logging, update handover doc",
