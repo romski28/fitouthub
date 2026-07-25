@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-25-2bfc7073",
+    "date": "2026-07-25T12:05:34+08:00",
+    "title": "chore: remove iOS debug code, safeguard clearAiClientState",
+    "summary": "chore: remove iOS debug code, safeguard clearAiClientState",
+    "areas": [
+      "web"
+    ],
+    "commit": "2bfc7073",
+    "files": [
+      "apps/web/src/app/globals.css",
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-07-24-3238396e",
     "date": "2026-07-24T22:03:56+08:00",
     "title": "fix(sw): fix cache-first fallthrough bug, bump to v3",

@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link
             href="/"
-            onClick={() => clearAiClientState()}
+            onClick={() => { try { clearAiClientState(); } catch {} }}
             className="flex items-center hover:opacity-80 transition"
           >
             <Image

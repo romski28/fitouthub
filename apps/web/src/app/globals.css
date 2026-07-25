@@ -150,6 +150,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* iOS: eliminate 300ms tap delay and improve touch responsiveness */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
 /* Standard parent panel theme (based on home hero shell) */
 .mimo-panel {
   border-radius: 1.5rem;
