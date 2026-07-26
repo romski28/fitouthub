@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-ece8dc67",
+    "date": "2026-07-26T16:56:25+08:00",
+    "title": "revert: restore full conversational prompt from backup",
+    "summary": "revert: restore full conversational prompt from backup",
+    "areas": [
+      "api"
+    ],
+    "commit": "ece8dc67",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-22475f87",
     "date": "2026-07-26T16:46:32+08:00",
     "title": "perf: trim conversational prompt 45%, cap tokens at 800 for chat mode",
