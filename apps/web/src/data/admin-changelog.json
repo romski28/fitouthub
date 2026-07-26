@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-32ffbae1",
+    "date": "2026-07-26T15:55:47+08:00",
+    "title": "revert: restore original home page from before iOS debugging",
+    "summary": "revert: restore original home page from before iOS debugging",
+    "areas": [
+      "web"
+    ],
+    "commit": "32ffbae1",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-7bf0e856",
     "date": "2026-07-26T13:28:04+08:00",
     "title": "revert: simplified home page, removed iOS split and debug code",
