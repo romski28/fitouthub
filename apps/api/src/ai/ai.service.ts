@@ -1589,7 +1589,7 @@ OUTPUT FORMAT (JSON only)
   }
 
   private extractJsonStringValue(source: string, key: string): string | null {
-    const regex = new RegExp(`"${key}"\\s*:\\s*"((?:\\\\.|[^"\\])*)"`, 'i');
+    const regex = new RegExp(`"${key}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`, 'i');
     const match = source.match(regex);
     if (!match) return null;
     try {

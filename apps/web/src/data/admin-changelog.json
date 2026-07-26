@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-a323927c",
+    "date": "2026-07-26T12:48:06+08:00",
+    "title": "fix: regex unterminated character class in extractJsonStringValue",
+    "summary": "fix: regex unterminated character class in extractJsonStringValue",
+    "areas": [
+      "api"
+    ],
+    "commit": "a323927c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-2ee93cce",
     "date": "2026-07-26T12:03:55+08:00",
     "title": "fix: update DeepSeek model name from deepseek-chat to deepseek-v4-pro",
