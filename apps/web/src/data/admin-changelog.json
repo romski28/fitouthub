@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-22475f87",
+    "date": "2026-07-26T16:46:32+08:00",
+    "title": "perf: trim conversational prompt 45%, cap tokens at 800 for chat mode",
+    "summary": "perf: trim conversational prompt 45%, cap tokens at 800 for chat mode",
+    "areas": [
+      "api"
+    ],
+    "commit": "22475f87",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-0827ecf5",
     "date": "2026-07-26T16:44:30+08:00",
     "title": "chore: change code default to deepseek-v4-flash to match Render env",
