@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-19e9434b",
+    "date": "2026-07-26T11:46:58+08:00",
+    "title": "fix: use useState+useEffect for iOS detection to avoid SSR mismatch",
+    "summary": "fix: use useState+useEffect for iOS detection to avoid SSR mismatch",
+    "areas": [
+      "web"
+    ],
+    "commit": "19e9434b",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-e05308e8",
     "date": "2026-07-26T11:43:23+08:00",
     "title": "fix(ios): iOS-specific simplified prompt, bypasses SearchFlow module hang",

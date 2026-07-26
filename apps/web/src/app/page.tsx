@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, Suspense, useMemo } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -9,12 +9,13 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { VideoTeaser } from '@/components/video-teaser';
 import { API_BASE_URL } from '@/config/api';
 
-// Detect iOS at runtime
+// Detect iOS at runtime — must use useEffect to avoid SSR hydration mismatch
 function useIsIOS() {
-  return useMemo(() => {
-    if (typeof navigator === 'undefined') return false;
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const [isIOS, setIsIOS] = useState(false);
+  useEffect(() => {
+    setIsIOS(/iphone|ipad|ipod/i.test(navigator.userAgent));
   }, []);
+  return isIOS;
 }
 
 // Simplified prompt for iOS — avoids SearchFlow's problematic module graph
