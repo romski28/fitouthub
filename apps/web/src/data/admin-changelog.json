@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-642a3946",
+    "date": "2026-07-26T16:19:12+08:00",
+    "title": "revert: undo AI prompt rule changes and fallback text fix",
+    "summary": "revert: undo AI prompt rule changes and fallback text fix",
+    "areas": [
+      "api"
+    ],
+    "commit": "642a3946",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-c99913fe",
     "date": "2026-07-26T16:11:26+08:00",
     "title": "fix: AI chat alignment - ban generic options, fix fallback text",

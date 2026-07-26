@@ -1394,21 +1394,18 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 CRITICAL RULES FOR DATA EXTRACTION
 1) Extract and validate ALL fields as in structured mode
 2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics, options
-3) "conversationalText" is MANDATORY — exactly ONE warm, friendly sentence acknowledging their answer. Keep it tight: no filler, no flattery. Get in, validate, get out. This is a STATEMENT, NOT a question. Do NOT end with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing. Put ALL questions in nextQuestions/followUpQuestions ONLY. CRITICAL: Do NOT quote the user's answer back as if it were a project description. Do NOT say "Based on your request (\"...\")". The conversationalText is YOUR reply to their answer, not a summary of their input. Examples of GOOD conversationalText: "Got it, a mixer tap it is.", "Understood — just the kitchen for now.", "A medium-sized room, that helps narrow things down." Examples of BAD conversationalText: "Based on your request (\"bedroom\") we can...", "Thanks for sharing your project details. Based on your request...".
-4) ANSWER OPTIONS — YOU MUST include an "options" array in EVERY response. This is NOT optional and there are NO exceptions. The user will tap buttons instead of typing. Rules:
-  - OPTIONS MUST DIRECTLY ANSWER YOUR CURRENT QUESTION. Every option must be a plausible answer to the specific question you are asking RIGHT NOW.
-  - If you ask "What size is the room?" → options MUST be size answers like "Small", "Medium", "Large". Do NOT give options about unrelated topics.
-  - If you ask "What kind of fixture?" → options MUST be fixture types like "Mixer tap", "Pillar taps", "Wall-mounted". Do NOT give generic options.
-  - BANNED OPTIONS — these are STRICTLY FORBIDDEN and you MUST NOT use them: "Tell me more", "That's all", "Find out more", "Not sure yet", "I am not sure yet", "Continue". These are not answers to any question. The UI already provides a free-text button for custom replies.
-  - REPLACEMENT: Use "Not sure" (without "yet") as the last option instead of any banned variant.
+3) "conversationalText" is MANDATORY — exactly ONE warm, friendly sentence acknowledging their answer. Keep it tight: no filler, no flattery, no repeating what they just said. Get in, validate, get out. This is a STATEMENT, NOT a question. Do NOT end with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing. Put ALL questions in nextQuestions/followUpQuestions ONLY.
+4) ANSWER OPTIONS — YOU MUST include an "options" array in EVERY response. This is NOT optional and there are NO exceptions. Even if your conversationalText is a plain statement, you MUST still include options suggesting what the user might say next. The user will tap buttons instead of typing. Rules:
   - If your next question can be answered with yes/no → [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }, { label: "Not sure", value: "I am not sure" }]
-  - Fixture/materials → 2-4 specific options like [{ label: "Mixer tap", value: "a mixer tap" }, { label: "Pillar taps", value: "pillar taps, hot and cold separate" }, { label: "Wall-mounted", value: "a wall-mounted tap" }, { label: "Not sure", value: "I am not sure, what do you recommend?" }]
-  - Pipe/plumbing → [{ label: "Copper pipes", value: "copper pipes" }, { label: "Flexible hoses", value: "flexible hoses" }, { label: "Not sure", value: "I am not sure" }]
-  - Rooms/areas → [{ label: "Kitchen", value: "kitchen" }, { label: "Bathroom", value: "bathroom" }, { label: "Not sure", value: "I am not sure" }]
+  - Fixture/materials questions → 2-4 specific options like [{ label: "Mixer tap", value: "a mixer tap" }, { label: "Pillar taps", value: "pillar taps, hot and cold separate" }, { label: "Wall-mounted", value: "a wall-mounted tap" }, { label: "Not sure", value: "I am not sure, what do you recommend?" }]
+  - Pipe/plumbing condition questions → [{ label: "Copper pipes", value: "copper pipes" }, { label: "Flexible hoses", value: "flexible hoses" }, { label: "Not sure", value: "I am not sure" }]
+  - Rooms/areas → [{ label: "Kitchen", value: "kitchen" }, { label: "Bathroom", value: "bathroom" }, { label: "Both", value: "kitchen and bathroom" }, { label: "Not sure", value: "I am not sure" }]
   - Scale/size → [{ label: "Small", value: "a small room" }, { label: "Medium", value: "a medium-sized room" }, { label: "Large", value: "a large room" }, { label: "Not sure", value: "I am not sure" }]
-  - Urgency → [{ label: "Urgent", value: "this is urgent" }, { label: "Not urgent", value: "no rush" }]
-  - Every options array MUST include "Not sure" as the last option UNLESS the question is about urgency.
-  - Values MUST be short phrases (2-8 words). Max 4 options. No duplicates.
+  - Urgency → [{ label: "Urgent", value: "this is urgent, I need it done quickly" }, { label: "Not urgent", value: "no rush, I am planning ahead" }]
+  - IMPORTANT: Do NOT include generic options like "Tell me more" or "That's all" in the options array. The UI already provides a free-text "Or something else?" button for custom replies. Every options array MUST include "Not sure" as the last option UNLESS the question is about urgency.
+  - Values MUST be short phrases that work as standalone replies (2-8 words).
+  - Max 4 options, no duplicates, no generic labels like "Option A".
+  - ONLY skip options if the next question requires a complex descriptive answer (e.g. "Describe the damage").
 5) "trades" must contain exact values from ALLOWED_TRADES only
 5) Use Hong Kong as the default location context
 6) Do NOT ask location-related follow-up questions in nextQuestions/followUpQuestions because location is collected separately in the wizard (avoid asking about district/area/region/address).
@@ -1504,13 +1501,9 @@ OUTPUT FORMAT (JSON only)
 
     const title = typeof source?.title === 'string' ? source.title.trim() : '';
     const summary = typeof source?.summary === 'string' ? source.summary.trim() : '';
-    const nextQuestions = Array.isArray(source?.nextQuestions) ? source.nextQuestions.filter((q): q is string => typeof q === 'string') : [];
     const trades = Array.isArray(source?.trades)
       ? source.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [];
-
-    // If we have a real nextQuestion, craft a natural lead-in to it
-    const nextQuestion = nextQuestions.length > 0 ? nextQuestions[0] : null;
 
     const locationObj =
       source?.location && typeof source.location === 'object' && !Array.isArray(source.location)
@@ -1522,24 +1515,22 @@ OUTPUT FORMAT (JSON only)
 
     const tradeLabel =
       trades.length === 0
-        ? 'the right professionals'
+        ? 'the right renovation professionals'
         : trades.length === 1
           ? trades[0]
-          : `${trades[0]} and more`;
+          : `${trades[0]} and ${trades.length - 1} other specialist${trades.length > 2 ? 's' : ''}`;
 
-    const lead = title || summary || 'Got it.';
-    const locationHint = locationLabel ? ` in ${locationLabel}` : '';
+    const lead = title || summary || 'Thanks for sharing your project details.';
+    const locationSentence = locationLabel
+      ? ` We can focus this around ${locationLabel} in Hong Kong.`
+      : ' We can tailor this for your area in Hong Kong.';
 
-    // Build a natural acknowledgment — never embed the raw user answer as a "request"
-    if (nextQuestion) {
-      return `Got it${locationHint}. ${nextQuestion}`;
-    }
+    const previewPrompt = prompt.trim().replace(/\s+/g, ' ').slice(0, 140);
+    const contextSentence = previewPrompt
+      ? ` Based on your request ("${previewPrompt}${prompt.trim().length > 140 ? '...' : ''}"),`
+      : ' Based on your request,';
 
-    if (trades.length > 0) {
-      return `${lead} We'll match you with ${tradeLabel}${locationHint}.`;
-    }
-
-    return 'Got it. Tell me a bit more about what you need.';
+    return `${lead} ${contextSentence} we can help you connect with ${tradeLabel}.${locationSentence} If you create an account, we can turn this into a full project brief and start matching you right away.`;
   }
 
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
