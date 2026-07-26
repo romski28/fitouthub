@@ -1947,7 +1947,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
 
   async getSandboxHealth() {
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
     const timeoutMs = Number(timeoutRaw || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
@@ -2736,7 +2736,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const { requestId, messages, timeoutMs, maxOutputTokens, label } = params;
     const apiKey = process.env.DEEPSEEK_API_KEY!;
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const passStartedAt = Date.now();
 
     const controller = new AbortController();
@@ -2933,7 +2933,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
@@ -2941,6 +2941,10 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
     const mode = context?.mode ?? 'structured';
+    // Conversational mode needs far fewer tokens — one sentence + options + JSON
+    const effectiveMaxTokens = mode === 'conversational'
+      ? Math.min(maxOutputTokens, 800)
+      : maxOutputTokens;
     const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
     const factsPromptWrapper = mode === 'conversational' ? null : await this.buildFactsExtractionPrompt();
@@ -3027,7 +3031,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             model,
             messages,
             temperature: 0.2,
-            max_tokens: maxOutputTokens,
+            max_tokens: effectiveMaxTokens,
             response_format: { type: 'json_object' },
           }),
           signal: controller.signal,
@@ -3976,7 +3980,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);

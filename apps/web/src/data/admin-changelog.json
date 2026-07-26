@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-6e994784",
+    "date": "2026-07-26T16:58:10+08:00",
+    "title": "fix: restore full prompt, keep flash model and 800 token cap",
+    "summary": "fix: restore full prompt, keep flash model and 800 token cap",
+    "areas": [
+      "api"
+    ],
+    "commit": "6e994784",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-ece8dc67",
     "date": "2026-07-26T16:56:25+08:00",
     "title": "revert: restore full conversational prompt from backup",
