@@ -9,10 +9,15 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { VideoTeaser } from '@/components/video-teaser';
 
-// Lazy-load SearchFlow — catch module-level errors on iOS
+// Lazy-load SearchFlow with timeout — iOS Safari sometimes hangs on dynamic import()
 const SearchFlow = dynamic(
   () =>
-    import('@/components/search-flow').catch((err) => {
+    Promise.race([
+      import('@/components/search-flow'),
+      new Promise<{ default: React.ComponentType<any> }>((_, reject) =>
+        setTimeout(() => reject(new Error('Import timed out after 12s')), 12000)
+      ),
+    ]).catch((err) => {
       const msg = err?.message || String(err);
       console.error('[SearchFlow import failed]', msg, err);
       return {

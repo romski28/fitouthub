@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-858c347c",
+    "date": "2026-07-26T11:29:49+08:00",
+    "title": "debug(ios): add 12s timeout to SearchFlow dynamic import",
+    "summary": "debug(ios): add 12s timeout to SearchFlow dynamic import",
+    "areas": [
+      "web"
+    ],
+    "commit": "858c347c",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-3ceedec8",
     "date": "2026-07-26T11:21:42+08:00",
     "title": "debug(ios): step 4 — catch SearchFlow dynamic import error",
