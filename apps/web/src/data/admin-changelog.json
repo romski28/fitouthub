@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-7bf0e856",
+    "date": "2026-07-26T13:28:04+08:00",
+    "title": "revert: simplified home page, removed iOS split and debug code",
+    "summary": "revert: simplified home page, removed iOS split and debug code",
+    "areas": [
+      "web"
+    ],
+    "commit": "7bf0e856",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-a323927c",
     "date": "2026-07-26T12:48:06+08:00",
     "title": "fix: regex unterminated character class in extractJsonStringValue",
