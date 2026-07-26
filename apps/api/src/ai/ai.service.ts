@@ -2941,10 +2941,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
     const mode = context?.mode ?? 'structured';
-    // Conversational mode needs far fewer tokens — one sentence + options + JSON
-    const effectiveMaxTokens = mode === 'conversational'
-      ? Math.min(maxOutputTokens, 800)
-      : maxOutputTokens;
     const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
     const factsPromptWrapper = mode === 'conversational' ? null : await this.buildFactsExtractionPrompt();
@@ -3031,7 +3027,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             model,
             messages,
             temperature: 0.2,
-            max_tokens: effectiveMaxTokens,
+            max_tokens: maxOutputTokens,
             response_format: { type: 'json_object' },
           }),
           signal: controller.signal,

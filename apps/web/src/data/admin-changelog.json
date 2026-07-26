@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-e3aaeefe",
+    "date": "2026-07-26T17:20:48+08:00",
+    "title": "revert: remove 800 token cap on conversational mode",
+    "summary": "revert: remove 800 token cap on conversational mode",
+    "areas": [
+      "api"
+    ],
+    "commit": "e3aaeefe",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-6e06f935",
     "date": "2026-07-26T17:14:29+08:00",
     "title": "feat: change You asked to You said, add bouncing dots to wizard thinking",
