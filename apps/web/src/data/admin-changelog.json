@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-c99913fe",
+    "date": "2026-07-26T16:11:26+08:00",
+    "title": "fix: AI chat alignment - ban generic options, fix fallback text",
+    "summary": "fix: AI chat alignment - ban generic options, fix fallback text",
+    "areas": [
+      "api"
+    ],
+    "commit": "c99913fe",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-4f19a71a",
     "date": "2026-07-26T15:57:15+08:00",
     "title": "fix: restore page.tsx with proper encoding from git checkout",
