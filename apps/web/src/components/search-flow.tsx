@@ -1890,7 +1890,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
             <div className="space-y-3 pt-1">
               {initialAiPrompt && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You asked...</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You said...</p>
                   <div className="mt-1 space-y-1 text-sm text-slate-800">
                     {(aiPromptHistory.length > 0 ? aiPromptHistory : [initialAiPrompt]).map((prompt, index) => (
                       <p key={`asked-prompt-${index}`}>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-26-6e06f935",
+    "date": "2026-07-26T17:14:29+08:00",
+    "title": "feat: change You asked to You said, add bouncing dots to wizard thinking",
+    "summary": "feat: change You asked to You said, add bouncing dots to wizard thinking",
+    "areas": [
+      "web"
+    ],
+    "commit": "6e06f935",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-6e994784",
     "date": "2026-07-26T16:58:10+08:00",
     "title": "fix: restore full prompt, keep flash model and 800 token cap",

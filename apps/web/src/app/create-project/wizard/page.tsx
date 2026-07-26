@@ -1577,7 +1577,14 @@ export default function CreateProjectWizardPage() {
                                 </div>
                               )})}
                               {chatBusy && (
-                                <p className="text-xs text-slate-500">MIMO is thinking...</p>
+                                <div className="flex items-center gap-2">
+                                  <span className="flex items-end gap-1" aria-hidden="true">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:150ms]" />
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:300ms]" />
+                                  </span>
+                                  <p className="text-xs text-slate-500">MIMO is thinking...</p>
+                                </div>
                               )}
                             </div>
 
