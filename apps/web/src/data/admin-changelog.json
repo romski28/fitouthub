@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-909905f5",
+    "date": "2026-07-26T10:44:41+08:00",
+    "title": "fix(ios): disable service worker on iOS Safari entirely",
+    "summary": "fix(ios): disable service worker on iOS Safari entirely",
+    "areas": [
+      "web"
+    ],
+    "commit": "909905f5",
+    "files": [
+      "apps/web/src/components/pwa-provider.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-8b01e146",
     "date": "2026-07-26T10:35:04+08:00",
     "title": "fix(ios): wrap useSearchParams in Suspense boundary",

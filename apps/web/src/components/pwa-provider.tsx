@@ -53,6 +53,17 @@ export function usePwa() {
       return;
     }
 
+    // iOS Safari has critical SW bugs (cache-first silently failing,
+    // hydration breaking) — skip SW on iOS entirely
+    if (platform === "ios") {
+      console.log("[PWA] iOS detected — skipping service worker (Safari SW bugs)");
+      // Also unregister any lingering SW from previous deployments
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      });
+      return;
+    }
+
     // Register service worker
     navigator.serviceWorker
       .register(SW_PATH, { scope: "/" })
