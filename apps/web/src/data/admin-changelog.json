@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-0827ecf5",
+    "date": "2026-07-26T16:44:30+08:00",
+    "title": "chore: change code default to deepseek-v4-flash to match Render env",
+    "summary": "chore: change code default to deepseek-v4-flash to match Render env",
+    "areas": [
+      "api"
+    ],
+    "commit": "0827ecf5",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-642a3946",
     "date": "2026-07-26T16:19:12+08:00",
     "title": "revert: undo AI prompt rule changes and fallback text fix",

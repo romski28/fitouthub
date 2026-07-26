@@ -1947,7 +1947,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
 
   async getSandboxHealth() {
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const timeoutRaw = process.env.DEEPSEEK_TIMEOUT_MS;
     const timeoutMs = Number(timeoutRaw || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '1200');
@@ -2736,7 +2736,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const { requestId, messages, timeoutMs, maxOutputTokens, label } = params;
     const apiKey = process.env.DEEPSEEK_API_KEY!;
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const passStartedAt = Date.now();
 
     const controller = new AbortController();
@@ -2933,7 +2933,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
     const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
@@ -3976,7 +3976,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
-    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
