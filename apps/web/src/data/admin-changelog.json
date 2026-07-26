@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-2ee93cce",
+    "date": "2026-07-26T12:03:55+08:00",
+    "title": "fix: update DeepSeek model name from deepseek-chat to deepseek-v4-pro",
+    "summary": "fix: update DeepSeek model name from deepseek-chat to deepseek-v4-pro",
+    "areas": [
+      "api"
+    ],
+    "commit": "2ee93cce",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-26-3eee6829",
     "date": "2026-07-26T11:54:53+08:00",
     "title": "fix: proper sessionId in IOSPrompt, add SearchFlow import error handling",
