@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-3782b41e",
+    "date": "2026-07-26T10:55:14+08:00",
+    "title": "debug(ios): replace home page with minimal test page",
+    "summary": "debug(ios): replace home page with minimal test page",
+    "areas": [
+      "web"
+    ],
+    "commit": "3782b41e",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-d907a70b",
     "date": "2026-07-26T10:52:29+08:00",
     "title": "fix(ios): fully disable PWA for iOS via user-agent detection",
