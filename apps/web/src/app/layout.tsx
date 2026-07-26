@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Toaster } from 'react-hot-toast';
@@ -28,38 +29,66 @@ type PackageJson = {
 const geistSans = GeistSans;
 const geistMono = GeistMono;
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5EEDE" },
-    { media: "(prefers-color-scheme: dark)", color: "#1E293B" },
-  ],
-};
+function isIOS(headersList: Headers): boolean {
+  const ua = headersList.get("user-agent") || "";
+  return /iphone|ipad|ipod/i.test(ua);
+}
 
-export const metadata: Metadata = {
-  title: "Mimo",
-  description: "Find tradesmen, professionals, and manage fitout projects",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    title: "Mimo",
-    statusBarStyle: "black-translucent",
-  },
-  icons: {
-    icon: [
-      { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
-      { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
+export function generateViewport(): Viewport {
+  // Can't access headers() here in generateViewport, use static safe defaults
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: "#F5EEDE" },
+      { media: "(prefers-color-scheme: dark)", color: "#1E293B" },
     ],
-    apple: "/assets/mark-coral-512.png",
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
-};
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const ios = isIOS(headersList);
+
+  if (ios) {
+    return {
+      title: "Mimo",
+      description: "Find tradesmen, professionals, and manage fitout projects",
+      // No manifest, no appleWebApp, no mobile-web-app-capable on iOS
+      icons: {
+        icon: [
+          { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
+          { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
+        ],
+        apple: "/assets/mark-coral-512.png",
+      },
+    };
+  }
+
+  return {
+    title: "Mimo",
+    description: "Find tradesmen, professionals, and manage fitout projects",
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      title: "Mimo",
+      statusBarStyle: "black-translucent",
+    },
+    icons: {
+      icon: [
+        { url: "/assets/images/favicon-180.ico", type: "image/x-icon" },
+        { url: "/assets/images/favicon-180.png", sizes: "180x180", type: "image/png" },
+      ],
+      apple: "/assets/mark-coral-512.png",
+    },
+    other: {
+      "mobile-web-app-capable": "yes",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

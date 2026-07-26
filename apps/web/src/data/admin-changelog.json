@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-d907a70b",
+    "date": "2026-07-26T10:52:29+08:00",
+    "title": "fix(ios): fully disable PWA for iOS via user-agent detection",
+    "summary": "fix(ios): fully disable PWA for iOS via user-agent detection",
+    "areas": [
+      "web"
+    ],
+    "commit": "d907a70b",
+    "files": [
+      "apps/web/src/app/layout.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-909905f5",
     "date": "2026-07-26T10:44:41+08:00",
     "title": "fix(ios): disable service worker on iOS Safari entirely",
