@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, Component } from 'react';
+import { useState, useEffect, Component, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import SearchFlow from '@/components/search-flow';
@@ -47,6 +47,18 @@ class SearchFlowErrorBoundary extends Component<
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 64px)' }}>
+        <div className="animate-pulse text-slate-400">Loading...</div>
+      </div>
+    }>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
   const { isLoggedIn, user } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();

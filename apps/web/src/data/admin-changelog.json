@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-8b01e146",
+    "date": "2026-07-26T10:35:04+08:00",
+    "title": "fix(ios): wrap useSearchParams in Suspense boundary",
+    "summary": "fix(ios): wrap useSearchParams in Suspense boundary",
+    "areas": [
+      "web"
+    ],
+    "commit": "8b01e146",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-25-2bfc7073",
     "date": "2026-07-25T12:05:34+08:00",
     "title": "chore: remove iOS debug code, safeguard clearAiClientState",
