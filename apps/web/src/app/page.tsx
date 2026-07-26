@@ -9,15 +9,32 @@ import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { VideoTeaser } from '@/components/video-teaser';
 
-// Lazy-load SearchFlow — if it crashes on iOS, we catch it gracefully
-const SearchFlow = dynamic(() => import('@/components/search-flow'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-pulse text-slate-400">Loading AI...</div>
-    </div>
-  ),
-});
+// Lazy-load SearchFlow — catch module-level errors on iOS
+const SearchFlow = dynamic(
+  () =>
+    import('@/components/search-flow').catch((err) => {
+      const msg = err?.message || String(err);
+      console.error('[SearchFlow import failed]', msg, err);
+      return {
+        default: () => (
+          <div className="flex items-center justify-center h-full">
+            <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 text-sm text-red-800 max-w-lg text-left overflow-auto max-h-64">
+              <p className="font-bold mb-2">AI failed to load:</p>
+              <p className="whitespace-pre-wrap text-xs font-mono break-all">{msg}</p>
+            </div>
+          </div>
+        ),
+      };
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse text-slate-400">Loading AI...</div>
+      </div>
+    ),
+  },
+);
 
 // Error boundary for runtime SearchFlow errors
 class DebugErrorBoundary extends Component<
