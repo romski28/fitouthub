@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-e05308e8",
+    "date": "2026-07-26T11:43:23+08:00",
+    "title": "fix(ios): iOS-specific simplified prompt, bypasses SearchFlow module hang",
+    "summary": "fix(ios): iOS-specific simplified prompt, bypasses SearchFlow module hang",
+    "areas": [
+      "web"
+    ],
+    "commit": "e05308e8",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-858c347c",
     "date": "2026-07-26T11:29:49+08:00",
     "title": "debug(ios): add 12s timeout to SearchFlow dynamic import",

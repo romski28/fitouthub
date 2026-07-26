@@ -1,92 +1,133 @@
 ﻿'use client';
 
-import { useState, Suspense, Component } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { VideoTeaser } from '@/components/video-teaser';
+import { API_BASE_URL } from '@/config/api';
 
-// Lazy-load SearchFlow with timeout — iOS Safari sometimes hangs on dynamic import()
-const SearchFlow = dynamic(
-  () =>
-    Promise.race([
-      import('@/components/search-flow'),
-      new Promise<{ default: React.ComponentType<any> }>((_, reject) =>
-        setTimeout(() => reject(new Error('Import timed out after 12s')), 12000)
-      ),
-    ]).catch((err) => {
-      const msg = err?.message || String(err);
-      console.error('[SearchFlow import failed]', msg, err);
-      return {
-        default: () => (
-          <div className="flex items-center justify-center h-full">
-            <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 text-sm text-red-800 max-w-lg text-left overflow-auto max-h-64">
-              <p className="font-bold mb-2">AI failed to load:</p>
-              <p className="whitespace-pre-wrap text-xs font-mono break-all">{msg}</p>
-            </div>
-          </div>
-        ),
-      };
-    }),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-slate-400">Loading AI...</div>
-      </div>
-    ),
-  },
-);
-
-// Error boundary for runtime SearchFlow errors
-class DebugErrorBoundary extends Component<
-  { children: React.ReactNode },
-  { error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { error: null };
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 text-sm text-red-800 max-w-lg text-left overflow-auto max-h-64">
-            <p className="font-bold mb-2">SearchFlow error:</p>
-            <p className="whitespace-pre-wrap text-xs font-mono">{this.state.error.message}</p>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
+// Detect iOS at runtime
+function useIsIOS() {
+  return useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }, []);
 }
 
+// Simplified prompt for iOS — avoids SearchFlow's problematic module graph
+function IOSPrompt({ autoFocus }: { autoFocus: boolean }) {
+  const [query, setQuery] = useState('');
+  const [response, setResponse] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed || loading) return;
+    setLoading(true);
+    setResponse(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/ai/sandbox/requirements/conversational`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: trimmed }),
+      });
+      const data = await res.json();
+      setResponse(data.conversationalText || data.output || JSON.stringify(data));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed';
+      setResponse('Error: ' + message);
+    } finally {
+      setLoading(false);
+      setQuery('');
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      <form onSubmit={handleSubmit} className="shrink-0">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <textarea
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="What do you want to do today?"
+            rows={3}
+            autoFocus={autoFocus}
+            className="w-full p-4 outline-none text-lg text-slate-900 placeholder-slate-400 resize-none"
+          />
+          <div className="flex justify-end px-4 pb-3">
+            <button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="rounded-lg bg-[#FF7F50] px-6 py-2 text-white font-bold disabled:opacity-50"
+            >
+              {loading ? 'Thinking...' : 'Ask Mimo'}
+            </button>
+          </div>
+        </div>
+      </form>
+      <div className="flex-1 overflow-y-auto">
+        {loading && <p className="text-slate-400 animate-pulse">Mimo is thinking...</p>}
+        {response && <div className="bg-white rounded-lg border border-slate-200 p-4 text-slate-700 whitespace-pre-wrap text-sm">{response}</div>}
+      </div>
+    </div>
+  );
+}
+
+// Full SearchFlow for non-iOS — lazy loaded since we confirmed it works on other platforms
+const SearchFlow = dynamic(() => import('@/components/search-flow'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-slate-400">Loading...</div></div>,
+});
+
 export default function Home() {
+  const isIOS = useIsIOS();
+
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 64px)' }}>
         <div className="animate-pulse text-slate-400">Loading...</div>
       </div>
     }>
-      <HomeInner />
+      {isIOS ? <HomeIOS /> : <HomeStandard />}
     </Suspense>
   );
 }
 
-function HomeInner() {
+// iOS: simple prompt without SearchFlow's problematic imports
+function HomeIOS() {
+  const searchParams = useSearchParams();
+  const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
+
+  return (
+    <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-y-auto" style={{ height: 'calc(100vh - 64px)', WebkitOverflowScrolling: 'touch' }}>
+      <section className="w-full max-w-6xl mx-auto" style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}>
+        <div className="mimo-panel relative h-full w-full flex flex-col py-6 sm:py-8">
+          <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
+            <div className="shrink-0 mb-4 text-center">
+              <h2 className="text-2xl font-bold text-slate-900">
+                <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">I</span>n <span className="text-[#F97362]">M</span>ove <span className="text-[#F97362]">O</span>ut
+              </h2>
+            </div>
+            <div className="flex-1 min-h-0">
+              <IOSPrompt autoFocus={shouldFocusPrompt} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// Standard: full SearchFlow for Android/desktop
+function HomeStandard() {
   const { isLoggedIn } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [aiHasStarted, setAiHasStarted] = useState(false);
-  const [clicks, setClicks] = useState(0);
 
   const shouldFocusPrompt = searchParams.get('focusPrompt') === '1';
 
@@ -96,13 +137,6 @@ function HomeInner() {
 
   return (
     <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 64px)', WebkitOverflowScrolling: 'touch' }}>
-      <div className="text-center mb-2">
-        <button onClick={() => setClicks(c => c + 1)} className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-          OK:{clicks}
-        </button>
-        <Link href="/docs" className="text-xs text-blue-600 underline ml-2">→Docs</Link>
-      </div>
-
       <section className="w-full max-w-6xl mx-auto overflow-hidden" style={{ height: 'calc(100vh - 64px - 40px - 40px)' }}>
         <div className="mimo-panel relative h-full w-full flex flex-col overflow-hidden py-6 sm:py-8">
           <div className="flex-1 min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
@@ -121,9 +155,7 @@ function HomeInner() {
                   <VideoTeaser />
                 </div>
                 <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-                  <DebugErrorBoundary>
-                    <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={handleAiLoadingChange} />
-                  </DebugErrorBoundary>
+                  <SearchFlow autoFocusPrompt={shouldFocusPrompt} resetAiSession={true} onAiLoadingChange={handleAiLoadingChange} />
                 </div>
               </div>
               <div className="hidden lg:flex items-start justify-start w-[120px] shrink-0">
