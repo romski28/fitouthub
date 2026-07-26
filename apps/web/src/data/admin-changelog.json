@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-3eee6829",
+    "date": "2026-07-26T11:54:53+08:00",
+    "title": "fix: proper sessionId in IOSPrompt, add SearchFlow import error handling",
+    "summary": "fix: proper sessionId in IOSPrompt, add SearchFlow import error handling",
+    "areas": [
+      "web"
+    ],
+    "commit": "3eee6829",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-19e9434b",
     "date": "2026-07-26T11:46:58+08:00",
     "title": "fix: use useState+useEffect for iOS detection to avoid SSR mismatch",

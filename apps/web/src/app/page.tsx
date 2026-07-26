@@ -23,6 +23,11 @@ function IOSPrompt({ autoFocus }: { autoFocus: boolean }) {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const sessionIdRef = useState(() =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+  )[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +39,16 @@ function IOSPrompt({ autoFocus }: { autoFocus: boolean }) {
       const res = await fetch(`${API_BASE_URL}/ai/sandbox/requirements/conversational`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: trimmed }),
+        body: JSON.stringify({ prompt: trimmed, sessionId: sessionIdRef, imageUrls: [], preferredLanguage: 'en', sourceMode: 'words' }),
       });
       const data = await res.json();
-      setResponse(data.conversationalText || data.output || JSON.stringify(data));
+      if (!res.ok) {
+        setResponse('Error: ' + (data.message || `API ${res.status}`));
+      } else {
+        setResponse(data.conversationalText || data.output || 'No response from AI.');
+      }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed';
-      setResponse('Error: ' + message);
+      setResponse('Network error: ' + (err instanceof Error ? err.message : 'Failed'));
     } finally {
       setLoading(false);
       setQuery('');
@@ -78,11 +86,23 @@ function IOSPrompt({ autoFocus }: { autoFocus: boolean }) {
   );
 }
 
-// Full SearchFlow for non-iOS — lazy loaded since we confirmed it works on other platforms
-const SearchFlow = dynamic(() => import('@/components/search-flow'), {
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-slate-400">Loading...</div></div>,
-});
+// Full SearchFlow for non-iOS — dynamic to split bundle and avoid iOS module hang
+const SearchFlow = dynamic(
+  () => import('@/components/search-flow').catch((err) => {
+    console.error('[SearchFlow dynamic import failed]', err);
+    return {
+      default: () => (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-red-600">Failed to load AI. Please refresh.</p>
+        </div>
+      ),
+    };
+  }),
+  {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-slate-400">Loading...</div></div>,
+  },
+);
 
 export default function Home() {
   const isIOS = useIsIOS();
