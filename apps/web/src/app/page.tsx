@@ -1,15 +1,25 @@
 ﻿'use client';
 
 import { useState, Suspense, Component } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { VideoTeaser } from '@/components/video-teaser';
-import SearchFlow from '@/components/search-flow';
 
-// Error boundary that shows the error ON SCREEN for iOS debugging
+// Lazy-load SearchFlow — if it crashes on iOS, we catch it gracefully
+const SearchFlow = dynamic(() => import('@/components/search-flow'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="animate-pulse text-slate-400">Loading AI...</div>
+    </div>
+  ),
+});
+
+// Error boundary for runtime SearchFlow errors
 class DebugErrorBoundary extends Component<
   { children: React.ReactNode },
   { error: Error | null }
@@ -26,9 +36,8 @@ class DebugErrorBoundary extends Component<
       return (
         <div className="flex items-center justify-center h-full">
           <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 text-sm text-red-800 max-w-lg text-left overflow-auto max-h-64">
-            <p className="font-bold mb-2 text-base">SearchFlow crashed on iOS:</p>
+            <p className="font-bold mb-2">SearchFlow error:</p>
             <p className="whitespace-pre-wrap text-xs font-mono">{this.state.error.message}</p>
-            <p className="text-xs mt-2 text-red-600">{this.state.error.stack?.split('\n').slice(0, 5).join('\n')}</p>
           </div>
         </div>
       );
@@ -50,7 +59,7 @@ export default function Home() {
 }
 
 function HomeInner() {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn } = useAuth();
   const { isLoggedIn: profIsLoggedIn } = useProfessionalAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,7 +74,6 @@ function HomeInner() {
 
   return (
     <div className="flex flex-col justify-between w-full px-5 pt-5 pb-5 sm:px-8 sm:pt-6 sm:pb-6 overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 64px)', WebkitOverflowScrolling: 'touch' }}>
-      {/* Test button to confirm React is alive */}
       <div className="text-center mb-2">
         <button onClick={() => setClicks(c => c + 1)} className="text-xs bg-green-600 text-white px-2 py-1 rounded">
           OK:{clicks}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-26-3a96018c",
+    "date": "2026-07-26T11:15:48+08:00",
+    "title": "debug(ios): step 3 — lazy-load SearchFlow with dynamic import",
+    "summary": "debug(ios): step 3 — lazy-load SearchFlow with dynamic import",
+    "areas": [
+      "web"
+    ],
+    "commit": "3a96018c",
+    "files": [
+      "apps/web/src/app/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-efbb1fc5",
     "date": "2026-07-26T11:06:10+08:00",
     "title": "debug(ios): step 2 — add SearchFlow back with visible error boundary",
