@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-5cd6cf8f",
+    "date": "2026-07-28T12:25:13+08:00",
+    "title": "fix: comprehensive scope compilation at wrap-up, fix fallback text",
+    "summary": "fix: comprehensive scope compilation at wrap-up, fix fallback text",
+    "areas": [
+      "api"
+    ],
+    "commit": "5cd6cf8f",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-2b92989a",
     "date": "2026-07-28T12:12:11+08:00",
     "title": "fix: filter duplicate generic options from wizard AI answer buttons",

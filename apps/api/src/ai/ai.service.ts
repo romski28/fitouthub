@@ -1369,9 +1369,10 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 - The ACCUMULATED PROJECT SCOPE in the user message contains the GROWING project brief from ALL previous turns.
 - Your "summary" field MUST include ALL details from the ACCUMULATED PROJECT SCOPE PLUS any new details from the latest user message.
 - NEVER drop or shorten previously established scope details. The summary should GROW each turn, not shrink.
-- If the accumulated scope says "Leak under kitchen sink, pipe is copper, access is tight" and the user adds "the tap is dripping too", your new summary must be "Leak under kitchen sink with dripping tap, copper pipes, tight access".
-- CRITICAL: Do NOT invent or hallucinate details that were never mentioned by the user or in the accumulated scope. If the accumulated scope says "Leak under kitchen sink" and the user says "the water is spreading", do NOT add "dripping tap" or any other unmentioned detail.
-- Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
+- Be specific: include what the problem is, where exactly it is, when it happens (if timing was discussed), sound/symptom descriptions, what the user has tried, what they want done, and any stated preferences.
+- Example: if scope says "Leak under kitchen sink, pipe is copper, access is tight" and user adds "tap is dripping too", your new summary MUST be "Leak under kitchen sink with dripping tap, copper pipes, tight access" — NOT "Leak under kitchen sink".
+- CRITICAL: Do NOT invent details. Never add anything the user didn't mention.
+- Your "title" should be a concise 5-8 word label capturing the essence of the full scope.
 
 # Temporary Mitigations (MANDATORY — populate for EVERY project)
 - ALWAYS include practical, actionable steps the user can take BEFORE a professional arrives.
@@ -1421,7 +1422,10 @@ CRITICAL RULES FOR DATA EXTRACTION
 16) If the user's description suggests survey uncertainty, measurement gaps, access issues, or site-condition unknowns, mention that Mimo can help with a survey and keep the offer short and natural.
 17) Never assume the client owns any tools, equipment, materials, or supplies. Do not write assumptions like "client has basic tools" or "homeowner can provide equipment."
 18) Always refer to the project owner as "the client" — never use "user," "homeowner," or "individual."
-19) WRAP-UP RULE — When overallConfidence is 0.75 or higher, the conversation is wrapping up. In this case: conversationalText must be a brief closing statement ONLY (e.g., "That covers everything I need — let's move on."). Do NOT ask any questions in conversationalText. Do NOT include nextQuestions or followUpQuestions (leave arrays empty). Do NOT include an options array. The system will auto-advance, so any question you ask will be ignored.
+19) WRAP-UP RULE — When overallConfidence is 0.75 or higher, the conversation is wrapping up. In this case:
+  - conversationalText must be a brief closing statement ONLY (e.g., "That covers everything I need — let's move on."). Do NOT ask any questions. Do NOT include nextQuestions, followUpQuestions, or options (leave arrays empty).
+  - CRITICAL: The "summary" field MUST be a COMPREHENSIVE compilation of EVERY detail shared across ALL turns of this conversation. Include: what the problem is, where it is, when it happens, what the user has tried, what they want done, specific findings from the chat, and any stated preferences. This is the final project scope — make it detailed and useful. Format as a paragraph. Example good summary: "Whistling noise from toilet cistern that starts after flushing and stops when the cistern is full. Likely a worn fill valve. No water dripping noticed. Client wants a plumber to replace the fill valve."
+  - The "title" field MUST be a descriptive 5-10 word summary capturing the key details, not just the problem. Example good title: "Toilet cistern fill valve replacement — whistling after flush". Never use generic titles like "Noise from toilet cistern" when more detail is available.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -1501,9 +1505,11 @@ OUTPUT FORMAT (JSON only)
 
     const title = typeof source?.title === 'string' ? source.title.trim() : '';
     const summary = typeof source?.summary === 'string' ? source.summary.trim() : '';
+    const nextQuestions = Array.isArray(source?.nextQuestions) ? source.nextQuestions.filter((q): q is string => typeof q === 'string' && q.trim().length > 0) : [];
     const trades = Array.isArray(source?.trades)
       ? source.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [];
+    const overallConfidence = typeof source?.overallConfidence === 'number' ? source.overallConfidence : 0;
 
     const locationObj =
       source?.location && typeof source.location === 'object' && !Array.isArray(source.location)
@@ -1515,22 +1521,34 @@ OUTPUT FORMAT (JSON only)
 
     const tradeLabel =
       trades.length === 0
-        ? 'the right renovation professionals'
+        ? 'the right professionals'
         : trades.length === 1
           ? trades[0]
-          : `${trades[0]} and ${trades.length - 1} other specialist${trades.length > 2 ? 's' : ''}`;
+          : `${trades[0]} and more`;
 
-    const lead = title || summary || 'Thanks for sharing your project details.';
-    const locationSentence = locationLabel
-      ? ` We can focus this around ${locationLabel} in Hong Kong.`
-      : ' We can tailor this for your area in Hong Kong.';
+    // Wrap-up: brief closing, no questions
+    if (overallConfidence >= 0.75) {
+      if (trades.length > 0 && summary) {
+        return `I think we have enough to get started. ${summary}`;
+      }
+      if (trades.length > 0) {
+        return `I think we have enough to get started. A ${tradeLabel}${locationLabel ? ` in ${locationLabel}` : ''} should be able to help.`;
+      }
+      return 'I think we have enough to get started.';
+    }
 
-    const previewPrompt = prompt.trim().replace(/\s+/g, ' ').slice(0, 140);
-    const contextSentence = previewPrompt
-      ? ` Based on your request ("${previewPrompt}${prompt.trim().length > 140 ? '...' : ''}"),`
-      : ' Based on your request,';
+    // Mid-conversation: lead with the next question if there is one
+    if (nextQuestions.length > 0) {
+      return nextQuestions[0];
+    }
 
-    return `${lead} ${contextSentence} we can help you connect with ${tradeLabel}.${locationSentence} If you create an account, we can turn this into a full project brief and start matching you right away.`;
+    // Generic acknowledgment — never embed raw user input
+    if (title || summary) {
+      const lead = title || summary;
+      return `Got it. ${lead}`;
+    }
+
+    return 'Got it. Tell me a bit more about what you need.';
   }
 
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
