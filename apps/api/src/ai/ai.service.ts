@@ -3377,6 +3377,9 @@ OUTPUT this JSON and nothing else:
               } else {
                 this.logger.warn(`[${requestId}] Scope compilation empty output`);
               }
+            } else {
+              this.logger.warn(`[${requestId}] Scope compilation failed status=${compileResponse.status}`);
+            }
           } catch (compileErr) {
             this.logger.warn(`[${requestId}] Scope compilation error: ${(compileErr as Error).message}`);
           }
