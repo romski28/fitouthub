@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-a2058c3f",
+    "date": "2026-07-28T20:45:51+08:00",
+    "title": "fix: explicit yes/no detection for answer options",
+    "summary": "fix: explicit yes/no detection for answer options",
+    "areas": [
+      "api"
+    ],
+    "commit": "a2058c3f",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-bb32ff0b",
     "date": "2026-07-28T20:32:58+08:00",
     "title": "feat: two-phase AI — slim chat prompt, full analysis at wrap-up",
