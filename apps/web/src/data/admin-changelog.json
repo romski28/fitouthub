@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-5467b35a",
+    "date": "2026-07-28T15:08:25+08:00",
+    "title": "revert: restore original fallback and prompt rules",
+    "summary": "revert: restore original fallback and prompt rules",
+    "areas": [
+      "api"
+    ],
+    "commit": "5467b35a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-ae0c32e8",
     "date": "2026-07-28T14:58:55+08:00",
     "title": "fix: fallback must not echo next question as conversational text",
