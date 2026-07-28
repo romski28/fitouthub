@@ -1537,15 +1537,14 @@ OUTPUT FORMAT (JSON only)
       return 'I think we have enough to get started.';
     }
 
-    // Mid-conversation: lead with the next question if there is one
-    if (nextQuestions.length > 0) {
-      return nextQuestions[0];
-    }
-
-    // Generic acknowledgment — never embed raw user input
+    // Mid-conversation: generate a proper acknowledgment, never echo the question
     if (title || summary) {
       const lead = title || summary;
       return `Got it. ${lead}`;
+    }
+
+    if (trades.length > 0) {
+      return `Understood — ${tradeLabel}${locationLabel ? ` in ${locationLabel}` : ''} is the right call.`;
     }
 
     return 'Got it. Tell me a bit more about what you need.';
