@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-a97a4c83",
+    "date": "2026-07-28T15:31:56+08:00",
+    "title": "fix: strengthen one-question rule, prevent compound questions and service options",
+    "summary": "fix: strengthen one-question rule, prevent compound questions and service options",
+    "areas": [
+      "api"
+    ],
+    "commit": "a97a4c83",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-5467b35a",
     "date": "2026-07-28T15:08:25+08:00",
     "title": "revert: restore original fallback and prompt rules",
