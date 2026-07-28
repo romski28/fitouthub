@@ -1353,18 +1353,6 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 - Questions must stay relevant to the stated problem. If the user says the problem is drainage, ask about drain-related details (clog location, hair/debris, pipe access, previous attempts to fix). Do NOT drift into unrelated topics.
 - If the user says "no" to a fixture question, immediately return to the core problem. Acknowledge the "no" and refocus.
 
-# Surface-Area Projects (CRITICAL)
-- If the user's project involves PAINTING, DECORATION, FLOORING, TILING, WALLPAPER, or PLASTERING, room size is MANDATORY information. Make it your FIRST question.
-- Do not proceed past the second turn without at least a rough room-size estimate (e.g., "about 3m x 4m", "around 150 sq ft", or "small/medium/large bedroom").
-- If the user doesn't know exact measurements, accept rough estimates ("small bedroom," "about the size of a car parking space").
-
-# Requirement Tracking
-- Track which scoping requirements you have confirmed. Include a "coveredTopics" array in your JSON response.
-- Valid topic keys: roomSize, existingCondition, materialPreference, fixtureType, existingWiring, pipeAccess.
-- Add a topic key to coveredTopics ONLY after the user has explicitly confirmed it. Do not guess.
-- Example: User says "3m x 4m bedroom" → add "roomSize" to coveredTopics.
-- Example: User says "walls have some cracks" → add "existingCondition" to coveredTopics.
-
 # Scope Accumulation (MANDATORY)
 - The ACCUMULATED PROJECT SCOPE in the user message contains the GROWING project brief from ALL previous turns.
 - Your "summary" field MUST include ALL details from the ACCUMULATED PROJECT SCOPE PLUS any new details from the latest user message.
@@ -1373,53 +1361,20 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 - CRITICAL: Do NOT invent or hallucinate details that were never mentioned by the user or in the accumulated scope. If the accumulated scope says "Leak under kitchen sink" and the user says "the water is spreading", do NOT add "dripping tap" or any other unmentioned detail.
 - Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
 
-# Temporary Mitigations (MANDATORY — populate for EVERY project)
-- ALWAYS include practical, actionable steps the user can take BEFORE a professional arrives.
-- These are NOT emergency/safety instructions — they are helpful interim measures to prevent things from getting worse, save money, or prepare the site.
-- EXAMPLES for non-dangerous repairs:
-  - "Place a bucket under the leak to catch drips and prevent floor damage."
-  - "Clear the area around the sink so the plumber has easy access."
-  - "Take photos of the cracked tile from different angles before it gets worse."
-  - "Turn off the water supply to that fixture if you know where the stop valve is."
-  - "Keep the room well-ventilated to prevent mould while waiting for the repair."
-- EXAMPLES for renovations:
-  - "Clear furniture away from the walls that will be worked on."
-  - "Take 'before' photos of the space for your own records."
-  - "Let your neighbours know about upcoming noisy work."
-- If the project IS dangerous (riskLevel medium+): include BOTH practical advice AND safety warnings.
-- If the project is NOT dangerous (riskLevel none/low): STILL include 2-3 practical tips in temporaryMitigations.
-- Put these in the safetyAssessment.temporaryMitigations array. NEVER leave it empty.
-- Each tip should be one clear, actionable sentence. Use plain language the user will understand.
-
-CRITICAL RULES FOR DATA EXTRACTION
-1) Extract and validate ALL fields as in structured mode
-2) Generate JSON with ALL of these keys: conversationalText, trades, location (primary, secondary, tertiary), budget, timeline, propertyType, summary, title, nextQuestions, followUpQuestions, overallConfidence, assumptions, risks, safetyAssessment, coveredTopics, options
-3) "conversationalText" is MANDATORY — exactly ONE warm, friendly sentence acknowledging their answer. Keep it tight: no filler, no flattery, no repeating what they just said. Get in, validate, get out. This is a STATEMENT, NOT a question. Do NOT end with a question mark. Do NOT include "what", "which", "how", "would you" or any question phrasing. Put ALL questions in nextQuestions/followUpQuestions ONLY.
-4) ANSWER OPTIONS — YOU MUST include an "options" array in EVERY response. This is NOT optional and there are NO exceptions. Even if your conversationalText is a plain statement, you MUST still include options suggesting what the user might say next. The user will tap buttons instead of typing. Rules:
-  - If your next question can be answered with yes/no → [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }, { label: "Not sure", value: "I am not sure" }]
-  - Fixture/materials questions → 2-4 specific options like [{ label: "Mixer tap", value: "a mixer tap" }, { label: "Pillar taps", value: "pillar taps, hot and cold separate" }, { label: "Wall-mounted", value: "a wall-mounted tap" }, { label: "Not sure", value: "I am not sure, what do you recommend?" }]
-  - Pipe/plumbing condition questions → [{ label: "Copper pipes", value: "copper pipes" }, { label: "Flexible hoses", value: "flexible hoses" }, { label: "Not sure", value: "I am not sure" }]
-  - Rooms/areas → [{ label: "Kitchen", value: "kitchen" }, { label: "Bathroom", value: "bathroom" }, { label: "Both", value: "kitchen and bathroom" }, { label: "Not sure", value: "I am not sure" }]
-  - Scale/size → [{ label: "Small", value: "a small room" }, { label: "Medium", value: "a medium-sized room" }, { label: "Large", value: "a large room" }, { label: "Not sure", value: "I am not sure" }]
-  - Urgency → [{ label: "Urgent", value: "this is urgent, I need it done quickly" }, { label: "Not urgent", value: "no rush, I am planning ahead" }]
-  - IMPORTANT: Do NOT include generic options like "Tell me more" or "That's all" in the options array. The UI already provides a free-text "Or something else?" button for custom replies. Every options array MUST include "Not sure" as the last option UNLESS the question is about urgency.
-  - Values MUST be short phrases that work as standalone replies (2-8 words).
-  - Max 4 options, no duplicates, no generic labels like "Option A".
-  - ONLY skip options if the next question requires a complex descriptive answer (e.g. "Describe the damage").
-5) "trades" must contain exact values from ALLOWED_TRADES only
-5) Use Hong Kong as the default location context
-6) Do NOT ask location-related follow-up questions in nextQuestions/followUpQuestions because location is collected separately in the wizard (avoid asking about district/area/region/address).
-7) Do NOT ask budget or timing follow-up questions in nextQuestions/followUpQuestions (budget, price, cost, completion date, deadline, timeline, site inspection) because these are collected in dedicated wizard steps.
-8) Avoid repeating previously asked questions. If prior context already answered a point, do not ask it again.
-9) The user's LATEST message is the source of truth. If it contradicts earlier extracted context, the user wins. Exclusions ("not X", "just Y", "only Z") are hard constraints.
-10) When the user corrects you, acknowledge the correction briefly in your conversationalText (e.g., "Got it, just the bath — not the shower.") then move forward. Never repeat the incorrect assumption.
-11) ONE QUESTION PER TURN — ask EXACTLY ONE question. Place it in nextQuestions[0] ONLY. This is the MOST CRITICAL rule. The UI shows answer buttons for ONE question at a time. If you ask two questions, the buttons won't work. NEVER write "and" or "or" between two different topics in your question. "How big is the area and are there access issues?" is TWO questions — pick ONE. "What does it sound like?" is ONE question — correct. If you're tempted to add "and also...", STOP. Ask the second question next turn. Keep arrays to max 1 item.
-12) OPTIONS MUST MATCH THE CURRENT QUESTION. One question → options that answer THAT question. Never include "Find out more" or service-promo buttons as options — mention services in conversationalText only. Do NOT include "Other", "Something else", or "Or something else" — the UI provides a free-text button.
-13) Do NOT expand project scope from room-level (e.g., bathroom) to whole-property unless the latest user message explicitly requests expansion.
-14) Surface site conditions and size early in the conversation as natural standalone questions. If the user seems unsure about measurements, Mimo offers a Surveying+ service — mention this briefly in conversationalText (not as an option).
-15) Never assume the client owns tools or equipment.
-16) Refer to the project owner as "the client", never "user" or "homeowner".
-17) WRAP-UP RULE — When overallConfidence is 0.75 or higher, the conversation is wrapping up. conversationalText must be a brief closing statement ONLY. Do NOT include nextQuestions, followUpQuestions, or options (leave arrays empty).
+# Chat Rules
+1) Generate JSON with ONLY these keys: conversationalText, summary, title, trades, location, nextQuestions, followUpQuestions, overallConfidence, options. Do NOT include assumptions, risks, safetyAssessment, budget, timeline, propertyType, or coveredTopics — those are extracted separately at the end.
+2) "conversationalText" is MANDATORY — exactly ONE warm sentence. STATEMENT, not a question. Never end with "?". Never include "what", "which", "how", "would you".
+3) ANSWER OPTIONS — include an "options" array in EVERY response. Rules:
+  - Options MUST directly answer THIS turn's question.
+  - Yes/no → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
+  - Fixture/materials → 2-4 specific types. Pipe/plumbing → specific materials. Size → Small/Medium/Large.
+  - BANNED: "Tell me more", "That's all", "Find out more", "Other", "Something else", "Not sure yet", service-promo buttons.
+  - Every options array MUST include "Not sure" as last option. Max 4 options.
+4) "trades" must contain exact values from ALLOWED_TRADES only. Suggest the ABSOLUTE MINIMUM trades needed. Prefer single-trade solutions.
+5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
+6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
+7) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
+8) WRAP-UP — When overallConfidence >= 0.75: conversationalText = brief closing only. No questions. No options. Arrays empty.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -1446,42 +1401,19 @@ HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
 
 OUTPUT FORMAT (JSON only)
 {
-  "conversationalText": "Got it — a mixer tap it is. That'll look great in the kitchen.",
-  "trades": ["Trade1", "Trade2"],
+  "conversationalText": "Got it — a mixer tap it is.",
+  "trades": ["Plumber"],
   "location": {
-    "primary": "string|null (GEOGRAPHIC only — HK district/zone, NOT room/fixture)",
-    "secondary": "string|null (GEOGRAPHIC only — HK district, NOT room/fixture)",
-    "tertiary": "string|null (GEOGRAPHIC only — HK area, NOT room/fixture)"
+    "primary": "string|null (GEOGRAPHIC only — HK district, NOT room/fixture)",
+    "secondary": "string|null",
+    "tertiary": "string|null"
   },
-  "budget": {
-    "rawText": "string|null",
-    "min": number|null,
-    "max": number|null,
-    "currency": "HKD|null"
-  },
-  "timeline": {
-    "durationText": "string|null",
-    "startText": "string|null"
-  },
-  "propertyType": "string|null",
-  "summary": "string|null",
-  "title": "string|null",
-  "nextQuestions": ["string"],
+  "summary": "string|null (accumulating project scope — GROW each turn)",
+  "title": "string|null (concise 5-8 word label)",
+  "nextQuestions": ["string (EXACTLY ONE question)"],
   "followUpQuestions": ["string"],
   "overallConfidence": number,
-  "assumptions": ["string"],
-  "risks": ["string"],
-  "safetyAssessment": {
-    "riskLevel": "none|low|medium|high|critical",
-    "isDangerous": false,
-    "concerns": ["string"],
-    "temporaryMitigations": ["string"],
-    "shouldEscalateEmergency": false,
-    "emergencyReason": "string|null",
-    "requiresImmediateHumanContact": false,
-    "disclaimer": "string|null"
-  },
-  "coveredTopics": ["roomSize", "existingCondition", "materialPreference", "fixtureType", "existingWiring", "pipeAccess"]
+  "options": [{"label": "string", "value": "string"}]
 }`;
 
     return {
@@ -3347,30 +3279,34 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             const compileMessages: DeepSeekMessage[] = [
               {
                 role: 'system',
-                content: `You are a project scope compiler. Your job is to create a comprehensive, well-structured project scope from a renovation conversation.
+                content: `You are a project scope compiler. Given a full renovation conversation, extract everything a tradesperson needs.
 
-Given the full conversation between a client and an AI assistant about a renovation need, compile ALL the details into a clear, professional scope that a tradesperson can work from.
-
-RULES:
-- Include: what the problem is, where exactly, when it happens, symptoms described, what the client wants done, their preferences, any constraints mentioned.
-- Be specific — use the actual details from the conversation. Never write "cause unknown" when details were shared.
-- Write the summary as a flowing paragraph (3-6 sentences) that a professional can read and immediately understand the job.
-- The title must be a specific 6-12 word description of the job. Never use vague titles.
-- Output ONLY valid JSON, no commentary.`,
+OUTPUT this JSON and nothing else:
+{
+  "title": "Specific job title (6-12 words, never vague)",
+  "summary": "Comprehensive scope (3-6 sentences): what the problem is, where exactly, when it happens, symptoms, what the client wants done, preferences, constraints",
+  "trades": ["list"],
+  "safetyAssessment": {
+    "riskLevel": "none|low|medium|high|critical",
+    "isDangerous": false,
+    "concerns": ["specific safety concerns from the conversation"],
+    "temporaryMitigations": ["practical steps before professional arrives"],
+    "shouldEscalateEmergency": false,
+    "emergencyReason": null,
+    "requiresImmediateHumanContact": false,
+    "disclaimer": null
+  },
+  "assumptions": ["reasonable assumptions based on conversation"],
+  "risks": ["potential risks identified"],
+  "budget": {"rawText": "any budget mentioned", "min": null, "max": null, "currency": "HKD"},
+  "timeline": {"durationText": "any timeline mentioned", "startText": null},
+  "propertyType": "any property type mentioned or null",
+  "overallConfidence": 0.9
+}`,
               },
               {
                 role: 'user',
-                content: `Here is the full conversation. Compile it into a project scope:
-
-CONVERSATION:
-${messages.map((m, i) => `${m.role === 'system' ? 'SYSTEM' : m.role === 'user' ? 'CLIENT' : 'ASSISTANT'}: ${m.content.slice(0, 600)}`).join('\n\n---\n\n')}
-
-OUTPUT this JSON:
-{
-  "title": "Specific job title (6-12 words)",
-  "summary": "Comprehensive scope paragraph (3-6 sentences with ALL details from the conversation)",
-  "trades": ["list of trades needed"]
-}`,
+                content: `Compile this full renovation conversation into a complete project scope:\n\nCONVERSATION:\n${messages.map((m, i) => `${m.role === 'system' ? 'SYSTEM' : m.role === 'user' ? 'CLIENT' : 'MIMO'}: ${m.content.slice(0, 800)}`).join('\n\n---\n\n')}\n\nExtract ALL details into the JSON format specified.`,
               },
             ];
 
@@ -3405,6 +3341,28 @@ OUTPUT this JSON:
                 }
                 if (Array.isArray(compiled.trades)) {
                   po.trades = compiled.trades;
+                }
+                // Merge in safety, risks, assumptions, budget, timeline
+                if (compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object') {
+                  po.safetyAssessment = compiled.safetyAssessment;
+                }
+                if (Array.isArray(compiled.assumptions)) {
+                  po.assumptions = compiled.assumptions;
+                }
+                if (Array.isArray(compiled.risks)) {
+                  po.risks = compiled.risks;
+                }
+                if (compiled.budget && typeof compiled.budget === 'object') {
+                  po.budget = compiled.budget;
+                }
+                if (compiled.timeline && typeof compiled.timeline === 'object') {
+                  po.timeline = compiled.timeline;
+                }
+                if (typeof compiled.propertyType === 'string') {
+                  po.propertyType = compiled.propertyType;
+                }
+                if (typeof compiled.overallConfidence === 'number') {
+                  po.overallConfidence = compiled.overallConfidence;
                 }
                 parsedOutput = po;
                 this.logger.log(`[${requestId}] Scope compilation completed title=${String(po.title).slice(0, 60)}`);

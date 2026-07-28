@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-bb32ff0b",
+    "date": "2026-07-28T20:32:58+08:00",
+    "title": "feat: two-phase AI — slim chat prompt, full analysis at wrap-up",
+    "summary": "feat: two-phase AI — slim chat prompt, full analysis at wrap-up",
+    "areas": [
+      "api"
+    ],
+    "commit": "bb32ff0b",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-8cbd1580",
     "date": "2026-07-28T18:44:53+08:00",
     "title": "fix: rewrite fallback - no raw input, no account mention",
