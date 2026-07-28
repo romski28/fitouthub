@@ -3309,7 +3309,7 @@ OUTPUT this JSON and nothing else:
               },
             ];
 
-            this.logger.log(`[${requestId}] Scope compilation started`);
+            this.logger.log(`[${requestId}] Scope compilation started messages=${messages.length}`);
             const compileResponse = await fetch(endpoint, {
               method: 'POST',
               headers: {
@@ -3320,16 +3320,18 @@ OUTPUT this JSON and nothing else:
                 model,
                 messages: compileMessages,
                 temperature: 0.1,
-                max_tokens: 500,
+                max_tokens: 800,
                 response_format: { type: 'json_object' },
               }),
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(20000),
             });
 
             if (compileResponse.ok) {
               const compileRaw = await compileResponse.text();
+              this.logger.log(`[${requestId}] Scope compilation raw (first 300): ${compileRaw.slice(0, 300)}`);
               const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
               const compileOutput = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+              this.logger.log(`[${requestId}] Scope compilation output length=${compileOutput.length}`);
               if (compileOutput) {
                 const compiled = JSON.parse(compileOutput) as Record<string, unknown>;
                 if (typeof compiled.summary === 'string' && compiled.summary.trim()) {
@@ -3364,11 +3366,17 @@ OUTPUT this JSON and nothing else:
                   po.overallConfidence = compiled.overallConfidence;
                 }
                 parsedOutput = po;
-                this.logger.log(`[${requestId}] Scope compilation completed title=${String(po.title).slice(0, 60)}`);
+                const compiledFields = [
+                  compiled.summary ? 'summary' : '', compiled.title ? 'title' : '',
+                  compiled.trades ? 'trades' : '', compiled.safetyAssessment ? 'safety' : '',
+                  compiled.assumptions ? 'assumptions' : '', compiled.risks ? 'risks' : '',
+                  compiled.budget ? 'budget' : '', compiled.timeline ? 'timeline' : '',
+                  compiled.propertyType ? 'propertyType' : '',
+                ].filter(Boolean).join(',');
+                this.logger.log(`[${requestId}] Scope compilation OK fields=[${compiledFields}]`);
+              } else {
+                this.logger.warn(`[${requestId}] Scope compilation empty output`);
               }
-            } else {
-              this.logger.warn(`[${requestId}] Scope compilation failed status=${compileResponse.status}`);
-            }
           } catch (compileErr) {
             this.logger.warn(`[${requestId}] Scope compilation error: ${(compileErr as Error).message}`);
           }

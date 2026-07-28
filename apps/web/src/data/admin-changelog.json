@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-96359d17",
+    "date": "2026-07-28T20:49:59+08:00",
+    "title": "fix: increase compilation tokens, add detailed logging",
+    "summary": "fix: increase compilation tokens, add detailed logging",
+    "areas": [
+      "api"
+    ],
+    "commit": "96359d17",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-a2058c3f",
     "date": "2026-07-28T20:45:51+08:00",
     "title": "fix: explicit yes/no detection for answer options",
