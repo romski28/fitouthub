@@ -3356,6 +3356,88 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
       }
 
+      // ── Wrap-up scope compilation ──
+      // When conversational mode wraps up (high confidence), make a dedicated
+      // call to compile ALL Q&A into a comprehensive project scope for the pros.
+      if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        const po = parsedOutput as Record<string, unknown>;
+        const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
+        if (confidence >= 0.75) {
+          try {
+            const compileMessages: DeepSeekMessage[] = [
+              {
+                role: 'system',
+                content: `You are a project scope compiler. Your job is to create a comprehensive, well-structured project scope from a renovation conversation.
+
+Given the full conversation between a client and an AI assistant about a renovation need, compile ALL the details into a clear, professional scope that a tradesperson can work from.
+
+RULES:
+- Include: what the problem is, where exactly, when it happens, symptoms described, what the client wants done, their preferences, any constraints mentioned.
+- Be specific — use the actual details from the conversation. Never write "cause unknown" when details were shared.
+- Write the summary as a flowing paragraph (3-6 sentences) that a professional can read and immediately understand the job.
+- The title must be a specific 6-12 word description of the job. Never use vague titles.
+- Output ONLY valid JSON, no commentary.`,
+              },
+              {
+                role: 'user',
+                content: `Here is the full conversation. Compile it into a project scope:
+
+CONVERSATION:
+${messages.map((m, i) => `${m.role === 'system' ? 'SYSTEM' : m.role === 'user' ? 'CLIENT' : 'ASSISTANT'}: ${m.content.slice(0, 600)}`).join('\n\n---\n\n')}
+
+OUTPUT this JSON:
+{
+  "title": "Specific job title (6-12 words)",
+  "summary": "Comprehensive scope paragraph (3-6 sentences with ALL details from the conversation)",
+  "trades": ["list of trades needed"]
+}`,
+              },
+            ];
+
+            this.logger.log(`[${requestId}] Scope compilation started`);
+            const compileResponse = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model,
+                messages: compileMessages,
+                temperature: 0.1,
+                max_tokens: 500,
+                response_format: { type: 'json_object' },
+              }),
+              signal: AbortSignal.timeout(15000),
+            });
+
+            if (compileResponse.ok) {
+              const compileRaw = await compileResponse.text();
+              const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
+              const compileOutput = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+              if (compileOutput) {
+                const compiled = JSON.parse(compileOutput) as Record<string, unknown>;
+                if (typeof compiled.summary === 'string' && compiled.summary.trim()) {
+                  po.summary = compiled.summary.trim();
+                }
+                if (typeof compiled.title === 'string' && compiled.title.trim()) {
+                  po.title = compiled.title.trim();
+                }
+                if (Array.isArray(compiled.trades)) {
+                  po.trades = compiled.trades;
+                }
+                parsedOutput = po;
+                this.logger.log(`[${requestId}] Scope compilation completed title=${String(po.title).slice(0, 60)}`);
+              }
+            } else {
+              this.logger.warn(`[${requestId}] Scope compilation failed status=${compileResponse.status}`);
+            }
+          } catch (compileErr) {
+            this.logger.warn(`[${requestId}] Scope compilation error: ${(compileErr as Error).message}`);
+          }
+        }
+      }
+
       return {
         requestId,
         intakeId,

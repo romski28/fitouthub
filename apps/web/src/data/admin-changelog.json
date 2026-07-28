@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-0f358161",
+    "date": "2026-07-28T14:51:39+08:00",
+    "title": "feat: dedicated scope compilation call after conversation wrap-up",
+    "summary": "feat: dedicated scope compilation call after conversation wrap-up",
+    "areas": [
+      "api"
+    ],
+    "commit": "0f358161",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-28-5cd6cf8f",
     "date": "2026-07-28T12:25:13+08:00",
     "title": "fix: comprehensive scope compilation at wrap-up, fix fallback text",
