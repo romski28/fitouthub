@@ -1499,36 +1499,36 @@ OUTPUT FORMAT (JSON only)
 
     const title = typeof source?.title === 'string' ? source.title.trim() : '';
     const summary = typeof source?.summary === 'string' ? source.summary.trim() : '';
+    const nextQuestions = Array.isArray(source?.nextQuestions) ? source.nextQuestions.filter((q): q is string => typeof q === 'string' && q.trim().length > 0) : [];
     const trades = Array.isArray(source?.trades)
       ? source.trades.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [];
+    const overallConfidence = typeof source?.overallConfidence === 'number' ? source.overallConfidence : 0;
 
-    const locationObj =
-      source?.location && typeof source.location === 'object' && !Array.isArray(source.location)
-        ? (source.location as Record<string, unknown>)
-        : null;
-    const primary = typeof locationObj?.primary === 'string' ? locationObj.primary.trim() : '';
-    const secondary = typeof locationObj?.secondary === 'string' ? locationObj.secondary.trim() : '';
-    const locationLabel = [secondary, primary].filter(Boolean).join(', ');
+    // Wrap-up — brief closing
+    if (overallConfidence >= 0.75) {
+      return 'I think we have enough to get started.';
+    }
 
-    const tradeLabel =
-      trades.length === 0
-        ? 'the right renovation professionals'
-        : trades.length === 1
-          ? trades[0]
-          : `${trades[0]} and ${trades.length - 1} other specialist${trades.length > 2 ? 's' : ''}`;
+    // Got useful data from the model — use it
+    if (title && summary) {
+      return `Got it. ${summary}`;
+    }
+    if (title) {
+      return `Got it — ${title}.`;
+    }
+    if (summary) {
+      return `Got it. ${summary}`;
+    }
 
-    const lead = title || summary || 'Thanks for sharing your project details.';
-    const locationSentence = locationLabel
-      ? ` We can focus this around ${locationLabel} in Hong Kong.`
-      : ' We can tailor this for your area in Hong Kong.';
+    // The model gave us a next question — acknowledge and move on
+    if (nextQuestions.length > 0 && trades.length > 0) {
+      const tradeList = trades.slice(0, 2).join(' and ');
+      return `Understood. A ${tradeList} is the right call for this.`;
+    }
 
-    const previewPrompt = prompt.trim().replace(/\s+/g, ' ').slice(0, 140);
-    const contextSentence = previewPrompt
-      ? ` Based on your request ("${previewPrompt}${prompt.trim().length > 140 ? '...' : ''}"),`
-      : ' Based on your request,';
-
-    return `${lead} ${contextSentence} we can help you connect with ${tradeLabel}.${locationSentence} If you create an account, we can turn this into a full project brief and start matching you right away.`;
+    // Nothing useful from the model — keep it minimal
+    return 'Got it. Tell me more about what you need.';
   }
 
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {
