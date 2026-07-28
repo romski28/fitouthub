@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-28-2b92989a",
+    "date": "2026-07-28T12:12:11+08:00",
+    "title": "fix: filter duplicate generic options from wizard AI answer buttons",
+    "summary": "fix: filter duplicate generic options from wizard AI answer buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "2b92989a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-26-e3aaeefe",
     "date": "2026-07-26T17:20:48+08:00",
     "title": "revert: remove 800 token cap on conversational mode",

@@ -916,7 +916,11 @@ export default function CreateProjectWizardPage() {
         fallbackText,
       );
       const answerOptions: { label: string; value: string }[] = (answerOptionsRaw && answerOptionsRaw.length > 0)
-        ? answerOptionsRaw
+        ? answerOptionsRaw.filter((opt) => {
+            const label = opt.label.toLowerCase();
+            // Strip AI-generated options that duplicate the UI's built-in free-text button
+            return !/(?:^|\s)(?:other|something\s*else|tell\s*me\s*more|that.?s\s*all|find\s*out\s*more)(?:\s|$)/i.test(label);
+          })
         : [
             { label: 'Tell me more', value: 'let me give you more details' },
             { label: 'That covers it', value: 'that covers everything' },
