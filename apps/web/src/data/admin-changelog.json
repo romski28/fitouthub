@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-475b867f",
+    "date": "2026-07-29T14:51:08+08:00",
+    "title": "fix: remove duplicate summary key in updateData",
+    "summary": "fix: remove duplicate summary key in updateData",
+    "areas": [
+      "api"
+    ],
+    "commit": "475b867f",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-71c75925",
     "date": "2026-07-29T14:48:55+08:00",
     "title": "fix: update summary/scope/title columns during compilation",

@@ -3376,7 +3376,6 @@ OUTPUT this JSON and nothing else:
                       risks: Array.isArray(compiled.risks) && compiled.risks.length > 0 ? compiled.risks : undefined,
                       // Update top-level scope columns — project detail page reads these
                       summary: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
-                      summary: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
                       scope: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
                       title: typeof compiled.title === 'string' ? compiled.title.trim() : undefined,
                       budget: compiled.budget ?? undefined,
