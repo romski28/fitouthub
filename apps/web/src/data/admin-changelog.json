@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-d8efe376",
+    "date": "2026-07-29T16:52:31+08:00",
+    "title": "fix: simple scope compilation using raw conversation transcript",
+    "summary": "fix: simple scope compilation using raw conversation transcript",
+    "areas": [
+      "api"
+    ],
+    "commit": "d8efe376",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-e7ad55e2",
     "date": "2026-07-29T15:48:01+08:00",
     "title": "fix: model produces scope at wrap-up, simple DB persist",

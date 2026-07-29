@@ -386,6 +386,28 @@ export class AiService {
       .join('\n');
   }
 
+  /** Collect raw conversation turns for scope compilation */
+  private async collectThreadConversationTurns(activeThread: { id: string; project?: unknown; rawPrompt?: string | null }, latestPrompt: string): Promise<Array<{ role: 'user' | 'assistant'; text: string }>> {
+    const turns: Array<{ role: 'user' | 'assistant'; text: string }> = [{ role: 'user', text: latestPrompt.trim() }];
+    const visited = new Set<string>();
+    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
+    for (let depth = 0; depth < 15; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+      const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
+        ? (cursor.rawOutput as Record<string, unknown>) : null;
+      const convText = typeof rawOutput?.conversationalText === 'string' ? rawOutput.conversationalText.trim() : '';
+      const userPrompt = cursor === activeThread ? null : (typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '');
+      if (convText) turns.unshift({ role: 'assistant', text: convText.slice(0, 500) });
+      if (userPrompt) turns.unshift({ role: 'user', text: userPrompt.slice(0, 500) });
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput } : null;
+    }
+    return turns;
+  }
+
   /** Extract locked facts from the entire thread chain — prevents redundant questions */
   private async buildEstablishedFacts(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
@@ -3271,6 +3293,45 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       } catch (dbErr) {
         // Non-fatal — log and continue; don't fail the user response
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
+      }
+
+      // At wrap-up, compile the full conversation into a project scope
+      if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+        const po = parsedOutput as Record<string, unknown>;
+        const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
+        if (confidence >= 0.74 && activeThread) {
+          try {
+            // Collect the actual conversation turns
+            const turns = await this.collectThreadConversationTurns(activeThread, trimmedPrompt);
+            if (turns.length >= 2) {
+              const transcript = turns.map((t) => `${t.role === 'user' ? 'Client' : 'Mimo'}: ${t.text}`).join('\n\n');
+              const compileMessages: DeepSeekMessage[] = [
+                { role: 'system', content: 'Summarize this renovation conversation as a clear project scope paragraph (4-6 sentences) that a tradesperson can read and immediately understand the job. Include what the problem is, where, when it happens, symptoms, what the client wants done, and any relevant details shared. Return ONLY the summary paragraph, no JSON, no labels.' },
+                { role: 'user', content: transcript },
+              ];
+
+              const compileResponse = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+                body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 400 }),
+                signal: AbortSignal.timeout(15000),
+              });
+
+              if (compileResponse.ok) {
+                const compileRaw = await compileResponse.text();
+                const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
+                const scopeSummary = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+                if (scopeSummary && scopeSummary.length > 20) {
+                  po.summary = scopeSummary;
+                  parsedOutput = po;
+                  this.logger.log(`[${requestId}] Scope compiled: ${scopeSummary.slice(0, 80)}...`);
+                }
+              }
+            }
+          } catch (compileErr) {
+            this.logger.warn(`[${requestId}] Scope compile error: ${(compileErr as Error).message}`);
+          }
+        }
       }
 
       // Persist safety/assumptions/risks to DB columns when present in the output
