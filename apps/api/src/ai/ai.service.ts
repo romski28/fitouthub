@@ -1396,7 +1396,7 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
 6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
 7) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
-8) WRAP-UP — When overallConfidence >= 0.50, the conversation is wrapping up. This is your last chance to produce a great scope:
+8) WRAP-UP — When overallConfidence >= 0.35, the conversation is wrapping up. This is your last chance to produce a great scope:
   - conversationalText = brief closing statement (e.g., "That covers it — let's move on.")
   - NO nextQuestions, NO followUpQuestions, NO options (leave arrays empty)
   - summary = COMPREHENSIVE scope paragraph (4-6 sentences) including ALL details from the full conversation: what the problem is, where, when, symptoms, what user wants done, any preferences or constraints mentioned, all specifics from the chat. Example: "Whistling noise from toilet cistern that starts after flushing and stops when full. Likely worn fill valve. Copper pipe connection. No dripping. Client wants plumber to replace fill valve. Cistern over 5 years old."
@@ -3344,14 +3344,17 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         }
       }
 
-      // Persist safety/assumptions/risks to DB columns when present in the output
-      if (intakeId && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+      // Persist safety/assumptions/risks to DB columns when present in the output.
+      // Write to the root (activeThread.id) so ALL accumulated data lives on one record
+      // that the project can link to, not scattered across per-turn records.
+      const persistTargetId = (activeThread?.id) || intakeId;
+      if (persistTargetId && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const po = parsedOutput as Record<string, unknown>;
         const hasSafety = po.safetyAssessment && typeof po.safetyAssessment === 'object';
         const hasAssumptions = Array.isArray(po.assumptions) && po.assumptions.length > 0;
         const hasRisks = Array.isArray(po.risks) && po.risks.length > 0;
         const hasSummary = typeof po.summary === 'string' && po.summary.trim().length > 20;
-        this.logger.warn(`[${requestId}] SCOPE-DEBUG persist: hasSafety=${!!hasSafety} hasAssumptions=${hasAssumptions} hasRisks=${hasRisks} hasSummary=${hasSummary} summaryLen=${hasSummary ? String(po.summary).length : 0}`);
+        this.logger.warn(`[${requestId}] SCOPE-DEBUG persist: targetId=${persistTargetId} hasSafety=${!!hasSafety} hasAssumptions=${hasAssumptions} hasRisks=${hasRisks} hasSummary=${hasSummary} summaryLen=${hasSummary ? String(po.summary).length : 0}`);
         if (hasSafety || hasAssumptions || hasRisks || hasSummary) {
           try {
             const updateData: Record<string, unknown> = {};
@@ -3362,13 +3365,13 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             if (typeof po.title === 'string' && po.title.trim()) updateData.title = po.title.trim();
             if (hasSafety) {
               const existingIntake = await this.prisma.aiIntake.findUnique({
-                where: { id: intakeId },
+                where: { id: persistTargetId },
                 select: { project: true },
               });
               const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
               updateData.project = { ...existingProject, safetyAssessment: po.safetyAssessment };
             }
-            await this.prisma.aiIntake.update({ where: { id: intakeId }, data: updateData as any });
+            await this.prisma.aiIntake.update({ where: { id: persistTargetId }, data: updateData as any });
           } catch (updateErr) {
             this.logger.warn(`[${requestId}] Safety/assumptions persist failed: ${(updateErr as Error).message}`);
           }

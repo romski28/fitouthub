@@ -1003,7 +1003,8 @@ export default function CreateProjectWizardPage() {
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
-      const shouldOfferSummaryConfirmation = hasCoreBrief && hasNoMoreQuestions;
+      // Trigger summary confirmation when the AI is done asking questions OR confidence is high enough
+      const shouldOfferSummaryConfirmation = hasCoreBrief && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
 
       // At wrap-up, the backend compilation call extracts safety, risks, assumptions from the full conversation.
       // Populate wizard state so they flow through to project creation handoff.
@@ -1065,9 +1066,15 @@ export default function CreateProjectWizardPage() {
         setFollowUpQuestions(filteredParsedQuestions);
       }
 
-      const nextIntakeId = typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0
-        ? payload.intakeId.trim()
-        : null;
+      // Use sourceIntakeId (root intake) where all safety/summary data accumulates,
+      // falling back to per-turn intakeId for backwards compatibility.
+      const nextIntakeId =
+        (typeof payload?.threadContext?.sourceIntakeId === 'string' && payload.threadContext.sourceIntakeId.trim().length > 0
+          ? payload.threadContext.sourceIntakeId.trim()
+          : null) ||
+        (typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0
+          ? payload.intakeId.trim()
+          : null);
       if (nextIntakeId) {
         setCurrentAiIntakeId(nextIntakeId);
       }

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-30-63be561e",
+    "date": "2026-07-30T00:14:29+08:00",
+    "title": "fix(ai): persist safety/summary to root intake, not per-turn records",
+    "summary": "fix(ai): persist safety/summary to root intake, not per-turn records",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "63be561e",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-29-1403ce7e",
     "date": "2026-07-29T23:31:29+08:00",
     "title": "fix: remove safetyAssessment from Prisma select (it lives in project JSON)",
