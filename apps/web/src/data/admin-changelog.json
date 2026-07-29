@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-1403ce7e",
+    "date": "2026-07-29T23:31:29+08:00",
+    "title": "fix: remove safetyAssessment from Prisma select (it lives in project JSON)",
+    "summary": "fix: remove safetyAssessment from Prisma select (it lives in project JSON)",
+    "areas": [
+      "api"
+    ],
+    "commit": "1403ce7e",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-297d2e02",
     "date": "2026-07-29T23:28:29+08:00",
     "title": "fix(api): add summary/scope/safetyAssessment/title to aiIntake Prisma selects",
