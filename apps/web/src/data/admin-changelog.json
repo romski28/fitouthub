@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-0a8230b5",
+    "date": "2026-07-29T11:23:53+08:00",
+    "title": "fix: persist compiled fields to DB columns for convertIntake",
+    "summary": "fix: persist compiled fields to DB columns for convertIntake",
+    "areas": [
+      "api"
+    ],
+    "commit": "0a8230b5",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-7d6ca224",
     "date": "2026-07-29T11:06:27+08:00",
     "title": "fix: handle 'or' questions with choice options, not yes/no",

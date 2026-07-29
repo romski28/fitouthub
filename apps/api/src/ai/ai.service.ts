@@ -3367,6 +3367,25 @@ OUTPUT this JSON and nothing else:
                   po.overallConfidence = compiled.overallConfidence;
                 }
                 parsedOutput = po;
+
+                // Also persist compiled fields to DB columns for convertIntake
+                if (intakeId) {
+                  try {
+                    await this.prisma.aiIntake.update({
+                      where: { id: intakeId },
+                      data: {
+                        assumptions: Array.isArray(compiled.assumptions) ? compiled.assumptions : undefined,
+                        risks: Array.isArray(compiled.risks) ? compiled.risks : undefined,
+                        budget: compiled.budget ?? undefined,
+                        timeline: compiled.timeline ?? undefined,
+                        rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
+                      },
+                    });
+                  } catch (updateErr) {
+                    this.logger.warn(`[${requestId}] Failed to update intake with compiled fields: ${(updateErr as Error).message}`);
+                  }
+                }
+
                 const compiledFields = [
                   compiled.summary ? 'summary' : '', compiled.title ? 'title' : '',
                   compiled.trades ? 'trades' : '', compiled.safetyAssessment ? 'safety' : '',
