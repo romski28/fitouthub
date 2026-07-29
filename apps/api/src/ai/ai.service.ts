@@ -3299,6 +3299,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const po = parsedOutput as Record<string, unknown>;
         const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
+        this.logger.warn(`[${requestId}] SCOPE-DEBUG confidence=${confidence} hasThread=${!!activeThread} intakeId=${intakeId}`);
         if (confidence >= 0.74 && activeThread) {
           try {
             // Collect the actual conversation turns
@@ -3321,11 +3322,14 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
                 const compileRaw = await compileResponse.text();
                 const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
                 const scopeSummary = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+                this.logger.warn(`[${requestId}] SCOPE-DEBUG compileResponse ok, summaryLen=${scopeSummary.length} prevSummaryLen=${String(po.summary || '').length}`);
                 if (scopeSummary && scopeSummary.length > 20) {
                   po.summary = scopeSummary;
                   parsedOutput = po;
                   this.logger.log(`[${requestId}] Scope compiled: ${scopeSummary.slice(0, 80)}...`);
                 }
+              } else {
+                this.logger.warn(`[${requestId}] SCOPE-DEBUG compileResponse FAILED status=${compileResponse.status}`);
               }
             }
           } catch (compileErr) {
@@ -3442,6 +3446,8 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       normalizedParsedOutput && typeof normalizedParsedOutput === 'object' && !Array.isArray(normalizedParsedOutput)
         ? (normalizedParsedOutput as Record<string, unknown>)
         : null;
+
+    this.logger.warn(`[${(baseResponse as any).requestId || '?'}] SCOPE-DEBUG wrapper: summaryLen=${typeof parsedObject?.summary === 'string' ? (parsedObject!.summary as string).length : 'NULL'} title=${String(parsedObject?.title || '').slice(0, 50)}`);
 
     const existingConversationalText =
       typeof baseResponse.conversationalText === 'string' && baseResponse.conversationalText.trim().length > 0

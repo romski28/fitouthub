@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-7fca6aa8",
+    "date": "2026-07-29T21:49:50+08:00",
+    "title": "debug: add scope compilation diagnostic logs",
+    "summary": "debug: add scope compilation diagnostic logs",
+    "areas": [
+      "api"
+    ],
+    "commit": "7fca6aa8",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-d8efe376",
     "date": "2026-07-29T16:52:31+08:00",
     "title": "fix: simple scope compilation using raw conversation transcript",
