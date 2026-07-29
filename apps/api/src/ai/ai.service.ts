@@ -3372,10 +3372,16 @@ OUTPUT this JSON and nothing else:
                 if (intakeId) {
                   try {
                     const updateData: Record<string, unknown> = {
-                      assumptions: Array.isArray(compiled.assumptions) ? compiled.assumptions : undefined,
-                      risks: Array.isArray(compiled.risks) ? compiled.risks : undefined,
+                      assumptions: Array.isArray(compiled.assumptions) && compiled.assumptions.length > 0 ? compiled.assumptions : undefined,
+                      risks: Array.isArray(compiled.risks) && compiled.risks.length > 0 ? compiled.risks : undefined,
+                      // Update top-level scope columns — project detail page reads these
+                      summary: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
+                      summary: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
+                      scope: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
+                      title: typeof compiled.title === 'string' ? compiled.title.trim() : undefined,
                       budget: compiled.budget ?? undefined,
                       timeline: compiled.timeline ?? undefined,
+                      overallConfidence: typeof compiled.overallConfidence === 'number' ? compiled.overallConfidence : undefined,
                       rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
                     };
                     // Merge safetyAssessment into project JSONB — convertIntake reads from project.safetyAssessment

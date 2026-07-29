@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-71c75925",
+    "date": "2026-07-29T14:48:55+08:00",
+    "title": "fix: update summary/scope/title columns during compilation",
+    "summary": "fix: update summary/scope/title columns during compilation",
+    "areas": [
+      "api"
+    ],
+    "commit": "71c75925",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-efdaee7f",
     "date": "2026-07-29T14:32:59+08:00",
     "title": "fix: read compiled safety/risks from API at wrap-up in wizard",
