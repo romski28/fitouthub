@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-efdaee7f",
+    "date": "2026-07-29T14:32:59+08:00",
+    "title": "fix: read compiled safety/risks from API at wrap-up in wizard",
+    "summary": "fix: read compiled safety/risks from API at wrap-up in wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "efdaee7f",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-29-1a7d4ef2",
     "date": "2026-07-29T12:16:14+08:00",
     "title": "fix: persist safetyAssessment into project JSONB for convertIntake",

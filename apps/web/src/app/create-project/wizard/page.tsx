@@ -1005,6 +1005,43 @@ export default function CreateProjectWizardPage() {
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const shouldOfferSummaryConfirmation = hasCoreBrief && Boolean(overallConfidence !== null && overallConfidence >= AI_SUMMARY_CONFIDENCE_THRESHOLD);
 
+      // At wrap-up, the backend compilation call extracts safety, risks, assumptions from the full conversation.
+      // Populate wizard state so they flow through to project creation handoff.
+      if (shouldOfferSummaryConfirmation) {
+        const compiledSafety = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
+          ? (parsed.safetyAssessment as Record<string, unknown>)
+          : null;
+        const compiledAssumptions = Array.isArray(parsed?.assumptions)
+          ? parsed.assumptions.filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
+          : [];
+        const compiledRisks = Array.isArray(parsed?.risks)
+          ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0)
+          : [];
+        const compiledRiskLevel = typeof compiledSafety?.riskLevel === 'string' ? compiledSafety.riskLevel.toLowerCase() : null;
+        const compiledConcerns = Array.isArray(compiledSafety?.concerns)
+          ? compiledSafety.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
+          : [];
+        const compiledMitigations = Array.isArray(compiledSafety?.temporaryMitigations)
+          ? compiledSafety.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0)
+          : [];
+        const compiledDisclaimer = typeof compiledSafety?.disclaimer === 'string' && compiledSafety.disclaimer.trim()
+          ? compiledSafety.disclaimer.trim()
+          : null;
+
+        if (compiledAssumptions.length > 0) console.log('[wizard][compilation] assumptions:', compiledAssumptions);
+        if (compiledRisks.length > 0) setAiRiskNotes(compiledRisks);
+        if (compiledRiskLevel) {
+          setAiRiskLevel((prev) => {
+            const order = ['low', 'medium', 'high', 'critical'];
+            const prevIdx = order.indexOf(prev === null ? '' : prev);
+            const newIdx = order.indexOf(compiledRiskLevel!);
+            return newIdx > prevIdx ? compiledRiskLevel : prev;
+          });
+        }
+        const allSafetyNotes = [...compiledConcerns, ...compiledMitigations, ...(compiledDisclaimer ? [compiledDisclaimer] : [])];
+        if (allSafetyNotes.length > 0) setAiSafetyNotes(allSafetyNotes);
+      }
+
       if (nextTitle) setTitle(nextTitle);
       if (nextSummary) setSummary(nextSummary);
       if (mergedTrades.length > 0) {
