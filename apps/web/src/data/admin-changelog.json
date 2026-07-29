@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-1a7d4ef2",
+    "date": "2026-07-29T12:16:14+08:00",
+    "title": "fix: persist safetyAssessment into project JSONB for convertIntake",
+    "summary": "fix: persist safetyAssessment into project JSONB for convertIntake",
+    "areas": [
+      "api"
+    ],
+    "commit": "1a7d4ef2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-0a8230b5",
     "date": "2026-07-29T11:23:53+08:00",
     "title": "fix: persist compiled fields to DB columns for convertIntake",

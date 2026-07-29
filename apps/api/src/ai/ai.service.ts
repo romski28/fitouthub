@@ -3368,18 +3368,32 @@ OUTPUT this JSON and nothing else:
                 }
                 parsedOutput = po;
 
-                // Also persist compiled fields to DB columns for convertIntake
+                // Also persist compiled fields to DB for convertIntake/client endpoints
                 if (intakeId) {
                   try {
+                    const updateData: Record<string, unknown> = {
+                      assumptions: Array.isArray(compiled.assumptions) ? compiled.assumptions : undefined,
+                      risks: Array.isArray(compiled.risks) ? compiled.risks : undefined,
+                      budget: compiled.budget ?? undefined,
+                      timeline: compiled.timeline ?? undefined,
+                      rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
+                    };
+                    // Merge safetyAssessment into project JSONB — convertIntake reads from project.safetyAssessment
+                    if (compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object') {
+                      const existingIntake = await this.prisma.aiIntake.findUnique({
+                        where: { id: intakeId },
+                        select: { project: true },
+                      });
+                      const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
+                      updateData.project = {
+                        ...existingProject,
+                        ...(compiled.summary ? { projectSummary: compiled.summary } : {}),
+                        safetyAssessment: compiled.safetyAssessment,
+                      };
+                    }
                     await this.prisma.aiIntake.update({
                       where: { id: intakeId },
-                      data: {
-                        assumptions: Array.isArray(compiled.assumptions) ? compiled.assumptions : undefined,
-                        risks: Array.isArray(compiled.risks) ? compiled.risks : undefined,
-                        budget: compiled.budget ?? undefined,
-                        timeline: compiled.timeline ?? undefined,
-                        rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
-                      },
+                      data: updateData as any,
                     });
                   } catch (updateErr) {
                     this.logger.warn(`[${requestId}] Failed to update intake with compiled fields: ${(updateErr as Error).message}`);
