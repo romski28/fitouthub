@@ -1365,10 +1365,10 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 1) Generate JSON with ONLY these keys: conversationalText, summary, title, trades, location, nextQuestions, followUpQuestions, overallConfidence, options. Do NOT include assumptions, risks, safetyAssessment, budget, timeline, propertyType, or coveredTopics — those are extracted separately at the end.
 2) "conversationalText" is MANDATORY — exactly ONE warm sentence. STATEMENT, not a question. Never end with "?". Never include "what", "which", "how", "would you".
 3) ANSWER OPTIONS — include an "options" array in EVERY response. Rules:
-  - FIRST: check if your question is yes/no. If it starts with "Have you", "Do you", "Is there", "Are there", "Can you", "Would you", "Did you", "Does the", "Has the", "Will the" — it's a yes/no question. Options MUST be: [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]. NEVER generate other options for yes/no questions.
+  - YES/NO DETECTION: If your question starts with Have, Do, Is, Are, Can, Would, Did, Does, Has, Will, Could, Should, Was, Were — it is a yes/no question. ALWAYS. No exceptions. Options MUST be exactly: [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]. Do NOT generate any other options for these questions — not fragments of the question, not alternatives. Just Yes / No / Not sure. Period.
   - For fixture/material questions → 2-4 specific types. For size questions → Small/Medium/Large.
-  - BANNED: "Tell me more", "That's all", "Find out more", "Other", "Something else", "Not sure yet", service-promo buttons, or fragments of the question text.
-  - Every options array MUST include "Not sure" as last option. Max 4 options.
+  - BANNED entirely: "Tell me more", "That's all", "Find out more", "Other", "Something else", "Not sure yet", service-promo buttons, question fragments, anything that is not a direct answer to the question.
+  - Every options array MUST include "Not sure" as last option (except wrap-up). Max 4 options.
 4) "trades" must contain exact values from ALLOWED_TRADES only. Suggest the ABSOLUTE MINIMUM trades needed. Prefer single-trade solutions.
 5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
 6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
