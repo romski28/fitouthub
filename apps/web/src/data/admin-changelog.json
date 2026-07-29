@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-e7ad55e2",
+    "date": "2026-07-29T15:48:01+08:00",
+    "title": "fix: model produces scope at wrap-up, simple DB persist",
+    "summary": "fix: model produces scope at wrap-up, simple DB persist",
+    "areas": [
+      "api"
+    ],
+    "commit": "e7ad55e2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-3b9f1eaa",
     "date": "2026-07-29T15:07:38+08:00",
     "title": "fix: sync compilation threshold, update wizard summary at wrap-up",

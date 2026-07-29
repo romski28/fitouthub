@@ -1362,7 +1362,7 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 - Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
 
 # Chat Rules
-1) Generate JSON with ONLY these keys: conversationalText, summary, title, trades, location, nextQuestions, followUpQuestions, overallConfidence, options. Do NOT include assumptions, risks, safetyAssessment, budget, timeline, propertyType, or coveredTopics — those are extracted separately at the end.
+1) Generate JSON with these keys: conversationalText, summary, title, trades, location, nextQuestions, followUpQuestions, overallConfidence, options. During normal turns do NOT include assumptions, risks, safetyAssessment, budget, timeline, propertyType. At WRAP-UP (rule 8), DO include: assumptions, risks, safetyAssessment — these are displayed in the project brief.
 2) "conversationalText" is MANDATORY — exactly ONE warm sentence. STATEMENT, not a question. Never end with "?". Never include "what", "which", "how", "would you".
 3) ANSWER OPTIONS — include an "options" array in EVERY response. Rules:
   - YES/NO: If your question can be answered with yes/no → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
@@ -1374,7 +1374,12 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
 5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
 6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
 7) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
-8) WRAP-UP — When overallConfidence >= 0.75: conversationalText = brief closing only. No questions. No options. Arrays empty.
+8) WRAP-UP — When overallConfidence >= 0.74, the conversation is wrapping up. This is your last chance to produce a great scope:
+  - conversationalText = brief closing statement (e.g., "That covers it — let's move on.")
+  - NO nextQuestions, NO followUpQuestions, NO options (leave arrays empty)
+  - summary = COMPREHENSIVE scope paragraph (4-6 sentences) including ALL details from the full conversation: what the problem is, where, when, symptoms, what user wants done, any preferences or constraints mentioned, all specifics from the chat. Example: "Whistling noise from toilet cistern that starts after flushing and stops when full. Likely worn fill valve. Copper pipe connection. No dripping. Client wants plumber to replace fill valve. Cistern over 5 years old."
+  - title = specific 6-12 word job description with key details
+  - SAFETY: Include safetyAssessment with riskLevel, concerns, temporaryMitigations if any hazards were discussed. Include assumptions array and risks array with specific items from the conversation.
 
 TRADE MINIMIZATION RULE (CRITICAL)
 - Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
@@ -3268,159 +3273,31 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
       }
 
-      // ── Wrap-up scope compilation ──
-      // When conversational mode wraps up (high confidence), make a dedicated
-      // call to compile ALL Q&A into a comprehensive project scope for the pros.
-      if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
+      // Persist safety/assumptions/risks to DB columns when present in the output
+      if (intakeId && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const po = parsedOutput as Record<string, unknown>;
-        const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
-        if (confidence >= 0.74) {
+        const hasSafety = po.safetyAssessment && typeof po.safetyAssessment === 'object';
+        const hasAssumptions = Array.isArray(po.assumptions) && po.assumptions.length > 0;
+        const hasRisks = Array.isArray(po.risks) && po.risks.length > 0;
+        if (hasSafety || hasAssumptions || hasRisks) {
           try {
-            const compileMessages: DeepSeekMessage[] = [
-              {
-                role: 'system',
-                content: `You are a project scope compiler. Given a full renovation conversation, extract everything a tradesperson needs.
-
-OUTPUT this JSON and nothing else:
-{
-  "title": "Specific job title (6-12 words, never vague)",
-  "summary": "Comprehensive scope (3-6 sentences): what the problem is, where exactly, when it happens, symptoms, what the client wants done, preferences, constraints",
-  "trades": ["list"],
-  "safetyAssessment": {
-    "riskLevel": "none|low|medium|high|critical",
-    "isDangerous": false,
-    "concerns": ["specific safety concerns from the conversation"],
-    "temporaryMitigations": ["practical steps before professional arrives"],
-    "shouldEscalateEmergency": false,
-    "emergencyReason": null,
-    "requiresImmediateHumanContact": false,
-    "disclaimer": null
-  },
-  "assumptions": ["reasonable assumptions based on conversation"],
-  "risks": ["potential risks identified"],
-  "budget": {"rawText": "any budget mentioned", "min": null, "max": null, "currency": "HKD"},
-  "timeline": {"durationText": "any timeline mentioned", "startText": null},
-  "propertyType": "any property type mentioned or null",
-  "overallConfidence": 0.9
-}`,
-              },
-              {
-                role: 'user',
-                content: `Compile this full renovation conversation into a complete project scope:\n\nCONVERSATION:\n${messages.map((m, i) => `${m.role === 'system' ? 'SYSTEM' : m.role === 'user' ? 'CLIENT' : 'MIMO'}: ${m.content.slice(0, 800)}`).join('\n\n---\n\n')}\n\nExtract ALL details into the JSON format specified.`,
-              },
-            ];
-
-            this.logger.log(`[${requestId}] Scope compilation started messages=${messages.length}`);
-            const compileResponse = await fetch(endpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-              },
-              body: JSON.stringify({
-                model,
-                messages: compileMessages,
-                temperature: 0.1,
-                max_tokens: 800,
-                response_format: { type: 'json_object' },
-              }),
-              signal: AbortSignal.timeout(20000),
-            });
-
-            if (compileResponse.ok) {
-              const compileRaw = await compileResponse.text();
-              this.logger.log(`[${requestId}] Scope compilation raw (first 300): ${compileRaw.slice(0, 300)}`);
-              const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
-              const compileOutput = compilePayload.choices?.[0]?.message?.content?.trim() || '';
-              this.logger.log(`[${requestId}] Scope compilation output length=${compileOutput.length}`);
-              if (compileOutput) {
-                const compiled = JSON.parse(compileOutput) as Record<string, unknown>;
-                if (typeof compiled.summary === 'string' && compiled.summary.trim()) {
-                  po.summary = compiled.summary.trim();
-                }
-                if (typeof compiled.title === 'string' && compiled.title.trim()) {
-                  po.title = compiled.title.trim();
-                }
-                if (Array.isArray(compiled.trades)) {
-                  po.trades = compiled.trades;
-                }
-                // Merge in safety, risks, assumptions, budget, timeline
-                if (compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object') {
-                  po.safetyAssessment = compiled.safetyAssessment;
-                }
-                if (Array.isArray(compiled.assumptions)) {
-                  po.assumptions = compiled.assumptions;
-                }
-                if (Array.isArray(compiled.risks)) {
-                  po.risks = compiled.risks;
-                }
-                if (compiled.budget && typeof compiled.budget === 'object') {
-                  po.budget = compiled.budget;
-                }
-                if (compiled.timeline && typeof compiled.timeline === 'object') {
-                  po.timeline = compiled.timeline;
-                }
-                if (typeof compiled.propertyType === 'string') {
-                  po.propertyType = compiled.propertyType;
-                }
-                if (typeof compiled.overallConfidence === 'number') {
-                  po.overallConfidence = compiled.overallConfidence;
-                }
-                parsedOutput = po;
-
-                // Also persist compiled fields to DB for convertIntake/client endpoints
-                if (intakeId) {
-                  try {
-                    const updateData: Record<string, unknown> = {
-                      assumptions: Array.isArray(compiled.assumptions) && compiled.assumptions.length > 0 ? compiled.assumptions : undefined,
-                      risks: Array.isArray(compiled.risks) && compiled.risks.length > 0 ? compiled.risks : undefined,
-                      // Update top-level scope columns — project detail page reads these
-                      summary: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
-                      scope: typeof compiled.summary === 'string' ? compiled.summary.trim() : undefined,
-                      title: typeof compiled.title === 'string' ? compiled.title.trim() : undefined,
-                      budget: compiled.budget ?? undefined,
-                      timeline: compiled.timeline ?? undefined,
-                      overallConfidence: typeof compiled.overallConfidence === 'number' ? compiled.overallConfidence : undefined,
-                      rawOutput: parsedOutput ? (parsedOutput as object) : undefined,
-                    };
-                    // Merge safetyAssessment into project JSONB — convertIntake reads from project.safetyAssessment
-                    if (compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object') {
-                      const existingIntake = await this.prisma.aiIntake.findUnique({
-                        where: { id: intakeId },
-                        select: { project: true },
-                      });
-                      const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
-                      updateData.project = {
-                        ...existingProject,
-                        ...(compiled.summary ? { projectSummary: compiled.summary } : {}),
-                        safetyAssessment: compiled.safetyAssessment,
-                      };
-                    }
-                    await this.prisma.aiIntake.update({
-                      where: { id: intakeId },
-                      data: updateData as any,
-                    });
-                  } catch (updateErr) {
-                    this.logger.warn(`[${requestId}] Failed to update intake with compiled fields: ${(updateErr as Error).message}`);
-                  }
-                }
-
-                const compiledFields = [
-                  compiled.summary ? 'summary' : '', compiled.title ? 'title' : '',
-                  compiled.trades ? 'trades' : '', compiled.safetyAssessment ? 'safety' : '',
-                  compiled.assumptions ? 'assumptions' : '', compiled.risks ? 'risks' : '',
-                  compiled.budget ? 'budget' : '', compiled.timeline ? 'timeline' : '',
-                  compiled.propertyType ? 'propertyType' : '',
-                ].filter(Boolean).join(',');
-                this.logger.log(`[${requestId}] Scope compilation OK fields=[${compiledFields}]`);
-              } else {
-                this.logger.warn(`[${requestId}] Scope compilation empty output`);
-              }
-            } else {
-              this.logger.warn(`[${requestId}] Scope compilation failed status=${compileResponse.status}`);
+            const updateData: Record<string, unknown> = {};
+            if (hasAssumptions) updateData.assumptions = po.assumptions;
+            if (hasRisks) updateData.risks = po.risks;
+            if (typeof po.summary === 'string' && po.summary.trim()) updateData.summary = po.summary.trim();
+            if (typeof po.summary === 'string' && po.summary.trim()) updateData.scope = po.summary.trim();
+            if (typeof po.title === 'string' && po.title.trim()) updateData.title = po.title.trim();
+            if (hasSafety) {
+              const existingIntake = await this.prisma.aiIntake.findUnique({
+                where: { id: intakeId },
+                select: { project: true },
+              });
+              const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
+              updateData.project = { ...existingProject, safetyAssessment: po.safetyAssessment };
             }
-          } catch (compileErr) {
-            this.logger.warn(`[${requestId}] Scope compilation error: ${(compileErr as Error).message}`);
+            await this.prisma.aiIntake.update({ where: { id: intakeId }, data: updateData as any });
+          } catch (updateErr) {
+            this.logger.warn(`[${requestId}] Safety/assumptions persist failed: ${(updateErr as Error).message}`);
           }
         }
       }
