@@ -58,6 +58,9 @@ interface ProjectDetail {
   }>;
   aiIntake?: {
     id?: string;
+    summary?: string;
+    scope?: string;
+    title?: string;
     assumptions?: unknown;
     risks?: unknown;
     project?: unknown;

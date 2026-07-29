@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-29-297d2e02",
+    "date": "2026-07-29T23:28:29+08:00",
+    "title": "fix(api): add summary/scope/safetyAssessment/title to aiIntake Prisma selects",
+    "summary": "fix(api): add summary/scope/safetyAssessment/title to aiIntake Prisma selects",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "297d2e02",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-29-f6256b64",
     "date": "2026-07-29T23:00:14+08:00",
     "title": "fix(ai): switch compilation trigger from confidence to 'no questions left'",
