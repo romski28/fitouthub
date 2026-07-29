@@ -3295,12 +3295,18 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
       }
 
-      // At wrap-up, compile the full conversation into a project scope
+      // At wrap-up, compile the full conversation into a project scope.
+      // Trigger when the AI has no more questions (concrete signal) OR confidence is high enough.
       if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const po = parsedOutput as Record<string, unknown>;
         const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
-        this.logger.warn(`[${requestId}] SCOPE-DEBUG confidence=${confidence} hasThread=${!!activeThread} intakeId=${intakeId}`);
-        if (confidence >= 0.50 && activeThread) {
+        const hasQuestions = (
+          (Array.isArray(po.nextQuestions) && po.nextQuestions.length > 0) ||
+          (Array.isArray(po.followUpQuestions) && po.followUpQuestions.length > 0)
+        );
+        const shouldCompile = activeThread && !hasQuestions && confidence >= 0.25;
+        this.logger.warn(`[${requestId}] SCOPE-DEBUG confidence=${confidence} hasThread=${!!activeThread} hasQuestions=${hasQuestions} shouldCompile=${shouldCompile}`);
+        if (shouldCompile) {
           try {
             // Collect the actual conversation turns
             const turns = await this.collectThreadConversationTurns(activeThread, trimmedPrompt);

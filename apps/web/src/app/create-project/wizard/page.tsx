@@ -93,7 +93,6 @@ interface ServiceOfferCopy {
   selectedMessage: string;
 }
 
-const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.50;
 const AI_CHAT_MAX_IMAGES_PER_TURN = 5;
 const SERVICE_OFFER_MARKER_PREFIX = '[[service-offer:';
 
@@ -1003,7 +1002,8 @@ export default function CreateProjectWizardPage() {
           const nextUnaskedQuestion = filteredParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
-      const shouldOfferSummaryConfirmation = hasCoreBrief && Boolean(overallConfidence !== null && overallConfidence >= AI_SUMMARY_CONFIDENCE_THRESHOLD);
+      const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
+      const shouldOfferSummaryConfirmation = hasCoreBrief && hasNoMoreQuestions;
 
       // At wrap-up, the backend compilation call extracts safety, risks, assumptions from the full conversation.
       // Populate wizard state so they flow through to project creation handoff.
