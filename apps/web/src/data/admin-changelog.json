@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-29-e8ac5204",
+    "date": "2026-07-29T22:43:19+08:00",
+    "title": "fix(ai): persist compiled summary even without safety/assumptions/risks",
+    "summary": "fix(ai): persist compiled summary even without safety/assumptions/risks",
+    "areas": [
+      "api"
+    ],
+    "commit": "e8ac5204",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-29-98002bb2",
     "date": "2026-07-29T22:28:47+08:00",
     "title": "fix(ai): lower wrap-up confidence threshold from 0.74 to 0.50",

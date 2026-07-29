@@ -3344,7 +3344,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         const hasSafety = po.safetyAssessment && typeof po.safetyAssessment === 'object';
         const hasAssumptions = Array.isArray(po.assumptions) && po.assumptions.length > 0;
         const hasRisks = Array.isArray(po.risks) && po.risks.length > 0;
-        if (hasSafety || hasAssumptions || hasRisks) {
+        const hasSummary = typeof po.summary === 'string' && po.summary.trim().length > 20;
+        this.logger.warn(`[${requestId}] SCOPE-DEBUG persist: hasSafety=${!!hasSafety} hasAssumptions=${hasAssumptions} hasRisks=${hasRisks} hasSummary=${hasSummary} summaryLen=${hasSummary ? po.summary!.length : 0}`);
+        if (hasSafety || hasAssumptions || hasRisks || hasSummary) {
           try {
             const updateData: Record<string, unknown> = {};
             if (hasAssumptions) updateData.assumptions = po.assumptions;
