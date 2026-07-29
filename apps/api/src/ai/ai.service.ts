@@ -3274,7 +3274,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
         const po = parsedOutput as Record<string, unknown>;
         const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
-        if (confidence >= 0.75) {
+        if (confidence >= 0.74) {
           try {
             const compileMessages: DeepSeekMessage[] = [
               {

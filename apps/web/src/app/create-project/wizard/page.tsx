@@ -1040,6 +1040,14 @@ export default function CreateProjectWizardPage() {
         }
         const allSafetyNotes = [...compiledConcerns, ...compiledMitigations, ...(compiledDisclaimer ? [compiledDisclaimer] : [])];
         if (allSafetyNotes.length > 0) setAiSafetyNotes(allSafetyNotes);
+
+        // Also update scope summary/title from compiled output — this is what flows to buildWizardPayload
+        if (nextSummary && nextSummary.trim().length > 20) {
+          setSummary(nextSummary.trim());
+        }
+        if (nextTitle && nextTitle.trim()) {
+          setTitle(nextTitle.trim());
+        }
       }
 
       if (nextTitle) setTitle(nextTitle);
