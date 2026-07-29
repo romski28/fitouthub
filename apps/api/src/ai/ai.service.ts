@@ -1391,12 +1391,12 @@ Focus on helping the client get to a clear scope, the right trade coverage, and 
   - OR QUESTIONS: If your question contains "or" (e.g. "louder or softer?"), it's a CHOICE question — extract the choices as individual options. Do NOT use yes/no.
   - For fixture/material questions → 2-4 specific types. For size → Small/Medium/Large.
   - IMPORTANT: Never ask a question that mixes yes/no with "or" choices. "Have you noticed if it's louder or softer?" is wrong — either ask "Has the noise changed? (yes/no)" OR "Is it louder or softer? (louder/softer)".
-  - BANNED: "Tell me more", "That's all", "Find out more", "Other", "Something else", question-text fragments, service buttons. Every array MUST include "Not sure" as last option. Max 4 options.
+  - BANNED: "Tell me more", "That's all", "Find out more", "Other", "Something else", "Or something else", "Or anything else", "None of the above", "I don't know" (use "Not sure" instead), question-text fragments, service buttons. Every array MUST include "Not sure" as last option. Max 4 options.
 4) "trades" must contain exact values from ALLOWED_TRADES only. Suggest the ABSOLUTE MINIMUM trades needed. Prefer single-trade solutions.
 5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
 6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
 7) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
-8) WRAP-UP — When overallConfidence >= 0.74, the conversation is wrapping up. This is your last chance to produce a great scope:
+8) WRAP-UP — When overallConfidence >= 0.50, the conversation is wrapping up. This is your last chance to produce a great scope:
   - conversationalText = brief closing statement (e.g., "That covers it — let's move on.")
   - NO nextQuestions, NO followUpQuestions, NO options (leave arrays empty)
   - summary = COMPREHENSIVE scope paragraph (4-6 sentences) including ALL details from the full conversation: what the problem is, where, when, symptoms, what user wants done, any preferences or constraints mentioned, all specifics from the chat. Example: "Whistling noise from toilet cistern that starts after flushing and stops when full. Likely worn fill valve. Copper pipe connection. No dripping. Client wants plumber to replace fill valve. Cistern over 5 years old."
@@ -3300,7 +3300,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         const po = parsedOutput as Record<string, unknown>;
         const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
         this.logger.warn(`[${requestId}] SCOPE-DEBUG confidence=${confidence} hasThread=${!!activeThread} intakeId=${intakeId}`);
-        if (confidence >= 0.74 && activeThread) {
+        if (confidence >= 0.50 && activeThread) {
           try {
             // Collect the actual conversation turns
             const turns = await this.collectThreadConversationTurns(activeThread, trimmedPrompt);

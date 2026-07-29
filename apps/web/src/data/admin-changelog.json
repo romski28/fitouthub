@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-29-98002bb2",
+    "date": "2026-07-29T22:28:47+08:00",
+    "title": "fix(ai): lower wrap-up confidence threshold from 0.74 to 0.50",
+    "summary": "fix(ai): lower wrap-up confidence threshold from 0.74 to 0.50",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "98002bb2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-29-7fca6aa8",
     "date": "2026-07-29T21:49:50+08:00",
     "title": "debug: add scope compilation diagnostic logs",

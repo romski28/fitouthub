@@ -93,7 +93,7 @@ interface ServiceOfferCopy {
   selectedMessage: string;
 }
 
-const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.74;
+const AI_SUMMARY_CONFIDENCE_THRESHOLD = 0.50;
 const AI_CHAT_MAX_IMAGES_PER_TURN = 5;
 const SERVICE_OFFER_MARKER_PREFIX = '[[service-offer:';
 
@@ -919,7 +919,7 @@ export default function CreateProjectWizardPage() {
         ? answerOptionsRaw.filter((opt) => {
             const label = opt.label.toLowerCase();
             // Strip AI-generated options that duplicate the UI's built-in free-text button
-            return !/(?:^|\s)(?:other|something\s*else|tell\s*me\s*more|that.?s\s*all|find\s*out\s*more)(?:\s|$)/i.test(label);
+            return !/(?:^|\s)(?:or\s+something|other|something\s*else|tell\s*me\s*more|that.?s\s*all|find\s*out\s*more)(?:\s|$)/i.test(label);
           })
         : [
             { label: 'Tell me more', value: 'let me give you more details' },
