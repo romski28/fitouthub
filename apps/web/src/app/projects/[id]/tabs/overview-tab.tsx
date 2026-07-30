@@ -848,57 +848,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </AccordionItem>
 
-        {/* Project Details */}
-        <AccordionItem
-          id="project-details"
-          title="Project Details"
-          isOpen={expandedAccordions['project-details'] !== false}
-          onToggle={onToggleAccordion}
-        >
-          <div className="space-y-3">
-            {project.notes && (
-              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-3 py-2 text-sm">
-                <p className="mb-1 font-semibold text-slate-800">Description</p>
-                <p className="leading-relaxed text-slate-700">{project.notes}</p>
-              </div>
-            )}
-
-            {project.tradesRequired && project.tradesRequired.length > 0 && (
-              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.72)] px-3 py-2 text-sm">
-                <p className="mb-2 font-semibold text-slate-800">Required Trades</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.tradesRequired.map((trade) => (
-                    <span key={trade} className="inline-flex items-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.88)] px-2.5 py-1 text-xs font-medium text-slate-700">
-                      {trade}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {project.budget && (
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="text-xs font-bold uppercase text-slate-600">Budget</p>
-                  <p className="mt-1 font-semibold text-slate-900">{formatHKD(project.budget)}</p>
-                </div>
-              )}
-
-              {project.approvedBudget && (
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="text-xs font-bold uppercase text-slate-600">Approved Budget</p>
-                  <p className="mt-1 font-semibold text-slate-900">{formatHKD(project.approvedBudget)}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 border-t border-[rgba(120,53,15,0.12)] pt-3 text-xs text-slate-500">
-              {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
-              {project.updatedAt && <span>Updated: {formatDate(project.updatedAt)}</span>}
-            </div>
-          </div>
-        </AccordionItem>
-
         {hasAiInsights && (
           <AccordionItem
             id="from-ai"

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-0d62820b",
+    "date": "2026-07-30T15:58:57+08:00",
+    "title": "refactor(ui): remove Project Details accordion from overview tab",
+    "summary": "refactor(ui): remove Project Details accordion from overview tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "0d62820b",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-30-00a19a60",
     "date": "2026-07-30T15:46:41+08:00",
     "title": "refactor(ui): replace ProjectSummaryCard with accordion using AI scope",
