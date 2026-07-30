@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-33a5a8da",
+    "date": "2026-07-30T14:59:31+08:00",
+    "title": "fix(ai): add anti-repetition rules back to conversational prompt",
+    "summary": "fix(ai): add anti-repetition rules back to conversational prompt",
+    "areas": [
+      "api"
+    ],
+    "commit": "33a5a8da",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-63bd5ced",
     "date": "2026-07-30T14:45:04+08:00",
     "title": "fix: add missing closing brace after aiIntake.create catch block",
