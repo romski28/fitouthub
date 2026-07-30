@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-30-8f59c168",
+    "date": "2026-07-30T15:21:29+08:00",
+    "title": "fix(ui): show AI scope summary to clients on project detail page",
+    "summary": "fix(ui): show AI scope summary to clients on project detail page",
+    "areas": [
+      "web"
+    ],
+    "commit": "8f59c168",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-ai-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-07-30-33a5a8da",
     "date": "2026-07-30T14:59:31+08:00",
     "title": "fix(ai): add anti-repetition rules back to conversational prompt",

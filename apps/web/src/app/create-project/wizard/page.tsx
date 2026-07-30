@@ -682,26 +682,23 @@ export default function CreateProjectWizardPage() {
     node.scrollTop = node.scrollHeight;
   }, [activeStep, chatMessages, chatBusy]);
 
-  // Fire-and-forget: calls the back-end to compile the full AI conversation into a project scope
-  const triggerCompile = async (intakeId: string) => {
+  // Calls the back-end to compile the full AI conversation into a project scope.
+  // Returns the compiled result so the wizard can populate safety/scope on the intermediate page.
+  const triggerCompile = async (intakeId: string): Promise<Record<string, unknown> | null> => {
     try {
-      await fetch(`${API_BASE_URL}/ai/intake/${encodeURIComponent(intakeId)}/compile`, {
+      const res = await fetch(`${API_BASE_URL}/ai/intake/${encodeURIComponent(intakeId)}/compile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
+      if (!res.ok) return null;
+      return await res.json();
     } catch {
-      // Silent — compile is best-effort, the wizard continues regardless
+      return null;
     }
   };
 
   const goNext = () => {
     if (!canGoNext) return;
-
-    // Fire-and-forget: compile the AI conversation into a project scope when leaving chat
-    if (currentStep === 0 && currentAiIntakeId && !compileFiredRef.current) {
-      compileFiredRef.current = true;
-      void triggerCompile(currentAiIntakeId);
-    }
 
     hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, stepsRef.current.length - 1));
@@ -1025,49 +1022,48 @@ export default function CreateProjectWizardPage() {
       // Trigger summary confirmation when the AI is done asking questions OR confidence is high enough
       const shouldOfferSummaryConfirmation = hasCoreBrief && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
 
-      // At wrap-up, the backend compilation call extracts safety, risks, assumptions from the full conversation.
-      // Populate wizard state so they flow through to project creation handoff.
-      if (shouldOfferSummaryConfirmation) {
-        const compiledSafety = parsed?.safetyAssessment && typeof parsed.safetyAssessment === 'object'
-          ? (parsed.safetyAssessment as Record<string, unknown>)
-          : null;
-        const compiledAssumptions = Array.isArray(parsed?.assumptions)
-          ? parsed.assumptions.filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
-          : [];
-        const compiledRisks = Array.isArray(parsed?.risks)
-          ? parsed.risks.filter((r): r is string => typeof r === 'string' && r.trim().length > 0)
-          : [];
-        const compiledRiskLevel = typeof compiledSafety?.riskLevel === 'string' ? compiledSafety.riskLevel.toLowerCase() : null;
-        const compiledConcerns = Array.isArray(compiledSafety?.concerns)
-          ? compiledSafety.concerns.filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
-          : [];
-        const compiledMitigations = Array.isArray(compiledSafety?.temporaryMitigations)
-          ? compiledSafety.temporaryMitigations.filter((m): m is string => typeof m === 'string' && m.trim().length > 0)
-          : [];
-        const compiledDisclaimer = typeof compiledSafety?.disclaimer === 'string' && compiledSafety.disclaimer.trim()
-          ? compiledSafety.disclaimer.trim()
-          : null;
+      // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
+      // and a comprehensive scope from the full conversation. Populate wizard state
+      // so they appear on the intermediate page and flow through to project creation.
+      if (shouldOfferSummaryConfirmation && currentAiIntakeId && !compileFiredRef.current) {
+        compileFiredRef.current = true;
+        triggerCompile(currentAiIntakeId).then((compiled) => {
+          if (!compiled) return;
 
-        if (compiledAssumptions.length > 0) console.log('[wizard][compilation] assumptions:', compiledAssumptions);
-        if (compiledRisks.length > 0) setAiRiskNotes(compiledRisks);
-        if (compiledRiskLevel) {
-          setAiRiskLevel((prev) => {
-            const order = ['low', 'medium', 'high', 'critical'];
-            const prevIdx = order.indexOf(prev === null ? '' : prev);
-            const newIdx = order.indexOf(compiledRiskLevel!);
-            return newIdx > prevIdx ? compiledRiskLevel : prev;
-          });
-        }
-        const allSafetyNotes = [...compiledConcerns, ...compiledMitigations, ...(compiledDisclaimer ? [compiledDisclaimer] : [])];
-        if (allSafetyNotes.length > 0) setAiSafetyNotes(allSafetyNotes);
+          // Safety
+          if (compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object') {
+            const safety = compiled.safetyAssessment as Record<string, unknown>;
+            const riskLevel = typeof safety.riskLevel === 'string' ? safety.riskLevel.toLowerCase() : null;
+            const concerns = Array.isArray(safety.concerns) ? safety.concerns.filter((c): c is string => typeof c === 'string') : [];
+            const mitigations = Array.isArray(safety.temporaryMitigations) ? safety.temporaryMitigations.filter((m): m is string => typeof m === 'string') : [];
+            const allNotes = [...concerns, ...mitigations];
+            if (riskLevel) {
+              setAiRiskLevel((prev) => {
+                const order = ['low', 'medium', 'high', 'critical'];
+                const prevIdx = order.indexOf(prev === null ? '' : prev);
+                const newIdx = order.indexOf(riskLevel);
+                return newIdx > prevIdx ? riskLevel : prev;
+              });
+            }
+            if (allNotes.length > 0) setAiSafetyNotes(allNotes);
+          }
 
-        // Also update scope summary/title from compiled output — this is what flows to buildWizardPayload
-        if (nextSummary && nextSummary.trim().length > 20) {
-          setSummary(nextSummary.trim());
-        }
-        if (nextTitle && nextTitle.trim()) {
-          setTitle(nextTitle.trim());
-        }
+          // Assumptions & Risks
+          if (Array.isArray(compiled.assumptions) && compiled.assumptions.length > 0) {
+            setAiRiskNotes((prev) => [...new Set([...prev, ...compiled.assumptions as string[]])]);
+          }
+          if (Array.isArray(compiled.risks) && compiled.risks.length > 0) {
+            setAiRiskNotes((prev) => [...new Set([...prev, ...compiled.risks as string[]])]);
+          }
+
+          // Compiled scope summary — flows to buildWizardPayload
+          if (typeof compiled.summary === 'string' && compiled.summary.trim().length > 20) {
+            setSummary(compiled.summary.trim());
+          }
+          if (typeof compiled.title === 'string' && compiled.title.trim()) {
+            setTitle(compiled.title.trim());
+          }
+        });
       }
 
       if (nextTitle) setTitle(nextTitle);
