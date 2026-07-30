@@ -3316,12 +3316,14 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       });
       if (latest) latestIntake = latest;
     }
+    this.logger.log(`[compileIntakeScope] rootId=${intakeId} sessionId=${intake.sessionId || 'NULL'} latestId=${(latestIntake as any).id} isRoot=${(latestIntake as any).id === intakeId}`);
 
     // Collect all conversation turns, starting from the latest and walking backward
     const turns = await this.collectThreadConversationTurns(
       latestIntake as { id: string; project?: unknown; rawPrompt?: string | null },
       latestIntake.rawPrompt || intake.rawPrompt || '',
     );
+    this.logger.log(`[compileIntakeScope] collected ${turns.length} turns: ${turns.map((t) => `${t.role}:${t.text.slice(0, 40)}`).join(' | ')}`);
 
     if (turns.length < 2) {
       // Not enough conversation to compile — return existing summary if any

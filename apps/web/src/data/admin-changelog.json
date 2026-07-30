@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-6e861189",
+    "date": "2026-07-30T21:27:37+08:00",
+    "title": "debug: add turn-collection logging to compileIntakeScope",
+    "summary": "debug: add turn-collection logging to compileIntakeScope",
+    "areas": [
+      "api"
+    ],
+    "commit": "6e861189",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-d007618d",
     "date": "2026-07-30T17:16:06+08:00",
     "title": "fix(ai): walk full thread in compile by starting from latest intake",
