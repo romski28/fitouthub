@@ -3229,6 +3229,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       } catch (dbErr) {
         // Non-fatal — log and continue; don't fail the user response
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
+      }
 
       return {
         requestId,

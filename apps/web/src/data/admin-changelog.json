@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-63bd5ced",
+    "date": "2026-07-30T14:45:04+08:00",
+    "title": "fix: add missing closing brace after aiIntake.create catch block",
+    "summary": "fix: add missing closing brace after aiIntake.create catch block",
+    "areas": [
+      "api"
+    ],
+    "commit": "63bd5ced",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-395d9e84",
     "date": "2026-07-30T14:26:01+08:00",
     "title": "refactor(ai): simplify scope compilation to one endpoint called at chat exit",
