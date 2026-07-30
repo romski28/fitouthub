@@ -248,18 +248,10 @@ export function ProjectAiPanel({
     );
   }
 
-  if (!hasSafety && assumptions.length === 0 && risks.length === 0 && !summary) return null;
+  if (!hasSafety && assumptions.length === 0 && risks.length === 0) return null;
 
   const clientContent = (
     <>
-      {(title || summary) && (
-        <div className="mb-3 rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Project Scope</p>
-          {title && <p className="text-sm font-semibold text-slate-900">{title}</p>}
-          {summary && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{summary}</p>}
-        </div>
-      )}
-
       <p className="text-xs text-slate-600 mb-3">Safety information prepared by Mimo with support from DeepSeek AI. For clarification or professional advice, please reach out through the chat button.</p>
 
       {safetyBlock}

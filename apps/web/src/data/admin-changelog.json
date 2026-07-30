@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-07-30-d2ef60f2",
+    "date": "2026-07-30T16:22:13+08:00",
+    "title": "refactor(ui): remove scope from safety panel, now in Project Overview",
+    "summary": "refactor(ui): remove scope from safety panel, now in Project Overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "d2ef60f2",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-ai-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-07-30-0d62820b",
     "date": "2026-07-30T15:58:57+08:00",
     "title": "refactor(ui): remove Project Details accordion from overview tab",
