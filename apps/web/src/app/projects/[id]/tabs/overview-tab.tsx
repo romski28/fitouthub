@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
-import { ProjectSummaryCard } from '@/components/project-summary-card';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
 import { API_BASE_URL } from '@/config/api';
@@ -794,18 +793,60 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       )}
 
       <AccordionGroup>
-        {/* Project Summary */}
-        <ProjectSummaryCard
-          projectName={project.projectName}
-          location={project.region}
-          trades={project.tradesRequired}
-          scope={project.notes}
-          isEmergency={(project as any)?.isEmergency}
-          siteInspectionDate={(project as any)?.siteInspectionAvailableOn}
-          completionTarget={project.endDate}
-          projectScale={project.projectScale}
-          budget={project.budget}
-        />
+        {/* Project Overview */}
+        <AccordionItem
+          id="project-overview"
+          title="Project Overview"
+          isOpen={expandedAccordions['project-overview'] !== false}
+          onToggle={onToggleAccordion}
+        >
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                {project.projectName?.trim() || 'Untitled project'}
+              </h3>
+            </div>
+
+            <div className="space-y-1.5 text-sm text-slate-700">
+              {project.region && (
+                <p>
+                  <span className="font-semibold text-slate-900">Location:</span> {project.region}
+                </p>
+              )}
+              {project.tradesRequired && project.tradesRequired.length > 0 && (
+                <p>
+                  <span className="font-semibold text-slate-900">Trades:</span> {project.tradesRequired.join(', ')}
+                </p>
+              )}
+              {(project.aiIntake?.summary || project.aiIntake?.scope) && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Scope</p>
+                  <p className="leading-relaxed text-slate-800">{project.aiIntake.summary || project.aiIntake.scope}</p>
+                </div>
+              )}
+              {!project.aiIntake?.summary && !project.aiIntake?.scope && project.notes && (
+                <p>
+                  <span className="font-semibold text-slate-900">Scope:</span> {project.notes}
+                </p>
+              )}
+              {project.budget && (
+                <p>
+                  <span className="font-semibold text-slate-900">Budget:</span> {formatHKD(project.budget)}
+                </p>
+              )}
+              {(project as any)?.isEmergency && (
+                <p>
+                  <span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 border-t border-[rgba(120,53,15,0.12)] pt-3 text-xs text-slate-500">
+              {project.createdAt && <span>Created: {formatDate(project.createdAt)}</span>}
+              {project.updatedAt && <span>Updated: {formatDate(project.updatedAt)}</span>}
+            </div>
+          </div>
+        </AccordionItem>
 
         {/* Project Details */}
         <AccordionItem
