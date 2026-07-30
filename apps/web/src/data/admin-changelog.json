@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-12095177",
+    "date": "2026-07-30T16:44:14+08:00",
+    "title": "fix(ai): strengthen anti-repetition with explicit examples and lower filter threshold",
+    "summary": "fix(ai): strengthen anti-repetition with explicit examples and lower filter threshold",
+    "areas": [
+      "api"
+    ],
+    "commit": "12095177",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-d2ef60f2",
     "date": "2026-07-30T16:22:13+08:00",
     "title": "refactor(ui): remove scope from safety panel, now in Project Overview",
