@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-1c7d9e34",
+    "date": "2026-07-30T22:23:15+08:00",
+    "title": "fix(ai): strengthen wrap-up rule — stay wrapped up, remove debug logs",
+    "summary": "fix(ai): strengthen wrap-up rule — stay wrapped up, remove debug logs",
+    "areas": [
+      "api"
+    ],
+    "commit": "1c7d9e34",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-c41da47c",
     "date": "2026-07-30T21:51:49+08:00",
     "title": "fix(ai): chain intakes correctly — each turn links to previous, not root",

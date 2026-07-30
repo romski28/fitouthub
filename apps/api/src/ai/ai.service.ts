@@ -1364,12 +1364,13 @@ Only suggest trades from ALLOWED_TRADES. Suggest the MINIMUM needed. Prefer sing
   - "Bath drain blocked" → core problem is DRAINAGE, not the bath itself.
   - "Kitchen tap leaking" → core problem is the LEAK, not the kitchen.
 
-# Wrap-up
-When you have enough information to describe the job fully, set overallConfidence >= 0.35:
-  - conversationalText = brief closing statement
-  - NO nextQuestions, NO options (leave arrays empty)
-  - summary = thorough scope paragraph with ALL details from the conversation
+# Wrap-up (CRITICAL)
+When you have enough information, set overallConfidence >= 0.35 and STOP asking questions:
+  - conversationalText = brief closing statement acknowledging you have enough
+  - NO nextQuestions, NO options (empty arrays)
+  - summary = thorough scope paragraph with ALL details
   - title = specific 6-12 word job description
+  - Once you wrap up, STAY wrapped up. Do NOT ask more questions even if the user replies.
 
 # Output (JSON only)
 {
@@ -3318,7 +3319,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       });
       if (latest) latestIntake = latest;
     }
-    this.logger.log(`[compileIntakeScope] rootId=${intakeId} sessionId=${intake.sessionId || 'NULL'} latestId=${(latestIntake as any).id} isRoot=${(latestIntake as any).id === intakeId}`);
 
     // Collect all conversation turns, starting from the latest and walking backward
     const turns = await this.collectThreadConversationTurns(
