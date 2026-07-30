@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-30-395d9e84",
+    "date": "2026-07-30T14:26:01+08:00",
+    "title": "refactor(ai): simplify scope compilation to one endpoint called at chat exit",
+    "summary": "refactor(ai): simplify scope compilation to one endpoint called at chat exit",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "395d9e84",
+    "files": [
+      "apps/api/src/ai/ai.controller.ts",
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-30-63be561e",
     "date": "2026-07-30T00:14:29+08:00",
     "title": "fix(ai): persist safety/summary to root intake, not per-turn records",

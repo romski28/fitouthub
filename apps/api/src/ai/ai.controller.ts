@@ -107,6 +107,12 @@ export class AiController {
     return this.aiService.getAiAdminMetrics();
   }
 
+  @Post('intake/:id/compile')
+  @UseGuards(OptionalCombinedAuthGuard)
+  async compileIntakeScope(@Param('id') id: string) {
+    return this.aiService.compileIntakeScope(id);
+  }
+
   @Post('intake/:id/convert')
   async convertIntake(
     @Param('id') id: string,

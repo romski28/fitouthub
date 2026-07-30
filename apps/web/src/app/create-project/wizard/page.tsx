@@ -391,6 +391,7 @@ export default function CreateProjectWizardPage() {
   const hasInitializedFromSeedRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
+  const compileFiredRef = useRef(false);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -681,8 +682,26 @@ export default function CreateProjectWizardPage() {
     node.scrollTop = node.scrollHeight;
   }, [activeStep, chatMessages, chatBusy]);
 
+  // Fire-and-forget: calls the back-end to compile the full AI conversation into a project scope
+  const triggerCompile = async (intakeId: string) => {
+    try {
+      await fetch(`${API_BASE_URL}/ai/intake/${encodeURIComponent(intakeId)}/compile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch {
+      // Silent — compile is best-effort, the wizard continues regardless
+    }
+  };
+
   const goNext = () => {
     if (!canGoNext) return;
+
+    // Fire-and-forget: compile the AI conversation into a project scope when leaving chat
+    if (currentStep === 0 && currentAiIntakeId && !compileFiredRef.current) {
+      compileFiredRef.current = true;
+      void triggerCompile(currentAiIntakeId);
+    }
 
     hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, stepsRef.current.length - 1));

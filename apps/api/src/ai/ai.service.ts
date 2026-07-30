@@ -1326,127 +1326,63 @@ OUTPUT SCHEMA
 
   private async buildConversationalPrompt() {
     const allowedTrades = await this.getAllowedTrades();
-    const locationTaxonomy = this.buildCompactLocationTaxonomy();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Mimo Friendly Assistant.
+    const systemPrompt = `You are Mimo, a friendly renovation assistant helping a client describe their project. Your job is to ask the right questions so a tradesperson can understand the job.
 
-# Role & Objective
-You are Mimo, an expert assistant helping the user navigate a renovation project. Your goal is to guide them to a clear, useful project brief by naturally uncovering their needs.
+# Your Goal
+Uncover exactly what the client needs done. Think like a tradesperson reading the brief: what would they need to know to quote and prepare?
 
-# Conversational Style (Lifelike Framework)
-- Use a plain-spoken, warm, and direct tone. Avoid sounding like a textbook.
-- Mix very short sentences with longer ones.
-- Never use robotic transitions such as "Furthermore" or "Let's delve deeper".
-- Lean heavily on natural contractions like it's, you'll, and that's.
-- Reuse the user's own wording where it helps keep the conversation natural.
-- If the prompt contains risk/emergency language (danger, hazard, urgent, leak, electrical risk, safety), reduce humor and switch to clear, calm, practical wording.
+# Style
+- Warm, plain-spoken, natural. Mix short and longer sentences.
+- Reuse the client's own words where helpful.
+- For urgent/safety topics (danger, hazard, electrical risk, leak), switch to calm, clear, practical wording.
 
-# Conversation Management (Guided Framework)
-- Advance the topic slowly. Do not rush to the solution.
-- Address what the user just said first, then introduce the next milestone.
-- Do NOT include questions in conversationalText. conversationalText should be a pure, warm narrative acknowledging their project (3-5 sentences). End naturally — never end with a question mark.
-- Put all clarifying questions in nextQuestions/followUpQuestions ONLY. These will be asked later in the project wizard, not here.
-- If the user goes off-topic, acknowledge their point briefly, then bridge back to the project.
+# Conversation Rules
+1) conversationalText = ONE warm sentence. Statement, not a question. Never end with "?".
+2) Put questions in nextQuestions ONLY. ONE question per turn — the most important rule. Never combine topics with "and" or "or".
+3) ANSWER OPTIONS in every response:
+  - YES/NO questions → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
+  - Choice questions → extract choices as individual options
+  - BANNED: "Tell me more", "That's all", "Other", "Something else", "Or something else". Always include "Not sure" as last option. Max 4 options.
+4) Never ask about location (district/area), budget, or timeline — the wizard handles those later.
+5) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
 
-Focus on helping the client get to a clear scope, the right trade coverage, and the right Mimo services when needed.
+# Trades
+Only suggest trades from ALLOWED_TRADES. Suggest the MINIMUM needed. Prefer single-trade solutions. Handyman covers: shelf fixing, basic repairs, minor carpentry, general maintenance.
 
-# Fact Tracking (MANDATORY)
-- Build a mental checklist of EXPLICIT FACTS the user has stated. These are LOCKED and must never be contradicted.
-- Examples of locked facts: "it is a bath" → the fixture is a bath, not a shower. "just the kitchen" → scope is kitchen only. "no tiling needed" → do not suggest a tiler.
-- When the user corrects you or clarifies ("no, it's just X"), immediately update your fact list and acknowledge the correction in your response. Do NOT repeat the incorrect assumption.
-- Before generating ANY response, silently review: "What has the user explicitly stated that I must not override or contradict?"
-- If the user says "not X" or "just Y" or "only Z" — those are EXCLUSIONS. Respect them absolutely.
-- If you are uncertain about a detail, ASK rather than assume. But never override a stated fact.
+# Scope Tracking
+- Build a mental list of facts the client has stated. Never override or contradict them.
+- If the client corrects you, acknowledge it and update.
+- Focus on the core problem. The fixture/appliance is often just the location, not the scope.
+  - "Bath drain blocked" → core problem is DRAINAGE, not the bath itself.
+  - "Kitchen tap leaking" → core problem is the LEAK, not the kitchen.
 
-# Redundant Question Prevention (MANDATORY)
-- The ESTABLISHED FACTS block in the user message contains facts the user has already confirmed. These are LOCKED.
-- If you are about to ask a question about primary location, secondary location, core problem, or any trade listed in ESTABLISHED FACTS — STOP. Do NOT ask it.
-- If you are about to ask a question listed in "Already asked questions" — STOP. Do NOT ask it.
-- If the user's LATEST message already answers one of your planned questions — remove that question.
-- Every question you ask MUST advance the conversation into NEW territory not covered by established facts, already-asked questions, or the user's latest message.
-- If you cannot think of a truly new question, ask about site conditions, access, materials, or timing — these are almost always safe.
+# Wrap-up
+When you have enough information to describe the job fully, set overallConfidence >= 0.35:
+  - conversationalText = brief closing statement
+  - NO nextQuestions, NO options (leave arrays empty)
+  - summary = thorough scope paragraph with ALL details from the conversation
+  - title = specific 6-12 word job description
 
-# Problem Focus (MANDATORY)
-- Identify the CORE PROBLEM from the user's description and NEVER lose sight of it. The fixture/appliance mentioned is often just the LOCATION, not the scope of work.
-- EXAMPLE: User says "bath drain is blocked" → core problem is DRAINAGE. Do NOT ask about replacing the bath, bath condition, or bath installation. The bath is the location, not the job.
-- EXAMPLE: User says "kitchen tap leaking" → core problem is the LEAK. Do NOT ask about replacing the sink or renovating the kitchen.
-- Only ask about fixture condition/replacement if the user explicitly mentions it (e.g., "the bath is cracked" or "I want a new sink").
-- Questions must stay relevant to the stated problem. If the user says the problem is drainage, ask about drain-related details (clog location, hair/debris, pipe access, previous attempts to fix). Do NOT drift into unrelated topics.
-- If the user says "no" to a fixture question, immediately return to the core problem. Acknowledge the "no" and refocus.
-
-# Scope Accumulation (MANDATORY)
-- The ACCUMULATED PROJECT SCOPE in the user message contains the GROWING project brief from ALL previous turns.
-- Your "summary" field MUST include ALL details from the ACCUMULATED PROJECT SCOPE PLUS any new details from the latest user message.
-- NEVER drop or shorten previously established scope details. The summary should GROW each turn, not shrink.
-- If the accumulated scope says "Leak under kitchen sink, pipe is copper, access is tight" and the user adds "the tap is dripping too", your new summary must be "Leak under kitchen sink with dripping tap, copper pipes, tight access".
-- CRITICAL: Do NOT invent or hallucinate details that were never mentioned by the user or in the accumulated scope. If the accumulated scope says "Leak under kitchen sink" and the user says "the water is spreading", do NOT add "dripping tap" or any other unmentioned detail.
-- Your "title" should be a concise 5-8 word label that captures the ESSENCE of the full accumulated scope.
-
-# Chat Rules
-1) Generate JSON with these keys: conversationalText, summary, title, trades, location, nextQuestions, followUpQuestions, overallConfidence, options. During normal turns do NOT include assumptions, risks, safetyAssessment, budget, timeline, propertyType. At WRAP-UP (rule 8), DO include: assumptions, risks, safetyAssessment — these are displayed in the project brief.
-2) "conversationalText" is MANDATORY — exactly ONE warm sentence. STATEMENT, not a question. Never end with "?". Never include "what", "which", "how", "would you".
-3) ANSWER OPTIONS — include an "options" array in EVERY response. Rules:
-  - YES/NO: If your question can be answered with yes/no → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
-  - OR QUESTIONS: If your question contains "or" (e.g. "louder or softer?"), it's a CHOICE question — extract the choices as individual options. Do NOT use yes/no.
-  - For fixture/material questions → 2-4 specific types. For size → Small/Medium/Large.
-  - IMPORTANT: Never ask a question that mixes yes/no with "or" choices. "Have you noticed if it's louder or softer?" is wrong — either ask "Has the noise changed? (yes/no)" OR "Is it louder or softer? (louder/softer)".
-  - BANNED: "Tell me more", "That's all", "Find out more", "Other", "Something else", "Or something else", "Or anything else", "None of the above", "I don't know" (use "Not sure" instead), question-text fragments, service buttons. Every array MUST include "Not sure" as last option. Max 4 options.
-4) "trades" must contain exact values from ALLOWED_TRADES only. Suggest the ABSOLUTE MINIMUM trades needed. Prefer single-trade solutions.
-5) ONE QUESTION PER TURN — THE MOST CRITICAL RULE. Exactly ONE question in nextQuestions[0]. Never combine topics with "and" or "or". "How big and are there access issues?" is TWO questions — pick ONE.
-6) Do NOT ask geographic location or budget/timeline questions — the wizard handles those.
-7) Never repeat questions. ESTABLISHED FACTS are locked. User exclusions ("not X", "just Y") are absolute.
-8) WRAP-UP — When overallConfidence >= 0.35, the conversation is wrapping up. This is your last chance to produce a great scope:
-  - conversationalText = brief closing statement (e.g., "That covers it — let's move on.")
-  - NO nextQuestions, NO followUpQuestions, NO options (leave arrays empty)
-  - summary = COMPREHENSIVE scope paragraph (4-6 sentences) including ALL details from the full conversation: what the problem is, where, when, symptoms, what user wants done, any preferences or constraints mentioned, all specifics from the chat. Example: "Whistling noise from toilet cistern that starts after flushing and stops when full. Likely worn fill valve. Copper pipe connection. No dripping. Client wants plumber to replace fill valve. Cistern over 5 years old."
-  - title = specific 6-12 word job description with key details
-  - SAFETY: Include safetyAssessment with riskLevel, concerns, temporaryMitigations if any hazards were discussed. Include assumptions array and risks array with specific items from the conversation.
-
-TRADE MINIMIZATION RULE (CRITICAL)
-- Suggest the ABSOLUTE MINIMUM trades necessary to complete the job.
-- Only include a trade if it is explicitly needed based on the user's description.
-- Prefer single-trade solutions when possible.
-- In Hong Kong, "Handyman" typically handles: shelf fixing, basic repairs, minor carpentry, general maintenance.
-- Do NOT add Plumber, Tiler, or Shower Fitter unless there is explicit damage to plumbing/tiles/fixtures.
-- EXAMPLE WRONG: User says "fixing shelves in shower" → suggest Plumber, Tiler, Shower Fitter, Handyman
-- EXAMPLE RIGHT: User says "fixing shelves in shower" → suggest Handyman ONLY (unless grout damage is explicitly mentioned)
-- EXAMPLE WRONG: User says "bath drain blocked" → ask about bath replacement, bath condition, or suggest Bath Fitter
-- EXAMPLE RIGHT: User says "bath drain blocked" → suggest Plumber ONLY. Focus questions on drain (clog location, hair/debris, pipe access).
-- Include extra trades ONLY if damage or specific needs are explicitly mentioned in the user's description.
-
-ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
-
-HK_LOCATION_TAXONOMY = ${JSON.stringify(locationTaxonomy)}
-
-# Location Handling (GEOGRAPHIC vs PHYSICAL)
-- \"location\" in the JSON output refers to GEOGRAPHIC location ONLY (Hong Kong districts/zones like \"Wan Chai\", \"Hong Kong Island\"). This is for matching professionals near the property.
-- Do NOT put physical locations (rooms, fixtures, areas inside the property) into the location fields. \"kitchen\", \"bathroom\", \"under the sink\", \"bedroom\" are NOT geographic locations.
-- Physical locations belong in the \"summary\" and \"title\" fields — they describe WHERE the problem is within the property.
-- If the user says \"kitchen sink\" or \"bathroom ceiling\", the room/fixture is a physical location — leave location fields null unless the user explicitly mentions a HK district/area.
-- The ESTABLISHED FACTS block will track both geographic and physical locations separately — do not confuse them.
-
-OUTPUT FORMAT (JSON only)
+# Output (JSON only)
 {
   "conversationalText": "Got it — a mixer tap it is.",
   "trades": ["Plumber"],
-  "location": {
-    "primary": "string|null (GEOGRAPHIC only — HK district, NOT room/fixture)",
-    "secondary": "string|null",
-    "tertiary": "string|null"
-  },
-  "summary": "string|null (accumulating project scope — GROW each turn)",
-  "title": "string|null (concise 5-8 word label)",
-  "nextQuestions": ["string (EXACTLY ONE question)"],
-  "followUpQuestions": ["string"],
+  "summary": "string (growing scope — accumulate details each turn)",
+  "title": "string (5-8 word label)",
+  "nextQuestions": ["string (exactly ONE)"],
+  "followUpQuestions": [],
   "overallConfidence": number,
   "options": [{"label": "string", "value": "string"}]
-}`;
+}
+
+ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
 
     return {
       systemPrompt,
       allowedTradesCount: allowedTrades.length,
-      locationEntryCount: Object.keys(locationTaxonomy).length,
+      locationEntryCount: 0,
     };
   }
 
@@ -3293,90 +3229,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       } catch (dbErr) {
         // Non-fatal — log and continue; don't fail the user response
         this.logger.warn(`[${requestId}] Intake save failed: ${(dbErr as Error).message}`);
-      }
-
-      // At wrap-up, compile the full conversation into a project scope.
-      // Trigger when the AI has no more questions (concrete signal) OR confidence is high enough.
-      if (mode === 'conversational' && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
-        const po = parsedOutput as Record<string, unknown>;
-        const confidence = typeof po.overallConfidence === 'number' ? po.overallConfidence : 0;
-        const hasQuestions = (
-          (Array.isArray(po.nextQuestions) && po.nextQuestions.length > 0) ||
-          (Array.isArray(po.followUpQuestions) && po.followUpQuestions.length > 0)
-        );
-        const shouldCompile = activeThread && !hasQuestions && confidence >= 0.25;
-        this.logger.warn(`[${requestId}] SCOPE-DEBUG confidence=${confidence} hasThread=${!!activeThread} hasQuestions=${hasQuestions} shouldCompile=${shouldCompile}`);
-        if (shouldCompile) {
-          try {
-            // Collect the actual conversation turns
-            const turns = await this.collectThreadConversationTurns(activeThread, trimmedPrompt);
-            if (turns.length >= 2) {
-              const transcript = turns.map((t) => `${t.role === 'user' ? 'Client' : 'Mimo'}: ${t.text}`).join('\n\n');
-              const compileMessages: DeepSeekMessage[] = [
-                { role: 'system', content: 'Summarize this renovation conversation as a clear project scope paragraph (4-6 sentences) that a tradesperson can read and immediately understand the job. Include what the problem is, where, when it happens, symptoms, what the client wants done, and any relevant details shared. Return ONLY the summary paragraph, no JSON, no labels.' },
-                { role: 'user', content: transcript },
-              ];
-
-              const compileResponse = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-                body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 400 }),
-                signal: AbortSignal.timeout(15000),
-              });
-
-              if (compileResponse.ok) {
-                const compileRaw = await compileResponse.text();
-                const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
-                const scopeSummary = compilePayload.choices?.[0]?.message?.content?.trim() || '';
-                this.logger.warn(`[${requestId}] SCOPE-DEBUG compileResponse ok, summaryLen=${scopeSummary.length} prevSummaryLen=${String(po.summary || '').length}`);
-                if (scopeSummary && scopeSummary.length > 20) {
-                  po.summary = scopeSummary;
-                  parsedOutput = po;
-                  this.logger.log(`[${requestId}] Scope compiled: ${scopeSummary.slice(0, 80)}...`);
-                }
-              } else {
-                this.logger.warn(`[${requestId}] SCOPE-DEBUG compileResponse FAILED status=${compileResponse.status}`);
-              }
-            }
-          } catch (compileErr) {
-            this.logger.warn(`[${requestId}] Scope compile error: ${(compileErr as Error).message}`);
-          }
-        }
-      }
-
-      // Persist safety/assumptions/risks to DB columns when present in the output.
-      // Write to the root (activeThread.id) so ALL accumulated data lives on one record
-      // that the project can link to, not scattered across per-turn records.
-      const persistTargetId = (activeThread?.id) || intakeId;
-      if (persistTargetId && parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)) {
-        const po = parsedOutput as Record<string, unknown>;
-        const hasSafety = po.safetyAssessment && typeof po.safetyAssessment === 'object';
-        const hasAssumptions = Array.isArray(po.assumptions) && po.assumptions.length > 0;
-        const hasRisks = Array.isArray(po.risks) && po.risks.length > 0;
-        const hasSummary = typeof po.summary === 'string' && po.summary.trim().length > 20;
-        this.logger.warn(`[${requestId}] SCOPE-DEBUG persist: targetId=${persistTargetId} hasSafety=${!!hasSafety} hasAssumptions=${hasAssumptions} hasRisks=${hasRisks} hasSummary=${hasSummary} summaryLen=${hasSummary ? String(po.summary).length : 0}`);
-        if (hasSafety || hasAssumptions || hasRisks || hasSummary) {
-          try {
-            const updateData: Record<string, unknown> = {};
-            if (hasAssumptions) updateData.assumptions = po.assumptions;
-            if (hasRisks) updateData.risks = po.risks;
-            if (typeof po.summary === 'string' && po.summary.trim()) updateData.summary = po.summary.trim();
-            if (typeof po.summary === 'string' && po.summary.trim()) updateData.scope = po.summary.trim();
-            if (typeof po.title === 'string' && po.title.trim()) updateData.title = po.title.trim();
-            if (hasSafety) {
-              const existingIntake = await this.prisma.aiIntake.findUnique({
-                where: { id: persistTargetId },
-                select: { project: true },
-              });
-              const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
-              updateData.project = { ...existingProject, safetyAssessment: po.safetyAssessment };
-            }
-            await this.prisma.aiIntake.update({ where: { id: persistTargetId }, data: updateData as any });
-          } catch (updateErr) {
-            this.logger.warn(`[${requestId}] Safety/assumptions persist failed: ${(updateErr as Error).message}`);
-          }
-        }
-      }
 
       return {
         requestId,
@@ -3437,6 +3289,135 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
   }
 
+  /**
+   * Compile a full conversation thread into a comprehensive project scope.
+   * Called by the wizard when the client leaves the AI chat screen.
+   * Walks the thread chain from the given intake, sends the full transcript
+   * to DeepSeek, and persists the compiled scope to the intake record.
+   */
+  async compileIntakeScope(intakeId: string) {
+    const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
+    if (!intake) throw new NotFoundException('AI intake not found');
+
+    // Collect all conversation turns from the thread
+    const turns = await this.collectThreadConversationTurns(
+      intake as { id: string; project?: unknown; rawPrompt?: string | null },
+      intake.rawPrompt || '',
+    );
+
+    if (turns.length < 2) {
+      // Not enough conversation to compile — return existing summary if any
+      return {
+        summary: intake.summary || intake.scope || '',
+        title: intake.title || '',
+        trades: intake.trades || [],
+        assumptions: intake.assumptions || [],
+        risks: intake.risks || [],
+      };
+    }
+
+    const transcript = turns.map((t) => `${t.role === 'user' ? 'Client' : 'Mimo'}: ${t.text}`).join('\n\n');
+
+    const endpoint = process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com/v1/chat/completions';
+    const apiKey = process.env.DEEPSEEK_API_KEY || '';
+    const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
+
+    const compileMessages: DeepSeekMessage[] = [
+      {
+        role: 'system',
+        content: `You are a renovation project scope compiler. Read the conversation below between a client and a renovation assistant. Produce a comprehensive project scope that a tradesperson can read and immediately understand the job.
+
+Return ONLY valid JSON (no markdown, no code fences):
+
+{
+  "summary": "Comprehensive scope paragraph (4-8 sentences). Include: what the problem is, where in the property, when it happens, symptoms, what the client wants done, any preferences or constraints mentioned, all specific details from the chat.",
+  "title": "Specific 6-12 word job title with key details",
+  "trades": ["exact", "trade", "names"],
+  "assumptions": ["specific assumption from conversation"],
+  "risks": ["specific risk mentioned or implied"],
+  "safetyAssessment": {
+    "riskLevel": "low|medium|high|critical",
+    "concerns": ["safety concern if any"],
+    "temporaryMitigations": ["mitigation if discussed"]
+  }
+}`,
+      },
+      { role: 'user', content: transcript },
+    ];
+
+    const compileResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 800 }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!compileResponse.ok) {
+      this.logger.warn(`[compileIntakeScope] DeepSeek compile failed status=${compileResponse.status}`);
+      return {
+        summary: intake.summary || intake.scope || '',
+        title: intake.title || '',
+        trades: intake.trades || [],
+        assumptions: intake.assumptions || [],
+        risks: intake.risks || [],
+      };
+    }
+
+    const compileRaw = await compileResponse.text();
+    const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
+    const content = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+
+    // Parse the JSON from the response
+    let compiled: Record<string, unknown> = {};
+    try {
+      // Strip markdown fences if present
+      const jsonStr = content.replace(/```(?:json)?\s*|```/gi, '').trim();
+      compiled = JSON.parse(jsonStr);
+    } catch {
+      this.logger.warn(`[compileIntakeScope] Failed to parse compile response as JSON`);
+      return {
+        summary: content.slice(0, 500) || intake.summary || '',
+        title: intake.title || '',
+        trades: intake.trades || [],
+        assumptions: intake.assumptions || [],
+        risks: intake.risks || [],
+      };
+    }
+
+    const summary = typeof compiled.summary === 'string' ? compiled.summary.trim() : '';
+    const title = typeof compiled.title === 'string' ? compiled.title.trim() : '';
+    const trades = Array.isArray(compiled.trades) ? compiled.trades.filter((t): t is string => typeof t === 'string') : [];
+    const assumptions = Array.isArray(compiled.assumptions) ? compiled.assumptions.filter((a): a is string => typeof a === 'string') : [];
+    const risks = Array.isArray(compiled.risks) ? compiled.risks.filter((r): r is string => typeof r === 'string') : [];
+    const safetyAssessment = compiled.safetyAssessment && typeof compiled.safetyAssessment === 'object' ? compiled.safetyAssessment : null;
+
+    // Persist compiled scope to the intake record
+    const existingIntake = await this.prisma.aiIntake.findUnique({
+      where: { id: intakeId },
+      select: { project: true },
+    });
+    const existingProject = (existingIntake?.project as Record<string, unknown>) || {};
+
+    await this.prisma.aiIntake.update({
+      where: { id: intakeId },
+      data: {
+        summary: summary || undefined,
+        scope: summary || undefined,
+        title: title || undefined,
+        trades: trades.length > 0 ? trades : undefined,
+        assumptions: assumptions.length > 0 ? assumptions : undefined,
+        risks: risks.length > 0 ? risks : undefined,
+        project: safetyAssessment
+          ? { ...existingProject, safetyAssessment }
+          : undefined,
+      } as any,
+    });
+
+    this.logger.log(`[compileIntakeScope] Compiled scope for intake ${intakeId}: summary=${summary.length}chars, title=${title}, trades=${trades.join(',')}`);
+
+    return { summary, title, trades, assumptions, risks, safetyAssessment };
+  }
+
   async previewConversationalRequirements(prompt: string, context?: { sessionId?: string; userId?: string; userRole?: string; ipAddress?: string; intakeId?: string; imageUrls?: string[] }) {
     const baseResponse = await this.previewRequirements(prompt, {
       ...context,
@@ -3457,8 +3438,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       normalizedParsedOutput && typeof normalizedParsedOutput === 'object' && !Array.isArray(normalizedParsedOutput)
         ? (normalizedParsedOutput as Record<string, unknown>)
         : null;
-
-    this.logger.warn(`[${(baseResponse as any).requestId || '?'}] SCOPE-DEBUG wrapper: summaryLen=${typeof parsedObject?.summary === 'string' ? (parsedObject!.summary as string).length : 'NULL'} title=${String(parsedObject?.title || '').slice(0, 50)}`);
 
     const existingConversationalText =
       typeof baseResponse.conversationalText === 'string' && baseResponse.conversationalText.trim().length > 0
