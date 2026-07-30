@@ -3306,10 +3306,21 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const intake = await this.prisma.aiIntake.findUnique({ where: { id: intakeId } });
     if (!intake) throw new NotFoundException('AI intake not found');
 
-    // Collect all conversation turns from the thread
+    // Find the LATEST intake in the thread. The given intakeId is the root;
+    // query by sessionId (all turns share the same session) to get the most recent.
+    let latestIntake = intake;
+    if (intake.sessionId) {
+      const latest = await (this.prisma as any).aiIntake.findFirst({
+        where: { sessionId: intake.sessionId },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (latest) latestIntake = latest;
+    }
+
+    // Collect all conversation turns, starting from the latest and walking backward
     const turns = await this.collectThreadConversationTurns(
-      intake as { id: string; project?: unknown; rawPrompt?: string | null },
-      intake.rawPrompt || '',
+      latestIntake as { id: string; project?: unknown; rawPrompt?: string | null },
+      latestIntake.rawPrompt || intake.rawPrompt || '',
     );
 
     if (turns.length < 2) {
@@ -3332,13 +3343,13 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const compileMessages: DeepSeekMessage[] = [
       {
         role: 'system',
-        content: `You are a renovation project scope compiler. Read the conversation below between a client and a renovation assistant. Produce a comprehensive project scope that a tradesperson can read and immediately understand the job.
+        content: `You are a renovation project scope compiler. Read the conversation below between a client and a renovation assistant. Produce a concise, factual project scope that a tradesperson can read and immediately understand the job.
 
 Return ONLY valid JSON (no markdown, no code fences):
 
 {
-  "summary": "Comprehensive scope paragraph (4-8 sentences). Include: what the problem is, where in the property, when it happens, symptoms, what the client wants done, any preferences or constraints mentioned, all specific details from the chat.",
-  "title": "Specific 6-12 word job title with key details",
+  "summary": "Concise scope (3-5 sentences MAX). Only include facts the client actually stated. If something was NOT discussed, don't mention it — never say 'was not specified'. Include: what the problem is, where, symptoms, what the client wants done, and any specific details shared. Be brief and direct.",
+  "title": "Specific 6-10 word job title with key details",
   "trades": ["exact", "trade", "names"],
   "assumptions": ["specific assumption from conversation"],
   "risks": ["specific risk mentioned or implied"],

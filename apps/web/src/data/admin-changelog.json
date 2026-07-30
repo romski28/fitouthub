@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-30-d007618d",
+    "date": "2026-07-30T17:16:06+08:00",
+    "title": "fix(ai): walk full thread in compile by starting from latest intake",
+    "summary": "fix(ai): walk full thread in compile by starting from latest intake",
+    "areas": [
+      "api"
+    ],
+    "commit": "d007618d",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-30-12095177",
     "date": "2026-07-30T16:44:14+08:00",
     "title": "fix(ai): strengthen anti-repetition with explicit examples and lower filter threshold",
