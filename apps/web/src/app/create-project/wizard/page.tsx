@@ -392,6 +392,7 @@ export default function CreateProjectWizardPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
   const compileFiredRef = useRef(false);
+  const latestIntakeIdRef = useRef<string | null>(null);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -428,6 +429,8 @@ export default function CreateProjectWizardPage() {
     setAiSafetyNotes([]);
     setAiRiskNotes([]);
     setAiRiskLevel(null);
+    compileFiredRef.current = false;
+    latestIntakeIdRef.current = null;
   }, [hydrated, searchParams]);
 
   useEffect(() => {
@@ -847,7 +850,7 @@ export default function CreateProjectWizardPage() {
         body: JSON.stringify({
           prompt,
           sessionId: effectiveSessionId,
-          intakeId: currentAiIntakeId || undefined,
+          intakeId: latestIntakeIdRef.current || undefined,
         }),
       });
 
@@ -1092,6 +1095,11 @@ export default function CreateProjectWizardPage() {
           : null);
       if (nextIntakeId) {
         setCurrentAiIntakeId(nextIntakeId);
+      }
+
+      // Track the latest per-turn intake ID for chaining the next turn
+      if (typeof payload?.intakeId === 'string' && payload.intakeId.trim().length > 0) {
+        latestIntakeIdRef.current = payload.intakeId.trim();
       }
 
       let nextPendingOffer: ServiceOfferType | null = null;

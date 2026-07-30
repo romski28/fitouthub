@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-07-30-c41da47c",
+    "date": "2026-07-30T21:51:49+08:00",
+    "title": "fix(ai): chain intakes correctly — each turn links to previous, not root",
+    "summary": "fix(ai): chain intakes correctly — each turn links to previous, not root",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "c41da47c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-30-6e861189",
     "date": "2026-07-30T21:27:37+08:00",
     "title": "debug: add turn-collection logging to compileIntakeScope",

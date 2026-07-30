@@ -3157,7 +3157,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         ...(activeThread
           ? {
               aiThread: {
-                sourceIntakeId: activeThread.id,
+                // Chain to the PREVIOUS turn's intake (context.intakeId), not the root.
+                // This creates a linked list, not a star, so backward walks find all turns.
+                sourceIntakeId: context?.intakeId || activeThread.id,
                 windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
               } as Prisma.InputJsonValue,
             }
