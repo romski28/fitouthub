@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-d2260b64",
+    "date": "2026-07-31T14:10:14+08:00",
+    "title": "fix(ai): enforce 3-question minimum with confidence guard, tighten compile",
+    "summary": "fix(ai): enforce 3-question minimum with confidence guard, tighten compile",
+    "areas": [
+      "api"
+    ],
+    "commit": "d2260b64",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-2d38bcf5",
     "date": "2026-07-31T13:52:51+08:00",
     "title": "fix(ai): enforce 3-5 question pacing in conversational prompt",
