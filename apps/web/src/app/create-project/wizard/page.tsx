@@ -392,6 +392,7 @@ export default function CreateProjectWizardPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasManualStepNavigationRef = useRef(false);
   const compileFiredRef = useRef(false);
+  const compilePromiseRef = useRef<Promise<Record<string, unknown> | null> | null>(null);
   const latestIntakeIdRef = useRef<string | null>(null);
 
   const createAiSessionId = () => (
@@ -430,6 +431,7 @@ export default function CreateProjectWizardPage() {
     setAiRiskNotes([]);
     setAiRiskLevel(null);
     compileFiredRef.current = false;
+    compilePromiseRef.current = null;
     latestIntakeIdRef.current = null;
   }, [hydrated, searchParams]);
 
@@ -700,8 +702,17 @@ export default function CreateProjectWizardPage() {
     }
   };
 
-  const goNext = () => {
+  const goNext = async () => {
     if (!canGoNext) return;
+
+    // If leaving the chat step and compile is in progress, wait for it (max 8s)
+    // so safety/scope data is available for the intermediate page and project creation.
+    if (currentStep === 0 && compilePromiseRef.current) {
+      await Promise.race([
+        compilePromiseRef.current,
+        new Promise((r) => setTimeout(r, 8000)),
+      ]);
+    }
 
     hasManualStepNavigationRef.current = true;
     setCurrentStep((prev) => Math.min(prev + 1, stepsRef.current.length - 1));
@@ -1022,15 +1033,21 @@ export default function CreateProjectWizardPage() {
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
+      // Count how many questions the AI has asked (assistant messages with options)
+      const assistantQuestionCount = chatMessages.filter((m) => m.role === 'assistant' && m.options && m.options.length > 0).length;
+      // Require at least 3 AI questions before allowing summary confirmation
+      const hasEnoughHistory = assistantQuestionCount >= 3;
       // Trigger summary confirmation when the AI is done asking questions OR confidence is high enough
-      const shouldOfferSummaryConfirmation = hasCoreBrief && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
+      const shouldOfferSummaryConfirmation = hasCoreBrief && hasEnoughHistory && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
 
       // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
       // and a comprehensive scope from the full conversation. Populate wizard state
       // so they appear on the intermediate page and flow through to project creation.
       if (shouldOfferSummaryConfirmation && currentAiIntakeId && !compileFiredRef.current) {
         compileFiredRef.current = true;
-        triggerCompile(currentAiIntakeId).then((compiled) => {
+        const compilePromise = triggerCompile(currentAiIntakeId);
+        compilePromiseRef.current = compilePromise;
+        compilePromise.then((compiled) => {
           if (!compiled) return;
 
           // Safety

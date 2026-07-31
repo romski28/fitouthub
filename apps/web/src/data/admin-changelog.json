@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-6ddd7cd9",
+    "date": "2026-07-31T14:33:22+08:00",
+    "title": "fix: wait for compile before advancing, enforce 3-question minimum",
+    "summary": "fix: wait for compile before advancing, enforce 3-question minimum",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ddd7cd9",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-31-0797d1bc",
     "date": "2026-07-31T14:17:53+08:00",
     "title": "fix: move transcript log after declaration",
