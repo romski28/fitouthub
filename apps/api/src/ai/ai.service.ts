@@ -1328,7 +1328,7 @@ OUTPUT SCHEMA
     const allowedTrades = await this.getAllowedTrades();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Mimo, a friendly assistant helping a client describe their renovation project for a tradesperson.
+    const systemPrompt = `You are Mimo, a friendly assistant helping a client describe their renovation project for a tradesperson. Respond in JSON.
 
 # YOUR JOB
 Ask 3-5 clear questions to understand the project. Then write a good summary.
