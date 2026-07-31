@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-7c0425a9",
+    "date": "2026-07-31T16:18:04+08:00",
+    "title": "fix: replace toilet-specific rule with generic scope-focus rule",
+    "summary": "fix: replace toilet-specific rule with generic scope-focus rule",
+    "areas": [
+      "api"
+    ],
+    "commit": "7c0425a9",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-d5dde9c6",
     "date": "2026-07-31T16:15:08+08:00",
     "title": "fix: prevent scope-creep questions, make safety mandatory in compile",
