@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-955beaaa",
+    "date": "2026-07-31T15:55:49+08:00",
+    "title": "fix(ai): strengthen compile prompt for safety/assumptions/risks",
+    "summary": "fix(ai): strengthen compile prompt for safety/assumptions/risks",
+    "areas": [
+      "api"
+    ],
+    "commit": "955beaaa",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-07e23a9f",
     "date": "2026-07-31T15:39:27+08:00",
     "title": "revert: remove back-end enforcement, restore working prompt",

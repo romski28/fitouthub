@@ -3343,8 +3343,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
 
 CRITICAL RULES:
 - ONLY include facts the client actually stated. If something was NOT discussed, OMIT it completely. NEVER write "was not specified", "no details were provided", or "not mentioned".
-- Include EVERY concrete detail the client shared: what the problem is, where, when it happens, what it sounds like, how often, any measurements or ages mentioned, what the client wants done.
+- Include EVERY concrete detail the client shared.
 - Be brief: 2-4 sentences. No filler.
+- ALWAYS provide assumptions, risks, and safetyAssessment. Even for low-risk jobs, think about what a tradesperson needs to know before arriving.
 
 Return ONLY valid JSON (no markdown):
 
@@ -3352,12 +3353,12 @@ Return ONLY valid JSON (no markdown):
   "summary": "2-4 sentence factual scope. List every concrete detail from the conversation.",
   "title": "6-10 word job title",
   "trades": ["exact", "trade", "names"],
-  "assumptions": ["specific assumption from conversation"],
-  "risks": ["specific risk mentioned or implied"],
+  "assumptions": ["What should the tradesperson assume about the property? E.g. standard residential, accessible cistern, copper piping. 2-3 practical assumptions."],
+  "risks": ["What could go wrong? E.g. old components may break during removal, hidden leak behind wall, water damage. 2-3 practical risks."],
   "safetyAssessment": {
     "riskLevel": "low|medium|high|critical",
-    "concerns": ["safety concern if any"],
-    "temporaryMitigations": ["mitigation if discussed"]
+    "concerns": ["Even for low-risk jobs, note basic safety: water and electricity proximity, slip hazard from water spillage, sharp edges on metal components. 1-2 concerns."],
+    "temporaryMitigations": ["What can the client do now? E.g. turn off cistern isolation valve overnight, place towel under cistern. 1 practical tip if relevant."]
   }
 }`,
       },
