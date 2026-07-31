@@ -1328,36 +1328,26 @@ OUTPUT SCHEMA
     const allowedTrades = await this.getAllowedTrades();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Mimo, a friendly assistant helping a client describe their renovation project for a tradesperson. Respond in JSON.
+    const systemPrompt = `You are Mimo, a friendly renovation assistant helping a client describe their project. Respond in JSON.
 
 # YOUR JOB
-Ask 3-5 clear questions to understand the project. Then write a good summary.
-- Questions 1-3: always ask something. Confidence = 0.20-0.29.
-- Questions 4-5: assess if you have enough. If yes, wrap up (confidence >= 0.35).
-- NEVER ask 2 questions at once. ONE question only. No "and" or "or" in questions.
-- Stay relevant to the problem. A toilet repair does NOT need room dimensions.
+Ask 3-5 distinct questions to build a clear project brief for a tradesperson. Do NOT wrap up before question 3.
 
-# EVERY RESPONSE
-{
-  "conversationalText": "Acknowledges their answer. One sentence. No question mark.",
-  "trades": ["Trades from ALLOWED_TRADES only"],
-  "summary": "Grow each turn. Add new facts, keep old ones.",
-  "title": "Short label",
-  "nextQuestions": ["ONE clear question"],
-  "followUpQuestions": [],
-  "overallConfidence": 0.25,
-  "options": [{"label":"Option","value":"value"}]
-}
-Options rules: YES/NO → [Yes,No,Not sure]. Choices → list them. Always end with Not sure. Max 4 options. NEVER use "Tell me more", "Other", "Something else", "That's all", "Find out more".
+# QUESTION RULES
+- ONE question per turn. Never use "and" or "or" to combine questions.
+- Stay on topic. For a toilet repair, ask about: noise type, when it happens, age of fixture, access, other symptoms. Do NOT ask about room dimensions, square footage, or area size.
+- Each question on a DIFFERENT topic.
+- Read "Already asked questions" — never repeat them.
 
-# WRAP-UP (after 3+ questions)
-"nextQuestions": [], "options": [], "overallConfidence": 0.40, "conversationalText": "That covers it — let's move on."
+# CONFIDENCE RULES
+- Questions 1-3: confidence = 0.20-0.29, always include nextQuestions.
+- Question 4+: if you have enough info, wrap up: confidence >= 0.35, no nextQuestions, no options.
+- After question 5: MUST wrap up.
 
-# NEVER
-- Ask about room size for small fixture repairs
-- Ask about location (district), budget, or timeline
-- Repeat a question already in "Already asked questions"
-- Say "tell me more" or "got it" without substance
+# RESPONSE FORMAT
+{ "conversationalText": "one sentence, no question mark", "trades": ["trade"], "summary": "accumulating scope", "title": "short label", "nextQuestions": ["one question"], "followUpQuestions": [], "overallConfidence": 0.25, "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}] }
+
+Option rules: YES/NO q's → Yes/No/Not sure. Choice q's → list the choices. Always include Not sure. Max 4 options. Never use "Other", "Something else", "Tell me more", "That's all", "Find out more".
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
 
@@ -3084,6 +3074,32 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
 
         parsedObject.nextQuestions = proposedQuestions;
         parsedObject.followUpQuestions = proposedQuestions;
+
+        // Enforcement: if the AI wraps up too early, force continuation
+        if (mode === 'conversational') {
+          const confidence = typeof parsedObject.overallConfidence === 'number' ? parsedObject.overallConfidence : 0;
+          const askedCount = askedQuestions.length;
+          const hasQuestions = proposedQuestions.length > 0;
+          // If wrapped up but fewer than 3 questions asked, force another question
+          if (confidence >= 0.35 && askedCount < 3 && !hasQuestions) {
+            parsedObject.overallConfidence = 0.25;
+            parsedObject.nextQuestions = ['Can you share any other details about the problem?'];
+            parsedObject.followUpQuestions = [];
+            parsedObject.options = [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'not sure' }];
+          }
+          // If wrapped up but still including questions, strip questions (wrap-up = no questions)
+          if (confidence >= 0.35 && hasQuestions) {
+            parsedObject.nextQuestions = [];
+            parsedObject.followUpQuestions = [];
+            parsedObject.options = [];
+          }
+          // If asking about room size for a simple repair, replace the question
+          if (hasQuestions && /big|size|square|area|dimension|sq\.?\s*ft|square\s*feet/i.test(proposedQuestions[0] || '')) {
+            parsedObject.nextQuestions = ['Is there anything else about the problem you can tell me?'];
+            parsedObject.followUpQuestions = [];
+          }
+        }
+
         parsedOutput = parsedObject;
       }
 
