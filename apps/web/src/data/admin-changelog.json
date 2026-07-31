@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-0797d1bc",
+    "date": "2026-07-31T14:17:53+08:00",
+    "title": "fix: move transcript log after declaration",
+    "summary": "fix: move transcript log after declaration",
+    "areas": [
+      "api"
+    ],
+    "commit": "0797d1bc",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-d2260b64",
     "date": "2026-07-31T14:10:14+08:00",
     "title": "fix(ai): enforce 3-question minimum with confidence guard, tighten compile",

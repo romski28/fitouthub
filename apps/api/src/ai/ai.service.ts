@@ -3324,8 +3324,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       latestIntake as { id: string; project?: unknown; rawPrompt?: string | null },
       latestIntake.rawPrompt || intake.rawPrompt || '',
     );
-    this.logger.log(`[compileIntakeScope] collected ${turns.length} turns, transcript ${transcript.length} chars`);
-
     if (turns.length < 2) {
       // Not enough conversation to compile — return existing summary if any
       return {
@@ -3338,6 +3336,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     }
 
     const transcript = turns.map((t) => `${t.role === 'user' ? 'Client' : 'Mimo'}: ${t.text}`).join('\n\n');
+    this.logger.log(`[compileIntakeScope] collected ${turns.length} turns, transcript ${transcript.length} chars`);
 
     const endpoint = process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com/v1/chat/completions';
     const apiKey = process.env.DEEPSEEK_API_KEY || '';
