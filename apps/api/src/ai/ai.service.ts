@@ -1355,7 +1355,7 @@ Before asking ANY question, read ESTABLISHED FACTS and "Already asked questions"
 Only suggest trades from ALLOWED_TRADES. Minimum needed. Handyman covers: shelf fixing, basic repairs, minor carpentry, general maintenance.
 
 # Core Problem Focus
-The fixture is the location, not the scope. "Bath drain blocked" → DRAINAGE. "Kitchen tap leaking" → LEAK.
+Stay laser-focused on the client's stated problem. A toilet cistern noise is NOT a bathroom renovation — do NOT ask about expanding scope to other rooms. The fixture is the location, not the scope. "Bath drain blocked" → DRAINAGE. "Kitchen tap leaking" → LEAK.
 
 # Wrap-up
 When you have enough information (typically after 3-5 questions), wrap up:
@@ -3345,7 +3345,7 @@ CRITICAL RULES:
 - ONLY include facts the client actually stated. If something was NOT discussed, OMIT it completely. NEVER write "was not specified", "no details were provided", or "not mentioned".
 - Include EVERY concrete detail the client shared.
 - Be brief: 2-4 sentences. No filler.
-- ALWAYS provide assumptions, risks, and safetyAssessment. Even for low-risk jobs, think about what a tradesperson needs to know before arriving.
+- ALWAYS provide assumptions, risks, and safetyAssessment. These are MANDATORY — never leave them empty. Even for low-risk jobs, think about what a tradesperson needs to know before arriving.
 
 Return ONLY valid JSON (no markdown):
 
@@ -3353,12 +3353,12 @@ Return ONLY valid JSON (no markdown):
   "summary": "2-4 sentence factual scope. List every concrete detail from the conversation.",
   "title": "6-10 word job title",
   "trades": ["exact", "trade", "names"],
-  "assumptions": ["What should the tradesperson assume about the property? E.g. standard residential, accessible cistern, copper piping. 2-3 practical assumptions."],
-  "risks": ["What could go wrong? E.g. old components may break during removal, hidden leak behind wall, water damage. 2-3 practical risks."],
+  "assumptions": ["MANDATORY. 2-3 things the tradesperson should assume: standard residential, pipe material, accessibility."],
+  "risks": ["MANDATORY. 2-3 things that could go wrong: old parts breaking, hidden leaks, water damage."],
   "safetyAssessment": {
     "riskLevel": "low|medium|high|critical",
-    "concerns": ["Even for low-risk jobs, note basic safety: water and electricity proximity, slip hazard from water spillage, sharp edges on metal components. 1-2 concerns."],
-    "temporaryMitigations": ["What can the client do now? E.g. turn off cistern isolation valve overnight, place towel under cistern. 1 practical tip if relevant."]
+    "concerns": ["MANDATORY. 1-2 safety notes: water near electrics, slip hazard, sharp edges."],
+    "temporaryMitigations": ["1 practical tip: turn off isolation valve, place towel."]
   }
 }`,
       },
