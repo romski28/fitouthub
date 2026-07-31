@@ -1359,7 +1359,7 @@ Stay focused on what the client described — do not expand the scope. If they m
 
 # Wrap-up
 When you have enough information (typically after 3-5 questions), wrap up:
-  - conversationalText = brief closing statement
+  - conversationalText = brief closing like "That covers it — let's move on." Never say "tell me more" or ask for more info.
   - NO nextQuestions, NO options (empty arrays)
   - summary = thorough scope paragraph
   - title = specific 6-12 word job description

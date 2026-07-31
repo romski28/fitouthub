@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-8090fbac",
+    "date": "2026-07-31T16:53:18+08:00",
+    "title": "fix: prevent 'tell me more' as wrap-up conversationalText",
+    "summary": "fix: prevent 'tell me more' as wrap-up conversationalText",
+    "areas": [
+      "api"
+    ],
+    "commit": "8090fbac",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-7c0425a9",
     "date": "2026-07-31T16:18:04+08:00",
     "title": "fix: replace toilet-specific rule with generic scope-focus rule",
