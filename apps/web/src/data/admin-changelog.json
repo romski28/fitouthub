@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-07-31-07e23a9f",
+    "date": "2026-07-31T15:39:27+08:00",
+    "title": "revert: remove back-end enforcement, restore working prompt",
+    "summary": "revert: remove back-end enforcement, restore working prompt",
+    "areas": [
+      "api"
+    ],
+    "commit": "07e23a9f",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-07-31-6d7b35ac",
     "date": "2026-07-31T15:26:54+08:00",
     "title": "fix(ai): back-end enforcement + restored working prompt structure",
