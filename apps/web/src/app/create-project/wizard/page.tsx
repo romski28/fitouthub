@@ -1033,12 +1033,7 @@ export default function CreateProjectWizardPage() {
       const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
       const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
       const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
-      // Count how many questions the AI has asked (assistant messages with options)
-      const assistantQuestionCount = chatMessages.filter((m) => m.role === 'assistant' && m.options && m.options.length > 0).length;
-      // Require at least 3 AI questions before allowing summary confirmation
-      const hasEnoughHistory = assistantQuestionCount >= 3;
-      // Trigger summary confirmation when the AI is done asking questions OR confidence is high enough
-      const shouldOfferSummaryConfirmation = hasCoreBrief && hasEnoughHistory && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
+      const shouldOfferSummaryConfirmation = hasCoreBrief && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
 
       // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
       // and a comprehensive scope from the full conversation. Populate wizard state

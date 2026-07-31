@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-07-31-2db00ba9",
+    "date": "2026-07-31T14:57:59+08:00",
+    "title": "fix: simplified prompt, compile fires from project creation",
+    "summary": "fix: simplified prompt, compile fires from project creation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2db00ba9",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-07-31-6ddd7cd9",
     "date": "2026-07-31T14:33:22+08:00",
     "title": "fix: wait for compile before advancing, enforce 3-question minimum",

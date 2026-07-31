@@ -5405,8 +5405,18 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
+    // Fire-and-forget: compile the AI conversation into project scope.
+    // Runs after project creation so safety/scope data is always available.
+    if (aiIntakeId) {
+      this.aiService.compileIntakeScope(aiIntakeId).catch((err) => {
+        console.warn('[ProjectsService.create] Intake scope compile failed (non-fatal):', {
+          aiIntakeId,
+          error: (err as Error)?.message,
+        });
+      });
+    }
+
     // Fire-and-forget: auto-generate initial AI scope for the new project.
-    // Runs non-blocking so project creation is never delayed or blocked.
     this.aiService
       .generateProjectScope(
         project.id,
