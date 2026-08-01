@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-f35c0dd7",
+    "date": "2026-08-01T11:52:01+08:00",
+    "title": "refactor(ui): simplify pro overview — remove name/location, flatten scope",
+    "summary": "refactor(ui): simplify pro overview — remove name/location, flatten scope",
+    "areas": [
+      "web"
+    ],
+    "commit": "f35c0dd7",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-764e2fe8",
     "date": "2026-08-01T11:45:49+08:00",
     "title": "refactor(ui): remove Trade Scope panel from pro overview",
