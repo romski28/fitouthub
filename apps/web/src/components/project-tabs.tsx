@@ -265,7 +265,7 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({ id, title, isOpen,
         </span>
       </button>
       {isOpen && (
-        <div className="border-t border-[rgba(120,53,15,0.12)] px-4 py-3 bg-transparent">
+        <div className="border-t border-[rgba(120,53,15,0.12)] px-4 py-3 bg-[rgba(255,250,240,0.72)]">
           {children}
         </div>
       )}
