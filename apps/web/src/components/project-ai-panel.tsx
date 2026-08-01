@@ -114,7 +114,6 @@ export function ProjectAiPanel({
   const title = toStringValue(aiIntake.title);
   const summary =
     toStringValue(aiIntake.summary) ||
-    toStringValue(aiIntake.scope) ||
     toStringValue(projectJson?.scopeText);
   const propertyType = toStringValue(projectJson?.propertyType);
   const projectScale =

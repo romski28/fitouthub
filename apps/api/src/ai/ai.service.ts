@@ -702,7 +702,6 @@ export class AiService {
       }
       if (threadSummary.summary) {
         parsedObject.summary = threadSummary.summary;
-        parsedObject.scope = threadSummary.summary;
         project.scopeText = threadSummary.summary;
       }
 
@@ -3422,7 +3421,6 @@ Return ONLY valid JSON (no markdown):
       where: { id: intakeId },
       data: {
         summary: summary || undefined,
-        scope: summary || undefined,
         title: title || undefined,
         trades: trades.length > 0 ? trades : undefined,
         assumptions: assumptions.length > 0 ? assumptions : undefined,

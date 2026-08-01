@@ -6,6 +6,7 @@ import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
+import { getProjectScope } from '@/lib/project-scope';
 import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
 import { API_BASE_URL } from '@/config/api';
 import type { Professional } from '@/lib/types';
@@ -817,17 +818,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <span className="font-semibold text-slate-900">Trades:</span> {project.tradesRequired.join(', ')}
                 </p>
               )}
-              {(project.aiIntake?.summary || project.aiIntake?.scope) && (
+              {(() => { const scope = getProjectScope(project); return scope ? (
                 <div className="mt-2 rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Scope</p>
-                  <p className="leading-relaxed text-slate-800">{project.aiIntake.summary || project.aiIntake.scope}</p>
+                  <p className="leading-relaxed text-slate-800">{scope}</p>
                 </div>
-              )}
-              {!project.aiIntake?.summary && !project.aiIntake?.scope && project.notes && (
-                <p>
-                  <span className="font-semibold text-slate-900">Scope:</span> {project.notes}
-                </p>
-              )}
+              ) : null; })()}
               {project.budget && (
                 <p>
                   <span className="font-semibold text-slate-900">Budget:</span> {formatHKD(project.budget)}

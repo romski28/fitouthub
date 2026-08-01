@@ -3,6 +3,7 @@
 import React from 'react';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectSummaryCard } from '@/components/project-summary-card';
+import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseItems,
   getQuoteBreakdownBaseTotal,
@@ -212,7 +213,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         projectName={project.project.projectName}
         location={project.project.region}
         trades={project.projectTradesSnapshot || project.quoteRequestedTrades}
-        scope={project.project.aiIntake?.summary || project.project.aiIntake?.scope || project.project.notes}
+        scope={getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any })}
         isEmergency={project.project.isEmergency}
         budget={project.project.budget}
         compact

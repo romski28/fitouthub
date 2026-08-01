@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-01-0dbd2e28",
+    "date": "2026-08-01T10:27:29+08:00",
+    "title": "refactor: consolidate duplicate scope field, use summary everywhere",
+    "summary": "refactor: consolidate duplicate scope field, use summary everywhere",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0dbd2e28",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/project-ai-panel.tsx",
+      "apps/web/src/lib/project-scope.ts"
+    ]
+  },
+  {
     "id": "2026-08-01-66e44ca6",
     "date": "2026-08-01T09:39:08+08:00",
     "title": "fix: pro overview tab now reads AI-compiled scope like client",
