@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-fd5852a0",
+    "date": "2026-08-01T12:00:24+08:00",
+    "title": "refactor(ui): add accordion roll-ups to pro overview matching client",
+    "summary": "refactor(ui): add accordion roll-ups to pro overview matching client",
+    "areas": [
+      "web"
+    ],
+    "commit": "fd5852a0",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-f35c0dd7",
     "date": "2026-08-01T11:52:01+08:00",
     "title": "refactor(ui): simplify pro overview — remove name/location, flatten scope",

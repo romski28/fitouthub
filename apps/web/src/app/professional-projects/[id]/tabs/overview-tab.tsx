@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { getProjectScope } from '@/lib/project-scope';
 import {
@@ -150,6 +151,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isCounterRequested = project.status === 'counter_requested';
   const isEmergencyProject = project.project.isEmergency === true;
   const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
+  const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({ 'project-overview': true });
 
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
@@ -164,10 +166,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
 
   return (
-    <div className="space-y-6">
+    <AccordionGroup>
       {/* Project Overview */}
-      <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
-        <h2 className="mb-3 text-lg font-bold text-slate-900">Project Overview</h2>
+      <AccordionItem
+        id="project-overview"
+        title="Project Overview"
+        isOpen={expandedAccordions['project-overview'] !== false}
+        onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+      >
         <div className="space-y-2 text-sm text-slate-700">
           {((project.projectTradesSnapshot && project.projectTradesSnapshot.length > 0) || (project.quoteRequestedTrades && project.quoteRequestedTrades.length > 0)) && (
             <div>
@@ -200,11 +206,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <p><span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency</p>
           )}
         </div>
-      </div>
+      </AccordionItem>
 
       {mimoExtras.length > 0 && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.05)]">
-          <h2 className="mb-3 text-lg font-bold text-slate-900">Mimo Added Services</h2>
+        <AccordionItem
+          id="mimo-services"
+          title="Mimo Added Services"
+          isOpen={expandedAccordions['mimo-services'] !== false}
+          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             {mimoExtras.map((extra) => (
               <div
@@ -231,15 +241,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </AccordionItem>
       )}
 
-      {/* Your Quote — slim status card */}
+      {/* Your Quote */}
       {showQuoteCard && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
-          <h2 className="mb-4 text-lg font-bold text-slate-900">
-            {hasQuoted ? 'Your Quote' : 'Submit Your Quote'}
-          </h2>
+        <AccordionItem
+          id="your-quote"
+          title={hasQuoted ? 'Your Quote' : 'Submit Your Quote'}
+          isOpen={expandedAccordions['your-quote'] !== false}
+          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+        >
 
           {!hasQuoted ? (
             <div className="text-center py-4">
@@ -337,14 +349,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             </>
           )}
-        </div>
+        </AccordionItem>
       )}
 
       {project.project.aiIntake && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <AccordionItem
+          id="safety-risks"
+          title="Safety, Assumptions and Risks"
+          isOpen={expandedAccordions['safety-risks'] === true}
+          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+        >
           <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
-        </div>
+        </AccordionItem>
       )}
-    </div>
+    </AccordionGroup>
   );
 };
