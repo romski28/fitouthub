@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-d8ff860a",
+    "date": "2026-08-01T16:32:54+08:00",
+    "title": "fix: re-add PUT /projects/:id to attach uploaded files",
+    "summary": "fix: re-add PUT /projects/:id to attach uploaded files",
+    "areas": [
+      "web"
+    ],
+    "commit": "d8ff860a",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-a8ff3387",
     "date": "2026-08-01T16:29:23+08:00",
     "title": "fix(ui): use shared getUploadResponseKeys in media tab upload",

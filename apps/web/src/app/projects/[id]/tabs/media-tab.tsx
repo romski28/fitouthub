@@ -53,6 +53,8 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   const [viewingFile, setViewingFile] = useState<ProjectPhoto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
 
   const handleUploadFiles = useCallback(async (files: FileList | File[]) => {
     if (files.length === 0) return;
@@ -79,6 +81,20 @@ export const MediaTab: React.FC<MediaTabProps> = ({
         toast.error('No files returned from upload');
         return;
       }
+
+      // Attach uploaded files to the project (merge with existing to avoid overwrites)
+      const existingEntries = (photosRef.current || []).map((p) => ({ url: p.url, note: p.note || '' }));
+      const newEntries = uploadedUrls.map((url) => ({ url, note: '' }));
+      const merged = [...existingEntries, ...newEntries];
+
+      await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ photos: merged }),
+      });
 
       toast.success(`${uploadedUrls.length} file${uploadedUrls.length > 1 ? 's' : ''} uploaded!`);
       onPhotosChanged?.();
