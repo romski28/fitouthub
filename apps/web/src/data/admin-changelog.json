@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-66e44ca6",
+    "date": "2026-08-01T09:39:08+08:00",
+    "title": "fix: pro overview tab now reads AI-compiled scope like client",
+    "summary": "fix: pro overview tab now reads AI-compiled scope like client",
+    "areas": [
+      "web"
+    ],
+    "commit": "66e44ca6",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-07-31-8090fbac",
     "date": "2026-07-31T16:53:18+08:00",
     "title": "fix: prevent 'tell me more' as wrap-up conversationalText",

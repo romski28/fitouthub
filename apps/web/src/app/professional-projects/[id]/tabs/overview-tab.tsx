@@ -25,6 +25,9 @@ interface OverviewTabProps {
       notes?: string;
       aiIntake?: {
         id?: string;
+        summary?: string;
+        scope?: string;
+        title?: string;
         assumptions?: unknown;
         risks?: unknown;
         project?: unknown;
@@ -209,7 +212,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         projectName={project.project.projectName}
         location={project.project.region}
         trades={project.projectTradesSnapshot || project.quoteRequestedTrades}
-        scope={project.project.notes}
+        scope={project.project.aiIntake?.summary || project.project.aiIntake?.scope || project.project.notes}
         isEmergency={project.project.isEmergency}
         budget={project.project.budget}
         compact
