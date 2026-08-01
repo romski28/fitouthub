@@ -1567,6 +1567,8 @@ export class ProfessionalController {
               aiIntake: {
                 select: {
                   id: true,
+                  summary: true,
+                  title: true,
                   assumptions: true,
                   risks: true,
                   project: true,

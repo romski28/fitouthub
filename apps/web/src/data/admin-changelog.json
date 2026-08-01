@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-d568d288",
+    "date": "2026-08-01T11:03:33+08:00",
+    "title": "fix: add summary/title to pro controller aiIntake select",
+    "summary": "fix: add summary/title to pro controller aiIntake select",
+    "areas": [
+      "api"
+    ],
+    "commit": "d568d288",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-08-01-0dbd2e28",
     "date": "2026-08-01T10:27:29+08:00",
     "title": "refactor: consolidate duplicate scope field, use summary everywhere",
