@@ -364,7 +364,7 @@ export const ProfessionalsTab: React.FC<ProfessionalsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Required Trades - always visible */}
       <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.78)] p-4">
         <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700">Required Trades</p>
