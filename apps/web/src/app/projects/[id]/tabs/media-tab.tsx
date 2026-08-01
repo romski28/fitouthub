@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { resolveMediaAssetUrl } from '@/lib/media-assets';
+import { resolveMediaAssetUrl, getUploadResponseKeys } from '@/lib/media-assets';
 import { FileViewerModal } from '@/components/file-viewer-modal';
 import { API_BASE_URL } from '@/config/api';
 
@@ -73,53 +73,14 @@ export const MediaTab: React.FC<MediaTabProps> = ({
       }
 
       const uploadData = await uploadRes.json();
-      // Support multiple upload response formats: { keys: [...] }, { files: [{key}] }, { urls: [...] }
-      const keys: string[] = Array.isArray(uploadData?.keys)
-        ? uploadData.keys
-        : Array.isArray(uploadData?.files)
-          ? uploadData.files.map((f: any) => typeof f === 'string' ? f : (f.key || f.url || f))
-          : Array.isArray(uploadData?.urls)
-            ? uploadData.urls
-            : [];
+      const uploadedUrls = getUploadResponseKeys(uploadData);
 
-      if (keys.length === 0) {
-        // Upload succeeded but we couldn't parse keys — still trigger refresh
-        toast.success('Files uploaded!');
-        onPhotosChanged?.();
+      if (uploadedUrls.length === 0) {
+        toast.error('No files returned from upload');
         return;
       }
 
-      const photoUrls = keys.map((key: string) => {
-        if (typeof key !== 'string') return '';
-        if (key.startsWith('http')) return key;
-        return `${API_BASE_URL.replace(/\/$/, '')}/uploads/${key.replace(/^\//, '')}`;
-      }).filter(Boolean);
-
-      if (photoUrls.length === 0) {
-        toast.success('Files uploaded!');
-        onPhotosChanged?.();
-        return;
-      }
-
-      // Merge with existing photos and update project via PUT
-      const existingEntries = photos.map((p) => ({ url: p.url, note: p.note || '' }));
-      const newEntries = photoUrls.map((url) => ({ url, note: '' }));
-      const merged = [...existingEntries, ...newEntries];
-
-      const updateRes = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ photos: merged }),
-      });
-
-      if (!updateRes.ok) {
-        toast.success('Files uploaded but could not attach to project.');
-      } else {
-        toast.success(`${files.length} file${files.length > 1 ? 's' : ''} uploaded!`);
-      }
+      toast.success(`${uploadedUrls.length} file${uploadedUrls.length > 1 ? 's' : ''} uploaded!`);
       onPhotosChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';

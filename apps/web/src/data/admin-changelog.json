@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-a8ff3387",
+    "date": "2026-08-01T16:29:23+08:00",
+    "title": "fix(ui): use shared getUploadResponseKeys in media tab upload",
+    "summary": "fix(ui): use shared getUploadResponseKeys in media tab upload",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8ff3387",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-0a1ddb9b",
     "date": "2026-08-01T16:15:22+08:00",
     "title": "fix(ui): move upload panel below gallery, improve upload response parsing",
