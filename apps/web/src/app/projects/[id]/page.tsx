@@ -2386,7 +2386,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Overview */}
         {activeTab === 'overview' && project && (
-          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] min-h-[60vh] w-full overflow-x-hidden">
             <OverviewTab
               project={project}
               expandedAccordions={expandedAccordions}
@@ -2432,7 +2432,7 @@ export default function ClientProjectDetailPage() {
         )}
 
         {activeTab === 'ai-scope' && project && (
-          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
             <ProjectAiScopePanel
               projectId={projectId}
               accessToken={accessToken || null}
@@ -2443,7 +2443,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Financials */}
         {activeTab === 'financials' && hasPostAwardLifecycleAccess && project && (
-          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
             <ClientFinancialsTab
               projectId={projectId}
               accessToken={accessToken || null}
@@ -2466,7 +2466,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Site Access */}
         {activeTab === 'site-access' && (
-          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
             <SiteAccessTab
               siteAccessRequests={siteAccessRequests}
               siteVisits={siteVisits}
@@ -2523,7 +2523,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Professionals */}
           {activeTab === 'professionals' && project && (
-            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
               <ProfessionalsTab
                 project={project}
                 professionals={project.professionals || []}
@@ -2552,7 +2552,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Contract */}
           {activeTab === 'contract' && isAwarded && project && (
-            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
               <ContractTab
                 projectId={project.id}
                 accessToken={accessToken || ''}
@@ -2564,7 +2564,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Schedule */}
           {activeTab === 'schedule' && isAwarded && project && (
-            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
               <ClientScheduleTab
                 tab="schedule"
                 projectId={projectId}
@@ -2587,7 +2587,7 @@ export default function ClientProjectDetailPage() {
 
           {/* Tab Content - Media */}
           {activeTab === 'media' && project && (
-            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+            <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
               <MediaTab
                 photos={(project as any).photos || []}
                 projectId={projectId}
@@ -2602,7 +2602,7 @@ export default function ClientProjectDetailPage() {
 
         {/* Tab Content - Chat */}
         {activeTab === 'chat' && (
-          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm">
+          <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)] backdrop-blur-sm w-full overflow-x-hidden">
             <ChatTab
               projectId={projectId}
               professionals={project.professionals || []}

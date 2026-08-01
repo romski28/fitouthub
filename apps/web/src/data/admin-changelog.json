@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-577df513",
+    "date": "2026-08-01T21:58:30+08:00",
+    "title": "fix(ui): add w-full overflow-x-hidden to all tab containers",
+    "summary": "fix(ui): add w-full overflow-x-hidden to all tab containers",
+    "areas": [
+      "web"
+    ],
+    "commit": "577df513",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-bfd2dcbb",
     "date": "2026-08-01T16:48:03+08:00",
     "title": "feat: Enter key saves image note in media tab",
