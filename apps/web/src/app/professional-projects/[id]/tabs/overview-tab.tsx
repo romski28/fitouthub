@@ -175,7 +175,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <p><span className="font-semibold text-slate-900">Location:</span> {project.project.region}</p>
           )}
           {((project.projectTradesSnapshot && project.projectTradesSnapshot.length > 0) || (project.quoteRequestedTrades && project.quoteRequestedTrades.length > 0)) && (
-            <p><span className="font-semibold text-slate-900">Trades:</span> {(project.projectTradesSnapshot || project.quoteRequestedTrades || []).join(', ')}</p>
+            <div>
+              <p className="font-semibold text-slate-900 mb-1.5">Trades:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {projectTradeScope.map((trade) => {
+                  const isProTrade = requestedTradeScope.some((rt) => rt.toLowerCase() === trade.toLowerCase());
+                  return (
+                    <span
+                      key={`overview-trade-${trade}`}
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${isProTrade ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.82)] text-slate-500'}`}
+                    >
+                      {trade}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
           )}
           {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
             <div className="mt-2 rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-4 py-3">
