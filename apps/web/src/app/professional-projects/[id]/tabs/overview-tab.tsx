@@ -216,8 +216,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {project.project.region && (
             <p><span className="font-semibold text-slate-900">Location:</span> {project.project.region}</p>
           )}
-          {(project.projectTradesSnapshot || project.quoteRequestedTrades)?.length > 0 && (
-            <p><span className="font-semibold text-slate-900">Trades:</span> {(project.projectTradesSnapshot || project.quoteRequestedTrades)!.join(', ')}</p>
+          {((project.projectTradesSnapshot && project.projectTradesSnapshot.length > 0) || (project.quoteRequestedTrades && project.quoteRequestedTrades.length > 0)) && (
+            <p><span className="font-semibold text-slate-900">Trades:</span> {(project.projectTradesSnapshot || project.quoteRequestedTrades || []).join(', ')}</p>
           )}
           {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
             <div className="mt-2 rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-4 py-3">

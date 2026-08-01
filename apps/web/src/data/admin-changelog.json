@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-f3a51769",
+    "date": "2026-08-01T11:18:45+08:00",
+    "title": "fix: TypeScript strict null check for pro trades display",
+    "summary": "fix: TypeScript strict null check for pro trades display",
+    "areas": [
+      "web"
+    ],
+    "commit": "f3a51769",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-583a4089",
     "date": "2026-08-01T11:13:23+08:00",
     "title": "refactor(ui): replace pro ProjectSummaryCard with matching beige panel",
