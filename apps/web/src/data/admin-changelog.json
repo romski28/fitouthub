@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-764e2fe8",
+    "date": "2026-08-01T11:45:49+08:00",
+    "title": "refactor(ui): remove Trade Scope panel from pro overview",
+    "summary": "refactor(ui): remove Trade Scope panel from pro overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "764e2fe8",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-46c52aa7",
     "date": "2026-08-01T11:42:50+08:00",
     "title": "refactor(ui): show all trades in pro overview with color coding",

@@ -151,7 +151,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isEmergencyProject = project.project.isEmergency === true;
   const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
 
-  const isAwardedProject = String(project.status || '').toLowerCase() === 'awarded';
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
     : [];
@@ -206,51 +205,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
         </div>
       </div>
-
-      {(isAwardedProject || requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
-          <h2 className="mb-3 text-lg font-bold text-slate-900">{isAwardedProject ? 'Trades Awarded' : 'Your Trade Scope'}</h2>
-          <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{isAwardedProject ? 'Awarded to you' : 'Quoted by you'}</p>
-              {requestedTradeScope.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {requestedTradeScope.map((trade) => (
-                    <span
-                      key={`scope-requested-${trade}`}
-                      className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800"
-                    >
-                      {trade}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-600">
-                  {isAwardedProject
-                    ? 'No awarded trade tags were recorded for this project yet.'
-                    : 'To be confirmed based on your supplied trade scope.'}
-                </p>
-              )}
-            </div>
-
-            {projectTradeScope.length > 0 && (
-              <div className="border-t border-[rgba(120,53,15,0.12)] pt-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">All project trades</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {projectTradeScope.map((trade) => (
-                    <span
-                      key={`scope-project-${trade}`}
-                      className="rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.82)] px-2 py-0.5 text-[11px] font-semibold text-slate-700"
-                    >
-                      {trade}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {mimoExtras.length > 0 && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.05)]">
