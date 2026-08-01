@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-583a4089",
+    "date": "2026-08-01T11:13:23+08:00",
+    "title": "refactor(ui): replace pro ProjectSummaryCard with matching beige panel",
+    "summary": "refactor(ui): replace pro ProjectSummaryCard with matching beige panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "583a4089",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-d568d288",
     "date": "2026-08-01T11:03:33+08:00",
     "title": "fix: add summary/title to pro controller aiIntake select",

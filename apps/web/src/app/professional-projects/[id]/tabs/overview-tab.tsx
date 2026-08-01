@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
-import { ProjectSummaryCard } from '@/components/project-summary-card';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseItems,
@@ -209,15 +208,31 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-6">
-      <ProjectSummaryCard
-        projectName={project.project.projectName}
-        location={project.project.region}
-        trades={project.projectTradesSnapshot || project.quoteRequestedTrades}
-        scope={getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any })}
-        isEmergency={project.project.isEmergency}
-        budget={project.project.budget}
-        compact
-      />
+      {/* Project Overview */}
+      <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
+        <h2 className="mb-3 text-lg font-bold text-slate-900">Project Overview</h2>
+        <div className="space-y-2 text-sm text-slate-700">
+          <p><span className="font-semibold text-slate-900">Project:</span> {project.project.projectName || 'Untitled'}</p>
+          {project.project.region && (
+            <p><span className="font-semibold text-slate-900">Location:</span> {project.project.region}</p>
+          )}
+          {(project.projectTradesSnapshot || project.quoteRequestedTrades)?.length > 0 && (
+            <p><span className="font-semibold text-slate-900">Trades:</span> {(project.projectTradesSnapshot || project.quoteRequestedTrades)!.join(', ')}</p>
+          )}
+          {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
+            <div className="mt-2 rounded-xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Scope</p>
+              <p className="leading-relaxed text-slate-800">{scope}</p>
+            </div>
+          ) : null; })()}
+          {project.project.budget && (
+            <p><span className="font-semibold text-slate-900">Budget:</span> HK$ {Number(project.project.budget).toLocaleString()}</p>
+          )}
+          {project.project.isEmergency && (
+            <p><span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency</p>
+          )}
+        </div>
+      </div>
 
       {(isAwardedProject || requestedTradeScope.length > 0 || projectTradeScope.length > 0) && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
