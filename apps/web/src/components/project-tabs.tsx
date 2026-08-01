@@ -245,11 +245,11 @@ interface AccordionItemProps {
 
 export const AccordionItem: React.FC<AccordionItemProps> = ({ id, title, isOpen, onToggle, children, badge }) => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-transparent backdrop-blur-sm">
+    <div className="overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.65)]">
       <button
         onClick={() => onToggle(id)}
         className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-          isOpen ? 'bg-[rgba(255,250,240,0.82)] border-b border-[rgba(120,53,15,0.12)]' : 'hover:bg-[rgba(255,250,240,0.52)]'
+          isOpen ? 'bg-[rgba(255,250,240,0.82)] border-b border-[rgba(120,53,15,0.12)]' : 'bg-[rgba(255,250,240,0.75)] hover:bg-[rgba(255,250,240,0.88)]'
         }`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
