@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseItems,
@@ -139,47 +138,6 @@ const getExtraStatusClasses = (value?: string) => {
   return 'border-amber-300 bg-amber-50 text-amber-700';
 };
 
-const extractOverviewSummaryLines = (value?: string): string[] => {
-  const source = (value || '').trim();
-  if (!source) return [];
-
-  const lines = source
-    .replace(/\r\n/g, '\n')
-    .replace(/\s+(Summary:)/gi, '\n$1')
-    .replace(/\s+(Assumptions:)/gi, '\n$1')
-    .replace(/\s+(Q&A:)/gi, '\n$1')
-    .replace(/\s+(Q\d+\s*:)/gi, '\n$1')
-    .replace(/\n{2,}/g, '\n')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const filtered: string[] = [];
-  let inAssumptions = false;
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (/^Assumptions:/i.test(line)) {
-      inAssumptions = true;
-      continue;
-    }
-    if (/^(Summary:|Q&A:|Q\d+\s*:)/i.test(line)) {
-      inAssumptions = false;
-    }
-    if (inAssumptions) continue;
-
-    if (/^Summary:/i.test(line)) {
-      const summaryContent = line.replace(/^Summary:\s*/i, '').trim();
-      if (summaryContent) filtered.push(summaryContent);
-      continue;
-    }
-
-    filtered.push(line);
-  }
-
-  return filtered;
-};
-
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   project,
   onOpenQuoteModal,
@@ -192,7 +150,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isEmergencyProject = project.project.isEmergency === true;
   const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
 
-  const overviewSummaryLines = extractOverviewSummaryLines(project.project.notes);
   const isAwardedProject = String(project.status || '').toLowerCase() === 'awarded';
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
@@ -307,23 +264,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {overviewSummaryLines.length > 0 && (
-        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] shadow-[0_18px_40px_rgba(81,55,32,0.06)] p-5">
-          <h2 className="mb-3 text-lg font-bold text-slate-900">Summary</h2>
-          <div className="space-y-1.5 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] px-3 py-3">
-            {overviewSummaryLines.map((line, index) => (
-              <p key={`overview-summary-line-${index}`} className="text-sm leading-relaxed text-slate-700">
-                {line}
-              </p>
-            ))}
-            <div className="mt-3 flex gap-4 border-t border-[rgba(120,53,15,0.12)] pt-2 text-xs text-slate-500">
-              <span>Invited: {formatDate(project.createdAt)}</span>
-              {project.updatedAt && <span>Last updated: {formatDate(project.updatedAt)}</span>}
-            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-b3d1bc53",
+    "date": "2026-08-01T11:32:03+08:00",
+    "title": "refactor(ui): remove redundant Summary panel from pro overview",
+    "summary": "refactor(ui): remove redundant Summary panel from pro overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "b3d1bc53",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-f3a51769",
     "date": "2026-08-01T11:18:45+08:00",
     "title": "fix: TypeScript strict null check for pro trades display",
