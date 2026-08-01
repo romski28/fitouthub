@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-bc630a0a",
+    "date": "2026-08-01T11:38:12+08:00",
+    "title": "fix: restore ProjectAiPanel import (still used in pro overview)",
+    "summary": "fix: restore ProjectAiPanel import (still used in pro overview)",
+    "areas": [
+      "web"
+    ],
+    "commit": "bc630a0a",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-b3d1bc53",
     "date": "2026-08-01T11:32:03+08:00",
     "title": "refactor(ui): remove redundant Summary panel from pro overview",

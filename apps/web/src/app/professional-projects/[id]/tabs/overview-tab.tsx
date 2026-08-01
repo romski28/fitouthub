@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseItems,
