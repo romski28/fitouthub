@@ -178,7 +178,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   const isLoading = externalLoading || uploading;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Empty state */}
       {!hasPhotos && !isLoading && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 text-center">

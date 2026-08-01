@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-01-672e9a11",
+    "date": "2026-08-01T22:21:55+08:00",
+    "title": "fix(ui): add w-full to media tab and ai-scope panel inner containers",
+    "summary": "fix(ui): add w-full to media tab and ai-scope panel inner containers",
+    "areas": [
+      "web"
+    ],
+    "commit": "672e9a11",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx",
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-577df513",
     "date": "2026-08-01T21:58:30+08:00",
     "title": "fix(ui): add w-full overflow-x-hidden to all tab containers",
