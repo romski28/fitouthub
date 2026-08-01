@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-0a1ddb9b",
+    "date": "2026-08-01T16:15:22+08:00",
+    "title": "fix(ui): move upload panel below gallery, improve upload response parsing",
+    "summary": "fix(ui): move upload panel below gallery, improve upload response parsing",
+    "areas": [
+      "web"
+    ],
+    "commit": "0a1ddb9b",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-257bf782",
     "date": "2026-08-01T12:17:39+08:00",
     "title": "fix(ui): give collapsed accordion headers a solid warm background",

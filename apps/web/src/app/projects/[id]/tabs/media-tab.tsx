@@ -73,22 +73,33 @@ export const MediaTab: React.FC<MediaTabProps> = ({
       }
 
       const uploadData = await uploadRes.json();
+      // Support multiple upload response formats: { keys: [...] }, { files: [{key}] }, { urls: [...] }
       const keys: string[] = Array.isArray(uploadData?.keys)
         ? uploadData.keys
         : Array.isArray(uploadData?.files)
-          ? uploadData.files.map((f: any) => f.key || f.url || f)
-          : [];
+          ? uploadData.files.map((f: any) => typeof f === 'string' ? f : (f.key || f.url || f))
+          : Array.isArray(uploadData?.urls)
+            ? uploadData.urls
+            : [];
 
       if (keys.length === 0) {
+        // Upload succeeded but we couldn't parse keys — still trigger refresh
         toast.success('Files uploaded!');
         onPhotosChanged?.();
         return;
       }
 
       const photoUrls = keys.map((key: string) => {
+        if (typeof key !== 'string') return '';
         if (key.startsWith('http')) return key;
         return `${API_BASE_URL.replace(/\/$/, '')}/uploads/${key.replace(/^\//, '')}`;
-      });
+      }).filter(Boolean);
+
+      if (photoUrls.length === 0) {
+        toast.success('Files uploaded!');
+        onPhotosChanged?.();
+        return;
+      }
 
       // Merge with existing photos and update project via PUT
       const existingEntries = photos.map((p) => ({ url: p.url, note: p.note || '' }));
@@ -186,46 +197,6 @@ export const MediaTab: React.FC<MediaTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Upload zone — only when allowed */}
-      {allowUpload && (
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
-          dragOver
-            ? 'border-emerald-400 bg-emerald-50/60'
-            : 'border-[rgba(120,53,15,0.18)] bg-[rgba(239,231,207,0.45)]'
-        }`}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <svg className={`w-10 h-10 ${dragOver ? 'text-emerald-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-          </svg>
-          <p className="text-sm font-semibold text-slate-700">
-            {dragOver ? 'Drop files here' : 'Drag & drop files here'}
-          </p>
-          <p className="text-xs text-slate-500">or click to browse — any file type supported</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="*/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="mt-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
-          >
-            {uploading ? 'Uploading…' : 'Browse Files'}
-          </button>
-        </div>
-      </div>
-      )}
-
       {/* Empty state */}
       {!hasPhotos && !isLoading && (
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 text-center">
@@ -233,7 +204,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21z" />
           </svg>
           <h2 className="text-lg font-bold text-slate-900 mt-3">No files yet</h2>
-          <p className="text-sm text-slate-500 mt-1">Drag and drop files above or click Browse Files to upload.</p>
+          <p className="text-sm text-slate-500 mt-1">Use the upload panel below to add files.</p>
         </div>
       )}
 
@@ -364,6 +335,46 @@ export const MediaTab: React.FC<MediaTabProps> = ({
             })}
           </div>
         </div>
+      )}
+
+      {/* Upload zone — below gallery */}
+      {allowUpload && (
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
+          dragOver
+            ? 'border-emerald-400 bg-emerald-50/60'
+            : 'border-[rgba(120,53,15,0.18)] bg-[rgba(239,231,207,0.45)]'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <svg className={`w-10 h-10 ${dragOver ? 'text-emerald-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+          </svg>
+          <p className="text-sm font-semibold text-slate-700">
+            {dragOver ? 'Drop files here' : 'Drag & drop files here'}
+          </p>
+          <p className="text-xs text-slate-500">or click to browse — any file type supported</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="*/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="mt-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
+          >
+            {uploading ? 'Uploading…' : 'Browse Files'}
+          </button>
+        </div>
+      </div>
       )}
 
       <FileViewerModal
