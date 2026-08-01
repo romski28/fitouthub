@@ -55,6 +55,9 @@ export const MediaTab: React.FC<MediaTabProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const photosRef = useRef(photos);
   photosRef.current = photos;
+  // Local state for newly uploaded files so they appear immediately
+  const [pendingPhotos, setPendingPhotos] = useState<ProjectPhoto[]>([]);
+  const displayPhotos = [...photos, ...pendingPhotos.filter((pp) => !photos.some((p) => p.url === pp.url))];
 
   const handleUploadFiles = useCallback(async (files: FileList | File[]) => {
     if (files.length === 0) return;
@@ -97,6 +100,8 @@ export const MediaTab: React.FC<MediaTabProps> = ({
       });
 
       toast.success(`${uploadedUrls.length} file${uploadedUrls.length > 1 ? 's' : ''} uploaded!`);
+      // Show immediately in gallery before parent refresh
+      setPendingPhotos((prev) => [...prev, ...uploadedUrls.map((url) => ({ id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, url, createdAt: new Date().toISOString() }))]);
       onPhotosChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
@@ -169,7 +174,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
     }
   };
 
-  const hasPhotos = photos && photos.length > 0;
+  const hasPhotos = displayPhotos && displayPhotos.length > 0;
   const isLoading = externalLoading || uploading;
 
   return (
@@ -190,13 +195,13 @@ export const MediaTab: React.FC<MediaTabProps> = ({
         <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Project Files ({photos.length})</h2>
+              <h2 className="text-lg font-bold text-slate-900">Project Files ({displayPhotos.length})</h2>
               <p className="text-sm text-slate-500 mt-1">Click a file to view, or use the icons to edit notes / delete</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {photos.map((photo) => {
+            {displayPhotos.map((photo) => {
               const { ext, isImage, isPdf } = getFileInfo(photo.url);
 
               return (
@@ -219,12 +224,10 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                         unoptimized
                       />
                     ) : (
-                      <div className={`flex h-full w-full flex-col items-center justify-center ${
-                        isPdf ? 'bg-red-50' : 'bg-slate-100'
-                      }`}>
-                        <span className={`text-lg font-bold uppercase ${
-                          isPdf ? 'text-red-500' : 'text-slate-400'
-                        }`}>{ext || 'FILE'}</span>
+                      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
+                          <span className="text-xs font-bold uppercase text-slate-500">{ext || 'FILE'}</span>
+                        </div>
                       </div>
                     )}
                     {isLoading && (

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-01-7e6caa92",
+    "date": "2026-08-01T16:43:49+08:00",
+    "title": "fix(ui): auto-refresh gallery on upload, match AI chat file thumbnails",
+    "summary": "fix(ui): auto-refresh gallery on upload, match AI chat file thumbnails",
+    "areas": [
+      "web"
+    ],
+    "commit": "7e6caa92",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/media-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-d8ff860a",
     "date": "2026-08-01T16:32:54+08:00",
     "title": "fix: re-add PUT /projects/:id to attach uploaded files",
