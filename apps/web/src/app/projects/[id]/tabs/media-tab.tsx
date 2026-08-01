@@ -268,6 +268,7 @@ export const MediaTab: React.FC<MediaTabProps> = ({
                         <textarea
                           value={editingNote}
                           onChange={(e) => setEditingNote(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveNote(photo); } }}
                           placeholder="Add a note…"
                           rows={2}
                           className="w-full rounded border border-slate-200 px-2 py-1 text-xs resize-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
