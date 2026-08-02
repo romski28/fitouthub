@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-d5d0b60c",
+    "date": "2026-08-02T21:50:13+08:00",
+    "title": "fix: ensure question fallback works without title/summary from AI",
+    "summary": "fix: ensure question fallback works without title/summary from AI",
+    "areas": [
+      "web"
+    ],
+    "commit": "d5d0b60c",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-ea3e65af",
     "date": "2026-08-02T21:22:19+08:00",
     "title": "fix: block 'That covers it' in options regex, stronger size ban in prompt",

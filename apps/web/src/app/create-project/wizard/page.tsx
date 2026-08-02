@@ -1186,15 +1186,16 @@ export default function CreateProjectWizardPage() {
         setAiChatCanContinue(false);
         setChatMessages((prev) => [...prev, { role: 'assistant', text: appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer), options: answerOptions }]);
       } else {
+        // Safety fallback — ensure a question is always shown on early turns
         const fallbackQuestion = getNextBestMissingBriefQuestion({
-          title: nextTitle || title,
-          summary: nextSummary || summary,
+          title: nextTitle || title || mergedTrades.join(', '),
+          summary: nextSummary || summary || `Client needs help with ${mergedTrades.join(', ')}`,
           trades: mergedTrades,
           isEmergency,
           allowSurveyPrompt: requiresSurveyService !== true,
           hasAskedSizeOrCondition,
           hasSurveyService: requiresSurveyService === true,
-        });
+        }) || `Can you tell me more about the ${mergedTrades.join(', ')} work you need?`;
 
         if (fallbackQuestion) {
           if (isEmergency !== true && !nextPendingOffer) {
