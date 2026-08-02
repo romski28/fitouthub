@@ -1140,22 +1140,6 @@ export default function CreateProjectWizardPage() {
           setPendingServiceOffer(null);
         }
       }
-
-      // Auto-continue: if the AI wraps up before 3 questions, inject a generic question
-      if (hasTrades && hasNoMoreQuestions && assistantQuestionCount < 3) {
-        setAiChatCanContinue(false);
-        const autoQuestions = [
-          'Can you share any other details about the project?',
-          'Is there anything else you can tell me about what you need?',
-          'Can you describe the issue in a bit more detail?',
-        ];
-        const autoQ = autoQuestions[assistantQuestionCount] || autoQuestions[0];
-        setChatMessages((prev) => [...prev, {
-          role: 'assistant',
-          text: autoQ,
-          options: [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'not sure' }],
-        }]);
-      }
       if (shouldOfferSummaryConfirmation) {
         let nextQuestion = nextUnaskedQuestion
           ? appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-04bf5dbf",
+    "date": "2026-08-02T17:14:57+08:00",
+    "title": "fix: remove auto-continuation block, let AI questions flow normally",
+    "summary": "fix: remove auto-continuation block, let AI questions flow normally",
+    "areas": [
+      "web"
+    ],
+    "commit": "04bf5dbf",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-6ce2fa40",
     "date": "2026-08-02T17:02:45+08:00",
     "title": "refactor(ai): two-phase chat — lightweight prompt, wizard enforces 3-question minimum",
