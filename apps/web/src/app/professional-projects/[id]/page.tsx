@@ -1698,11 +1698,13 @@ export default function ProjectDetailPage() {
             />
 
             <TabPanel tab="ai-scope">
+              <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
               <ProjectAiScopePanel
                 projectId={project.project.id}
                 accessToken={accessToken || null}
                 mode="professional"
               />
+              </div>
             </TabPanel>
 
             <SiteAccessTab
