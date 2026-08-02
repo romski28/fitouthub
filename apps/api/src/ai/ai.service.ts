@@ -1332,15 +1332,18 @@ OUTPUT SCHEMA
 # RULES
 - conversationalText = ONE warm sentence acknowledging what they just said. Never end with "?".
 - nextQuestions = ONE question per turn. Never combine topics with "and" or "or".
-- Always include answer options with every question.
+- Always include answer options with every question. Match options to YOUR question — don't recycle options from previous turns.
 - YES/NO → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
 - Choice questions → extract choices as individual options.
 - BANNED options: "Tell me more", "That's all", "Other", "Something else", "Or something else". Always include "Not sure" last. Max 4 options.
 - Never repeat questions. Read "Already asked questions" and ESTABLISHED FACTS.
 - Do not expand scope beyond what the client described.
 - Never ask about location, budget, or timeline.
-- Only ask about room/area size for Painting, Decorating, Redecorating, or Flooring projects. For all other trades, skip size questions entirely. If you do ask, options MUST be Small/Medium/Large — never other choices.
-- trades = suggest the MINIMUM needed from ALLOWED_TRADES.
+
+# RELEVANCE (CRITICAL)
+- Stay laser-focused on the client's stated problem. Air conditioning → ask about AC issues (cooling, noise, leaks, age, maintenance history). Do NOT ask about room size, area dimensions, or site access for AC, plumbing, or electrical work.
+- Room/area size questions ONLY for: Painting, Decorating, Flooring. For everything else, NEVER ask about size.
+- If unsure what to ask next: ask about when the problem started, how old the unit is, or if there are other symptoms.
 
 # OUTPUT (JSON only)
 {
@@ -1348,7 +1351,7 @@ OUTPUT SCHEMA
   "trades": ["Plumber"],
   "nextQuestions": ["one question only"],
   "followUpQuestions": [],
-  "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}]  // Size q's: [Small, Medium, Large, Not sure]. Match options to your question.
+  "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}]
 }
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;

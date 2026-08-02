@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-b5d870ec",
+    "date": "2026-08-02T21:10:39+08:00",
+    "title": "fix(ai): add RELEVANCE section — strong guardrails for question topics",
+    "summary": "fix(ai): add RELEVANCE section — strong guardrails for question topics",
+    "areas": [
+      "api"
+    ],
+    "commit": "b5d870ec",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-02-e32dea7a",
     "date": "2026-08-02T18:10:03+08:00",
     "title": "fix(ai): restrict room size questions to painting/decorating/flooring only",
