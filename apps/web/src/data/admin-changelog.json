@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-2bf69f4e",
+    "date": "2026-08-02T10:13:17+08:00",
+    "title": "fix: stray closing div in professionals tab wrapper",
+    "summary": "fix: stray closing div in professionals tab wrapper",
+    "areas": [
+      "web"
+    ],
+    "commit": "2bf69f4e",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-206942a8",
     "date": "2026-08-02T10:11:08+08:00",
     "title": "refactor(ui): wrap all tab content in shared parent frame",

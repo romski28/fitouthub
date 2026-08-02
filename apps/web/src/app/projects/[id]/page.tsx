@@ -2550,7 +2550,7 @@ export default function ClientProjectDetailPage() {
                 actionBusy={actionBusy}
                 onNavigateTab={(tab) => setActiveTab(tab)}
               />
-            </div>
+            </>
           )}
 
           {/* Tab Content - Contract */}
