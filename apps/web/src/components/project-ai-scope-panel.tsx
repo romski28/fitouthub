@@ -355,7 +355,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
   const auditLog = scope?.scopeAuditLog ?? [];
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="space-y-1">

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-d330c5ed",
+    "date": "2026-08-02T10:47:54+08:00",
+    "title": "fix(ui): add space-y-4 to AI scope panel after wrapper removal",
+    "summary": "fix(ui): add space-y-4 to AI scope panel after wrapper removal",
+    "areas": [
+      "web"
+    ],
+    "commit": "d330c5ed",
+    "files": [
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-db6cf81b",
     "date": "2026-08-02T10:43:48+08:00",
     "title": "fix: add w-full to professional project pages to prevent width bounce",
