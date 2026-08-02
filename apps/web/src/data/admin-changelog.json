@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-02-ea3e65af",
+    "date": "2026-08-02T21:22:19+08:00",
+    "title": "fix: block 'That covers it' in options regex, stronger size ban in prompt",
+    "summary": "fix: block 'That covers it' in options regex, stronger size ban in prompt",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ea3e65af",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-b5d870ec",
     "date": "2026-08-02T21:10:39+08:00",
     "title": "fix(ai): add RELEVANCE section — strong guardrails for question topics",
