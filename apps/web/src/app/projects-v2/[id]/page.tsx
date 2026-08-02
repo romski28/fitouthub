@@ -148,7 +148,7 @@ export default function ProjectV2Page() {
 
   // ── Render ─────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="w-full mx-auto max-w-3xl px-4 py-6">
       {/* Status Bar */}
       <div className="mb-6 rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] px-5 py-3">
         <div className="flex items-center justify-between">

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-02-db6cf81b",
+    "date": "2026-08-02T10:43:48+08:00",
+    "title": "fix: add w-full to professional project pages to prevent width bounce",
+    "summary": "fix: add w-full to professional project pages to prevent width bounce",
+    "areas": [
+      "web"
+    ],
+    "commit": "db6cf81b",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects-v2/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-43c18e30",
     "date": "2026-08-02T10:33:32+08:00",
     "title": "fix: add w-full to MainWrapper to prevent content-driven width shrink",
