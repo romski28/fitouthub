@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-206942a8",
+    "date": "2026-08-02T10:11:08+08:00",
+    "title": "refactor(ui): wrap all tab content in shared parent frame",
+    "summary": "refactor(ui): wrap all tab content in shared parent frame",
+    "areas": [
+      "web"
+    ],
+    "commit": "206942a8",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-01-bd72ad92",
     "date": "2026-08-01T22:30:31+08:00",
     "title": "fix(ui): remove double-wrapper from AI scope panel",
