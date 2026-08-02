@@ -2273,7 +2273,7 @@ export default function ClientProjectDetailPage() {
   return (
     <>
       <div className="min-h-screen pb-16">
-        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
         {/* Project Hero */}
         <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm space-y-4">
           <div className="flex items-center justify-between">

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-02-43c18e30",
+    "date": "2026-08-02T10:33:32+08:00",
+    "title": "fix: add w-full to MainWrapper to prevent content-driven width shrink",
+    "summary": "fix: add w-full to MainWrapper to prevent content-driven width shrink",
+    "areas": [
+      "web"
+    ],
+    "commit": "43c18e30",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/main-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-2bf69f4e",
     "date": "2026-08-02T10:13:17+08:00",
     "title": "fix: stray closing div in professionals tab wrapper",
