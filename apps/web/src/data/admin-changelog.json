@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-02-6ce2fa40",
+    "date": "2026-08-02T17:02:45+08:00",
+    "title": "refactor(ai): two-phase chat — lightweight prompt, wizard enforces 3-question minimum",
+    "summary": "refactor(ai): two-phase chat — lightweight prompt, wizard enforces 3-question minimum",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6ce2fa40",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-750d2148",
     "date": "2026-08-02T11:05:20+08:00",
     "title": "fix(ui): add container wrapper for AI scope tab on pro page",

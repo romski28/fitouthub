@@ -1030,10 +1030,12 @@ export default function CreateProjectWizardPage() {
           .filter((key) => key.length > 0),
       );
           const nextUnaskedQuestion = filteredParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
-      const overallConfidence = typeof parsed?.overallConfidence === 'number' ? parsed.overallConfidence : null;
-      const hasCoreBrief = Boolean(nextTitle && nextSummary && mergedTrades.length > 0);
+      // Count how many questions the AI has asked so far
+      const assistantQuestionCount = chatMessages.filter((m) => m.role === 'assistant' && m.options && m.options.length > 0).length;
+      const hasTrades = mergedTrades.length > 0;
       const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
-      const shouldOfferSummaryConfirmation = hasCoreBrief && (hasNoMoreQuestions || Boolean(overallConfidence !== null && overallConfidence >= 0.50));
+      // Require at least 3 questions before allowing summary confirmation
+      const shouldOfferSummaryConfirmation = hasTrades && assistantQuestionCount >= 3 && hasNoMoreQuestions;
 
       // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
       // and a comprehensive scope from the full conversation. Populate wizard state
@@ -1139,7 +1141,21 @@ export default function CreateProjectWizardPage() {
         }
       }
 
-      // Inject the first next-question as the next chat prompt so it appears inside the conversation
+      // Auto-continue: if the AI wraps up before 3 questions, inject a generic question
+      if (hasTrades && hasNoMoreQuestions && assistantQuestionCount < 3) {
+        setAiChatCanContinue(false);
+        const autoQuestions = [
+          'Can you share any other details about the project?',
+          'Is there anything else you can tell me about what you need?',
+          'Can you describe the issue in a bit more detail?',
+        ];
+        const autoQ = autoQuestions[assistantQuestionCount] || autoQuestions[0];
+        setChatMessages((prev) => [...prev, {
+          role: 'assistant',
+          text: autoQ,
+          options: [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'not sure' }],
+        }]);
+      }
       if (shouldOfferSummaryConfirmation) {
         let nextQuestion = nextUnaskedQuestion
           ? appendServiceOfferHint(nextUnaskedQuestion, nextPendingOffer)
@@ -1164,9 +1180,10 @@ export default function CreateProjectWizardPage() {
         setAiChatCanContinue(true);
 
         if (nextQuestion) {
-          const prefix = summaryConfirmationShown
-            ? 'Another question, if you have the time.'
-            : 'Thanks, we have enough information to proceed. Click Next to move on or continue answering questions if you have time.';
+          // Q4+ with questions: "if you have time" prefix
+          const prefix = assistantQuestionCount === 3
+            ? 'Thanks, would like to know more — if you have time.'
+            : 'If you have time.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}`, options: answerOptions }]);
         } else {
