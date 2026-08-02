@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-02-e32dea7a",
+    "date": "2026-08-02T18:10:03+08:00",
+    "title": "fix(ai): restrict room size questions to painting/decorating/flooring only",
+    "summary": "fix(ai): restrict room size questions to painting/decorating/flooring only",
+    "areas": [
+      "api"
+    ],
+    "commit": "e32dea7a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-02-04bf5dbf",
     "date": "2026-08-02T17:14:57+08:00",
     "title": "fix: remove auto-continuation block, let AI questions flow normally",

@@ -1339,6 +1339,7 @@ OUTPUT SCHEMA
 - Never repeat questions. Read "Already asked questions" and ESTABLISHED FACTS.
 - Do not expand scope beyond what the client described.
 - Never ask about location, budget, or timeline.
+- Only ask about room/area size for Painting, Decorating, Redecorating, or Flooring projects. For all other trades, skip size questions entirely. If you do ask, options MUST be Small/Medium/Large — never other choices.
 - trades = suggest the MINIMUM needed from ALLOWED_TRADES.
 
 # OUTPUT (JSON only)
@@ -1347,7 +1348,7 @@ OUTPUT SCHEMA
   "trades": ["Plumber"],
   "nextQuestions": ["one question only"],
   "followUpQuestions": [],
-  "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}]
+  "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}]  // Size q's: [Small, Medium, Large, Not sure]. Match options to your question.
 }
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
