@@ -2810,7 +2810,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const maxOutputTokens = Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
+    const maxOutputTokens = mode === 'conversational'
+      ? Number(process.env.DEEPSEEK_CONVERSATIONAL_MAX_TOKENS || '800')
+      : Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
@@ -3489,14 +3491,32 @@ Return ONLY valid JSON (no markdown):
       this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
       [],
     ).slice(0, 1);
-    // Safety net: if AI produced no question, inject one based on trades
-    const finalNextQuestions = nextQ.length > 0 ? nextQ : [`Can you share any other details about the ${finalTrades.join(' or ')} work?`];
+    // Safety net: if AI produced no question, inject a targeted opening question
+    let finalNextQuestions = nextQ;
+    let injectedOptions: Array<{ label: string; value: string }> | undefined;
+    if (finalNextQuestions.length === 0) {
+      const trade = finalTrades[0]?.toLowerCase() || '';
+      if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {
+        finalNextQuestions = ['What symptoms or issues are you experiencing with your AC?'];
+        injectedOptions = [{ label: 'Not cooling', value: 'not cooling' }, { label: 'Making noise', value: 'making noise' }, { label: 'Leaking water', value: 'leaking water' }, { label: 'Not sure', value: 'not sure' }];
+      } else if (trade.includes('plumb')) {
+        finalNextQuestions = ['What plumbing issue are you dealing with?'];
+        injectedOptions = [{ label: 'Leak or drip', value: 'leak or drip' }, { label: 'Blocked drain', value: 'blocked drain' }, { label: 'No water / low pressure', value: 'no water' }, { label: 'Not sure', value: 'not sure' }];
+      } else if (trade.includes('electric')) {
+        finalNextQuestions = ['What electrical problem are you experiencing?'];
+        injectedOptions = [{ label: 'Power outage', value: 'power outage' }, { label: 'Flickering lights', value: 'flickering' }, { label: 'Burning smell', value: 'burning smell' }, { label: 'Not sure', value: 'not sure' }];
+      } else {
+        finalNextQuestions = ['Can you describe the issue in a bit more detail?'];
+        injectedOptions = [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'not sure' }];
+      }
+    }
 
-    const responseParsedOutput = {
+    const responseParsedOutput: Record<string, unknown> = {
       ...(parsedObject || {}),
       conversationalText,
       trades: finalTrades,
       nextQuestions: finalNextQuestions,
+      ...(injectedOptions ? { options: injectedOptions } : {}),
       followUpQuestions: this.filterRepeatedQuestions(
         this.toStringArray((parsedObject as Record<string, unknown> | null)?.followUpQuestions),
         [],

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-27f629eb",
+    "date": "2026-08-03T11:41:37+08:00",
+    "title": "fix(ai): smarter fallback questions with options, reduce conversational tokens to 800",
+    "summary": "fix(ai): smarter fallback questions with options, reduce conversational tokens to 800",
+    "areas": [
+      "api"
+    ],
+    "commit": "27f629eb",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-2075fe52",
     "date": "2026-08-03T11:27:37+08:00",
     "title": "fix(ai): inject fallback question when AI produces nq=0",
