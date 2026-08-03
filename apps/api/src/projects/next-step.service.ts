@@ -984,39 +984,38 @@ export class NextStepService {
               }
             }
 
-            // For CLASS 2 (only after pro has confirmed):
-            // client must review and confirm the schedule before escrow.
+            // SCALE_2: client must review and confirm the schedule before escrow.
             // SCALE_1 skips this — no multi-milestone schedule to agree.
             if (['SCALE_2'].includes(preWorkNormalizedScale) && profSchedDone) {
               const clientSchedConfirmed = await this.prisma.nextStepAction.findFirst({
-                where: {
-                  projectId,
-                  userId,
-                  actionKey: 'CONFIRM_SCHEDULE',
-                  userAction: 'COMPLETED',
-                },
+                where: { projectId, userId, actionKey: 'CONFIRM_SCHEDULE', userAction: 'COMPLETED' },
                 select: { id: true },
               });
               if (!clientSchedConfirmed) {
                 availableConfigSteps = [{
-                  actionKey: 'CONFIRM_SCHEDULE',
-                  actionLabel: preWorkNormalizedScale === 'SCALE_1'
-                    ? 'Review project timeline end date'
-                    : 'Agree milestone schedule',
-                  description: preWorkNormalizedScale === 'SCALE_1'
-                    ? 'Start date is agreed. Review the calculated project end date/time and confirm the timeline before funding escrow.'
-                    : 'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
+                  actionKey: 'CONFIRM_SCHEDULE', actionLabel: 'Agree milestone schedule',
+                  description: 'Start date is agreed. Please review and confirm the milestone schedule before funding escrow.',
                   isPrimary: true, isElective: false, requiresAction: true,
                   estimatedDurationMinutes: 5, displayOrder: 1,
                 } as any];
                 return returnWithCache({
-                  PRIMARY: availableConfigSteps.map(toApiAction),
-                  ELECTIVE: [],
-                  status: project.status,
-                  stage: effectiveStage,
+                  PRIMARY: availableConfigSteps.map(toApiAction), ELECTIVE: [],
+                  status: project.status, stage: effectiveStage,
                 });
               }
             }
+
+            // SCALE_1 or schedule confirmed → show escrow deposit
+            availableConfigSteps = [{
+              actionKey: 'DEPOSIT_ESCROW_FUNDS', actionLabel: 'Deposit funds to escrow',
+              description: 'Start date is agreed. Deposit the project funds to escrow so work can begin.',
+              isPrimary: true, isElective: false, requiresAction: true,
+              estimatedDurationMinutes: 5, displayOrder: 1,
+            } as any];
+            return returnWithCache({
+              PRIMARY: availableConfigSteps.map(toApiAction), ELECTIVE: [],
+              status: project.status, stage: effectiveStage,
+            });
           } else {
             // Escrow funded — show passive wait or materials actions (handled by existing CLIENT block below)
             // Just clear any CONFIRM_START_DETAILS that seeded config might set

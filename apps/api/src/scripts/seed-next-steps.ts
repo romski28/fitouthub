@@ -59,6 +59,7 @@ const nextStepSeeds: NextStepSeed[] = [
   // Platform T&Cs (accepted at sign-up) serve as the binding agreement.
 
   { projectStage: ProjectStage.PRE_WORK, role: 'CLIENT', actionKey: 'CONFIRM_START_DETAILS', actionLabel: 'Confirm start details', description: 'Accept or update the proposed start date before work begins.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.PRE_WORK, role: 'CLIENT', actionKey: 'DEPOSIT_ESCROW_FUNDS', actionLabel: 'Deposit funds to escrow', description: 'Deposit project funds to escrow so work can begin.', isPrimary: true, requiresAction: true, displayOrder: 2 },
   { projectStage: ProjectStage.PRE_WORK, role: 'PROFESSIONAL', actionKey: 'CONFIRM_START_DATE', actionLabel: 'Confirm start date', description: 'Confirm kickoff date and resource plan.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.PRE_WORK, role: 'PROFESSIONAL', actionKey: 'MAKE_MILESTONE_1_CLAIM', actionLabel: 'Submit materials claim', description: 'Submit purchase receipts and claimed amount for milestone 1 materials. The client will review and approve the confirmed amount to your withdrawable wallet.', isPrimary: true, requiresAction: true, displayOrder: 3 },
   { projectStage: ProjectStage.PRE_WORK, role: 'PROFESSIONAL', actionKey: 'RESPOND_TO_MATERIALS_QUESTIONS', actionLabel: 'Respond to client questions on materials claim', description: 'Your materials claim is under client review. Respond to any questions in the claim thread so authorisation can proceed.', isPrimary: true, requiresAction: true, displayOrder: 1 },

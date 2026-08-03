@@ -39,6 +39,7 @@ VALUES
 
   -- PRE_WORK stage
   (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'CONFIRM_START_DETAILS', 'Confirm start details', 'Accept or update the proposed start date before work begins.', true, false, true, NULL, 1, NOW(), NOW()),
+  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'DEPOSIT_ESCROW_FUNDS', 'Deposit funds to escrow', 'Deposit project funds to escrow so work can begin.', true, false, true, NULL, 2, NOW(), NOW()),
   (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL', 'CONFIRM_START_DATE', 'Confirm start date', 'Confirm kickoff date and resource plan.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- WORK_IN_PROGRESS stage

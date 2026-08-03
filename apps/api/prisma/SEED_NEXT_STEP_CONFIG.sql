@@ -164,6 +164,11 @@ VALUES
    'Accept or update the proposed start date before work begins.',
    true, false, true, 1, NOW(), NOW()),
 
+  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT',
+   'DEPOSIT_ESCROW_FUNDS', 'Deposit funds to escrow',
+   'Deposit project funds to escrow so work can begin.',
+   true, false, true, 2, NOW(), NOW()),
+
   (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL',
    'CONFIRM_START_DATE', 'Confirm start date',
    'Confirm kickoff date and resource plan.',
