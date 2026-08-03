@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-f707d2d6",
+    "date": "2026-08-03T14:57:27+08:00",
+    "title": "fix: warm wrap-up for 'no' answer, handle clarifications, robust compile",
+    "summary": "fix: warm wrap-up for 'no' answer, handle clarifications, robust compile",
+    "areas": [
+      "api"
+    ],
+    "commit": "f707d2d6",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-e00d08ee",
     "date": "2026-08-03T14:44:47+08:00",
     "title": "fix: prevent duplicate project creation with front-end guard and back-end transaction",

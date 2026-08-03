@@ -1339,6 +1339,7 @@ OUTPUT SCHEMA
 - Never repeat questions. Read "Already asked questions" and ESTABLISHED FACTS.
 - Do not expand scope beyond what the client described.
 - Never ask about location, budget, or timeline.
+- If the client clarifies their need (e.g. "not a repair, an extension", "not a leak, just replacing"), acknowledge the clarification and ask ONE natural follow-up. Never return empty conversationalText or nextQuestions — you must always provide both.
 
 # RELEVANCE
 - Stay focused on the client's stated problem. Match options to YOUR question — never recycle options from a previous turn.
@@ -1404,6 +1405,11 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
     // Wrap-up — brief closing
     if (overallConfidence >= 0.75) {
       return 'I think we have enough to get started.';
+    }
+
+    // User said "no" to the fallback — wrap up warmly, don't let catch-all fire
+    if (/^no$/i.test(prompt.trim()) && nextQuestions.length === 0) {
+      return "No problem — I think we've covered everything we need.";
     }
 
     // Got useful data from the model — use it
@@ -3345,10 +3351,12 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         content: `You are a renovation project scope compiler. Read the conversation below and produce a factual scope for a tradesperson.
 
 CRITICAL RULES:
-- ONLY include facts the client actually stated. If something was NOT discussed, OMIT it completely. NEVER write "was not specified", "no details were provided", or "not mentioned".
-- Include EVERY concrete detail the client shared.
-- Be brief: 2-4 sentences. No filler.
-- ALWAYS provide assumptions, risks, and safetyAssessment. These are MANDATORY — never leave them empty. Even for low-risk jobs, think about what a tradesperson needs to know before arriving.
+- Include every concrete detail the client shared in the summary. Be brief: 2-4 sentences. No filler.
+- NEVER write "was not specified", "no details were provided", or "not mentioned" — just describe what IS known.
+- Even when the conversation is short, produce reasonable assumptions and risks based on the trade and job type. A tradesperson needs to know what to expect before arriving — use your knowledge of the trade to fill in standard assumptions.
+- assumptions: 2-3 standard things any tradesperson would assume (e.g. residential property, standard materials, accessible work area).
+- risks: 2-3 common things that could go wrong for this type of work.
+- safetyAssessment is MANDATORY — always include concerns and mitigations, even for low-risk jobs.
 
 Return ONLY valid JSON (no markdown):
 
@@ -3356,12 +3364,12 @@ Return ONLY valid JSON (no markdown):
   "summary": "2-4 sentence factual scope. List every concrete detail from the conversation.",
   "title": "6-10 word job title",
   "trades": ["exact", "trade", "names"],
-  "assumptions": ["MANDATORY. 2-3 things the tradesperson should assume: standard residential, pipe material, accessibility."],
-  "risks": ["MANDATORY. 2-3 things that could go wrong: old parts breaking, hidden leaks, water damage."],
+  "assumptions": ["Standard residential property", "Existing wiring in serviceable condition", "Accessible distribution board"],
+  "risks": ["Circuit capacity may be insufficient for new load", "Wall chasing may reveal unexpected obstacles"],
   "safetyAssessment": {
     "riskLevel": "low|medium|high|critical",
-    "concerns": ["MANDATORY. 1-2 safety notes: water near electrics, slip hazard, sharp edges."],
-    "temporaryMitigations": ["1 practical tip: turn off isolation valve, place towel."]
+    "concerns": ["Turn off mains before any electrical work", "Test circuits before touching"],
+    "temporaryMitigations": ["Isolate the circuit at the distribution board before starting"]
   }
 }`,
       },
