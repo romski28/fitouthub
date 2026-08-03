@@ -1011,6 +1011,16 @@ export class NextStepService {
               description: 'Start date is agreed. Deposit the project funds to escrow so work can begin.',
               isPrimary: true, isElective: false, requiresAction: true,
               estimatedDurationMinutes: 5, displayOrder: 1,
+              modalTitle: 'Deposit funds to escrow',
+              modalBody: 'Deposit the project amount to escrow. Funds are held securely and released according to the payment schedule as milestones are completed.',
+              modalDetailsBody: 'Escrow protects both you and the professional — funds release only when you approve each milestone.',
+              modalSuccessTitle: 'Escrow funded',
+              modalSuccessBody: '{amount} has been deposited to escrow.',
+              modalSuccessNextStepBody: 'The professional can now begin work on site.',
+              modalPrimaryButtonLabel: 'Deposit now',
+              modalSecondaryButtonLabel: 'Review details',
+              modalPrimaryActionType: 'confirm_transfer',
+              modalSecondaryActionType: 'close_modal',
             } as any];
             return returnWithCache({
               PRIMARY: availableConfigSteps.map(toApiAction), ELECTIVE: [],

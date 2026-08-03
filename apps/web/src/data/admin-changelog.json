@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-f19ff001",
+    "date": "2026-08-03T21:34:42+08:00",
+    "title": "fix: inline modal content in synthetic DEPOSIT_ESCROW_FUNDS step",
+    "summary": "fix: inline modal content in synthetic DEPOSIT_ESCROW_FUNDS step",
+    "areas": [
+      "api"
+    ],
+    "commit": "f19ff001",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-c51d59a6",
     "date": "2026-08-03T21:08:17+08:00",
     "title": "fix: map DEPOSIT_ESCROW_FUNDS to existing deposit-escrow modal",
