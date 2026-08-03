@@ -1340,15 +1340,8 @@ OUTPUT SCHEMA
 - Do not expand scope beyond what the client described.
 - Never ask about location, budget, or timeline.
 
-# RELEVANCE (CRITICAL — READ BEFORE EVERY QUESTION)
-- NEVER ask: "how big is the area", room dimensions, square footage, site access conditions.
-  These are WRONG for AC, plumbing, electrical, appliance repair, fixture fixes.
-- Room/area questions are ONLY valid for: Painting, Decorating, Flooring.
-  When asking about size: use Small / Medium / Large options. Ask access separately with Easy access / Tradesman entrance / Sign-in required options.
-  For AC: ask about symptoms, age, maintenance history, unit location.
-  For plumbing: ask about when it started, water pressure, other affected fixtures.
-  For electrical: ask about breakers tripping, flickering, burning smells.
-- Match options to YOUR question. Never recycle options from a previous turn.
+# RELEVANCE
+- Stay focused on the client's stated problem. Match options to YOUR question — never recycle options from a previous turn.
 
 # OUTPUT (JSON only)
 {
@@ -3512,27 +3505,8 @@ Return ONLY valid JSON (no markdown):
       }
     }
 
-    // Filter: strip size/area questions unless the trade involves painting, decorating, or flooring
-    if (finalNextQuestions.length > 0) {
-      const q = finalNextQuestions[0].toLowerCase();
-      const isSizeQ = /\b(big|size|area|dimension|sq\.?\s*ft|square\s*feet|square\s*met(?:er|re)s?|site.access|site.condition)\b/i.test(q);
-      const primaryTrade = finalTrades[0]?.toLowerCase() || '';
-      const allowsSizeQ = primaryTrade.includes('paint') || primaryTrade.includes('decorat') || primaryTrade.includes('floor');
-      if (isSizeQ && !allowsSizeQ) {
-        // Replace with a relevant follow-up
-        if (primaryTrade.includes('air condition') || primaryTrade.includes('ac') || primaryTrade.includes('hvac')) {
-          finalNextQuestions = ['When did you first notice the issue?'];
-          injectedOptions = [{ label: 'Recently', value: 'recently' }, { label: 'A few weeks ago', value: 'weeks ago' }, { label: 'Over a month', value: 'over a month' }, { label: 'Not sure', value: 'not sure' }];
-        } else if (primaryTrade.includes('plumb')) {
-          finalNextQuestions = ['When did this problem start?'];
-          injectedOptions = [{ label: 'Recently', value: 'recently' }, { label: 'A few weeks ago', value: 'weeks ago' }, { label: 'Over a month', value: 'over a month' }, { label: 'Not sure', value: 'not sure' }];
-        } else {
-          finalNextQuestions = ['When did you first notice the issue?'];
-          injectedOptions = [{ label: 'Recently', value: 'recently' }, { label: 'A while ago', value: 'a while ago' }, { label: 'Not sure', value: 'not sure' }];
-        }
-        this.logger.warn(`Stripped size/area question for trade=${primaryTrade}: "${q.slice(0, 60)}"`);
-      }
-    }
+    // SHELVED: size/area question filter — kept for future reference
+    // if (finalNextQuestions.length > 0) { ... }
 
     const responseParsedOutput: Record<string, unknown> = {
       ...(parsedObject || {}),

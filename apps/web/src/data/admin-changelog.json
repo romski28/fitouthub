@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-5a27d0e1",
+    "date": "2026-08-03T13:45:20+08:00",
+    "title": "fix: No to fallback wraps up, shelf size/area logic",
+    "summary": "fix: No to fallback wraps up, shelf size/area logic",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5a27d0e1",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-5ca1d9fe",
     "date": "2026-08-03T12:46:00+08:00",
     "title": "fix: simplify fallback options to just No for open-ended question",
