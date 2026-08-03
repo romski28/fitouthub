@@ -2810,13 +2810,13 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
     // Increased default timeout to 30000ms (30s) for large prompts
     const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
-    const maxOutputTokens = mode === 'conversational'
-      ? Number(process.env.DEEPSEEK_CONVERSATIONAL_MAX_TOKENS || '800')
-      : Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
 
     const requestId = `ds_${Date.now().toString(36)}`;
     const startedAt = Date.now();
     const mode = context?.mode ?? 'structured';
+    const maxOutputTokens = mode === 'conversational'
+      ? Number(process.env.DEEPSEEK_CONVERSATIONAL_MAX_TOKENS || '800')
+      : Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
     const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
     const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
     const factsPromptWrapper = mode === 'conversational' ? null : await this.buildFactsExtractionPrompt();

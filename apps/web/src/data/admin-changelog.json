@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-9cea2475",
+    "date": "2026-08-03T11:45:34+08:00",
+    "title": "fix: move maxOutputTokens after mode declaration",
+    "summary": "fix: move maxOutputTokens after mode declaration",
+    "areas": [
+      "api"
+    ],
+    "commit": "9cea2475",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-27f629eb",
     "date": "2026-08-03T11:41:37+08:00",
     "title": "fix(ai): smarter fallback questions with options, reduce conversational tokens to 800",
