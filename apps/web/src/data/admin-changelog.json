@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-50df8469",
+    "date": "2026-08-03T20:23:10+08:00",
+    "title": "fix: use if(false) + void guards for dead CONTRACT_PHASE block",
+    "summary": "fix: use if(false) + void guards for dead CONTRACT_PHASE block",
+    "areas": [
+      "api"
+    ],
+    "commit": "50df8469",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-1664c955",
     "date": "2026-08-03T20:17:34+08:00",
     "title": "fix: remove leftover if-stub from contract removal in modal-dispatcher",
