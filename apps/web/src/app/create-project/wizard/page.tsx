@@ -1032,12 +1032,10 @@ export default function CreateProjectWizardPage() {
           .filter((key) => key.length > 0),
       );
           const nextUnaskedQuestion = filteredParsedQuestions.find((question) => !askedAssistantQuestionKeys.has(normalizeQuestionKey(question))) || null;
-      // Count how many questions the AI has asked so far
-      const assistantQuestionCount = chatMessages.filter((m) => m.role === 'assistant' && m.options && m.options.length > 0).length;
       const hasTrades = mergedTrades.length > 0;
       const hasNoMoreQuestions = filteredParsedQuestions.length === 0;
-      // Require at least 3 questions before allowing summary confirmation
-      const shouldOfferSummaryConfirmation = hasTrades && assistantQuestionCount >= 3 && hasNoMoreQuestions;
+      // Wrap up whenever the AI has no more questions (fallback question acts as the safety net)
+      const shouldOfferSummaryConfirmation = hasTrades && hasNoMoreQuestions;
 
       // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
       // and a comprehensive scope from the full conversation. Populate wizard state
@@ -1166,12 +1164,8 @@ export default function CreateProjectWizardPage() {
         setAiChatCanContinue(true);
 
         if (nextQuestion) {
-          // Q4+ with questions: "if you have time" prefix
-          const prefix = assistantQuestionCount === 3
-            ? 'Thanks, would like to know more — if you have time.'
-            : 'If you have time.';
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
-          setChatMessages((prev) => [...prev, { role: 'assistant', text: `${prefix}\n\n${nextQuestion}`, options: answerOptions }]);
+          setChatMessages((prev) => [...prev, { role: 'assistant', text: nextQuestion, options: answerOptions }]);
         } else {
           // No more questions — all done. Auto-advance after 5s
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-210b8720",
+    "date": "2026-08-03T14:12:06+08:00",
+    "title": "fix: remove minimum-3-questions rule for summary confirmation",
+    "summary": "fix: remove minimum-3-questions rule for summary confirmation",
+    "areas": [
+      "web"
+    ],
+    "commit": "210b8720",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-3e54d88a",
     "date": "2026-08-03T14:05:14+08:00",
     "title": "fix: shelve area/size fallback question for all project classes",
