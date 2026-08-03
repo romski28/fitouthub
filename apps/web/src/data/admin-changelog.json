@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-c51d59a6",
+    "date": "2026-08-03T21:08:17+08:00",
+    "title": "fix: map DEPOSIT_ESCROW_FUNDS to existing deposit-escrow modal",
+    "summary": "fix: map DEPOSIT_ESCROW_FUNDS to existing deposit-escrow modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "c51d59a6",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-cafb1cff",
     "date": "2026-08-03T20:56:16+08:00",
     "title": "fix: add DEPOSIT_ESCROW_FUNDS step to PRE_WORK client flow",

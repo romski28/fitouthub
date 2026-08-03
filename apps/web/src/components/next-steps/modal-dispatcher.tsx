@@ -379,6 +379,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'start-date';
   }
 
+  if (['DEPOSIT_ESCROW_FUNDS'].includes(actionKey)) {
+    return 'deposit-escrow';
+  }
+
   if (['CONFIRM_SCHEDULE'].includes(actionKey)) {
     return 'agree-milestone-schedule';
   }
