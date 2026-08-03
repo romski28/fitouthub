@@ -1340,9 +1340,13 @@ OUTPUT SCHEMA
 - Do not expand scope beyond what the client described.
 - Never ask about location, budget, or timeline.
 - If the client clarifies their need (e.g. "not a repair, an extension", "not a leak, just replacing"), acknowledge the clarification and ask ONE natural follow-up. Never return empty conversationalText or nextQuestions — you must always provide both.
+- If the client answers "yes" or confirms something, immediately narrow down with ONE specific follow-up question. Examples:
+  "Is it for a specific appliance?" → yes → "What type of appliance is it?"
+  "Are you replacing something?" → yes → "What needs replacing?"
+  "Do you have the materials already?" → yes → "What materials do you have?"
 
 # RELEVANCE
-- Stay focused on the client's stated problem. Match options to YOUR question — never recycle options from a previous turn.
+- Stay focused on the client's stated need. If this is a new installation or upgrade (not a repair), do NOT ask about problems or symptoms — ask about requirements instead. Match options to YOUR question — never recycle options from a previous turn.
 
 # OUTPUT (JSON only)
 {
@@ -3508,23 +3512,23 @@ Return ONLY valid JSON (no markdown):
       this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
       [],
     ).slice(0, 1);
-    // Safety net: if AI produced no question, inject a targeted opening question.
-    // Skip injection when the user answered "no" to the fallback — let empty
-    // nextQuestions signal wrap-up to the client.
+    // Safety net: if AI produced no question on the FIRST turn only, inject a seed question.
+    // On subsequent turns, empty nextQuestions signals wrap-up — don't fight it.
     let finalNextQuestions = nextQ;
     let injectedOptions: Array<{ label: string; value: string }> | undefined;
     const isUserSayingNo = /^no$/i.test(prompt.trim());
-    if (finalNextQuestions.length === 0 && !isUserSayingNo) {
+    const isFirstTurn = !baseResponse.threadContext;
+    if (finalNextQuestions.length === 0 && !isUserSayingNo && isFirstTurn) {
       const trade = finalTrades[0]?.toLowerCase() || '';
       if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {
-        finalNextQuestions = ['What symptoms or issues are you experiencing with your AC?'];
-        injectedOptions = [{ label: 'Not cooling', value: 'not cooling' }, { label: 'Making noise', value: 'making noise' }, { label: 'Leaking water', value: 'leaking water' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Can you tell me a bit more about the AC work needed?'];
+        injectedOptions = [{ label: 'Installation', value: 'installation' }, { label: 'Repair or service', value: 'repair' }, { label: 'Maintenance', value: 'maintenance' }, { label: 'Not sure', value: 'not sure' }];
       } else if (trade.includes('plumb')) {
-        finalNextQuestions = ['What plumbing issue are you dealing with?'];
-        injectedOptions = [{ label: 'Leak or drip', value: 'leak or drip' }, { label: 'Blocked drain', value: 'blocked drain' }, { label: 'No water / low pressure', value: 'no water' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Can you tell me a bit more about the plumbing work?'];
+        injectedOptions = [{ label: 'New installation', value: 'new install' }, { label: 'Leak or repair', value: 'repair' }, { label: 'Upgrade or change', value: 'upgrade' }, { label: 'Not sure', value: 'not sure' }];
       } else if (trade.includes('electric')) {
-        finalNextQuestions = ['What electrical problem are you experiencing?'];
-        injectedOptions = [{ label: 'Power outage', value: 'power outage' }, { label: 'Flickering lights', value: 'flickering' }, { label: 'Burning smell', value: 'burning smell' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Can you tell me a bit more about the electrical work needed?'];
+        injectedOptions = [{ label: 'New installation', value: 'new install' }, { label: 'Repair or fault', value: 'repair' }, { label: 'Upgrade or change', value: 'upgrade' }, { label: 'Not sure', value: 'not sure' }];
       } else {
         finalNextQuestions = ['Is there anything else you can tell me about the work needed?'];
         injectedOptions = [{ label: 'No', value: 'no' }];

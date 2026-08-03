@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-32ec3691",
+    "date": "2026-08-03T15:47:59+08:00",
+    "title": "fix: fallback questions only on first turn, neutral wording, prompt improvements",
+    "summary": "fix: fallback questions only on first turn, neutral wording, prompt improvements",
+    "areas": [
+      "api"
+    ],
+    "commit": "32ec3691",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-56b07542",
     "date": "2026-08-03T15:43:24+08:00",
     "title": "fix: expand yes/no detection regex to catch 'is there', 'are there', 'will', 'should'",
