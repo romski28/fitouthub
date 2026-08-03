@@ -34,11 +34,8 @@ VALUES
 
   -- BIDDING_CLOSED stage
   (gen_random_uuid()::text, 'BIDDING_CLOSED', 'CLIENT', 'SELECT_PROFESSIONAL', 'Select professional', 'Choose a professional to proceed.', true, false, true, NULL, 1, NOW(), NOW()),
-  (gen_random_uuid()::text, 'BIDDING_CLOSED', 'PROFESSIONAL', 'PREPARE_CONTRACT', 'Prepare contract', 'Prepare terms for contract stage if selected.', true, false, true, NULL, 1, NOW(), NOW()),
 
-  -- CONTRACT_PHASE stage
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT', 'REVIEW_CONTRACT', 'Review agreement', 'Review terms and approve or request changes.', true, false, true, NULL, 1, NOW(), NOW()),
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL', 'SUBMIT_CONTRACT', 'Review agreement', 'Submit draft contract with milestones and schedule.', true, false, true, NULL, 1, NOW(), NOW()),
+  -- CONTRACT_PHASE removed — projects go directly to PRE_WORK on quote acceptance.
 
   -- PRE_WORK stage
   (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'CONFIRM_START_DETAILS', 'Confirm start details', 'Accept or update the proposed start date before work begins.', true, false, true, NULL, 1, NOW(), NOW()),

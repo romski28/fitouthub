@@ -792,8 +792,10 @@ export class NextStepService {
       }
     }
 
+    // CONTRACT_PHASE removed — projects now go straight to PRE_WORK on quote acceptance.
+    // Legacy projects in CONTRACT_PHASE are handled by PRE_WORK block below.
     if (
-      effectiveStage === ProjectStage.CONTRACT_PHASE &&
+      false && effectiveStage === ProjectStage.CONTRACT_PHASE &&
       project.status === 'awarded'
     ) {
       const clientSigned = Boolean(project.clientSignedAt);

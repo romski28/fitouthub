@@ -13,8 +13,6 @@ export const clientActionTabMap: Record<string, string> = {
   SELECT_PROFESSIONAL: 'professionals',
   REQUEST_SITE_VISIT: 'site-access',
   CONFIRM_SITE_VISIT: 'site-access',
-  REVIEW_CONTRACT: 'contract',
-  SIGN_CONTRACT: 'contract',
   DEPOSIT_ESCROW_FUNDS: 'financials',
   REVIEW_PAYMENT_REQUEST: 'financials',
   AUTHORIZE_MATERIALS_WALLET: 'financials',
@@ -62,12 +60,6 @@ export const clientTimelineSteps: ClientTimelineStep[] = [
     title: 'Select Professional',
     description: 'Choose who will execute the project.',
     actionKeys: ['SELECT_PROFESSIONAL'],
-  },
-  {
-    id: 'contract',
-    title: 'Agreement & Sign-off',
-    description: 'Review terms and complete agreement signatures.',
-    actionKeys: ['REVIEW_CONTRACT', 'SIGN_CONTRACT'],
   },
   {
     id: 'pre-work',

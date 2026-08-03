@@ -54,15 +54,9 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.QUOTE_RECEIVED, role: 'PROFESSIONAL', actionKey: 'WAIT_FOR_DECISION', actionLabel: 'Wait for client decision', description: 'Client is evaluating submitted quotes.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.BIDDING_CLOSED, role: 'CLIENT', actionKey: 'SELECT_PROFESSIONAL', actionLabel: 'Select professional', description: 'Choose a professional to proceed.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.BIDDING_CLOSED, role: 'PROFESSIONAL', actionKey: 'PREPARE_CONTRACT', actionLabel: 'Prepare contract', description: 'Prepare terms for contract stage if selected.', isPrimary: true, displayOrder: 1 },
 
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'REVIEW_CONTRACT', actionLabel: 'Review agreement', description: 'Review terms and confirm the contract is ready for signature.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'SIGN_CONTRACT', actionLabel: 'Sign agreement', description: 'Sign the agreement once terms are confirmed.', isPrimary: true, requiresAction: true, displayOrder: 2 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'CLIENT', actionKey: 'DEPOSIT_ESCROW_FUNDS', actionLabel: 'Deposit funds to escrow', description: 'After both signatures are complete, deposit funds to escrow before work starts.', isPrimary: true, requiresAction: true, displayOrder: 3 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_CONTRACT', actionLabel: 'Submit contract', description: 'Submit draft contract with milestones and schedule.', isPrimary: true, displayOrder: 1 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'SIGN_CONTRACT', actionLabel: 'Sign agreement', description: 'Sign the agreement after client review to unlock escrow funding.', isPrimary: true, requiresAction: true, displayOrder: 2 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'MAKE_MILESTONE_1_CLAIM', actionLabel: 'Submit materials claim', description: 'Submit purchase receipts and claimed amount for milestone 1 materials. The client will review and approve the confirmed amount to your withdrawable wallet.', isPrimary: true, requiresAction: true, displayOrder: 3 },
-  { projectStage: ProjectStage.CONTRACT_PHASE, role: 'PROFESSIONAL', actionKey: 'RESPOND_TO_MATERIALS_QUESTIONS', actionLabel: 'Respond to client questions on materials claim', description: 'Your materials claim is under client review. Respond to any questions in the claim thread so authorisation can proceed.', isPrimary: true, requiresAction: true, displayOrder: 1 },
+  // CONTRACT_PHASE removed — projects go directly to PRE_WORK on quote acceptance.
+  // Platform T&Cs (accepted at sign-up) serve as the binding agreement.
 
   { projectStage: ProjectStage.PRE_WORK, role: 'CLIENT', actionKey: 'CONFIRM_START_DETAILS', actionLabel: 'Confirm start details', description: 'Accept or update the proposed start date before work begins.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.PRE_WORK, role: 'PROFESSIONAL', actionKey: 'CONFIRM_START_DATE', actionLabel: 'Confirm start date', description: 'Confirm kickoff date and resource plan.', isPrimary: true, displayOrder: 1 },

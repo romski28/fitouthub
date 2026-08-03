@@ -8636,12 +8636,13 @@ Please review the project details and respond with your quote or decline the inv
         },
       });
 
-      // Mark project as awarded for downstream views
+      // Mark project as awarded — skip CONTRACT_PHASE, go straight to PRE_WORK.
+      // Platform T&Cs (accepted at sign-up) serve as the binding agreement.
       await tx.project.update({
         where: { id: projectId },
         data: {
           status: 'awarded',
-          currentStage: ProjectStage.CONTRACT_PHASE,
+          currentStage: ProjectStage.PRE_WORK,
           awardedProjectProfessionalId: awardedPP.id,
           startDate: hasValidQuoteStartAt ? (quoteStartAt as Date) : undefined,
           endDate: quoteEndAt || undefined,
@@ -8684,8 +8685,23 @@ Please review the project details and respond with your quote or decline the inv
           },
         });
 
-        // Escrow deposit request is intentionally created later,
-        // after both parties have signed the standard contract.
+        // Create escrow deposit request — platform T&Cs bind both parties, no separate signing step
+        await tx.financialTransaction.create({
+          data: {
+            projectId,
+            projectProfessionalId: awardedPP.id,
+            type: 'escrow_deposit_request',
+            description: 'Request to deposit project fees to escrow',
+            amount: quoteAmount,
+            status: 'pending',
+            requestedBy: 'foh',
+            requestedByRole: 'platform',
+            actionBy: clientId,
+            actionByRole: 'client',
+            actionComplete: false,
+            notes: `Quote amount for project ${projectProfessional.project?.projectName || 'Project'}`,
+          },
+        });
       }
 
       await this.ensureProjectPaymentPlan(tx as any, {

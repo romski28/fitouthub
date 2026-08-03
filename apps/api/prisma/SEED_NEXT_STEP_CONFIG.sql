@@ -139,65 +139,17 @@ VALUES
   (gen_random_uuid()::text, 'BIDDING_CLOSED', 'CLIENT',
    'SELECT_PROFESSIONAL', 'Select professional',
    'Choose a professional to proceed.',
-   true, false, true, 1, NOW(), NOW()),
-
-  (gen_random_uuid()::text, 'BIDDING_CLOSED', 'PROFESSIONAL',
-   'PREPARE_CONTRACT', 'Prepare contract',
-   'Prepare terms for contract stage if selected.',
    true, false, true, 1, NOW(), NOW())
 
 ON CONFLICT ("projectStage","role","actionKey") DO NOTHING;
 
 -- ---------------------------------------------------------------------------
--- CONTRACT_PHASE stage  ← most critical for post-quote-acceptance flow
---
--- Flow after client accepts a quote:
---   1. acceptQuote() sets Project.currentStage = 'CONTRACT_PHASE'
---   2. Professional sees REVIEW_AGREEMENT (SUBMIT_CONTRACT action key) first
---   3. Client sees REVIEW_CONTRACT (requiresAction=false = waiting for professional)
---   4. Once contract submitted: client sees SIGN_CONTRACT (requiresAction=true)
---   5. After both sign: client sees DEPOSIT_ESCROW_FUNDS
+-- CONTRACT_PHASE removed — projects now go straight to PRE_WORK on quote acceptance.
+-- Platform T&Cs (accepted at sign-up) serve as the binding agreement.
+-- Previously had 5 seed rows: REVIEW_CONTRACT, SIGN_CONTRACT, DEPOSIT_ESCROW_FUNDS (client),
+-- SUBMIT_CONTRACT, SIGN_CONTRACT (professional).
 -- ---------------------------------------------------------------------------
-INSERT INTO "NextStepConfig"
-  ("id","projectStage","role","actionKey","actionLabel","description",
-   "isPrimary","isElective","requiresAction","displayOrder","createdAt","updatedAt")
-VALUES
-  -- Client steps (ordered by contract lifecycle)
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT',
-   'REVIEW_CONTRACT', 'Review agreement',
-   'Review terms and confirm the contract is ready for signature.',
-   true, false, false, 1, NOW(), NOW()),
-  -- requiresAction=false: contract not yet submitted by professional; client is waiting.
-  -- The service overrides this with synthetic steps once signing begins.
-
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT',
-   'SIGN_CONTRACT', 'Sign agreement',
-   'Sign the agreement once terms are confirmed.',
-   true, false, true, 2, NOW(), NOW()),
-
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'CLIENT',
-   'DEPOSIT_ESCROW_FUNDS', 'Deposit funds to escrow',
-   'After both signatures are complete, deposit funds to escrow before work starts.',
-   true, false, true, 3, NOW(), NOW()),
-
-  -- Professional steps
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL',
-    'SUBMIT_CONTRACT', 'Review agreement',
-   'Submit draft contract with milestones and schedule.',
-   true, false, true, 1, NOW(), NOW()),
-
-  (gen_random_uuid()::text, 'CONTRACT_PHASE', 'PROFESSIONAL',
-   'SIGN_CONTRACT', 'Sign agreement',
-   'Sign the agreement after client review to unlock escrow funding.',
-   true, false, true, 2, NOW(), NOW())
-
-ON CONFLICT ("projectStage","role","actionKey") DO UPDATE SET
-  "actionLabel"    = EXCLUDED."actionLabel",
-  "description"    = EXCLUDED."description",
-  "isPrimary"      = EXCLUDED."isPrimary",
-  "isElective"     = EXCLUDED."isElective",
-  "requiresAction" = EXCLUDED."requiresAction",   -- critical: fixes REVIEW_CONTRACT true→false
-  "displayOrder"   = EXCLUDED."displayOrder",
+-- PRE_WORK stage
   "updatedAt"      = NOW();
 
 -- ---------------------------------------------------------------------------

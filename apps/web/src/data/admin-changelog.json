@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-08-03-a8a71b0e",
+    "date": "2026-08-03T20:14:00+08:00",
+    "title": "feat: remove contract signing step — platform T&Cs bind both parties",
+    "summary": "feat: remove contract signing step — platform T&Cs bind both parties",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a8a71b0e",
+    "files": [
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/lib/client-workflow.ts",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-8dd16f99",
     "date": "2026-08-03T15:59:13+08:00",
     "title": "feat: AI asks style/preference question for new installations",

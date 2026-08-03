@@ -377,16 +377,6 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   // Contract-related actions
   if (
-    [
-      'REVIEW_CONTRACT',
-      'SIGN_CONTRACT',
-      'SUBMIT_CONTRACT',
-      'REVIEW_AGREEMENT',
-    ].includes(actionKey)
-  ) {
-    return 'contract';
-  }
-
   if (['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS'].includes(actionKey)) {
     return 'start-date';
   }
