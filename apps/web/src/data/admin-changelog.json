@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-1664c955",
+    "date": "2026-08-03T20:17:34+08:00",
+    "title": "fix: remove leftover if-stub from contract removal in modal-dispatcher",
+    "summary": "fix: remove leftover if-stub from contract removal in modal-dispatcher",
+    "areas": [
+      "web"
+    ],
+    "commit": "1664c955",
+    "files": [
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-a8a71b0e",
     "date": "2026-08-03T20:14:00+08:00",
     "title": "feat: remove contract signing step — platform T&Cs bind both parties",

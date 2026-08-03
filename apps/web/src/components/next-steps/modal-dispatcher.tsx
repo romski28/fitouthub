@@ -375,8 +375,6 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'review-quotes';
   }
 
-  // Contract-related actions
-  if (
   if (['CONFIRM_START_DATE', 'CONFIRM_START_DETAILS'].includes(actionKey)) {
     return 'start-date';
   }
