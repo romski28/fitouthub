@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-9f647566",
+    "date": "2026-08-03T20:28:31+08:00",
+    "title": "fix: delete dead CONTRACT_PHASE block entirely (725 lines)",
+    "summary": "fix: delete dead CONTRACT_PHASE block entirely (725 lines)",
+    "areas": [
+      "api"
+    ],
+    "commit": "9f647566",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-50df8469",
     "date": "2026-08-03T20:23:10+08:00",
     "title": "fix: use if(false) + void guards for dead CONTRACT_PHASE block",
