@@ -835,19 +835,6 @@ export default function CreateProjectWizardPage() {
 
     if (!prompt || chatBusy) return;
 
-    // If user answers "no" to the fallback question, wrap up immediately
-    const lastAssistantMsg = [...chatMessages].reverse().find((m) => m.role === 'assistant');
-    if (lastAssistantMsg && /is there anything else/i.test(lastAssistantMsg.text) && /^no$/i.test(prompt)) {
-      setChatMessages((prev) => [...prev, { role: 'user', text: prompt }]);
-      setChatInput('');
-      if (currentStep < stepsRef.current.length - 1) {
-        goNext();
-      } else {
-        submitWizard();
-      }
-      return;
-    }
-
     setPendingServiceOffer(null);
     setExpandedServiceOffer(null);
     const effectiveSessionId = aiSessionId || createAiSessionId();

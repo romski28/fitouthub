@@ -3511,10 +3511,13 @@ Return ONLY valid JSON (no markdown):
       this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
       [],
     ).slice(0, 1);
-    // Safety net: if AI produced no question, inject a targeted opening question
+    // Safety net: if AI produced no question, inject a targeted opening question.
+    // Skip injection when the user answered "no" to the fallback — let empty
+    // nextQuestions signal wrap-up to the client.
     let finalNextQuestions = nextQ;
     let injectedOptions: Array<{ label: string; value: string }> | undefined;
-    if (finalNextQuestions.length === 0) {
+    const isUserSayingNo = /^no$/i.test(prompt.trim());
+    if (finalNextQuestions.length === 0 && !isUserSayingNo) {
       const trade = finalTrades[0]?.toLowerCase() || '';
       if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {
         finalNextQuestions = ['What symptoms or issues are you experiencing with your AC?'];
