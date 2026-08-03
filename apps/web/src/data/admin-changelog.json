@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-5ca1d9fe",
+    "date": "2026-08-03T12:46:00+08:00",
+    "title": "fix: simplify fallback options to just No for open-ended question",
+    "summary": "fix: simplify fallback options to just No for open-ended question",
+    "areas": [
+      "api"
+    ],
+    "commit": "5ca1d9fe",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-c6c87e7d",
     "date": "2026-08-03T12:35:36+08:00",
     "title": "fix: replace awkward mid-conversation fallback question",

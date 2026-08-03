@@ -3508,7 +3508,7 @@ Return ONLY valid JSON (no markdown):
         injectedOptions = [{ label: 'Power outage', value: 'power outage' }, { label: 'Flickering lights', value: 'flickering' }, { label: 'Burning smell', value: 'burning smell' }, { label: 'Not sure', value: 'not sure' }];
       } else {
         finalNextQuestions = ['Is there anything else you can tell me about the work needed?'];
-        injectedOptions = [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }, { label: 'Not sure', value: 'not sure' }];
+        injectedOptions = [{ label: 'No', value: 'no' }];
       }
     }
 
