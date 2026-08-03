@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-2075fe52",
+    "date": "2026-08-03T11:27:37+08:00",
+    "title": "fix(ai): inject fallback question when AI produces nq=0",
+    "summary": "fix(ai): inject fallback question when AI produces nq=0",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2075fe52",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-675628f2",
     "date": "2026-08-03T11:12:23+08:00",
     "title": "debug: add logging to trace question generation + clearer template",

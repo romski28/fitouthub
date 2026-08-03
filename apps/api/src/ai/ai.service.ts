@@ -3439,8 +3439,6 @@ Return ONLY valid JSON (no markdown):
         ? (normalizedParsedOutput as Record<string, unknown>)
         : null;
 
-    this.logger.log(`[conversational] parsedOutput keys=${parsedObject ? Object.keys(parsedObject).join(',') : 'NULL'} nq=${Array.isArray(parsedObject?.nextQuestions) ? (parsedObject!.nextQuestions as any[]).length : 'none'} trades=${Array.isArray(parsedObject?.trades) ? (parsedObject!.trades as any[]).length : 'none'}`);
-
     const existingConversationalText =
       typeof baseResponse.conversationalText === 'string' && baseResponse.conversationalText.trim().length > 0
         ? baseResponse.conversationalText.trim()
@@ -3487,14 +3485,18 @@ Return ONLY valid JSON (no markdown):
       this.logger.warn(`Dropped low-confidence trades (<0.5): ${lowConf.join(', ')}`);
     }
 
+    const nextQ = this.filterRepeatedQuestions(
+      this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
+      [],
+    ).slice(0, 1);
+    // Safety net: if AI produced no question, inject one based on trades
+    const finalNextQuestions = nextQ.length > 0 ? nextQ : [`Can you share any other details about the ${finalTrades.join(' or ')} work?`];
+
     const responseParsedOutput = {
       ...(parsedObject || {}),
       conversationalText,
       trades: finalTrades,
-      nextQuestions: this.filterRepeatedQuestions(
-        this.toStringArray((parsedObject as Record<string, unknown> | null)?.nextQuestions),
-        [],
-      ).slice(0, 1),
+      nextQuestions: finalNextQuestions,
       followUpQuestions: this.filterRepeatedQuestions(
         this.toStringArray((parsedObject as Record<string, unknown> | null)?.followUpQuestions),
         [],
