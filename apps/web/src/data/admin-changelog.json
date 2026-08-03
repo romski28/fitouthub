@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-c6c87e7d",
+    "date": "2026-08-03T12:35:36+08:00",
+    "title": "fix: replace awkward mid-conversation fallback question",
+    "summary": "fix: replace awkward mid-conversation fallback question",
+    "areas": [
+      "api"
+    ],
+    "commit": "c6c87e7d",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-c27944c6",
     "date": "2026-08-03T12:20:03+08:00",
     "title": "fix(ai): back-end filter strips size/area questions for non-painting trades",
