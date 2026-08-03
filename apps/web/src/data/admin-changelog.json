@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-8dd16f99",
+    "date": "2026-08-03T15:59:13+08:00",
+    "title": "feat: AI asks style/preference question for new installations",
+    "summary": "feat: AI asks style/preference question for new installations",
+    "areas": [
+      "api"
+    ],
+    "commit": "8dd16f99",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-32ec3691",
     "date": "2026-08-03T15:47:59+08:00",
     "title": "fix: fallback questions only on first turn, neutral wording, prompt improvements",
