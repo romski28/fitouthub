@@ -5003,45 +5003,24 @@ Please review the project details and respond with your quote or decline the inv
       createData.user = { connect: { id: userId } };
     }
 
-    const enrichCreateData = (data: any) => {
-      const enriched = { ...data };
-
-      if (aiIntakeId) {
-        enriched.aiIntakeId = aiIntakeId;
-      }
-
-      if (normalizedPhotos.length > 0) {
-        enriched.photos = {
-          create: normalizedPhotos.map((p) => ({ url: p.url, note: p.note, uploadedById: userId || null, uploadedByRole: 'client' })),
-        };
-      }
-
-      if (userId) {
-        enriched.user = { connect: { id: userId } };
-      }
-
-      return enriched;
-    };
-
-    const createProjectRecord = async (data: any) => {
-      return this.prisma.project.create({
-        data,
-        include: {
-
-          professionals: {
-            include: {
-              professional: true,
-            },
-          },
-          photos: true,
-        },
-      });
-    };
-
     // Create project with all ProjectProfessional junctions
+    // Wrapped in a transaction so a partial INSERT (row exists but RETURNING fails)
+    // cannot leave an orphan row behind when the retry creates a second project.
     let project: any;
     try {
-      project = await createProjectRecord(createData);
+      project = await this.prisma.$transaction(async (tx) => {
+        return tx.project.create({
+          data: createData,
+          include: {
+            professionals: {
+              include: {
+                professional: true,
+              },
+            },
+            photos: true,
+          },
+        });
+      });
     } catch (error) {
       let retryError: any = error;
 
@@ -5049,7 +5028,15 @@ Please review the project details and respond with your quote or decline the inv
         console.warn('[ProjectsService.create] Missing Project activity column detected, applying hotfix DDL and retrying');
         try {
           await this.ensureProjectActivityColumns();
-          project = await createProjectRecord(createData);
+          project = await this.prisma.$transaction(async (tx) => {
+            return tx.project.create({
+              data: createData,
+              include: {
+                professionals: { include: { professional: true } },
+                photos: true,
+              },
+            });
+          });
           retryError = null;
         } catch (ddlRetryError) {
           retryError = ddlRetryError;

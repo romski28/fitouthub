@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-e00d08ee",
+    "date": "2026-08-03T14:44:47+08:00",
+    "title": "fix: prevent duplicate project creation with front-end guard and back-end transaction",
+    "summary": "fix: prevent duplicate project creation with front-end guard and back-end transaction",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e00d08ee",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-38385feb",
     "date": "2026-08-03T14:27:21+08:00",
     "title": "fix: remove fishing fallback 'Got it. Tell me more about what you need'",

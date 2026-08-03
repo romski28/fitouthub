@@ -445,6 +445,7 @@ export default function CreateProjectPage() {
   };
 
   const handleSubmit = async (formData: ProjectFormData, pendingFiles: File[], removedPhotos: string[]) => {
+    if (isSubmitting) return;
     setError(null);
     setIsSubmitting(true);
     setSubmissionComplete(false);
