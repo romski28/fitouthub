@@ -1366,8 +1366,13 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
   private generateFallbackOptions(question: string): Array<{ label: string; value: string }> | null {
     if (!question) return null;
     const q = question.trim();
+    // Fallback question — must be checked BEFORE yes/no so "Is there anything else..."
+    // gets the single "No" option, not Yes/No/Not sure
+    if (/is there anything else/i.test(q)) {
+      return [{ label: 'No', value: 'no' }];
+    }
     // Yes/No question → Yes / No / Not sure
-    if (/^(would you|do you|are you|is it|can you|have you|did you)\b/i.test(q)) {
+    if (/^(is (?:there|it)|are (?:there|you)|do you|does|did you|have you|has|can you|could you|will|would you|should)\b/i.test(q)) {
       return [
         { label: 'Yes', value: 'yes' },
         { label: 'No', value: 'no' },
@@ -1380,10 +1385,6 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
         { label: 'Tell me more', value: 'let me give you more details' },
         { label: 'Not sure yet', value: 'I am not sure yet' },
       ];
-    }
-    // Fallback question
-    if (/is there anything else/i.test(q)) {
-      return [{ label: 'No', value: 'no' }];
     }
     return null;
   }

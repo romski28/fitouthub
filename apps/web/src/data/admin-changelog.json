@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-56b07542",
+    "date": "2026-08-03T15:43:24+08:00",
+    "title": "fix: expand yes/no detection regex to catch 'is there', 'are there', 'will', 'should'",
+    "summary": "fix: expand yes/no detection regex to catch 'is there', 'are there', 'will', 'should'",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "56b07542",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-f2050499",
     "date": "2026-08-03T15:34:06+08:00",
     "title": "fix: move conversation logging to after fallback enrichment",

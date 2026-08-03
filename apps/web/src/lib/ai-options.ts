@@ -38,7 +38,7 @@ export function generateAiOptions(text: string): { label: string; value: string 
   //    "Have you checked or cleaned the air filters?" don't get split into fragments
   if (
     /\b(yes|no)\b/.test(lower) ||
-    (/\?$/.test(trimmed) && /^(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower))
+    (/\?$/.test(trimmed) && /^(is (?:there|it)|are (?:there|you)|do you|does|did you|have you|has|can you|could you|will|would you|should)\b/i.test(lower))
   ) {
     return [
       { label: 'Yes', value: 'yes' },
