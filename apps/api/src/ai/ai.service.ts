@@ -1423,8 +1423,8 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
       return `Understood. A ${tradeList} is the right call for this.`;
     }
 
-    // Nothing useful from the model — keep it minimal
-    return 'Got it. Tell me more about what you need.';
+    // Nothing useful from the model — let the final catch-all handle it
+    return null;
   }
 
   private normalizeSafetyAssessment(value: unknown): SafetyAssessment {

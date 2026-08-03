@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-38385feb",
+    "date": "2026-08-03T14:27:21+08:00",
+    "title": "fix: remove fishing fallback 'Got it. Tell me more about what you need'",
+    "summary": "fix: remove fishing fallback 'Got it. Tell me more about what you need'",
+    "areas": [
+      "api"
+    ],
+    "commit": "38385feb",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-210b8720",
     "date": "2026-08-03T14:12:06+08:00",
     "title": "fix: remove minimum-3-questions rule for summary confirmation",
