@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-24327813",
+    "date": "2026-08-03T13:53:47+08:00",
+    "title": "fix: reorder option generation so yes/no beats 'or' split, add back-end fallback",
+    "summary": "fix: reorder option generation so yes/no beats 'or' split, add back-end fallback",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "24327813",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-5a27d0e1",
     "date": "2026-08-03T13:45:20+08:00",
     "title": "fix: No to fallback wraps up, shelf size/area logic",

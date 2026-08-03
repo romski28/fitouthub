@@ -26,17 +26,7 @@ export function generateAiOptions(text: string): { label: string; value: string 
     return parts.map((s) => ({ label: s.trim(), value: s.trim().toLowerCase() })).slice(0, 5);
   }
 
-  // 2. Simple "X or Y" pattern (e.g. "indoor or outdoor?")
-  const orMatch = questionBody.match(/(.+)\s+or\s+(.+)/i);
-  if (orMatch) {
-    return [
-      { label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() },
-      { label: orMatch[2].trim(), value: orMatch[2].trim().toLowerCase() },
-      { label: 'Something else', value: 'something else' },
-    ];
-  }
-
-  // 3. What/which/how questions — checked BEFORE yes/no so "What type … are you …" doesn't falsely match yes/no
+  // 2. What/which/how questions — checked BEFORE yes/no so "What type … are you …" doesn't falsely match yes/no
   if (/\b(what|which|how)\b/i.test(lower) && /\?$/.test(trimmed)) {
     return [
       { label: 'Tell me more', value: 'let me give you more details' },
@@ -44,7 +34,8 @@ export function generateAiOptions(text: string): { label: string; value: string 
     ];
   }
 
-  // 4. Yes/No question detection — only when the question STARTS with a yes/no auxiliary
+  // 3. Yes/No question detection — checked BEFORE "X or Y" so questions like
+  //    "Have you checked or cleaned the air filters?" don't get split into fragments
   if (
     /\b(yes|no)\b/.test(lower) ||
     (/\?$/.test(trimmed) && /^(would you|do you|are you|is it|can you|have you|did you)\b/i.test(lower))
@@ -53,6 +44,16 @@ export function generateAiOptions(text: string): { label: string; value: string 
       { label: 'Yes', value: 'yes' },
       { label: 'No', value: 'no' },
       { label: 'Not sure', value: 'I am not sure' },
+    ];
+  }
+
+  // 4. Simple "X or Y" pattern (e.g. "indoor or outdoor?") — only for non-yes/no questions
+  const orMatch = questionBody.match(/(.+)\s+or\s+(.+)/i);
+  if (orMatch) {
+    return [
+      { label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() },
+      { label: orMatch[2].trim(), value: orMatch[2].trim().toLowerCase() },
+      { label: 'Something else', value: 'something else' },
     ];
   }
 

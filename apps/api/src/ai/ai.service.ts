@@ -1361,6 +1361,32 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
     };
   }
 
+  /** Generate sensible fallback options when the AI produces a question but no valid options. */
+  private generateFallbackOptions(question: string): Array<{ label: string; value: string }> | null {
+    if (!question) return null;
+    const q = question.trim();
+    // Yes/No question → Yes / No / Not sure
+    if (/^(would you|do you|are you|is it|can you|have you|did you)\b/i.test(q)) {
+      return [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+        { label: 'Not sure', value: 'not sure' },
+      ];
+    }
+    // What/which/how → open-ended
+    if (/\b(what|which|how)\b/i.test(q.toLowerCase())) {
+      return [
+        { label: 'Tell me more', value: 'let me give you more details' },
+        { label: 'Not sure yet', value: 'I am not sure yet' },
+      ];
+    }
+    // Fallback question
+    if (/is there anything else/i.test(q)) {
+      return [{ label: 'No', value: 'no' }];
+    }
+    return null;
+  }
+
   private buildConversationalTextFallback(parsedOutput: unknown, prompt: string): string | null {
     const source =
       parsedOutput && typeof parsedOutput === 'object' && !Array.isArray(parsedOutput)
@@ -3519,6 +3545,23 @@ Return ONLY valid JSON (no markdown):
         [],
       ).slice(0, 1),
     };
+
+    // Safety net: if AI produced a question but no valid options, generate them
+    if (!injectedOptions && finalNextQuestions.length > 0) {
+      const aiOptions = parsedObject?.options;
+      const hasValidOptions = Array.isArray(aiOptions) && aiOptions.length > 0 &&
+        aiOptions.some((o: unknown) => {
+          const obj = o as Record<string, unknown>;
+          return typeof obj?.label === 'string' && typeof obj?.value === 'string';
+        });
+      if (!hasValidOptions) {
+        const q = finalNextQuestions[0];
+        const opts = this.generateFallbackOptions(q);
+        if (opts) {
+          responseParsedOutput.options = opts;
+        }
+      }
+    }
 
     return {
       ...baseResponse,
