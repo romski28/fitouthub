@@ -1353,7 +1353,7 @@ OUTPUT SCHEMA
 {
   "conversationalText": "Got it — maintenance it is.",
   "trades": ["Plumber"],
-  "nextQuestions": ["one question only"],
+  "nextQuestions": ["your question here (must not be empty)"],
   "followUpQuestions": [],
   "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}]
 }
@@ -3438,6 +3438,8 @@ Return ONLY valid JSON (no markdown):
       normalizedParsedOutput && typeof normalizedParsedOutput === 'object' && !Array.isArray(normalizedParsedOutput)
         ? (normalizedParsedOutput as Record<string, unknown>)
         : null;
+
+    this.logger.log(`[conversational] parsedOutput keys=${parsedObject ? Object.keys(parsedObject).join(',') : 'NULL'} nq=${Array.isArray(parsedObject?.nextQuestions) ? (parsedObject!.nextQuestions as any[]).length : 'none'} trades=${Array.isArray(parsedObject?.trades) ? (parsedObject!.trades as any[]).length : 'none'}`);
 
     const existingConversationalText =
       typeof baseResponse.conversationalText === 'string' && baseResponse.conversationalText.trim().length > 0

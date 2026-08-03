@@ -1037,6 +1037,8 @@ export default function CreateProjectWizardPage() {
       // Require at least 3 questions before allowing summary confirmation
       const shouldOfferSummaryConfirmation = hasTrades && assistantQuestionCount >= 3 && hasNoMoreQuestions;
 
+      console.log('[wizard][questions] count=', assistantQuestionCount, 'hasTrades=', hasTrades, 'noMore=', hasNoMoreQuestions, 'parsedNQ=', Array.isArray(parsed?.nextQuestions) ? parsed.nextQuestions.length : 'none', 'filtered=', filteredParsedQuestions.length, 'nextUnasked=', !!nextUnaskedQuestion);
+
       // At wrap-up, call the compile endpoint to extract safety, risks, assumptions,
       // and a comprehensive scope from the full conversation. Populate wizard state
       // so they appear on the intermediate page and flow through to project creation.

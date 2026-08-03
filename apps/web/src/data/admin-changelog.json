@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-03-675628f2",
+    "date": "2026-08-03T11:12:23+08:00",
+    "title": "debug: add logging to trace question generation + clearer template",
+    "summary": "debug: add logging to trace question generation + clearer template",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "675628f2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-02-d5d0b60c",
     "date": "2026-08-02T21:50:13+08:00",
     "title": "fix: ensure question fallback works without title/summary from AI",
