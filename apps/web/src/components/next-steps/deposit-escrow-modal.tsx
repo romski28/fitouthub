@@ -191,9 +191,9 @@ export function DepositEscrowModal({ isOpen, isLoading = false, onClose }: Depos
     }
   };
 
-  if (!isOpen || !state.modalContent) return null;
+  if (!isOpen) return null;
 
-  const { title, body, imageUrl } = state.modalContent;
+  const { title, body, imageUrl } = state.modalContent || {};
   const fmtAmount = pendingTx
     ? new Intl.NumberFormat('en-HK', { style: 'currency', currency: 'HKD' }).format(
         Number(pendingTx.amount),

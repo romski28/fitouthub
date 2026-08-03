@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-1c0da66a",
+    "date": "2026-08-03T21:40:47+08:00",
+    "title": "fix: remove modalContent guard from DepositEscrowModal",
+    "summary": "fix: remove modalContent guard from DepositEscrowModal",
+    "areas": [
+      "web"
+    ],
+    "commit": "1c0da66a",
+    "files": [
+      "apps/web/src/components/next-steps/deposit-escrow-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-f19ff001",
     "date": "2026-08-03T21:34:42+08:00",
     "title": "fix: inline modal content in synthetic DEPOSIT_ESCROW_FUNDS step",
