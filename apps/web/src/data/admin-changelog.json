@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-03-3e54d88a",
+    "date": "2026-08-03T14:05:14+08:00",
+    "title": "fix: shelve area/size fallback question for all project classes",
+    "summary": "fix: shelve area/size fallback question for all project classes",
+    "areas": [
+      "web"
+    ],
+    "commit": "3e54d88a",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-03-a30f8a75",
     "date": "2026-08-03T13:56:30+08:00",
     "title": "fix: No to fallback flows through API instead of skipping it",

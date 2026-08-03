@@ -220,9 +220,11 @@ const getNextBestMissingBriefQuestion = (context: {
     }
     return null;
   }
-  if (context.summary.trim().length < 90 && context.allowSurveyPrompt !== false) {
-    return 'Roughly how big is the area, and are there any access or site-condition issues we should keep in mind?';
-  }
+  // SHELVED: area/size question — causes option mismatch and inappropriate for small projects.
+  // Will revisit later with trade-specific gating.
+  // if (context.summary.trim().length < 90 && context.allowSurveyPrompt !== false) {
+  //   return 'Roughly how big is the area, and are there any access or site-condition issues we should keep in mind?';
+  // }
   if (context.isEmergency === null) {
     return 'Is this urgent or can it be planned as a normal timeline project?';
   }
