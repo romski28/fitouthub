@@ -3213,20 +3213,8 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         intakeId = intake.id;
         this.logger.log(`[${requestId}] Intake saved id=${intakeId}`);
 
-        // Log conversation turn for LLM training dataset
-        if (sessionId) {
-          try {
-            await this.logConversationTurn({
-              sessionId,
-              intakeId,
-              prompt: trimmedPrompt,
-              parsedOutput,
-              requestId,
-            });
-          } catch (logErr) {
-            this.logger.warn(`[${requestId}] Conversation log failed: ${(logErr as Error).message}`);
-          }
-        }
+        // Note: conversation turn logging moved to previewConversationalRequirements
+        // so it captures enriched output (fallback conversationalText, options) the user actually sees.
 
         if (requestedImageCount > 0) {
           await this.persistAiIntakeImageInsights({
@@ -3571,6 +3559,22 @@ Return ONLY valid JSON (no markdown):
         if (opts) {
           responseParsedOutput.options = opts;
         }
+      }
+    }
+
+    // Log conversation turn with the enriched output the user actually sees
+    const sessionId = this.sanitizeSessionId(context?.sessionId);
+    if (sessionId && baseResponse.intakeId) {
+      try {
+        await this.logConversationTurn({
+          sessionId,
+          intakeId: baseResponse.intakeId,
+          prompt,
+          parsedOutput: responseParsedOutput,
+          requestId: baseResponse.requestId,
+        });
+      } catch (logErr) {
+        this.logger.warn(`Conversation log failed in previewConversationalRequirements: ${(logErr as Error).message}`);
       }
     }
 
