@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-7177515e",
+    "date": "2026-08-04T22:50:59+08:00",
+    "title": "fix: remove stray )} from modal refactor",
+    "summary": "fix: remove stray )} from modal refactor",
+    "areas": [
+      "web"
+    ],
+    "commit": "7177515e",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-da807572",
     "date": "2026-08-04T22:47:21+08:00",
     "title": "refactor: simplify claim review modal — remove chat, single column, collapsible questions",

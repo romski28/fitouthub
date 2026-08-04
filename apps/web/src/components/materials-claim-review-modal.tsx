@@ -459,7 +459,6 @@ export default function MaterialsClaimReviewModal({
               </div>
             )}
           </div>
-        )}
 
       {lightboxUrl && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[rgba(81,55,32,0.85)] p-4">
