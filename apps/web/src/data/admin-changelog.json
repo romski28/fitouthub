@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-8da6ddf4",
+    "date": "2026-08-04T20:47:11+08:00",
+    "title": "feat: blue 'info' variant for passive next-step buttons",
+    "summary": "feat: blue 'info' variant for passive next-step buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "8da6ddf4",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-92e992b9",
     "date": "2026-08-04T19:50:34+08:00",
     "title": "fix: clear nextStepCache on claim submit, broaden claim status check",

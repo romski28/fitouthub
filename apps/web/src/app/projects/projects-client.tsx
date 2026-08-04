@@ -180,7 +180,7 @@ function NextStepModalButton({
 }: {
   action: NextStepAction;
   projectId: string;
-  variant: 'primary' | 'secondary' | 'status';
+  variant: 'primary' | 'secondary' | 'status' | 'info';
   disabled?: boolean;
   labelOverride?: string;
   disabledTitle?: string;
@@ -224,6 +224,8 @@ function NextStepModalButton({
           ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : variant === 'status'
             ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500 disabled:hover:bg-amber-500 text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+          : variant === 'info'
+            ? 'rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:hover:bg-blue-600 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition text-center leading-tight disabled:cursor-not-allowed'
       }
     >
@@ -936,7 +938,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                               key={`${project.id}-${action.actionKey}`}
                               action={action}
                               projectId={project.id}
-                              variant="primary"
+                              variant={action.requiresAction ? 'primary' : 'info'}
                               onCompleted={() => refreshProjectNextStep(project.id)}
                             />
                           ))}
