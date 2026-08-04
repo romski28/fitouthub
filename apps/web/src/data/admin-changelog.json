@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-2d2ef090",
+    "date": "2026-08-04T22:56:03+08:00",
+    "title": "fix: correct WorkflowCompletionModal props (completedLabel/completedDescription)",
+    "summary": "fix: correct WorkflowCompletionModal props (completedLabel/completedDescription)",
+    "areas": [
+      "web"
+    ],
+    "commit": "2d2ef090",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-40f6712b",
     "date": "2026-08-04T22:53:09+08:00",
     "title": "fix: remove duplicate closing brace",

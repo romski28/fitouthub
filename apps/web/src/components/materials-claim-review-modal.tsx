@@ -312,8 +312,8 @@ export default function MaterialsClaimReviewModal({
       <WorkflowCompletionModal
         isOpen={workflowModalOpen}
         onClose={() => { setWorkflowModalOpen(false); onClose(); onCompleted?.(); }}
-        title="Transfer authorised"
-        body={`${formatHKD(Number(approvedAmount || 0))} has been authorised for transfer.`}
+        completedLabel="Transfer authorised"
+        completedDescription={`${formatHKD(Number(approvedAmount || 0))} has been authorised for transfer.`}
       />
     ) : (
     <div
