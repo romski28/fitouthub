@@ -1027,9 +1027,20 @@ export class NextStepService {
               status: project.status, stage: effectiveStage,
             });
           } else {
-            // Escrow funded — show passive wait or materials actions (handled by existing CLIENT block below)
-            // Just clear any CONFIRM_START_DETAILS that seeded config might set
-            availableConfigSteps = availableConfigSteps.filter((s) => s.actionKey !== 'CONFIRM_START_DETAILS');
+            // Escrow funded — filter out both start-date and deposit steps.
+            // Professional now sees their next actions (materials claim, start project).
+            availableConfigSteps = availableConfigSteps.filter(
+              (s) => !['CONFIRM_START_DETAILS', 'DEPOSIT_ESCROW_FUNDS'].includes(s.actionKey),
+            );
+            // If nothing remains, show a passive status step
+            if (availableConfigSteps.length === 0) {
+              availableConfigSteps = [{
+                actionKey: 'WAIT_FOR_PROFESSIONAL', actionLabel: 'Professional preparing',
+                description: 'Escrow is funded. The professional is reviewing the project and preparing to begin work.',
+                isPrimary: true, isElective: false, requiresAction: false,
+                estimatedDurationMinutes: null, displayOrder: 1,
+              } as any];
+            }
           }
         }
         // If latestStartProposal and !preWorkStartDateAgreed → keep seed CONFIRM_START_DETAILS (fall through)

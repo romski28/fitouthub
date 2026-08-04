@@ -923,6 +923,7 @@ export class FinancialService {
       data: {
         currentStage: ProjectStage.PRE_WORK,
         stageStartedAt: new Date(),
+        nextStepCache: Prisma.JsonNull,
       },
     });
 
@@ -1747,6 +1748,7 @@ export class FinancialService {
         data: {
           escrowHeld: newHeld,
           escrowHeldUpdatedAt: new Date(),
+          nextStepCache: Prisma.JsonNull,
         },
       });
 

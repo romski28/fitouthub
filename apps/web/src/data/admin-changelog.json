@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-04-377c06bb",
+    "date": "2026-08-04T13:30:39+08:00",
+    "title": "fix: clear nextStepCache on escrow deposit, show passive step after funding",
+    "summary": "fix: clear nextStepCache on escrow deposit, show passive step after funding",
+    "areas": [
+      "api"
+    ],
+    "commit": "377c06bb",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-03-1c0da66a",
     "date": "2026-08-03T21:40:47+08:00",
     "title": "fix: remove modalContent guard from DepositEscrowModal",
