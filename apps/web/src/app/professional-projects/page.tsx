@@ -756,7 +756,10 @@ export default function ProfessionalProjectsPage() {
                                           projectProf.id,
                                         )
                                       }
-                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight"
+                                      className={action.requiresAction
+                                        ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight'
+                                        : 'rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight'
+                                      }
                                     >
                                       {label}
                                     </button>

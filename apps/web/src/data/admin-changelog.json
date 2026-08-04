@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-f5592595",
+    "date": "2026-08-04T22:21:29+08:00",
+    "title": "fix: pro list blue button for passive steps (inline rendering)",
+    "summary": "fix: pro list blue button for passive steps (inline rendering)",
+    "areas": [
+      "web"
+    ],
+    "commit": "f5592595",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-8da6ddf4",
     "date": "2026-08-04T20:47:11+08:00",
     "title": "feat: blue 'info' variant for passive next-step buttons",
