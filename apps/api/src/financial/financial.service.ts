@@ -2851,6 +2851,14 @@ export class FinancialService {
       console.warn('[FinancialService] Failed to create scoped claim chat messages:', chatError);
     }
 
+    // Invalidate next-step cache so the pro sees the updated state immediately
+    try {
+      await this.prisma.project.update({
+        where: { id: input.projectId },
+        data: { nextStepCache: Prisma.JsonNull },
+      });
+    } catch { /* non-fatal */ }
+
     return {
       success: true,
       evidence,

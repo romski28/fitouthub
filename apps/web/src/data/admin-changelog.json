@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-04-92e992b9",
+    "date": "2026-08-04T19:50:34+08:00",
+    "title": "fix: clear nextStepCache on claim submit, broaden claim status check",
+    "summary": "fix: clear nextStepCache on claim submit, broaden claim status check",
+    "areas": [
+      "api"
+    ],
+    "commit": "92e992b9",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-04-1204ef05",
     "date": "2026-08-04T17:24:36+08:00",
     "title": "fix: materials claim — pro sees submitted status, client sees review step",

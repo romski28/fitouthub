@@ -909,7 +909,7 @@ export class NextStepService {
               const m1 = allMilestonesPreWork.find((m) => m.sequence === 1)?.id;
               if (m1) {
                 const [pendingCountPw, approvedCountPw] = await Promise.all([
-                  (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: 'pending' } }),
+                  (this.prisma as any).milestoneProcurementEvidence.count({ where: { projectId, paymentMilestoneId: m1, status: { in: ['pending', 'under_review', 'submitted'] } } }),
                   this.prisma.financialTransaction.count({
                     where: { projectId, type: 'milestone_procurement_approved', status: 'confirmed', notes: { contains: m1 } },
                   }),
@@ -1040,7 +1040,7 @@ export class NextStepService {
               const m1 = paymentPlan?.milestones?.find((m: any) => m.sequence === 1)?.id;
               if (m1) {
                 const pendingCount = await (this.prisma as any).milestoneProcurementEvidence.count({
-                  where: { projectId, paymentMilestoneId: m1, status: 'pending' },
+                  where: { projectId, paymentMilestoneId: m1, status: { in: ['pending', 'under_review', 'submitted'] } },
                 });
                 hasClaimForClient = pendingCount > 0;
               }
