@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-92bb2a77",
+    "date": "2026-08-04T23:16:05+08:00",
+    "title": "fix: suppress synthetic milestone when active materials claim exists",
+    "summary": "fix: suppress synthetic milestone when active materials claim exists",
+    "areas": [
+      "web"
+    ],
+    "commit": "92bb2a77",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-d0c9d086",
     "date": "2026-08-04T23:06:47+08:00",
     "title": "feat: show pending materials claims in client financials tab",

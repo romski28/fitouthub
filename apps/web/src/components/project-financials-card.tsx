@@ -423,6 +423,14 @@ export default function ProjectFinancialsCard({
         .filter(Boolean),
     );
 
+    // Milestones that have an active procurement claim — suppress their synthetic entry
+    const milestoneIdsWithClaim = new Set(
+      procurementEvidence
+        .filter((ev) => ['pending', 'submitted', 'under_review'].includes(String(ev.status || '').toLowerCase()))
+        .map((ev) => ev.paymentMilestoneId)
+        .filter(Boolean),
+    );
+
     // When a payment_request exists (pending or confirmed), suppress the upcoming
     // milestone with the lowest sequence — the request replaces the placeholder.
     const hasPaymentRequest = filteredTransactions.some(
@@ -433,7 +441,7 @@ export default function ProjectFinancialsCard({
       : -1;
 
     const upcomingMilestones = (paymentPlan?.milestones || [])
-      .filter((m) => !milestoneIdsWithTx.has(m.id) && m.status !== 'cancelled' && m.sequence !== requestedMilestoneSeq)
+      .filter((m) => !milestoneIdsWithTx.has(m.id) && !milestoneIdsWithClaim.has(m.id) && m.status !== 'cancelled' && m.sequence !== requestedMilestoneSeq)
       .map((m) => ({
         id: `upcoming-${m.id}`,
         type: 'milestone_payment' as const,
@@ -451,7 +459,7 @@ export default function ProjectFinancialsCard({
       }));
 
     return [...upcomingMilestones, ...filteredTransactions];
-  }, [filteredTransactions, paymentPlan]);
+  }, [filteredTransactions, paymentPlan, procurementEvidence]);
 
   const approvedBudget = useMemo(() => {
     const approvedTx = transactions.find((tx) => tx.type === 'approved_budget');
