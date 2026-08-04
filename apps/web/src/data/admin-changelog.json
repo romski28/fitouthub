@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-4b5e9b00",
+    "date": "2026-08-04T23:29:44+08:00",
+    "title": "feat: add Review button on materials claim bar in financials tab",
+    "summary": "feat: add Review button on materials claim bar in financials tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "4b5e9b00",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-92bb2a77",
     "date": "2026-08-04T23:16:05+08:00",
     "title": "fix: suppress synthetic milestone when active materials claim exists",

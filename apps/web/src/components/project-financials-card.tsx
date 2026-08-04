@@ -1667,7 +1667,7 @@ export default function ProjectFinancialsCard({
                 No financial transactions yet
               </div>
             )}
-            {/* Pending materials claims — record only, no actions */}
+            {/* Pending materials claims */}
             {pendingProcurementEvidence.map((evidence: MilestoneProcurementEvidence) => {
               const dateObj = evidence.createdAt ? new Date(evidence.createdAt) : null;
               const dateLabel = dateObj && !isNaN(dateObj.getTime())
@@ -1687,6 +1687,13 @@ export default function ProjectFinancialsCard({
                       <span>{formatHKD(evidence.claimedAmount)}</span>
                       <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Pending review</span>
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedProcurementEvidenceId(evidence.id); setShowClaimReviewModal(true); }}
+                      className="shrink-0 rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                    >
+                      Review
+                    </button>
                   </div>
                 </div>
               );
