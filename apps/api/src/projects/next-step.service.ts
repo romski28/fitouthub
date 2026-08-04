@@ -931,14 +931,19 @@ export class NextStepService {
                   projectStage: effectiveStage, actionKey: 'MAKE_MILESTONE_1_CLAIM',
                   actionLabel: 'Submit materials claim',
                   description: 'Submit purchase receipts and claimed amount for milestone 1 materials.',
-                  isPrimary: true, isElective: false, requiresAction: true, estimatedDurationMinutes: 10, displayOrder: 2,
+                  isPrimary: false, isElective: true, requiresAction: true, estimatedDurationMinutes: 10, displayOrder: 2,
                 } as any);
               }
             } else if (hasPendingClaimPreWork) {
               availableConfigSteps = [
-                createSyntheticPrimaryStep('RESPOND_TO_MATERIALS_QUESTIONS', 'Respond to client questions on materials claim', true, role, effectiveStage,
-                  'Your materials claim is under client review. Respond to any questions in the claim thread.'),
+                createSyntheticPrimaryStep('WAIT_FOR_CLIENT_REVIEW', 'Materials claim submitted', false, role, effectiveStage,
+                  'Your materials claim is under client review. The client will authorize the wallet transfer shortly. You can start work on site in the meantime.'),
               ];
+              if (canStartPreWork) {
+                availableConfigSteps.push({ ...createSyntheticPrimaryStep('START_PROJECT', 'Start work on site', true, role, effectiveStage,
+                  'Escrow prerequisites are ready. You may begin work on site while the materials claim is reviewed.'),
+                  isPrimary: true, isElective: false, displayOrder: 1 } as any);
+              }
             } else {
               availableConfigSteps = [
                 createSyntheticPrimaryStep(
@@ -1028,11 +1033,29 @@ export class NextStepService {
             });
           } else {
             // Escrow funded — client is ready for site start.
-            // Pro initiates via QR/token exchange; client confirms on site.
+            // Check if the pro has submitted a materials claim first.
+            const escrowClientPreWork = Number(project.escrowHeld ?? 0) > 0;
+            let hasClaimForClient = false;
+            if (escrowClientPreWork && ['SCALE_1', 'SCALE_2'].includes(preWorkNormalizedScale)) {
+              const m1 = paymentPlan?.milestones?.find((m: any) => m.sequence === 1)?.id;
+              if (m1) {
+                const pendingCount = await (this.prisma as any).milestoneProcurementEvidence.count({
+                  where: { projectId, paymentMilestoneId: m1, status: 'pending' },
+                });
+                hasClaimForClient = pendingCount > 0;
+              }
+            }
             availableConfigSteps = availableConfigSteps.filter(
               (s) => !['CONFIRM_START_DETAILS', 'DEPOSIT_ESCROW_FUNDS'].includes(s.actionKey),
             );
-            if (availableConfigSteps.length === 0) {
+            if (hasClaimForClient) {
+              availableConfigSteps = [{
+                actionKey: 'REVIEW_MATERIALS_PURCHASE', actionLabel: 'Review materials claim',
+                description: 'The professional submitted a materials purchase claim. Review and authorize the wallet transfer.',
+                isPrimary: true, isElective: false, requiresAction: true,
+                estimatedDurationMinutes: 10, displayOrder: 1,
+              } as any];
+            } else if (availableConfigSteps.length === 0) {
               availableConfigSteps = [{
                 actionKey: 'START_PROJECT_ON_SITE', actionLabel: 'Start project on site',
                 description: 'Escrow is funded. Be on site when the professional arrives to confirm the start.',

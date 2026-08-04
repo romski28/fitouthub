@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-1204ef05",
+    "date": "2026-08-04T17:24:36+08:00",
+    "title": "fix: materials claim — pro sees submitted status, client sees review step",
+    "summary": "fix: materials claim — pro sees submitted status, client sees review step",
+    "areas": [
+      "api"
+    ],
+    "commit": "1204ef05",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-04-b4593cb1",
     "date": "2026-08-04T16:06:05+08:00",
     "title": "fix: client sees START_PROJECT_ON_SITE after escrow, materials claim elective",
