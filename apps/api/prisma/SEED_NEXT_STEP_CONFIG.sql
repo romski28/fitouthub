@@ -169,10 +169,20 @@ VALUES
    'Deposit project funds to escrow so work can begin.',
    true, false, true, 2, NOW(), NOW()),
 
+  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT',
+   'START_PROJECT_ON_SITE', 'Start project on site',
+   'Escrow is funded. Be on site when the professional arrives to confirm the start.',
+   true, false, true, 3, NOW(), NOW()),
+
   (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL',
    'CONFIRM_START_DATE', 'Confirm start date',
    'Confirm kickoff date and resource plan.',
-   true, false, true, 1, NOW(), NOW())
+   true, false, true, 1, NOW(), NOW()),
+
+  (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL',
+   'MAKE_MILESTONE_1_CLAIM', 'Submit materials claim',
+   'Submit purchase receipts and claimed amount for milestone 1 materials.',
+   false, true, true, 2, NOW(), NOW())
 
 ON CONFLICT ("projectStage","role","actionKey") DO NOTHING;
 

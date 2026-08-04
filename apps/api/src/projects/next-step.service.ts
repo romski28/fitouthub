@@ -1027,18 +1027,17 @@ export class NextStepService {
               status: project.status, stage: effectiveStage,
             });
           } else {
-            // Escrow funded — filter out both start-date and deposit steps.
-            // Professional now sees their next actions (materials claim, start project).
+            // Escrow funded — client is ready for site start.
+            // Pro initiates via QR/token exchange; client confirms on site.
             availableConfigSteps = availableConfigSteps.filter(
               (s) => !['CONFIRM_START_DETAILS', 'DEPOSIT_ESCROW_FUNDS'].includes(s.actionKey),
             );
-            // If nothing remains, show a passive status step
             if (availableConfigSteps.length === 0) {
               availableConfigSteps = [{
-                actionKey: 'WAIT_FOR_PROFESSIONAL', actionLabel: 'Professional preparing',
-                description: 'Escrow is funded. The professional is reviewing the project and preparing to begin work.',
-                isPrimary: true, isElective: false, requiresAction: false,
-                estimatedDurationMinutes: null, displayOrder: 1,
+                actionKey: 'START_PROJECT_ON_SITE', actionLabel: 'Start project on site',
+                description: 'Escrow is funded. Be on site when the professional arrives to confirm the start.',
+                isPrimary: true, isElective: false, requiresAction: true,
+                estimatedDurationMinutes: 5, displayOrder: 1,
               } as any];
             }
           }

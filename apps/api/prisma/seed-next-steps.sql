@@ -40,7 +40,9 @@ VALUES
   -- PRE_WORK stage
   (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'CONFIRM_START_DETAILS', 'Confirm start details', 'Accept or update the proposed start date before work begins.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'DEPOSIT_ESCROW_FUNDS', 'Deposit funds to escrow', 'Deposit project funds to escrow so work can begin.', true, false, true, NULL, 2, NOW(), NOW()),
+  (gen_random_uuid()::text, 'PRE_WORK', 'CLIENT', 'START_PROJECT_ON_SITE', 'Start project on site', 'Escrow is funded. Be on site to confirm the start.', true, false, true, NULL, 3, NOW(), NOW()),
   (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL', 'CONFIRM_START_DATE', 'Confirm start date', 'Confirm kickoff date and resource plan.', true, false, true, NULL, 1, NOW(), NOW()),
+  (gen_random_uuid()::text, 'PRE_WORK', 'PROFESSIONAL', 'MAKE_MILESTONE_1_CLAIM', 'Submit materials claim', 'Submit purchase receipts and claimed amount for milestone 1 materials.', false, true, true, NULL, 2, NOW(), NOW()),
 
   -- WORK_IN_PROGRESS stage
   (gen_random_uuid()::text, 'WORK_IN_PROGRESS', 'CLIENT', 'REVIEW_PROGRESS', 'Review progress', 'Check updates and milestone readiness.', true, false, true, NULL, 1, NOW(), NOW()),

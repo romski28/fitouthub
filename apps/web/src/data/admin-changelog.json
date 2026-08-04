@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-04-b4593cb1",
+    "date": "2026-08-04T16:06:05+08:00",
+    "title": "fix: client sees START_PROJECT_ON_SITE after escrow, materials claim elective",
+    "summary": "fix: client sees START_PROJECT_ON_SITE after escrow, materials claim elective",
+    "areas": [
+      "api"
+    ],
+    "commit": "b4593cb1",
+    "files": [
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-08-04-377c06bb",
     "date": "2026-08-04T13:30:39+08:00",
     "title": "fix: clear nextStepCache on escrow deposit, show passive step after funding",
