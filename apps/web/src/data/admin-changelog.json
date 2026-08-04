@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-d0c9d086",
+    "date": "2026-08-04T23:06:47+08:00",
+    "title": "feat: show pending materials claims in client financials tab",
+    "summary": "feat: show pending materials claims in client financials tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "d0c9d086",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-837c3260",
     "date": "2026-08-04T22:58:25+08:00",
     "title": "fix: add required nextStep prop to WorkflowCompletionModal",

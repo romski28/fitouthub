@@ -1654,11 +1654,35 @@ export default function ProjectFinancialsCard({
         <div className="p-5 flex flex-col gap-6">
           {/* Transactions — card layout */}
           <div className="space-y-3">
-            {displayTransactions.length === 0 && (
+            {displayTransactions.length === 0 && pendingProcurementEvidence.length === 0 && (
               <div className="rounded-md border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] p-6 text-center text-sm text-slate-600">
                 No financial transactions yet
               </div>
             )}
+            {/* Pending materials claims — record only, no actions */}
+            {pendingProcurementEvidence.map((evidence: MilestoneProcurementEvidence) => {
+              const dateObj = evidence.createdAt ? new Date(evidence.createdAt) : null;
+              const dateLabel = dateObj && !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+                : '';
+              return (
+                <div
+                  key={evidence.id}
+                  className="rounded-lg border-2 border-[#FF7F50] bg-[#F5F0E0] p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[#FF7F50] bg-transparent" />
+                    <p className="flex-1 text-sm font-semibold text-slate-800 min-w-0">
+                      {dateLabel && <span className="text-slate-500 font-normal">{dateLabel}{' — '}</span>}
+                      Materials purchase claim
+                      {' · '}
+                      <span>{formatHKD(evidence.claimedAmount)}</span>
+                      <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Pending review</span>
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
             {displayTransactions.map((tx: any) => {
               const status = (tx.status || '').toLowerCase();
               const isComplete = status === 'confirmed' || status === 'paid' || status === 'info';
