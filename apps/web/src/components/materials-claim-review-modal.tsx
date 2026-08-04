@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
-import ProjectChat from '@/components/project-chat';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 
 interface ClaimModalContent {
@@ -117,12 +115,13 @@ export default function MaterialsClaimReviewModal({
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan | null>(null);
   const [summary, setSummary] = React.useState<ProjectFinancialSummary | null>(null);
   const [evidence, setEvidence] = React.useState<ProcurementEvidence | null>(null);
-  const router = useRouter();
   const [authorising, setAuthorising] = React.useState(false);
   const [approvedAmount, setApprovedAmount] = React.useState('');
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
-  const [showDetails, setShowDetails] = React.useState(false);
   const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
+  const [questionText, setQuestionText] = React.useState('');
+  const [questionExpanded, setQuestionExpanded] = React.useState(false);
+  const [sendingQuestion, setSendingQuestion] = React.useState(false);
 
   const allUrls = React.useMemo(
     () => [...(evidence?.invoiceUrls ?? []), ...(evidence?.photoUrls ?? [])],
@@ -281,41 +280,47 @@ export default function MaterialsClaimReviewModal({
     }
   };
 
+  const handleAskQuestion = async () => {
+    const trimmed = questionText.trim();
+    if (!trimmed || !evidence || !projectId || !accessToken) return;
+    setSendingQuestion(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat/project/${projectId}/claim/${evidence.id}/message`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: trimmed }),
+      });
+      if (!res.ok) throw new Error('Failed to send question');
+      toast.success('Question sent to professional');
+      setQuestionText('');
+      setQuestionExpanded(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send question');
+    } finally {
+      setSendingQuestion(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  const title = modalContent?.title || 'Review materials purchase receipts';
-  const body =
-    modalContent?.body ||
-    'Review the professional\'s materials claim, ask for clarification in claim chat, or authorise transfer.';
-  const detailsBody =
-    modalContent?.detailsBody ||
-    'Review each receipt and claim details before authorising. Use the claim thread for clarifications so all context is retained in one place.';
+  const title = modalContent?.title || 'Review claim';
+  const body = modalContent?.body || 'Review the claim details, ask a question if needed, or authorise the transfer.';
 
   return (
     <>
+    {workflowModalOpen ? (
+      <WorkflowCompletionModal
+        isOpen={workflowModalOpen}
+        onClose={() => { setWorkflowModalOpen(false); onClose(); onCompleted?.(); }}
+        title="Transfer authorised"
+        body={`${formatHKD(Number(approvedAmount || 0))} has been authorised for transfer.`}
+      />
+    ) : (
     <div
-      className={`fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-2 sm:items-center sm:p-4 transition-all ${
-        isOpen ? 'visible bg-black/60 backdrop-blur-sm' : 'invisible bg-black/0'
-      }`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-[rgba(81,55,32,0.35)] backdrop-blur-sm p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="my-2 w-full max-w-6xl sm:my-0 [perspective:1600px]">
-        <div
-          className="relative grid sm:max-h-[88vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
-          style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-        >
-          <div className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]">
-            <button
-              type="button"
-              onClick={() => setShowDetails(true)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(255,250,240,0.95)]"
-              aria-label="Show details"
-              title="More info"
-            >
-              i
-            </button>
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl">
 
             <div className="border-b border-[rgba(120,53,15,0.14)] px-5 py-4">
               <div>
@@ -324,7 +329,7 @@ export default function MaterialsClaimReviewModal({
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4">
+            <div className="flex flex-col min-h-0 overflow-y-auto p-4 space-y-4">
               {loading ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[rgba(120,53,15,0.14)] border-t-[#FF7F50]" />
@@ -332,86 +337,76 @@ export default function MaterialsClaimReviewModal({
                 </div>
               ) : !evidence ? (
                 <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] px-4 py-6 text-center text-sm text-[#4A3623]">
-                  No pending materials claim found for this project.
+                  No pending claim found for this project.
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 grid gap-4 lg:grid-cols-2 lg:items-stretch">
-                  <div className="space-y-3 min-h-0 min-w-0 lg:overflow-y-auto">
-                    <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">Claimed amount</span>
-                          <span className="text-lg font-bold text-[#4A3623]">
-                            {formatHKD(evidence.claimedAmount)} / {formatHKD(milestoneCapAmount)}
-                          </span>
-                      </div>
-                      {evidence.deadlineAt && (
-                        <div className="flex items-center justify-between text-xs text-[rgba(126,58,33,0.55)]">
-                          <span>Review deadline</span>
-                          <span className="text-amber-600">
-                            {new Date(evidence.deadlineAt).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {evidence.openingMessage && (
-                        <div className="pt-2 border-t border-[rgba(120,53,15,0.14)] text-xs text-[#4A3623]">
-                          {evidence.openingMessage}
-                        </div>
-                      )}
+                <>
+                  {/* Claimed amount */}
+                  <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">Claimed amount</span>
+                      <span className="text-lg font-bold text-[#4A3623]">
+                        {formatHKD(evidence.claimedAmount)}
+                        {milestoneCapAmount > 0 && <> / {formatHKD(milestoneCapAmount)}</>}
+                      </span>
                     </div>
+                    {evidence.deadlineAt && (
+                      <div className="flex items-center justify-between text-xs text-[rgba(126,58,33,0.55)]">
+                        <span>Review deadline</span>
+                        <span className="text-amber-600">
+                          {new Date(evidence.deadlineAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    )}
+                    {evidence.openingMessage && (
+                      <div className="pt-2 border-t border-[rgba(120,53,15,0.14)] text-xs text-[#4A3623]">{evidence.openingMessage}</div>
+                    )}
+                  </div>
 
-                    {allUrls.length > 0 && (
-                      <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.65)] p-3 space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">
-                          Receipts &amp; photos ({allUrls.length})
-                        </p>
-
-                        <div className="max-h-[28vh] space-y-2 overflow-y-auto pr-1">
-                          {allUrls.map((url, index) => {
-                            const file = filenameFromUrl(url);
-                            const meta = itemNoteMap[file] || {};
-                            return (
-                              <div
-                                key={`${url}-${index}`}
-                                className="flex items-center gap-3 rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] p-2"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => setLightboxUrl(url)}
-                                  className="relative block h-14 w-14 shrink-0 overflow-hidden rounded border border-[rgba(120,53,15,0.14)] transition hover:border-[#FF7F50]"
-                                  title={`Open ${file}`}
-                                >
-                                  <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
-                                </button>
-                                <div className="min-w-0 text-[11px] text-[rgba(126,58,33,0.65)]">
-                                  <p><span className="text-[rgba(126,58,33,0.55)]">Value:</span> {meta.valueText || 'Not itemised'}</p>
-                                  <p className="truncate"><span className="text-[rgba(126,58,33,0.55)]">Note:</span> {meta.noteText || 'No per-item note provided'}</p>
-                                </div>
+                  {/* Receipts & photos */}
+                  {allUrls.length > 0 && (
+                    <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.65)] p-3 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">Receipts &amp; photos ({allUrls.length})</p>
+                      <div className="max-h-[24vh] space-y-2 overflow-y-auto pr-1">
+                        {allUrls.map((url, index) => {
+                          const file = filenameFromUrl(url);
+                          const meta = itemNoteMap[file] || {};
+                          return (
+                            <div key={`${url}-${index}`} className="flex items-center gap-3 rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] p-2">
+                              <button type="button" onClick={() => setLightboxUrl(url)} className="relative block h-14 w-14 shrink-0 overflow-hidden rounded border border-[rgba(120,53,15,0.14)] transition hover:border-[#FF7F50]">
+                                <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
+                              </button>
+                              <div className="min-w-0 text-[11px] text-[rgba(126,58,33,0.65)]">
+                                <p><span className="text-[rgba(126,58,33,0.55)]">Value:</span> {meta.valueText || 'Not itemised'}</p>
+                                <p className="truncate"><span className="text-[rgba(126,58,33,0.55)]">Note:</span> {meta.noteText || 'No note'}</p>
                               </div>
-                            );
-                          })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ask a question (collapsible) */}
+                  <div>
+                    <button type="button" onClick={() => setQuestionExpanded(!questionExpanded)} className="text-xs font-medium text-[#FF7F50] hover:text-[#E67245] transition">
+                      {questionExpanded ? '\u2212 Cancel question' : '+ Ask a question'}
+                    </button>
+                    {questionExpanded && (
+                      <div className="mt-2 space-y-2">
+                        <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} rows={2}
+                          placeholder="Ask for clarification on amounts, receipts, or notes..."
+                          className="w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-xs text-[#4A3623] placeholder-[rgba(126,58,33,0.4)] resize-none" />
+                        <div className="flex justify-end">
+                          <button type="button" onClick={handleAskQuestion} disabled={sendingQuestion || !questionText.trim()}
+                            className="rounded-md bg-[#FF7F50] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#E67245] disabled:opacity-50 transition">
+                            {sendingQuestion ? 'Sending...' : 'Send question'}
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
-
-                  <div className="flex flex-col min-h-0 h-full">
-                    <ProjectChat
-                      projectId={projectId}
-                      accessToken={accessToken}
-                      currentUserRole={currentUserRole === 'admin' ? 'admin' : 'client'}
-                      threadScope="claim"
-                      threadScopeId={evidence.id}
-                      sendButtonLabel="Request clarification"
-                      messagePlaceholder="Ask for clarification on receipts, amounts, or notes..."
-                      className="flex-1 min-h-0"
-                      fillHeight
-                    />
-                  </div>
-                </div>
+                </>
               )}
             </div>
 
@@ -464,39 +459,7 @@ export default function MaterialsClaimReviewModal({
               </div>
             )}
           </div>
-
-          <div
-            className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]"
-            style={{ transform: 'rotateY(180deg)' }}
-            aria-hidden={!showDetails}
-          >
-            <button
-              type="button"
-              onClick={() => setShowDetails(false)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(255,250,240,0.95)]"
-              aria-label="Hide details"
-            >
-              ×
-            </button>
-
-            <div className="flex-1 overflow-y-visible px-6 pb-6 pt-12 text-left sm:overflow-y-auto">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#FF7F50]">More information</p>
-              <h3 className="mt-3 text-2xl font-bold text-emerald-700">{title}</h3>
-              <p className="mt-5 text-sm leading-relaxed text-[#4A3623]">{detailsBody}</p>
-            </div>
-
-            <div className="mt-auto border-t border-[rgba(120,53,15,0.14)] px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setShowDetails(false)}
-                className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
-              >
-                Back to action
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
 
       {lightboxUrl && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[rgba(81,55,32,0.85)] p-4">
@@ -513,24 +476,8 @@ export default function MaterialsClaimReviewModal({
         </div>
       )}
     </div>
-
-    <WorkflowCompletionModal
-      isOpen={workflowModalOpen}
-      completedLabel={modalContent?.title ? `${modalContent.title} — approved!` : 'Materials claim approved!'}
-        nextStep={null}
-      completedDescription="The approved amount has been moved to the professional's withdrawable wallet. Any unspent balance has been returned to your escrow."
-      primaryActionLabel="Return to projects"
-      secondaryActionLabel="Close"
-      showConfetti
-      onNavigate={() => {
-        router.push('/projects');
-      }}
-      onClose={() => {
-        setWorkflowModalOpen(false);
-        onCompleted?.();
-        onClose();
-      }}
-    />
+    )}
     </>
-    );
+  );
+}
   }

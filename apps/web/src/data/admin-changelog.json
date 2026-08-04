@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-da807572",
+    "date": "2026-08-04T22:47:21+08:00",
+    "title": "refactor: simplify claim review modal — remove chat, single column, collapsible questions",
+    "summary": "refactor: simplify claim review modal — remove chat, single column, collapsible questions",
+    "areas": [
+      "web"
+    ],
+    "commit": "da807572",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-b4225c63",
     "date": "2026-08-04T22:28:41+08:00",
     "title": "style: update both materials claim modals to Mimo beige theme",
