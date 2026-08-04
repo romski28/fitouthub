@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-40f6712b",
+    "date": "2026-08-04T22:53:09+08:00",
+    "title": "fix: remove duplicate closing brace",
+    "summary": "fix: remove duplicate closing brace",
+    "areas": [
+      "web"
+    ],
+    "commit": "40f6712b",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-7177515e",
     "date": "2026-08-04T22:50:59+08:00",
     "title": "fix: remove stray )} from modal refactor",
