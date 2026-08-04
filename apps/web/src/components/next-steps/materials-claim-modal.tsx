@@ -380,29 +380,29 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
   return (
     <>
     {showMainModal && (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-2 backdrop-blur-sm sm:items-center sm:p-4" onClick={(e) => {
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(81,55,32,0.35)] p-2 backdrop-blur-sm sm:items-center sm:p-4" onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
       <div className="my-2 w-full max-w-3xl sm:my-0">
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh]">
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl sm:max-h-[88vh]">
         {(isLoading || pageLoading) ? (
           <div className="px-6 py-12 text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
-            <p className="text-slate-300">Loading...</p>
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[rgba(120,53,15,0.14)] border-t-[#FF7F50]" />
+            <p className="text-[rgba(126,58,33,0.65)]">Loading...</p>
           </div>
         ) : (
           <>
-            <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
+            <div className="flex items-start justify-between border-b border-[rgba(120,53,15,0.14)] px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-white">Milestone 1 payment - Materials Purchase</h3>
-                <p className="mt-1 text-xs text-slate-300">Upload receipts/photos, add values, and submit for client approval.</p>
+                <h3 className="text-lg font-semibold text-[#4A3623]">Milestone 1 payment - Materials Purchase</h3>
+                <p className="mt-1 text-xs text-[rgba(126,58,33,0.65)]">Upload receipts/photos, add values, and submit for client approval.</p>
               </div>
-              <button type="button" onClick={onClose} className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">Close</button>
+              <button type="button" onClick={onClose} className="rounded border border-[rgba(120,53,15,0.2)] px-2 py-1 text-xs text-[#4A3623] hover:bg-[rgba(245,238,219,0.9)]">Close</button>
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
               {!isMaterialsWorkflowProject && (
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
                   This project scale does not use the milestone 1 materials claim flow.
                 </div>
               )}
@@ -410,7 +410,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
               {isMaterialsWorkflowProject && showSubmissionForm && (
                 <>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Items to claim</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#FF7F50]">Items to claim</p>
                     <div className="text-right">
                       <input
                         ref={fileInputRef}
@@ -424,11 +424,11 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingFiles}
-                        className="rounded-md border border-cyan-500/40 bg-cyan-600/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-600/30 disabled:opacity-50 transition"
+                        className="rounded-md border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] px-3 py-1.5 text-xs font-semibold text-[#4A3623] hover:bg-[rgba(255,250,240,0.95)] disabled:opacity-50 transition"
                       >
                         {uploadingFiles ? 'Uploading...' : '+ Add photos / receipts'}
                       </button>
-                      <p className="text-[10px] text-slate-400 mt-0.5">Images only - max 1 MB each</p>
+                      <p className="text-[10px] text-[rgba(126,58,33,0.45)] mt-0.5">Images only - max 1 MB each</p>
                     </div>
                   </div>
 
@@ -446,12 +446,12 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-white">Opening message (optional)</label>
+                      <label className="block text-xs font-semibold text-[#4A3623]">Opening message (optional)</label>
                       {materialsOpeningMessage && (
                         <button
                           type="button"
                           onClick={() => setMaterialsOpeningMessage('')}
-                          className="text-[10px] text-slate-400 hover:text-slate-200 transition"
+                          className="text-[10px] text-[rgba(126,58,33,0.45)] hover:text-[#4A3623] transition"
                         >
                           Clear
                         </button>
@@ -462,11 +462,11 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                       onChange={(e) => setMaterialsOpeningMessage(e.target.value)}
                       rows={2}
                       placeholder="Opening message to send with this claim (e.g., 'Milestone 1 payment request')"
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500"
+                      className="w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-xs text-[#4A3623] placeholder-[rgba(126,58,33,0.4)]"
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs text-cyan-100">
+                  <label className="flex items-center gap-2 text-xs text-[#4A3623]">
                     <input
                       type="checkbox"
                       checked={titleTransferAcknowledged}
@@ -481,7 +481,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                         type="button"
                         onClick={handleSubmit}
                         disabled={submitting || readyRows.length === 0 || isClaimOverMaximum || !titleTransferAcknowledged}
-                        className="w-full rounded-md bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50 transition"
+                        className="w-full rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                       >
                         {submitting ? 'Submitting...' : 'Submit for payment'}
                       </button>
@@ -490,7 +490,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
                           type="button"
                           onClick={handleSkip}
                           disabled={skipping}
-                          className="w-full rounded-md border border-slate-500 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition"
+                          className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] px-4 py-2 text-xs font-semibold text-[#4A3623] hover:bg-[rgba(255,250,240,0.95)] disabled:opacity-50 transition"
                         >
                           {skipping ? 'Processing...' : 'Skip until final payment'}
                         </button>
@@ -501,7 +501,7 @@ export function MaterialsClaimModal({ isOpen, isLoading = false, onClose }: Mate
               )}
 
               {isMaterialsWorkflowProject && !showSubmissionForm && (
-                <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 p-3 text-xs text-cyan-100">
+                <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] p-3 text-xs text-[#4A3623]">
                   A materials claim is already submitted for milestone 1. Open Financials to review status or respond in claim chat.
                 </div>
               )}

@@ -306,48 +306,48 @@ export default function MaterialsClaimReviewModal({
           className="relative grid sm:max-h-[88vh] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
           style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
         >
-          <div className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]">
+          <div className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]">
             <button
               type="button"
               onClick={() => setShowDetails(true)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(255,250,240,0.95)]"
               aria-label="Show details"
               title="More info"
             >
               i
             </button>
 
-            <div className="border-b border-slate-700 px-5 py-4">
+            <div className="border-b border-[rgba(120,53,15,0.14)] px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-white">{title}</h3>
-                <p className="mt-0.5 text-xs text-slate-300">{body}</p>
+                <h3 className="text-lg font-semibold text-[#4A3623]">{title}</h3>
+                <p className="mt-0.5 text-xs text-[rgba(126,58,33,0.65)]">{body}</p>
               </div>
             </div>
 
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4">
               {loading ? (
                 <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-cyan-400" />
-                  <p className="text-slate-300 text-sm">Loading claim...</p>
+                  <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-[rgba(120,53,15,0.14)] border-t-[#FF7F50]" />
+                  <p className="text-[rgba(126,58,33,0.65)] text-sm">Loading claim...</p>
                 </div>
               ) : !evidence ? (
-                <div className="rounded-md border border-slate-600 bg-slate-800 px-4 py-6 text-center text-sm text-slate-300">
+                <div className="rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] px-4 py-6 text-center text-sm text-[#4A3623]">
                   No pending materials claim found for this project.
                 </div>
               ) : (
                 <div className="flex-1 min-h-0 grid gap-4 lg:grid-cols-2 lg:items-stretch">
                   <div className="space-y-3 min-h-0 min-w-0 lg:overflow-y-auto">
-                    <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-2">
+                    <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.75)] p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Claimed amount</span>
-                          <span className="text-lg font-bold text-white">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">Claimed amount</span>
+                          <span className="text-lg font-bold text-[#4A3623]">
                             {formatHKD(evidence.claimedAmount)} / {formatHKD(milestoneCapAmount)}
                           </span>
                       </div>
                       {evidence.deadlineAt && (
-                        <div className="flex items-center justify-between text-xs text-slate-400">
+                        <div className="flex items-center justify-between text-xs text-[rgba(126,58,33,0.55)]">
                           <span>Review deadline</span>
-                          <span className="text-amber-300">
+                          <span className="text-amber-600">
                             {new Date(evidence.deadlineAt).toLocaleDateString('en-GB', {
                               day: '2-digit',
                               month: 'short',
@@ -357,15 +357,15 @@ export default function MaterialsClaimReviewModal({
                         </div>
                       )}
                       {evidence.openingMessage && (
-                        <div className="pt-2 border-t border-slate-700 text-xs text-slate-200">
+                        <div className="pt-2 border-t border-[rgba(120,53,15,0.14)] text-xs text-[#4A3623]">
                           {evidence.openingMessage}
                         </div>
                       )}
                     </div>
 
                     {allUrls.length > 0 && (
-                      <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                      <div className="rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.65)] p-3 space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(126,58,33,0.65)]">
                           Receipts &amp; photos ({allUrls.length})
                         </p>
 
@@ -376,19 +376,19 @@ export default function MaterialsClaimReviewModal({
                             return (
                               <div
                                 key={`${url}-${index}`}
-                                className="flex items-center gap-3 rounded-md border border-slate-700 bg-slate-900/70 p-2"
+                                className="flex items-center gap-3 rounded-md border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] p-2"
                               >
                                 <button
                                   type="button"
                                   onClick={() => setLightboxUrl(url)}
-                                  className="relative block h-14 w-14 shrink-0 overflow-hidden rounded border border-slate-600 transition hover:border-cyan-400"
+                                  className="relative block h-14 w-14 shrink-0 overflow-hidden rounded border border-[rgba(120,53,15,0.14)] transition hover:border-[#FF7F50]"
                                   title={`Open ${file}`}
                                 >
                                   <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
                                 </button>
-                                <div className="min-w-0 text-[11px] text-slate-300">
-                                  <p><span className="text-slate-400">Value:</span> {meta.valueText || 'Not itemised'}</p>
-                                  <p className="truncate"><span className="text-slate-400">Note:</span> {meta.noteText || 'No per-item note provided'}</p>
+                                <div className="min-w-0 text-[11px] text-[rgba(126,58,33,0.65)]">
+                                  <p><span className="text-[rgba(126,58,33,0.55)]">Value:</span> {meta.valueText || 'Not itemised'}</p>
+                                  <p className="truncate"><span className="text-[rgba(126,58,33,0.55)]">Note:</span> {meta.noteText || 'No per-item note provided'}</p>
                                 </div>
                               </div>
                             );
@@ -416,13 +416,13 @@ export default function MaterialsClaimReviewModal({
             </div>
 
             {evidence && (
-              <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4">
+              <div className="border-t border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.94)] px-5 py-4">
                 <div className="flex w-full flex-wrap items-center justify-end gap-2">
                   <div className="flex items-center gap-2">
-                      <span className="shrink-0 text-xs font-semibold text-slate-300">Amount to transfer</span>
+                      <span className="shrink-0 text-xs font-semibold text-[rgba(126,58,33,0.65)]">Amount to transfer</span>
                     </div>
                     <div className="relative w-full max-w-[13rem] min-w-[11rem]">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">HK$</span>
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[rgba(126,58,33,0.55)]">HK$</span>
                       <input
                         type="number"
                         min="0"
@@ -430,7 +430,7 @@ export default function MaterialsClaimReviewModal({
                         value={approvedAmount}
                         onChange={(event) => setApprovedAmount(event.target.value)}
                         placeholder="0.00"
-                        className="h-9 w-full rounded-md border border-cyan-300/30 bg-slate-900 pl-12 pr-3 text-right text-sm text-white"
+                        className="h-9 w-full rounded-md border border-[rgba(120,53,15,0.22)] bg-white/70 pl-12 pr-3 text-right text-sm text-[#4A3623]"
                       />
                     </div>
                   <button
@@ -444,7 +444,7 @@ export default function MaterialsClaimReviewModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="h-9 shrink-0 rounded border border-slate-600 px-3 text-xs text-slate-200 hover:bg-slate-800"
+                    className="h-9 shrink-0 rounded border border-[rgba(120,53,15,0.2)] px-3 text-xs text-[#4A3623] hover:bg-[rgba(245,238,219,0.9)]"
                   >
                     Close
                   </button>
@@ -453,11 +453,11 @@ export default function MaterialsClaimReviewModal({
             )}
 
             {!evidence && !loading && (
-              <div className="border-t border-slate-700 bg-slate-900/95 px-5 py-4 text-right">
+              <div className="border-t border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.94)] px-5 py-4 text-right">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+                  className="rounded border border-[rgba(120,53,15,0.2)] px-3 py-2 text-xs text-[#4A3623] hover:bg-[rgba(245,238,219,0.9)]"
                 >
                   Close
                 </button>
@@ -466,30 +466,30 @@ export default function MaterialsClaimReviewModal({
           </div>
 
           <div
-            className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]"
+            className="col-start-1 row-start-1 flex flex-col overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] shadow-2xl sm:max-h-[88vh] [backface-visibility:hidden]"
             style={{ transform: 'rotateY(180deg)' }}
             aria-hidden={!showDetails}
           >
             <button
               type="button"
               onClick={() => setShowDetails(false)}
-              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+              className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] text-lg font-semibold text-[#4A3623] transition hover:bg-[rgba(255,250,240,0.95)]"
               aria-label="Hide details"
             >
               ×
             </button>
 
             <div className="flex-1 overflow-y-visible px-6 pb-6 pt-12 text-left sm:overflow-y-auto">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-              <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title}</h3>
-              <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#FF7F50]">More information</p>
+              <h3 className="mt-3 text-2xl font-bold text-emerald-700">{title}</h3>
+              <p className="mt-5 text-sm leading-relaxed text-[#4A3623]">{detailsBody}</p>
             </div>
 
-            <div className="mt-auto border-t border-slate-700 px-5 py-4">
+            <div className="mt-auto border-t border-[rgba(120,53,15,0.14)] px-5 py-4">
               <button
                 type="button"
                 onClick={() => setShowDetails(false)}
-                className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] px-4 py-2 text-base font-semibold text-[#4A3623] transition hover:bg-[rgba(245,238,219,0.9)]"
               >
                 Back to action
               </button>
@@ -499,12 +499,12 @@ export default function MaterialsClaimReviewModal({
       </div>
 
       {lightboxUrl && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/85 p-4">
-          <div className="relative w-full max-w-5xl rounded-xl border border-slate-700 bg-slate-950 p-2">
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[rgba(81,55,32,0.85)] p-4">
+          <div className="relative w-full max-w-5xl rounded-xl border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.94)] p-2">
             <button
               type="button"
               onClick={() => setLightboxUrl(null)}
-              className="absolute right-3 top-3 z-10 rounded border border-slate-500 bg-slate-900/90 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-slate-800"
+              className="absolute right-3 top-3 z-10 rounded border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold text-[#4A3623] hover:bg-[rgba(255,250,240,0.95)]"
             >
               Close
             </button>

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-04-b4225c63",
+    "date": "2026-08-04T22:28:41+08:00",
+    "title": "style: update both materials claim modals to Mimo beige theme",
+    "summary": "style: update both materials claim modals to Mimo beige theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "b4225c63",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx",
+      "apps/web/src/components/next-steps/materials-claim-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-f5592595",
     "date": "2026-08-04T22:21:29+08:00",
     "title": "fix: pro list blue button for passive steps (inline rendering)",
