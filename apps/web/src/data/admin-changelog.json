@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-04-837c3260",
+    "date": "2026-08-04T22:58:25+08:00",
+    "title": "fix: add required nextStep prop to WorkflowCompletionModal",
+    "summary": "fix: add required nextStep prop to WorkflowCompletionModal",
+    "areas": [
+      "web"
+    ],
+    "commit": "837c3260",
+    "files": [
+      "apps/web/src/components/materials-claim-review-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-2d2ef090",
     "date": "2026-08-04T22:56:03+08:00",
     "title": "fix: correct WorkflowCompletionModal props (completedLabel/completedDescription)",
