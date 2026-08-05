@@ -1761,7 +1761,7 @@ export default function ProjectFinancialsCard({
                         <button
                           type="button"
                           onClick={onViewQuote}
-                          className="shrink-0 rounded-md border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.7)] px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-[rgba(239,231,207,0.9)] transition"
+                          className="shrink-0 rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition"
                         >
                           View quote
                         </button>

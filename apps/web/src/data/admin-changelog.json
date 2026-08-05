@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-05-e5317abe",
+    "date": "2026-08-05T14:31:20+08:00",
+    "title": "style(pro): match 'View quote' button to emerald-600 filled scheme",
+    "summary": "style(pro): match 'View quote' button to emerald-600 filled scheme",
+    "areas": [
+      "web"
+    ],
+    "commit": "e5317abe",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-66d16912",
     "date": "2026-08-05T13:58:21+08:00",
     "title": "fix(pro): narrow 'View quote' button to quotation_accepted bar only",
