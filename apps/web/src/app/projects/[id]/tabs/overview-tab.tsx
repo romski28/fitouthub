@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import { getProjectScope } from '@/lib/project-scope';
@@ -1011,6 +1012,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             )}
           </div>
         </AccordionItem>
+
+        {['SCALE_2', 'SCALE_3'].includes(String(project.projectScale || '').toUpperCase()) && (
+          <AccordionItem
+            id="programme-of-works"
+            title="Programme of Works"
+            isOpen={expandedAccordions['programme-of-works'] === true}
+            onToggle={onToggleAccordion}
+          >
+            <ProjectAiScopePanel
+              projectId={project.id}
+              accessToken={accessToken}
+              mode="client"
+            />
+          </AccordionItem>
+        )}
       </AccordionGroup>
 
       <ProfessionalDetailsModal

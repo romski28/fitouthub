@@ -22,7 +22,6 @@ import { AcPlansTab } from './tabs/ac-plans-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
-import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
 import {
@@ -1667,7 +1666,6 @@ export default function ProjectDetailPage() {
                   const tabsArray = [
                     { id: 'overview', label: 'Overview', icon: '📋' },
                     { id: 'media', label: 'Files', icon: '📁' },
-                    { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
                   ];
                   
                   // Show Site Access tab only during bidding stage (not awarded)
@@ -1695,17 +1693,9 @@ export default function ProjectDetailPage() {
               onOpenQuoteModal={() => setShowQuoteModal(true)}
               onKeepCurrentQuote={handleKeepCurrentQuote}
               onOpenAccessSchedule={() => setActiveTab('site-access')}
+              accessToken={accessToken || null}
+              projectId={project?.project?.id}
             />
-
-            <TabPanel tab="ai-scope">
-              <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">
-              <ProjectAiScopePanel
-                projectId={project.project.id}
-                accessToken={accessToken || null}
-                mode="professional"
-              />
-              </div>
-            </TabPanel>
 
             <SiteAccessTab
               tab="site-access"

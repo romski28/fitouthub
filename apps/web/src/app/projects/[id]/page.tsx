@@ -31,7 +31,6 @@ import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
-import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { PostProjectSurveyModal } from '@/components/post-project-survey-modal';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
@@ -2358,7 +2357,6 @@ export default function ClientProjectDetailPage() {
             tabs={isAwarded ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
-              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'contract', label: 'Agreement', icon: '📄' },
@@ -2368,7 +2366,6 @@ export default function ClientProjectDetailPage() {
             ] : hasPostAwardLifecycleAccess ? [
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
-              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'financials', label: 'Financials', icon: '💳' },
@@ -2376,7 +2373,6 @@ export default function ClientProjectDetailPage() {
             ] : [
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
-              { id: 'ai-scope', label: 'AI Scope', icon: '🧠' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'chat', label: 'Chat', icon: '💬' },
@@ -2430,16 +2426,6 @@ export default function ClientProjectDetailPage() {
               isUpdatingSchedule={updatingSchedule}
               isUpdatingContact={updatingContact}
               siteAccessRequests={siteAccessRequests}
-            />
-          </>
-        )}
-
-        {activeTab === 'ai-scope' && project && (
-          <>
-            <ProjectAiScopePanel
-              projectId={projectId}
-              accessToken={accessToken || null}
-              mode="client"
             />
           </>
         )}

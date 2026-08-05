@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-05-058205a3",
+    "date": "2026-08-05T16:07:28+08:00",
+    "title": "feat: move Programme of Works from AI Scope tab into overview tab",
+    "summary": "feat: move Programme of Works from AI Scope tab into overview tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "058205a3",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-96e74f15",
     "date": "2026-08-05T15:34:04+08:00",
     "title": "feat(pro): enhance Project Overview + simplify Your Quote on overview tab",

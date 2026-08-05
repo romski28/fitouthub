@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
+import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseTotal,
@@ -13,6 +14,7 @@ interface OverviewTabProps {
   tab?: string;
   project: {
     id: string;
+    projectScale?: string;
     quoteRequestedTrades?: string[];
     projectTradesSnapshot?: string[];
     project: {
@@ -20,6 +22,7 @@ interface OverviewTabProps {
       projectName: string;
       clientName: string;
       region: string;
+      projectScale?: string;
       isEmergency?: boolean;
       budget?: string;
       notes?: string;
@@ -59,6 +62,8 @@ interface OverviewTabProps {
   onOpenQuoteModal: () => void;
   onKeepCurrentQuote: () => Promise<void>;
   onOpenAccessSchedule?: () => void;
+  accessToken?: string | null;
+  projectId?: string;
 }
 
 const formatDateTime = (value?: string) => {
@@ -144,6 +149,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onOpenQuoteModal,
   onKeepCurrentQuote,
   onOpenAccessSchedule,
+  accessToken,
+  projectId,
 }) => {
   const hasQuoted = Boolean(project.quotedAt);
   const isDeclinedOrRejected = project.status === 'declined' || project.status === 'rejected';
@@ -162,6 +169,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     ? project.project.mimoProjectExtras
     : [];
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
+  const projectScale = String(project.projectScale || project.project?.projectScale || '').toUpperCase();
+  const showProgrammePanel = ['SCALE_2', 'SCALE_3'].includes(projectScale);
 
   return (
     <AccordionGroup>
@@ -301,6 +310,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
         >
           <ProjectAiPanel aiIntake={project.project.aiIntake} mode="professional" />
+        </AccordionItem>
+      )}
+
+      {showProgrammePanel && accessToken && projectId && (
+        <AccordionItem
+          id="programme-of-works"
+          title="Programme of Works"
+          isOpen={expandedAccordions['programme-of-works'] === true}
+          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+        >
+          <ProjectAiScopePanel
+            projectId={projectId}
+            accessToken={accessToken}
+            mode="professional"
+          />
         </AccordionItem>
       )}
     </AccordionGroup>
