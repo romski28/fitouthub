@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-05-a144544f",
+    "date": "2026-08-05T17:03:10+08:00",
+    "title": "fix: remove missed ContractTab render block from client page",
+    "summary": "fix: remove missed ContractTab render block from client page",
+    "areas": [
+      "web"
+    ],
+    "commit": "a144544f",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-dfa2a25f",
     "date": "2026-08-05T16:51:40+08:00",
     "title": "fix: hide Agreement tab from pro and client project detail pages",

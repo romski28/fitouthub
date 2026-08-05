@@ -2537,18 +2537,6 @@ export default function ClientProjectDetailPage() {
             </>
           )}
 
-          {/* Tab Content - Contract */}
-          {activeTab === 'contract' && isAwarded && project && (
-            <>
-              <ContractTab
-                projectId={project.id}
-                accessToken={accessToken || ''}
-                userRole="client"
-                onNavigateTab={(tab) => setActiveTab(tab)}
-              />
-            </>
-          )}
-
           {/* Tab Content - Schedule */}
           {activeTab === 'schedule' && isAwarded && project && (
             <>
