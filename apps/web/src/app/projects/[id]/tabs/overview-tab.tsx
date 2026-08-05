@@ -1017,7 +1017,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <AccordionItem
             id="programme-of-works"
             title="Programme of Works"
-            isOpen={expandedAccordions['programme-of-works'] === true}
+            isOpen={expandedAccordions['programme-of-works'] !== false}
             onToggle={onToggleAccordion}
           >
             <ProjectAiScopePanel

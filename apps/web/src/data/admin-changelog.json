@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-05-c3e25cab",
+    "date": "2026-08-05T16:19:27+08:00",
+    "title": "fix: make Programme of Works accordion open by default",
+    "summary": "fix: make Programme of Works accordion open by default",
+    "areas": [
+      "web"
+    ],
+    "commit": "c3e25cab",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-058205a3",
     "date": "2026-08-05T16:07:28+08:00",
     "title": "feat: move Programme of Works from AI Scope tab into overview tab",
