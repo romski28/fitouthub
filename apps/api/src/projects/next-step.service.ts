@@ -957,6 +957,15 @@ export class NextStepService {
               ];
             }
           }
+
+          // Always add VIEW_QUOTE as an elective — pro can review their accepted quote (read-only)
+          availableConfigSteps.push({
+            id: 'synthetic-VIEW_QUOTE', createdAt: new Date(), updatedAt: new Date(), role,
+            projectStage: effectiveStage, actionKey: 'VIEW_QUOTE',
+            actionLabel: 'View your quote',
+            description: 'Review your accepted quote details. To change the start date, use the Schedule tab. To add out-of-scope work, use Request additional works payment.',
+            isPrimary: false, isElective: true, requiresAction: false, estimatedDurationMinutes: 2, displayOrder: 99,
+          } as any);
         }
       }
 

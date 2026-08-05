@@ -176,6 +176,7 @@ export function ModalDispatcher({
         isOpen={state.isOpen}
         isLoading={state.isLoading}
         onClose={closeModal}
+        readOnly={state.actionKey === 'VIEW_QUOTE'}
         onSubmitted={() => {
           state.onCompleted?.({ projectId: state.projectId ?? '', actionKey: state.actionKey ?? '' });
         }}
@@ -365,8 +366,8 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'payment';
   }
 
-  // Professional: submit/revise quote
-  if (['SUBMIT_QUOTE', 'PREPARE_REVISED_QUOTE'].includes(actionKey)) {
+  // Professional: submit/revise/view quote
+  if (['SUBMIT_QUOTE', 'PREPARE_REVISED_QUOTE', 'VIEW_QUOTE'].includes(actionKey)) {
     return 'quote';
   }
 

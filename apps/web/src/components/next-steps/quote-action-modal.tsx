@@ -24,6 +24,7 @@ interface QuoteActionModalProps {
   onSubmitted?: () => void;
   projectId?: string;
   projectProfessionalId?: string;
+  readOnly?: boolean;
 }
 
 const toDateInput = (value: Date) => {
@@ -125,6 +126,7 @@ export function QuoteActionModal({
   onSubmitted,
   projectId: projectIdProp,
   projectProfessionalId: projectProfessionalIdProp,
+  readOnly = false,
 }: QuoteActionModalProps) {
   const router = useRouter();
   const { accessToken } = useProfessionalAuth();
@@ -160,11 +162,13 @@ export function QuoteActionModal({
 
   const modalContent = state.modalContent || {};
   const {
-    title = 'Submit your quote',
-    body,
+    title = readOnly ? 'Your quote' : 'Submit your quote',
+    body = readOnly
+      ? 'Your accepted quote details are shown below. To change the start date, use the Schedule tab. To add out-of-scope work, use Request additional works payment.'
+      : undefined,
     detailsBody,
     imageUrl,
-    primaryButtonLabel = 'Submit quote',
+    primaryButtonLabel = readOnly ? 'Close' : 'Submit quote',
     secondaryButtonLabel = 'Cancel',
   } = modalContent;
   const hasDetails = Boolean(detailsBody);
@@ -542,7 +546,7 @@ export function QuoteActionModal({
                           onChange={(e) => setBreakdown((prev) => ({ ...prev, [field.key]: e.target.value }))}
                           className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                           placeholder="0.00"
-                          disabled={submitting}
+                          disabled={submitting || readOnly}
                           required={field.required}
                         />
                       </label>
@@ -558,7 +562,7 @@ export function QuoteActionModal({
                         rows={2}
                         className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                         placeholder="e.g. Disposal of old fixtures, protective covers..."
-                        disabled={submitting}
+                        disabled={submitting || readOnly}
                       />
                     </label>
                   )}
@@ -597,7 +601,7 @@ export function QuoteActionModal({
                                 className={`px-3 py-2 text-sm font-semibold transition ${
                                   active ? 'bg-amber-600 text-white' : 'bg-white/70 text-stone-600 hover:bg-[rgba(245,238,219,0.9)]'
                                 }`}
-                                disabled={submitting}
+                                disabled={submitting || readOnly}
                               >
                                 {option.label}
                               </button>
@@ -610,6 +614,7 @@ export function QuoteActionModal({
                             ? Math.max(2, Math.ceil((requestedCompletionDeadline.getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))
                             : 4;
                           return (
+                        <div className={readOnly ? 'pointer-events-none opacity-70' : undefined}>
                         <WorkDatePicker
                           value={estimatedStartDate ? new Date(estimatedStartDate + 'T00:00:00') : null}
                           onChange={(d) => setEstimatedStartDate(toDateKey(d))}
@@ -620,6 +625,7 @@ export function QuoteActionModal({
                           fullWidth
                           headerPrefix="I can start on "
                         />
+                        </div>
                           );
                         })()
                       )}
@@ -634,7 +640,7 @@ export function QuoteActionModal({
                         value={estimatedStartHour}
                         onChange={(e) => setEstimatedStartHour(e.target.value)}
                         className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                        disabled={submitting}
+                        disabled={submitting || readOnly}
                       >
                         {hourOptions.map((h) => (
                           <option key={h} value={h}>{h}</option>
@@ -647,7 +653,7 @@ export function QuoteActionModal({
                         value={estimatedStartMinute}
                         onChange={(e) => setEstimatedStartMinute(e.target.value)}
                         className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                        disabled={submitting}
+                        disabled={submitting || readOnly}
                       >
                         <option value="00">00</option>
                         <option value="30">30</option>
@@ -663,7 +669,7 @@ export function QuoteActionModal({
                         onChange={(e) => setEstimatedDurationValue(e.target.value)}
                         className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                         placeholder="8"
-                        disabled={submitting}
+                        disabled={submitting || readOnly}
                         required
                       />
                     </label>
@@ -675,7 +681,7 @@ export function QuoteActionModal({
                             key={unit}
                             type="button"
                             onClick={() => setEstimatedDurationUnit(unit)}
-                            disabled={submitting}
+                            disabled={submitting || readOnly}
                             className={`w-full px-3 py-2 text-sm font-semibold transition ${
                               estimatedDurationUnit === unit
                                 ? 'bg-amber-600 text-white'
@@ -697,7 +703,7 @@ export function QuoteActionModal({
                       rows={4}
                       className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
                       placeholder="Optional details about materials, assumptions, or timing."
-                      disabled={submitting}
+                      disabled={submitting || readOnly}
                     />
                   </label>
 
@@ -709,21 +715,33 @@ export function QuoteActionModal({
                 </div>
 
                   <div className="shrink-0 flex items-center justify-end gap-2 sm:gap-3 border-t border-[rgba(120,53,15,0.12)] px-4 sm:px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={handleClose}
-                      className="min-w-fit rounded-lg border border-[rgba(120,53,15,0.2)] px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={submitting}
-                    >
-                      {secondaryButtonLabel || 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      className="min-w-fit rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Submitting...' : primaryButtonLabel}
-                    </button>
+                    {readOnly ? (
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        className="min-w-fit rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        Close
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleClose}
+                          className="min-w-fit rounded-lg border border-[rgba(120,53,15,0.2)] px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-stone-700 transition hover:bg-[rgba(245,238,219,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={submitting}
+                        >
+                          {secondaryButtonLabel || 'Cancel'}
+                        </button>
+                        <button
+                          type="submit"
+                          className="min-w-fit rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={submitting}
+                        >
+                          {submitting ? 'Submitting...' : primaryButtonLabel}
+                        </button>
+                      </>
+                    )}
                 </div>
               </form>
             </div>

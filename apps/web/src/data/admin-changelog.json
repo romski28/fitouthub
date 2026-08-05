@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-05-ddcef5a3",
+    "date": "2026-08-05T13:06:06+08:00",
+    "title": "feat(pro): add read-only 'View your quote' next-step for post-acceptance timeline",
+    "summary": "feat(pro): add read-only 'View your quote' next-step for post-acceptance timeline",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ddcef5a3",
+    "files": [
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-08-05-e92b693b",
     "date": "2026-08-05T12:32:20+08:00",
     "title": "fix(pro): restore tab='financials' prop so FinancialsTab only renders on financials tab",
