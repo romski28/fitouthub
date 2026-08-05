@@ -1760,49 +1760,12 @@ export default function ProjectDetailPage() {
             />
 
             <FinancialsTab
-              tab="financials"
               projectStatus={project.status}
-              projectBudget={projectBudgetValue}
               awardedAmount={awardedAmountValue}
               accessToken={accessToken || null}
               projectId={project.project.id}
               projectProfessionalId={projectProfessionalId}
-              onRefreshPaymentPlan={reloadPaymentPlan}
-              paymentPlan={paymentPlan}
-              paymentPlanLoading={paymentPlanLoading}
-              selectedPaymentMilestoneId={selectedPaymentMilestoneId}
-              onSelectPaymentMilestone={setSelectedPaymentMilestoneId}
-              paymentRequests={mappedPaymentRequests}
-              projectFinancials={projectFinancials}
-              paymentRequestLoading={false}
-              paymentRequestError={null}
-              onSubmitPaymentRequest={handleSubmitPaymentRequest}
-              paymentRequestActionLoading={submittingAdvanceRequest}
-              onRequestMilestoneFunding={handleRequestMilestoneFunding}
-              fundingRequestLoading={fundingRequestLoading}
-              onOpenScheduleTab={() => setActiveTab('schedule')}
-              paymentRequestAmount={paymentRequestAmount}
-              onUpdatePaymentRequestAmount={(value) => {
-                setAdvanceRequestForm((prev) =>
-                  prev.requestType === 'fixed'
-                    ? { ...prev, amount: value }
-                    : { ...prev, percentage: value },
-                );
-              }}
-              paymentRequestType={advanceRequestForm.requestType}
-              onUpdatePaymentRequestType={(type) => {
-                setAdvanceRequestForm((prev) => ({
-                  ...prev,
-                  requestType: type === 'percentage' ? 'percentage' : 'fixed',
-                }));
-              }}
-              paymentRequestNotes={advanceRequestForm.notes}
-              onUpdatePaymentRequestNotes={(notes) => {
-                setAdvanceRequestForm((prev) => ({
-                  ...prev,
-                  notes,
-                }));
-              }}
+              onNavigateTab={(tab) => setActiveTab(tab)}
             />
 
             <AcPlansTab
