@@ -1013,20 +1013,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </AccordionItem>
 
-        {['SCALE_2', 'SCALE_3'].includes(String(project.projectScale || '').toUpperCase()) && (
-          <AccordionItem
-            id="programme-of-works"
-            title="Programme of Works"
-            isOpen={expandedAccordions['programme-of-works'] !== false}
-            onToggle={onToggleAccordion}
-          >
-            <ProjectAiScopePanel
-              projectId={project.id}
-              accessToken={accessToken}
-              mode="client"
-            />
-          </AccordionItem>
-        )}
+        <AccordionItem
+          id="programme-of-works"
+          title="Programme of Works"
+          isOpen={expandedAccordions['programme-of-works'] !== false}
+          onToggle={onToggleAccordion}
+        >
+          <ProjectAiScopePanel
+            projectId={project.id}
+            accessToken={accessToken}
+            mode="client"
+          />
+        </AccordionItem>
       </AccordionGroup>
 
       <ProfessionalDetailsModal

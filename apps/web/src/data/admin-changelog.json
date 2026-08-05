@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-05-b2c47857",
+    "date": "2026-08-05T16:23:44+08:00",
+    "title": "fix: remove visibility gate — show Programme of Works on all projects",
+    "summary": "fix: remove visibility gate — show Programme of Works on all projects",
+    "areas": [
+      "web"
+    ],
+    "commit": "b2c47857",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-c3e25cab",
     "date": "2026-08-05T16:19:27+08:00",
     "title": "fix: make Programme of Works accordion open by default",

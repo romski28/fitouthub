@@ -14,7 +14,6 @@ interface OverviewTabProps {
   tab?: string;
   project: {
     id: string;
-    projectScale?: string;
     quoteRequestedTrades?: string[];
     projectTradesSnapshot?: string[];
     project: {
@@ -22,7 +21,6 @@ interface OverviewTabProps {
       projectName: string;
       clientName: string;
       region: string;
-      projectScale?: string;
       isEmergency?: boolean;
       budget?: string;
       notes?: string;
@@ -169,8 +167,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     ? project.project.mimoProjectExtras
     : [];
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
-  const projectScale = String(project.projectScale || project.project?.projectScale || '').toUpperCase();
-  const showProgrammePanel = ['SCALE_2', 'SCALE_3'].includes(projectScale);
 
   return (
     <AccordionGroup>
@@ -313,7 +309,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </AccordionItem>
       )}
 
-      {showProgrammePanel && accessToken && projectId && (
+      {accessToken && projectId && (
         <AccordionItem
           id="programme-of-works"
           title="Programme of Works"
