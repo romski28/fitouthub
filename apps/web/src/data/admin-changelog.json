@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-05-66d16912",
+    "date": "2026-08-05T13:58:21+08:00",
+    "title": "fix(pro): narrow 'View quote' button to quotation_accepted bar only",
+    "summary": "fix(pro): narrow 'View quote' button to quotation_accepted bar only",
+    "areas": [
+      "web"
+    ],
+    "commit": "66d16912",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-3df6d10a",
     "date": "2026-08-05T13:51:25+08:00",
     "title": "feat(pro): move buttons into ProjectFinancialsCard header and escrow bars",

@@ -228,6 +228,7 @@ const formatHKD = (value: number | string) => {
 
 const getTypeLabel = (type: string) => {
   const map: Record<string, string> = {
+    quotation_accepted: 'Quotation Accepted',
     escrow_deposit_request: 'Escrow Deposit Request',
     escrow_deposit_confirmation: 'Escrow Deposit Confirmation',
     escrow_deposit: 'Escrow Deposit',
@@ -1756,7 +1757,7 @@ export default function ProjectFinancialsCard({
                       >
                         Details
                       </button>
-                      {resolvedRole === 'professional' && onViewQuote && ['escrow_deposit_request', 'escrow_deposit_confirmation', 'escrow_deposit', 'escrow_confirmation'].includes(tx.type) && (
+                      {resolvedRole === 'professional' && onViewQuote && tx.type === 'quotation_accepted' && (
                         <button
                           type="button"
                           onClick={onViewQuote}
