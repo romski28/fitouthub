@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-08-05-bfbeacd6",
+    "date": "2026-08-05T13:37:55+08:00",
+    "title": "fix(pro): move 'View your quote' from timeline to financials tab",
+    "summary": "fix(pro): move 'View your quote' from timeline to financials tab",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "bfbeacd6",
+    "files": [
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-08-05-ddcef5a3",
     "date": "2026-08-05T13:06:06+08:00",
     "title": "feat(pro): add read-only 'View your quote' next-step for post-acceptance timeline",

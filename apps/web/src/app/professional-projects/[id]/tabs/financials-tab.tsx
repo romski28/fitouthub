@@ -3,6 +3,7 @@
 import React from 'react';
 import ProjectFinancialsCard from '@/components/project-financials-card';
 import { PaymentRequestModal } from '@/components/next-steps/payment-request-modal';
+import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
 
 interface FinancialsTabProps {
   tab?: string;
@@ -24,6 +25,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   onNavigateTab,
 }) => {
   const [showPaymentRequestModal, setShowPaymentRequestModal] = React.useState(false);
+  const [showViewQuoteModal, setShowViewQuoteModal] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
 
   const isAwarded = projectStatus === 'awarded';
@@ -49,7 +51,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Request additional works - ad hoc payment request for out-of-scope work */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowViewQuoteModal(true)}
+          className="rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.5)] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[rgba(239,231,207,0.4)] transition"
+        >
+          View your quote
+        </button>
         <button
           type="button"
           onClick={() => setShowPaymentRequestModal(true)}
@@ -78,6 +87,14 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         onSubmitted={() => {
           setRefreshKey((k) => k + 1);
         }}
+      />
+
+      <QuoteActionModal
+        isOpen={showViewQuoteModal}
+        onClose={() => setShowViewQuoteModal(false)}
+        readOnly
+        projectId={projectId}
+        projectProfessionalId={projectProfessionalId}
       />
     </div>
   );
