@@ -1760,6 +1760,7 @@ export default function ProjectDetailPage() {
             />
 
             <FinancialsTab
+              tab="financials"
               projectStatus={project.status}
               awardedAmount={awardedAmountValue}
               accessToken={accessToken || null}

@@ -5,6 +5,7 @@ import ProjectFinancialsCard from '@/components/project-financials-card';
 import { PaymentRequestModal } from '@/components/next-steps/payment-request-modal';
 
 interface FinancialsTabProps {
+  tab?: string;
   projectStatus: string;
   awardedAmount?: number;
   accessToken?: string | null;
@@ -14,6 +15,7 @@ interface FinancialsTabProps {
 }
 
 export const FinancialsTab: React.FC<FinancialsTabProps> = ({
+  tab: _tab,
   projectStatus,
   awardedAmount,
   accessToken,

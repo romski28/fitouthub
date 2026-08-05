@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-05-e92b693b",
+    "date": "2026-08-05T12:32:20+08:00",
+    "title": "fix(pro): restore tab='financials' prop so FinancialsTab only renders on financials tab",
+    "summary": "fix(pro): restore tab='financials' prop so FinancialsTab only renders on financials tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "e92b693b",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-0a487bad",
     "date": "2026-08-05T12:16:53+08:00",
     "title": "refactor(pro): switch financials tab to ProjectFinancialsCard (read-only + unified list)",
