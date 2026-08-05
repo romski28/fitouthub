@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-05-3df6d10a",
+    "date": "2026-08-05T13:51:25+08:00",
+    "title": "feat(pro): move buttons into ProjectFinancialsCard header and escrow bars",
+    "summary": "feat(pro): move buttons into ProjectFinancialsCard header and escrow bars",
+    "areas": [
+      "web"
+    ],
+    "commit": "3df6d10a",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-bfbeacd6",
     "date": "2026-08-05T13:37:55+08:00",
     "title": "fix(pro): move 'View your quote' from timeline to financials tab",

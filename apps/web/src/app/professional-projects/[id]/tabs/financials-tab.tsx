@@ -50,24 +50,6 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Request additional works - ad hoc payment request for out-of-scope work */}
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowViewQuoteModal(true)}
-          className="rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.5)] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[rgba(239,231,207,0.4)] transition"
-        >
-          View your quote
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowPaymentRequestModal(true)}
-          className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E67245] transition"
-        >
-          + Request additional works payment
-        </button>
-      </div>
-
       <ProjectFinancialsCard
         key={refreshKey}
         projectId={projectId}
@@ -76,6 +58,8 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         projectCost={projectCost}
         role="professional"
         onNavigateTab={onNavigateTab}
+        onViewQuote={() => setShowViewQuoteModal(true)}
+        onRequestAdditionalWorks={() => setShowPaymentRequestModal(true)}
       />
 
       <PaymentRequestModal

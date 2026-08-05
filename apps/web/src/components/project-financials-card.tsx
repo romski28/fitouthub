@@ -211,6 +211,8 @@ interface ProjectFinancialsCardProps {
   role: ProjectFinancialRole;
   onClarify?: (transactionId: string) => void; // Callback when client clicks Clarify
   onNavigateTab?: (tab: string) => void;
+  onViewQuote?: () => void;
+  onRequestAdditionalWorks?: () => void;
   openMaterialsWalletOnLoad?: boolean;
   onMaterialsWalletAutoOpenHandled?: () => void;
 }
@@ -317,6 +319,8 @@ export default function ProjectFinancialsCard({
   role,
   onClarify,
   onNavigateTab,
+  onViewQuote,
+  onRequestAdditionalWorks,
   openMaterialsWalletOnLoad,
   onMaterialsWalletAutoOpenHandled,
 }: ProjectFinancialsCardProps) {
@@ -1646,12 +1650,23 @@ export default function ProjectFinancialsCard({
             View Statement
           </button>
         </div>
-        {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
-          <div className="text-right">
-            <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Confirmed Quotation</p>
-            <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+          {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
+            <div className="text-right">
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Confirmed Quotation</p>
+              <p className="text-lg font-bold text-slate-900">{formatHKD(originalBudget)}</p>
+            </div>
+          )}
+          {resolvedRole === 'professional' && onRequestAdditionalWorks && (
+            <button
+              type="button"
+              onClick={onRequestAdditionalWorks}
+              className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E67245] transition whitespace-nowrap"
+            >
+              + Request additional works payment
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -1733,6 +1748,7 @@ export default function ProjectFinancialsCard({
                       {tx._isUpcoming && <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Upcoming</span>}
                     </p>
                     {!tx._isUpcoming && (
+                      <>
                       <button
                         type="button"
                         onClick={() => setSelectedTx(tx)}
@@ -1740,6 +1756,16 @@ export default function ProjectFinancialsCard({
                       >
                         Details
                       </button>
+                      {resolvedRole === 'professional' && onViewQuote && ['escrow_deposit_request', 'escrow_deposit_confirmation', 'escrow_deposit', 'escrow_confirmation'].includes(tx.type) && (
+                        <button
+                          type="button"
+                          onClick={onViewQuote}
+                          className="shrink-0 rounded-md border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.7)] px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-[rgba(239,231,207,0.9)] transition"
+                        >
+                          View quote
+                        </button>
+                      )}
+                      </>
                     )}
                   </div>
                 </div>
