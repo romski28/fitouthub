@@ -14,7 +14,6 @@ import { ProjectTabs } from '@/components/project-tabs';
 import ProjectInfoCard from '@/components/project-info-card';
 import { OverviewTab } from './tabs/overview-tab';
 import { SiteAccessTab } from './tabs/site-access-tab';
-import { ContractTab } from './tabs/contract-tab';
 import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
@@ -1673,9 +1672,8 @@ export default function ProjectDetailPage() {
                     tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
                   }
                   
-                  // Show Contract and Schedule tabs only when awarded
+                  // Show Schedule tab only when awarded
                   if (inContractWorkflow) {
-                    tabsArray.push({ id: 'contract', label: 'Agreement', icon: '📄' });
                     tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
                   }
                   
@@ -1727,13 +1725,6 @@ export default function ProjectDetailPage() {
               onUpdateVisitNotes={setVisitNotes}
               visitResponseNotes={visitResponseNotes}
               onUpdateVisitResponseNotes={setVisitResponseNotes}
-            />
-
-            <ContractTab
-              tab="contract"
-              projectId={project.project.id}
-              accessToken={accessToken}
-              onOpenScheduleTab={() => setActiveTab('schedule')}
             />
 
             <ScheduleTab

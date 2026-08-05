@@ -27,7 +27,6 @@ import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
 import { ClientFinancialsTab } from '@/app/projects/[id]/tabs/financials-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
-import { ContractTab } from '@/app/projects/[id]/tabs/contract-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
@@ -2359,7 +2358,6 @@ export default function ClientProjectDetailPage() {
               { id: 'media', label: 'Files', icon: '📁' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
               { id: 'professionals', label: 'Professionals', icon: '👥' },
-              { id: 'contract', label: 'Agreement', icon: '📄' },
               { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
