@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-05-7461ba3c",
+    "date": "2026-08-05T16:31:37+08:00",
+    "title": "fix: deduplicate Programme of Works title, move subtitle to bottom",
+    "summary": "fix: deduplicate Programme of Works title, move subtitle to bottom",
+    "areas": [
+      "web"
+    ],
+    "commit": "7461ba3c",
+    "files": [
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-b2c47857",
     "date": "2026-08-05T16:23:44+08:00",
     "title": "fix: remove visibility gate — show Programme of Works on all projects",

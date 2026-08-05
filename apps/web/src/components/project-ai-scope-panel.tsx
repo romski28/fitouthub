@@ -356,18 +356,14 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
 
   return (
     <div className="w-full space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-bold text-slate-900">Programme of Works</h3>
-            <StatusBadge status={workflowStatus} />
-          </div>
-          <p className="text-xs text-slate-600">
-            {isAdmin
-              ? `AI-generated draft scope and programme. Version count: ${versionCount}`
-              : 'AI-generated programme of works prepared by Mimo.'}
-          </p>
+      {/* Header — admin controls only (title comes from parent accordion) */}
+      {(isAdmin || workflowStatus) && (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <StatusBadge status={workflowStatus} />
+          {isAdmin && (
+            <span className="text-xs text-slate-500">Version {versionCount}</span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canRegenerate && (
@@ -678,6 +674,15 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
             </div>
           )}
         </>
+      )}
+
+      {/* Subtitle — bottom-right, only when scope is shown */}
+      {scope && (
+      <p className="text-right text-[11px] text-slate-500">
+        {isAdmin
+          ? `AI-generated draft scope and programme · Version ${versionCount}`
+          : 'AI-generated programme of works prepared by Mimo.'}
+      </p>
       )}
     </div>
   );
