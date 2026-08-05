@@ -5,7 +5,6 @@ import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { getProjectScope } from '@/lib/project-scope';
 import {
-  getQuoteBreakdownBaseItems,
   getQuoteBreakdownBaseTotal,
   type StoredQuoteBreakdown,
 } from '@/lib/quote-breakdown';
@@ -162,7 +161,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const mimoExtras = Array.isArray(project.project.mimoProjectExtras)
     ? project.project.mimoProjectExtras
     : [];
-  const existingBreakdownItems = getQuoteBreakdownBaseItems(project.quoteBreakdown);
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
 
   return (
@@ -175,6 +173,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
       >
         <div className="space-y-2 text-sm text-slate-700">
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            <p><span className="font-semibold text-slate-900">Project:</span> {project.project.projectName}</p>
+            <p><span className="font-semibold text-slate-900">Client:</span> {project.project.clientName}</p>
+            <p><span className="font-semibold text-slate-900">Region:</span> {project.project.region}</p>
+          </div>
+          {project.project.budget && (
+            <p><span className="font-semibold text-slate-900">Budget:</span> HK$ {Number(project.project.budget).toLocaleString()}</p>
+          )}
+          {project.project.isEmergency && (
+            <p><span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency</p>
+          )}
+          {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
+            <div>
+              <p className="font-semibold text-slate-900 mb-1">Scope:</p>
+              <p className="leading-relaxed text-slate-700">{scope}</p>
+            </div>
+          ) : null; })()}
           {((project.projectTradesSnapshot && project.projectTradesSnapshot.length > 0) || (project.quoteRequestedTrades && project.quoteRequestedTrades.length > 0)) && (
             <div>
               <p className="font-semibold text-slate-900 mb-1.5">Trades:</p>
@@ -192,18 +207,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 })}
               </div>
             </div>
-          )}
-          {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Scope:</p>
-              <p className="leading-relaxed text-slate-700">{scope}</p>
-            </div>
-          ) : null; })()}
-          {project.project.budget && (
-            <p><span className="font-semibold text-slate-900">Budget:</span> HK$ {Number(project.project.budget).toLocaleString()}</p>
-          )}
-          {project.project.isEmergency && (
-            <p><span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency</p>
           )}
         </div>
       </AccordionItem>
@@ -252,100 +255,38 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           isOpen={expandedAccordions['your-quote'] !== false}
           onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
         >
-
           {!hasQuoted ? (
-            <div className="text-center py-4">
-              <p className="text-sm text-slate-600 mb-4">You haven't submitted a quote for this project yet.</p>
+            <div className="flex items-center justify-between py-2">
+              <p className="text-sm text-slate-500">No bid made yet</p>
               <button
                 type="button"
                 onClick={onOpenQuoteModal}
-                className="rounded-xl bg-[#FF7F50] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E86A3E]"
+                className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E67245] transition"
               >
-                Submit Quote
+                Submit quote
               </button>
             </div>
           ) : (
             <>
               {isCounterRequested && (
-                <div className="mb-4 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-700">
-                  The client requested a revised offer. You can update your quote or keep your current offer.
+                <div className="mb-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-700">
+                  The client requested a revised offer.
                 </div>
               )}
-
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</p>
-                  <p className="text-2xl font-bold text-slate-900">${project.quoteAmount}</p>
-                </div>
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Entered subtotal</p>
-                  <p className="text-sm font-semibold text-slate-900">HK${existingBreakdownTotal.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
-                </div>
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted</p>
-                  <p className="text-sm font-semibold text-slate-900">{project.quotedAt ? new Date(project.quotedAt).toLocaleDateString() : '—'}</p>
-                </div>
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</p>
-                  <p className="line-clamp-2 text-sm text-slate-700">{project.quoteNotes || '—'}</p>
-                </div>
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">
-                    {isEmergencyProject ? 'Be with you...' : 'Estimated Start'}
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{formatHKD(existingBreakdownTotal || project.quoteAmount)}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Submitted {project.quotedAt ? new Date(project.quotedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                   </p>
-                  <p className="text-sm font-semibold text-slate-900">{formatDateTime(project.quoteEstimatedStartAt)}</p>
                 </div>
-              </div>
-
-              {existingBreakdownItems.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Breakdown</p>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    {existingBreakdownItems.map((item) => (
-                      <div key={item.code} className="rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.92)] px-3 py-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
-                        <p className="text-sm font-semibold text-slate-900">HK${Number(item.amount || 0).toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Estimated Duration</p>
-                  <p className="text-sm font-semibold text-slate-900">{formatDuration(project.quoteEstimatedDurationMinutes)}</p>
-                </div>
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                    project.status === 'awarded' ? 'border border-emerald-300 bg-emerald-50 text-emerald-700' :
-                    project.status === 'quoted' ? 'border border-sky-300 bg-sky-50 text-sky-700' :
-                    project.status === 'counter_requested' ? 'border border-amber-300 bg-amber-50 text-amber-700' :
-                    'border border-[rgba(120,53,15,0.16)] bg-[rgba(255,250,240,0.9)] text-slate-700'
-                  }`}>
-                    {project.status.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={onOpenQuoteModal}
-                  className="min-w-40 flex-1 rounded-xl bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#E86A3E]"
+                  className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
                 >
-                  Edit Quote
+                  View quote
                 </button>
-                {isCounterRequested && (
-                  <button
-                    type="button"
-                    onClick={onKeepCurrentQuote}
-                    className="min-w-40 flex-1 rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(245,238,219,0.9)] px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[rgba(245,238,219,1)]"
-                  >
-                    Keep Current Quote
-                  </button>
-                )}
               </div>
             </>
           )}

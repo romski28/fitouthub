@@ -1840,6 +1840,7 @@ export default function ProjectDetailPage() {
         }}
         projectId={project?.project?.id}
         projectProfessionalId={projectProfessionalId}
+        readOnly={Boolean(project?.quotedAt) && project?.status !== 'counter_requested'}
       />
     </>
   );
