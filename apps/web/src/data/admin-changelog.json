@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-05-672c3bf4",
+    "date": "2026-08-05T12:02:32+08:00",
+    "title": "feat: add 'Request additional works payment' button + modal to pro financials",
+    "summary": "feat: add 'Request additional works payment' button + modal to pro financials",
+    "areas": [
+      "web"
+    ],
+    "commit": "672c3bf4",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/next-steps/payment-request-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-04-4b5e9b00",
     "date": "2026-08-04T23:29:44+08:00",
     "title": "feat: add Review button on materials claim bar in financials tab",

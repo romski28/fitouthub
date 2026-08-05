@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/config/api';
 import MaterialsClaimThreadPanel from '@/components/materials-claim-thread-panel';
 import MaterialsClaimItemsTable from '@/components/materials-claim-items-table';
+import { PaymentRequestModal } from '@/components/next-steps/payment-request-modal';
 
 interface PaymentRequest {
   id: string;
@@ -199,6 +200,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   const [walletTransferLoading, setWalletTransferLoading] = React.useState(false);
   const [walletTransferAmount, setWalletTransferAmount] = React.useState('');
   const [activeClaimThreadId, setActiveClaimThreadId] = React.useState<string | null>(null);
+  const [showPaymentRequestModal, setShowPaymentRequestModal] = React.useState(false);
   const claimModalTarget = typeof document !== 'undefined' ? document.body : null;
   const isAwarded = projectStatus === 'awarded';
   const totalPending = paymentRequests
@@ -774,6 +776,17 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Request additional works — ad hoc payment request for out-of-scope work */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowPaymentRequestModal(true)}
+          className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E67245] transition"
+        >
+          + Request additional works payment
+        </button>
+      </div>
 
       {paymentPlanLoading && (
         <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm text-slate-700">
@@ -1564,6 +1577,18 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
           </div>
         </div>
       )}
+
+      <PaymentRequestModal
+        isOpen={showPaymentRequestModal}
+        onClose={() => setShowPaymentRequestModal(false)}
+        accessToken={accessToken}
+        projectId={projectId}
+        projectProfessionalId={projectProfessionalId}
+        onSubmitted={() => {
+          void fetchProjectFinancialSummary();
+          void onRefreshPaymentPlan?.();
+        }}
+      />
     </div>
   );
 };
