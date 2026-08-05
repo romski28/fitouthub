@@ -417,6 +417,7 @@ export function ProjectAiScopePanel({ projectId, accessToken, mode }: ProjectAiS
           )}
         </div>
       </div>
+      )}
 
       {/* Generator inputs (admin only) */}
       {isAdmin && (

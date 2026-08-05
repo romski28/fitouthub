@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-05-fc0ccc1f",
+    "date": "2026-08-05T16:39:45+08:00",
+    "title": "fix: add missing closing bracket for conditional header wrapper",
+    "summary": "fix: add missing closing bracket for conditional header wrapper",
+    "areas": [
+      "web"
+    ],
+    "commit": "fc0ccc1f",
+    "files": [
+      "apps/web/src/components/project-ai-scope-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-7461ba3c",
     "date": "2026-08-05T16:31:37+08:00",
     "title": "fix: deduplicate Programme of Works title, move subtitle to bottom",
