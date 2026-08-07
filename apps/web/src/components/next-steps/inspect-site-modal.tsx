@@ -34,13 +34,14 @@ interface SiteAccessStatus {
 interface InspectSiteModalProps {
   isOpen: boolean;
   onClose: () => void;
+  projectId?: string;
 }
 
 // ── Component ────────────────────────────────────────────────────
-export function InspectSiteModal({ isOpen, onClose }: InspectSiteModalProps) {
+export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: InspectSiteModalProps) {
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
-  const projectId = state.projectId || "";
+  const projectId = projectIdProp || state.projectId || "";
 
   const [status, setStatus] = useState<SiteAccessStatus | null>(null);
   const [loading, setLoading] = useState(true);

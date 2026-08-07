@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
+import { InspectSiteModal } from '@/components/next-steps/inspect-site-modal';
 
 interface SiteAccessData {
   addressFull: string;
@@ -44,6 +45,7 @@ interface SiteAccessVisit {
 
 interface SiteAccessTabProps {
   tab?: string;
+  projectId?: string;
   siteAccessStatus: SiteAccessStatus | null;
   siteAccessLoading: boolean;
   siteAccessError: string | null;
@@ -133,16 +135,16 @@ const isRescheduleRequired = (note?: string | null) =>
 
 export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   const {
+    projectId,
     siteAccessStatus,
     siteAccessLoading,
     siteAccessError,
     expandedAccordions,
     onToggleAccordion,
-    onRequestSiteAccess,
-    siteAccessRequestTime,
-    onUpdateSiteAccessRequestTime,
     siteAccessActionLoading,
   } = props;
+
+  const [showInspectModal, setShowInspectModal] = useState(false);
 
   const offeredInspectionDate = siteAccessStatus?.siteInspectionAvailableOn || '';
   const backendRescheduleRequired =
@@ -298,63 +300,23 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
 
               {showRequestPanel && (
                 <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
-                  <p className="text-sm font-semibold text-slate-900">Select inspection slot</p>
-                  <p className="text-xs text-slate-600">
-                    {offeredInspectionDate
-                      ? 'Choose one available inspection slot on the client offered date. Times already selected by other professionals are disabled.'
-                      : 'Client has not offered an inspection date yet.'}
-                  </p>
-
                   {offeredInspectionDate ? (
-                    <div className="space-y-3">
+                    <>
                       <div>
-                        <p className="mb-1 text-xs font-semibold text-slate-700">Inspection Date</p>
-                        <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900">
-                          {formatInspectionDate(offeredInspectionDate)}
-                        </div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Inspection Date</p>
+                        <p className="mt-1 font-semibold text-slate-900">{formatInspectionDate(offeredInspectionDate)}</p>
                       </div>
-                      <div>
-                        <p className="mb-2 text-xs font-semibold text-slate-700">Choose an hourly time</p>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                          {INSPECTION_TIME_OPTIONS.map((timeOption) => {
-                            const isBooked = bookedInspectionTimes.has(timeOption);
-                            const isSelected = siteAccessRequestTime === timeOption;
-                            return (
-                              <button
-                                key={timeOption}
-                                type="button"
-                                onClick={() => onUpdateSiteAccessRequestTime(timeOption)}
-                                disabled={isBooked || siteAccessActionLoading || isPending}
-                                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-                                  isSelected
-                                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                                    : isBooked
-                                    ? 'border-slate-300 bg-slate-100 text-slate-400'
-                                    : 'border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] text-slate-700 hover:border-[rgba(126,58,33,0.4)] hover:text-slate-900'
-                                }`}
-                              >
-                                {timeOption}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowInspectModal(true)}
+                        className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+                      >
+                        {backendRescheduleRequired ? 'Reschedule inspection' : 'Book inspection'}
+                      </button>
+                    </>
                   ) : (
-                    <div className="rounded-xl border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-700">
-                      Waiting for client to offer a site inspection date.
-                    </div>
+                    <p className="text-sm text-slate-600">No inspection date has been shared by the client yet.</p>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={onRequestSiteAccess}
-                    disabled={siteAccessActionLoading || !canRequestSiteAccess}
-                    title={!canRequestSiteAccess ? 'Choose a time to request inspection slot' : ''}
-                    className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] disabled:opacity-50 transition"
-                  >
-                    {siteAccessActionLoading ? 'Requesting...' : backendRescheduleRequired ? 'Request Reschedule' : 'Request Slot'}
-                  </button>
                 </div>
               )}
 
@@ -365,6 +327,12 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
           )}
         </AccordionItem>
       </AccordionGroup>
+
+      <InspectSiteModal
+        isOpen={showInspectModal}
+        onClose={() => setShowInspectModal(false)}
+        projectId={projectId}
+      />
     </div>
   );
 };

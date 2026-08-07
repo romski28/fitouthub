@@ -1697,6 +1697,7 @@ export default function ProjectDetailPage() {
 
             <SiteAccessTab
               tab="site-access"
+              projectId={project?.project?.id}
               siteAccessStatus={siteAccessStatus}
               siteAccessLoading={siteAccessLoading}
               siteAccessError={siteAccessError}

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-07-6e60dc8e",
+    "date": "2026-08-07T09:25:33+08:00",
+    "title": "refactor(pro): replace inline site inspection form with info display + modal button",
+    "summary": "refactor(pro): replace inline site inspection form with info display + modal button",
+    "areas": [
+      "web"
+    ],
+    "commit": "6e60dc8e",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-05-a144544f",
     "date": "2026-08-05T17:03:10+08:00",
     "title": "fix: remove missed ContractTab render block from client page",
