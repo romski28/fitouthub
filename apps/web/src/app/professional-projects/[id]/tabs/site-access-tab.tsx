@@ -165,11 +165,16 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
     !backendRescheduleRequired &&
     hasApprovedAccess;
   const isMissed = requestStatus === 'missed';
+  const isSkipped = requestStatus === 'skipped';
+  const isVisited = requestStatus === 'visited';
   const isNotAvailable = !offeredInspectionDate;
   const isNotRequested =
     !backendRescheduleRequired &&
     !isPending &&
     !isBooked &&
+    !isSkipped &&
+    !isMissed &&
+    !isVisited &&
     (requestStatus === 'none' || requestStatus === 'denied' || !siteAccessStatus?.requestId);
   const scheduledInspectionSlot = formatInspectionSlot(
     siteAccessStatus?.visitScheduledAt,
@@ -204,7 +209,7 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
           ) : (
             <div className="space-y-3">
               {/* ── Panel 1: Status + Address ─────────────────── */}
-              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || isMissed || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
+              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || isMissed || isSkipped || isVisited || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
                 <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
                   {offeredInspectionDate && (
                     <div>
@@ -240,6 +245,25 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
                       <p className="mt-1 text-slate-600">
                         ⏰ Inspection missed — the site inspection date has passed and you did not book or skip a visit.
+                      </p>
+                    </div>
+                  )}
+
+                  {isSkipped && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 text-slate-600">
+                        ↩️ Site inspection skipped — you chose not to attend.
+                      </p>
+                    </div>
+                  )}
+
+                  {isVisited && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
+                      <p className="mt-1 font-semibold text-emerald-700">
+                        ✅ Site inspection completed
+                        {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
                       </p>
                     </div>
                   )}

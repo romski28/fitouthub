@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-6bec3dc2",
+    "date": "2026-08-07T09:27:37+08:00",
+    "title": "fix(pro): show skipped/missed/visited inspection status in site-access tab",
+    "summary": "fix(pro): show skipped/missed/visited inspection status in site-access tab",
+    "areas": [
+      "web"
+    ],
+    "commit": "6bec3dc2",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-6e60dc8e",
     "date": "2026-08-07T09:25:33+08:00",
     "title": "refactor(pro): replace inline site inspection form with info display + modal button",
