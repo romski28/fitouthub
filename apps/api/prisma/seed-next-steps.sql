@@ -17,6 +17,7 @@ VALUES
   -- BIDDING_ACTIVE stage
   (gen_random_uuid()::text, 'BIDDING_ACTIVE', 'CLIENT', 'REVIEW_INCOMING_QUOTES', 'Review quotes', 'Compare submitted pricing and notes.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'BIDDING_ACTIVE', 'CLIENT', 'REQUEST_SITE_VISIT', 'Request site visit', 'Allow professionals to inspect site before final quote.', false, true, true, NULL, 2, NOW(), NOW()),
+  (gen_random_uuid()::text, 'BIDDING_ACTIVE', 'CLIENT', 'CONFIRM_SITE_VISIT', 'Manage site requests', 'Review and respond to professional site inspection requests.', false, true, true, NULL, 3, NOW(), NOW()),
   (gen_random_uuid()::text, 'BIDDING_ACTIVE', 'PROFESSIONAL', 'SUBMIT_QUOTE', 'Submit quote', 'Provide quote and timeline.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'BIDDING_ACTIVE', 'PROFESSIONAL', 'REQUEST_SITE_ACCESS', 'Request site access', 'Ask for visit access before finalizing quote.', false, true, true, NULL, 2, NOW(), NOW()),
 

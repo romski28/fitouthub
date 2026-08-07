@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-07-4cb707e5",
+    "date": "2026-08-07T09:49:34+08:00",
+    "title": "fix(client): seed CONFIRM_SITE_VISIT for BIDDING_ACTIVE stage",
+    "summary": "fix(client): seed CONFIRM_SITE_VISIT for BIDDING_ACTIVE stage",
+    "areas": [
+      "api"
+    ],
+    "commit": "4cb707e5",
+    "files": [
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/scripts/seed-next-steps.ts"
+    ]
+  },
+  {
     "id": "2026-08-07-bfa60f9c",
     "date": "2026-08-07T09:33:52+08:00",
     "title": "fix: remove duplicate Inspection Date display from booking panel",

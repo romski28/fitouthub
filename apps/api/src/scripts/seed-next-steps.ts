@@ -41,6 +41,7 @@ const nextStepSeeds: NextStepSeed[] = [
   // Deprecated: client-requested site visits were replaced by professional
   // proposals + client confirmations in the site-access flow.
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'REQUEST_SITE_VISIT', actionLabel: 'Request site visit', description: 'Allow professionals to inspect site before final quote.', isElective: true, displayOrder: 2 },
+  { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'CLIENT', actionKey: 'CONFIRM_SITE_VISIT', actionLabel: 'Manage site requests', description: 'Review and respond to professional site inspection requests.', isElective: true, requiresAction: true, displayOrder: 3 },
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'SUBMIT_QUOTE', actionLabel: 'Submit quote', description: 'Provide quote and timeline.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.BIDDING_ACTIVE, role: 'PROFESSIONAL', actionKey: 'REQUEST_SITE_ACCESS', actionLabel: 'Site inspection', description: 'Ask to visit site before finalizing quote.', isElective: true, displayOrder: 2 },
 
