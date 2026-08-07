@@ -324,19 +324,13 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
               {showRequestPanel && (
                 <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
                   {offeredInspectionDate ? (
-                    <>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Inspection Date</p>
-                        <p className="mt-1 font-semibold text-slate-900">{formatInspectionDate(offeredInspectionDate)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowInspectModal(true)}
-                        className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
-                      >
-                        {backendRescheduleRequired ? 'Reschedule inspection' : 'Book inspection'}
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => setShowInspectModal(true)}
+                      className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+                    >
+                      {backendRescheduleRequired ? 'Reschedule inspection' : 'Book inspection'}
+                    </button>
                   ) : (
                     <p className="text-sm text-slate-600">No inspection date has been shared by the client yet.</p>
                   )}

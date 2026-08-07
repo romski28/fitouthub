@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-bfa60f9c",
+    "date": "2026-08-07T09:33:52+08:00",
+    "title": "fix: remove duplicate Inspection Date display from booking panel",
+    "summary": "fix: remove duplicate Inspection Date display from booking panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "bfa60f9c",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-baa4b30b",
     "date": "2026-08-07T09:28:23+08:00",
     "title": "fix: remove stale canRequestSiteAccess referencing removed prop",
