@@ -606,6 +606,59 @@ export class NextStepService {
     }
 
     if (role === 'CLIENT' && project.status !== 'awarded') {
+      // ── Dynamic quote count for review label ──
+      const quotedCount = await this.prisma.projectProfessional.count({
+        where: {
+          projectId,
+          status: { in: ['quoted', 'counter_requested', 'awarded'] },
+        },
+      });
+
+      // Update REVIEW_INCOMING_QUOTES label based on how many quotes received
+      availableConfigSteps = availableConfigSteps.map((step) => {
+        if (step.actionKey === 'REVIEW_INCOMING_QUOTES') {
+          return {
+            ...step,
+            actionLabel:
+              quotedCount > 0
+                ? `${quotedCount} quote${quotedCount === 1 ? '' : 's'} received`
+                : 'Awaiting quotes',
+            description:
+              quotedCount > 0
+                ? 'Compare submitted pricing and notes.'
+                : 'No quotes received yet. Professionals are preparing their bids.',
+            requiresAction: quotedCount > 0,
+          };
+        }
+        return step;
+      });
+
+      // ── Surface manage site requests when pros have booked inspections ──
+      const pendingSiteCount = await this.prisma.siteAccessRequest.count({
+        where: { projectId, status: 'pending' },
+      });
+      const proposedVisitCount = await this.prisma.siteAccessVisit.count({
+        where: { projectId, status: 'proposed', proposedByRole: 'professional' },
+      });
+
+      if (pendingSiteCount > 0 || proposedVisitCount > 0) {
+        availableConfigSteps = [
+          createSyntheticPrimaryStep(
+            'CONFIRM_SITE_VISIT',
+            pendingSiteCount > 0
+              ? `Manage site requests (${pendingSiteCount})`
+              : 'Manage site requests',
+            true,
+            role,
+            effectiveStage,
+            pendingSiteCount > 0
+              ? `${pendingSiteCount} professional${pendingSiteCount === 1 ? ' has' : 's have'} requested a site inspection. Review and respond.`
+              : 'A professional proposed a site visit. Confirm or decline.',
+          ),
+          ...availableConfigSteps.filter((step) => step.actionKey !== 'CONFIRM_SITE_VISIT'),
+        ];
+      }
+
       let surveyBookingDescription: string | null = null;
 
       try {
@@ -655,63 +708,9 @@ export class NextStepService {
         // Extras table may not be present in all environments.
       }
 
-      let manageSiteRequestsDescription: string | null = null;
-
-      const pendingClientAccessRequest = await this.prisma.siteAccessRequest.findFirst({
-        where: {
-          projectId,
-          status: 'pending',
-        },
-        select: { id: true, requestedAt: true },
-        orderBy: { requestedAt: 'asc' },
-      });
-
-      if (pendingClientAccessRequest) {
-        const requestedAtLabel = new Date(
-          pendingClientAccessRequest.requestedAt,
-        ).toLocaleString('en-HK', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
-
-        manageSiteRequestsDescription =
-          `A professional requested site access on ${requestedAtLabel}. Review and respond in the site-access tab.`;
-      }
-
-      const pendingClientVisitResponse = await this.prisma.siteAccessVisit.findFirst({
-        where: {
-          projectId,
-          status: 'proposed',
-          proposedByRole: 'professional',
-        },
-        select: { id: true, proposedAt: true },
-        orderBy: { createdAt: 'asc' },
-      });
-
-      if (pendingClientVisitResponse) {
-        const proposedAtLabel = new Date(
-          pendingClientVisitResponse.proposedAt,
-        ).toLocaleString('en-HK', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
-
-        if (!manageSiteRequestsDescription) {
-          manageSiteRequestsDescription =
-            `A professional proposed a site visit for ${proposedAtLabel}. Confirm or decline this request.`;
-        }
-      }
-
-      // Show button when there are upcoming site inspections to manage (QR scan, etc.)
-      if (!manageSiteRequestsDescription) {
+      // Show button when there are upcoming confirmed inspections (QR scan, etc.)
+      // Pending requests and proposed visits are handled above.
+      if (pendingSiteCount === 0 && proposedVisitCount === 0) {
         const upcomingInspection = await this.prisma.siteAccessRequest.findFirst({
           where: {
             projectId,
@@ -729,23 +728,18 @@ export class NextStepService {
                 hour: '2-digit', minute: '2-digit', hour12: true,
               })
             : 'upcoming';
-          manageSiteRequestsDescription =
-            `${proName} is scheduled to visit on ${timeLabel}. Manage site inspections or scan their QR badge.`;
+          availableConfigSteps = [
+            createSyntheticPrimaryStep(
+              'CONFIRM_SITE_VISIT',
+              'Manage site requests',
+              true,
+              role,
+              effectiveStage,
+              `${proName} is scheduled to visit on ${timeLabel}. Manage site inspections or scan their QR badge.`,
+            ),
+            ...availableConfigSteps.filter((step) => step.actionKey !== 'CONFIRM_SITE_VISIT'),
+          ];
         }
-      }
-
-      if (manageSiteRequestsDescription) {
-        availableConfigSteps = [
-          createSyntheticPrimaryStep(
-            'CONFIRM_SITE_VISIT',
-            'Manage site requests',
-            true,
-            role,
-            effectiveStage,
-            manageSiteRequestsDescription,
-          ),
-          ...availableConfigSteps.filter((step) => step.actionKey !== 'CONFIRM_SITE_VISIT'),
-        ];
       }
 
       if (surveyBookingDescription) {

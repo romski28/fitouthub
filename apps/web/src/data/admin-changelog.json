@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-a996d2be",
+    "date": "2026-08-07T10:04:16+08:00",
+    "title": "fix(client): dynamic review-quotes label + simplify site-request next-step",
+    "summary": "fix(client): dynamic review-quotes label + simplify site-request next-step",
+    "areas": [
+      "api"
+    ],
+    "commit": "a996d2be",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-07-4cb707e5",
     "date": "2026-08-07T09:49:34+08:00",
     "title": "fix(client): seed CONFIRM_SITE_VISIT for BIDDING_ACTIVE stage",
