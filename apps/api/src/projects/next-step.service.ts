@@ -614,24 +614,19 @@ export class NextStepService {
         },
       });
 
+      console.log(`[NextStep] CLIENT ${projectId}: quotedCount=${quotedCount}, effectiveStage=${effectiveStage}`);
+
       // Update REVIEW_INCOMING_QUOTES label based on how many quotes received
-      availableConfigSteps = availableConfigSteps.map((step) => {
-        if (step.actionKey === 'REVIEW_INCOMING_QUOTES') {
-          return {
-            ...step,
-            actionLabel:
-              quotedCount > 0
-                ? `${quotedCount} quote${quotedCount === 1 ? '' : 's'} received`
-                : 'Awaiting quotes',
-            description:
-              quotedCount > 0
-                ? 'Compare submitted pricing and notes.'
-                : 'No quotes received yet. Professionals are preparing their bids.',
-            requiresAction: quotedCount > 0,
-          };
-        }
-        return step;
-      });
+      const reviewStep = availableConfigSteps.find((s) => (s as any).actionKey === 'REVIEW_INCOMING_QUOTES');
+      if (reviewStep) {
+        (reviewStep as any).actionLabel = quotedCount > 0
+          ? `${quotedCount} quote${quotedCount === 1 ? '' : 's'} received`
+          : 'Awaiting quotes';
+        (reviewStep as any).description = quotedCount > 0
+          ? 'Compare submitted pricing and notes.'
+          : 'No quotes received yet. Professionals are preparing their bids.';
+        (reviewStep as any).requiresAction = quotedCount > 0;
+      }
 
       // ── Surface manage site requests when pros have booked inspections ──
       const pendingSiteCount = await this.prisma.siteAccessRequest.count({
@@ -640,6 +635,8 @@ export class NextStepService {
       const proposedVisitCount = await this.prisma.siteAccessVisit.count({
         where: { projectId, status: 'proposed', proposedByRole: 'professional' },
       });
+
+      console.log(`[NextStep] CLIENT ${projectId}: pendingSiteCount=${pendingSiteCount}, proposedVisitCount=${proposedVisitCount}`);
 
       if (pendingSiteCount > 0 || proposedVisitCount > 0) {
         availableConfigSteps = [
@@ -1168,6 +1165,7 @@ export class NextStepService {
       status: project.status,
       stage: effectiveStage,
     };
+    console.log(`[NextStep] CLIENT ${projectId} result: PRIMARY=${JSON.stringify(primary.map(p => p.actionKey))}, ELECTIVE=${JSON.stringify(elective.map(e => e.actionKey))}`);
     saveCache(result);
     return result;
     } catch (error: any) {

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-89a5a2ac",
+    "date": "2026-08-07T10:18:44+08:00",
+    "title": "debug(client): add logging to trace next-step label and CONFIRM_SITE_VISIT",
+    "summary": "debug(client): add logging to trace next-step label and CONFIRM_SITE_VISIT",
+    "areas": [
+      "api"
+    ],
+    "commit": "89a5a2ac",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-07-a996d2be",
     "date": "2026-08-07T10:04:16+08:00",
     "title": "fix(client): dynamic review-quotes label + simplify site-request next-step",
