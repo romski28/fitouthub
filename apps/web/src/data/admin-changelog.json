@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-159ad203",
+    "date": "2026-08-07T13:04:24+08:00",
+    "title": "fix(pro): reorder InspectSiteModal layout per spec",
+    "summary": "fix(pro): reorder InspectSiteModal layout per spec",
+    "areas": [
+      "web"
+    ],
+    "commit": "159ad203",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-e3608f81",
     "date": "2026-08-07T12:44:26+08:00",
     "title": "fix(pro): move CTA buttons directly under scheduled date in InspectSiteModal",

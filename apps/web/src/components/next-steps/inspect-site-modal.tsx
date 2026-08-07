@@ -318,54 +318,29 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
 
           {!loading && !error && address && (
             <>
-              {/* Visit info */}
+              {/* Date — bold charcoal, same size as title */}
               {visitLabel && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-                  Scheduled: {visitLabel}
-                </div>
+                <p className="text-lg font-bold text-slate-800">{visitLabel}</p>
               )}
 
-              {/* Visit notes + actions — directly under scheduled date */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">📝 Visit Notes</h3>
-                <textarea
-                  rows={3}
-                  value={visitNotes}
-                  onChange={(e) => setVisitNotes(e.target.value)}
-                  placeholder="Measurements taken, discussed materials, site conditions..."
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+              {/* Message — no label, just input + button */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
+                  placeholder="Send message to client..."
+                  className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                 />
-                <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                  {!showQR ? (
-                    <button
-                      type="button"
-                      onClick={generateQr}
-                      disabled={generatingQr}
-                      className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
-                    >
-                      {generatingQr ? "Generating..." : "🆔 QR Check-in"}
-                    </button>
-                  ) : (
-                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-4 text-center">
-                      <p className="text-xs text-slate-500 mb-3">Have the client scan this QR</p>
-                      <div className="flex justify-center mb-2">
-                        <QRCodeSVG value={qrToken || ""} size={Math.min(window.innerWidth - 80, 280)} />
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        Expires in {formatCountdown(qrSecondsLeft)}
-                      </p>
-                      {qrError && <p className="text-xs text-red-500 mt-1">{qrError}</p>}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleMarkVisited}
-                    disabled={markingVisited}
-                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                  >
-                    {markingVisited ? "Recording..." : "✅ Mark as Visited"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !messageText.trim()}
+                  className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                >
+                  {sendingMessage ? "..." : "Send"}
+                </button>
               </div>
 
               {/* Address — single line */}
@@ -405,38 +380,49 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 </div>
               )}
 
-              {/* Access details */}
-              {address.accessDetails && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-1">📝 Access Details</h3>
-                  <p className="text-sm text-slate-600 bg-white rounded-lg border border-[#D4C8A0] p-3">
-                    {address.accessDetails}
+              {/* Check-in */}
+              {!showQR ? (
+                <button
+                  type="button"
+                  onClick={generateQr}
+                  disabled={generatingQr}
+                  className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+                >
+                  {generatingQr ? "Generating..." : "🆔 QR Check-in"}
+                </button>
+              ) : (
+                <div className="rounded-lg border border-[#D4C8A0] bg-white p-4 text-center">
+                  <p className="text-xs text-slate-500 mb-3">Have the client scan this QR</p>
+                  <div className="flex justify-center mb-2">
+                    <QRCodeSVG value={qrToken || ""} size={Math.min(window.innerWidth - 80, 280)} />
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Expires in {formatCountdown(qrSecondsLeft)}
                   </p>
+                  {qrError && <p className="text-xs text-red-500 mt-1">{qrError}</p>}
                 </div>
               )}
 
-              {/* Message to client */}
+              {/* Visit Notes */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">💬 Message</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
-                    placeholder="Send message to client..."
-                    className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage || !messageText.trim()}
-                    className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
-                  >
-                    {sendingMessage ? "..." : "Send"}
-                  </button>
-                </div>
+                <textarea
+                  rows={3}
+                  value={visitNotes}
+                  onChange={(e) => setVisitNotes(e.target.value)}
+                  placeholder="Visit notes — measurements, materials, site conditions..."
+                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                />
               </div>
+
+              {/* Mark as visited */}
+              <button
+                type="button"
+                onClick={handleMarkVisited}
+                disabled={markingVisited}
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+              >
+                {markingVisited ? "Recording..." : "✅ Mark as Visited"}
+              </button>
             </>
           )}
 
@@ -449,7 +435,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
         <div className="shrink-0 border-t border-[#D4C8A0] px-5 py-3">
           <button
             onClick={onClose}
-            className="w-full rounded-lg border border-[#D4C8A0] py-2 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
+            className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
           >
             Close
           </button>
