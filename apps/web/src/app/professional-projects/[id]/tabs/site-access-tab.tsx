@@ -184,7 +184,6 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
   // Hide the "Awaiting approval" panel when a reschedule is also required — the reschedule
   // panel + picker takes priority so the professional can select a new slot.
   const showPendingReadOnlyPanel = isPending && !backendRescheduleRequired;
-  const canRequestSiteAccess = Boolean(offeredInspectionDate && siteAccessRequestTime);
 
   return (
     <div className="space-y-4 rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(239,231,207,0.76)] p-5 shadow-[0_18px_40px_rgba(81,55,32,0.06)]">

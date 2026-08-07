@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-baa4b30b",
+    "date": "2026-08-07T09:28:23+08:00",
+    "title": "fix: remove stale canRequestSiteAccess referencing removed prop",
+    "summary": "fix: remove stale canRequestSiteAccess referencing removed prop",
+    "areas": [
+      "web"
+    ],
+    "commit": "baa4b30b",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-6bec3dc2",
     "date": "2026-08-07T09:27:37+08:00",
     "title": "fix(pro): show skipped/missed/visited inspection status in site-access tab",
