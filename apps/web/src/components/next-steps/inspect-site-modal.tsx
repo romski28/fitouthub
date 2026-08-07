@@ -190,9 +190,15 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
 
   const formatInspectionDate = (value?: string | null) => {
     if (!value) return '';
-    const d = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // Parse as Hong Kong date (YYYY-MM-DD) to avoid UTC/local ambiguity
+    const parts = value.split('-');
+    if (parts.length === 3) {
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-HK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      }
+    }
+    return value;
   };
 
   const offeredDate = status?.siteInspectionAvailableOn || '';
@@ -319,19 +325,20 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 </div>
               )}
 
-              {/* Address */}
+              {/* Address — single line */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
-                <div className="rounded-lg border border-[#D4C8A0] bg-white p-3 text-sm text-slate-800 space-y-0.5">
-                  {address.buildingName && (
-                    <p className="font-medium">{address.buildingName}</p>
-                  )}
-                  <p>
-                    {[address.unitNumber, address.floorLevel].filter(Boolean).join(", ")}
-                  </p>
-                  <p>{address.addressFull}</p>
-                  {address.district && <p className="text-slate-500">{address.district}</p>}
-                </div>
+                <p className="rounded-lg border border-[#D4C8A0] bg-white p-3 text-sm text-slate-800">
+                  {[
+                    address.buildingName,
+                    address.unitNumber,
+                    address.floorLevel,
+                    address.addressFull,
+                    address.district,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                </p>
               </div>
 
               {/* Google Maps Embed */}
@@ -365,30 +372,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 </div>
               )}
 
-              {/* Message to client */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">💬 Message</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
-                    placeholder="Send message to client..."
-                    className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage || !messageText.trim()}
-                    className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
-                  >
-                    {sendingMessage ? "..." : "Send"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Visit notes + actions */}
+              {/* Visit notes + actions — moved to top */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📝 Visit Notes</h3>
                 <textarea
@@ -427,6 +411,29 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                     className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                   >
                     {markingVisited ? "Recording..." : "✅ Mark as Visited"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Message to client */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">💬 Message</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
+                    placeholder="Send message to client..."
+                    className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !messageText.trim()}
+                    className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                  >
+                    {sendingMessage ? "..." : "Send"}
                   </button>
                 </div>
               </div>

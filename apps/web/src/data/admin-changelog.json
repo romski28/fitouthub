@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-623e8e0c",
+    "date": "2026-08-07T11:34:43+08:00",
+    "title": "fix(pro): InspectSiteModal — timezone, address, CTA layout",
+    "summary": "fix(pro): InspectSiteModal — timezone, address, CTA layout",
+    "areas": [
+      "web"
+    ],
+    "commit": "623e8e0c",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-c7c20fa0",
     "date": "2026-08-07T10:50:02+08:00",
     "title": "chore: remove debug logging from next-step service",
