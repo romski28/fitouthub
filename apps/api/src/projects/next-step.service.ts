@@ -620,8 +620,6 @@ export class NextStepService {
         },
       });
 
-      console.log(`[NextStep] CLIENT ${projectId}: quotedCount=${quotedCount}, effectiveStage=${effectiveStage}`);
-
       // Update REVIEW_INCOMING_QUOTES label based on how many quotes received
       const reviewStep = availableConfigSteps.find((s) => (s as any).actionKey === 'REVIEW_INCOMING_QUOTES');
       if (reviewStep) {
@@ -641,8 +639,6 @@ export class NextStepService {
       const proposedVisitCount = await this.prisma.siteAccessVisit.count({
         where: { projectId, status: 'proposed', proposedByRole: 'professional' },
       });
-
-      console.log(`[NextStep] CLIENT ${projectId}: pendingSiteCount=${pendingSiteCount}, proposedVisitCount=${proposedVisitCount}`);
 
       if (pendingSiteCount > 0 || proposedVisitCount > 0) {
         availableConfigSteps = [
@@ -1171,7 +1167,6 @@ export class NextStepService {
       status: project.status,
       stage: effectiveStage,
     };
-    console.log(`[NextStep] CLIENT ${projectId} result: PRIMARY=${JSON.stringify(primary.map(p => p.actionKey))}, ELECTIVE=${JSON.stringify(elective.map(e => e.actionKey))}`);
     saveCache(result);
     return result;
     } catch (error: any) {

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-07-c7c20fa0",
+    "date": "2026-08-07T10:50:02+08:00",
+    "title": "chore: remove debug logging from next-step service",
+    "summary": "chore: remove debug logging from next-step service",
+    "areas": [
+      "api"
+    ],
+    "commit": "c7c20fa0",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-07-cf29e661",
     "date": "2026-08-07T10:39:32+08:00",
     "title": "fix: add cache versioning to bust stale next-step caches",
