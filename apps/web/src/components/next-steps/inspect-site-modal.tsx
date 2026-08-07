@@ -325,6 +325,49 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 </div>
               )}
 
+              {/* Visit notes + actions — directly under scheduled date */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">📝 Visit Notes</h3>
+                <textarea
+                  rows={3}
+                  value={visitNotes}
+                  onChange={(e) => setVisitNotes(e.target.value)}
+                  placeholder="Measurements taken, discussed materials, site conditions..."
+                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                />
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                  {!showQR ? (
+                    <button
+                      type="button"
+                      onClick={generateQr}
+                      disabled={generatingQr}
+                      className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+                    >
+                      {generatingQr ? "Generating..." : "🆔 QR Check-in"}
+                    </button>
+                  ) : (
+                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-4 text-center">
+                      <p className="text-xs text-slate-500 mb-3">Have the client scan this QR</p>
+                      <div className="flex justify-center mb-2">
+                        <QRCodeSVG value={qrToken || ""} size={Math.min(window.innerWidth - 80, 280)} />
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Expires in {formatCountdown(qrSecondsLeft)}
+                      </p>
+                      {qrError && <p className="text-xs text-red-500 mt-1">{qrError}</p>}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleMarkVisited}
+                    disabled={markingVisited}
+                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                  >
+                    {markingVisited ? "Recording..." : "✅ Mark as Visited"}
+                  </button>
+                </div>
+              </div>
+
               {/* Address — single line */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
@@ -371,49 +414,6 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                   </p>
                 </div>
               )}
-
-              {/* Visit notes + actions — moved to top */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">📝 Visit Notes</h3>
-                <textarea
-                  rows={3}
-                  value={visitNotes}
-                  onChange={(e) => setVisitNotes(e.target.value)}
-                  placeholder="Measurements taken, discussed materials, site conditions..."
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                />
-                <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                  {!showQR ? (
-                    <button
-                      type="button"
-                      onClick={generateQr}
-                      disabled={generatingQr}
-                      className="flex-1 rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
-                    >
-                      {generatingQr ? "Generating..." : "🆔 QR Check-in"}
-                    </button>
-                  ) : (
-                    <div className="flex-1 rounded-lg border border-[#D4C8A0] bg-white p-4 text-center">
-                      <p className="text-xs text-slate-500 mb-3">Have the client scan this QR</p>
-                      <div className="flex justify-center mb-2">
-                        <QRCodeSVG value={qrToken || ""} size={Math.min(window.innerWidth - 80, 280)} />
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        Expires in {formatCountdown(qrSecondsLeft)}
-                      </p>
-                      {qrError && <p className="text-xs text-red-500 mt-1">{qrError}</p>}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleMarkVisited}
-                    disabled={markingVisited}
-                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
-                  >
-                    {markingVisited ? "Recording..." : "✅ Mark as Visited"}
-                  </button>
-                </div>
-              </div>
 
               {/* Message to client */}
               <div>
