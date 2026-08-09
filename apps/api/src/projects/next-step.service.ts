@@ -586,6 +586,7 @@ export class NextStepService {
           // Need to request
           const inspectionLabel = new Date(inspectionDate).toLocaleDateString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
+            timeZone: 'Asia/Hong_Kong',
           });
           availableConfigSteps = [{
             ...createSyntheticPrimaryStep(
@@ -725,6 +726,7 @@ export class NextStepService {
             ? new Date(upcomingInspection.visitScheduledAt).toLocaleString('en-HK', {
                 weekday: 'short', day: '2-digit', month: 'short',
                 hour: '2-digit', minute: '2-digit', hour12: true,
+                timeZone: 'Asia/Hong_Kong',
               })
             : 'upcoming';
           availableConfigSteps = [

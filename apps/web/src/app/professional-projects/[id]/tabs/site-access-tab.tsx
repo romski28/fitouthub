@@ -83,13 +83,11 @@ const INSPECTION_TIME_OPTIONS = Array.from({ length: 11 }, (_, index) => {
 
 const formatInspectionDate = (value?: string | null) => {
   if (!value) return 'Not set';
-  const date = new Date(`${value}T00:00:00`);
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-HK', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Asia/Hong_Kong',
   });
 };
 

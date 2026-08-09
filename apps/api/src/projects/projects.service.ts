@@ -7853,6 +7853,7 @@ Please review the project details and respond with your quote or decline the inv
         : latestAccessRequest?.visitScheduledFor
         ? new Date(latestAccessRequest.visitScheduledFor).toLocaleDateString('en-HK', {
             weekday: 'long', day: 'numeric', month: 'long',
+            timeZone: 'Asia/Hong_Kong',
           })
         : null,
       reasonDenied: latestAccessRequest?.reasonDenied || null,
