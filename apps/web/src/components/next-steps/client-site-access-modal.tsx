@@ -68,12 +68,12 @@ interface ClientSiteAccessModalProps {
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDayDate = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short" });
+  return new Date(iso).toLocaleDateString("en-HK", { weekday: "short", day: "2-digit", month: "short", timeZone: "Asia/Hong_Kong" });
 };
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Hong_Kong" });
 };
 
 const formatDateTime = (iso?: string | null) => {
@@ -81,6 +81,7 @@ const formatDateTime = (iso?: string | null) => {
   return new Date(iso).toLocaleString("en-HK", {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: false,
+    timeZone: "Asia/Hong_Kong",
   });
 };
 
