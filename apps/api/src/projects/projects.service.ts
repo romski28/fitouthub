@@ -6162,8 +6162,9 @@ Please review the project details and respond with your quote or decline the inv
     const monthIndex = Number(match[2]) - 1;
     const day = Number(match[3]);
 
-    // Interpret entered date as 00:00 in Hong Kong (UTC+8), then store UTC instant.
-    const utcMillis = Date.UTC(year, monthIndex, day, -HK_TIMEZONE_OFFSET_HOURS, 0, 0, 0);
+    // Store as date-only — use UTC noon to avoid DST/offset boundary issues.
+    // The @db.Date column strips time, so we just need the right calendar day.
+    const utcMillis = Date.UTC(year, monthIndex, day, 0, 0, 0, 0);
     return new Date(utcMillis);
   }
 
