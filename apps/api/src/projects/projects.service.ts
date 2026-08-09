@@ -7135,6 +7135,10 @@ Please review the project details and respond with your quote or decline the inv
         if (isTimeOnly && !scheduledForInput) {
           throw new BadRequestException('Date is required when time is provided');
         }
+        // Already a full ISO datetime (from modal) — parse directly, don't re-convert
+        if (!isTimeOnly) {
+          scheduledAt = parseOptionalDate(scheduledAtInput);
+        }
         localDateTime = scheduledAtInput;
       }
 

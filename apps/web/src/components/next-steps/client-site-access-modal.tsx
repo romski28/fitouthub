@@ -86,12 +86,12 @@ const formatDateTime = (iso?: string | null) => {
 
 const formatTime = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Hong_Kong" });
 };
 
 const formatTime12h = (iso?: string | null) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return new Date(iso).toLocaleTimeString("en-HK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Hong_Kong" });
 };
 
 const proName = (p: { fullName?: string; businessName?: string }) =>
