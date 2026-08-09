@@ -320,7 +320,7 @@ export class NextStepService {
     // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
     // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
     // the cache via invalidateNextStepCache(), so they also trigger a recompute.
-    const CACHE_VERSION = 2; // bump to invalidate all caches
+    const CACHE_VERSION = 3; // bump to invalidate all caches
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
     const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;

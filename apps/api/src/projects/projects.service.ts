@@ -6770,6 +6770,12 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
+    // Invalidate next-step cache so the pro sees the updated step
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
+    }).catch(() => {});
+
     const professionalName =
       projectProfessional.professional?.businessName ||
       projectProfessional.professional?.fullName ||
