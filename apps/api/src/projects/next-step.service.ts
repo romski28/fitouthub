@@ -114,6 +114,7 @@ export class NextStepService {
   private async buildInspectSiteStep(
     projectProfessionalId: string,
   ): Promise<any | null> {
+    // Check for approved access first
     const approvedAccess = await this.prisma.siteAccessRequest.findFirst({
       where: {
         projectProfessionalId,
@@ -122,25 +123,60 @@ export class NextStepService {
       select: { visitScheduledAt: true, visitScheduledFor: true },
       orderBy: { respondedAt: 'desc' },
     });
-    if (!approvedAccess) return null;
-    const visitDateTime = approvedAccess.visitScheduledAt || approvedAccess.visitScheduledFor;
-    const timeLabel = visitDateTime
-      ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true })
-      : null;
-    const dateLabel = visitDateTime
-      ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short' })
-      : 'site';
-    const label = timeLabel
-      ? `Visit site at ${timeLabel} on ${dateLabel}`
-      : `Visit site on ${dateLabel}`;
-    return createSyntheticPrimaryStep(
-      'INSPECT_SITE',
-      label,
-      true,
-      'PROFESSIONAL',
-      ProjectStage.BIDDING_ACTIVE,
-      'Address access granted. View details on the Site Access tab.',
-    );
+
+    if (approvedAccess) {
+      const visitDateTime = approvedAccess.visitScheduledAt || approvedAccess.visitScheduledFor;
+      const timeLabel = visitDateTime
+        ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Hong_Kong' })
+        : null;
+      const dateLabel = visitDateTime
+        ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'Asia/Hong_Kong' })
+        : 'site';
+      const label = timeLabel
+        ? `Visit site at ${timeLabel} on ${dateLabel}`
+        : `Visit site on ${dateLabel}`;
+      return createSyntheticPrimaryStep(
+        'INSPECT_SITE',
+        label,
+        true,
+        'PROFESSIONAL',
+        ProjectStage.BIDDING_ACTIVE,
+        'Address access granted. View details on the Site Access tab.',
+      );
+    }
+
+    // Check for pending access request — pro has booked, awaiting client approval
+    const pendingAccess = await this.prisma.siteAccessRequest.findFirst({
+      where: {
+        projectProfessionalId,
+        status: 'pending',
+      },
+      select: { visitScheduledAt: true, visitScheduledFor: true, requestedAt: true },
+      orderBy: { requestedAt: 'desc' },
+    });
+
+    if (pendingAccess) {
+      const visitDateTime = pendingAccess.visitScheduledAt || pendingAccess.visitScheduledFor;
+      const timeLabel = visitDateTime
+        ? new Date(visitDateTime).toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Hong_Kong' })
+        : null;
+      const dateLabel = visitDateTime
+        ? new Date(visitDateTime).toLocaleDateString('en-HK', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'Asia/Hong_Kong' })
+        : null;
+      const label = timeLabel && dateLabel
+        ? `Inspection booked — ${timeLabel} on ${dateLabel}. Awaiting client approval`
+        : 'Inspection booked — awaiting client approval';
+      return createSyntheticPrimaryStep(
+        'AWAIT_SITE_ACCESS_APPROVAL',
+        label,
+        false,
+        'PROFESSIONAL',
+        ProjectStage.BIDDING_ACTIVE,
+        'Your site inspection request has been submitted. The client will review and respond shortly.',
+      );
+    }
+
+    return null;
   }
 
   private async getProfessionalWalletTransferPrerequisiteStatus(

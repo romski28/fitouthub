@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-09-5687ee3b",
+    "date": "2026-08-09T21:19:26+08:00",
+    "title": "fix(pro): show 'Inspection booked — awaiting approval' after booking",
+    "summary": "fix(pro): show 'Inspection booked — awaiting approval' after booking",
+    "areas": [
+      "api"
+    ],
+    "commit": "5687ee3b",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-09-3719887b",
     "date": "2026-08-09T11:54:08+08:00",
     "title": "fix: store visitScheduledFor with correct UTC date for @db.Date column",
