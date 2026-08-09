@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-09-a1849f9b",
+    "date": "2026-08-09T11:21:48+08:00",
+    "title": "feat(pro): add OTP/PIN code to InspectSiteModal QR check-in",
+    "summary": "feat(pro): add OTP/PIN code to InspectSiteModal QR check-in",
+    "areas": [
+      "web"
+    ],
+    "commit": "a1849f9b",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-07-159ad203",
     "date": "2026-08-07T13:04:24+08:00",
     "title": "fix(pro): reorder InspectSiteModal layout per spec",
