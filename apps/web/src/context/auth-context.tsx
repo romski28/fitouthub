@@ -287,6 +287,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setRole('professional');
       applyPreferredLocale(result.professional?.preferredLanguage);
     }
+    if (result.landlord) {
+      localStorage.setItem('user', JSON.stringify(result.landlord));
+      setRole('landlord');
+      applyPreferredLocale(result.landlord?.preferredLanguage);
+    }
 
     setAccessToken(result.accessToken);
     setPersona(result.persona ?? null);

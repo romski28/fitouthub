@@ -13,7 +13,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import PhoneInput from '@/components/phone-input';
 
-type Role = 'client' | 'professional';
+type Role = 'client' | 'professional' | 'landlord';
 type SignInMethod = 'email' | 'google' | null;
 
 declare global {

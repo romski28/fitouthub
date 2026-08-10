@@ -58,7 +58,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
-  const [userType, setUserType] = useState<'client' | 'professional'>('client');
+  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord'>('client');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -99,6 +99,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const normalizedRole = String(role || '').toLowerCase();
     if (normalizedRole === 'surveyor' || normalizedRole === 'mimo_boh') {
       return '/survey-ops';
+    }
+    if (normalizedRole === 'landlord') {
+      return '/landlord';
     }
     return '/projects';
   };
@@ -624,7 +627,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         disabled={loading}
                         className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left font-medium text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
                       >
-                        {p.type === 'CLIENT' ? '🏠 Client' : p.type === 'PROFESSIONAL' ? '🔧 Professional' : `👤 ${p.type}`}
+                        {p.type === 'CLIENT' ? '🏠 Client' : p.type === 'PROFESSIONAL' ? '🔧 Professional' : p.type === 'LANDLORD' ? '🏘️ Landlord' : `👤 ${p.type}`}
                       </button>
                     ))}
                   </div>
@@ -746,6 +749,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }`}
                   >
                     👷 {modalT('professional')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('landlord')}
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                      userType === 'landlord'
+                        ? 'bg-[#0E7C3A] text-white shadow-sm'
+                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
+                    }`}
+                  >
+                    🏘️ Landlord
                   </button>
                 </div>
               )}

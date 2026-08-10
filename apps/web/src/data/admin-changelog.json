@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-08-10-c6a00f35",
+    "date": "2026-08-10T23:13:15+08:00",
+    "title": "feat(persona): add Landlord persona - schema, auth, UI, holding page",
+    "summary": "feat(persona): add Landlord persona - schema, auth, UI, holding page",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "c6a00f35",
+    "files": [
+      "MANUAL_SQL_ADD_LANDLORD_PERSONA.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/landlord/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/hooks/use-role-guard.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-03bf15ed",
     "date": "2026-08-10T22:19:53+08:00",
     "title": "docs(ai): log Aug 10 prompt deployment, parameter tuning, choice fix",

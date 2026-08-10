@@ -159,13 +159,27 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
+
+      // Determine persona type from role
+      const personaType = dto.role === 'landlord' ? 'LANDLORD' : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
           identityId: identity.id,
-          type: 'CLIENT',
+          type: personaType,
           userId: user.id,
         },
       });
+
+      // Create Landlord profile row if landlord persona
+      if (personaType === 'LANDLORD') {
+        const landlord = await (this.prisma as any).landlord.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { landlordId: landlord.id },
+        });
+      }
       await (this.prisma as any).user.update({
         where: { id: user.id },
         data: { personaId: persona.id },
@@ -320,6 +334,7 @@ export class AuthService {
     allowPlatformUpdates?: boolean;
     firstName?: string;
     surname?: string;
+    role?: string;
   }) {
     if (!dto.onboardingToken || !dto.nickname) {
       throw new BadRequestException('Onboarding token and nickname are required');
@@ -377,7 +392,7 @@ export class AuthService {
           firstName: dto.firstName || payload.givenName || 'Member',
           surname: dto.surname || payload.familyName || 'User',
           mobile: dto.mobile,
-          role: 'client',
+          role: dto.role || 'client',
           emailVerified: true,
         },
       });
@@ -392,13 +407,23 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
+      const personaType = dto.role === 'landlord' ? 'LANDLORD' : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
           identityId: identity.id,
-          type: 'CLIENT',
+          type: personaType,
           userId: user.id,
         },
       });
+      if (personaType === 'LANDLORD') {
+        const landlord = await (this.prisma as any).landlord.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { landlordId: landlord.id },
+        });
+      }
       await (this.prisma as any).user.update({
         where: { id: user.id },
         data: { personaId: persona.id },
@@ -603,6 +628,16 @@ export class AuthService {
       };
       profileId = pro.id;
       role = 'professional';
+    } else if (selectedPersona.type === 'LANDLORD') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Landlord profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = 'landlord';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -620,8 +655,9 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: selectedPersona.type === 'CLIENT' ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
+      landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
     };
   }
 
