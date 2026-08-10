@@ -7676,6 +7676,7 @@ Please review the project details and respond with your quote or decline the inv
         ? new Date(date).toLocaleString('en-HK', {
             weekday: 'short', day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit', hour12: true,
+            timeZone: 'Asia/Hong_Kong',
           })
         : null;
 
