@@ -6,25 +6,12 @@ import Link from 'next/link';
 
 export default function LandlordPage() {
   const { user, isLoggedIn } = useAuth();
-  const { isAuthorized, isLoading } = useRoleGuard(['landlord']);
+  useRoleGuard(['landlord']);
 
-  if (isLoading) {
+  if (isLoggedIn === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F5EEDE]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
-      </div>
-    );
-  }
-
-  if (!isAuthorized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5EEDE]">
-        <div className="text-center space-y-4">
-          <p className="text-lg text-slate-700">You don&apos;t have access to this area.</p>
-          <Link href="/projects" className="text-emerald-600 underline text-sm">
-            Go to my projects
-          </Link>
-        </div>
       </div>
     );
   }
