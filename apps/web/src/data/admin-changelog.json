@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-11-66d2a265",
+    "date": "2026-08-11T02:10:04+08:00",
+    "title": "fix(auth): remove duplicate existingUser check, already present above",
+    "summary": "fix(auth): remove duplicate existingUser check, already present above",
+    "areas": [
+      "api"
+    ],
+    "commit": "66d2a265",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-e529c0e8",
     "date": "2026-08-11T00:33:27+08:00",
     "title": "fix(auth): enforce unique email per account, remove multi-persona logic",

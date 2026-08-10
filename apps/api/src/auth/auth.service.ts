@@ -134,14 +134,6 @@ export class AuthService {
       );
     }
 
-    // Unique email enforcement — one email = one account for now
-    const existingUser = await (this.prisma as any).user.findUnique({
-      where: { email: dto.email },
-    });
-    if (existingUser) {
-      throw new BadRequestException('An account with this email already exists. Please log in instead.');
-    }
-
     let user: any;
     let identity: any;
     try {
