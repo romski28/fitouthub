@@ -7292,6 +7292,12 @@ Please review the project details and respond with your quote or decline the inv
       console.error('Failed to send site access approval notification:', error);
     }
 
+    // Invalidate next-step cache so the pro sees updated step
+    await this.prisma.project.update({
+      where: { id: request.projectId },
+      data: { nextStepCache: null as any },
+    }).catch(() => {});
+
     return {
       success: true,
       request: approved,

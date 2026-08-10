@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-10-b3c507f4",
+    "date": "2026-08-10T12:09:40+08:00",
+    "title": "fix: invalidate next-step cache when client approves site inspection",
+    "summary": "fix: invalidate next-step cache when client approves site inspection",
+    "areas": [
+      "api"
+    ],
+    "commit": "b3c507f4",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-cc23f543",
     "date": "2026-08-10T10:07:38+08:00",
     "title": "fix: don't overwrite visitScheduledAt on approval without time change",
