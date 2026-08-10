@@ -138,59 +138,115 @@ export class AuthService {
     let user: any;
     let identity: any;
     try {
-      user = await (this.prisma as any).user.create({
-        data: {
-          email: dto.email,
-          nickname: dto.nickname,
-          firstName: dto.firstName,
-          surname: dto.surname,
-          chineseName: dto.chineseName,
-          mobile: dto.mobile,
-          role: dto.role || 'client',
-        },
-      });
-
-      // Create parallel Identity row for unified auth
-      identity = await this.identityService.create({
-        email: dto.email,
-        passwordHash: dto.password,
-      });
-      await (this.prisma as any).user.update({
-        where: { id: user.id },
-        data: { identityId: identity.id },
-      });
-
       // Determine persona type from role
       const personaType = dto.role === 'landlord' ? 'LANDLORD' : 'CLIENT';
-      const persona = await (this.prisma as any).persona.create({
-        data: {
-          identityId: identity.id,
-          type: personaType,
-          userId: user.id,
-        },
+
+      // Check if a User with this email already exists (multi-persona flow)
+      const existingUser = await (this.prisma as any).user.findUnique({
+        where: { email: dto.email },
+        include: { identity: true },
       });
 
-      // Create Landlord profile row if landlord persona
-      if (personaType === 'LANDLORD') {
-        const landlord = await (this.prisma as any).landlord.create({
-          data: { userId: user.id },
+      if (existingUser && dto.role !== 'client') {
+        // ── Multi-persona: add a new Persona to an existing Identity ──
+        if (!existingUser.identity) {
+          throw new BadRequestException('Account exists but is not fully set up. Please contact support.');
+        }
+
+        // Verify password against existing identity
+        const passwordValid = await this.identityService.validatePassword(
+          existingUser.identity.id,
+          dto.password,
+        );
+        if (!passwordValid) {
+          throw new UnauthorizedException('Password is incorrect for this email.');
+        }
+
+        // Check if this persona type already exists for this identity
+        const existingPersona = await (this.prisma as any).persona.findFirst({
+          where: { identityId: existingUser.identity.id, type: personaType },
         });
-        await (this.prisma as any).persona.update({
-          where: { id: persona.id },
-          data: { landlordId: landlord.id },
+        if (existingPersona) {
+          throw new BadRequestException(`A ${personaType.toLowerCase()} account already exists for this email.`);
+        }
+
+        identity = existingUser.identity;
+        user = existingUser;
+
+        // Create the new Persona
+        const persona = await (this.prisma as any).persona.create({
+          data: {
+            identityId: identity.id,
+            type: personaType,
+            userId: user.id,
+          },
+        });
+
+        // Create Landlord profile row if landlord persona
+        if (personaType === 'LANDLORD') {
+          const landlord = await (this.prisma as any).landlord.create({
+            data: { userId: user.id },
+          });
+          await (this.prisma as any).persona.update({
+            where: { id: persona.id },
+            data: { landlordId: landlord.id },
+          });
+        }
+      } else if (existingUser) {
+        // Same email, same role (client) — treat as duplicate registration attempt
+        throw new BadRequestException('An account with this email already exists. Please log in instead.');
+      } else {
+        // ── New user: full registration ──
+        user = await (this.prisma as any).user.create({
+          data: {
+            email: dto.email,
+            nickname: dto.nickname,
+            firstName: dto.firstName,
+            surname: dto.surname,
+            chineseName: dto.chineseName,
+            mobile: dto.mobile,
+            role: dto.role || 'client',
+          },
+        });
+
+        identity = await this.identityService.create({
+          email: dto.email,
+          passwordHash: dto.password,
+        });
+        await (this.prisma as any).user.update({
+          where: { id: user.id },
+          data: { identityId: identity.id },
+        });
+
+        const persona = await (this.prisma as any).persona.create({
+          data: {
+            identityId: identity.id,
+            type: personaType,
+            userId: user.id,
+          },
+        });
+
+        if (personaType === 'LANDLORD') {
+          const landlord = await (this.prisma as any).landlord.create({
+            data: { userId: user.id },
+          });
+          await (this.prisma as any).persona.update({
+            where: { id: persona.id },
+            data: { landlordId: landlord.id },
+          });
+        }
+        await (this.prisma as any).user.update({
+          where: { id: user.id },
+          data: { personaId: persona.id },
         });
       }
-      await (this.prisma as any).user.update({
-        where: { id: user.id },
-        data: { personaId: persona.id },
-      });
     } catch (err) {
       // Clean up partial records on failure
-      if (identity?.id) {
+      if (identity?.id && !user?.identity?.id) {
         await (this.prisma as any).persona.deleteMany({ where: { identityId: identity.id } }).catch(() => {});
         await (this.prisma as any).identity.delete({ where: { id: identity.id } }).catch(() => {});
       }
-      if (user?.id) {
+      if (user?.id && !identity?.id) {
         await (this.prisma as any).user.delete({ where: { id: user.id } }).catch(() => {});
       }
       throw err;

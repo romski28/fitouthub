@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-11-228cab79",
+    "date": "2026-08-11T00:25:08+08:00",
+    "title": "feat(auth): support multi-persona registration with same email",
+    "summary": "feat(auth): support multi-persona registration with same email",
+    "areas": [
+      "api"
+    ],
+    "commit": "228cab79",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-e8a2bf80",
     "date": "2026-08-11T00:16:22+08:00",
     "title": "fix(auth-modal): pass dynamic role from userType dropdown to register",
