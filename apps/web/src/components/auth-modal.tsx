@@ -58,7 +58,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
-  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord'>('client');
+  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'client_helper'>('client');
+
+  const personaOptions: Array<{ value: typeof userType; label: string; icon: string }> = [
+    { value: 'client', label: 'Client', icon: '👤' },
+    { value: 'professional', label: 'Professional', icon: '👷' },
+    { value: 'landlord', label: 'Landlord', icon: '🏘️' },
+    { value: 'estate_agent', label: 'Estate Agent', icon: '🏷️' },
+    { value: 'property_manager', label: 'Property Manager', icon: '🏢' },
+    { value: 'client_helper', label: 'Client Helper', icon: '🤝' },
+  ];
+
+  const selectedPersona = personaOptions.find(p => p.value === userType);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -727,40 +738,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ) : (
             <>
               {!pendingVerification && (
-                <div className="mb-6 flex gap-2 bg-gray-100 p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setUserType('client')}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                      userType === 'client'
-                        ? 'bg-[#0E7C3A] text-white shadow-sm'
-                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
-                    }`}
+                <div className="mb-6">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                    I am a...
+                  </label>
+                  <select
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value as typeof userType)}
+                    className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2.5 text-sm font-medium text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: '2rem' }}
                   >
-                    👤 {modalT('client')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUserType('professional')}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                      userType === 'professional'
-                        ? 'bg-[#0E7C3A] text-white shadow-sm'
-                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
-                    }`}
-                  >
-                    👷 {modalT('professional')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUserType('landlord')}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                      userType === 'landlord'
-                        ? 'bg-[#0E7C3A] text-white shadow-sm'
-                        : 'bg-[#F3F4F6] text-gray-600 hover:bg-[#E5E7EB] hover:text-gray-900'
-                    }`}
-                  >
-                    🏘️ Landlord
-                  </button>
+                    {personaOptions.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.icon} {p.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 

@@ -131,7 +131,7 @@ export default function GetStartedPage() {
     const params = new URLSearchParams(window.location.search);
     const roleParam = params.get('role');
     const stepParam = params.get('step');
-    if (roleParam === 'client' || roleParam === 'professional') {
+    if (roleParam === 'client' || roleParam === 'professional' || roleParam === 'landlord') {
       setRole(roleParam);
     }
     if (stepParam) {
@@ -259,6 +259,10 @@ export default function GetStartedPage() {
   };
 
   const handleChooseRole = (nextRole: Role) => {
+    if (nextRole === 'landlord') {
+      openLoginModal();
+      return;
+    }
     setRole(nextRole);
     setStep(0);
     setMethod(null);
@@ -644,7 +648,7 @@ export default function GetStartedPage() {
               {!role && (
                 <div className="space-y-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-3">
                     {/* Client card — Sarah peeks in from the left */}
                     <button
                       onClick={() => handleChooseRole('client')}
@@ -668,6 +672,16 @@ export default function GetStartedPage() {
                       <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
                       <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Win premium renovation projects</p>
                       <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
+                    </button>
+                    {/* Landlord card */}
+                    <button
+                      onClick={() => handleChooseRole('landlord')}
+                      className="group relative rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-100/60 to-amber-50/40 pb-5 pl-5 pr-5 pt-5 text-left transition hover:-translate-y-1 hover:border-amber-500/50"
+                    >
+                      <div className="mb-3 text-3xl">🏘️</div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-amber-700">Landlord</p>
+                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Manage properties with ease</p>
+                      <p className="mt-2 text-sm text-[#4E4A42]">Request quotes, coordinate maintenance, and keep tenants happy across your portfolio.</p>
                     </button>
                   </div>
                 </div>

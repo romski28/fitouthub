@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-10-b336c3e0",
+    "date": "2026-08-10T23:34:55+08:00",
+    "title": "feat(auth): replace persona tabs with dropdown, add all 6 types",
+    "summary": "feat(auth): replace persona tabs with dropdown, add all 6 types",
+    "areas": [
+      "web"
+    ],
+    "commit": "b336c3e0",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-2cdeabaa",
     "date": "2026-08-10T23:25:20+08:00",
     "title": "fix(schema): add missing Landlord opposite relation on User model",
