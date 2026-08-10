@@ -66,6 +66,7 @@ function passwordStrength(password: string): number {
 const stepsByRole: Record<Role, string[]> = {
   client: ['Sign in method', 'About you'],
   professional: ['Sign in method', 'About your business'],
+  landlord: ['Sign in method', 'About you'],
 };
 
 export default function GetStartedPage() {
