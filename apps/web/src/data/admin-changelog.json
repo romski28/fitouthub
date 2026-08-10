@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-11-700e0b48",
+    "date": "2026-08-11T00:13:39+08:00",
+    "title": "fix: add Landlord table to migration, disable click-outside on join form",
+    "summary": "fix: add Landlord table to migration, disable click-outside on join form",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "700e0b48",
+    "files": [
+      "MANUAL_SQL_ADD_LANDLORD_PERSONA.sql",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-4d6781d7",
     "date": "2026-08-10T23:57:43+08:00",
     "title": "fix(auth-modal): route landlord + new personas to client register, not professional",

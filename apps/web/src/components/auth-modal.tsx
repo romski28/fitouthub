@@ -547,6 +547,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   if (!isOpen) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (activeTab === 'join') return;
     if (e.target === e.currentTarget) {
       onClose();
     }
