@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-03bf15ed",
+    "date": "2026-08-10T22:19:53+08:00",
+    "title": "docs(ai): log Aug 10 prompt deployment, parameter tuning, choice fix",
+    "summary": "docs(ai): log Aug 10 prompt deployment, parameter tuning, choice fix",
+    "areas": [
+      "infra"
+    ],
+    "commit": "03bf15ed",
+    "files": [
+      "AI_PROMPT_UPDATES_JUNE_2026.md"
+    ]
+  },
+  {
     "id": "2026-08-10-9dfac9fd",
     "date": "2026-08-10T15:57:12+08:00",
     "title": "fix(ai): prevent choice-question option mismatch, add or-extraction fallback",

@@ -1,6 +1,34 @@
 # AI Prompting — Recent Updates Reference
 
-_Last updated: June 8, 2026_
+_Last updated: August 10, 2026_
+
+---
+
+## 2026-08-10: Prompt Deployed + Parameters Tuned + Choice Question Fix
+
+### Background
+The June 2026 prompt updates (sections 1-8 below) were documented but never deployed to the live `buildConversationalPrompt()`. The AI was running a much older/simpler prompt that made it far less inquisitive — typically asking only one question before wrapping up, sometimes producing no questions at all and stalling the conversation.
+
+### Changes Deployed
+
+**1. Full June 2026 prompt activated** — All sections below (Fact Tracking, Problem Focus, Surface-Area Projects, Requirement Tracking, CRITICAL RULES 1-14, Trade Minimization examples, updated OUTPUT FORMAT) are now live.
+
+**2. `maxOutputTokens` increased 800 → 1500** — The conversational mode token budget was too tight for the model to produce substantive questions alongside the full JSON output (conversationalText, trades, options, assumptions, risks, safetyAssessment, coveredTopics). Still overridable via `DEEPSEEK_CONVERSATIONAL_MAX_TOKENS` env.
+
+**3. Seed question safety net now fires on ANY turn** — Previously the seed question (injecting a fallback when the AI returns empty `nextQuestions`) only triggered on the first turn. On follow-up exchanges, an empty response was treated as a "wrap-up signal" even when it shouldn't have been. Now fires whenever `nextQuestions` is empty AND `overallConfidence < 0.75`.
+
+**4. `MAX_AI_ROUNDS` increased 2 → 4** — Home page (`search-flow.tsx`) now allows 4 follow-up exchanges instead of 2. Round limit notice updated accordingly.
+
+**5. Choice question option matching fixed** — The AI would produce choice questions like "Would you like a standard service or a more thorough clean and check?" but return Yes/No/Not sure options. Two layers of defense:
+- **Prompt layer:** Rule 4 now explicitly states "If your question contains 'or' presenting different choices, it is NOT a yes/no question." Rule 5 expanded with concrete "Q → Options" examples.
+- **Fallback layer:** New `extractChoiceOptions()` method detects "or" in questions and splits on the last " or " to extract alternatives. Runs BEFORE the yes/no regex fallback.
+
+### Files Modified (Aug 10)
+
+| File | Changes |
+|------|---------|
+| `apps/api/src/ai/ai.service.ts` | Deployed full June prompt, increased default tokens, extended seed question guard, added `extractChoiceOptions()` |
+| `apps/web/src/components/search-flow.tsx` | `MAX_AI_ROUNDS` 2→4, updated round notice message |
 
 ---
 
@@ -141,23 +169,23 @@ RIGHT: "bath drain blocked" → suggest Plumber ONLY, focus on drain questions
 | 1 | Role & Objective | Unchanged |
 | 2 | Conversational Style | Unchanged |
 | 3 | Conversation Management | Unchanged |
-| 4 | **Fact Tracking** | NEW |
-| 5 | **Problem Focus** | NEW |
-| 6 | **Surface-Area Projects** | NEW |
-| 7 | **Requirement Tracking** | NEW |
-| 8 | CRITICAL RULES (1-14) | Updated (rules 9-10, rule 2) |
-| 9 | TRADE MINIMIZATION RULE | Updated (new examples) |
+| 4 | **Fact Tracking** | ✅ Deployed Aug 10 |
+| 5 | **Problem Focus** | ✅ Deployed Aug 10 |
+| 6 | **Surface-Area Projects** | ✅ Deployed Aug 10 |
+| 7 | **Requirement Tracking** | ✅ Deployed Aug 10 |
+| 8 | CRITICAL RULES (1-14) | ✅ Deployed Aug 10 (rules 4-5 further tightened for choice questions) |
+| 9 | TRADE MINIMIZATION RULE | ✅ Deployed Aug 10 |
 | 10 | ALLOWED_TRADES / LOCATION_TAXONOMY | Unchanged |
-| 11 | OUTPUT FORMAT (JSON) | Updated (assumptions, risks, safetyAssessment, coveredTopics) |
+| 11 | OUTPUT FORMAT (JSON) | ✅ Deployed Aug 10 (assumptions, risks, safetyAssessment, coveredTopics) |
 
 ---
 
-## Files Modified
+## Files Modified (cumulative)
 
 | File | Changes |
 |------|---------|
-| `apps/api/src/ai/ai.service.ts` | All prompt sections, thread context, output format |
+| `apps/api/src/ai/ai.service.ts` | All prompt sections, thread context, output format, token increase, seed question guard, choice extraction |
+| `apps/web/src/components/search-flow.tsx` | Added `coveredTopics` to types, response parsing, component props; `MAX_AI_ROUNDS` 2→4 |
 | `apps/web/src/components/requirement-checklist.tsx` | NEW — subtle pill-style checklist widget |
 | `apps/web/src/lib/requirement-matrix.ts` | NEW — editable category→topic config |
-| `apps/web/src/components/search-flow.tsx` | Added `coveredTopics` to types, response parsing, component props |
 | `apps/web/src/app/projects/[id]/tabs/overview-tab.tsx` | Fixed `hasAiInsights` check |
