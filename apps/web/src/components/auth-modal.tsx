@@ -1085,6 +1085,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                   </div>
 
+                  {userType === 'professional' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {modalT('joinAs')}
@@ -1116,8 +1117,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </button>
                     </div>
                   </div>
+                  )}
 
-                  {(professionType === 'contractor' || professionType === 'company') && (
+                  {userType === 'professional' && (professionType === 'contractor' || professionType === 'company') && (
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <input
                         type="checkbox"

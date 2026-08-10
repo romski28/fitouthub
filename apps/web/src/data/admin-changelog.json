@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-12ad58a4",
+    "date": "2026-08-10T23:50:47+08:00",
+    "title": "fix(auth-modal): hide professional-only fields for non-pro personas",
+    "summary": "fix(auth-modal): hide professional-only fields for non-pro personas",
+    "areas": [
+      "web"
+    ],
+    "commit": "12ad58a4",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-abeaa62b",
     "date": "2026-08-10T23:42:23+08:00",
     "title": "fix(get-started): unify card layouts, fix landlord join, remove landlord emoji",
