@@ -257,6 +257,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
   };
 
   const visitLabel = status?.formattedVisitTime || null;
+  const isVisited = reqStatus === 'visited';
 
   if (!isOpen) return null;
 
@@ -342,10 +343,12 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
 
           {!loading && !error && address && (
             <>
-              {/* Date — bold charcoal, same size as title */}
-              {visitLabel && (
+              {/* Date / visited status */}
+              {isVisited ? (
+                <p className="text-lg font-bold text-emerald-700">✅ Visit completed — {visitLabel}</p>
+              ) : visitLabel ? (
                 <p className="text-lg font-bold text-slate-800">{visitLabel}</p>
-              )}
+              ) : null}
 
               {/* Message — no label, just input + button */}
               <div className="flex gap-2">
@@ -404,7 +407,9 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 </div>
               )}
 
-              {/* Check-in */}
+              {/* Check-in — only show when not yet visited */}
+              {!isVisited && (
+              <>
               {!showQR ? (
                 <button
                   type="button"
@@ -453,19 +458,22 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                   {qrError && <p className="text-xs text-red-500">{qrError}</p>}
                 </div>
               )}
+              </>
+              )}
 
-              {/* Visit Notes */}
+              {/* Visit Notes — optional after visit, actionable before */}
               <div>
                 <textarea
                   rows={3}
                   value={visitNotes}
                   onChange={(e) => setVisitNotes(e.target.value)}
-                  placeholder="Visit notes — measurements, materials, site conditions..."
+                  placeholder={isVisited ? 'Add notes about the visit (optional)...' : 'Visit notes — measurements, materials, site conditions...'}
                   className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
-              {/* Mark as visited */}
+              {/* Mark as visited / Save notes */}
+              {!isVisited ? (
               <button
                 type="button"
                 onClick={handleMarkVisited}
@@ -474,6 +482,16 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
               >
                 {markingVisited ? "Recording..." : "✅ Mark as Visited"}
               </button>
+              ) : (
+              <button
+                type="button"
+                onClick={handleMarkVisited}
+                disabled={markingVisited || !visitNotes.trim()}
+                className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+              >
+                {markingVisited ? "Saving..." : "Save visit notes"}
+              </button>
+              )}
             </>
           )}
 

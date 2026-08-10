@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-10-55b1dfd4",
+    "date": "2026-08-10T13:14:58+08:00",
+    "title": "feat(pro): client check-in auto-completes site visit, modal adapts",
+    "summary": "feat(pro): client check-in auto-completes site visit, modal adapts",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "55b1dfd4",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-5ea83420",
     "date": "2026-08-10T12:42:54+08:00",
     "title": "fix: persist OTP codes in DB to survive server restarts",

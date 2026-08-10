@@ -10983,6 +10983,12 @@ Please review the project details and respond with your quote or decline the inv
       });
     }
 
+    // Invalidate pro's next-step cache so they see 'Submit quote' immediately
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
+    }).catch(() => {});
+
     return { success: true };
   }
 }
