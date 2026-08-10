@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-2cdeabaa",
+    "date": "2026-08-10T23:25:20+08:00",
+    "title": "fix(schema): add missing Landlord opposite relation on User model",
+    "summary": "fix(schema): add missing Landlord opposite relation on User model",
+    "areas": [
+      "api"
+    ],
+    "commit": "2cdeabaa",
+    "files": [
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-08-10-0212da48",
     "date": "2026-08-10T23:19:40+08:00",
     "title": "fix(build): useRoleGuard returns void, simplify landlord page",
