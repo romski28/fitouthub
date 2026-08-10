@@ -358,7 +358,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         firstName: clientForm.firstName,
         surname: clientForm.surname,
         mobile: clientForm.mobile || undefined,
-        role: 'client',
+        role: userType,
         preferredContactMethod: clientPreferredContact,
         preferredLanguage: clientPreferredLanguage,
         allowPartnerOffers: clientAllowPartnerOffers,
