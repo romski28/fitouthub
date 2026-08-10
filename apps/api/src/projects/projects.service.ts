@@ -10769,8 +10769,19 @@ Please review the project details and respond with your quote or decline the inv
     const token = jwt.sign(payload, secret, { expiresIn: expiresInSeconds });
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 
-    // Cache OTP → projectId for quick lookup on confirm
-    this.otpCache.set(otp, { projectId, expiresAt: Date.now() + expiresInSeconds * 1000 });
+    // Store OTP in both memory cache AND DB (survives restarts, shared across instances)
+    const otpEntry = { projectId, purpose, expiresAt: Date.now() + expiresInSeconds * 1000 };
+    this.otpCache.set(otp, otpEntry);
+    // Also persist in project's JSON cache so it survives server restarts
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        nextStepCache: {
+          ...((project as any).nextStepCache || {}),
+          __otp__: { code: otp, ...otpEntry, storedAt: Date.now() },
+        },
+      } as any,
+    }).catch(() => {});
 
     return { token, otp, expiresAt };
   }
@@ -10790,8 +10801,18 @@ Please review the project details and respond with your quote or decline the inv
     // Support both JWT (QR scan) and 6-digit OTP (manual entry)
     let decodedProjectId = projectId;
     if (/^\d{6}$/.test(token)) {
-      // OTP lookup — find the cached entry
-      const cached = this.otpCache.get(token);
+      // OTP lookup — check memory cache first, then DB
+      let cached = this.otpCache.get(token);
+      if (!cached || cached.expiresAt < Date.now()) {
+        const project = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          select: { nextStepCache: true },
+        });
+        const dbOtp = (project?.nextStepCache as any)?.__otp__;
+        if (dbOtp && dbOtp.code === token && dbOtp.expiresAt > Date.now() && dbOtp.projectId === projectId && dbOtp.purpose === 'site_start') {
+          cached = dbOtp;
+        }
+      }
       if (!cached || cached.expiresAt < Date.now()) {
         this.otpCache.delete(token);
         throw new BadRequestException('Code is invalid or has expired. Ask the professional to generate a new one.');
@@ -10863,8 +10884,19 @@ Please review the project details and respond with your quote or decline the inv
 
     // Support both JWT (QR scan) and 6-digit OTP (manual entry)
     if (/^\d{6}$/.test(token)) {
-      // OTP lookup — find the cached entry
-      const cached = this.otpCache.get(token);
+      // OTP lookup — check memory cache first, then DB
+      let cached = this.otpCache.get(token);
+      if (!cached || cached.expiresAt < Date.now()) {
+        // Fall back to DB-stored OTP
+        const project = await this.prisma.project.findUnique({
+          where: { id: projectId },
+          select: { nextStepCache: true },
+        });
+        const dbOtp = (project?.nextStepCache as any)?.__otp__;
+        if (dbOtp && dbOtp.code === token && dbOtp.expiresAt > Date.now() && dbOtp.projectId === projectId && dbOtp.purpose === 'site_inspection') {
+          cached = dbOtp;
+        }
+      }
       if (!cached || cached.expiresAt < Date.now()) {
         this.otpCache.delete(token);
         throw new BadRequestException('Code is invalid or has expired. Ask the professional to generate a new one.');

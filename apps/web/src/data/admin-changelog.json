@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-5ea83420",
+    "date": "2026-08-10T12:42:54+08:00",
+    "title": "fix: persist OTP codes in DB to survive server restarts",
+    "summary": "fix: persist OTP codes in DB to survive server restarts",
+    "areas": [
+      "api"
+    ],
+    "commit": "5ea83420",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-803dc6a4",
     "date": "2026-08-10T12:36:49+08:00",
     "title": "fix: support OTP/PIN code in confirmSiteInspection (not just JWT)",
