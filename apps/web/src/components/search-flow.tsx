@@ -540,7 +540,7 @@ function IntentModal({ intent, onClose, matchCount, countLoading, isLoggedIn, op
 
 export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, resetAiSession = false, onAiLoadingChange, initialPrompt, initialImages, sourceMode }: { autoFocusPrompt?: boolean; resultsPortalId?: string; resetAiSession?: boolean; onAiLoadingChange?: (isLoading: boolean) => void; initialPrompt?: string; initialImages?: File[]; sourceMode?: 'photos' | 'words' }) {
   const AI_ASSIST_DRAFT_STORAGE_KEY = 'aiPendingAssistDraft';
-  const MAX_AI_ROUNDS = 2;
+  const MAX_AI_ROUNDS = 4;
   const AI_SESSION_STORAGE_KEY = 'aiSandboxSessionId';
   const AI_KEEP_CONVERSATION_PREF_KEY = 'aiKeepConversationOnRefresh';
   const ENABLE_FOLLOW_UP_COMPOSER = false; // gated — set to true to re-enable
@@ -1736,7 +1736,7 @@ export default function SearchFlow({ autoFocusPrompt = false, resultsPortalId, r
     if (!trimmed) return;
     if (searchMode === 'ai' && deepSeekSandboxEnabled) {
       if (aiRoundCount >= MAX_AI_ROUNDS) {
-        setAiRoundNotice('You can make one follow-up tweak only. Clear and start again for a new request.');
+        setAiRoundNotice('You\'ve reached the follow-up limit for this request. Clear and start again for a new project.');
         return;
       }
 

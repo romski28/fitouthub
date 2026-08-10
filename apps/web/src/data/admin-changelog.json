@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-10-e2e34a91",
+    "date": "2026-08-10T15:21:57+08:00",
+    "title": "feat(ai): deploy June 2026 prompt, increase tokens + rounds, smarter fallback",
+    "summary": "feat(ai): deploy June 2026 prompt, increase tokens + rounds, smarter fallback",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e2e34a91",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/components/search-flow.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-7221496f",
     "date": "2026-08-10T13:26:44+08:00",
     "title": "feat(overview): surface project site address, inline scope/trade labels",
