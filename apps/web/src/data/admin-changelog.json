@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-cf98b81f",
+    "date": "2026-08-10T12:31:30+08:00",
+    "title": "fix: use site-inspection/confirm for PIN entry, not site-start/confirm",
+    "summary": "fix: use site-inspection/confirm for PIN entry, not site-start/confirm",
+    "areas": [
+      "web"
+    ],
+    "commit": "cf98b81f",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-faac1ce9",
     "date": "2026-08-10T12:24:01+08:00",
     "title": "feat(client): add manual PIN code entry for site inspection check-in",
