@@ -1357,8 +1357,12 @@ OUTPUT SCHEMA
 1) conversationalText = ONE warm sentence acknowledging what they just said. Never end with "?". Never say "Tell me more" or "Got it. Tell me more".
 2) nextQuestions = ONE question per turn. Never combine topics with "and" or "or". The JSON output must include conversationalText, nextQuestions, options, trades, title, summary, assumptions, risks, safetyAssessment, and coveredTopics.
 3) Always include answer options with every question. Match options to YOUR question — don't recycle options from previous turns.
-4) YES/NO → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]
-5) Choice questions → extract choices as individual options.
+4) YES/NO questions (no alternatives listed in the question) → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]. If your question contains "or" presenting different choices (e.g. "X or Y"), it is NOT a yes/no question — use rule 5 instead.
+5) CHOICE questions — your question presents distinct alternatives. The options MUST be the alternatives you named. Extract exact phrases from your question as individual option labels. Examples:
+   Q: "Would you like a standard service or a more thorough clean and check?" → Options: "Standard service", "Thorough clean and check", "Not sure"
+   Q: "Is it wall-mounted or a standing unit?" → Options: "Wall-mounted", "Standing unit", "Not sure"
+   Q: "Do you want paint or wallpaper?" → Options: "Paint", "Wallpaper", "Not sure"
+   Never use Yes/No for a question that contains "or" with alternatives.
 6) BANNED options: "Tell me more", "That's all", "Other", "Something else", "Or something else". Always include "Not sure" last. Max 4 options.
 7) Never repeat questions. Read "Already asked questions" and ESTABLISHED FACTS.
 8) Do not expand scope beyond what the client described.
@@ -1433,6 +1437,10 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
     if (/is there anything else/i.test(q)) {
       return [{ label: 'No', value: 'no' }];
     }
+    // Choice question — contains "or" presenting distinct alternatives
+    // Extract the alternatives as individual options instead of Yes/No
+    const orChoices = this.extractChoiceOptions(q);
+    if (orChoices) return orChoices;
     // Yes/No question → Yes / No / Not sure
     if (/^(is (?:there|it)|are (?:there|you)|do you|does|did you|have you|has|can you|could you|will|would you|should)\b/i.test(q)) {
       return [
@@ -1449,6 +1457,37 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
       ];
     }
     return null;
+  }
+
+  /** Detect choice questions ("X or Y") and extract alternatives as options. */
+  private extractChoiceOptions(question: string): Array<{ label: string; value: string }> | null {
+    const q = question.trim();
+    // Look for "or" separating distinct alternatives (not yes/no patterns)
+    const orPattern = /\b(or)\b/gi;
+    const orMatches = [...q.matchAll(orPattern)];
+    // Need at least one "or" that's not just "yes or no"
+    if (orMatches.length === 0) return null;
+    // Try to split on " or " to extract alternatives
+    // First, find the question part before any trailing "?"
+    const cleaned = q.replace(/\?+$/, '').trim();
+    // Find "or" after a question prefix
+    const orIdx = cleaned.toLowerCase().lastIndexOf(' or ');
+    if (orIdx < 0) return null;
+    const beforeOr = cleaned.substring(0, orIdx).trim();
+    const afterOr = cleaned.substring(orIdx + 4).trim();
+    // Extract the last phrase before "or" (the first alternative)
+    const firstAlt = beforeOr.split(/\s+(?:,\s*)?/).slice(-3).join(' ');
+    const secondAlt = afterOr.split(/\s+(?:,\s*)?/).slice(0, 4).join(' ');
+    if (!firstAlt || !secondAlt || firstAlt.length < 3 || secondAlt.length < 3) return null;
+    // Skip if it looks like a yes/no rephrase
+    if (/\b(yes|no|not)\b/i.test(`${firstAlt} ${secondAlt}`)) return null;
+    // Capitalize each alternative nicely
+    const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/\?+$/, '');
+    return [
+      { label: capFirst(firstAlt), value: firstAlt.toLowerCase().replace(/\?+$/, '') },
+      { label: capFirst(secondAlt), value: secondAlt.toLowerCase().replace(/\?+$/, '') },
+      { label: 'Not sure', value: 'not sure' },
+    ];
   }
 
   private buildConversationalTextFallback(parsedOutput: unknown, prompt: string): string | null {

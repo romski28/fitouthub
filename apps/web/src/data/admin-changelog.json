@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-9dfac9fd",
+    "date": "2026-08-10T15:57:12+08:00",
+    "title": "fix(ai): prevent choice-question option mismatch, add or-extraction fallback",
+    "summary": "fix(ai): prevent choice-question option mismatch, add or-extraction fallback",
+    "areas": [
+      "api"
+    ],
+    "commit": "9dfac9fd",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-e2e34a91",
     "date": "2026-08-10T15:21:57+08:00",
     "title": "feat(ai): deploy June 2026 prompt, increase tokens + rounds, smarter fallback",
