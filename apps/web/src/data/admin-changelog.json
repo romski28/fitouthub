@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-e3be1673",
+    "date": "2026-08-10T08:58:50+08:00",
+    "title": "chore: bump CACHE_VERSION to 5",
+    "summary": "chore: bump CACHE_VERSION to 5",
+    "areas": [
+      "api"
+    ],
+    "commit": "e3be1673",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-8aa478bf",
     "date": "2026-08-10T08:58:22+08:00",
     "title": "fix: add timeZone to formatVisitTime in site-visits endpoint",
