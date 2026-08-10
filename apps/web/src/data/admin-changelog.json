@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-4d6781d7",
+    "date": "2026-08-10T23:57:43+08:00",
+    "title": "fix(auth-modal): route landlord + new personas to client register, not professional",
+    "summary": "fix(auth-modal): route landlord + new personas to client register, not professional",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d6781d7",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-12ad58a4",
     "date": "2026-08-10T23:50:47+08:00",
     "title": "fix(auth-modal): hide professional-only fields for non-pro personas",

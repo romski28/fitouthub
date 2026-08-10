@@ -801,7 +801,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     {modalT('resendCode')}
                   </button>
                 </form>
-              ) : userType === 'client' ? (
+              ) : userType !== 'professional' ? (
                 <form
                   onSubmit={handleClientRegister}
                   className="space-y-4 max-h-96 overflow-y-auto"
