@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-10-abeaa62b",
+    "date": "2026-08-10T23:42:23+08:00",
+    "title": "fix(get-started): unify card layouts, fix landlord join, remove landlord emoji",
+    "summary": "fix(get-started): unify card layouts, fix landlord join, remove landlord emoji",
+    "areas": [
+      "web"
+    ],
+    "commit": "abeaa62b",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/context/auth-modal-control.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-b336c3e0",
     "date": "2026-08-10T23:34:55+08:00",
     "title": "feat(auth): replace persona tabs with dropdown, add all 6 types",

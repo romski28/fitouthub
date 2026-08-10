@@ -71,7 +71,7 @@ const stepsByRole: Record<Role, string[]> = {
 
 export default function GetStartedPage() {
   const router = useRouter();
-  const { openLoginModal } = useAuthModalControl();
+  const { openLoginModal, openJoinModal } = useAuthModalControl();
   const { login: clientLogin } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
   const locale = useLocale();
@@ -260,7 +260,7 @@ export default function GetStartedPage() {
 
   const handleChooseRole = (nextRole: Role) => {
     if (nextRole === 'landlord') {
-      openLoginModal();
+      openJoinModal();
       return;
     }
     setRole(nextRole);
@@ -649,19 +649,19 @@ export default function GetStartedPage() {
                 <div className="space-y-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
                   <div className="grid gap-4 md:grid-cols-3">
-                    {/* Client card — Sarah peeks in from the left */}
+                    {/* Client card */}
                     <button
                       onClick={() => handleChooseRole('client')}
-                      className="group relative rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 pb-5 pl-28 pr-5 pt-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
+                      className="group relative rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
                     >
-                      <div className="pointer-events-none absolute bottom-0 -left-6 w-28 select-none">
+                      <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
                         <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={112} height={160} className="object-contain" />
                       </div>
                       <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
                       <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Plan and control your renovation</p>
                       <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
                     </button>
-                    {/* Professional card — Ben peeks in from the right */}
+                    {/* Professional card */}
                     <button
                       onClick={() => handleChooseRole('professional')}
                       className="group relative rounded-2xl border border-[#0E7C3A]/40 bg-gradient-to-br from-[#0E7C3A]/10 to-[#0E7C3A]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#0E7C3A]/50"
@@ -676,9 +676,11 @@ export default function GetStartedPage() {
                     {/* Landlord card */}
                     <button
                       onClick={() => handleChooseRole('landlord')}
-                      className="group relative rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-100/60 to-amber-50/40 pb-5 pl-5 pr-5 pt-5 text-left transition hover:-translate-y-1 hover:border-amber-500/50"
+                      className="group relative rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-100/60 to-amber-50/40 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-amber-500/50"
                     >
-                      <div className="mb-3 text-3xl">🏘️</div>
+                      <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none flex items-end justify-center">
+                        <div className="h-24 w-20 rounded-t-2xl bg-amber-200/60" />
+                      </div>
                       <p className="text-xs uppercase tracking-[0.2em] text-amber-700">Landlord</p>
                       <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Manage properties with ease</p>
                       <p className="mt-2 text-sm text-[#4E4A42]">Request quotes, coordinate maintenance, and keep tenants happy across your portfolio.</p>
