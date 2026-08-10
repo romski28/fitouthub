@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-faac1ce9",
+    "date": "2026-08-10T12:24:01+08:00",
+    "title": "feat(client): add manual PIN code entry for site inspection check-in",
+    "summary": "feat(client): add manual PIN code entry for site inspection check-in",
+    "areas": [
+      "web"
+    ],
+    "commit": "faac1ce9",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-b3c507f4",
     "date": "2026-08-10T12:09:40+08:00",
     "title": "fix: invalidate next-step cache when client approves site inspection",

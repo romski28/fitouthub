@@ -144,6 +144,39 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const scannerRef = useRef<any>(null);
   const scannerDivId = "qr-scanner-client-access";
 
+  // Manual PIN entry
+  const [manualPinVisitId, setManualPinVisitId] = useState<string | null>(null);
+  const [manualPinCode, setManualPinCode] = useState("");
+  const [verifyingPin, setVerifyingPin] = useState(false);
+
+  const handleManualPinCheckIn = async (visitId: string) => {
+    const code = manualPinCode.trim();
+    if (code.length < 4) {
+      toast.error('Please enter the full code');
+      return;
+    }
+    setVerifyingPin(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-start/confirm`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: code }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Verification failed');
+      }
+      toast.success('Check-in confirmed!');
+      setCheckedInVisitIds((prev) => new Set(prev).add(visitId));
+      setManualPinVisitId(null);
+      setManualPinCode("");
+    } catch (err: any) {
+      toast.error(err.message || 'Could not verify code');
+    } finally {
+      setVerifyingPin(false);
+    }
+  };
+
   // ── Fetch data ─────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!isOpen || !projectId || !accessToken) return;
@@ -711,6 +744,50 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                       {scannerError && (
                         <p className="text-xs text-red-500 mt-2 text-center">{scannerError}</p>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => { stopScanning(); setManualPinVisitId(scanningVisitId); }}
+                        className="mt-3 w-full text-xs font-semibold text-[#FF7F50] hover:text-[#E67245] transition"
+                      >
+                        Enter code manually instead
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Manual PIN entry */}
+                  {manualPinVisitId && (
+                    <div className="mt-3 rounded-lg border border-[#D4C8A0] bg-white p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-slate-700">Enter code from professional's screen</p>
+                        <button onClick={() => { setManualPinVisitId(null); setManualPinCode(""); }} className="text-xs text-red-500 hover:text-red-700">Cancel</button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={10}
+                          value={manualPinCode}
+                          onChange={(e) => setManualPinCode(e.target.value.replace(/\D/g, ''))}
+                          placeholder="Enter 6-digit code"
+                          autoFocus
+                          className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-center text-lg font-mono tracking-[0.2em] text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleManualPinCheckIn(manualPinVisitId)}
+                          disabled={verifyingPin || manualPinCode.trim().length < 4}
+                          className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+                        >
+                          {verifyingPin ? '...' : 'Check In'}
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setManualPinVisitId(null); setManualPinCode(""); startScanning(manualPinVisitId); }}
+                        className="mt-2 w-full text-xs font-semibold text-[#FF7F50] hover:text-[#E67245] transition"
+                      >
+                        ← Scan QR code instead
+                      </button>
                     </div>
                   )}
                 </div>
