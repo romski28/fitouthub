@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-10-cc23f543",
+    "date": "2026-08-10T10:07:38+08:00",
+    "title": "fix: don't overwrite visitScheduledAt on approval without time change",
+    "summary": "fix: don't overwrite visitScheduledAt on approval without time change",
+    "areas": [
+      "api"
+    ],
+    "commit": "cc23f543",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-e3be1673",
     "date": "2026-08-10T08:58:50+08:00",
     "title": "chore: bump CACHE_VERSION to 5",

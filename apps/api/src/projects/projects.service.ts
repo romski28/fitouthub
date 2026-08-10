@@ -7194,25 +7194,31 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
+    // Only update visit times if the client explicitly provided new ones
+    const updateData: any = {
+      status: approvedStatus,
+      respondedAt: new Date(),
+      clientApprovedBy: userId,
+      reasonDenied: body.reasonDenied,
+    };
+    const clientProvidedNewTime = Boolean(body.visitScheduledAt?.trim() || body.visitScheduledFor?.trim());
+    if (clientProvidedNewTime) {
+      updateData.visitScheduledFor = effectiveScheduledFor;
+      updateData.visitScheduledAt = effectiveScheduledAt;
+    }
+
     const approved = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
-      data: {
-        status: approvedStatus,
-        respondedAt: new Date(),
-        clientApprovedBy: userId,
-        reasonDenied: body.reasonDenied,
-        visitScheduledFor: effectiveScheduledFor,
-        visitScheduledAt: effectiveScheduledAt,
-      },
+      data: updateData,
     });
 
-    if (approvedStatus === 'approved_visit_scheduled' && effectiveScheduledAt) {
+    if (approvedStatus === 'approved_visit_scheduled' && approved.visitScheduledAt) {
       await this.prisma.siteAccessVisit.create({
         data: {
           projectId: request.projectId,
           projectProfessionalId: request.projectProfessionalId,
           professionalId: request.professionalId,
-          proposedAt: effectiveScheduledAt,
+          proposedAt: approved.visitScheduledAt,
           proposedByRole: 'client',
           status: 'accepted',
         },
@@ -7236,7 +7242,7 @@ Please review the project details and respond with your quote or decline the inv
     const siteAccessApprovalMessage =
       approvedStatus === 'approved_no_visit'
         ? 'Client approved site access (no visit required).'
-        : `Client approved site access with a proposed visit on ${this.formatHongKongDateTimeLabel(effectiveScheduledAt)}.`;
+        : `Client approved site access with a proposed visit on ${this.formatHongKongDateTimeLabel(approved.visitScheduledAt || effectiveScheduledAt)}.`;
     const requestProjectStatus = (request.project?.status || '').toLowerCase();
     const routeApprovalToPrivate = requestProjectStatus === 'pending' || requestProjectStatus === 'approved';
 
