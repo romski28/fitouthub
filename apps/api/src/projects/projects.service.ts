@@ -713,6 +713,55 @@ export class ProjectsService {
     }
   }
 
+  async getProjectSiteAddress(projectId: string): Promise<
+    | {
+        buildingName: string | null;
+        addressFull: string | null;
+        unitNumber: string | null;
+        floorLevel: string | null;
+        district: string | null;
+        accessDetails: string | null;
+        onSiteContactName: string | null;
+        onSiteContactPhone: string | null;
+      }
+    | null
+  > {
+    try {
+      const rows = await this.prisma.$queryRaw<
+        Array<{
+          buildingName: string | null;
+          addressFull: string | null;
+          unitNumber: string | null;
+          floorLevel: string | null;
+          district: string | null;
+          accessDetails: string | null;
+          onSiteContactName: string | null;
+          onSiteContactPhone: string | null;
+        }>
+      >`
+        SELECT
+          COALESCE(ps."buildingName", csa."buildingName") as "buildingName",
+          COALESCE(ps."addressFullSnapshot", csa."addressFull") as "addressFull",
+          COALESCE(ps."unitNumberSnapshot", csa."unitNumber") as "unitNumber",
+          COALESCE(ps."floorLevelSnapshot", csa."floorLevel") as "floorLevel",
+          COALESCE(ps."districtSnapshot", csa."district") as "district",
+          COALESCE(ps."accessDetailsSnapshot", csa."accessDetails") as "accessDetails",
+          COALESCE(ps."onSiteContactNameSnapshot", csa."onSiteContactName") as "onSiteContactName",
+          COALESCE(ps."onSiteContactPhoneSnapshot", csa."onSiteContactPhone") as "onSiteContactPhone"
+        FROM project_sites ps
+        LEFT JOIN client_site_addresses csa ON csa.id = ps."clientAddressId"
+        WHERE ps."projectId" = ${projectId}
+          AND ps."isActive" = true
+        ORDER BY ps."isPrimary" DESC, ps."updatedAt" DESC
+        LIMIT 1
+      `;
+
+      return rows[0] || null;
+    } catch {
+      return null;
+    }
+  }
+
   async listClientSiteAddresses(projectId: string, userId: string) {
     await this.assertClientProjectAccess(projectId, userId);
 

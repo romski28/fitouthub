@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-10-7221496f",
+    "date": "2026-08-10T13:26:44+08:00",
+    "title": "feat(overview): surface project site address, inline scope/trade labels",
+    "summary": "feat(overview): surface project site address, inline scope/trade labels",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7221496f",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-10-55b1dfd4",
     "date": "2026-08-10T13:14:58+08:00",
     "title": "feat(pro): client check-in auto-completes site visit, modal adapts",

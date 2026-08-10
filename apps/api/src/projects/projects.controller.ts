@@ -1080,6 +1080,21 @@ export class ProjectsController {
     return this.projectsService.getSiteAccessStatus(projectId, professionalId);
   }
 
+  @Get(':id/address')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectAddress(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const actorId = req.user?.id || req.user?.sub;
+    if (!actorId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    const address = await this.projectsService.getProjectSiteAddress(projectId);
+    return { success: true, address };
+  }
+
   @Get(':id/site-visits')
   @UseGuards(CombinedAuthGuard)
   async getSiteVisits(

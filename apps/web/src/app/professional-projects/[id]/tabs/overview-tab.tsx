@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
@@ -9,6 +9,8 @@ import {
   getQuoteBreakdownBaseTotal,
   type StoredQuoteBreakdown,
 } from '@/lib/quote-breakdown';
+import { API_BASE_URL } from '@/config/api';
+import { fetchWithRetry } from '@/lib/http';
 
 interface OverviewTabProps {
   tab?: string;
@@ -168,6 +170,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     : [];
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
 
+  const [siteAddress, setSiteAddress] = useState<{
+    buildingName?: string | null;
+    addressFull?: string | null;
+    unitNumber?: string | null;
+    floorLevel?: string | null;
+    district?: string | null;
+  } | null>(null);
+
+  const fetchAddress = useCallback(async () => {
+    if (!projectId || !accessToken) return;
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/projects/${projectId}/address`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSiteAddress(data?.address ?? null);
+      }
+    } catch {
+      // silently ignore
+    }
+  }, [projectId, accessToken]);
+
+  useEffect(() => {
+    fetchAddress();
+  }, [fetchAddress]);
+
   return (
     <AccordionGroup>
       {/* Project Overview */}
@@ -189,29 +219,41 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {project.project.isEmergency && (
             <p><span className="font-semibold text-slate-900">Priority:</span> 🚨 Emergency</p>
           )}
+          {siteAddress?.addressFull && (
+            <p>
+              <span className="font-semibold text-slate-900">📍 Address:</span>{' '}
+              {[
+                siteAddress.buildingName,
+                siteAddress.unitNumber,
+                siteAddress.floorLevel,
+                siteAddress.addressFull,
+                siteAddress.district,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+            </p>
+          )}
           {(() => { const scope = getProjectScope({ notes: project.project.notes, aiIntake: project.project.aiIntake as any }); return scope ? (
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Scope:</p>
-              <p className="leading-relaxed text-slate-700">{scope}</p>
-            </div>
+            <p>
+              <span className="font-semibold text-slate-900">Scope:</span>{' '}
+              <span className="leading-relaxed text-slate-700">{scope}</span>
+            </p>
           ) : null; })()}
           {((project.projectTradesSnapshot && project.projectTradesSnapshot.length > 0) || (project.quoteRequestedTrades && project.quoteRequestedTrades.length > 0)) && (
-            <div>
-              <p className="font-semibold text-slate-900 mb-1.5">Trades:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {projectTradeScope.map((trade) => {
-                  const isProTrade = requestedTradeScope.some((rt) => rt.toLowerCase() === trade.toLowerCase());
-                  return (
-                    <span
-                      key={`overview-trade-${trade}`}
-                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${isProTrade ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.82)] text-slate-500'}`}
-                    >
-                      {trade}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
+            <p>
+              <span className="font-semibold text-slate-900">Trades: </span>
+              {projectTradeScope.map((trade) => {
+                const isProTrade = requestedTradeScope.some((rt) => rt.toLowerCase() === trade.toLowerCase());
+                return (
+                  <span
+                    key={`overview-trade-${trade}`}
+                    className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold mr-1.5 ${isProTrade ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.82)] text-slate-500'}`}
+                  >
+                    {trade}
+                  </span>
+                );
+              })}
+            </p>
           )}
         </div>
       </AccordionItem>

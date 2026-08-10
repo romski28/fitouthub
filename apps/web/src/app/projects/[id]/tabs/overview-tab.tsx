@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
@@ -247,6 +247,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [siteAddress, setSiteAddress] = useState<{
+    buildingName?: string | null;
+    addressFull?: string | null;
+    unitNumber?: string | null;
+    floorLevel?: string | null;
+    district?: string | null;
+  } | null>(null);
 
   const handleOpenProDetails = async (professionalId: string) => {
     try {
@@ -260,6 +267,27 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       }
     } catch { /* silently fail */ }
   };
+
+  const fetchAddress = useCallback(async () => {
+    if (!project?.id || !accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${project.id}/address`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSiteAddress(data?.address ?? null);
+      }
+    } catch {
+      // silently ignore
+    }
+  }, [project?.id, accessToken]);
+
+  useEffect(() => {
+    fetchAddress();
+  }, [fetchAddress]);
+
   const timelineContainerRef = useRef<HTMLDivElement | null>(null);
   const timelineCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -814,16 +842,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <span className="font-semibold text-slate-900">Location:</span> {project.region}
                 </p>
               )}
-              {project.tradesRequired && project.tradesRequired.length > 0 && (
+              {siteAddress?.addressFull && (
                 <p>
-                  <span className="font-semibold text-slate-900">Trades:</span> {project.tradesRequired.join(', ')}
+                  <span className="font-semibold text-slate-900">📍 Address:</span>{' '}
+                  {[
+                    siteAddress.buildingName,
+                    siteAddress.unitNumber,
+                    siteAddress.floorLevel,
+                    siteAddress.addressFull,
+                    siteAddress.district,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
                 </p>
               )}
               {(() => { const scope = getProjectScope(project); return scope ? (
-                <div className="mt-2 rounded-xl border border-slate-200 bg-[#F5EEDE]/90 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Scope</p>
-                  <p className="leading-relaxed text-slate-800">{scope}</p>
-                </div>
+                <p>
+                  <span className="font-semibold text-slate-900">Scope:</span>{' '}
+                  <span className="leading-relaxed text-slate-800">{scope}</span>
+                </p>
               ) : null; })()}
               {project.budget && (
                 <p>
