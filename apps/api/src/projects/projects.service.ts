@@ -10859,31 +10859,66 @@ Please review the project details and respond with your quote or decline the inv
   ): Promise<{ success: boolean }> {
     const secret = process.env.JWT_SECRET || 'your-secret-key';
 
-    let decoded: { projectId: string; generatedByUserId: string; purpose: string };
-    try {
-      decoded = jwt.verify(token, secret) as typeof decoded;
-    } catch {
-      throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
+    let decodedGeneratedByUserId: string | null = null;
+
+    // Support both JWT (QR scan) and 6-digit OTP (manual entry)
+    if (/^\d{6}$/.test(token)) {
+      // OTP lookup — find the cached entry
+      const cached = this.otpCache.get(token);
+      if (!cached || cached.expiresAt < Date.now()) {
+        this.otpCache.delete(token);
+        throw new BadRequestException('Code is invalid or has expired. Ask the professional to generate a new one.');
+      }
+      if (cached.projectId !== projectId) {
+        throw new BadRequestException('Code does not match this project');
+      }
+      // OTP verified — find the professional via the visit
+    } else {
+      // JWT verification (QR scan path)
+      let decoded: { projectId: string; generatedByUserId: string; purpose: string };
+      try {
+        decoded = jwt.verify(token, secret) as typeof decoded;
+      } catch {
+        throw new BadRequestException('QR code is invalid or has expired. Ask the professional to regenerate it.');
+      }
+
+      if (decoded.purpose !== 'site_inspection') {
+        throw new BadRequestException('Invalid QR code');
+      }
+
+      if (decoded.projectId !== projectId) {
+        throw new BadRequestException('QR code does not match this project');
+      }
+
+      decodedGeneratedByUserId = decoded.generatedByUserId;
     }
 
-    if (decoded.purpose !== 'site_inspection') {
-      throw new BadRequestException('Invalid QR code');
+    // Find the professional — from JWT payload or from the site access request
+    let pro: { id: string; businessName: string | null; fullName: string | null } | null = null;
+    if (decodedGeneratedByUserId) {
+      pro = await this.prisma.professional.findFirst({
+        where: {
+          OR: [
+            { id: decodedGeneratedByUserId },
+            { userId: decodedGeneratedByUserId },
+          ],
+        },
+        select: { id: true, businessName: true, fullName: true },
+      });
+    } else {
+      // OTP path — find the professional with an approved visit for this project
+      const sar = await this.prisma.siteAccessRequest.findFirst({
+        where: { projectId, status: 'approved_visit_scheduled' },
+        orderBy: { respondedAt: 'desc' },
+        select: { professionalId: true },
+      });
+      if (sar) {
+        pro = await this.prisma.professional.findUnique({
+          where: { id: sar.professionalId },
+          select: { id: true, businessName: true, fullName: true },
+        });
+      }
     }
-
-    if (decoded.projectId !== projectId) {
-      throw new BadRequestException('QR code does not match this project');
-    }
-
-    // generatedByUserId can be either Professional.id or Professional.userId depending on auth strategy
-    const pro = await this.prisma.professional.findFirst({
-      where: {
-        OR: [
-          { id: decoded.generatedByUserId },
-          { userId: decoded.generatedByUserId },
-        ],
-      },
-      select: { id: true, businessName: true, fullName: true },
-    });
     if (!pro) throw new BadRequestException('Professional not found');
 
     const visit = await this.prisma.siteAccessVisit.findFirst({

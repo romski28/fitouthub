@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-10-803dc6a4",
+    "date": "2026-08-10T12:36:49+08:00",
+    "title": "fix: support OTP/PIN code in confirmSiteInspection (not just JWT)",
+    "summary": "fix: support OTP/PIN code in confirmSiteInspection (not just JWT)",
+    "areas": [
+      "api"
+    ],
+    "commit": "803dc6a4",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-10-cf98b81f",
     "date": "2026-08-10T12:31:30+08:00",
     "title": "fix: use site-inspection/confirm for PIN entry, not site-start/confirm",
