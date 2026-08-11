@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-11-450a0960",
+    "date": "2026-08-11T13:19:46+08:00",
+    "title": "feat(auth): email-first join form, nickname optional, auto-derived",
+    "summary": "feat(auth): email-first join form, nickname optional, auto-derived",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "450a0960",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-11-735f25c2",
     "date": "2026-08-11T13:11:22+08:00",
     "title": "fix(auth-modal): clear join form on tab switch, prevent browser autofill",

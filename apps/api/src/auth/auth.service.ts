@@ -85,10 +85,8 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     // Validate inputs
-    if (!dto.email || !dto.password || !dto.nickname) {
-      throw new BadRequestException(
-        'Email, password, and nickname are required',
-      );
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Email and password are required');
     }
 
     // Check if email already registered (Identity level — one email = one persona)
@@ -107,7 +105,6 @@ export class AuthService {
     }
 
     // Check if mobile already in use (soft check — log but don't block)
-    // One person may have multiple personas, so duplicate mobiles are allowed
     if (dto.mobile) {
       const existingMobile = await (this.prisma as any).user.findFirst({
         where: { mobile: dto.mobile },
@@ -118,8 +115,8 @@ export class AuthService {
       }
     }
 
-    // Check if nickname is taken (demoted — no longer unique, skip duplicate check)
-    // Nickname is now just a user self-reference, not a unique identifier
+    // Derive display name from email if nickname not provided
+    const derivedNickname = dto.nickname?.trim() || dto.email.split('@')[0] || 'User';
 
     const preferredContactMethod =
       dto.preferredContactMethod || NotificationChannel.EMAIL;
@@ -142,7 +139,7 @@ export class AuthService {
       user = await (this.prisma as any).user.create({
         data: {
           email: dto.email,
-          nickname: dto.nickname,
+          nickname: derivedNickname,
           firstName: dto.firstName,
           surname: dto.surname,
           chineseName: dto.chineseName,
@@ -332,8 +329,8 @@ export class AuthService {
     surname?: string;
     role?: string;
   }) {
-    if (!dto.onboardingToken || !dto.nickname) {
-      throw new BadRequestException('Onboarding token and nickname are required');
+    if (!dto.onboardingToken) {
+      throw new BadRequestException('Onboarding token is required');
     }
 
     let payload: ClientGoogleOnboardingPayload;
@@ -357,14 +354,6 @@ export class AuthService {
       throw new BadRequestException('Email already registered. Continue with Google sign-in.');
     }
 
-    const existingNickname = await (this.prisma as any).user.findUnique({
-      where: { nickname: dto.nickname },
-    });
-
-    if (existingNickname) {
-      throw new BadRequestException('Nickname already taken');
-    }
-
     const preferredContactMethod =
       dto.preferredContactMethod || NotificationChannel.EMAIL;
 
@@ -384,7 +373,7 @@ export class AuthService {
       user = await (this.prisma as any).user.create({
         data: {
           email: payload.email,
-          nickname: dto.nickname,
+          nickname: (dto.nickname?.trim() || payload.email.split('@')[0] || 'Member'),
           firstName: dto.firstName || payload.givenName || 'Member',
           surname: dto.surname || payload.familyName || 'User',
           mobile: dto.mobile,

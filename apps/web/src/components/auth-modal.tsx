@@ -819,18 +819,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      {t('signup.username')}
-                    </label>
-                    <input
-                      type="text"
-                      value={clientForm.nickname}
-                      onChange={(e) => setClientForm({ ...clientForm, nickname: e.target.value })}
-                      required
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
                       {t('signup.email')}
                     </label>
                     <input
@@ -838,6 +826,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={clientForm.email}
                       onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
                       required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                    />
+                    <p className="mt-1 text-xs text-slate-400">Your email will be your username</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Display name <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={clientForm.nickname}
+                      onChange={(e) => setClientForm({ ...clientForm, nickname: e.target.value })}
+                      placeholder="How you'll appear to professionals"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>

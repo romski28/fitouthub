@@ -1,7 +1,7 @@
 export class RegisterDto {
-  nickname: string; // username for login
   email: string;
   password: string;
+  nickname?: string; // display name, auto-derived from email if blank
   firstName: string;
   surname: string;
   chineseName?: string;
