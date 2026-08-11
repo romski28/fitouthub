@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 
-type Role = 'admin' | 'client' | 'professional' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent';
+type Role = 'admin' | 'client' | 'professional' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent' | 'project_delegate';
 
 interface Options {
   fallback?: string;

@@ -302,6 +302,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setRole('estate_agent');
       applyPreferredLocale(result.estateAgent?.preferredLanguage);
     }
+    if (result.projectDelegate) {
+      localStorage.setItem('user', JSON.stringify(result.projectDelegate));
+      setRole('project_delegate');
+      applyPreferredLocale(result.projectDelegate?.preferredLanguage);
+    }
 
     setAccessToken(result.accessToken);
     setPersona(result.persona ?? null);

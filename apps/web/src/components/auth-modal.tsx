@@ -58,7 +58,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
-  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'client_helper'>('client');
+  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'project_delegate'>('client');
 
   const personaOptions: Array<{ value: typeof userType; label: string; icon: string }> = [
     { value: 'client', label: 'Client', icon: '👤' },
@@ -66,7 +66,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     { value: 'landlord', label: 'Landlord', icon: '🏘️' },
     { value: 'estate_agent', label: 'Estate Agent', icon: '🏷️' },
     { value: 'property_manager', label: 'Property Manager', icon: '🏢' },
-    { value: 'client_helper', label: 'Client Helper', icon: '🤝' },
+    { value: 'project_delegate', label: 'Project Delegate', icon: '🤝' },
   ];
 
   const selectedPersona = personaOptions.find(p => p.value === userType);
@@ -119,6 +119,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     if (normalizedRole === 'estate_agent') {
       return '/estate-agent';
+    }
+    if (normalizedRole === 'project_delegate') {
+      return '/project-delegate';
     }
     return '/projects';
   };

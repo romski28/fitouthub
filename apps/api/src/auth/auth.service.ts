@@ -406,6 +406,7 @@ export class AuthService {
       const personaType = dto.role === 'landlord' ? 'LANDLORD'
         : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
         : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
+        : dto.role === 'project_delegate' ? 'PROJECT_DELEGATE'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
@@ -439,6 +440,15 @@ export class AuthService {
         await (this.prisma as any).persona.update({
           where: { id: persona.id },
           data: { estateAgentId: ea.id },
+        });
+      }
+      if (personaType === 'PROJECT_DELEGATE') {
+        const pd = await (this.prisma as any).projectDelegate.create({
+          data: { userId: user.id, assistedClientId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { projectDelegateId: pd.id },
         });
       }
       await (this.prisma as any).user.update({
@@ -675,6 +685,16 @@ export class AuthService {
       profileId = user.id;
       role = 'estate_agent';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'PROJECT_DELEGATE') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Project delegate profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = 'project_delegate';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -692,11 +712,12 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
       propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,
       estateAgent: selectedPersona.type === 'ESTATE_AGENT' ? profile : undefined,
+      projectDelegate: selectedPersona.type === 'PROJECT_DELEGATE' ? profile : undefined,
     };
   }
 

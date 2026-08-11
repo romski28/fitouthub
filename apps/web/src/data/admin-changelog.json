@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-08-11-93c293bf",
+    "date": "2026-08-11T12:39:22+08:00",
+    "title": "feat(persona): add Project Delegate persona (renamed from Client Helper)",
+    "summary": "feat(persona): add Project Delegate persona (renamed from Client Helper)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "93c293bf",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_DELEGATE_PERSONA.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/project-delegate/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/hooks/use-role-guard.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-cc744a21",
     "date": "2026-08-11T12:29:19+08:00",
     "title": "feat(persona): add Estate Agent persona - schema, auth, UI, holding page",
