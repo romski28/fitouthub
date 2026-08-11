@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-11-cc59f8d6",
+    "date": "2026-08-11T12:43:41+08:00",
+    "title": "fix(auth): resolve User.id from Identity for roles without Persona rows",
+    "summary": "fix(auth): resolve User.id from Identity for roles without Persona rows",
+    "areas": [
+      "api"
+    ],
+    "commit": "cc59f8d6",
+    "files": [
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-93c293bf",
     "date": "2026-08-11T12:39:22+08:00",
     "title": "feat(persona): add Project Delegate persona (renamed from Client Helper)",

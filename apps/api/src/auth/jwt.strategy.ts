@@ -100,12 +100,21 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       });
       if (persona?.userId) resolvedId = persona.userId;
     } else {
-      // Client / admin / surveyor / mimo_boh: resolve User.id from Persona
+      // Client / admin / surveyor / mimo_boh: resolve User.id from Persona or directly from Identity
       const persona = await (this.prisma as any).persona.findFirst({
         where: { identityId: identity.id, type: 'CLIENT' },
         select: { userId: true },
       });
-      if (persona?.userId) resolvedId = persona.userId;
+      if (persona?.userId) {
+        resolvedId = persona.userId;
+      } else {
+        // Fallback for roles without Persona rows (admin, surveyor, mimo_boh)
+        const user = await (this.prisma as any).user.findFirst({
+          where: { identityId: identity.id },
+          select: { id: true },
+        });
+        if (user?.id) resolvedId = user.id;
+      }
     }
 
     return {
