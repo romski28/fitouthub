@@ -213,6 +213,8 @@ model Persona {
   landlord          Landlord?        @relation(fields: [landlordId], references: [id])
   propertyManagerId String?          @unique
   propertyManager   PropertyManager? @relation(fields: [propertyManagerId], references: [id])
+  estateAgentId     String?          @unique
+  estateAgent       EstateAgent?     @relation(fields: [estateAgentId], references: [id])
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 }
@@ -239,6 +241,7 @@ model User {
   professional                    Professional?
   landlord                        Landlord?
   propertyManager                 PropertyManager?
+  estateAgent                     EstateAgent?
   projects                        Project[]
   assistRequests                  ProjectAssistRequest[]   @relation("UserAssistRequests")
   privateChatThreads              PrivateChatThread[]
@@ -408,6 +411,18 @@ model PropertyManager {
   persona              Persona?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model EstateAgent {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agencyName    String?
+  licenseNumber String?
+  agencyLogo    String?
+  persona       Persona?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model ProfessionalAvailability {

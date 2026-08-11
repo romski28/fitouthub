@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-08-11-cc744a21",
+    "date": "2026-08-11T12:29:19+08:00",
+    "title": "feat(persona): add Estate Agent persona - schema, auth, UI, holding page",
+    "summary": "feat(persona): add Estate Agent persona - schema, auth, UI, holding page",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "cc744a21",
+    "files": [
+      "MANUAL_SQL_ADD_ESTATE_AGENT_PERSONA.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/estate-agent/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/hooks/use-role-guard.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-a708f814",
     "date": "2026-08-11T10:05:22+08:00",
     "title": "feat(persona): add Property Manager persona - schema, auth, UI, holding page",

@@ -405,6 +405,7 @@ export class AuthService {
       });
       const personaType = dto.role === 'landlord' ? 'LANDLORD'
         : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
+        : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
@@ -429,6 +430,15 @@ export class AuthService {
         await (this.prisma as any).persona.update({
           where: { id: persona.id },
           data: { propertyManagerId: pm.id },
+        });
+      }
+      if (personaType === 'ESTATE_AGENT') {
+        const ea = await (this.prisma as any).estateAgent.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { estateAgentId: ea.id },
         });
       }
       await (this.prisma as any).user.update({
@@ -655,6 +665,16 @@ export class AuthService {
       profileId = user.id;
       role = 'property_manager';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'ESTATE_AGENT') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Estate agent profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = 'estate_agent';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -672,10 +692,11 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
       propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,
+      estateAgent: selectedPersona.type === 'ESTATE_AGENT' ? profile : undefined,
     };
   }
 
