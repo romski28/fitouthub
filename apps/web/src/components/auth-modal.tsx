@@ -171,7 +171,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         phone: '',
       });
     }
-  }, [isOpen, pageLanguage]);
+  }, [isOpen, activeTab, pageLanguage]);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');

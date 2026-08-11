@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-11-735f25c2",
+    "date": "2026-08-11T13:11:22+08:00",
+    "title": "fix(auth-modal): clear join form on tab switch, prevent browser autofill",
+    "summary": "fix(auth-modal): clear join form on tab switch, prevent browser autofill",
+    "areas": [
+      "web"
+    ],
+    "commit": "735f25c2",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/password-input.tsx"
+    ]
+  },
+  {
     "id": "2026-08-11-cc59f8d6",
     "date": "2026-08-11T12:43:41+08:00",
     "title": "fix(auth): resolve User.id from Identity for roles without Persona rows",

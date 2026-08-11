@@ -9,9 +9,10 @@ interface PasswordInputProps {
   className?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  autoComplete?: string;
 }
 
-export function PasswordInput({ value, onChange, placeholder, className, autoFocus, disabled }: PasswordInputProps) {
+export function PasswordInput({ value, onChange, placeholder, className, autoFocus, disabled, autoComplete }: PasswordInputProps) {
   const [show, setShow] = useState(false);
 
   return (
@@ -24,6 +25,7 @@ export function PasswordInput({ value, onChange, placeholder, className, autoFoc
         className={className}
         autoFocus={autoFocus}
         disabled={disabled}
+        autoComplete={autoComplete || 'new-password'}
       />
       <button
         type="button"
