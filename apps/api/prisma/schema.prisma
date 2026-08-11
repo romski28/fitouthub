@@ -201,18 +201,20 @@ model Identity {
 }
 
 model Persona {
-  id             String        @id @default(cuid())
-  identityId     String
-  identity       Identity      @relation(fields: [identityId], references: [id])
-  type           String        @default("CLIENT")
-  userId         String?       @unique
-  user           User?         @relation("PersonaToUser", fields: [userId], references: [id])
-  professionalId String?       @unique
-  professional   Professional? @relation("PersonaToProfessional", fields: [professionalId], references: [id])
-  landlordId     String?       @unique
-  landlord       Landlord?     @relation(fields: [landlordId], references: [id])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                String           @id @default(cuid())
+  identityId        String
+  identity          Identity         @relation(fields: [identityId], references: [id])
+  type              String           @default("CLIENT")
+  userId            String?          @unique
+  user              User?            @relation("PersonaToUser", fields: [userId], references: [id])
+  professionalId    String?          @unique
+  professional      Professional?    @relation("PersonaToProfessional", fields: [professionalId], references: [id])
+  landlordId        String?          @unique
+  landlord          Landlord?        @relation(fields: [landlordId], references: [id])
+  propertyManagerId String?          @unique
+  propertyManager   PropertyManager? @relation(fields: [propertyManagerId], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 }
 
 model User {
@@ -236,6 +238,7 @@ model User {
   updatedAt                       DateTime                 @updatedAt
   professional                    Professional?
   landlord                        Landlord?
+  propertyManager                 PropertyManager?
   projects                        Project[]
   assistRequests                  ProjectAssistRequest[]   @relation("UserAssistRequests")
   privateChatThreads              PrivateChatThread[]
@@ -392,6 +395,19 @@ model Landlord {
   persona                Persona?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
+}
+
+model PropertyManager {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agencyName           String?
+  licenseNumber        String?
+  managedPropertyCount Int      @default(0)
+  serviceContractUrl   String?
+  persona              Persona?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model ProfessionalAvailability {

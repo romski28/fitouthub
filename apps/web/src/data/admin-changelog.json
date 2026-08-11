@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-08-11-a708f814",
+    "date": "2026-08-11T10:05:22+08:00",
+    "title": "feat(persona): add Property Manager persona - schema, auth, UI, holding page",
+    "summary": "feat(persona): add Property Manager persona - schema, auth, UI, holding page",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "a708f814",
+    "files": [
+      "MANUAL_SQL_ADD_PROPERTY_MANAGER_PERSONA.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/property-manager/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/hooks/use-role-guard.ts"
+    ]
+  },
+  {
     "id": "2026-08-11-66d2a265",
     "date": "2026-08-11T02:10:04+08:00",
     "title": "fix(auth): remove duplicate existingUser check, already present above",

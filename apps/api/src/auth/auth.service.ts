@@ -403,7 +403,9 @@ export class AuthService {
         where: { id: user.id },
         data: { identityId: identity.id },
       });
-      const personaType = dto.role === 'landlord' ? 'LANDLORD' : 'CLIENT';
+      const personaType = dto.role === 'landlord' ? 'LANDLORD'
+        : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
+        : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
           identityId: identity.id,
@@ -418,6 +420,15 @@ export class AuthService {
         await (this.prisma as any).persona.update({
           where: { id: persona.id },
           data: { landlordId: landlord.id },
+        });
+      }
+      if (personaType === 'PROPERTY_MANAGER') {
+        const pm = await (this.prisma as any).propertyManager.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { propertyManagerId: pm.id },
         });
       }
       await (this.prisma as any).user.update({
@@ -634,6 +645,16 @@ export class AuthService {
       profileId = user.id;
       role = 'landlord';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'PROPERTY_MANAGER') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Property manager profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = 'property_manager';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -651,9 +672,10 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
+      propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,
     };
   }
 

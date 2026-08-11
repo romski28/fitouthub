@@ -114,6 +114,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (normalizedRole === 'landlord') {
       return '/landlord';
     }
+    if (normalizedRole === 'property_manager') {
+      return '/property-manager';
+    }
     return '/projects';
   };
 
