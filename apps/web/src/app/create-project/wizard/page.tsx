@@ -626,35 +626,28 @@ export default function CreateProjectWizardPage() {
 
   const steps = useMemo<WizardStep[]>(
     () => {
-      // If AI is done and user shared images in chat, skip the images step entirely
-      if (summaryConfirmationShown && hasImagesFromChat) {
-        return [
-          { kind: 'followups' as const },
-          { kind: 'projectDetails' as const },
-        ];
-      }
-      // No images shared — insert images step before projectDetails so they get a chance
-      if (summaryConfirmationShown && !hasImagesFromChat) {
+      // Images step is always mandatory — between followups and projectDetails
+      if (summaryConfirmationShown) {
         return [
           { kind: 'followups' as const },
           { kind: 'images' as const },
           { kind: 'projectDetails' as const },
         ];
       }
-      // AI still running — default layout (all 3, images last)
+      // AI still running — images last
       return [
         { kind: 'followups' as const },
         { kind: 'projectDetails' as const },
         { kind: 'images' as const },
       ];
     },
-    [summaryConfirmationShown, hasImagesFromChat],
+    [summaryConfirmationShown],
   );
 
   const stepsRef = useRef(steps);
   stepsRef.current = steps;
 
-  // Safety: clamp currentStep if the steps array shrank (e.g. images shared mid-chat)
+  // Safety: clamp currentStep if the steps array changes size
   useEffect(() => {
     if (currentStep >= steps.length) {
       setCurrentStep(steps.length - 1);
@@ -1760,8 +1753,16 @@ export default function CreateProjectWizardPage() {
 
                     {step.kind === 'images' && (
                       <div className={panelContentClass}>
-                        <h3 className={panelTitleClass}><span>�</span><span>Files, photos & documents</span></h3>
-                        <p className={panelNoteClass}>Attach any photos, plans, or documents that will help pros understand your project.</p>
+                        <h3 className={panelTitleClass}><span>📎</span><span>Files, photos & documents</span></h3>
+                        {hasImagesFromChat ? (
+                          <p className={panelNoteClass}>
+                            You've already shared some files — great start. You can add more here, or review and remove any you don't want to include.
+                          </p>
+                        ) : (
+                          <p className={panelNoteClass}>
+                            Photos help professionals understand your space and give more accurate quotes. Attach any photos, plans, or documents related to your project.
+                          </p>
+                        )}
 
                         <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-3 py-3 text-base font-semibold text-white hover:bg-emerald-700">
                           Add files
