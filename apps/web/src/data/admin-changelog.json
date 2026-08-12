@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-12-84903c90",
+    "date": "2026-08-12T17:52:06+08:00",
+    "title": "fix(ai): add Q&A boundary rule to prevent cross-turn answer mixing",
+    "summary": "fix(ai): add Q&A boundary rule to prevent cross-turn answer mixing",
+    "areas": [
+      "api"
+    ],
+    "commit": "84903c90",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-12-e323fbb1",
     "date": "2026-08-12T17:08:48+08:00",
     "title": "fix(ai): prevent 'no' answer from contaminating scope with exclusion",
