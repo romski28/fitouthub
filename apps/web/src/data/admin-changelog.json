@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-12-183463ef",
+    "date": "2026-08-12T12:11:29+08:00",
+    "title": "fix(auth): restrict new-password autofill block to join form only",
+    "summary": "fix(auth): restrict new-password autofill block to join form only",
+    "areas": [
+      "web"
+    ],
+    "commit": "183463ef",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/password-input.tsx"
+    ]
+  },
+  {
     "id": "2026-08-11-450a0960",
     "date": "2026-08-11T13:19:46+08:00",
     "title": "feat(auth): email-first join form, nickname optional, auto-derived",

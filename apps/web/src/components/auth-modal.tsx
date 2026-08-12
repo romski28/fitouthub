@@ -908,6 +908,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <PasswordInput
                       value={clientForm.password}
                       onChange={(v) => setClientForm({ ...clientForm, password: v })}
+                      autoComplete="new-password"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -918,6 +919,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <PasswordInput
                       value={clientForm.confirmPassword}
                       onChange={(v) => setClientForm({ ...clientForm, confirmPassword: v })}
+                      autoComplete="new-password"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -1188,6 +1190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <PasswordInput
                       value={professionalForm.password}
                       onChange={(v) => setProfessionalForm({ ...professionalForm, password: v })}
+                      autoComplete="new-password"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -1198,6 +1201,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <PasswordInput
                       value={professionalForm.confirmPassword}
                       onChange={(v) => setProfessionalForm({ ...professionalForm, confirmPassword: v })}
+                      autoComplete="new-password"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>

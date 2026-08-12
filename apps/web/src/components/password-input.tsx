@@ -25,7 +25,7 @@ export function PasswordInput({ value, onChange, placeholder, className, autoFoc
         className={className}
         autoFocus={autoFocus}
         disabled={disabled}
-        autoComplete={autoComplete || 'new-password'}
+        autoComplete={autoComplete}
       />
       <button
         type="button"
