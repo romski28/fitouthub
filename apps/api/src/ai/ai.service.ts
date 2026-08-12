@@ -1341,7 +1341,7 @@ OUTPUT SCHEMA
 - Fixture is often just the LOCATION, not the scope of work.
 - EXAMPLE: "bath drain blocked" → core problem is DRAINAGE. Do NOT ask about bath replacement.
 - EXAMPLE: "kitchen tap leaking" → core problem is LEAK. Do NOT ask about sink replacement.
-- If the user says "no" to a fixture question, immediately return to core problem.
+- If the user says "no" to a fixture question, immediately return to core problem. If the user says "no" to a wrap-up or "anything else" question, it means they have nothing more to add — do NOT treat it as an exclusion of previously stated facts.
 
 # SURFACE-AREA PROJECTS
 - Painting, decoration, flooring, tiling, wallpaper, plastering → room size MANDATORY.
@@ -1853,7 +1853,7 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
 
     const userMessage = input.threadSummary
       ? `THREAD_MODE: You are CONTINUING an existing project conversation. The core project subject, trades, and scope from prior context remain valid unless the user explicitly changes them. Do NOT restart, change the subject, or treat this as a new project.${input.establishedFacts}${input.accumulatedScope ? `\nACCUMULATED PROJECT SCOPE (growing summary — ADD new details, never remove existing ones):\n${input.accumulatedScope}\n` : ''}
-The LATEST_USER_UPDATE is the user's answer to your last question — integrate it into the existing project. If it contradicts any earlier context, the user's latest words win. Treat negation words ("not", "just", "only", "no") as explicit exclusions.
+The LATEST_USER_UPDATE is the user's answer to your last question — integrate it into the existing project. If it contradicts any earlier context, the user's latest words win. Treat negation words ("not", "just", "only") as explicit exclusions. IMPORTANT: if the word "no" appears as a standalone answer to a wrap-up or "anything else" question, it means the client has nothing more to add — do NOT treat it as an exclusion of previously stated facts.
 
 ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conversationHistory ? `\nCONVERSATION SO FAR:\n${input.conversationHistory}\n` : ''}\nEARLIER_USER_PROMPT:\n${summarizedPriorPrompt || 'unknown'}\n\nEXISTING PROJECT CONTEXT (this is the SAME project — do not reset):\n- Title: ${summarizedPriorTitle}\n- Summary: ${summarizedPriorSummary}\n- Trades: ${input.threadSummary.trades.length > 0 ? input.threadSummary.trades.slice(0, 6).join(', ') : 'unknown'}\n- Location: ${summarizedPriorLocation}\n- Budget: ${summarizedPriorBudget}\n- Timeline: ${summarizedPriorTimeline}\n- Prior assistant reply: ${summarizedPriorReply}\n- Already asked questions: ${input.askedQuestionsSummary || 'none'}\n\nLATEST_USER_UPDATE (the user's answer — integrate this into the existing project):\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage\n- Merge the latest update into the existing project, giving priority to user corrections\n- If the user explicitly excludes something (not, just, only, no), exclude it from trades, scope, and questions\n- Ask only one best next question and do not repeat previously asked topics\n- The prior assistant reply is what YOU said — the user is answering IT. Stay on that thread.`
       : `USER_PROMPT:\n${input.trimmedPrompt}\n\nContext:\n- Market: Hong Kong\n- Use only allowed trades from the provided list\n- Normalize output for platform matching and triage`;
@@ -3447,6 +3447,7 @@ CRITICAL RULES:
 - assumptions: 2-3 standard things any tradesperson would assume (e.g. residential property, standard materials, accessible work area).
 - risks: 2-3 common things that could go wrong for this type of work.
 - safetyAssessment is MANDATORY — always include concerns and mitigations, even for low-risk jobs.
+- If the client says "no" in response to a wrap-up or "anything else" question, it means they have finished describing the scope — do NOT treat it as contradicting or excluding earlier details. Only treat "no" as exclusion when it directly responds to a specific substantive question.
 
 Return ONLY valid JSON (no markdown):
 
@@ -3636,8 +3637,14 @@ Return ONLY valid JSON (no markdown):
     // SHELVED: size/area question filter — kept for future reference
     // if (finalNextQuestions.length > 0) { ... }
 
+    // When user says "no" to a wrap-up, strip AI-generated summary to prevent
+    // "then said no" from being treated as exclusion of prior facts
+    const sanitizedParsed = isUserSayingNo
+      ? { ...(parsedObject || {}), summary: conversationalText, title: undefined }
+      : (parsedObject || {});
+
     const responseParsedOutput: Record<string, unknown> = {
-      ...(parsedObject || {}),
+      ...sanitizedParsed,
       conversationalText,
       trades: finalTrades,
       nextQuestions: finalNextQuestions,
