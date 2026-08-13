@@ -1459,30 +1459,48 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
     return null;
   }
 
-  /** Detect choice questions ("X or Y") and extract alternatives as options. */
+  /** Detect choice questions ("X or Y" / "A, B, or C") and extract alternatives as options. */
   private extractChoiceOptions(question: string): Array<{ label: string; value: string }> | null {
     const q = question.trim();
-    // Look for "or" separating distinct alternatives (not yes/no patterns)
-    const orPattern = /\b(or)\b/gi;
-    const orMatches = [...q.matchAll(orPattern)];
-    // Need at least one "or" that's not just "yes or no"
-    if (orMatches.length === 0) return null;
-    // Try to split on " or " to extract alternatives
-    // First, find the question part before any trailing "?"
+    if (!/\b(?:or|,)\b/i.test(q)) return null;
     const cleaned = q.replace(/\?+$/, '').trim();
-    // Find "or" after a question prefix
+
+    const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/\?+$/, '');
+
+    // Case 1: comma-separated list "A, B, or C" / "A, B, C"
+    const commaParts = cleaned
+      .split(/,\s*(?:or\s+)?/i)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (commaParts.length >= 3) {
+      // The first part carries the question stem ("Is your lounge wall plasterboard").
+      // Take only its last word as the first option; remaining parts are clean options.
+      const firstWords = commaParts[0].split(/\s+/);
+      const firstOption = firstWords[firstWords.length - 1];
+      const options = [firstOption, ...commaParts.slice(1)]
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 2);
+      if (options.length >= 2 && !/\b(yes|no)\b/i.test(options.join(' '))) {
+        return [
+          ...options.slice(0, 4).map((s) => ({ label: capFirst(s), value: s.toLowerCase() })),
+          { label: 'Not sure', value: 'not sure' },
+        ];
+      }
+    }
+
+    // Case 2: simple "X or Y" (no commas)
     const orIdx = cleaned.toLowerCase().lastIndexOf(' or ');
     if (orIdx < 0) return null;
     const beforeOr = cleaned.substring(0, orIdx).trim();
     const afterOr = cleaned.substring(orIdx + 4).trim();
-    // Extract the last phrase before "or" (the first alternative)
-    const firstAlt = beforeOr.split(/\s+(?:,\s*)?/).slice(-3).join(' ');
-    const secondAlt = afterOr.split(/\s+(?:,\s*)?/).slice(0, 4).join(' ');
-    if (!firstAlt || !secondAlt || firstAlt.length < 3 || secondAlt.length < 3) return null;
-    // Skip if it looks like a yes/no rephrase
+    // Strip leading question words + subject to isolate the first alternative
+    const firstAlt = beforeOr
+      .replace(/^(is|are|do|does|did|would|should|could|can|will|have|has)\s+/i, '')
+      .replace(/^(your|the|my|our|a|an|this|that|it|there)\s+/i, '')
+      .trim();
+    const secondAlt = afterOr;
+    if (!firstAlt || !secondAlt || firstAlt.length < 2 || secondAlt.length < 2) return null;
     if (/\b(yes|no|not)\b/i.test(`${firstAlt} ${secondAlt}`)) return null;
-    // Capitalize each alternative nicely
-    const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/\?+$/, '');
     return [
       { label: capFirst(firstAlt), value: firstAlt.toLowerCase().replace(/\?+$/, '') },
       { label: capFirst(secondAlt), value: secondAlt.toLowerCase().replace(/\?+$/, '') },

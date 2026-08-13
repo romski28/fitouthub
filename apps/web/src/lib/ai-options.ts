@@ -19,11 +19,15 @@ export function generateAiOptions(text: string): { label: string; value: string 
   const questionBody = trimmed.replace(/[?.]$/, '').trim();
   const parts = questionBody
     .split(/,\s*(?:or\s+)?/i)
-    .filter((s) => s.trim().length > 0)
-    .slice(-5);
+    .filter((s) => s.trim().length > 0);
 
   if (parts.length >= 3) {
-    return parts.map((s) => ({ label: s.trim(), value: s.trim().toLowerCase() })).slice(0, 5);
+    // The first part carries the question stem ("Is your lounge wall plasterboard").
+    // Take only its last word as the first option; remaining parts are clean options.
+    const firstWords = parts[0].split(/\s+/);
+    const firstOption = firstWords[firstWords.length - 1];
+    const options = [firstOption, ...parts.slice(1)].map((s) => s.trim()).filter((s) => s.length >= 2);
+    return options.slice(0, 5).map((s) => ({ label: s, value: s.toLowerCase() }));
   }
 
   // 2. What/which/how questions — checked BEFORE yes/no so "What type … are you …" doesn't falsely match yes/no

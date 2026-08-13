@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-13-da9cc27a",
+    "date": "2026-08-13T10:51:02+08:00",
+    "title": "fix(ai): correct comma-list choice option extraction",
+    "summary": "fix(ai): correct comma-list choice option extraction",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "da9cc27a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-08-13-efd6da9d",
     "date": "2026-08-13T10:42:47+08:00",
     "title": "feat(wizard): summarising state with dots, auto-advance on compile completion",
