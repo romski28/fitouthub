@@ -396,6 +396,7 @@ export default function CreateProjectWizardPage() {
   const compileFiredRef = useRef(false);
   const compilePromiseRef = useRef<Promise<Record<string, unknown> | null> | null>(null);
   const latestIntakeIdRef = useRef<string | null>(null);
+  const [compileInProgress, setCompileInProgress] = useState(false);
 
   const createAiSessionId = () => (
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -1035,6 +1036,7 @@ export default function CreateProjectWizardPage() {
       // so they appear on the intermediate page and flow through to project creation.
       if (shouldOfferSummaryConfirmation && currentAiIntakeId && !compileFiredRef.current) {
         compileFiredRef.current = true;
+        setCompileInProgress(true);
         const compilePromise = triggerCompile(currentAiIntakeId);
         compilePromiseRef.current = compilePromise;
         compilePromise.then((compiled) => {
@@ -1073,6 +1075,8 @@ export default function CreateProjectWizardPage() {
           if (typeof compiled.title === 'string' && compiled.title.trim()) {
             setTitle(compiled.title.trim());
           }
+        }).finally(() => {
+          setCompileInProgress(false);
         });
       }
 
@@ -1160,16 +1164,23 @@ export default function CreateProjectWizardPage() {
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: nextQuestion, options: answerOptions }]);
         } else {
-          // No more questions — all done. Auto-advance after 5s
+          // No more questions — all done. Auto-advance once compile completes (or 8s timeout)
           if (!summaryConfirmationShown) setSummaryConfirmationShown(true);
           setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Thanks, we are done here. Let\'s move on.' }]);
-          setTimeout(() => {
+          const advanceWhenReady = async () => {
+            if (compilePromiseRef.current) {
+              await Promise.race([
+                compilePromiseRef.current,
+                new Promise((r) => setTimeout(r, 8000)),
+              ]);
+            }
             if (currentStep < stepsRef.current.length - 1) {
               goNext();
             } else {
               submitWizard();
             }
-          }, 5000);
+          };
+          advanceWhenReady();
         }
       } else if (nextUnaskedQuestion) {
         setAiChatCanContinue(false);
@@ -1944,14 +1955,29 @@ export default function CreateProjectWizardPage() {
                     </button>
                   )
                 ) : currentStep < steps.length - 1 ? (
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!canGoNext}
-                    className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
-                  >
-                    Next
-                  </button>
+                  activeStep?.kind === 'followups' && compileInProgress ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="flex items-center gap-2 rounded-lg bg-emerald-600/70 px-2.5 py-1.5 text-xs font-semibold text-white cursor-wait sm:px-3 sm:py-2 sm:text-sm"
+                    >
+                      Summarising the conversation
+                      <span className="flex gap-0.5">
+                        <span className="h-1 w-1 animate-bounce rounded-full bg-white" style={{ animationDelay: '0ms' }} />
+                        <span className="h-1 w-1 animate-bounce rounded-full bg-white" style={{ animationDelay: '150ms' }} />
+                        <span className="h-1 w-1 animate-bounce rounded-full bg-white" style={{ animationDelay: '300ms' }} />
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={goNext}
+                      disabled={!canGoNext}
+                      className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                    >
+                      Next
+                    </button>
+                  )
                 ) : activeStep?.kind !== 'projectDetails' ? (
                   <button
                     type="button"

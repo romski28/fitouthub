@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-13-efd6da9d",
+    "date": "2026-08-13T10:42:47+08:00",
+    "title": "feat(wizard): summarising state with dots, auto-advance on compile completion",
+    "summary": "feat(wizard): summarising state with dots, auto-advance on compile completion",
+    "areas": [
+      "web"
+    ],
+    "commit": "efd6da9d",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-12-84903c90",
     "date": "2026-08-12T17:52:06+08:00",
     "title": "fix(ai): add Q&A boundary rule to prevent cross-turn answer mixing",
