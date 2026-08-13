@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-13-7a9f7381",
+    "date": "2026-08-13T14:54:37+08:00",
+    "title": "fix(wizard): compile scope on true termination, refresh on continued chat",
+    "summary": "fix(wizard): compile scope on true termination, refresh on continued chat",
+    "areas": [
+      "web"
+    ],
+    "commit": "7a9f7381",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-13-da9cc27a",
     "date": "2026-08-13T10:51:02+08:00",
     "title": "fix(ai): correct comma-list choice option extraction",
