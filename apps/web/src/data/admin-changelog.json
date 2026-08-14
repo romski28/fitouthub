@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-14-e5d900e1",
+    "date": "2026-08-14T13:57:31+08:00",
+    "title": "fix(quotes): invalidate next-step cache on quote submit and update",
+    "summary": "fix(quotes): invalidate next-step cache on quote submit and update",
+    "areas": [
+      "api"
+    ],
+    "commit": "e5d900e1",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-14-1b848b81",
     "date": "2026-08-14T12:50:37+08:00",
     "title": "fix(client): secondary button hover no longer matches panel",

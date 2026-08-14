@@ -5971,6 +5971,12 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // Flush nextStepCache so the client sees "N quotes received" immediately
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
+    });
+
     if (latestAccessRequest) {
       await this.prisma.siteAccessRequest.update({
         where: { id: latestAccessRequest.id },
@@ -9641,6 +9647,12 @@ Please review the project details and respond with your quote or decline the inv
         senderProfessionalId: professionalId,
         content: `Updated quote: $${feeBreakdown.grossAmount} (base: $${feeBreakdown.baseAmount}) · Estimated start ${this.formatDateTime(quoteSchedule.quoteEstimatedStartAt)} · Duration ${this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes || 0)}${quoteNotes ? ` - ${quoteNotes}` : ''}`,
       },
+    });
+
+    // Flush nextStepCache so the client sees the updated quote count
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { nextStepCache: null as any },
     });
 
     return {
