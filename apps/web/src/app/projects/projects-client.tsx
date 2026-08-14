@@ -221,12 +221,12 @@ function NextStepModalButton({
         action.actionKey === 'UX_SURVEY'
           ? 'rounded-lg bg-[#FF7F50] hover:bg-[#E67245] text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight'
           : variant === 'primary'
-          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:hover:bg-slate-600 disabled:text-slate-200 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+          ? 'rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : variant === 'status'
-            ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500 disabled:hover:bg-amber-500 text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+            ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : variant === 'info'
-            ? 'rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:hover:bg-blue-600 text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
-          : 'rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 disabled:border-slate-500 disabled:text-slate-300 disabled:hover:bg-transparent transition text-center leading-tight disabled:cursor-not-allowed'
+            ? 'rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
+          : 'rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-[#F5EEDE] disabled:bg-[#818589] disabled:border-[#818589] disabled:text-white disabled:hover:bg-[#818589] transition text-center leading-tight disabled:cursor-not-allowed'
       }
     >
       {labelOverride || action.actionLabel}

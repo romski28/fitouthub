@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-14-9d6e1bba",
+    "date": "2026-08-14T12:46:59+08:00",
+    "title": "fix(client): gunmetal gray disabled buttons, visible secondary style",
+    "summary": "fix(client): gunmetal gray disabled buttons, visible secondary style",
+    "areas": [
+      "web"
+    ],
+    "commit": "9d6e1bba",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-08-14-5cf839ec",
     "date": "2026-08-14T12:21:50+08:00",
     "title": "fix(ai): take last word before 'or' for simple choice questions",
