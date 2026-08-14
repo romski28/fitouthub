@@ -226,7 +226,7 @@ function NextStepModalButton({
             ? 'rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-slate-950 px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
           : variant === 'info'
             ? 'rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed'
-          : 'rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-[#F5EEDE] disabled:bg-[#818589] disabled:border-[#818589] disabled:text-white disabled:hover:bg-[#818589] transition text-center leading-tight disabled:cursor-not-allowed'
+          : 'rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-300 disabled:bg-[#818589] disabled:border-[#818589] disabled:text-white disabled:hover:bg-[#818589] transition text-center leading-tight disabled:cursor-not-allowed'
       }
     >
       {labelOverride || action.actionLabel}

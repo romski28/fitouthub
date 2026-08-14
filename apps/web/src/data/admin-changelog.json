@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-14-1b848b81",
+    "date": "2026-08-14T12:50:37+08:00",
+    "title": "fix(client): secondary button hover no longer matches panel",
+    "summary": "fix(client): secondary button hover no longer matches panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "1b848b81",
+    "files": [
+      "apps/web/src/app/projects/projects-client.tsx"
+    ]
+  },
+  {
     "id": "2026-08-14-9d6e1bba",
     "date": "2026-08-14T12:46:59+08:00",
     "title": "fix(client): gunmetal gray disabled buttons, visible secondary style",
