@@ -237,8 +237,35 @@ export class ClientController {
           },
         });
 
-        // Escrow deposit request is intentionally created later,
-        // after both parties have signed the standard contract.
+        // Escrow deposit request is created immediately on award — the
+        // contract signing step has been short-circuited, so accepting the
+        // quotation (cost + programme + terms) is sufficient to unlock escrow.
+        const existingEscrowRequest = await tx.financialTransaction.findFirst({
+          where: {
+            projectId: pp.projectId,
+            type: 'escrow_deposit_request',
+            status: { in: ['pending', 'paid'] },
+          },
+        });
+
+        if (!existingEscrowRequest) {
+          await tx.financialTransaction.create({
+            data: {
+              projectId: pp.projectId,
+              projectProfessionalId,
+              type: 'escrow_deposit_request',
+              description: 'Request to deposit project fees to escrow',
+              amount: quoteAmount,
+              status: 'pending',
+              requestedBy: 'foh',
+              requestedByRole: 'platform',
+              actionBy: userId,
+              actionByRole: 'client',
+              actionComplete: false,
+              notes: `Quote amount for project ${pp.project.projectName || 'Project'}`,
+            },
+          });
+        }
       }
 
       return updatedPP;
@@ -303,6 +330,16 @@ export class ClientController {
     }).catch((error) => {
       console.warn('[ClientController.acceptQuote] Failed to write activity log:', (error as Error)?.message);
     });
+
+    // Flush next-step cache so the client sees the escrow funding step immediately
+    try {
+      await (this.prisma as any).project.update({
+        where: { id: pp.projectId },
+        data: { nextStepCache: null as any },
+      });
+    } catch (err) {
+      console.warn('[ClientController.acceptQuote] Failed to flush next-step cache:', (err as Error)?.message);
+    }
 
     return { success: true, projectProfessional: updated };
   }

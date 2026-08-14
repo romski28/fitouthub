@@ -1,14 +1,10 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
-import { WorkflowCompletionModal, WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
-import { fetchPrimaryNextStep, NextStepAction } from '@/lib/next-steps';
-import { getClientTabForAction } from '@/lib/client-workflow';
 import type { Professional } from '@/lib/types';
 import { getQuoteBreakdownClientItems, getQuoteBreakdownBaseTotal, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
@@ -83,7 +79,6 @@ const formatDuration = (minutes?: number, unit?: 'hours' | 'days') => {
 };
 
 export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
-  const router = useRouter();
   const { accessToken } = useAuth();
   const { state, openModal } = useNextStepModal();
 
@@ -94,12 +89,8 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [termsExpanded, setTermsExpanded] = useState(true);
-  const [acceptedName, setAcceptedName] = useState('');
-  const [resolvedNextStep, setResolvedNextStep] = useState<WorkflowNextStep | null>(null);
-  const [resolvedNextAction, setResolvedNextAction] = useState<NextStepAction | null>(null);
   const hasNotifiedCompletionRef = useRef(false);
 
   const handleOpenProDetails = async (professionalId: string) => {
@@ -142,11 +133,9 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      setShowSuccess(false);
       setShowDetails(false);
       setTermsExpanded(true);
       setAcceptError(null);
-      setResolvedNextAction(null);
       hasNotifiedCompletionRef.current = false;
       fetchQuotes();
     }
@@ -178,27 +167,24 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || 'Failed to accept quote');
       }
-      setAcceptedName(pp.professional.fullName || pp.professional.businessName || 'the professional');
-      // Fetch the real next step — should be REVIEW_CONTRACT / SIGN_CONTRACT now in CONTRACT_PHASE
-      try {
-        const action = await fetchPrimaryNextStep(state.projectId, accessToken, { forceRefresh: true });
-        if (action) {
-          setResolvedNextAction(action);
-          setResolvedNextStep({
-            actionLabel: action.actionLabel,
-            description: action.description,
-            requiresAction: Boolean(action.requiresAction),
-            tab: getClientTabForAction(action.actionKey),
-          });
-        } else {
-          setResolvedNextAction(null);
-          setResolvedNextStep(null);
-        }
-      } catch {
-        setResolvedNextAction(null);
-        setResolvedNextStep(null);
+
+      notifyCompleted();
+
+      // Contract signing has been short-circuited — accepting the quotation
+      // (cost + programme + terms) is sufficient. Go straight to escrow deposit.
+      if (state.projectId && state.userId && state.role) {
+        await openModal(
+          'DEPOSIT_ESCROW_FUNDS',
+          state.projectId,
+          `/projects/${state.projectId}?tab=financials`,
+          state.userId,
+          state.role,
+          undefined,
+          state.projectStage,
+          state.onCompleted,
+        );
       }
-      setShowSuccess(true);
+      onClose();
     } catch (err) {
       setAcceptError(err instanceof Error ? err.message : 'Failed to accept quote');
     } finally {
@@ -206,62 +192,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     }
   };
 
-  const handleOpenProject = () => {
-    if (!state.projectId) { onClose(); return; }
-    notifyCompleted();
-    const tab = resolvedNextStep?.tab ?? 'contract';
-    router.push(`/projects/${state.projectId}?tab=${tab}`);
-    onClose();
-  };
-
-  const handleDoNextStep = async () => {
-    if (!state.projectId || !state.userId || !state.role) {
-      handleOpenProject();
-      return;
-    }
-
-    if (!resolvedNextAction) {
-      handleOpenProject();
-      return;
-    }
-
-    notifyCompleted();
-    const tab = getClientTabForAction(resolvedNextAction.actionKey) || 'contract';
-    await openModal(
-      resolvedNextAction.actionKey,
-      state.projectId,
-      `/projects/${state.projectId}?tab=${tab}`,
-      state.userId,
-      state.role,
-      resolvedNextAction.modalContent,
-      state.projectStage,
-      state.onCompleted,
-    );
-  };
-
-  const handleLater = () => {
-    notifyCompleted();
-    onClose();
-  };
-
   if (!isOpen) return null;
-
-  if (showSuccess) {
-    return (
-      <WorkflowCompletionModal
-        isOpen
-        onClose={handleLater}
-        completedLabel="Quote accepted!"
-        completedDescription={`You have accepted ${acceptedName}'s quote. The project moves to the agreement phase — get it signed to unlock escrow and start work.`}
-        nextStep={resolvedNextStep}
-        showConfetti
-        primaryActionLabel={resolvedNextStep?.actionLabel ?? 'Review agreement'}
-        secondaryActionLabel="Later"
-        showPrimaryActionOverride={Boolean(resolvedNextAction)}
-        onNavigate={handleDoNextStep}
-      />
-    );
-  }
 
   const withQuoteNums = professionals.filter((pp) => Number.isFinite(getNumeric(pp.quoteAmount)));
   const sortedByPrice = [...withQuoteNums].sort((a, b) => getNumeric(a.quoteAmount) - getNumeric(b.quoteAmount));
