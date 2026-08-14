@@ -54,9 +54,14 @@ export function generateAiOptions(text: string): { label: string; value: string 
   // 4. Simple "X or Y" pattern (e.g. "indoor or outdoor?") — only for non-yes/no questions
   const orMatch = questionBody.match(/(.+)\s+or\s+(.+)/i);
   if (orMatch) {
+    // First alternative is the last word before "or" (the stem precedes it);
+    // second alternative strips a leading article.
+    const firstWords = orMatch[1].trim().split(/\s+/);
+    const firstAlt = firstWords[firstWords.length - 1] || orMatch[1].trim();
+    const secondAlt = orMatch[2].trim().replace(/^(a|an|the)\s+/i, '');
     return [
-      { label: orMatch[1].trim(), value: orMatch[1].trim().toLowerCase() },
-      { label: orMatch[2].trim(), value: orMatch[2].trim().toLowerCase() },
+      { label: firstAlt, value: firstAlt.toLowerCase() },
+      { label: secondAlt, value: secondAlt.toLowerCase() },
       { label: 'Something else', value: 'something else' },
     ];
   }

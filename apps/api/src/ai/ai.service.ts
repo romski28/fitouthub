@@ -1493,12 +1493,13 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
     if (orIdx < 0) return null;
     const beforeOr = cleaned.substring(0, orIdx).trim();
     const afterOr = cleaned.substring(orIdx + 4).trim();
-    // Strip leading question words + subject to isolate the first alternative
-    const firstAlt = beforeOr
-      .replace(/^(is|are|do|does|did|would|should|could|can|will|have|has)\s+/i, '')
-      .replace(/^(your|the|my|our|a|an|this|that|it|there)\s+/i, '')
-      .trim();
-    const secondAlt = afterOr;
+    // The question stem lives before the final alternative — take only the
+    // last word as the first option ("Is the wall in your dining room drywall" → "drywall").
+    const beforeWords = beforeOr.split(/\s+/);
+    const firstAlt = beforeWords[beforeWords.length - 1] || '';
+    // Strip a leading article from the second option ("a hinged door" → "hinged door").
+    const afterStripped = afterOr.replace(/^(a|an|the)\s+/i, '').trim();
+    const secondAlt = afterStripped;
     if (!firstAlt || !secondAlt || firstAlt.length < 2 || secondAlt.length < 2) return null;
     if (/\b(yes|no|not)\b/i.test(`${firstAlt} ${secondAlt}`)) return null;
     return [

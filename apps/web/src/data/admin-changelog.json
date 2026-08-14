@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-14-5cf839ec",
+    "date": "2026-08-14T12:21:50+08:00",
+    "title": "fix(ai): take last word before 'or' for simple choice questions",
+    "summary": "fix(ai): take last word before 'or' for simple choice questions",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5cf839ec",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/lib/ai-options.ts"
+    ]
+  },
+  {
     "id": "2026-08-13-7a9f7381",
     "date": "2026-08-13T14:54:37+08:00",
     "title": "fix(wizard): compile scope on true termination, refresh on continued chat",
