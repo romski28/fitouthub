@@ -805,7 +805,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
     (mode === 'thread' ? PROGRESS_MODAL_COPY_ROOT.threadBody : PROGRESS_MODAL_COPY_ROOT.composeBody);
   const detailsBody = state.modalContent?.detailsBody || PROGRESS_MODAL_COPY_ROOT.detailsBody;
   const hasDetails = Boolean(detailsBody);
-  const panelBodyMaxHeight = 'calc(100dvh - 84px)';
 
   return (
     <>
@@ -936,9 +935,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   </div>
                 ) : (
                   /* Thread mode */
-                  <div className="next-step-content-grow flex min-h-0 flex-1 flex-col" style={{ maxHeight: panelBodyMaxHeight }}>
+                  <div className="next-step-content-grow flex min-h-0 flex-1 flex-col">
                     {/* Report bubbles */}
-                    <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                    <div className="next-step-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 space-y-4">
                       {reports.length === 0 ? (
                         <div className="py-12 text-center">
                           <p className="text-slate-500 text-sm">No progress updates yet.</p>
@@ -978,9 +977,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       <div ref={threadBottomRef} />
                     </div>
 
-                    {/* Scoped reply chat */}
+                    {/* Scoped reply chat — pinned, fixed height, internally scrollable */}
                     {state.projectId && effectiveAccessToken && (
-                      <div className="border-t border-[#D4C8A0] shrink-0">
+                      <div className="flex h-[clamp(240px,36dvh,400px)] shrink-0 flex-col border-t border-[#D4C8A0]">
                         <ProjectChat
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
@@ -989,11 +988,11 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           threadScopeId="general"
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
-                          fillHeight={false}
+                          fillHeight
                           headerTitle="Project Team Chat - Project Updates"
                           headerSubtitle=""
                           showPresenceIndicator={false}
-                          className="border-0 rounded-none bg-transparent shadow-none"
+                          className="h-full border-0 rounded-none bg-transparent shadow-none"
                         />
                       </div>
                     )}

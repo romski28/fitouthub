@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-15-627ff848",
+    "date": "2026-08-15T12:56:16+08:00",
+    "title": "fix(next-steps): scrollable client review thread, visible scrollbar",
+    "summary": "fix(next-steps): scrollable client review thread, visible scrollbar",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "627ff848",
+    "files": [
+      "MODAL_CSS_RISK_ANALYSIS.md",
+      "apps/web/src/app/globals.css",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-d0f137c7",
     "date": "2026-08-15T12:21:49+08:00",
     "title": "style(next-steps): lighten progress modal theme, fix top-stuck centering",

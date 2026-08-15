@@ -238,7 +238,7 @@ body {
 
 .next-step-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.9) transparent;
+  scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
   padding-right: 0.25rem;
   margin-right: 0.625rem;
   overscroll-behavior: contain;
@@ -255,14 +255,14 @@ body {
 }
 
 .next-step-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(100, 116, 139, 0.55);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 .next-step-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 1);
+  background: rgba(71, 85, 105, 0.8);
   background-clip: content-box;
 }
 
