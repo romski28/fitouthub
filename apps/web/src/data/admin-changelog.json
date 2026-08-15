@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-d0f137c7",
+    "date": "2026-08-15T12:21:49+08:00",
+    "title": "style(next-steps): lighten progress modal theme, fix top-stuck centering",
+    "summary": "style(next-steps): lighten progress modal theme, fix top-stuck centering",
+    "areas": [
+      "web"
+    ],
+    "commit": "d0f137c7",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-6d9eb930",
     "date": "2026-08-15T12:13:34+08:00",
     "title": "feat(progress): convert pro progress-report drawer to centered modal",

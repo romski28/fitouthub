@@ -178,32 +178,32 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
   const statusChip = () => {
     if (report.signOffStatus === 'approved') {
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-xs font-semibold text-emerald-700">
           ✓ Approved{report.signOffApprovedAt ? ` · ${formatDate(report.signOffApprovedAt)}` : ''}
         </span>
       );
     }
     if (report.signOffStatus === 'rejected') {
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-xs font-semibold text-red-300">
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-xs font-semibold text-red-600">
           ✗ Rejected{report.signOffRejectedAt ? ` · ${formatDate(report.signOffRejectedAt)}` : ''}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-xs font-semibold text-amber-300">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-xs font-semibold text-amber-700">
         ⏳ Awaiting approval
       </span>
     );
   };
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-amber-400/40 bg-amber-50 p-4 space-y-3">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-amber-300">Milestone Sign-off Request</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Milestone Sign-off Request</p>
           {milestone && (
-            <p className="mt-0.5 text-sm font-semibold text-white">
+            <p className="mt-0.5 text-sm font-semibold text-slate-900">
               {milestone.sequence}. {milestone.title}
             </p>
           )}
@@ -212,7 +212,7 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
       </div>
 
       {report.narrativeSummary && (
-        <p className="text-sm text-slate-300 leading-relaxed">{report.narrativeSummary}</p>
+        <p className="text-sm text-slate-600 leading-relaxed">{report.narrativeSummary}</p>
       )}
 
       {Array.isArray(report.photoEntries) && report.photoEntries.length > 0 && (
@@ -235,7 +235,7 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
                 type="button"
                 disabled={isDeciding}
                 onClick={() => setShowRejectInput(true)}
-                className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-1.5 text-sm font-semibold text-red-300 hover:bg-red-500/20 disabled:opacity-50 transition"
+                className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-500/20 disabled:opacity-50 transition"
               >
                 Reject
               </button>
@@ -247,7 +247,7 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
                 onChange={(e) => setRejectNote(e.target.value)}
                 rows={2}
                 placeholder="Briefly explain why (optional)…"
-                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none"
               />
               <div className="flex gap-2">
                 <button
@@ -261,7 +261,7 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
                 <button
                   type="button"
                   onClick={() => { setShowRejectInput(false); setRejectNote(''); }}
-                  className="rounded-lg border border-slate-600 px-4 py-1.5 text-sm text-slate-400 hover:text-white transition"
+                  className="rounded-lg border border-[#D4C8A0] px-4 py-1.5 text-sm text-slate-500 hover:text-slate-700 transition"
                 >
                   Cancel
                 </button>
@@ -299,7 +299,7 @@ function ReportBubble({
     return (
       <div className="space-y-1">
         {!isSelf && (
-          <span className="px-1 text-xs font-semibold text-slate-400">
+          <span className="px-1 text-xs font-semibold text-slate-500">
             {report.submitterName ?? 'Professional'}
           </span>
         )}
@@ -310,7 +310,7 @@ function ReportBubble({
           onDecision={onDecision}
           decidingId={decidingId}
         />
-        <span className={`block px-1 text-[10px] text-slate-500 ${isSelf ? 'text-right' : ''}`}>
+        <span className={`block px-1 text-[10px] text-slate-400 ${isSelf ? 'text-right' : ''}`}>
           {formatTime(report.createdAt)}
         </span>
       </div>
@@ -321,15 +321,15 @@ function ReportBubble({
     <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] space-y-1 flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
         {!isSelf && (
-          <span className="px-1 text-xs font-semibold text-slate-400">
+          <span className="px-1 text-xs font-semibold text-slate-500">
             {report.submitterName ?? (report.submittedByRole === 'client' ? 'Client' : 'Professional')}
           </span>
         )}
         <div
           className={`rounded-2xl px-4 py-3 space-y-2 ${
             isSelf
-              ? 'bg-cyan-600 text-white rounded-tr-sm'
-              : 'bg-slate-800 text-white border border-slate-700 rounded-tl-sm'
+              ? 'bg-emerald-600 text-white rounded-tr-sm'
+              : 'bg-white text-slate-800 border border-[#D4C8A0] rounded-tl-sm'
           }`}
         >
           {report.narrativeSummary && (
@@ -337,7 +337,7 @@ function ReportBubble({
           )}
           {hasPhotos && <InlinePhotoGrid photos={report.photoEntries} />}
         </div>
-        <span className="px-1 text-[10px] text-slate-500">{formatTime(report.createdAt)}</span>
+        <span className="px-1 text-[10px] text-slate-400">{formatTime(report.createdAt)}</span>
       </div>
     </div>
   );
@@ -431,13 +431,13 @@ function ComposeForm({
 
       {/* Milestone */}
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-emerald-700">
           Select Milestone For Approval
         </label>
         <select
           value={selectedMilestoneId}
           onChange={(e) => setSelectedMilestoneId(e.target.value)}
-          className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+          className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
         >
           <option value="">— No milestone selected —</option>
           {milestones.map((m) => {
@@ -472,21 +472,21 @@ function ComposeForm({
       </div>
 
       {selectedMilestoneId && linkedPaymentMilestone && (
-        <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-300">Payment milestone linked</p>
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">Payment milestone linked</p>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-            <span className="text-white">
-              <span className="text-slate-400">Amount: </span>
+            <span className="text-slate-900">
+              <span className="text-slate-500">Amount: </span>
               <strong>{formatHKD(linkedPaymentMilestone.amount)}</strong>
             </span>
             {linkedPaymentMilestone.plannedDueAt && (
-              <span className="text-white">
-                <span className="text-slate-400">Due: </span>
+              <span className="text-slate-900">
+                <span className="text-slate-500">Due: </span>
                 <strong>{formatDate(linkedPaymentMilestone.plannedDueAt)}</strong>
               </span>
             )}
-            <span className="text-white capitalize">
-              <span className="text-slate-400">Status: </span>
+            <span className="text-slate-900 capitalize">
+              <span className="text-slate-500">Status: </span>
               <strong>{linkedPaymentMilestone.status.replace(/_/g, ' ')}</strong>
             </span>
           </div>
@@ -494,7 +494,7 @@ function ComposeForm({
       )}
 
       {selectedMilestoneId && !linkedPaymentMilestone && (
-        <div className="rounded-md border border-slate-600/40 bg-slate-800/40 px-3 py-2 text-xs text-slate-400">
+        <div className="rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-xs text-slate-500">
           No payment milestone linked to this work milestone.
         </div>
       )}
@@ -502,21 +502,21 @@ function ComposeForm({
       {/* Milestone summary */}
       {selectedMilestoneId && (
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-cyan-200">
-          Milestone summary <span className="font-normal normal-case text-rose-300">(required)</span>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          Milestone summary <span className="font-normal normal-case text-rose-500">(required)</span>
         </label>
         <textarea
           value={narrativeSummary}
           onChange={(e) => setNarrativeSummary(e.target.value)}
           rows={3}
           placeholder="Describe this milestone completion for client review…"
-          className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+          className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none"
         />
       </div>
       )}
 
       {/* Actions */}
-      <div className="border-t border-slate-700 pt-4">
+      <div className="border-t border-[#D4C8A0] pt-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
@@ -837,29 +837,29 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
           }}
         >
           <div
-            className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out ${
+            className={`relative z-10 w-full max-w-lg md:max-w-4xl [perspective:1600px] transition-transform duration-300 ease-out ${
               isAnimatingIn ? 'translate-y-0 scale-100' : 'translate-y-6 scale-[0.98]'
             }`}
           >
             <div
-              className="relative grid [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+              className="relative h-[86dvh] min-h-[420px] max-h-[760px] [transform-style:preserve-3d] transition-transform duration-500 ease-out"
               style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               <div
-                className="col-start-1 row-start-1 flex h-[86dvh] min-h-[420px] max-h-[760px] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
+                className="absolute inset-0 flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl [backface-visibility:hidden]"
                 aria-hidden={showDetails}
               >
                 {/* Header */}
-                <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
+                <div className="flex items-start justify-between border-b border-[#D4C8A0] px-5 py-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{frontTitle}</h3>
-                    <p className="mt-1 text-xs text-slate-300">{frontBody}</p>
+                    <h3 className="text-lg font-bold text-slate-900">{frontTitle}</h3>
+                    <p className="mt-1 text-xs text-slate-600">{frontBody}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={requestClose}
-                      className="ml-1 h-8 w-8 rounded-full border border-slate-600 text-lg font-semibold text-slate-300 transition hover:bg-slate-800"
+                      className="ml-1 h-8 w-8 rounded-full border border-[#D4C8A0] text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
                       aria-label="Close"
                       title="Close"
                     >
@@ -869,7 +869,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       <button
                         type="button"
                         onClick={() => setMode((m) => (m === 'thread' ? 'compose' : 'thread'))}
-                        className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 transition"
+                        className="rounded border border-[#D4C8A0] px-2 py-1 text-xs text-slate-600 hover:bg-[#F5EEDE] transition"
                       >
                         {mode === 'thread' ? '+ New update' : 'View thread'}
                       </button>
@@ -878,7 +878,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       <button
                         type="button"
                         onClick={() => setMode('compose')}
-                        className="rounded border border-cyan-600 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-600/20 transition"
+                        className="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50 transition"
                       >
                         + Post first update
                       </button>
@@ -887,7 +887,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       <button
                         type="button"
                         onClick={() => setShowDetails(true)}
-                        className="h-8 w-8 rounded-full border border-blue-300/60 bg-blue-500/20 text-lg font-semibold text-blue-100 transition hover:bg-blue-500/35"
+                        className="h-8 w-8 rounded-full border border-emerald-300 bg-emerald-50 text-lg font-semibold text-emerald-700 transition hover:bg-emerald-100"
                         aria-label="Show details"
                       >
                         i
@@ -900,13 +900,13 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                 {pageLoading ? (
                   <div className="px-6 py-12 text-center">
                     <MimoSpinner size="md" className="mx-auto mb-4" />
-                    <p className="text-slate-300">Loading…</p>
+                    <p className="text-slate-600">Loading…</p>
                   </div>
                 ) : mode === 'compose' ? (
                   <div className="next-step-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
                     <div className="next-step-content-grow flex min-h-0 flex-col gap-4 pb-8">
                     {state.projectId && effectiveAccessToken && (
-                      <div className="h-[70dvh] max-h-[70dvh] min-h-[20rem] rounded-lg border border-slate-700 bg-slate-900/40 overflow-hidden">
+                      <div className="h-[70dvh] max-h-[70dvh] min-h-[20rem] rounded-lg border border-[#D4C8A0] bg-white overflow-hidden">
                         <ProjectChat
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
@@ -941,18 +941,18 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 py-4 space-y-4">
                       {reports.length === 0 ? (
                         <div className="py-12 text-center">
-                          <p className="text-slate-400 text-sm">No progress updates yet.</p>
+                          <p className="text-slate-500 text-sm">No progress updates yet.</p>
                           {isProfessional && (
                             <button
                               type="button"
                               onClick={() => setMode('compose')}
-                              className="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 transition"
+                              className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
                             >
                               Post first update
                             </button>
                           )}
                           {isClient && (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-slate-400">
                               The professional will share photos and updates here as work progresses.
                             </p>
                           )}
@@ -980,7 +980,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
                     {/* Scoped reply chat */}
                     {state.projectId && effectiveAccessToken && (
-                      <div className="border-t border-slate-700 shrink-0">
+                      <div className="border-t border-[#D4C8A0] shrink-0">
                         <ProjectChat
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
@@ -1002,30 +1002,30 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
               </div>
 
               <div
-                className="col-start-1 row-start-1 flex h-[calc(100dvh-1rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-[100dvh] sm:max-h-[100dvh] sm:overflow-y-auto sm:rounded-none sm:rounded-l-2xl"
+                className="absolute inset-0 flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl [backface-visibility:hidden]"
                 style={{ transform: 'rotateY(180deg)' }}
                 aria-hidden={!showDetails}
               >
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-slate-500 bg-slate-800/80 text-lg font-semibold text-slate-100 transition hover:bg-slate-700"
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white/90 text-lg font-semibold text-slate-700 transition hover:bg-[#F5EEDE]"
                   aria-label="Hide details"
                 >
                   x
                 </button>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-                  <h3 className="mt-3 text-2xl font-bold text-emerald-300">{frontTitle || 'Step details'}</h3>
-                  <p className="mt-5 text-sm leading-relaxed text-white">{detailsBody}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">More information</p>
+                  <h3 className="mt-3 text-2xl font-bold text-emerald-600">{frontTitle || 'Step details'}</h3>
+                  <p className="mt-5 text-sm leading-relaxed text-slate-800">{detailsBody}</p>
                 </div>
 
-                <div className="mt-auto border-t border-slate-700 px-5 py-4">
+                <div className="mt-auto border-t border-[#D4C8A0] px-5 py-4">
                   <button
                     type="button"
                     onClick={() => setShowDetails(false)}
-                    className="w-full rounded-lg border border-slate-500 px-4 py-2 text-base font-semibold text-slate-100 transition hover:bg-slate-800"
+                    className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-base font-semibold text-slate-700 transition hover:bg-[#F5EEDE]"
                   >
                     {PROGRESS_MODAL_COPY_ROOT.detailsBackLabel}
                   </button>
