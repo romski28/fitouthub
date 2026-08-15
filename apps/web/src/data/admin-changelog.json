@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-ace2f8cd",
+    "date": "2026-08-15T21:50:36+08:00",
+    "title": "style(overview): disambiguate bidding status chips",
+    "summary": "style(overview): disambiguate bidding status chips",
+    "areas": [
+      "web"
+    ],
+    "commit": "ace2f8cd",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-80269a8a",
     "date": "2026-08-15T21:28:18+08:00",
     "title": "fix(professional-details-modal): restore hook order to fix React error 310",

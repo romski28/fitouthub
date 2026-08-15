@@ -429,23 +429,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const quotationStatusOf = (pp: any): { label: string; cls: string } => {
     const status = String(pp?.status || '').toLowerCase();
     const hasQuote = Boolean(pp?.quotedAt) || Number.isFinite(Number(pp?.quoteAmount));
-    if (status === 'awarded') return { label: 'Awarded', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
-    if (status === 'rejected') return { label: 'Pro declined', cls: 'border-rose-300 bg-rose-50 text-rose-700' };
-    if (status === 'declined') return { label: 'Not awarded', cls: 'border-slate-300 bg-slate-100 text-slate-600' };
-    if (status === 'quoted' || status === 'counter_requested' || hasQuote) return { label: 'Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
-    return { label: 'Awaiting', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
+    if (status === 'awarded') return { label: 'Quote: Awarded', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
+    if (status === 'rejected') return { label: 'Quote: Pro declined', cls: 'border-rose-300 bg-rose-50 text-rose-700' };
+    if (status === 'declined') return { label: 'Quote: Not awarded', cls: 'border-slate-300 bg-slate-100 text-slate-600' };
+    if (status === 'quoted' || status === 'counter_requested' || hasQuote) return { label: 'Quote: Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
+    return { label: 'Quote: Awaiting', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
   };
 
-  const siteStatusOf = (pp: any): { label: string; cls: string } | null => {
+  const siteStatusOf = (pp: any): { label: string; cls: string } => {
     const req = (siteAccessRequests ?? []).find(
       (r: any) => r?.professional?.id && r.professional.id === pp?.professional?.id,
     );
-    if (!req) return null;
+    if (!req) return { label: 'Site: Not requested', cls: 'border-slate-300 bg-slate-50 text-slate-500' };
     const status = String(req.status || '').toLowerCase();
-    if (status === 'pending') return { label: 'Inspection requested', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
-    if (status === 'approved_visit_scheduled' || status === 'approved_no_visit') return { label: 'Inspection accepted', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
-    if (status === 'visited') return { label: 'Inspected', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
-    return null;
+    if (status === 'pending') return { label: 'Site: Requested', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
+    if (status === 'approved_visit_scheduled' || status === 'approved_no_visit') return { label: 'Site: Accepted', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
+    if (status === 'visited') return { label: 'Site: Completed', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
+    return { label: 'Site: Not requested', cls: 'border-slate-300 bg-slate-50 text-slate-500' };
   };
 
   const proDeclinedProfessionals = (project.professionals ?? []).filter(
@@ -768,11 +768,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${quoteChip.cls}`}>
                           {quoteChip.label}
                         </span>
-                        {siteChip && (
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${siteChip.cls}`}>
-                            {siteChip.label}
-                          </span>
-                        )}
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${siteChip.cls}`}>
+                          {siteChip.label}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 sm:justify-end">
                         <span className="font-semibold text-slate-900">{row.totalQuoteLabel}</span>
