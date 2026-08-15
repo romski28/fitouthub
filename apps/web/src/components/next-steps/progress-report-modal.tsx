@@ -829,7 +829,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
       {showMainModal && (
         <div
-          className={`fixed inset-0 z-50 flex items-end justify-center p-2 backdrop-blur-sm transition-opacity duration-200 sm:items-stretch sm:justify-end sm:p-0 ${
+          className={`fixed inset-0 z-50 flex items-center justify-center p-2 backdrop-blur-sm transition-opacity duration-200 sm:p-4 ${
             isAnimatingIn ? 'bg-black/60 opacity-100' : 'bg-black/0 opacity-0'
           }`}
           onClick={(e) => {
@@ -837,8 +837,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
           }}
         >
           <div
-            className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out sm:my-0 sm:h-full sm:max-w-none sm:w-[min(92vw,56rem)] ${
-              isAnimatingIn ? 'translate-y-0 scale-100 sm:translate-x-0 sm:scale-100' : 'translate-y-16 scale-[0.98] sm:translate-x-40 sm:translate-y-0 sm:scale-95'
+            className={`w-full max-w-3xl [perspective:1600px] transition-transform duration-300 ease-out ${
+              isAnimatingIn ? 'translate-y-0 scale-100' : 'translate-y-6 scale-[0.98]'
             }`}
           >
             <div
@@ -846,21 +846,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
               style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               <div
-                className="col-start-1 row-start-1 flex h-[calc(100dvh-1rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden] sm:h-[100dvh] sm:max-h-[100dvh] sm:overflow-y-auto sm:rounded-none sm:rounded-l-2xl"
+                className="col-start-1 row-start-1 flex h-[86dvh] min-h-[420px] max-h-[760px] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl [backface-visibility:hidden]"
                 aria-hidden={showDetails}
               >
-                <div className="flex items-center justify-center px-3 py-2 sm:hidden">
-                  <button
-                    type="button"
-                    onClick={requestClose}
-                    className="inline-flex h-10 w-full max-w-[9rem] items-center justify-center"
-                    aria-label="Close updates"
-                    title="Close"
-                  >
-                    <span className="h-1.5 w-16 rounded-full bg-slate-500/60" />
-                  </button>
-                </div>
-
                 {/* Header */}
                 <div className="flex items-start justify-between border-b border-slate-700 px-5 py-4">
                   <div>
@@ -868,6 +856,15 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     <p className="mt-1 text-xs text-slate-300">{frontBody}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={requestClose}
+                      className="ml-1 h-8 w-8 rounded-full border border-slate-600 text-lg font-semibold text-slate-300 transition hover:bg-slate-800"
+                      aria-label="Close"
+                      title="Close"
+                    >
+                      ×
+                    </button>
                     {isProfessional && hasReports && (
                       <button
                         type="button"

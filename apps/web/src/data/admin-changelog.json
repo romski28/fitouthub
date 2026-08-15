@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-6d9eb930",
+    "date": "2026-08-15T12:13:34+08:00",
+    "title": "feat(progress): convert pro progress-report drawer to centered modal",
+    "summary": "feat(progress): convert pro progress-report drawer to centered modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "6d9eb930",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-14-2d18273f",
     "date": "2026-08-14T15:07:56+08:00",
     "title": "feat(escrow): create deposit request at award, route straight to payment",
