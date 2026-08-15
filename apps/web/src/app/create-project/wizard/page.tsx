@@ -408,6 +408,12 @@ export default function CreateProjectWizardPage() {
     setHydrated(true);
   }, []);
 
+  // Entering the wizard signals fresh creation intent, so clear the
+  // "project just created" safeguard that redirects the review page away.
+  useEffect(() => {
+    sessionStorage.removeItem('fh_project_created_at');
+  }, []);
+
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);

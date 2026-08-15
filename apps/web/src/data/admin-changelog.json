@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-15-5caa71a6",
+    "date": "2026-08-15T21:21:55+08:00",
+    "title": "fix(create-project): guard against accidental duplicate projects",
+    "summary": "fix(create-project): guard against accidental duplicate projects",
+    "areas": [
+      "web"
+    ],
+    "commit": "5caa71a6",
+    "files": [
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-34e33d9d",
     "date": "2026-08-15T18:26:33+08:00",
     "title": "style(projects): simplify project page hero",

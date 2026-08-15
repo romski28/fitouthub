@@ -166,6 +166,20 @@ export default function CreateProjectPage() {
     }
   }, [hydrated, isLoggedIn, router]);
 
+  // Safeguard against accidental duplicate creation: if a project was just
+  // created in this tab (e.g. via browser back into the review page), send the
+  // client to their project list instead of letting them resubmit.
+  useEffect(() => {
+    if (!hydrated || !isLoggedIn) return;
+    const raw = sessionStorage.getItem('fh_project_created_at');
+    if (!raw) return;
+    const createdAt = Number(raw);
+    if (!Number.isFinite(createdAt)) return;
+    if (Date.now() - createdAt < 30 * 60 * 1000) {
+      router.replace('/projects');
+    }
+  }, [hydrated, isLoggedIn, router]);
+
   useEffect(() => {
     if (hydrated && isLoggedIn) {
       const handoffDebug =
@@ -474,6 +488,7 @@ export default function CreateProjectPage() {
       clearCreateProjectDraftHandoff();
       clearProjectDescriptionHandoff();
       clearAiClientState();
+      sessionStorage.setItem('fh_project_created_at', String(Date.now()));
 
       const surveyStep = payload.requiresSurveyService === true;
       setCompletedProjectId(project.id);
@@ -551,6 +566,7 @@ export default function CreateProjectPage() {
       clearCreateProjectDraftHandoff();
       clearProjectDescriptionHandoff();
       clearAiClientState();
+      sessionStorage.setItem('fh_project_created_at', String(Date.now()));
       toast.success('Open tender started!');
       router.push(`/projects/${project.id}`);
     } catch (err) {
@@ -602,6 +618,7 @@ export default function CreateProjectPage() {
       setShowAssistModal(false);
       setAssistDraft(null);
       clearAiClientState();
+      sessionStorage.setItem('fh_project_created_at', String(Date.now()));
 
       toast.success(
         assistConfig.contactMethod === 'call'
