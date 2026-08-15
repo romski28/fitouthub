@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-34e33d9d",
+    "date": "2026-08-15T18:26:33+08:00",
+    "title": "style(projects): simplify project page hero",
+    "summary": "style(projects): simplify project page hero",
+    "areas": [
+      "web"
+    ],
+    "commit": "34e33d9d",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-7582c249",
     "date": "2026-08-15T17:13:01+08:00",
     "title": "refactor(projects): consolidate professionals tab into overview",

@@ -27,7 +27,6 @@ import { ClientFinancialsTab } from '@/app/projects/[id]/tabs/financials-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
-import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { PostProjectSurveyModal } from '@/components/post-project-survey-modal';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
@@ -224,22 +223,6 @@ const buildClientAssistInitialNotes = (
 };
 
 const ASSIST_PAGE_SIZE = 30;
-
-const projectStatusBadge: Record<string, string> = {
-  pending: 'border border-amber-300 bg-amber-50 text-amber-800',
-  approved: 'border border-emerald-300 bg-emerald-50 text-emerald-800',
-  rejected: 'border border-rose-300 bg-rose-50 text-rose-700',
-  withdrawn: 'border border-slate-300 bg-slate-100 text-slate-700',
-};
-
-const getProjectClassBadgeLabel = (projectScale?: string | null) => {
-  const normalized = String(projectScale || '').trim().toUpperCase();
-  if (!normalized) return null;
-  if (normalized === 'SCALE_1' || normalized === '1' || normalized === 'I') return 'I';
-  if (normalized === 'SCALE_2' || normalized === '2' || normalized === 'II') return 'II';
-  if (normalized === 'SCALE_3' || normalized === '3' || normalized === 'III') return 'III';
-  return null;
-};
 
 const formatDate = (date?: string) => {
   if (!date) return '—';
@@ -517,7 +500,6 @@ export default function ClientProjectDetailPage() {
 
   // Derived values
   const projectStatus = project?.status ?? 'pending';
-  const projectClassBadge = getProjectClassBadgeLabel((project as any)?.projectScale);
   const awardedPro = project?.professionals?.find((pp) => pp.status === 'awarded');
   const isAwarded = projectStatus === 'awarded' || Boolean(awardedPro);
   const surveyRequested = Boolean(project?.mimoProjectExtras?.some((extra) => extra.extraType === 'survey'));
@@ -2288,34 +2270,6 @@ export default function ClientProjectDetailPage() {
                 <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-coral-700 text-[rgba(215,107,78,0.96)]">
                   {project.region}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {projectClassBadge && (
-                    <span className="inline-flex h-9 items-center justify-center rounded-full border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.9)] px-3 text-xs font-semibold text-slate-700">
-                      Class {projectClassBadge}
-                    </span>
-                  )}
-                  <span
-                    className={`inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold capitalize ${
-                      projectStatusBadge[projectStatus] || 'border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.9)] text-slate-700'
-                    }`}
-                  >
-                    {projectStatus.replace('_', ' ')}
-                  </span>
-                  <ProjectSentimentBadge
-                    projectId={project.id}
-                    storageScope="client"
-                    iconOnly
-                    size="md"
-                    className="h-9 w-9 justify-center px-0 py-0"
-                  />
-                </div>
-                {projectStatus === 'awarded' && project.professionals?.some((pp) => pp.status === 'awarded') && (
-                  <span className="mt-2 block text-xs font-medium text-slate-600">
-                    {project.professionals.find((pp) => pp.status === 'awarded')?.professional.fullName || 
-                     project.professionals.find((pp) => pp.status === 'awarded')?.professional.businessName || 
-                     'Professional'}
-                  </span>
-                )}
               </div>
               <div className="flex flex-shrink-0 flex-wrap items-center gap-2 self-start lg:pt-1">
                 {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
