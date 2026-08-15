@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-7acab9bb",
+    "date": "2026-08-15T21:56:56+08:00",
+    "title": "fix(overview): stop misreporting quotes with null amount",
+    "summary": "fix(overview): stop misreporting quotes with null amount",
+    "areas": [
+      "web"
+    ],
+    "commit": "7acab9bb",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-ace2f8cd",
     "date": "2026-08-15T21:50:36+08:00",
     "title": "style(overview): disambiguate bidding status chips",

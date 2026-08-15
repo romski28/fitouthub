@@ -426,13 +426,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     ? project.mimoProjectExtras
     : [];
 
+  const hasSubmittedQuote = (pp: any): boolean => {
+    const status = String(pp?.status || '').toLowerCase();
+    return status === 'quoted' || status === 'counter_requested' || status === 'awarded' || Boolean(pp?.quotedAt);
+  };
+
   const quotationStatusOf = (pp: any): { label: string; cls: string } => {
     const status = String(pp?.status || '').toLowerCase();
-    const hasQuote = Boolean(pp?.quotedAt) || Number.isFinite(Number(pp?.quoteAmount));
     if (status === 'awarded') return { label: 'Quote: Awarded', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
     if (status === 'rejected') return { label: 'Quote: Pro declined', cls: 'border-rose-300 bg-rose-50 text-rose-700' };
     if (status === 'declined') return { label: 'Quote: Not awarded', cls: 'border-slate-300 bg-slate-100 text-slate-600' };
-    if (status === 'quoted' || status === 'counter_requested' || hasQuote) return { label: 'Quote: Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
+    if (hasSubmittedQuote(pp)) return { label: 'Quote: Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
     return { label: 'Quote: Awaiting', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
   };
 
@@ -774,7 +778,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       </div>
                       <div className="flex items-center justify-between gap-2 sm:justify-end">
                         <span className="font-semibold text-slate-900">{row.totalQuoteLabel}</span>
-                        {Number.isFinite(Number(row.pp?.quoteAmount)) && (
+                        {hasSubmittedQuote(row.pp) && (
                           <button
                             type="button"
                             onClick={() => openQuoteModal(row.pp)}
