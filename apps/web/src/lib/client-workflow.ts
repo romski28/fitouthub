@@ -6,11 +6,11 @@ export type ClientTimelineStep = {
 };
 
 export const clientActionTabMap: Record<string, string> = {
-  INVITE_PROFESSIONALS: 'professionals',
+  INVITE_PROFESSIONALS: 'overview',
   BOOK_MIMO_SURVEY: 'overview',
-  REVIEW_INCOMING_QUOTES: 'professionals',
-  COMPARE_QUOTES: 'professionals',
-  SELECT_PROFESSIONAL: 'professionals',
+  REVIEW_INCOMING_QUOTES: 'overview',
+  COMPARE_QUOTES: 'overview',
+  SELECT_PROFESSIONAL: 'overview',
   REQUEST_SITE_VISIT: 'site-access',
   CONFIRM_SITE_VISIT: 'site-access',
   DEPOSIT_ESCROW_FUNDS: 'financials',

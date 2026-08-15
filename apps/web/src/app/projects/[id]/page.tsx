@@ -22,7 +22,6 @@ import { ProjectImagesCard } from '@/components/project-images-card';
 import { ProjectTabs, AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { OverviewTab } from '@/app/projects/[id]/tabs/overview-tab';
 import { SiteAccessTab } from '@/app/projects/[id]/tabs/site-access-tab';
-import { ProfessionalsTab } from '@/app/projects/[id]/tabs/professionals-tab';
 import { ClientScheduleTab } from '@/app/projects/[id]/tabs/schedule-tab';
 import { ClientFinancialsTab } from '@/app/projects/[id]/tabs/financials-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
@@ -548,7 +547,7 @@ export default function ClientProjectDetailPage() {
     const requestedTab = searchParams.get('tab');
     if (!requestedTab) return;
 
-    const allowedTabs = new Set(['overview', 'site-access', 'professionals', 'chat', 'media']);
+    const allowedTabs = new Set(['overview', 'site-access', 'chat', 'media']);
     if (isAwarded) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
@@ -2357,7 +2356,6 @@ export default function ClientProjectDetailPage() {
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
-              { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'schedule', label: 'Schedule', icon: '📅' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
@@ -2365,14 +2363,12 @@ export default function ClientProjectDetailPage() {
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
-              { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'financials', label: 'Financials', icon: '💳' },
               { id: 'chat', label: 'Chat', icon: '💬' },
             ] : [
               { id: 'overview', label: 'Overview', icon: '📋' },
               { id: 'media', label: 'Files', icon: '📁' },
               { id: 'site-access', label: 'Site Access', icon: '📍' },
-              { id: 'professionals', label: 'Professionals', icon: '👥' },
               { id: 'chat', label: 'Chat', icon: '💬' },
             ]}
           />
@@ -2393,7 +2389,9 @@ export default function ClientProjectDetailPage() {
               onRemindProfessional={handleRemindPro}
               remindingProfessionalIds={Array.from(remindingPros)}
               onOpenChatTab={() => setActiveTab('chat')}
-              onManageBidding={() => setActiveTab('professionals')}
+              onCompareAward={() => openModal('COMPARE_QUOTES', projectId, undefined, user?.id || '', 'CLIENT')}
+              onOpenSiteInspection={() => openModal('CONFIRM_SITE_VISIT', projectId, undefined, user?.id || '', 'CLIENT')}
+              onOpenFinancials={() => setActiveTab('financials')}
               onShowWithdrawConfirm={() => setShowWithdrawConfirm(true)}
               onScheduleUpdate={async (data) => {
                 const res = await fetch(`${API_BASE_URL}/projects/${projectId}/schedule`, {
@@ -2507,35 +2505,6 @@ export default function ClientProjectDetailPage() {
             />
           </>
         )}
-
-          {/* Tab Content - Professionals */}
-          {activeTab === 'professionals' && project && (
-            <>
-              <ProfessionalsTab
-                project={project}
-                professionals={project.professionals || []}
-                siteAccessRequests={siteAccessRequests}
-                expandedAccordions={expandedAccordions}
-                onToggleAccordion={toggleAccordion}
-                accessToken={accessToken || ''}
-                onOpenChat={(professional) => {
-                  setViewingAssistChat(false);
-                  setSelectedProfessional(professional);
-                  setActiveTab('chat');
-                }}
-                onAwarded={async () => {
-                  await fetchProject();
-                }}
-                onOpenAccessSchedule={() => setActiveTab('site-access')}
-                onProfessionalsChanged={async () => {
-                  await fetchProject();
-                }}
-                onActionBusy={setActionBusy}
-                actionBusy={actionBusy}
-                onNavigateTab={(tab) => setActiveTab(tab)}
-              />
-            </>
-          )}
 
           {/* Tab Content - Schedule */}
           {activeTab === 'schedule' && isAwarded && project && (

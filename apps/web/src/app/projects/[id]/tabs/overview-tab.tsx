@@ -6,6 +6,7 @@ import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
+import { QuoteBreakdownModal, type QuoteDetail } from '@/components/quote-breakdown-modal';
 import { fetchPrimaryNextStep, type NextStepAction } from '@/lib/next-steps';
 import { getProjectScope } from '@/lib/project-scope';
 import { clientTimelineSteps, getClientTabForAction } from '@/lib/client-workflow';
@@ -83,7 +84,9 @@ interface OverviewTabProps {
   onRemindProfessional?: (projectProfessional: any) => void;
   remindingProfessionalIds?: string[];
   onOpenChatTab?: () => void;
-  onManageBidding?: () => void;
+  onCompareAward?: () => void;
+  onOpenSiteInspection?: () => void;
+  onOpenFinancials?: () => void;
   onShowWithdrawConfirm?: () => void;
 }
 
@@ -228,7 +231,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onRemindProfessional,
   remindingProfessionalIds = [],
   onOpenChatTab,
-  onManageBidding,
+  onCompareAward,
+  onOpenSiteInspection,
+  onOpenFinancials,
   onShowWithdrawConfirm,
 }) => {
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -247,6 +252,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [quoteModalPro, setQuoteModalPro] = useState<QuoteDetail | null>(null);
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [siteAddress, setSiteAddress] = useState<{
     buildingName?: string | null;
     addressFull?: string | null;
@@ -395,6 +402,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         isAwarded: status === 'awarded',
         bidDateLabel: bidAt ? formatDate(bidAt) : 'No bid',
         totalQuoteLabel: pp?.quoteAmount ? formatHKD(pp.quoteAmount) : 'HK$ —',
+        pp,
       };
     }) ?? [];
   const pendingQuoteCount = Math.max(invitedCount - quotedCount, 0);
@@ -417,6 +425,57 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const mimoExtras = Array.isArray(project.mimoProjectExtras)
     ? project.mimoProjectExtras
     : [];
+
+  const quotationStatusOf = (pp: any): { label: string; cls: string } => {
+    const status = String(pp?.status || '').toLowerCase();
+    const hasQuote = Boolean(pp?.quotedAt) || Number.isFinite(Number(pp?.quoteAmount));
+    if (status === 'awarded') return { label: 'Awarded', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
+    if (status === 'rejected') return { label: 'Pro declined', cls: 'border-rose-300 bg-rose-50 text-rose-700' };
+    if (status === 'declined') return { label: 'Not awarded', cls: 'border-slate-300 bg-slate-100 text-slate-600' };
+    if (status === 'quoted' || status === 'counter_requested' || hasQuote) return { label: 'Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
+    return { label: 'Awaiting', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
+  };
+
+  const siteStatusOf = (pp: any): { label: string; cls: string } | null => {
+    const req = (siteAccessRequests ?? []).find(
+      (r: any) => r?.professional?.id && r.professional.id === pp?.professional?.id,
+    );
+    if (!req) return null;
+    const status = String(req.status || '').toLowerCase();
+    if (status === 'pending') return { label: 'Inspection requested', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
+    if (status === 'approved_visit_scheduled' || status === 'approved_no_visit') return { label: 'Inspection accepted', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
+    if (status === 'visited') return { label: 'Inspected', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
+    return null;
+  };
+
+  const proDeclinedProfessionals = (project.professionals ?? []).filter(
+    (pp) => String(pp?.status || '').toLowerCase() === 'rejected',
+  );
+  const notAwardedProfessionals = (project.professionals ?? []).filter(
+    (pp) => String(pp?.status || '').toLowerCase() === 'declined',
+  );
+  const hasOutstandingQuotes = quotedProfessionals.length > 0 && !awardedProfessional;
+  const hasOutstandingSiteInspections = (siteAccessRequests ?? []).some(
+    (r: any) => String(r?.status || '').toLowerCase() === 'pending',
+  );
+
+  const openQuoteModal = (pp: any) => {
+    const name =
+      pp?.professional?.fullName ||
+      pp?.professional?.businessName ||
+      pp?.professional?.email ||
+      'Professional';
+    setQuoteModalPro({
+      name,
+      quoteAmount: pp?.quoteAmount ?? null,
+      quoteBreakdown: pp?.quoteBreakdown ?? null,
+      quoteNotes: pp?.quoteNotes ?? null,
+      quoteEstimatedStartAt: pp?.quoteEstimatedStartAt ?? null,
+      quoteEstimatedDurationMinutes: pp?.quoteEstimatedDurationMinutes ?? null,
+      quoteEstimatedDurationUnit: pp?.quoteEstimatedDurationUnit ?? null,
+    });
+    setQuoteModalOpen(true);
+  };
 
   const currentTimelineStepIndex = useMemo(() => {
     const actionKey = primaryNextStep?.actionKey;
@@ -660,49 +719,147 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="rounded-full border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
                 {projectStatus.replace('_', ' ')}
               </span>
-              {onManageBidding && (
-                <button
-                  type="button"
-                  onClick={onManageBidding}
-                  className="inline-flex items-center rounded-xl border border-emerald-300 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                >
-                  Manage bidding
-                </button>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {hasOutstandingQuotes && onCompareAward && (
+                  <button
+                    type="button"
+                    onClick={onCompareAward}
+                    className="inline-flex items-center rounded-xl border border-emerald-300 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Compare &amp; Award
+                  </button>
+                )}
+                {hasOutstandingSiteInspections && onOpenSiteInspection && (
+                  <button
+                    type="button"
+                    onClick={onOpenSiteInspection}
+                    className="inline-flex items-center rounded-xl border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                  >
+                    Site inspections
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
-            <div className="grid grid-cols-12 border-b border-[rgba(120,53,15,0.12)] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              <span className="col-span-6">Professional</span>
-              <span className="col-span-3">Bid date</span>
-              <span className="col-span-3 text-right">Total quote</span>
-            </div>
             {biddingRows.length === 0 ? (
               <div className="px-4 py-3 text-sm text-slate-600">No professionals invited yet.</div>
             ) : (
               <div className="divide-y divide-[rgba(120,53,15,0.10)]">
-                {biddingRows.map((row) => (
-                  <div key={row.id} className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm text-slate-700">
-                    <button
-                      type="button"
-                      className="col-span-6 text-left font-medium text-slate-800 hover:text-[#b94e2d] hover:underline transition flex items-center gap-1.5"
-                      onClick={() => handleOpenProDetails(row.professionalId)}
-                    >
-                      {row.isAwarded && (
-                        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 text-white shrink-0">
-                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {biddingRows.map((row) => {
+                  const quoteChip = quotationStatusOf(row.pp);
+                  const siteChip = siteStatusOf(row.pp);
+                  return (
+                    <div key={row.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-1.5 text-left font-medium text-slate-800 transition hover:text-[#b94e2d] hover:underline"
+                        onClick={() => handleOpenProDetails(row.professionalId)}
+                      >
+                        {row.isAwarded && (
+                          <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                          </span>
+                        )}
+                        <span className="truncate">{row.professionalName}</span>
+                      </button>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${quoteChip.cls}`}>
+                          {quoteChip.label}
                         </span>
-                      )}
-                      <span>{row.professionalName}</span>
-                    </button>
-                    <span className="col-span-3">{row.bidDateLabel}</span>
-                    <span className="col-span-3 text-right font-semibold text-slate-900">{row.totalQuoteLabel}</span>
-                  </div>
-                ))}
+                        {siteChip && (
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${siteChip.cls}`}>
+                            {siteChip.label}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-2 sm:justify-end">
+                        <span className="font-semibold text-slate-900">{row.totalQuoteLabel}</span>
+                        {Number.isFinite(Number(row.pp?.quoteAmount)) && (
+                          <button
+                            type="button"
+                            onClick={() => openQuoteModal(row.pp)}
+                            className="rounded-md border border-[#D4C8A0] bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-[#F5EEDE]"
+                          >
+                            View
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {(awardedProfessional || proDeclinedProfessionals.length > 0 || notAwardedProfessionals.length > 0) && (
+            <div className="mt-4 space-y-3">
+              {awardedProfessional && (
+                <div className="rounded-2xl border border-emerald-200 bg-[rgba(255,250,240,0.78)] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      </span>
+                      <p className="text-sm font-semibold text-slate-900">
+                        Awarded: {awardedProfessional.professional?.fullName || awardedProfessional.professional?.businessName || awardedProfessional.professional?.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openQuoteModal(awardedProfessional)}
+                        className="text-sm font-semibold text-[#b94e2d] hover:underline"
+                      >
+                        {formatHKD(awardedProfessional.quoteAmount)}
+                      </button>
+                      {onOpenFinancials && (
+                        <button
+                          type="button"
+                          onClick={onOpenFinancials}
+                          className="text-xs font-semibold text-[#b94e2d] hover:underline"
+                        >
+                          Financials →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {Array.isArray(awardedProfessional.quoteRequestedTrades) && awardedProfessional.quoteRequestedTrades.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {awardedProfessional.quoteRequestedTrades.map((trade: string) => (
+                        <span key={trade} className="rounded-full border border-[#D4C8A0] bg-white px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                          {trade}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {awardedProfessional.quoteNotes && (
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">{awardedProfessional.quoteNotes}</p>
+                  )}
+                </div>
+              )}
+              {(proDeclinedProfessionals.length > 0 || notAwardedProfessionals.length > 0) && (
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Other professionals</p>
+                  <div className="mt-2 space-y-1.5">
+                    {notAwardedProfessionals.map((pp: any) => (
+                      <div key={pp.id} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-700">{pp.professional?.fullName || pp.professional?.businessName || pp.professional?.email}</span>
+                        <span className="text-xs font-medium text-slate-500">Not awarded</span>
+                      </div>
+                    ))}
+                    {proDeclinedProfessionals.map((pp: any) => (
+                      <div key={pp.id} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-700">{pp.professional?.fullName || pp.professional?.businessName || pp.professional?.email}</span>
+                        <span className="text-xs font-medium text-rose-600">Pro declined</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {quoteOverdueBlocker && (
             <div className="mt-4 space-y-4 rounded-2xl border border-rose-200 bg-[rgba(255,250,240,0.78)] p-4">
@@ -1068,6 +1225,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         isOpen={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         professional={detailsPro}
+      />
+
+      <QuoteBreakdownModal
+        isOpen={quoteModalOpen}
+        onClose={() => setQuoteModalOpen(false)}
+        quote={quoteModalPro}
       />
     </div>
   );

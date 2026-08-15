@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-15-7582c249",
+    "date": "2026-08-15T17:13:01+08:00",
+    "title": "refactor(projects): consolidate professionals tab into overview",
+    "summary": "refactor(projects): consolidate professionals tab into overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "7582c249",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/quote-breakdown-modal.tsx",
+      "apps/web/src/lib/client-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-08-15-c8d187ef",
     "date": "2026-08-15T13:36:34+08:00",
     "title": "refactor(financials): drop escrow statement modal, inline running balance",
