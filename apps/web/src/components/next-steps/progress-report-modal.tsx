@@ -858,7 +858,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                     <button
                       type="button"
                       onClick={requestClose}
-                      className="ml-1 h-8 w-8 rounded-full border border-[#D4C8A0] text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
+                      className="ml-1 h-8 w-8 rounded-full border border-red-500 bg-red-500 text-lg font-semibold text-white transition hover:bg-red-600"
                       aria-label="Close"
                       title="Close"
                     >
@@ -886,7 +886,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       <button
                         type="button"
                         onClick={() => setShowDetails(true)}
-                        className="h-8 w-8 rounded-full border border-emerald-300 bg-emerald-50 text-lg font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                        className="h-8 w-8 rounded-full border border-blue-500 bg-blue-500 text-lg font-semibold text-white transition hover:bg-blue-600"
                         aria-label="Show details"
                       >
                         i
@@ -1008,10 +1008,10 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
-                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white/90 text-lg font-semibold text-slate-700 transition hover:bg-[#F5EEDE]"
+                  className="absolute right-4 top-4 z-20 h-8 w-8 rounded-full border border-red-500 bg-red-500 text-lg font-semibold text-white transition hover:bg-red-600"
                   aria-label="Hide details"
                 >
-                  x
+                  ×
                 </button>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">

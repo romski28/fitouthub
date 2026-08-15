@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-930d09f7",
+    "date": "2026-08-15T13:00:32+08:00",
+    "title": "style(next-steps): blue info button, red close buttons",
+    "summary": "style(next-steps): blue info button, red close buttons",
+    "areas": [
+      "web"
+    ],
+    "commit": "930d09f7",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-627ff848",
     "date": "2026-08-15T12:56:16+08:00",
     "title": "fix(next-steps): scrollable client review thread, visible scrollbar",
