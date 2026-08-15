@@ -54,21 +54,12 @@ interface Summary {
   transactions: Transaction[];
 }
 
-interface LedgerEntry {
+interface EscrowLedgerEntry {
   id: string;
+  transactionId?: string | null;
   direction: string;
   amount: number | string;
-  currency: string;
-  description: string | null;
   createdAt: string;
-  transaction: { type: string; description: string } | null;
-}
-
-interface Statement {
-  ledger: LedgerEntry[];
-  balance: number | string;
-  required: number | string;
-  approvedBudget: number | string;
 }
 
 interface PaymentPlanMilestone {
@@ -331,8 +322,7 @@ export default function ProjectFinancialsCard({
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-  const [showStatement, setShowStatement] = useState(false);
-  const [statement, setStatement] = useState<Statement | null>(null);
+  const [escrowLedger, setEscrowLedger] = useState<EscrowLedgerEntry[]>([]);
   const [projectEscrowHeld, setProjectEscrowHeld] = useState<number | string>(0);
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
   const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
@@ -1548,20 +1538,34 @@ export default function ProjectFinancialsCard({
     }
   };
 
-  const handleViewStatement = async () => {
-    try {
-      setShowStatement(true);
-      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/statement`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error('Failed to load statement');
-      const data: Statement = await res.json();
-      setStatement(data);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load statement');
-      setShowStatement(false);
+  useEffect(() => {
+    if (!projectId || !accessToken) return;
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/financial/project/${projectId}/statement`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { ledger?: EscrowLedgerEntry[] } | null) => {
+        if (!cancelled && data && Array.isArray(data.ledger)) {
+          setEscrowLedger(data.ledger);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, accessToken]);
+
+  const ledgerBalanceByTxId = useMemo(() => {
+    const map = new Map<string, number>();
+    let running = 0;
+    for (const entry of escrowLedger) {
+      const amt = typeof entry.amount === 'string' ? parseFloat(entry.amount) : Number(entry.amount || 0);
+      running += entry.direction === 'credit' ? amt : -amt;
+      if (entry.transactionId) map.set(entry.transactionId, running);
     }
-  };
+    return map;
+  }, [escrowLedger]);
 
   const cashflow = useMemo(() => {
     const fallbackContractValue =
@@ -1644,12 +1648,6 @@ export default function ProjectFinancialsCard({
       <div className="p-5 border-b border-[rgba(120,53,15,0.12)] flex items-start justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Project Financials</h2>
-          <button
-            onClick={handleViewStatement}
-            className="mt-1 text-xs text-[#b94e2d] hover:text-[#8b3a1e] transition"
-          >
-            View Statement
-          </button>
         </div>
         <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
           {(resolvedRole === 'client' || resolvedRole === 'admin') && originalBudget && (
@@ -1746,6 +1744,11 @@ export default function ProjectFinancialsCard({
                       {tx._isUpcoming ? tx.description : (tx.type === 'milestone_foh_allocation_cap' ? 'Materials Wallet Transfer' : getTypeLabel(tx.type))}
                       {' · '}
                       <span>{formatHKD(tx.amount)}</span>
+                      {ledgerBalanceByTxId.has(tx.id) && (
+                        <span className="ml-2 text-xs font-normal text-slate-500">
+                          Balance {formatHKD(ledgerBalanceByTxId.get(tx.id) as number)}
+                        </span>
+                      )}
                       {tx._isUpcoming && <span className="ml-1.5 text-xs font-medium text-[#FF7F50]">Upcoming</span>}
                     </p>
                     {!tx._isUpcoming && (
@@ -2148,74 +2151,6 @@ export default function ProjectFinancialsCard({
         </div>
       )}
 
-      {/* Escrow Statement Modal */}
-      {showStatement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowStatement(false)}>
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Escrow Statement</h3>
-                {statement && (
-                  <p className="text-sm text-slate-600 mt-1">
-                    Current Balance: <span className="font-semibold text-emerald-600">{formatHKD(statement.balance)}</span>
-                    {' • '}
-                    Required: <span className="font-semibold">{formatHKD(statement.required)}</span>
-                  </p>
-                )}
-              </div>
-              <button onClick={() => setShowStatement(false)} className="text-slate-400 hover:text-slate-600">
-                ✕
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              {!statement ? (
-                <p className="text-sm text-slate-500">Loading statement...</p>
-              ) : statement.ledger.length === 0 ? (
-                <p className="text-sm text-slate-500">No ledger entries yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {statement.ledger.map((entry, idx) => {
-                    const isCredit = entry.direction === 'credit';
-                    const runningBalance = statement.ledger
-                      .slice(0, idx + 1)
-                      .reduce((acc, e) => {
-                        const amt = typeof e.amount === 'string' ? parseFloat(e.amount) : e.amount;
-                        return acc + (e.direction === 'credit' ? amt : -amt);
-                      }, 0);
-                    return (
-                      <div key={entry.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50">
-                        <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          isCredit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                        }`}>
-                          {isCredit ? '+' : '−'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900">{entry.description || entry.transaction?.description || '—'}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{new Date(entry.createdAt).toLocaleString('en-HK')}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`text-sm font-semibold ${isCredit ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {isCredit ? '+' : '−'}{formatHKD(entry.amount)}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-0.5">Balance: {formatHKD(runningBalance)}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setShowStatement(false)}
-                className="px-4 py-2 bg-slate-600 text-white rounded text-sm font-medium hover:bg-slate-700 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

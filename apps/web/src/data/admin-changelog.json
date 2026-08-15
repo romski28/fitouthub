@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-c8d187ef",
+    "date": "2026-08-15T13:36:34+08:00",
+    "title": "refactor(financials): drop escrow statement modal, inline running balance",
+    "summary": "refactor(financials): drop escrow statement modal, inline running balance",
+    "areas": [
+      "web"
+    ],
+    "commit": "c8d187ef",
+    "files": [
+      "apps/web/src/components/project-financials-card.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-930d09f7",
     "date": "2026-08-15T13:00:32+08:00",
     "title": "style(next-steps): blue info button, red close buttons",
