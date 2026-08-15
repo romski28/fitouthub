@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-15-80269a8a",
+    "date": "2026-08-15T21:28:18+08:00",
+    "title": "fix(professional-details-modal): restore hook order to fix React error 310",
+    "summary": "fix(professional-details-modal): restore hook order to fix React error 310",
+    "areas": [
+      "web"
+    ],
+    "commit": "80269a8a",
+    "files": [
+      "apps/web/src/components/professional-details-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-15-5caa71a6",
     "date": "2026-08-15T21:21:55+08:00",
     "title": "fix(create-project): guard against accidental duplicate projects",

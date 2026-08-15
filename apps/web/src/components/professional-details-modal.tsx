@@ -63,6 +63,14 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  const zoneCodes = useMemo(() => {
+    const codes = new Set<string>();
+    for (const cov of professional?.regionCoverage || []) {
+      if (cov?.zone?.code) codes.add(cov.zone.code.toUpperCase());
+    }
+    return Array.from(codes);
+  }, [professional]);
+
   if (!professional) return null;
 
   const normalizedProfileImages = resolveMediaAssetUrls(professional.profileImages || []);
@@ -70,13 +78,6 @@ export function ProfessionalDetailsModal({ isOpen, onClose, professional, onSele
   const referenceProjectCount = professional.referenceProjects?.length || 0;
   const persuasiveHighlights = buildPersuasiveHighlights(professional);
   const roleIcon = professional.professionType === 'company' ? '🏢' : professional.professionType === 'reseller' ? '📦' : '👷';
-  const zoneCodes = useMemo(() => {
-    const codes = new Set<string>();
-    for (const cov of professional.regionCoverage || []) {
-      if (cov?.zone?.code) codes.add(cov.zone.code.toUpperCase());
-    }
-    return Array.from(codes);
-  }, [professional.regionCoverage]);
 
   const drawerContent = (
     <>
