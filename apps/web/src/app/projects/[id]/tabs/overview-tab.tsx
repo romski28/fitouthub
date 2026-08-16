@@ -187,12 +187,27 @@ const getExtraStatusClasses = (value?: string) => {
   return 'border-amber-300 bg-amber-50 text-amber-700';
 };
 
-const projectStatusBadge: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
-  approved: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40',
-  rejected: 'bg-rose-500/20 text-rose-200 border border-rose-500/40',
-  withdrawn: 'bg-slate-700 text-slate-300 border border-slate-600',
-  awarded: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
+const CHIP_TONES = {
+  neutral: 'border-slate-200 bg-white text-slate-500',
+  waiting: 'border-amber-200 bg-amber-100 text-amber-900',
+  active: 'border-sky-200 bg-sky-100 text-sky-900',
+  done: 'border-teal-200 bg-teal-100 text-teal-900',
+  negative: 'border-rose-200 bg-rose-100 text-rose-900',
+} as const;
+
+const projectStatusChipOf = (status?: string): { label: string; cls: string } => {
+  const normalized = String(status || 'pending').toLowerCase();
+  const label = String(status || 'pending').replace(/_/g, ' ');
+  if (['awarded', 'approved', 'completed', 'started'].includes(normalized)) {
+    return { label, cls: CHIP_TONES.done };
+  }
+  if (['quoted', 'counter_requested'].includes(normalized)) {
+    return { label, cls: CHIP_TONES.active };
+  }
+  if (['withdrawn', 'rejected'].includes(normalized)) {
+    return { label, cls: CHIP_TONES.negative };
+  }
+  return { label, cls: CHIP_TONES.waiting };
 };
 
 type TimelineMetric = {
@@ -364,6 +379,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   };
 
   const projectStatus = project.status ?? 'pending';
+  const projectStatusChip = projectStatusChipOf(projectStatus);
   const hasAiInsights = Boolean(
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
@@ -433,23 +449,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   const quotationStatusOf = (pp: any): { label: string; cls: string } => {
     const status = String(pp?.status || '').toLowerCase();
-    if (status === 'awarded') return { label: 'Quote: Awarded', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
-    if (status === 'rejected') return { label: 'Quote: Pro declined', cls: 'border-rose-300 bg-rose-50 text-rose-700' };
-    if (status === 'declined') return { label: 'Quote: Not awarded', cls: 'border-slate-300 bg-slate-100 text-slate-600' };
-    if (hasSubmittedQuote(pp)) return { label: 'Quote: Received', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
-    return { label: 'Quote: Awaiting', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
+    if (status === 'awarded') return { label: 'Quote: Awarded', cls: CHIP_TONES.done };
+    if (status === 'rejected') return { label: 'Quote: Pro declined', cls: CHIP_TONES.negative };
+    if (status === 'declined') return { label: 'Quote: Not awarded', cls: CHIP_TONES.neutral };
+    if (hasSubmittedQuote(pp)) return { label: 'Quote: Received', cls: CHIP_TONES.active };
+    return { label: 'Quote: Awaiting', cls: CHIP_TONES.waiting };
   };
 
   const siteStatusOf = (pp: any): { label: string; cls: string } => {
     const req = (siteAccessRequests ?? []).find(
       (r: any) => r?.professional?.id && r.professional.id === pp?.professional?.id,
     );
-    if (!req) return { label: 'Site: Not requested', cls: 'border-slate-300 bg-slate-50 text-slate-500' };
+    if (!req) return { label: 'Site: Not requested', cls: CHIP_TONES.neutral };
     const status = String(req.status || '').toLowerCase();
-    if (status === 'pending') return { label: 'Site: Requested', cls: 'border-amber-300 bg-amber-50 text-amber-700' };
-    if (status === 'approved_visit_scheduled' || status === 'approved_no_visit') return { label: 'Site: Accepted', cls: 'border-sky-300 bg-sky-50 text-sky-700' };
-    if (status === 'visited') return { label: 'Site: Completed', cls: 'border-emerald-300 bg-emerald-50 text-emerald-700' };
-    return { label: 'Site: Not requested', cls: 'border-slate-300 bg-slate-50 text-slate-500' };
+    if (status === 'pending') return { label: 'Site: Requested', cls: CHIP_TONES.waiting };
+    if (status === 'approved_visit_scheduled' || status === 'approved_no_visit') return { label: 'Site: Accepted', cls: CHIP_TONES.active };
+    if (status === 'visited') return { label: 'Site: Completed', cls: CHIP_TONES.done };
+    return { label: 'Site: Not requested', cls: CHIP_TONES.neutral };
   };
 
   const proDeclinedProfessionals = (project.professionals ?? []).filter(
@@ -720,8 +736,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.88)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
-                {projectStatus.replace('_', ' ')}
+              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${projectStatusChip.cls}`}>
+                {projectStatusChip.label}
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 {hasOutstandingQuotes && onCompareAward && (
@@ -769,11 +785,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         <span className="truncate">{row.professionalName}</span>
                       </button>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${quoteChip.cls}`}>
-                          {quoteChip.label}
-                        </span>
                         <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${siteChip.cls}`}>
                           {siteChip.label}
+                        </span>
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${quoteChip.cls}`}>
+                          {quoteChip.label}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 sm:justify-end">
