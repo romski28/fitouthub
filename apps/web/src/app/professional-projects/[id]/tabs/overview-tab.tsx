@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
+import { InspectSiteModal } from '@/components/next-steps/inspect-site-modal';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseTotal,
@@ -11,6 +12,17 @@ import {
 } from '@/lib/quote-breakdown';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
+
+interface SiteInspectionSummary {
+  requestStatus?: string;
+  rescheduleRequired?: boolean | null;
+  requiresReschedule?: boolean | null;
+  visitScheduledFor?: string | null;
+  visitScheduledAt?: string | null;
+  formattedVisitedAt?: string | null;
+  visitDetails?: string | null;
+  siteInspectionAvailableOn?: string | null;
+}
 
 interface OverviewTabProps {
   tab?: string;
@@ -64,6 +76,9 @@ interface OverviewTabProps {
   onOpenAccessSchedule?: () => void;
   accessToken?: string | null;
   projectId?: string;
+  siteAccessStatus?: SiteInspectionSummary | null;
+  siteAccessLoading?: boolean;
+  siteAccessError?: string | null;
 }
 
 const formatDateTime = (value?: string) => {
@@ -151,6 +166,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onOpenAccessSchedule,
   accessToken,
   projectId,
+  siteAccessStatus,
+  siteAccessLoading,
+  siteAccessError,
 }) => {
   const hasQuoted = Boolean(project.quotedAt);
   const isDeclinedOrRejected = project.status === 'declined' || project.status === 'rejected';
@@ -158,6 +176,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const isEmergencyProject = project.project.isEmergency === true;
   const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
   const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({ 'project-overview': true });
+  const [showInspectModal, setShowInspectModal] = useState(false);
 
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
@@ -169,6 +188,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     ? project.project.mimoProjectExtras
     : [];
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
+
+  const sarStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
+  const rescheduleRequired =
+    siteAccessStatus?.rescheduleRequired === true ||
+    siteAccessStatus?.requiresReschedule === true ||
+    (siteAccessStatus?.visitDetails || '').includes('Site availability changed to');
+  const isVisited = sarStatus === 'visited';
+  const isBooked = !rescheduleRequired && ['approved_visit_scheduled', 'approved_no_visit'].includes(sarStatus);
+  const isPending = sarStatus === 'pending' && !rescheduleRequired;
+  const isMissed = sarStatus === 'missed';
+  const isSkipped = sarStatus === 'skipped';
+  const offeredDate = siteAccessStatus?.siteInspectionAvailableOn || '';
+  const scheduledSlot = siteAccessStatus?.visitScheduledAt || siteAccessStatus?.visitScheduledFor || '';
 
   const [siteAddress, setSiteAddress] = useState<{
     buildingName?: string | null;
@@ -199,8 +231,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }, [fetchAddress]);
 
   return (
-    <AccordionGroup>
-      {/* Project Overview */}
+    <>
+      <AccordionGroup>
+        {/* Project Overview */}
       <AccordionItem
         id="project-overview"
         title="Project Overview"
@@ -256,6 +289,79 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </p>
           )}
         </div>
+      </AccordionItem>
+
+      {/* Site Inspection */}
+      <AccordionItem
+        id="site-inspection"
+        title="Site Inspection"
+        isOpen={expandedAccordions['site-inspection'] !== false}
+        onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+      >
+        {siteAccessError && (
+          <div className="rounded-2xl border border-rose-400 bg-rose-50 px-3 py-2 text-sm text-rose-700 mb-3">
+            {siteAccessError}
+          </div>
+        )}
+        {siteAccessLoading ? (
+          <p className="text-sm text-slate-600">Loading site access status...</p>
+        ) : !siteAccessStatus ? (
+          <p className="text-sm text-slate-600">No site access data</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
+              {isVisited ? (
+                <p className="font-semibold text-emerald-700">
+                  ✅ Site inspection completed
+                  {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
+                </p>
+              ) : rescheduleRequired ? (
+                <p className="font-semibold text-amber-700">The client requested a reschedule. Please select a new slot.</p>
+              ) : isBooked ? (
+                <p className="font-semibold text-emerald-700">
+                  ✅ Inspection booked
+                  {scheduledSlot && ` — ${scheduledSlot}`}
+                </p>
+              ) : isPending ? (
+                <p className="text-slate-700">
+                  Awaiting client approval
+                  {scheduledSlot && ` — ${scheduledSlot}`}
+                </p>
+              ) : isMissed ? (
+                <p className="text-slate-600">
+                  ⏰ Inspection missed — the site inspection date has passed and you did not book or skip a visit.
+                </p>
+              ) : isSkipped ? (
+                <p className="text-slate-600">
+                  ↩️ Site inspection skipped — you chose not to attend.
+                </p>
+              ) : offeredDate ? (
+                <p className="font-semibold text-slate-900">Site inspection — {formatDate(offeredDate)}</p>
+              ) : (
+                <p className="text-slate-600">No inspection date has been shared by the client yet.</p>
+              )}
+            </div>
+
+            {isVisited && siteAccessStatus.visitDetails && (
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Notes</p>
+                <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowInspectModal(true)}
+              className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+            >
+              {rescheduleRequired
+                ? 'Reschedule inspection'
+                : isBooked || isVisited
+                  ? 'Manage inspection'
+                  : 'Book inspection'}
+            </button>
+          </div>
+        )}
       </AccordionItem>
 
       {mimoExtras.length > 0 && (
@@ -365,6 +471,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           />
         </AccordionItem>
       )}
-    </AccordionGroup>
+      </AccordionGroup>
+
+      <InspectSiteModal
+        isOpen={showInspectModal}
+        onClose={() => setShowInspectModal(false)}
+        projectId={projectId}
+      />
+    </>
   );
 };

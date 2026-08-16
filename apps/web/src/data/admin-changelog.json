@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-16-ad234e76",
+    "date": "2026-08-16T20:58:38+08:00",
+    "title": "refactor(overview): merge site inspection into professional overview",
+    "summary": "refactor(overview): merge site inspection into professional overview",
+    "areas": [
+      "web"
+    ],
+    "commit": "ad234e76",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/lib/professional-workflow.ts"
+    ]
+  },
+  {
     "id": "2026-08-16-56569c62",
     "date": "2026-08-16T20:17:31+08:00",
     "title": "refactor(site-access): collapse tab to a single status line + notes",

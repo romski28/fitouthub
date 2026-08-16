@@ -13,7 +13,6 @@ import toast from 'react-hot-toast';
 import { ProjectTabs } from '@/components/project-tabs';
 import ProjectInfoCard from '@/components/project-info-card';
 import { OverviewTab } from './tabs/overview-tab';
-import { SiteAccessTab } from './tabs/site-access-tab';
 import { FinancialsTab } from './tabs/financials-tab';
 import { ScheduleTab } from './tabs/schedule-tab';
 import { ChatTab } from './tabs/chat-tab';
@@ -391,13 +390,9 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       const inContractWorkflow = hasProfessionalContractWorkflow(project);
-      // If on site-access tab but project is awarded, switch to schedule
-      if (activeTab === 'site-access' && inContractWorkflow) {
-        setActiveTab('schedule');
-      }
-      // If on schedule tab but project is not awarded, switch to site-access
+      // If on schedule tab but project is not awarded, switch to overview
       if (activeTab === 'schedule' && !inContractWorkflow) {
-        setActiveTab('site-access');
+        setActiveTab('overview');
       }
     }
   }, [activeTab, project]);
@@ -413,8 +408,6 @@ export default function ProjectDetailPage() {
     if (inContractWorkflow) {
       allowedTabs.add('contract');
       allowedTabs.add('schedule');
-    } else {
-      allowedTabs.add('site-access');
     }
 
     setActiveTab(allowedTabs.has(requestedTab) ? requestedTab : 'overview');
@@ -1667,16 +1660,6 @@ export default function ProjectDetailPage() {
                     { id: 'media', label: 'Files', icon: '📁' },
                   ];
                   
-                  // Show Site Access tab only during bidding stage (not awarded)
-                  if (!inContractWorkflow) {
-                    tabsArray.push({ id: 'site-access', label: 'Access & Schedule', icon: '📍' });
-                  }
-                  
-                  // Show Schedule tab only when awarded
-                  if (inContractWorkflow) {
-                    tabsArray.push({ id: 'schedule', label: 'Schedule', icon: '📅' });
-                  }
-                  
                   // Always show financials and chat
                   tabsArray.push({ id: 'financials', label: 'Financials', icon: '💳' });
                   tabsArray.push({ id: 'ac-plans', label: 'AC Plans', icon: '❄️' });
@@ -1690,42 +1673,11 @@ export default function ProjectDetailPage() {
               project={project}
               onOpenQuoteModal={() => setShowQuoteModal(true)}
               onKeepCurrentQuote={handleKeepCurrentQuote}
-              onOpenAccessSchedule={() => setActiveTab('site-access')}
               accessToken={accessToken || null}
-              projectId={project?.project?.id}
-            />
-
-            <SiteAccessTab
-              tab="site-access"
               projectId={project?.project?.id}
               siteAccessStatus={siteAccessStatus}
               siteAccessLoading={siteAccessLoading}
               siteAccessError={siteAccessError}
-              siteVisits={siteVisits}
-              siteVisitLoading={siteVisitLoading}
-              siteVisitError={siteVisitError}
-              expandedAccordions={expandedAccordions}
-              onToggleAccordion={toggleAccordion}
-              onRequestSiteAccess={handleRequestSiteAccess}
-              siteAccessRequestDate={siteAccessRequestDate}
-              onUpdateSiteAccessRequestDate={setSiteAccessRequestDate}
-              siteAccessRequestTime={siteAccessRequestTime}
-              onUpdateSiteAccessRequestTime={setSiteAccessRequestTime}
-              onRequestSiteVisit={handleRequestSiteVisit}
-              onRespondSiteVisit={handleRespondSiteVisit}
-              onCompleteSiteVisit={handleCompleteSiteVisit}
-              siteAccessActionLoading={siteAccessActionLoading}
-              siteVisitActionLoading={siteVisitActionLoading}
-              visitDate={visitDate}
-              onUpdateVisitDate={setVisitDate}
-              visitTime={visitTime}
-              onUpdateVisitTime={setVisitTime}
-              visitRequestNotes={visitRequestNotes}
-              onUpdateVisitRequestNotes={setVisitRequestNotes}
-              visitNotes={visitNotes}
-              onUpdateVisitNotes={setVisitNotes}
-              visitResponseNotes={visitResponseNotes}
-              onUpdateVisitResponseNotes={setVisitResponseNotes}
             />
 
             <ScheduleTab
