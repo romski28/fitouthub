@@ -43,6 +43,13 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
   const { state } = useNextStepModal();
   const projectId = projectIdProp || state.projectId || "";
 
+  const mode = (() => {
+    const key = state.actionKey || '';
+    if (key === 'REQUEST_SITE_ACCESS') return 'book';
+    if (key === 'REQUEST_SITE_RESCHEDULE') return 'reschedule-propose';
+    return 'manage';
+  })();
+
   const [status, setStatus] = useState<SiteAccessStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,7 +266,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
   const bookedTimes = new Set(status?.bookedInspectionTimes || []);
   const reqStatus = (status?.requestStatus || 'none').toLowerCase();
   const needsReschedule = status?.rescheduleRequired === true || status?.requiresReschedule === true;
-  const showBookingForm = !status?.requestId || needsReschedule;
+  const showBookingForm = mode === 'reschedule-propose' || !status?.requestId || needsReschedule;
   const canRequest = Boolean(offeredDate && selectedTime);
 
   const handleRequestSlot = async () => {
@@ -275,11 +282,31 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to request slot');
       }
-      toast.success('Inspection slot requested');
+      toast.success(mode === 'reschedule-propose' ? 'New time proposed to the client' : 'Inspection slot requested');
       setSelectedTime('');
+      state.onCompleted?.({ projectId, actionKey: state.actionKey });
       fetchStatus(); // refresh
     } catch (err: any) {
       toast.error(err.message || 'Failed to request slot');
+    } finally {
+      setRequestingSlot(false);
+    }
+  };
+
+  const handleSkipVisit = async () => {
+    if (!projectId || !accessToken) return;
+    setRequestingSlot(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/site-access/skip`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to skip site visit');
+      toast.success('Site visit skipped. You can now submit your quote.');
+      state.onCompleted?.({ projectId, actionKey: state.actionKey });
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed');
     } finally {
       setRequestingSlot(false);
     }
@@ -296,7 +323,11 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
           <h2 className="text-lg font-bold text-slate-900">
-            {state.modalContent?.title || "Inspect site"}
+            {mode === 'book'
+              ? 'Book a site inspection slot'
+              : mode === 'reschedule-propose'
+                ? 'Request a new inspection time'
+                : state.modalContent?.title || 'Inspect site'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
         </div>
@@ -361,8 +392,24 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                     disabled={requestingSlot || !canRequest}
                     className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
                   >
-                    {requestingSlot ? 'Requesting...' : needsReschedule ? 'Request Reschedule' : 'Request Slot'}
+                    {requestingSlot
+                      ? 'Requesting...'
+                      : mode === 'reschedule-propose'
+                        ? 'Propose new time'
+                        : needsReschedule
+                          ? 'Request Reschedule'
+                          : 'Request Slot'}
                   </button>
+                  {mode === 'book' && (
+                    <button
+                      type="button"
+                      onClick={handleSkipVisit}
+                      disabled={requestingSlot}
+                      className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+                    >
+                      Skip inspection
+                    </button>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-slate-500 italic">Waiting for client to offer a site inspection date.</p>

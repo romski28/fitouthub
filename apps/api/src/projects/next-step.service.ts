@@ -577,9 +577,35 @@ export class NextStepService {
         !isProfessional.siteVisitedAt
       ) {
         const inspectStep = await this.buildInspectSiteStep(isProfessional.id);
-        availableConfigSteps = inspectStep
-          ? [{ ...inspectStep, isPrimary: true }]
-          : [quoteStep, declineStep];
+        if (inspectStep) {
+          availableConfigSteps = [{ ...inspectStep, isPrimary: true }];
+
+          // Pro-initiated reschedule — offer a secondary action when a slot is booked
+          const bookedSlot = await this.prisma.siteAccessRequest.findFirst({
+            where: {
+              projectProfessionalId: isProfessional.id,
+              status: 'approved_visit_scheduled',
+            },
+            select: { id: true },
+          });
+          if (bookedSlot) {
+            availableConfigSteps.push({
+              ...createSyntheticPrimaryStep(
+                'REQUEST_SITE_RESCHEDULE',
+                'Request reschedule',
+                true,
+                role,
+                effectiveStage,
+                'Propose a new inspection time for the client to approve.',
+              ),
+              isPrimary: false,
+              isElective: true,
+              displayOrder: 2,
+            } as any);
+          }
+        } else {
+          availableConfigSteps = [quoteStep, declineStep];
+        }
       }
       // If client set inspection date — site access loop
       else if (inspectionDate) {

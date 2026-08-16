@@ -6757,17 +6757,24 @@ Please review the project details and respond with your quote or decline the inv
       const needsRebook = Boolean(
         existingRequest.visitDetails && existingRequest.visitDetails.includes('Site availability changed to'),
       );
-      if (!needsRebook) {
+      // Pro-initiated reschedule: an approved slot can be superseded by a new request.
+      const isApprovedReschedule = existingRequest.status === 'approved_visit_scheduled';
+      if (!needsRebook && !isApprovedReschedule) {
         return {
           success: true,
           request: existingRequest,
           message: 'A site access request is already pending',
         };
       }
-      // Cancel the stale pending request so the new one can take its place.
+      // Cancel the previous request so the new one can take its place.
       await this.prisma.siteAccessRequest.update({
         where: { id: existingRequest.id },
-        data: { status: 'denied', reasonDenied: existingRequest.visitDetails },
+        data: {
+          status: 'denied',
+          reasonDenied: needsRebook
+            ? existingRequest.visitDetails
+            : 'Rescheduled by professional',
+        },
       });
     }
 

@@ -1,6 +1,7 @@
 export const professionalActionTabMap: Record<string, string> = {
   REQUEST_SITE_ACCESS: 'site-access',
   INSPECT_SITE: 'site-access',
+  REQUEST_SITE_RESCHEDULE: 'site-access',
   DECLINE_PROJECT: 'overview',
   SUBMIT_QUOTE: 'overview',
   ATTEND_SITE_VISIT: 'site-access',

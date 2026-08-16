@@ -19,7 +19,6 @@ import { ReviewMaterialsClaimModal } from './review-materials-claim-modal';
 import { RespondMaterialsClaimModal } from './respond-materials-claim-modal';
 import { StartOnSiteModal } from './start-on-site-modal';
 import { ProgressReportModal } from './progress-report-modal';
-import { RequestSiteAccessModal } from './request-site-access-modal';
 import { ClientSiteAccessModal } from './client-site-access-modal';
 import { InspectSiteModal } from './inspect-site-modal';
 import { DeclineProjectModal } from './decline-project-modal';
@@ -283,16 +282,6 @@ export function ModalDispatcher({
     );
   }
 
-  if (modalType === 'request-site-access') {
-    return (
-      <RequestSiteAccessModal
-        isOpen={state.isOpen}
-        isLoading={state.isLoading}
-        onClose={closeModal}
-      />
-    );
-  }
-
   if (modalType === 'book-mimo-survey') {
     return (
       <BookMimoSurveyModal
@@ -346,7 +335,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'request-site-access' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' | 'review-payment-request' | 'ux-survey' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' | 'review-payment-request' | 'ux-survey' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -404,7 +393,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'progress-report';
   }
 
-  if (actionKey === 'INSPECT_SITE') {
+  if (['INSPECT_SITE', 'REQUEST_SITE_ACCESS', 'REQUEST_SITE_RESCHEDULE'].includes(actionKey)) {
     return 'inspect-site';
   }
 
@@ -414,10 +403,6 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (actionKey === 'SITE_INSPECTION_EXPIRED') {
     return 'site-inspection-expired';
-  }
-
-  if (actionKey === 'REQUEST_SITE_ACCESS') {
-    return 'request-site-access';
   }
 
   if (['CONFIRM_SITE_VISIT', 'MANAGE_SITE_ACCESS'].includes(actionKey)) {
