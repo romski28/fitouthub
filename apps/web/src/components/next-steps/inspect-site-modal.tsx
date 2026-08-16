@@ -516,7 +516,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
                 type="button"
                 onClick={handleMarkVisited}
                 disabled={markingVisited || !visitNotes.trim()}
-                className="w-full rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-[#F5EEDE] disabled:opacity-50 transition"
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
               >
                 {markingVisited ? "Saving..." : "Save visit notes"}
               </button>

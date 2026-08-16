@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-16-0edac788",
+    "date": "2026-08-16T12:45:56+08:00",
+    "title": "style(inspect-site): green Save visit notes button",
+    "summary": "style(inspect-site): green Save visit notes button",
+    "areas": [
+      "web"
+    ],
+    "commit": "0edac788",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-16-0c713d2a",
     "date": "2026-08-16T12:23:11+08:00",
     "title": "feat(inspect-site): confirm client scan to pro without closing modal",
