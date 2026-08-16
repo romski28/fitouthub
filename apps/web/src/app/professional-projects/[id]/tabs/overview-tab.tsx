@@ -309,12 +309,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <p className="text-sm text-slate-600">No site access data</p>
         ) : (
           <div className="space-y-3">
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
+            <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
               {isVisited ? (
-                <p className="font-semibold text-emerald-700">
-                  ✅ Site inspection completed
-                  {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
-                </p>
+                <>
+                  <p className="font-semibold text-emerald-700">
+                    ✅ Site inspection completed
+                    {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
+                  </p>
+                  {siteAccessStatus.visitDetails && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Notes</p>
+                      <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
+                    </div>
+                  )}
+                </>
               ) : rescheduleRequired ? (
                 <p className="font-semibold text-amber-700">The client requested a reschedule. Please select a new slot.</p>
               ) : isBooked ? (
@@ -342,24 +350,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            {isVisited && siteAccessStatus.visitDetails && (
-              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Notes</p>
-                <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
-              </div>
+            {!isVisited && (
+              <button
+                type="button"
+                onClick={() => setShowInspectModal(true)}
+                className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+              >
+                {rescheduleRequired
+                  ? 'Reschedule inspection'
+                  : isBooked
+                    ? 'Manage inspection'
+                    : 'Book inspection'}
+              </button>
             )}
-
-            <button
-              type="button"
-              onClick={() => setShowInspectModal(true)}
-              className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
-            >
-              {rescheduleRequired
-                ? 'Reschedule inspection'
-                : isBooked || isVisited
-                  ? 'Manage inspection'
-                  : 'Book inspection'}
-            </button>
           </div>
         )}
       </AccordionItem>

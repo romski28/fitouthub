@@ -580,15 +580,15 @@ export class NextStepService {
         if (inspectStep) {
           availableConfigSteps = [{ ...inspectStep, isPrimary: true }];
 
-          // Pro-initiated reschedule — offer a secondary action when a slot is booked
-          const bookedSlot = await this.prisma.siteAccessRequest.findFirst({
+          // Pro-initiated reschedule — offer a secondary action when a slot is requested or booked
+          const activeRequest = await this.prisma.siteAccessRequest.findFirst({
             where: {
               projectProfessionalId: isProfessional.id,
-              status: 'approved_visit_scheduled',
+              status: { in: ['pending', 'approved_visit_scheduled'] },
             },
             select: { id: true },
           });
-          if (bookedSlot) {
+          if (activeRequest) {
             availableConfigSteps.push({
               ...createSyntheticPrimaryStep(
                 'REQUEST_SITE_RESCHEDULE',
@@ -627,7 +627,7 @@ export class NextStepService {
           // Pro chose not to visit — go to quote
           availableConfigSteps = [quoteStep, declineStep];
         } else if (latestStatus === 'pending') {
-          // Awaiting approval
+          // Awaiting approval — allow reschedule while pending
           availableConfigSteps = [{
             ...createSyntheticPrimaryStep(
               'AWAIT_SITE_ACCESS_APPROVAL',
@@ -640,6 +640,19 @@ export class NextStepService {
             isPrimary: true,
             isElective: false,
             displayOrder: 0,
+          } as any,
+          {
+            ...createSyntheticPrimaryStep(
+              'REQUEST_SITE_RESCHEDULE',
+              'Request reschedule',
+              true,
+              role,
+              effectiveStage,
+              'Propose a new inspection time for the client to approve.',
+            ),
+            isPrimary: false,
+            isElective: true,
+            displayOrder: 2,
           } as any];
         } else if (
           !['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(latestStatus) ||

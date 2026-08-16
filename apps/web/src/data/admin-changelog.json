@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-16-17d2677b",
+    "date": "2026-08-16T21:46:24+08:00",
+    "title": "fix(site-inspection): surface reschedule elective and tidy completion UI",
+    "summary": "fix(site-inspection): surface reschedule elective and tidy completion UI",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "17d2677b",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-16-ad234e76",
     "date": "2026-08-16T20:58:38+08:00",
     "title": "refactor(overview): merge site inspection into professional overview",
