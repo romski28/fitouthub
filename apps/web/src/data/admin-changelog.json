@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-16-56569c62",
+    "date": "2026-08-16T20:17:31+08:00",
+    "title": "refactor(site-access): collapse tab to a single status line + notes",
+    "summary": "refactor(site-access): collapse tab to a single status line + notes",
+    "areas": [
+      "web"
+    ],
+    "commit": "56569c62",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/site-access-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-16-ff941758",
     "date": "2026-08-16T19:05:39+08:00",
     "title": "feat(site-inspection): merge booking modal and add pro reschedule",

@@ -205,139 +205,64 @@ export const SiteAccessTab: React.FC<SiteAccessTabProps> = (props) => {
             <p className="text-sm text-slate-600">No site access data</p>
           ) : (
             <div className="space-y-3">
-              {/* ── Panel 1: Status + Address ─────────────────── */}
-              {(offeredInspectionDate || showPendingReadOnlyPanel || isBooked || isMissed || isSkipped || isVisited || backendRescheduleRequired || (hasApprovedAccess && siteAccessStatus.siteAccessData)) && (
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
-                  {offeredInspectionDate && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Inspection Date</p>
-                      <p className="mt-1 font-semibold text-slate-900">{formatInspectionDate(offeredInspectionDate)}</p>
-                    </div>
-                  )}
+              {/* Single progressing status line */}
+              <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
+                {isVisited ? (
+                  <p className="font-semibold text-emerald-700">
+                    ✅ Site inspection completed
+                    {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
+                  </p>
+                ) : backendRescheduleRequired ? (
+                  <p className="font-semibold text-amber-700">
+                    The client requested a reschedule. Please select a new slot.
+                  </p>
+                ) : isBooked ? (
+                  <p className="font-semibold text-emerald-700">
+                    ✅ Inspection booked
+                    {scheduledInspectionSlot && ` — ${scheduledInspectionSlot}`}
+                  </p>
+                ) : isPending ? (
+                  <p className="text-slate-700">
+                    Awaiting client approval
+                    {scheduledInspectionSlot && ` — ${scheduledInspectionSlot}`}
+                  </p>
+                ) : isMissed ? (
+                  <p className="text-slate-600">
+                    ⏰ Inspection missed — the site inspection date has passed and you did not book or skip a visit.
+                  </p>
+                ) : isSkipped ? (
+                  <p className="text-slate-600">
+                    ↩️ Site inspection skipped — you chose not to attend.
+                  </p>
+                ) : offeredInspectionDate ? (
+                  <p className="font-semibold text-slate-900">
+                    Site inspection — {formatInspectionDate(offeredInspectionDate)}
+                  </p>
+                ) : (
+                  <p className="text-slate-600">No inspection date has been shared by the client yet.</p>
+                )}
+              </div>
 
-                  {showPendingReadOnlyPanel && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 text-slate-700">
-                        Awaiting client approval
-                        {siteAccessStatus.formattedScheduledSlot && (
-                          <> — <span className="font-semibold">{siteAccessStatus.formattedScheduledSlot}</span></>
-                        )}
-                      </p>
-                    </div>
-                  )}
-
-                  {isBooked && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 font-semibold text-emerald-700">
-                        ✅ Inspection booked
-                        {siteAccessStatus.formattedScheduledSlot && ` — ${siteAccessStatus.formattedScheduledSlot}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {isMissed && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 text-slate-600">
-                        ⏰ Inspection missed — the site inspection date has passed and you did not book or skip a visit.
-                      </p>
-                    </div>
-                  )}
-
-                  {isSkipped && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 text-slate-600">
-                        ↩️ Site inspection skipped — you chose not to attend.
-                      </p>
-                    </div>
-                  )}
-
-                  {isVisited && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 font-semibold text-emerald-700">
-                        ✅ Site inspection completed
-                        {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {backendRescheduleRequired && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</p>
-                      <p className="mt-1 text-amber-700">The client requested a reschedule. Please select a new slot.</p>
-                    </div>
-                  )}
-
-                  {/* SITE ADDRESS at bottom of panel */}
-                  {hasApprovedAccess && !backendRescheduleRequired && siteAccessStatus.siteAccessData && (
-                    <>
-                      <hr className="border-[rgba(120,53,15,0.14)]" />
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Site Address</p>
-                        <p className="mt-1 font-medium text-slate-900">
-                          {[siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel]
-                            .filter(Boolean)
-                            .join('/')
-                            .concat(
-                              [siteAccessStatus.siteAccessData.unitNumber, siteAccessStatus.siteAccessData.floorLevel].some(Boolean)
-                                ? ` ${siteAccessStatus.siteAccessData.addressFull}`
-                                : siteAccessStatus.siteAccessData.addressFull,
-                            )}
-                        </p>
-                        {siteAccessStatus.siteAccessData.postalCode?.trim() && (
-                          <p className="text-slate-600 mt-0.5">{siteAccessStatus.siteAccessData.postalCode.trim()}</p>
-                        )}
-                      </div>
-                      {siteAccessStatus.siteAccessData.accessDetails && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Access Details</p>
-                          <p className="text-slate-700">{siteAccessStatus.siteAccessData.accessDetails}</p>
-                        </div>
-                      )}
-                    </>
-                  )}
+              {/* Visit notes — surfaced only after completion */}
+              {isVisited && siteAccessStatus.visitDetails && (
+                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Notes</p>
+                  <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
                 </div>
               )}
 
-              {/* ── Panel 2: Visit completed + Notes ──────────── */}
-              {siteAccessStatus.formattedVisitedAt && (
-                <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4 text-sm space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Completed</p>
-                    <p className="mt-1 text-slate-700">{siteAccessStatus.formattedVisitedAt}</p>
-                  </div>
-                  {siteAccessStatus.visitDetails && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Visit Notes</p>
-                      <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {showRequestPanel && (
-                <div className="space-y-3 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] p-4">
-                  {offeredInspectionDate ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowInspectModal(true)}
-                      className="rounded-xl bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
-                    >
-                      {backendRescheduleRequired ? 'Reschedule inspection' : 'Book inspection'}
-                    </button>
-                  ) : (
-                    <p className="text-sm text-slate-600">No inspection date has been shared by the client yet.</p>
-                  )}
-                </div>
-              )}
-
-              {!isBooked && isNotAvailable && (
-                <p className="text-xs text-slate-600">Inspection date not available yet.</p>
-              )}
+              {/* Manage / Book / Reschedule — opens the full modal */}
+              <button
+                type="button"
+                onClick={() => setShowInspectModal(true)}
+                className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+              >
+                {backendRescheduleRequired
+                  ? 'Reschedule inspection'
+                  : isBooked || isVisited
+                    ? 'Manage inspection'
+                    : 'Book inspection'}
+              </button>
             </div>
           )}
         </AccordionItem>
