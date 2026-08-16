@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-16-57e62518",
+    "date": "2026-08-16T11:07:11+08:00",
+    "title": "style(overview): next-step button styling for chips and CTAs",
+    "summary": "style(overview): next-step button styling for chips and CTAs",
+    "areas": [
+      "web"
+    ],
+    "commit": "57e62518",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-16-460facc0",
     "date": "2026-08-16T10:42:12+08:00",
     "title": "style(overview): reorder chips and refine status colours",

@@ -188,11 +188,11 @@ const getExtraStatusClasses = (value?: string) => {
 };
 
 const CHIP_TONES = {
-  neutral: 'border-slate-200 bg-white text-slate-500',
-  waiting: 'border-amber-200 bg-amber-100 text-amber-900',
-  active: 'border-sky-200 bg-sky-100 text-sky-900',
-  done: 'border-teal-200 bg-teal-100 text-teal-900',
-  negative: 'border-rose-200 bg-rose-100 text-rose-900',
+  neutral: 'border-[#818589] bg-[#818589] text-white',
+  waiting: 'border-amber-500 bg-amber-500 text-white',
+  active: 'border-blue-600 bg-blue-600 text-white',
+  done: 'border-emerald-600 bg-emerald-600 text-white',
+  negative: 'border-rose-500 bg-rose-500 text-white',
 } as const;
 
 const projectStatusChipOf = (status?: string): { label: string; cls: string } => {
@@ -739,26 +739,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${projectStatusChip.cls}`}>
                 {projectStatusChip.label}
               </span>
-              <div className="flex flex-wrap items-center gap-2">
-                {hasOutstandingQuotes && onCompareAward && (
-                  <button
-                    type="button"
-                    onClick={onCompareAward}
-                    className="inline-flex items-center rounded-xl border border-emerald-300 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                  >
-                    Compare &amp; Award
-                  </button>
-                )}
-                {hasOutstandingSiteInspections && onOpenSiteInspection && (
-                  <button
-                    type="button"
-                    onClick={onOpenSiteInspection}
-                    className="inline-flex items-center rounded-xl border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
-                  >
-                    Site inspections
-                  </button>
-                )}
-              </div>
             </div>
           </div>
 
@@ -810,6 +790,31 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             )}
           </div>
+
+          {(onOpenSiteInspection || onCompareAward) && (
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              {onOpenSiteInspection && (
+                <button
+                  type="button"
+                  onClick={onOpenSiteInspection}
+                  disabled={!hasOutstandingSiteInspections}
+                  className="rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed"
+                >
+                  Site inspections
+                </button>
+              )}
+              {onCompareAward && (
+                <button
+                  type="button"
+                  onClick={onCompareAward}
+                  disabled={!hasOutstandingQuotes}
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-[#818589] disabled:hover:bg-[#818589] disabled:text-white text-white px-4 py-2 text-sm font-semibold transition text-center leading-tight disabled:cursor-not-allowed"
+                >
+                  Compare &amp; Award
+                </button>
+              )}
+            </div>
+          )}
 
           {(awardedProfessional || proDeclinedProfessionals.length > 0 || notAwardedProfessionals.length > 0) && (
             <div className="mt-4 space-y-3">
