@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-16-0c713d2a",
+    "date": "2026-08-16T12:23:11+08:00",
+    "title": "feat(inspect-site): confirm client scan to pro without closing modal",
+    "summary": "feat(inspect-site): confirm client scan to pro without closing modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "0c713d2a",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-16-57e62518",
     "date": "2026-08-16T11:07:11+08:00",
     "title": "style(overview): next-step button styling for chips and CTAs",
