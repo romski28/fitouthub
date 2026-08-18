@@ -27,6 +27,7 @@ type DeepSeekChatResponse = {
   choices?: Array<{
     message?: {
       content?: string;
+      reasoning_content?: string;
     };
   }>;
   usage?: {
@@ -2986,7 +2987,6 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           messages,
           temperature: 0.2,
           max_tokens: maxOutputTokens,
-          response_format: { type: 'json_object' },
         }),
         signal: controller.signal,
       });
@@ -3005,7 +3005,17 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         throw new InternalServerErrorException('Invalid DeepSeek response');
       }
 
-      const output = payload.choices?.[0]?.message?.content?.trim() || '';
+      const message = payload.choices?.[0]?.message;
+      const content = (message?.content || '').trim();
+      const reasoningContent = (message?.reasoning_content || '').trim();
+      // Some DeepSeek models leave "content" empty and either answer in
+      // "reasoning_content" or burn the token budget reasoning without answering.
+      if (!content) {
+        this.logger.warn(
+          `[${requestId}] ${label} empty content (reasoningContent=${reasoningContent.length} chars, completionTokens=${payload.usage?.completion_tokens ?? 0})`,
+        );
+      }
+      const output = content || reasoningContent;
       const durationMs = Date.now() - passStartedAt;
       const usage = (payload.usage || {}) as Record<string, number>;
 
@@ -3014,7 +3024,13 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         try {
           parsedOutput = JSON.parse(output) as Record<string, unknown>;
         } catch {
-          this.logger.warn(`[${requestId}] ${label} non-parseable JSON`);
+          // Strip markdown fences if the model wrapped the JSON despite the prompt.
+          const stripped = output.replace(/```(?:json)?\s*|```/gi, '').trim();
+          try {
+            parsedOutput = JSON.parse(stripped) as Record<string, unknown>;
+          } catch {
+            this.logger.warn(`[${requestId}] ${label} non-parseable JSON`);
+          }
         }
       }
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-4ca31a6c",
+    "date": "2026-08-18T20:53:56+08:00",
+    "title": "fix(ai): handle empty DeepSeek content and reasoning_content fallback",
+    "summary": "fix(ai): handle empty DeepSeek content and reasoning_content fallback",
+    "areas": [
+      "api"
+    ],
+    "commit": "4ca31a6c",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-9cdbfb55",
     "date": "2026-08-18T20:33:25+08:00",
     "title": "fix(ai): skip question bank when trade matcher fails or returns empty",
