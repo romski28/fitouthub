@@ -361,9 +361,12 @@ export class AiService {
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
         : null;
-      const assistantText = typeof rawOutput?.conversationalText === 'string'
-        ? rawOutput.conversationalText.trim().slice(0, 150)
+      const convText = typeof rawOutput?.conversationalText === 'string'
+        ? rawOutput.conversationalText.trim()
         : '';
+      const nextQuestions = this.toStringArray(rawOutput?.nextQuestions);
+      // Prefer the actual question over the acknowledgment so "Mimo asked about X" is accurate
+      const assistantText = (nextQuestions[0] || convText).slice(0, 150);
 
       if (userPrompt) {
         turns.unshift({ user: userPrompt, assistant: assistantText });
@@ -397,8 +400,13 @@ export class AiService {
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>) : null;
       const convText = typeof rawOutput?.conversationalText === 'string' ? rawOutput.conversationalText.trim() : '';
+      const nextQuestions = this.toStringArray(rawOutput?.nextQuestions);
+      const question = nextQuestions[0] || '';
+      // Pair the assistant's acknowledgment with the question it asked, so the
+      // compiler can match each user answer ("3m x 4m") to the question ("what size?").
+      const assistantText = [convText, question ? `Asked: ${question}` : ''].filter(Boolean).join(' ');
       const userPrompt = cursor === activeThread ? null : (typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '');
-      if (convText) turns.unshift({ role: 'assistant', text: convText.slice(0, 500) });
+      if (assistantText) turns.unshift({ role: 'assistant', text: assistantText.slice(0, 500) });
       if (userPrompt) turns.unshift({ role: 'user', text: userPrompt.slice(0, 500) });
       const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
       if (!sourceIntakeId) break;
