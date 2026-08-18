@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-18-76876f8d",
+    "date": "2026-08-18T12:26:41+08:00",
+    "title": "fix(inspect-site): close modal on booking success, state-aware empty message",
+    "summary": "fix(inspect-site): close modal on booking success, state-aware empty message",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "76876f8d",
+    "files": [
+      "CFO_BUDGET_SHEET_HKD.md",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx",
+      "docs/DEVELOPER_INTRO_PACK.md",
+      "docs/INTERVIEW_CRIB_SHEET.md",
+      "docs/NEW_DEV_FIRST_TWO_WEEKS.md",
+      "docs/RUNBOOK.md"
+    ]
+  },
+  {
     "id": "2026-08-16-17d2677b",
     "date": "2026-08-16T21:46:24+08:00",
     "title": "fix(site-inspection): surface reschedule elective and tidy completion UI",

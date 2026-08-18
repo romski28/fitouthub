@@ -282,10 +282,14 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to request slot');
       }
-      toast.success(mode === 'reschedule-propose' ? 'New time proposed to the client' : 'Inspection slot requested');
-      setSelectedTime('');
+      const slotLabel = `${formatInspectionDate(offeredDate)} at ${selectedTime}`;
+      toast.success(
+        mode === 'reschedule-propose'
+          ? `New time proposed — ${slotLabel}`
+          : `Slot requested — ${slotLabel}`,
+      );
       state.onCompleted?.({ projectId, actionKey: state.actionKey });
-      fetchStatus(); // refresh
+      onClose();
     } catch (err: any) {
       toast.error(err.message || 'Failed to request slot');
     } finally {
@@ -572,7 +576,13 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
           )}
 
           {!loading && !error && !address && (
-            <p className="text-sm text-slate-500 italic py-4">No address data available. The client may not have shared it yet.</p>
+            <p className="text-sm text-slate-500 italic py-4">
+              {reqStatus === 'pending'
+                ? `Slot requested${visitLabel ? ` — ${visitLabel}` : ''}. The client will share the address once they confirm.`
+                : offeredDate
+                  ? 'Address not available yet.'
+                  : "The client hasn't shared an inspection date yet."}
+            </p>
           )}
         </div>
 
