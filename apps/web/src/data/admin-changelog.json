@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-667da0c2",
+    "date": "2026-08-18T22:40:58+08:00",
+    "title": "fix(ai): restore scope/safety/risks compile when DeepSeek returns empty content",
+    "summary": "fix(ai): restore scope/safety/risks compile when DeepSeek returns empty content",
+    "areas": [
+      "api"
+    ],
+    "commit": "667da0c2",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-e79570c8",
     "date": "2026-08-18T21:47:21+08:00",
     "title": "perf(ai): consolidate thread-chain walks into one session query (Phase 5)",

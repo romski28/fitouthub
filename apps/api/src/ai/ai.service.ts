@@ -3848,7 +3848,7 @@ Return ONLY valid JSON (no markdown):
     const compileResponse = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 800 }),
+      body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 1500 }),
       signal: AbortSignal.timeout(20000),
     });
 
@@ -3865,7 +3865,11 @@ Return ONLY valid JSON (no markdown):
 
     const compileRaw = await compileResponse.text();
     const compilePayload = JSON.parse(compileRaw) as DeepSeekChatResponse;
-    const content = compilePayload.choices?.[0]?.message?.content?.trim() || '';
+    const message = compilePayload.choices?.[0]?.message;
+    const content = (message?.content || message?.reasoning_content || '').trim();
+    if (!content) {
+      this.logger.warn(`[compileIntakeScope] DeepSeek compile returned empty content (completionTokens=${compilePayload.usage?.completion_tokens ?? 0})`);
+    }
 
     // Parse the JSON from the response
     let compiled: Record<string, unknown> = {};
@@ -4614,7 +4618,6 @@ Return ONLY valid JSON (no markdown):
             { role: 'user', content: prompt },
           ],
           temperature: 0.15,
-          response_format: { type: 'json_object' },
           max_tokens: 2200,
         }),
         signal: controller.signal,
@@ -4626,12 +4629,14 @@ Return ONLY valid JSON (no markdown):
       }
 
       const payload = rawText ? (JSON.parse(rawText) as DeepSeekChatResponse) : null;
-      const content = payload?.choices?.[0]?.message?.content?.trim() || '';
+      const message = payload?.choices?.[0]?.message;
+      const content = (message?.content || message?.reasoning_content || '').trim();
       if (!content) {
         throw new ServiceUnavailableException('DeepSeek returned empty scope output');
       }
 
-      return JSON.parse(content) as Record<string, unknown>;
+      const stripped = content.replace(/```(?:json)?\s*|```/gi, '').trim();
+      return JSON.parse(stripped) as Record<string, unknown>;
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         throw new ServiceUnavailableException('DeepSeek scope generation timed out');
