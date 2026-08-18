@@ -312,25 +312,41 @@ export class AiService {
     );
   }
 
-  private async collectThreadAskedQuestions(activeThread?: { id: string; project?: unknown } | null): Promise<string[]> {
+  /** Fetch the thread chain once (single session query) and walk it in memory, newest → oldest. */
+  private async collectThreadChain(
+    activeThread: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null } | null,
+  ): Promise<Array<Record<string, any>>> {
     if (!activeThread) return [];
 
-    const visited = new Set<string>();
-    const chain: Array<{ id: string; project?: unknown; rawOutput?: unknown }> = [];
-    let cursor: { id: string; project?: unknown; rawOutput?: unknown } | null = activeThread;
+    const sessionId = activeThread.sessionId || undefined;
+    if (!sessionId) {
+      return [activeThread as Record<string, any>];
+    }
 
+    const sessionIntakes = await this.prisma.aiIntake.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' },
+    });
+    const byId = new Map(sessionIntakes.map((intake) => [intake.id, intake as Record<string, any>]));
+
+    const chain: Array<Record<string, any>> = [];
+    const visited = new Set<string>();
+    let cursor: Record<string, any> | null = activeThread as Record<string, any>;
     for (let depth = 0; depth < 20; depth += 1) {
       if (!cursor || visited.has(cursor.id)) break;
       visited.add(cursor.id);
       chain.push(cursor);
-
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent
-        ? { id: parent.id, project: parent.project, rawOutput: parent.rawOutput }
-        : null;
+      const sourceId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceId) break;
+      cursor = byId.get(sourceId) ?? null;
     }
+    return chain;
+  }
+
+  private async collectThreadAskedQuestions(activeThread?: { id: string; project?: unknown } | null): Promise<string[]> {
+    if (!activeThread) return [];
+
+    const chain = await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null });
 
     const questionsByKey = new Map<string, string>();
     for (const intake of chain) {
@@ -350,14 +366,9 @@ export class AiService {
   private async collectThreadCoveredTopics(activeThread?: { id: string; project?: unknown } | null): Promise<string[]> {
     if (!activeThread) return [];
 
-    const visited = new Set<string>();
     const topics = new Set<string>();
-    let cursor: { id: string; project?: unknown; rawOutput?: unknown } | null = activeThread;
 
-    for (let depth = 0; depth < 20; depth += 1) {
-      if (!cursor || visited.has(cursor.id)) break;
-      visited.add(cursor.id);
-
+    for (const cursor of await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null })) {
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
         : null;
@@ -365,13 +376,6 @@ export class AiService {
         ? rawOutput.coveredTopics.filter((topic): topic is string => typeof topic === 'string' && topic.trim().length > 0)
         : [];
       for (const topic of covered) topics.add(topic.trim());
-
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent
-        ? { id: parent.id, project: parent.project, rawOutput: parent.rawOutput }
-        : null;
     }
 
     return Array.from(topics);
@@ -381,14 +385,9 @@ export class AiService {
   private async collectThreadConversationHistory(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
 
-    const visited = new Set<string>();
     const turns: Array<{ user: string; assistant: string }> = [];
-    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
 
-    for (let depth = 0; depth < 10; depth += 1) {
-      if (!cursor || visited.has(cursor.id)) break;
-      visited.add(cursor.id);
-
+    for (const cursor of await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null })) {
       const userPrompt = typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '';
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
@@ -403,13 +402,6 @@ export class AiService {
       if (userPrompt) {
         turns.unshift({ user: userPrompt, assistant: assistantText });
       }
-
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent
-        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
-        : null;
     }
 
     if (turns.length <= 1) return ''; // No history beyond the current turn
@@ -424,11 +416,8 @@ export class AiService {
   /** Collect raw conversation turns for scope compilation */
   private async collectThreadConversationTurns(activeThread: { id: string; project?: unknown; rawPrompt?: string | null }, latestPrompt: string): Promise<Array<{ role: 'user' | 'assistant'; text: string }>> {
     const turns: Array<{ role: 'user' | 'assistant'; text: string }> = [{ role: 'user', text: latestPrompt.trim() }];
-    const visited = new Set<string>();
-    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
-    for (let depth = 0; depth < 15; depth += 1) {
-      if (!cursor || visited.has(cursor.id)) break;
-      visited.add(cursor.id);
+    let isFirst = true;
+    for (const cursor of await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null })) {
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>) : null;
       const convText = typeof rawOutput?.conversationalText === 'string' ? rawOutput.conversationalText.trim() : '';
@@ -437,13 +426,10 @@ export class AiService {
       // Pair the assistant's acknowledgment with the question it asked, so the
       // compiler can match each user answer ("3m x 4m") to the question ("what size?").
       const assistantText = [convText, question ? `Asked: ${question}` : ''].filter(Boolean).join(' ');
-      const userPrompt = cursor === activeThread ? null : (typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '');
+      const userPrompt = isFirst ? null : (typeof cursor.rawPrompt === 'string' ? cursor.rawPrompt.trim() : '');
+      isFirst = false;
       if (assistantText) turns.unshift({ role: 'assistant', text: assistantText.slice(0, 500) });
       if (userPrompt) turns.unshift({ role: 'user', text: userPrompt.slice(0, 500) });
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput } : null;
     }
     return turns;
   }
@@ -452,7 +438,6 @@ export class AiService {
   private async buildEstablishedFacts(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
 
-    const visited = new Set<string>();
     const facts: { geographicLocation?: string; physicalLocation?: string; coreProblem?: string; exclusions: string[]; trades: string[] } = {
       exclusions: [],
       trades: [],
@@ -461,12 +446,7 @@ export class AiService {
     // Physical location keywords — rooms, fixtures, areas inside a property
     const physicalLocationKeywords = /\b(kitchen|bathroom|bedroom|living\s*room|toilet|shower|balcony|roof|ceiling|wall|floor|window|door|sink|basin|tap|pipe|drain|cabinet|counter|cupboard|under\s+\w+|behind\s+\w+|inside\s+\w+)\b/i;
 
-    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null = activeThread;
-
-    for (let depth = 0; depth < 10; depth += 1) {
-      if (!cursor || visited.has(cursor.id)) break;
-      visited.add(cursor.id);
-
+    for (const cursor of await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null })) {
       // Extract from parsed output
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
@@ -547,12 +527,6 @@ export class AiService {
         }
       }
 
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent
-        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput }
-        : null;
     }
 
     const lines: string[] = [];
@@ -569,21 +543,9 @@ export class AiService {
   private async buildAccumulatedScope(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null; sessionId?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
 
-    const visited = new Set<string>();
     const scopeParts: string[] = [];
-    const sessionId = activeThread.sessionId || undefined;
-    let cursor: { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null } | null = activeThread;
 
-    for (let depth = 0; depth < 10; depth += 1) {
-      if (!cursor || visited.has(cursor.id)) break;
-      visited.add(cursor.id);
-
-      // Guard: only pull from intakes in the same session (prevent cross-conversation contamination)
-      if (sessionId && cursor.sessionId && cursor.sessionId !== sessionId) {
-        this.logger.warn(`[buildAccumulatedScope] Skipping intake ${cursor.id} — session mismatch`);
-        break;
-      }
-
+    for (const cursor of await this.collectThreadChain(activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null })) {
       const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
         ? (cursor.rawOutput as Record<string, unknown>)
         : null;
@@ -601,12 +563,6 @@ export class AiService {
         }
       }
 
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
-      if (!sourceIntakeId) break;
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      cursor = parent
-        ? { id: parent.id, project: parent.project, rawPrompt: parent.rawPrompt, rawOutput: parent.rawOutput, sessionId: parent.sessionId }
-        : null;
     }
 
     return scopeParts.join('. ').trim();
@@ -623,23 +579,9 @@ export class AiService {
       : null;
   }
 
-  private async resolveThreadOriginIntake(intake: { id: string; project?: unknown }) {
-    let current = intake;
-    const visited = new Set<string>([intake.id]);
-
-    for (let depth = 0; depth < 10; depth += 1) {
-      const sourceIntakeId = this.extractSourceIntakeIdFromProject(current.project);
-      if (!sourceIntakeId || visited.has(sourceIntakeId)) {
-        break;
-      }
-      visited.add(sourceIntakeId);
-
-      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
-      if (!parent) break;
-      current = parent;
-    }
-
-    return current;
+  private async resolveThreadOriginIntake(intake: { id: string; project?: unknown; sessionId?: string | null }) {
+    const chain = await this.collectThreadChain(intake as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown; sessionId?: string | null });
+    return chain.length > 0 ? chain[chain.length - 1] : intake;
   }
 
   private async findActiveAiThread(context?: { sessionId?: string; userId?: string; intakeId?: string }) {

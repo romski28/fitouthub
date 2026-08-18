@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-e79570c8",
+    "date": "2026-08-18T21:47:21+08:00",
+    "title": "perf(ai): consolidate thread-chain walks into one session query (Phase 5)",
+    "summary": "perf(ai): consolidate thread-chain walks into one session query (Phase 5)",
+    "areas": [
+      "api"
+    ],
+    "commit": "e79570c8",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-62ef57cf",
     "date": "2026-08-18T21:26:34+08:00",
     "title": "perf(ai): reuse prior trade match instead of re-running Pass A every turn",
