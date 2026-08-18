@@ -3114,10 +3114,11 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             requestId: `${requestId}_trade`,
             messages,
             timeoutMs,
-            maxOutputTokens: 300,
+            maxOutputTokens,
             label: 'Conversational-TradeMatcher',
           });
           passAUsage = passA.usage;
+          this.logger.log(`[${requestId}_trade] raw output (${passA.output.length} chars): ${passA.output.slice(0, 800)}`);
           const a = passA.parsedOutput;
           tradeContext = {
             trades: Array.isArray(a.trades) ? (a.trades as string[]) : [],
@@ -3159,9 +3160,11 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           requestId: `${requestId}_question`,
           messages: passBMessages,
           timeoutMs,
-          maxOutputTokens: 400,
+          maxOutputTokens,
           label: 'Conversational-NextQuestion',
         });
+
+        this.logger.log(`[${requestId}_question] raw output (${passB.output.length} chars): ${passB.output.slice(0, 800)}`);
 
         output = passB.output;
         durationMs = Date.now() - startedAt;

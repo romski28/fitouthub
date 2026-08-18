@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-43bac4ac",
+    "date": "2026-08-18T14:23:04+08:00",
+    "title": "fix(ai): raise conversational split-pass token limits, log raw pass output",
+    "summary": "fix(ai): raise conversational split-pass token limits, log raw pass output",
+    "areas": [
+      "api"
+    ],
+    "commit": "43bac4ac",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-1472e894",
     "date": "2026-08-18T13:55:14+08:00",
     "title": "feat(ai): split conversational turn into trade-matcher + next-question passes",
