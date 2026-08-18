@@ -291,6 +291,7 @@ model Tradesman {
   createdAt                  DateTime                        @default(now())
   updatedAt                  DateTime                        @updatedAt
   serviceMappings            ServiceMapping[]
+  tradeQuestions             TradeQuestion[]
   milestoneTemplates         MilestoneTemplate[]
   translations               TradesmanTranslation[]
   certificationRequirements  TradeCertificationRequirement[]
@@ -1493,6 +1494,33 @@ model ServiceMapping {
   @@index([keyword])
   @@index([tradeId])
   @@index([enabled])
+}
+
+// ============================================================
+// Trade Question Bank — deterministic AI wizard questions
+// Keyed by trade × mode (repair|refresh|design) × element.
+// element 'general' matches any element for that trade+mode.
+// ============================================================
+
+model TradeQuestion {
+  id        String   @id @default(cuid())
+  tradeId   String
+  mode      String // repair | refresh | design
+  element   String   @default("general")
+  question  String
+  options   Json     @default("[]") // [{ "label": "...", "value": "..." }]
+  priority  Int      @default(0)
+  locale    String   @default("en")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trade Tradesman @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, mode, element])
+  @@index([mode])
+  @@index([element])
+  @@index([isActive])
 }
 
 model PaymentRequest {

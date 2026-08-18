@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-18-cafaae08",
+    "date": "2026-08-18T19:29:09+08:00",
+    "title": "feat(ai): add trade question bank table and seed (Phase 1)",
+    "summary": "feat(ai): add trade question bank table and seed (Phase 1)",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "cafaae08",
+    "files": [
+      "MANUAL_SQL_ADD_TRADE_QUESTION_BANK.sql",
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-08-18-0864c0d4",
     "date": "2026-08-18T15:02:44+08:00",
     "title": "fix(ai): prevent premature wrap-up after the first question",
