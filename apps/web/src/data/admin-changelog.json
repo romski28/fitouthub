@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-18-0864c0d4",
+    "date": "2026-08-18T15:02:44+08:00",
+    "title": "fix(ai): prevent premature wrap-up after the first question",
+    "summary": "fix(ai): prevent premature wrap-up after the first question",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0864c0d4",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/create-project/wizard/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-18-3827afda",
     "date": "2026-08-18T14:44:55+08:00",
     "title": "fix(ai): pair assistant questions with answers in compile transcript",

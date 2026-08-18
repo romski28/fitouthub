@@ -345,6 +345,37 @@ export class AiService {
     return Array.from(questionsByKey.values());
   }
 
+  /** Collect confirmed briefing topics across the thread chain so the next question skips what is already known */
+  private async collectThreadCoveredTopics(activeThread?: { id: string; project?: unknown } | null): Promise<string[]> {
+    if (!activeThread) return [];
+
+    const visited = new Set<string>();
+    const topics = new Set<string>();
+    let cursor: { id: string; project?: unknown; rawOutput?: unknown } | null = activeThread;
+
+    for (let depth = 0; depth < 20; depth += 1) {
+      if (!cursor || visited.has(cursor.id)) break;
+      visited.add(cursor.id);
+
+      const rawOutput = cursor.rawOutput && typeof cursor.rawOutput === 'object' && !Array.isArray(cursor.rawOutput)
+        ? (cursor.rawOutput as Record<string, unknown>)
+        : null;
+      const covered = Array.isArray(rawOutput?.coveredTopics)
+        ? rawOutput.coveredTopics.filter((topic): topic is string => typeof topic === 'string' && topic.trim().length > 0)
+        : [];
+      for (const topic of covered) topics.add(topic.trim());
+
+      const sourceIntakeId = this.extractSourceIntakeIdFromProject(cursor.project);
+      if (!sourceIntakeId) break;
+      const parent = await this.prisma.aiIntake.findUnique({ where: { id: sourceIntakeId } });
+      cursor = parent
+        ? { id: parent.id, project: parent.project, rawOutput: parent.rawOutput }
+        : null;
+    }
+
+    return Array.from(topics);
+  }
+
   /** Collect the full user→AI conversation from the thread chain for context */
   private async collectThreadConversationHistory(activeThread?: { id: string; project?: unknown; rawPrompt?: string | null } | null): Promise<string> {
     if (!activeThread) return '';
@@ -1359,13 +1390,25 @@ OUTPUT SCHEMA
   - floor/tiles → Tiler; sanitary ware / fittings / waterproofing → Plumber;
     lighting / sockets / wiring → Electrician; painting → Painter;
     structure / partitions / demolition → Builder; joinery / cabinetry → Carpenter.
-  - If the user says "full renovation" WITHOUT specifics, still list the standard trade set for that room (e.g. bathroom → Plumber, Tiler, Electrician, Builder) and record the unstated specifics in "missingScope".
+  - If the user says "full renovation" WITHOUT specifics, still list the standard trade set for that room (e.g. bathroom → Plumber, Tiler, Electrician, Builder) and record the unstated specifics in "missingScope" (see below).
   - WRONG: "full bathroom renovation — floor, sanitary ware, lighting" → Handyman
   - RIGHT: "full bathroom renovation — floor, sanitary ware, lighting" → Plumber, Tiler, Electrician
 - refresh mode → minimal + surface trade(s) only where justified (e.g. "repaint kitchen" → Painter only).
 - Assign confidence per trade. Use confidence < 0.5 for trades you are unsure about.
 
 ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
+
+# missingScope
+- missingScope lists the briefing items the client has NOT yet told you, which the
+  next-question pass must collect. Use ONLY these keys:
+  "roomSize", "existingCondition", "materialPreference", "fixtureType", "whatsIncluded", "existingWiring", "pipeAccess".
+- Do NOT list items the client already stated.
+  "full bathroom renovation including floor, sanitary wares and lighting"
+  → missingScope = ["roomSize", "existingCondition", "materialPreference"]
+  (floor / sanitary wares / lighting were stated, so they are NOT missing).
+- design/renovation mode ALWAYS includes roomSize, existingCondition, and materialPreference
+  when the client has not stated them.
+- repair/refresh mode: list only what is genuinely needed to scope the job.
 
 # OUTPUT (JSON only)
 {
@@ -1376,7 +1419,7 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
   "summary": "one-sentence summary of what the client needs",
   "trades": ["..."],
   "tradeDetails": [{ "trade": "...", "confidence": 0.0 }],
-  "missingScope": ["floor", "sanitary ware", "lighting"]
+  "missingScope": ["roomSize", "existingCondition", "materialPreference"]
 }`;
 
     return {
@@ -1391,10 +1434,11 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
    * Slim prompt that asks ONE question. Trades come from the trade matcher pass
    * (injected as KNOWN_TRADES); scope/risks/safety are computed at wrap-up.
    */
-  private buildConversationalPrompt(known?: { knownTrades: string[]; mode: string; missingScope: string[] }) {
+  private buildConversationalPrompt(known?: { knownTrades: string[]; mode: string; missingScope: string[]; coveredTopics: string[] }) {
     const knownTrades = Array.isArray(known?.knownTrades) ? known.knownTrades : [];
     const mode = known?.mode || 'repair';
     const missingScope = Array.isArray(known?.missingScope) ? known.missingScope : [];
+    const coveredTopics = Array.isArray(known?.coveredTopics) ? known.coveredTopics : [];
 
     const systemPrompt = `You are Mimo, a friendly renovation assistant. Ask ONE question to understand the client's project better. Respond in JSON.
 
@@ -1402,6 +1446,7 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
 trades = ${knownTrades.length > 0 ? JSON.stringify(knownTrades) : 'unknown'}
 mode = ${mode}
 missingScope = ${JSON.stringify(missingScope)}
+alreadyCovered = ${JSON.stringify(coveredTopics)}
 
 # FACT TRACKING
 - Build a mental checklist of EXPLICIT FACTS. These are LOCKED and must never be contradicted.
@@ -1456,8 +1501,11 @@ missingScope = ${JSON.stringify(missingScope)}
   Example: "Do you have a style or finish in mind, or let the professional suggest options?"
   Options: "I have a preference", "Let the pro suggest", "Standard is fine", "Not sure".
   Only ask this after you've established what's being installed — not on the first turn.
-19) Wrap-up: set nextQuestions = [] ONLY when overallConfidence ≥ 0.85 AND all required topics for the mode are covered. Below that, always ask one more substantive question.
-20) For design/renovation mode, work through missingScope FIRST (size → what's included → existing condition → finishes) before asking anything else. If the user answers "yes" to a broad confirmation ("Is it a full renovation?"), immediately narrow with ONE specific follow-up — never a generic "anything else".
+19) NEVER wrap up early. Work through missingScope in order before you may set nextQuestions = [].
+    - design/renovation mode minimum briefing: room size → what's included → existing condition → material/finish preference.
+    - repair/refresh mode: the specific fault/unit (and room size for surface work).
+20) overallConfidence must reflect topic completeness. Keep it ≤ 0.6 while any missingScope item is unanswered. Only output ≥ 0.85 when every missingScope item has been asked AND answered (confirmed in coveredTopics). Never jump to ≥ 0.85 after a single answer.
+21) For design/renovation mode, work through missingScope FIRST (size → what's included → existing condition → finishes) before asking anything else. If the user answers "yes" to a broad confirmation ("Is it a full renovation?"), immediately narrow with ONE specific follow-up — never a generic "anything else".
 
 # RELEVANCE
 - Stay focused on the client's stated need. If this is a new installation or upgrade (not a repair), do NOT ask about problems or symptoms — ask about requirements instead. Match options to YOUR question — never recycle options from a previous turn.
@@ -3024,6 +3072,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
     const threadOrigin = activeThread ? await this.resolveThreadOriginIntake(activeThread) : null;
     const threadOriginSummary = threadOrigin ? this.buildAiThreadContextSummary(threadOrigin) : null;
     const askedQuestions = await this.collectThreadAskedQuestions(activeThread as { id: string; project?: unknown } | null);
+    const coveredTopics = await this.collectThreadCoveredTopics(activeThread as { id: string; project?: unknown } | null);
     const conversationHistory = await this.collectThreadConversationHistory(activeThread as any);
     const establishedFacts = await this.buildEstablishedFacts(activeThread as { id: string; project?: unknown; rawPrompt?: string | null } | null);
     const accumulatedScope = await this.buildAccumulatedScope(
@@ -3159,6 +3208,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           knownTrades: tradeContext.trades,
           mode: tradeContext.mode,
           missingScope: tradeContext.missingScope,
+          coveredTopics,
         });
         const passBMessages: DeepSeekMessage[] = [
           { role: 'system', content: conversationalWrapper.systemPrompt },

@@ -1068,15 +1068,19 @@ export default function CreateProjectWizardPage() {
       const assistantQuestionBodies = chatMessages
         .filter((message) => message.role === 'assistant')
         .map((message) => extractServiceOfferFromMessage(message.text).body);
-      const hasAskedSizeOrCondition = assistantQuestionBodies.some(
-        (question) => shouldPromptSurveyService(question) || isConditionFollowUpQuestion(question),
-      );
+      const hasAskedSize = assistantQuestionBodies.some((question) => shouldPromptSurveyService(question));
+      const hasAskedCondition = assistantQuestionBodies.some((question) => isConditionFollowUpQuestion(question));
+      const hasAskedSizeOrCondition = hasAskedSize || hasAskedCondition;
 
       const filteredParsedQuestions = dedupedParsedQuestions.filter((question) => {
-        const isSizeOrConditionQuestion = shouldPromptSurveyService(question) || isConditionFollowUpQuestion(question);
-        if (!isSizeOrConditionQuestion) return true;
+        const isSizeQuestion = shouldPromptSurveyService(question);
+        const isConditionQuestion = isConditionFollowUpQuestion(question);
+        if (!isSizeQuestion && !isConditionQuestion) return true;
         if (requiresSurveyService === true) return false;
-        if (hasAskedSizeOrCondition) return false;
+        // Only drop a question if the SAME topic was already asked — asking size
+        // must not block a later condition question, and vice versa.
+        if (isSizeQuestion && hasAskedSize) return false;
+        if (isConditionQuestion && hasAskedCondition) return false;
         return true;
       });
 
