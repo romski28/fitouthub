@@ -3270,7 +3270,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         // Pass A uses the envelope built with the trade-matcher system prompt.
         let passAUsage: Record<string, number> = {};
         let passASucceeded = false;
-        // Carry the prior turn's mode/elements forward so a failed or empty Pass A
+        // Carry the prior turn's classification forward so a failed or empty Pass A
         // never silently regresses a continuing project (e.g. design → repair).
         const activeThreadRecord = activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null;
         const priorRawOutput = activeThreadRecord?.rawOutput && typeof activeThreadRecord.rawOutput === 'object' && !Array.isArray(activeThreadRecord.rawOutput)
@@ -3282,6 +3282,30 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         const priorElements = Array.isArray(priorRawOutput?.elements)
           ? (priorRawOutput.elements as unknown[]).filter((e): e is string => typeof e === 'string')
           : [];
+        const priorTradesList = Array.isArray(priorRawOutput?.trades)
+          ? (priorRawOutput.trades as unknown[]).filter((t): t is string => typeof t === 'string')
+          : [];
+        const priorMissingScope = Array.isArray(priorRawOutput?.missingScope)
+          ? (priorRawOutput.missingScope as unknown[]).filter((s): s is string => typeof s === 'string')
+          : [];
+        const priorTitle = typeof priorRawOutput?.title === 'string' ? priorRawOutput.title : null;
+        const priorSummary = typeof priorRawOutput?.summary === 'string' ? priorRawOutput.summary : null;
+        const priorTradeDetails = Array.isArray(priorRawOutput?.tradeDetails)
+          ? (priorRawOutput.tradeDetails as Array<{ trade: string; confidence: number }>)
+          : [];
+        const priorModeConfidence = typeof priorRawOutput?.modeConfidence === 'number' ? priorRawOutput.modeConfidence : null;
+        const priorModeReasoning = typeof priorRawOutput?.modeReasoning === 'string' ? priorRawOutput.modeReasoning : null;
+
+        const fallbackTrades = () =>
+          threadSummary?.trades && threadSummary.trades.length > 0
+            ? threadSummary.trades.slice(0, 6)
+            : this.fallbackTrades.map((t) => t.name).slice(0, 6);
+
+        // Re-run the trade matcher only on the first turn or when the client clearly
+        // changes/expands scope. Otherwise reuse the prior classification, dropping
+        // one of the two LLM calls per turn (halves per-turn latency).
+        const scopeChangePattern = /\b(actually|instead|also|plus|too|as well|not just|not only|whole (?:flat|apartment|house|unit)|entire|extension|extend)\b/i;
+        const shouldRerunTradeMatcher = !activeThread || priorTradesList.length === 0 || scopeChangePattern.test(trimmedPrompt);
 
         let tradeContext: {
           trades: string[];
@@ -3294,65 +3318,65 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           modeConfidence: number | null;
           modeReasoning: string | null;
         } = {
-          trades: [],
+          trades: priorTradesList,
           mode: priorMode,
-          missingScope: [],
+          missingScope: priorMissingScope,
           elements: priorElements,
-          title: null,
-          summary: null,
-          tradeDetails: [],
-          modeConfidence: null,
-          modeReasoning: null,
+          title: priorTitle,
+          summary: priorSummary,
+          tradeDetails: priorTradeDetails,
+          modeConfidence: priorModeConfidence,
+          modeReasoning: priorModeReasoning,
         };
 
-        const priorTrades = () =>
-          threadSummary?.trades && threadSummary.trades.length > 0
-            ? threadSummary.trades.slice(0, 6)
-            : this.fallbackTrades.map((t) => t.name).slice(0, 6);
-
-        try {
-          const passA = await this.runDeepSeekPass({
-            requestId: `${requestId}_trade`,
-            messages,
-            timeoutMs,
-            maxOutputTokens,
-            label: 'Conversational-TradeMatcher',
-          });
-          passAUsage = passA.usage;
-          this.logger.log(`[${requestId}_trade] raw output (${passA.output.length} chars): ${passA.output.slice(0, 800)}`);
-          const a = passA.parsedOutput;
-          const freshMode = typeof a.mode === 'string' && ['repair', 'refresh', 'design'].includes(a.mode) ? a.mode : priorMode;
-          // A continuing design/refresh project must not silently regress to repair.
-          const resolvedMode = activeThread && (priorMode === 'design' || priorMode === 'refresh') && freshMode === 'repair'
-            ? priorMode
-            : freshMode;
-          const freshElements = Array.isArray(a.elements) && (a.elements as unknown[]).length > 0
-            ? (a.elements as string[])
-            : priorElements;
-          tradeContext = {
-            trades: Array.isArray(a.trades) ? (a.trades as string[]) : [],
-            mode: resolvedMode,
-            missingScope: Array.isArray(a.missingScope) ? (a.missingScope as string[]) : [],
-            elements: freshElements,
-            title: typeof a.title === 'string' ? a.title : null,
-            summary: typeof a.summary === 'string' ? a.summary : null,
-            tradeDetails: Array.isArray(a.tradeDetails)
-              ? (a.tradeDetails as Array<{ trade: string; confidence: number }>)
-              : [],
-            modeConfidence: typeof a.modeConfidence === 'number' ? a.modeConfidence : null,
-            modeReasoning: typeof a.modeReasoning === 'string' ? a.modeReasoning : null,
-          };
-          if (tradeContext.trades.length > 0) {
-            passASucceeded = true;
-          } else {
-            tradeContext.trades = priorTrades();
-            this.logger.warn(`[${requestId}] Trade matcher returned no trades; reusing prior/fallback trades`);
+        if (shouldRerunTradeMatcher) {
+          try {
+            const passA = await this.runDeepSeekPass({
+              requestId: `${requestId}_trade`,
+              messages,
+              timeoutMs,
+              maxOutputTokens,
+              label: 'Conversational-TradeMatcher',
+            });
+            passAUsage = passA.usage;
+            this.logger.log(`[${requestId}_trade] raw output (${passA.output.length} chars): ${passA.output.slice(0, 800)}`);
+            const a = passA.parsedOutput;
+            const freshMode = typeof a.mode === 'string' && ['repair', 'refresh', 'design'].includes(a.mode) ? a.mode : priorMode;
+            // A continuing design/refresh project must not silently regress to repair.
+            const resolvedMode = activeThread && (priorMode === 'design' || priorMode === 'refresh') && freshMode === 'repair'
+              ? priorMode
+              : freshMode;
+            const freshElements = Array.isArray(a.elements) && (a.elements as unknown[]).length > 0
+              ? (a.elements as string[])
+              : priorElements;
+            tradeContext = {
+              trades: Array.isArray(a.trades) ? (a.trades as string[]) : [],
+              mode: resolvedMode,
+              missingScope: Array.isArray(a.missingScope) ? (a.missingScope as string[]) : [],
+              elements: freshElements,
+              title: typeof a.title === 'string' ? a.title : null,
+              summary: typeof a.summary === 'string' ? a.summary : null,
+              tradeDetails: Array.isArray(a.tradeDetails)
+                ? (a.tradeDetails as Array<{ trade: string; confidence: number }>)
+                : [],
+              modeConfidence: typeof a.modeConfidence === 'number' ? a.modeConfidence : null,
+              modeReasoning: typeof a.modeReasoning === 'string' ? a.modeReasoning : null,
+            };
+            if (tradeContext.trades.length > 0) {
+              passASucceeded = true;
+            } else {
+              tradeContext.trades = fallbackTrades();
+              this.logger.warn(`[${requestId}] Trade matcher returned no trades; reusing prior/fallback trades`);
+            }
+          } catch (tradeErr) {
+            this.logger.warn(
+              `[${requestId}] Trade matcher pass failed; reusing prior mode=${priorMode} elements=${JSON.stringify(priorElements)}. ${(tradeErr as Error).message}`,
+            );
+            tradeContext.trades = fallbackTrades();
           }
-        } catch (tradeErr) {
-          this.logger.warn(
-            `[${requestId}] Trade matcher pass failed; reusing prior mode=${priorMode} elements=${JSON.stringify(priorElements)}. ${(tradeErr as Error).message}`,
-          );
-          tradeContext.trades = priorTrades();
+        } else {
+          passASucceeded = true;
+          this.logger.log(`[${requestId}] Reusing prior trade match (mode=${tradeContext.mode}, trades=${tradeContext.trades.join(', ')}) — skipping Pass A`);
         }
 
         // Deterministic question bank: pick the next trade-specific question.

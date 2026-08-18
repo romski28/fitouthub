@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-62ef57cf",
+    "date": "2026-08-18T21:26:34+08:00",
+    "title": "perf(ai): reuse prior trade match instead of re-running Pass A every turn",
+    "summary": "perf(ai): reuse prior trade match instead of re-running Pass A every turn",
+    "areas": [
+      "api"
+    ],
+    "commit": "62ef57cf",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-4ca31a6c",
     "date": "2026-08-18T20:53:56+08:00",
     "title": "fix(ai): handle empty DeepSeek content and reasoning_content fallback",
