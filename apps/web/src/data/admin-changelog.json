@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-9cdbfb55",
+    "date": "2026-08-18T20:33:25+08:00",
+    "title": "fix(ai): skip question bank when trade matcher fails or returns empty",
+    "summary": "fix(ai): skip question bank when trade matcher fails or returns empty",
+    "areas": [
+      "api"
+    ],
+    "commit": "9cdbfb55",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-7d316012",
     "date": "2026-08-18T20:12:37+08:00",
     "title": "fix(ai): carry mode/elements forward when trade matcher fails or is empty",

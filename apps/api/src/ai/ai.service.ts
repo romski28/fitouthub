@@ -3253,6 +3253,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         // ── Conversational split: Pass A (trade matcher) → Pass B (next question) ──
         // Pass A uses the envelope built with the trade-matcher system prompt.
         let passAUsage: Record<string, number> = {};
+        let passASucceeded = false;
         // Carry the prior turn's mode/elements forward so a failed or empty Pass A
         // never silently regresses a continuing project (e.g. design → repair).
         const activeThreadRecord = activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null;
@@ -3325,7 +3326,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             modeConfidence: typeof a.modeConfidence === 'number' ? a.modeConfidence : null,
             modeReasoning: typeof a.modeReasoning === 'string' ? a.modeReasoning : null,
           };
-          if (tradeContext.trades.length === 0) {
+          if (tradeContext.trades.length > 0) {
+            passASucceeded = true;
+          } else {
             tradeContext.trades = priorTrades();
             this.logger.warn(`[${requestId}] Trade matcher returned no trades; reusing prior/fallback trades`);
           }
@@ -3337,20 +3340,25 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         }
 
         // Deterministic question bank: pick the next trade-specific question.
-        // Falls back to the model (defer) for room size and uncovered combos.
+        // Only when the trade matcher succeeded — otherwise the model fallback is
+        // safer than serving a question matched against a guessed mode/trades.
         let nextQuestionDecision: { kind: 'bank'; question: string; options: Array<{ label: string; value: string }> } | { kind: 'defer' } = { kind: 'defer' };
-        try {
-          const bank = await this.getQuestionBank();
-          nextQuestionDecision = this.resolveNextQuestion({
-            trades: tradeContext.trades,
-            mode: tradeContext.mode,
-            elements: tradeContext.elements,
-            askedQuestions,
-            coveredTopics,
-            bank,
-          });
-        } catch (bankErr) {
-          this.logger.warn(`[${requestId}] Question bank lookup failed; deferring to model. ${(bankErr as Error).message}`);
+        if (passASucceeded) {
+          try {
+            const bank = await this.getQuestionBank();
+            nextQuestionDecision = this.resolveNextQuestion({
+              trades: tradeContext.trades,
+              mode: tradeContext.mode,
+              elements: tradeContext.elements,
+              askedQuestions,
+              coveredTopics,
+              bank,
+            });
+          } catch (bankErr) {
+            this.logger.warn(`[${requestId}] Question bank lookup failed; deferring to model. ${(bankErr as Error).message}`);
+          }
+        } else {
+          this.logger.warn(`[${requestId}] Skipping question bank — trade matcher failed or returned no trades; deferring to model`);
         }
 
         // Pass B — next question, with the trade list injected for context.
