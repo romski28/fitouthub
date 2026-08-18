@@ -3253,6 +3253,19 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         // ── Conversational split: Pass A (trade matcher) → Pass B (next question) ──
         // Pass A uses the envelope built with the trade-matcher system prompt.
         let passAUsage: Record<string, number> = {};
+        // Carry the prior turn's mode/elements forward so a failed or empty Pass A
+        // never silently regresses a continuing project (e.g. design → repair).
+        const activeThreadRecord = activeThread as { id: string; project?: unknown; rawPrompt?: string | null; rawOutput?: unknown } | null;
+        const priorRawOutput = activeThreadRecord?.rawOutput && typeof activeThreadRecord.rawOutput === 'object' && !Array.isArray(activeThreadRecord.rawOutput)
+          ? (activeThreadRecord.rawOutput as Record<string, unknown>)
+          : null;
+        const priorMode = typeof priorRawOutput?.mode === 'string' && ['repair', 'refresh', 'design'].includes(priorRawOutput.mode)
+          ? (priorRawOutput.mode as string)
+          : 'repair';
+        const priorElements = Array.isArray(priorRawOutput?.elements)
+          ? (priorRawOutput.elements as unknown[]).filter((e): e is string => typeof e === 'string')
+          : [];
+
         let tradeContext: {
           trades: string[];
           mode: string;
@@ -3265,9 +3278,9 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           modeReasoning: string | null;
         } = {
           trades: [],
-          mode: 'repair',
+          mode: priorMode,
           missingScope: [],
-          elements: [],
+          elements: priorElements,
           title: null,
           summary: null,
           tradeDetails: [],
@@ -3291,14 +3304,19 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           passAUsage = passA.usage;
           this.logger.log(`[${requestId}_trade] raw output (${passA.output.length} chars): ${passA.output.slice(0, 800)}`);
           const a = passA.parsedOutput;
+          const freshMode = typeof a.mode === 'string' && ['repair', 'refresh', 'design'].includes(a.mode) ? a.mode : priorMode;
+          // A continuing design/refresh project must not silently regress to repair.
+          const resolvedMode = activeThread && (priorMode === 'design' || priorMode === 'refresh') && freshMode === 'repair'
+            ? priorMode
+            : freshMode;
+          const freshElements = Array.isArray(a.elements) && (a.elements as unknown[]).length > 0
+            ? (a.elements as string[])
+            : priorElements;
           tradeContext = {
             trades: Array.isArray(a.trades) ? (a.trades as string[]) : [],
-            mode:
-              typeof a.mode === 'string' && ['repair', 'refresh', 'design'].includes(a.mode)
-                ? a.mode
-                : 'repair',
+            mode: resolvedMode,
             missingScope: Array.isArray(a.missingScope) ? (a.missingScope as string[]) : [],
-            elements: Array.isArray(a.elements) ? (a.elements as string[]) : [],
+            elements: freshElements,
             title: typeof a.title === 'string' ? a.title : null,
             summary: typeof a.summary === 'string' ? a.summary : null,
             tradeDetails: Array.isArray(a.tradeDetails)
@@ -3313,7 +3331,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           }
         } catch (tradeErr) {
           this.logger.warn(
-            `[${requestId}] Trade matcher pass failed; reusing prior/fallback trades. ${(tradeErr as Error).message}`,
+            `[${requestId}] Trade matcher pass failed; reusing prior mode=${priorMode} elements=${JSON.stringify(priorElements)}. ${(tradeErr as Error).message}`,
           );
           tradeContext.trades = priorTrades();
         }

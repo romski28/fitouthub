@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-7d316012",
+    "date": "2026-08-18T20:12:37+08:00",
+    "title": "fix(ai): carry mode/elements forward when trade matcher fails or is empty",
+    "summary": "fix(ai): carry mode/elements forward when trade matcher fails or is empty",
+    "areas": [
+      "api"
+    ],
+    "commit": "7d316012",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-4d7bde7e",
     "date": "2026-08-18T19:46:37+08:00",
     "title": "feat(ai): wire deterministic trade question bank into the wizard (Phase 2+3)",
