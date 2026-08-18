@@ -1323,11 +1323,77 @@ OUTPUT SCHEMA
     return systemPrompt;
   }
 
-  private async buildConversationalPrompt() {
+  /**
+   * Conversational split — Pass A: Trade Matcher.
+   * Small, focused prompt that returns ONLY the trade list (plus mode and a
+   * short title/summary for thread continuity). The next-question prompt runs
+   * separately with these trades injected, keeping per-turn output small.
+   */
+  private async buildTradeMatcherPrompt() {
     const allowedTrades = await this.getAllowedTrades();
     const allowedTradeNames = allowedTrades.map((trade) => trade.name);
 
-    const systemPrompt = `You are Mimo, a friendly renovation assistant. Your job is to chat with a client and ask questions to understand their project. Respond in JSON.
+    const systemPrompt = `You are Mimo Trade Matcher. Given the client's renovation need and the conversation so far, return ONLY the list of trades required. Nothing else.
+
+# CLASSIFY MODE FIRST
+- repair: fixing faults, leaks, damage, breakage, malfunction.
+- refresh: cosmetic or light upgrades without major redesign.
+- design: full renovation, refit, fitout, layout rethink, or transformation-led scope (e.g. "full bathroom renovation", "refit my kitchen").
+
+# TRADE RULES
+- "trades" must contain exact values from ALLOWED_TRADES only.
+- repair mode → ABSOLUTE MINIMUM trades. Prefer a single trade; add another only if the described fault clearly needs it.
+  - WRONG: "leaking tap" → Plumber, Handyman
+  - RIGHT: "leaking tap" → Plumber
+  - WRONG: "bath drain blocked" → Bath Fitter, Plumber
+  - RIGHT: "bath drain blocked" → Plumber
+- design/renovation mode → list EVERY trade implied by the works described:
+  - floor/tiles → Tiler; sanitary ware / fittings / waterproofing → Plumber;
+    lighting / sockets / wiring → Electrician; painting → Painter;
+    structure / partitions / demolition → Builder; joinery / cabinetry → Carpenter.
+  - If the user says "full renovation" WITHOUT specifics, still list the standard trade set for that room (e.g. bathroom → Plumber, Tiler, Electrician, Builder) and record the unstated specifics in "missingScope".
+  - WRONG: "full bathroom renovation — floor, sanitary ware, lighting" → Handyman
+  - RIGHT: "full bathroom renovation — floor, sanitary ware, lighting" → Plumber, Tiler, Electrician
+- refresh mode → minimal + surface trade(s) only where justified (e.g. "repaint kitchen" → Painter only).
+- Assign confidence per trade. Use confidence < 0.5 for trades you are unsure about.
+
+ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
+
+# OUTPUT (JSON only)
+{
+  "mode": "repair|refresh|design",
+  "modeConfidence": 0.0,
+  "modeReasoning": "one short sentence",
+  "title": "short project title",
+  "summary": "one-sentence summary of what the client needs",
+  "trades": ["..."],
+  "tradeDetails": [{ "trade": "...", "confidence": 0.0 }],
+  "missingScope": ["floor", "sanitary ware", "lighting"]
+}`;
+
+    return {
+      systemPrompt,
+      allowedTradesCount: allowedTrades.length,
+      locationEntryCount: 0,
+    };
+  }
+
+  /**
+   * Conversational split — Pass B: Next Question.
+   * Slim prompt that asks ONE question. Trades come from the trade matcher pass
+   * (injected as KNOWN_TRADES); scope/risks/safety are computed at wrap-up.
+   */
+  private buildConversationalPrompt(known?: { knownTrades: string[]; mode: string; missingScope: string[] }) {
+    const knownTrades = Array.isArray(known?.knownTrades) ? known.knownTrades : [];
+    const mode = known?.mode || 'repair';
+    const missingScope = Array.isArray(known?.missingScope) ? known.missingScope : [];
+
+    const systemPrompt = `You are Mimo, a friendly renovation assistant. Ask ONE question to understand the client's project better. Respond in JSON.
+
+# KNOWN_TRADES (from the trade matcher — do NOT suggest trades; focus only on the next question)
+trades = ${knownTrades.length > 0 ? JSON.stringify(knownTrades) : 'unknown'}
+mode = ${mode}
+missingScope = ${JSON.stringify(missingScope)}
 
 # FACT TRACKING
 - Build a mental checklist of EXPLICIT FACTS. These are LOCKED and must never be contradicted.
@@ -1355,7 +1421,7 @@ OUTPUT SCHEMA
 
 # CRITICAL RULES
 1) conversationalText = ONE warm sentence acknowledging what they just said. Never end with "?". Never say "Tell me more" or "Got it. Tell me more".
-2) nextQuestions = ONE question per turn. Never combine topics with "and" or "or". The JSON output must include conversationalText, nextQuestions, options, trades, title, summary, assumptions, risks, safetyAssessment, and coveredTopics.
+2) nextQuestions = ONE question per turn. Never combine topics with "and" or "or". The JSON output must include conversationalText, nextQuestions, options, coveredTopics, and overallConfidence only.
 3) Always include answer options with every question. Match options to YOUR question — don't recycle options from previous turns.
 4) YES/NO questions (no alternatives listed in the question) → [{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not sure",value:"I am not sure"}]. If your question contains "or" presenting different choices (e.g. "X or Y"), it is NOT a yes/no question — use rule 5 instead.
 5) CHOICE questions — your question presents distinct alternatives. The options MUST be the alternatives you named. Extract exact phrases from your question as individual option labels. Examples:
@@ -1382,48 +1448,24 @@ OUTPUT SCHEMA
   Example: "Do you have a style or finish in mind, or let the professional suggest options?"
   Options: "I have a preference", "Let the pro suggest", "Standard is fine", "Not sure".
   Only ask this after you've established what's being installed — not on the first turn.
-19) Wrap-up: when overallConfidence ≥ 0.75, you may stop asking questions and signal completion with a brief closing conversationalText and an empty nextQuestions array.
+19) Wrap-up: set nextQuestions = [] ONLY when overallConfidence ≥ 0.85 AND all required topics for the mode are covered. Below that, always ask one more substantive question.
+20) For design/renovation mode, work through missingScope FIRST (size → what's included → existing condition → finishes) before asking anything else. If the user answers "yes" to a broad confirmation ("Is it a full renovation?"), immediately narrow with ONE specific follow-up — never a generic "anything else".
 
 # RELEVANCE
 - Stay focused on the client's stated need. If this is a new installation or upgrade (not a repair), do NOT ask about problems or symptoms — ask about requirements instead. Match options to YOUR question — never recycle options from a previous turn.
 
-# TRADE MINIMIZATION
-- Suggest the ABSOLUTE MINIMUM trades necessary. Do NOT add trades just because a fixture could be replaced.
-- WRONG: "bath drain blocked" → suggest Bath Fitter, ask about bath replacement
-- RIGHT: "bath drain blocked" → suggest Plumber ONLY, focus on drain questions
-- WRONG: "kitchen tap leaking" → suggest Plumber + Kitchen Fitter
-- RIGHT: "kitchen tap leaking" → suggest Plumber ONLY
-
 # OUTPUT (JSON only)
 {
-  "title": "short project title",
-  "summary": "one-sentence summary of what the client needs",
-  "conversationalText": "Got it — maintenance it is.",
-  "trades": ["Plumber"],
-  "nextQuestions": ["your question here (must not be empty)"],
-  "followUpQuestions": [],
-  "coveredTopics": ["fixtureType"],
+  "conversationalText": "Got it — that helps.",
+  "nextQuestions": ["your question here (or [] only when wrapping up)"],
   "options": [{"label":"Yes","value":"yes"},{"label":"No","value":"no"},{"label":"Not sure","value":"not sure"}],
-  "assumptions": ["assuming this is a residential property"],
-  "risks": ["water damage if not addressed quickly"],
-  "safetyAssessment": {
-    "riskLevel": "low",
-    "isDangerous": false,
-    "concerns": [],
-    "temporaryMitigations": [],
-    "shouldEscalateEmergency": false,
-    "emergencyReason": null,
-    "requiresImmediateHumanContact": false,
-    "disclaimer": "If there is immediate danger, move to safety and contact emergency services or the relevant utility provider."
-  },
+  "coveredTopics": ["fixtureType"],
   "overallConfidence": 0.3
-}
-
-ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}`;
+}`;
 
     return {
       systemPrompt,
-      allowedTradesCount: allowedTrades.length,
+      allowedTradesCount: 0,
       locationEntryCount: 0,
     };
   }
@@ -2965,7 +3007,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
       ? Number(process.env.DEEPSEEK_CONVERSATIONAL_MAX_TOKENS || '1500')
       : Number(process.env.DEEPSEEK_MAX_OUTPUT_TOKENS || '2000');
     const orchestratorEnabled = this.shouldUseUnifiedOrchestrator();
-    const promptWrapper = mode === 'conversational' ? await this.buildConversationalPrompt() : await this.buildPromptWrapper();
+    const promptWrapper = mode === 'conversational' ? await this.buildTradeMatcherPrompt() : await this.buildPromptWrapper();
     const factsPromptWrapper = mode === 'conversational' ? null : await this.buildFactsExtractionPrompt();
 
     const shouldResetMemory = this.isMemoryResetPrompt(trimmedPrompt);
@@ -3038,8 +3080,114 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
         durationMs = pipelineResult.durationMs;
         usage = pipelineResult.usage;
         parsedOutput = pipelineResult.parsedOutput;
+      } else if (mode === 'conversational') {
+        // ── Conversational split: Pass A (trade matcher) → Pass B (next question) ──
+        // Pass A uses the envelope built with the trade-matcher system prompt.
+        let passAUsage: Record<string, number> = {};
+        let tradeContext: {
+          trades: string[];
+          mode: string;
+          missingScope: string[];
+          title: string | null;
+          summary: string | null;
+          tradeDetails: Array<{ trade: string; confidence: number }>;
+          modeConfidence: number | null;
+          modeReasoning: string | null;
+        } = {
+          trades: [],
+          mode: 'repair',
+          missingScope: [],
+          title: null,
+          summary: null,
+          tradeDetails: [],
+          modeConfidence: null,
+          modeReasoning: null,
+        };
+
+        const priorTrades = () =>
+          threadSummary?.trades && threadSummary.trades.length > 0
+            ? threadSummary.trades.slice(0, 6)
+            : this.fallbackTrades.map((t) => t.name).slice(0, 6);
+
+        try {
+          const passA = await this.runDeepSeekPass({
+            requestId: `${requestId}_trade`,
+            messages,
+            timeoutMs,
+            maxOutputTokens: 300,
+            label: 'Conversational-TradeMatcher',
+          });
+          passAUsage = passA.usage;
+          const a = passA.parsedOutput;
+          tradeContext = {
+            trades: Array.isArray(a.trades) ? (a.trades as string[]) : [],
+            mode:
+              typeof a.mode === 'string' && ['repair', 'refresh', 'design'].includes(a.mode)
+                ? a.mode
+                : 'repair',
+            missingScope: Array.isArray(a.missingScope) ? (a.missingScope as string[]) : [],
+            title: typeof a.title === 'string' ? a.title : null,
+            summary: typeof a.summary === 'string' ? a.summary : null,
+            tradeDetails: Array.isArray(a.tradeDetails)
+              ? (a.tradeDetails as Array<{ trade: string; confidence: number }>)
+              : [],
+            modeConfidence: typeof a.modeConfidence === 'number' ? a.modeConfidence : null,
+            modeReasoning: typeof a.modeReasoning === 'string' ? a.modeReasoning : null,
+          };
+          if (tradeContext.trades.length === 0) {
+            tradeContext.trades = priorTrades();
+            this.logger.warn(`[${requestId}] Trade matcher returned no trades; reusing prior/fallback trades`);
+          }
+        } catch (tradeErr) {
+          this.logger.warn(
+            `[${requestId}] Trade matcher pass failed; reusing prior/fallback trades. ${(tradeErr as Error).message}`,
+          );
+          tradeContext.trades = priorTrades();
+        }
+
+        // Pass B — next question, with the trade list injected for context.
+        const conversationalWrapper = this.buildConversationalPrompt({
+          knownTrades: tradeContext.trades,
+          mode: tradeContext.mode,
+          missingScope: tradeContext.missingScope,
+        });
+        const passBMessages: DeepSeekMessage[] = [
+          { role: 'system', content: conversationalWrapper.systemPrompt },
+          { role: 'user', content: envelope.userMessage },
+        ];
+        const passB = await this.runDeepSeekPass({
+          requestId: `${requestId}_question`,
+          messages: passBMessages,
+          timeoutMs,
+          maxOutputTokens: 400,
+          label: 'Conversational-NextQuestion',
+        });
+
+        output = passB.output;
+        durationMs = Date.now() - startedAt;
+        usage = {
+          prompt_tokens: (passAUsage.prompt_tokens || 0) + (passB.usage.prompt_tokens || 0),
+          completion_tokens: (passAUsage.completion_tokens || 0) + (passB.usage.completion_tokens || 0),
+          total_tokens: (passAUsage.total_tokens || 0) + (passB.usage.total_tokens || 0),
+        };
+
+        const merged: Record<string, unknown> = {
+          ...passB.parsedOutput,
+          trades: tradeContext.trades,
+          tradeDetails: tradeContext.tradeDetails,
+          mode: tradeContext.mode,
+          modeSuggested: tradeContext.mode,
+          modeConfidence: tradeContext.modeConfidence,
+          modeReasoning: tradeContext.modeReasoning,
+          missingScope: tradeContext.missingScope,
+          title:
+            tradeContext.title ??
+            (typeof passB.parsedOutput.title === 'string' ? passB.parsedOutput.title : null),
+          summary: tradeContext.summary ?? null,
+        };
+        parsedOutput = this.normalizeParsedOutput(merged);
       } else {
-        // Single-pass fallback (conversational mode or when facts prompt not available)
+        // Non-conversational single-pass fallback (rare: structured mode without facts wrapper)
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -3635,7 +3783,7 @@ Return ONLY valid JSON (no markdown):
     let injectedOptions: Array<{ label: string; value: string }> | undefined;
     const isUserSayingNo = /^no$/i.test(prompt.trim());
     const confidenceHigh = typeof (parsedObject as Record<string, unknown> | null)?.overallConfidence === 'number'
-      && (parsedObject as Record<string, unknown>).overallConfidence as number >= 0.75;
+      && (parsedObject as Record<string, unknown>).overallConfidence as number >= 0.85;
     if (finalNextQuestions.length === 0 && !isUserSayingNo && !confidenceHigh) {
       const trade = finalTrades[0]?.toLowerCase() || '';
       if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {

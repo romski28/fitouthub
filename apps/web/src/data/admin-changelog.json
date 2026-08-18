@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-1472e894",
+    "date": "2026-08-18T13:55:14+08:00",
+    "title": "feat(ai): split conversational turn into trade-matcher + next-question passes",
+    "summary": "feat(ai): split conversational turn into trade-matcher + next-question passes",
+    "areas": [
+      "api"
+    ],
+    "commit": "1472e894",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-57d96bcb",
     "date": "2026-08-18T12:43:34+08:00",
     "title": "fix(client-site-access): wrap request row on mobile",
