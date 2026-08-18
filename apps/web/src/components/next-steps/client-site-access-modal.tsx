@@ -608,15 +608,15 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                         : null;
                       return (
                         <div key={req.id} className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">
+                              <p className="text-sm font-medium text-slate-800">
                                 {proName(req.professional)}
                                 {timeLabel && <span className="font-normal text-slate-500"> requested {timeLabel}</span>}
                               </p>
                             </div>
                             {!isDeclining && (
-                              <div className="flex gap-1.5 shrink-0">
+                              <div className="flex gap-1.5 sm:shrink-0">
                                 <button
                                   onClick={() => handleAcceptRequest(req.id)}
                                   disabled={!!actionBusy || !selectedAddressId}

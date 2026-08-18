@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-57d96bcb",
+    "date": "2026-08-18T12:43:34+08:00",
+    "title": "fix(client-site-access): wrap request row on mobile",
+    "summary": "fix(client-site-access): wrap request row on mobile",
+    "areas": [
+      "web"
+    ],
+    "commit": "57d96bcb",
+    "files": [
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-18-76876f8d",
     "date": "2026-08-18T12:26:41+08:00",
     "title": "fix(inspect-site): close modal on booking success, state-aware empty message",
