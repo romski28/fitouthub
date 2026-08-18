@@ -1362,6 +1362,96 @@ OUTPUT SCHEMA
     return systemPrompt;
   }
 
+  // ── Trade question bank (deterministic questions, DB-backed + in-memory cached) ──
+  private questionBankCache: {
+    rows: Array<{
+      tradeName: string;
+      mode: string;
+      element: string;
+      question: string;
+      options: Array<{ label: string; value: string }>;
+      priority: number;
+    }>;
+    loadedAt: number;
+  } | null = null;
+  private readonly QUESTION_BANK_TTL_MS = 60_000;
+
+  private async getQuestionBank() {
+    if (this.questionBankCache && Date.now() - this.questionBankCache.loadedAt < this.QUESTION_BANK_TTL_MS) {
+      return this.questionBankCache.rows;
+    }
+
+    const rows = await this.prisma.tradeQuestion.findMany({
+      where: { isActive: true },
+      include: { trade: { select: { title: true } } },
+      orderBy: { priority: 'asc' },
+    });
+
+    const mapped = rows.map((row) => ({
+      tradeName: row.trade.title,
+      mode: row.mode,
+      element: row.element,
+      question: row.question,
+      options: Array.isArray(row.options)
+        ? (row.options as unknown[])
+            .filter((o): o is { label: string; value: string } => {
+              const obj = o as Record<string, unknown>;
+              return typeof obj?.label === 'string' && typeof obj?.value === 'string';
+            })
+        : [],
+      priority: row.priority,
+    }));
+
+    this.questionBankCache = { rows: mapped, loadedAt: Date.now() };
+    return mapped;
+  }
+
+  private resolveNextQuestion(input: {
+    trades: string[];
+    mode: string;
+    elements: string[];
+    askedQuestions: string[];
+    coveredTopics: string[];
+    bank: Array<{
+      tradeName: string;
+      mode: string;
+      element: string;
+      question: string;
+      options: Array<{ label: string; value: string }>;
+      priority: number;
+    }>;
+  }): { kind: 'bank'; question: string; options: Array<{ label: string; value: string }> } | { kind: 'defer' } {
+    const { trades, mode, elements, askedQuestions, coveredTopics, bank } = input;
+    const tradeSet = new Set(trades.map((t) => t.toLowerCase()));
+    const elementSet = new Set(elements.map((e) => e.toLowerCase()));
+
+    const candidates = bank
+      .filter((row) => tradeSet.has(row.tradeName.toLowerCase()))
+      .filter((row) => row.mode === mode)
+      .filter((row) => row.element === 'general' || elementSet.has(row.element.toLowerCase()))
+      .filter((row) => !askedQuestions.some((q) => this.areQuestionsNearDuplicate(q, row.question)))
+      .sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return (a.element === 'general' ? 1 : 0) - (b.element === 'general' ? 1 : 0);
+      });
+
+    const sizeCovered =
+      coveredTopics.includes('roomSize') ||
+      askedQuestions.some((q) => /(?:size|dimension|measurement|how big|sqm|sq\.?\s?m|sqft|square)/i.test(q));
+
+    // Ask room size first for design/renovation projects, then fall to the bank.
+    if (mode === 'design' && !sizeCovered) {
+      return { kind: 'defer' };
+    }
+
+    if (candidates.length > 0) {
+      const row = candidates[0];
+      return { kind: 'bank', question: row.question, options: row.options };
+    }
+
+    return { kind: 'defer' };
+  }
+
   /**
    * Conversational split — Pass A: Trade Matcher.
    * Small, focused prompt that returns ONLY the trade list (plus mode and a
@@ -1410,6 +1500,14 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
   when the client has not stated them.
 - repair/refresh mode: list only what is genuinely needed to scope the job.
 
+# elements
+- Detect the fixtures/works the client mentioned and output them as "elements".
+- Use ONLY this vocabulary: "floor", "wall", "finish", "lighting", "sockets", "wiring",
+  "sanitary", "wc", "basin", "water-heater", "tap", "cabinetry", "door", "shelving",
+  "structural", "waterproofing", "demolition".
+- "full bathroom renovation including floor, sanitary wares and lighting" → ["floor", "sanitary", "lighting"].
+- If nothing specific matches, use ["general"].
+
 # OUTPUT (JSON only)
 {
   "mode": "repair|refresh|design",
@@ -1419,6 +1517,7 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
   "summary": "one-sentence summary of what the client needs",
   "trades": ["..."],
   "tradeDetails": [{ "trade": "...", "confidence": 0.0 }],
+  "elements": ["floor", "sanitary", "lighting"],
   "missingScope": ["roomSize", "existingCondition", "materialPreference"]
 }`;
 
@@ -1434,11 +1533,18 @@ ALLOWED_TRADES = ${JSON.stringify(allowedTradeNames)}
    * Slim prompt that asks ONE question. Trades come from the trade matcher pass
    * (injected as KNOWN_TRADES); scope/risks/safety are computed at wrap-up.
    */
-  private buildConversationalPrompt(known?: { knownTrades: string[]; mode: string; missingScope: string[]; coveredTopics: string[] }) {
+  private buildConversationalPrompt(known?: {
+    knownTrades: string[];
+    mode: string;
+    missingScope: string[];
+    coveredTopics: string[];
+    preselectedQuestion: { question: string; options: Array<{ label: string; value: string }> } | null;
+  }) {
     const knownTrades = Array.isArray(known?.knownTrades) ? known.knownTrades : [];
     const mode = known?.mode || 'repair';
     const missingScope = Array.isArray(known?.missingScope) ? known.missingScope : [];
     const coveredTopics = Array.isArray(known?.coveredTopics) ? known.coveredTopics : [];
+    const preselectedQuestion = known?.preselectedQuestion ?? null;
 
     const systemPrompt = `You are Mimo, a friendly renovation assistant. Ask ONE question to understand the client's project better. Respond in JSON.
 
@@ -1447,6 +1553,12 @@ trades = ${knownTrades.length > 0 ? JSON.stringify(knownTrades) : 'unknown'}
 mode = ${mode}
 missingScope = ${JSON.stringify(missingScope)}
 alreadyCovered = ${JSON.stringify(coveredTopics)}
+
+# PRESELECTED NEXT QUESTION
+preselectedQuestion = ${preselectedQuestion ? preselectedQuestion.question : 'none'}
+preselectedOptions = ${JSON.stringify(preselectedQuestion?.options ?? [])}
+- If preselectedQuestion is NOT "none", use it EXACTLY as nextQuestions[0] and use preselectedOptions as options. Write conversationalText that acknowledges the client's last message and leads naturally into that question. Do NOT invent a different question.
+- If preselectedQuestion is "none", follow the normal question rules below.
 
 # FACT TRACKING
 - Build a mental checklist of EXPLICIT FACTS. These are LOCKED and must never be contradicted.
@@ -3145,6 +3257,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           trades: string[];
           mode: string;
           missingScope: string[];
+          elements: string[];
           title: string | null;
           summary: string | null;
           tradeDetails: Array<{ trade: string; confidence: number }>;
@@ -3154,6 +3267,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           trades: [],
           mode: 'repair',
           missingScope: [],
+          elements: [],
           title: null,
           summary: null,
           tradeDetails: [],
@@ -3184,6 +3298,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
                 ? a.mode
                 : 'repair',
             missingScope: Array.isArray(a.missingScope) ? (a.missingScope as string[]) : [],
+            elements: Array.isArray(a.elements) ? (a.elements as string[]) : [],
             title: typeof a.title === 'string' ? a.title : null,
             summary: typeof a.summary === 'string' ? a.summary : null,
             tradeDetails: Array.isArray(a.tradeDetails)
@@ -3203,12 +3318,33 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           tradeContext.trades = priorTrades();
         }
 
+        // Deterministic question bank: pick the next trade-specific question.
+        // Falls back to the model (defer) for room size and uncovered combos.
+        let nextQuestionDecision: { kind: 'bank'; question: string; options: Array<{ label: string; value: string }> } | { kind: 'defer' } = { kind: 'defer' };
+        try {
+          const bank = await this.getQuestionBank();
+          nextQuestionDecision = this.resolveNextQuestion({
+            trades: tradeContext.trades,
+            mode: tradeContext.mode,
+            elements: tradeContext.elements,
+            askedQuestions,
+            coveredTopics,
+            bank,
+          });
+        } catch (bankErr) {
+          this.logger.warn(`[${requestId}] Question bank lookup failed; deferring to model. ${(bankErr as Error).message}`);
+        }
+
         // Pass B — next question, with the trade list injected for context.
         const conversationalWrapper = this.buildConversationalPrompt({
           knownTrades: tradeContext.trades,
           mode: tradeContext.mode,
           missingScope: tradeContext.missingScope,
           coveredTopics,
+          preselectedQuestion:
+            nextQuestionDecision.kind === 'bank'
+              ? { question: nextQuestionDecision.question, options: nextQuestionDecision.options }
+              : null,
         });
         const passBMessages: DeepSeekMessage[] = [
           { role: 'system', content: conversationalWrapper.systemPrompt },
@@ -3240,12 +3376,18 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           modeSuggested: tradeContext.mode,
           modeConfidence: tradeContext.modeConfidence,
           modeReasoning: tradeContext.modeReasoning,
+          elements: tradeContext.elements,
           missingScope: tradeContext.missingScope,
           title:
             tradeContext.title ??
             (typeof passB.parsedOutput.title === 'string' ? passB.parsedOutput.title : null),
           summary: tradeContext.summary ?? null,
         };
+        if (nextQuestionDecision.kind === 'bank') {
+          merged.nextQuestions = [nextQuestionDecision.question];
+          merged.followUpQuestions = [nextQuestionDecision.question];
+          merged.options = nextQuestionDecision.options;
+        }
         parsedOutput = this.normalizeParsedOutput(merged);
       } else {
         // Non-conversational single-pass fallback (rare: structured mode without facts wrapper)

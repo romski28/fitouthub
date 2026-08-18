@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-18-4d7bde7e",
+    "date": "2026-08-18T19:46:37+08:00",
+    "title": "feat(ai): wire deterministic trade question bank into the wizard (Phase 2+3)",
+    "summary": "feat(ai): wire deterministic trade question bank into the wizard (Phase 2+3)",
+    "areas": [
+      "api"
+    ],
+    "commit": "4d7bde7e",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-cafaae08",
     "date": "2026-08-18T19:29:09+08:00",
     "title": "feat(ai): add trade question bank table and seed (Phase 1)",
