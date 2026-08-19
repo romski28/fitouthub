@@ -2936,6 +2936,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           messages,
           temperature: 0.2,
           max_tokens: maxOutputTokens,
+          response_format: { type: 'json_object' },
           thinking: { type: 'disabled' },
         }),
         signal: controller.signal,
@@ -3418,6 +3419,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
             messages,
             temperature: 0.2,
             max_tokens: maxOutputTokens,
+            response_format: { type: 'json_object' },
             thinking: { type: 'disabled' },
           }),
           signal: controller.signal,
@@ -3856,7 +3858,7 @@ Return ONLY valid JSON (no markdown):
     const compileResponse = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 1500, thinking: { type: 'disabled' } }),
+      body: JSON.stringify({ model, messages: compileMessages, temperature: 0.1, max_tokens: 1500, response_format: { type: 'json_object' }, thinking: { type: 'disabled' } }),
       signal: AbortSignal.timeout(20000),
     });
 

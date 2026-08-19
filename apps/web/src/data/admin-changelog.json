@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-19-b84e29a7",
+    "date": "2026-08-19T13:41:30+08:00",
+    "title": "feat(ai): re-enable json_object response format on DeepSeek calls",
+    "summary": "feat(ai): re-enable json_object response format on DeepSeek calls",
+    "areas": [
+      "api"
+    ],
+    "commit": "b84e29a7",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-19-18b77032",
     "date": "2026-08-19T13:00:45+08:00",
     "title": "feat(ai): bank drives design questions only; AI handles repair/refresh",
