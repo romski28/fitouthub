@@ -1382,8 +1382,15 @@ OUTPUT SCHEMA
       coveredTopics.includes('roomSize') ||
       askedQuestions.some((q) => /(?:size|dimension|measurement|how big|sqm|sq\.?\s?m|sqft|square)/i.test(q));
 
+    // Only design/renovation uses the deterministic bank — its question space is
+    // enumerable (fixtures, finishes). Repair and refresh are contextual diagnoses
+    // the model handles far better, so defer to the AI for those modes.
+    if (mode !== 'design') {
+      return { kind: 'defer' };
+    }
+
     // Ask room size first for design/renovation projects, then fall to the bank.
-    if (mode === 'design' && !sizeCovered) {
+    if (!sizeCovered) {
       return { kind: 'defer' };
     }
 
