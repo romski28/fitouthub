@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-19-719b9e07",
+    "date": "2026-08-19T08:56:44+08:00",
+    "title": "fix(ai): restore json_object for scope generation",
+    "summary": "fix(ai): restore json_object for scope generation",
+    "areas": [
+      "api"
+    ],
+    "commit": "719b9e07",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-18-667da0c2",
     "date": "2026-08-18T22:40:58+08:00",
     "title": "fix(ai): restore scope/safety/risks compile when DeepSeek returns empty content",

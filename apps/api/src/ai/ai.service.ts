@@ -4618,6 +4618,7 @@ Return ONLY valid JSON (no markdown):
             { role: 'user', content: prompt },
           ],
           temperature: 0.15,
+          response_format: { type: 'json_object' },
           max_tokens: 2200,
         }),
         signal: controller.signal,
