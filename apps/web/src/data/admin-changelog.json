@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-19-3c6d7e25",
+    "date": "2026-08-19T12:32:43+08:00",
+    "title": "fix(ai): disable DeepSeek thinking mode on all chat requests",
+    "summary": "fix(ai): disable DeepSeek thinking mode on all chat requests",
+    "areas": [
+      "api"
+    ],
+    "commit": "3c6d7e25",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-19-064cc276",
     "date": "2026-08-19T10:06:09+08:00",
     "title": "fix(ai): robustly parse scope generation output, don't parse reasoning prose",
