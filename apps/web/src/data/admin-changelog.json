@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-19-064cc276",
+    "date": "2026-08-19T10:06:09+08:00",
+    "title": "fix(ai): robustly parse scope generation output, don't parse reasoning prose",
+    "summary": "fix(ai): robustly parse scope generation output, don't parse reasoning prose",
+    "areas": [
+      "api"
+    ],
+    "commit": "064cc276",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-19-719b9e07",
     "date": "2026-08-19T08:56:44+08:00",
     "title": "fix(ai): restore json_object for scope generation",

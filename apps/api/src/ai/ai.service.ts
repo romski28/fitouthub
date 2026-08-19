@@ -4569,7 +4569,8 @@ Return ONLY valid JSON (no markdown):
 
     const endpoint = this.resolveDeepSeekChatEndpoint();
     const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
-    const timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS || '60000');
+    // Scope generation is a long, complex task — allow extra time.
+    const timeoutMs = Number(process.env.DEEPSEEK_SCOPE_TIMEOUT_MS || '120000');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -4618,8 +4619,7 @@ Return ONLY valid JSON (no markdown):
             { role: 'user', content: prompt },
           ],
           temperature: 0.15,
-          response_format: { type: 'json_object' },
-          max_tokens: 2200,
+          max_tokens: 4000,
         }),
         signal: controller.signal,
       });
@@ -4631,13 +4631,20 @@ Return ONLY valid JSON (no markdown):
 
       const payload = rawText ? (JSON.parse(rawText) as DeepSeekChatResponse) : null;
       const message = payload?.choices?.[0]?.message;
-      const content = (message?.content || message?.reasoning_content || '').trim();
+      const content = (message?.content || '').trim();
       if (!content) {
+        const reasoningLen = (message?.reasoning_content || '').trim().length;
+        this.logger.warn(`[callDeepSeekForScope] empty content (reasoning_content=${reasoningLen} chars, completionTokens=${payload?.usage?.completion_tokens ?? 0})`);
         throw new ServiceUnavailableException('DeepSeek returned empty scope output');
       }
 
+      // Strip markdown fences, then extract the outermost JSON object in case the
+      // model prefixed/suffixed the JSON with a sentence.
       const stripped = content.replace(/```(?:json)?\s*|```/gi, '').trim();
-      return JSON.parse(stripped) as Record<string, unknown>;
+      const start = stripped.indexOf('{');
+      const end = stripped.lastIndexOf('}');
+      const jsonText = start >= 0 && end > start ? stripped.slice(start, end + 1) : stripped;
+      return JSON.parse(jsonText) as Record<string, unknown>;
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         throw new ServiceUnavailableException('DeepSeek scope generation timed out');
