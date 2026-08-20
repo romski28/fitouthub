@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-20-b9d2324a",
+    "date": "2026-08-20T15:35:01+08:00",
+    "title": "feat(admin): chat-style AI conversation logs with question, source, and detail panel",
+    "summary": "feat(admin): chat-style AI conversation logs with question, source, and detail panel",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b9d2324a",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/admin/analytics/conversation-logs/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-20-1f3f92cb",
     "date": "2026-08-20T15:05:15+08:00",
     "title": "docs: capture blind-login / scoped task access design notes",

@@ -13,6 +13,7 @@ type ConvLogRow = {
   aiIntakeId: string | null;
   prompt: string | null;
   userResponse: string | null;
+  structuredJson: any;
   safetyJson: any;
   metadata: any;
   createdAt: string;
@@ -34,6 +35,164 @@ type SessionGroup = {
   safetyLevel: string | null;
 };
 
+const asRecord = (v: any): Record<string, any> | null =>
+  v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, any>) : null;
+
+const questionOf = (log: ConvLogRow): string | null => {
+  const nq = asRecord(log.structuredJson)?.nextQuestions;
+  return Array.isArray(nq) && nq.length > 0 && typeof nq[0] === 'string' ? nq[0] : null;
+};
+
+const optionsOf = (log: ConvLogRow): any[] => {
+  const opts = asRecord(log.structuredJson)?.options;
+  return Array.isArray(opts) ? opts : [];
+};
+
+const sourceOf = (log: ConvLogRow): string | null => {
+  const m = asRecord(log.metadata)?.questionSource;
+  if (typeof m === 'string') return m;
+  const s = asRecord(log.structuredJson)?.questionSource;
+  return typeof s === 'string' ? s : null;
+};
+
+function SourceBadge({ source }: { source: string }) {
+  const tone: Record<string, string> = {
+    ai: 'bg-sky-100 text-sky-700',
+    bank: 'bg-emerald-100 text-emerald-700',
+    seed: 'bg-amber-100 text-amber-700',
+  };
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${tone[source] || 'bg-slate-100 text-slate-600'}`}>
+      {source}
+    </span>
+  );
+}
+
+function DetailPanel({
+  log,
+  deleting,
+  onDelete,
+}: {
+  log: ConvLogRow;
+  deleting: string | null;
+  onDelete: (id: string) => void;
+}) {
+  const sj = asRecord(log.structuredJson);
+  const safety = asRecord(log.safetyJson);
+  const source = sourceOf(log);
+  const confidence = typeof sj?.overallConfidence === 'number' ? sj.overallConfidence : null;
+  const trades: string[] = Array.isArray(sj?.trades) ? sj.trades.filter((t) => typeof t === 'string') : [];
+  const coveredTopics: string[] = Array.isArray(sj?.coveredTopics)
+    ? sj.coveredTopics.filter((t) => typeof t === 'string')
+    : [];
+  const title = typeof sj?.title === 'string' ? sj.title : null;
+  const summary = typeof sj?.summary === 'string' ? sj.summary : null;
+  const riskLevel = typeof safety?.riskLevel === 'string' ? safety.riskLevel : null;
+  const concerns: string[] = Array.isArray(safety?.concerns)
+    ? safety.concerns.filter((c) => typeof c === 'string')
+    : [];
+
+  return (
+    <div className="space-y-3 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {log.role === 'assistant' ? 'Mimo AI' : 'Client'} · Turn {log.turn}
+          </p>
+          <p className="mt-0.5 text-[10px] text-slate-400">{new Date(log.createdAt).toLocaleString()}</p>
+        </div>
+        <button
+          type="button"
+          disabled={deleting === log.id}
+          onClick={() => onDelete(log.id)}
+          className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 hover:bg-red-100 disabled:opacity-30"
+        >
+          {deleting === log.id ? 'Deleting…' : 'Delete'}
+        </button>
+      </div>
+
+      {source && (
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Question source</span>
+          <SourceBadge source={source} />
+        </div>
+      )}
+
+      {confidence !== null && (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <p className="text-[10px] font-medium text-slate-400">Overall confidence</p>
+          <p className="text-sm font-semibold text-slate-900">{Math.round(confidence * 100)}%</p>
+        </div>
+      )}
+
+      {title && (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <p className="text-[10px] font-medium text-slate-400">Project title</p>
+          <p className="text-xs font-semibold text-slate-800">{title}</p>
+        </div>
+      )}
+
+      {summary && (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <p className="text-[10px] font-medium text-slate-400">Summary</p>
+          <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-wrap">{summary}</p>
+        </div>
+      )}
+
+      {trades.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <p className="text-[10px] font-medium text-slate-400">Trades</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {trades.map((t) => (
+              <span key={t} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {coveredTopics.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <p className="text-[10px] font-medium text-slate-400">Covered topics</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {coveredTopics.map((t) => (
+              <span key={t} className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(riskLevel || concerns.length > 0) && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="text-[10px] font-medium text-amber-600">Safety {riskLevel ? `— ${riskLevel}` : ''}</p>
+          {concerns.length > 0 && (
+            <div className="mt-1 space-y-0.5">
+              {concerns.slice(0, 8).map((c, i) => (
+                <p key={i} className="text-[10px] text-amber-700">⚠ {c}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] text-slate-400 break-all">
+        <p className="font-medium text-slate-500">Row</p>
+        <p>id: {log.id}</p>
+        {log.projectId && <p>projectId: {log.projectId}</p>}
+        {log.aiIntakeId && <p>aiIntakeId: {log.aiIntakeId}</p>}
+      </div>
+
+      <details className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+          Structured JSON
+        </summary>
+        <pre className="max-h-[45vh] overflow-auto border-t border-slate-100 bg-slate-950 p-3 text-[10px] leading-relaxed text-slate-200 whitespace-pre-wrap">
+          {log.structuredJson ? JSON.stringify(log.structuredJson, null, 2) : '—'}
+        </pre>
+      </details>
+    </div>
+  );
+}
+
 export default function ConversationLogsPage() {
   const { accessToken, user, isLoggedIn } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -42,6 +201,7 @@ export default function ConversationLogsPage() {
   const [filter, setFilter] = useState<{ projectId?: string; sessionId?: string }>({});
   const [filterInput, setFilterInput] = useState({ projectId: '', sessionId: '' });
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [skip, setSkip] = useState(0);
   const take = 250;
@@ -132,6 +292,15 @@ export default function ConversationLogsPage() {
     }).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
   }, [data]);
 
+  const selectedLog = useMemo(() => {
+    if (!selectedLogId) return null;
+    for (const s of sessions) {
+      const hit = s.turns.find((t) => t.id === selectedLogId);
+      if (hit) return hit;
+    }
+    return null;
+  }, [selectedLogId, sessions]);
+
   const safetyBadge = (level: string | null) => {
     if (!level || level === 'none') return null;
     const colors: Record<string, string> = {
@@ -217,7 +386,10 @@ export default function ConversationLogsPage() {
           {/* Session header */}
           <button
             type="button"
-            onClick={() => setExpandedSession(expandedSession === session.sessionId ? null : session.sessionId)}
+            onClick={() => {
+              setExpandedSession(expandedSession === session.sessionId ? null : session.sessionId);
+              setSelectedLogId(null);
+            }}
             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition"
           >
             <span className="text-xs text-slate-400">
@@ -250,57 +422,83 @@ export default function ConversationLogsPage() {
             </div>
           </button>
 
-          {/* Expanded: turn-by-turn */}
+          {/* Expanded: chat-style conversation + detail panel */}
           {expandedSession === session.sessionId && (
-            <div className="border-t border-slate-100 px-4 py-3 space-y-2 max-h-[60vh] overflow-y-auto">
-              {session.turns.map((log) => (
-                <div key={log.id} className="rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-semibold text-slate-500">
-                      Turn {log.turn} — {log.role}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={deleting === log.id}
-                        onClick={() => handleDelete(log.id)}
-                        className="text-[10px] text-red-500 hover:text-red-700 disabled:opacity-30"
-                      >
-                        {deleting === log.id ? '…' : '🗑'}
-                      </button>
-                    </div>
-                  </div>
-                  {log.prompt && (
-                    <div className="mb-1">
-                      <span className="text-[10px] font-medium text-slate-400">Prompt:</span>
-                      <p className="text-xs text-slate-700 whitespace-pre-wrap">{log.prompt.slice(0, 300)}{log.prompt.length > 300 ? '…' : ''}</p>
-                    </div>
-                  )}
-                  {log.userResponse && (
-                    <div className="mb-1">
-                      <span className="text-[10px] font-medium text-slate-400">Response:</span>
-                      <p className="text-xs text-slate-600 whitespace-pre-wrap">{log.userResponse.slice(0, 300)}{log.userResponse.length > 300 ? '…' : ''}</p>
-                    </div>
-                  )}
-                  {log.safetyJson && typeof log.safetyJson === 'object' && !Array.isArray(log.safetyJson) && (
-                    <div className="mt-1 rounded bg-amber-50/60 px-2 py-1">
-                      <span className="text-[10px] font-medium text-amber-600">
-                        Safety: {(log.safetyJson as any).riskLevel || 'N/A'}
-                      </span>
-                      {Array.isArray((log.safetyJson as any).concerns) && (log.safetyJson as any).concerns.length > 0 && (
-                        <div className="text-[10px] text-amber-700 mt-0.5">
-                          {(log.safetyJson as any).concerns.slice(0, 3).map((c: string, i: number) => (
-                            <span key={i} className="block">⚠ {c}</span>
-                          ))}
+            <div className="border-t border-slate-100">
+              <div className="grid min-h-[60vh] max-h-[72vh] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+                {/* Chat window */}
+                <div className="overflow-y-auto bg-slate-50/40 px-4 py-4">
+                  <div className="space-y-3">
+                    {session.turns.map((log) => {
+                      const isAssistant = log.role === 'assistant';
+                      const question = questionOf(log);
+                      const options = optionsOf(log);
+                      const source = sourceOf(log);
+                      const selected = selectedLogId === log.id;
+                      return (
+                        <div key={log.id} className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLogId(log.id)}
+                            className={`max-w-[88%] rounded-2xl px-4 py-3 text-left shadow-sm transition ${selected ? 'ring-2 ring-sky-400' : ''} ${
+                              isAssistant
+                                ? 'border border-slate-200 bg-white'
+                                : 'bg-sky-600 text-white'
+                            }`}
+                          >
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className={`text-[10px] font-semibold ${isAssistant ? 'text-slate-400' : 'text-sky-100'}`}>
+                                {isAssistant ? 'Mimo AI' : 'Client'} · Turn {log.turn}
+                              </span>
+                              {isAssistant && source ? <SourceBadge source={source} /> : null}
+                            </div>
+
+                            {isAssistant ? (
+                              <>
+                                {log.userResponse && (
+                                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-slate-800">{log.userResponse}</p>
+                                )}
+                                {question && (
+                                  <div className="mt-2 rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-2">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Asked</p>
+                                    <p className="mt-0.5 text-xs font-medium leading-relaxed text-slate-900">{question}</p>
+                                    {options.length > 0 && (
+                                      <div className="mt-1.5 flex flex-wrap gap-1">
+                                        {options.map((o: any, i: number) => (
+                                          <span key={i} className="rounded-full border border-[#D4C8A0] bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                                            {typeof o === 'string' ? o : (o?.label ?? o?.value ?? '')}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-xs leading-relaxed whitespace-pre-wrap">{log.prompt}</p>
+                            )}
+
+                            <div className={`mt-1.5 text-[10px] ${isAssistant ? 'text-slate-400' : 'text-sky-200'}`}>
+                              {new Date(log.createdAt).toLocaleString()}
+                            </div>
+                          </button>
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Detail panel */}
+                <div className="overflow-y-auto border-t border-slate-100 bg-slate-50/80 lg:border-l lg:border-t-0">
+                  {selectedLog ? (
+                    <DetailPanel log={selectedLog} deleting={deleting} onDelete={handleDelete} />
+                  ) : (
+                    <div className="p-6 text-xs text-slate-400">
+                      Select a message to see its full details (structured JSON, safety, confidence).
                     </div>
                   )}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>

@@ -4419,6 +4419,7 @@ Return ONLY valid JSON (no markdown):
           aiIntakeId: true,
           prompt: true,
           userResponse: true,
+          structuredJson: true,
           safetyJson: true,
           metadata: true,
           createdAt: true,
