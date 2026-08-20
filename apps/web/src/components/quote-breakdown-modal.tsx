@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import {
   getQuoteBreakdownClientItems,
   getQuoteBreakdownClientTotal,
@@ -72,7 +73,7 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
   const items = getQuoteBreakdownClientItems(quote.quoteBreakdown);
   const total = getQuoteBreakdownClientTotal(quote.quoteBreakdown, quote.quoteAmount);
 
-  return (
+  const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg [perspective:1600px]">
@@ -199,4 +200,6 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

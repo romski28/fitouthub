@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-20-210c07af",
+    "date": "2026-08-20T11:51:34+08:00",
+    "title": "fix(overview): portal quotation modal to body so it isn't trapped by panel",
+    "summary": "fix(overview): portal quotation modal to body so it isn't trapped by panel",
+    "areas": [
+      "web"
+    ],
+    "commit": "210c07af",
+    "files": [
+      "apps/web/src/components/quote-breakdown-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-20-7d894adb",
     "date": "2026-08-20T11:28:18+08:00",
     "title": "feat(site-inspection): allow pros to add/edit visit notes after the inspection",
