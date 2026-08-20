@@ -736,6 +736,10 @@ export class AiService {
       ? po.conversationalText.trim()
       : null;
 
+    const questionSource = typeof po?.questionSource === 'string'
+      ? po.questionSource
+      : null;
+
     await this.prisma.aiConversationLog.create({
       data: {
         sessionId,
@@ -746,7 +750,7 @@ export class AiService {
         aiIntakeId: intakeId,
         structuredJson: po ? (po as any) : undefined,
         safetyJson: safetyAssessment as any ?? undefined,
-        metadata: { requestId },
+        metadata: questionSource ? { requestId, questionSource } : { requestId },
       },
     });
 
@@ -762,7 +766,9 @@ export class AiService {
           aiIntakeId: intakeId,
           structuredJson: po ? (po as any) : undefined,
           safetyJson: safetyAssessment as any ?? undefined,
-          metadata: { requestId, turnLabel: 'response' },
+          metadata: questionSource
+            ? { requestId, turnLabel: 'response', questionSource }
+            : { requestId, turnLabel: 'response' },
         },
       });
     }
@@ -3405,6 +3411,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
           merged.followUpQuestions = [nextQuestionDecision.question];
           merged.options = nextQuestionDecision.options;
         }
+        merged.questionSource = nextQuestionDecision.kind === 'bank' ? 'bank' : 'ai';
         parsedOutput = this.normalizeParsedOutput(merged);
       } else {
         // Non-conversational single-pass fallback (rare: structured mode without facts wrapper)
@@ -4012,14 +4019,14 @@ Return ONLY valid JSON (no markdown):
     if (finalNextQuestions.length === 0 && !isUserSayingNo && !confidenceHigh) {
       const trade = finalTrades[0]?.toLowerCase() || '';
       if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {
-        finalNextQuestions = ['Can you tell me a bit more about the AC work needed?'];
-        injectedOptions = [{ label: 'Installation', value: 'installation' }, { label: 'Repair or service', value: 'repair' }, { label: 'Maintenance', value: 'maintenance' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Is it a new AC installation, a repair, or routine service?'];
+        injectedOptions = [{ label: 'New installation', value: 'installation' }, { label: 'Repair', value: 'repair' }, { label: 'Routine service', value: 'maintenance' }, { label: 'Not sure', value: 'not sure' }];
       } else if (trade.includes('plumb')) {
-        finalNextQuestions = ['Can you tell me a bit more about the plumbing work?'];
-        injectedOptions = [{ label: 'New installation', value: 'new install' }, { label: 'Leak or repair', value: 'repair' }, { label: 'Upgrade or change', value: 'upgrade' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Is it a leak or blockage to fix, or something new to install?'];
+        injectedOptions = [{ label: 'Leak', value: 'leak' }, { label: 'Blockage', value: 'blockage' }, { label: 'New installation', value: 'new install' }, { label: 'Not sure', value: 'not sure' }];
       } else if (trade.includes('electric')) {
-        finalNextQuestions = ['Can you tell me a bit more about the electrical work needed?'];
-        injectedOptions = [{ label: 'New installation', value: 'new install' }, { label: 'Repair or fault', value: 'repair' }, { label: 'Upgrade or change', value: 'upgrade' }, { label: 'Not sure', value: 'not sure' }];
+        finalNextQuestions = ['Is it a fault to repair, or new wiring or fixtures to install?'];
+        injectedOptions = [{ label: 'Repair a fault', value: 'repair' }, { label: 'New wiring or fixtures', value: 'new install' }, { label: 'Upgrade existing', value: 'upgrade' }, { label: 'Not sure', value: 'not sure' }];
       } else {
         finalNextQuestions = ['Is there anything else you can tell me about the work needed?'];
         injectedOptions = [{ label: 'No', value: 'no' }];
@@ -4035,8 +4042,18 @@ Return ONLY valid JSON (no markdown):
       ? { ...(parsedObject || {}), summary: conversationalText, title: undefined }
       : (parsedObject || {});
 
+    // Tag the source of the question the assistant asked this turn:
+    // 'bank' (deterministic trade question), 'seed' (hardcoded safety net), or 'ai'.
+    const seedApplied = finalNextQuestions.length > 0 && injectedOptions !== undefined;
+    const questionSource: string = seedApplied
+      ? 'seed'
+      : typeof (parsedObject as Record<string, unknown> | null)?.questionSource === 'string'
+        ? (parsedObject as Record<string, unknown>).questionSource as string
+        : 'ai';
+
     const responseParsedOutput: Record<string, unknown> = {
       ...sanitizedParsed,
+      questionSource,
       conversationalText,
       trades: finalTrades,
       nextQuestions: finalNextQuestions,

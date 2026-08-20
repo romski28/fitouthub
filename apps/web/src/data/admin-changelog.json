@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-20-4249851f",
+    "date": "2026-08-20T13:29:56+08:00",
+    "title": "feat(ai): tag question source in conversation logs; sharpen fallback seeds",
+    "summary": "feat(ai): tag question source in conversation logs; sharpen fallback seeds",
+    "areas": [
+      "api"
+    ],
+    "commit": "4249851f",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-20-210c07af",
     "date": "2026-08-20T11:51:34+08:00",
     "title": "fix(overview): portal quotation modal to body so it isn't trapped by panel",
