@@ -7387,11 +7387,13 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Site visit cannot be confirmed for this request');
     }
 
+    const wasVisited = request.status === 'visited';
+
     const updatedRequest = await this.prisma.siteAccessRequest.update({
       where: { id: requestId },
       data: {
         status: 'visited',
-        visitedAt: new Date(),
+        ...(wasVisited ? {} : { visitedAt: new Date() }),
         visitDetails: body.visitDetails,
       },
     });
@@ -7399,24 +7401,26 @@ Please review the project details and respond with your quote or decline the inv
     await this.prisma.projectProfessional.update({
       where: { id: request.projectProfessionalId },
       data: {
-        siteVisitedAt: new Date(),
+        ...(wasVisited ? {} : { siteVisitedAt: new Date(), visitApprovedButNotDone: false }),
         visitNotes: body.visitDetails,
-        visitApprovedButNotDone: false,
       },
     });
 
-    const professional = await this.prisma.professional.findUnique({
-      where: { id: professionalId },
-    });
-    const professionalName =
-      professional?.businessName || professional?.fullName || 'Professional';
-    await this.addProjectChatMessage(
-      request.projectId,
-      'professional',
-      null,
-      professionalId,
-      `${professionalName} confirmed a site visit on ${this.formatDateTime(updatedRequest.visitedAt)}.`,
-    );
+    // Only announce the first visit — editing notes afterwards shouldn't re-announce.
+    if (!wasVisited) {
+      const professional = await this.prisma.professional.findUnique({
+        where: { id: professionalId },
+      });
+      const professionalName =
+        professional?.businessName || professional?.fullName || 'Professional';
+      await this.addProjectChatMessage(
+        request.projectId,
+        'professional',
+        null,
+        professionalId,
+        `${professionalName} confirmed a site visit on ${this.formatDateTime(updatedRequest.visitedAt)}.`,
+      );
+    }
 
     return {
       success: true,

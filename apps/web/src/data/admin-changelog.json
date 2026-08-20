@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-20-7d894adb",
+    "date": "2026-08-20T11:28:18+08:00",
+    "title": "feat(site-inspection): allow pros to add/edit visit notes after the inspection",
+    "summary": "feat(site-inspection): allow pros to add/edit visit notes after the inspection",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7d894adb",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-19-b84e29a7",
     "date": "2026-08-19T13:41:30+08:00",
     "title": "feat(ai): re-enable json_object response format on DeepSeek calls",

@@ -104,6 +104,14 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
 
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
+  // Pre-populate the notes field with existing visit notes when the status loads,
+  // so the pro can review and edit them after the visit.
+  useEffect(() => {
+    if (status?.visitDetails) {
+      setVisitNotes((prev) => prev || status.visitDetails || "");
+    }
+  }, [status?.visitDetails]);
+
   // ── Send message to client ─────────────────────────────────────
   const handleSendMessage = async () => {
     const text = messageText.trim();

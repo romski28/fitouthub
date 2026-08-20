@@ -317,10 +317,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     {siteAccessStatus.formattedVisitedAt && ` — ${siteAccessStatus.formattedVisitedAt}`}
                   </p>
                   {siteAccessStatus.visitDetails && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Notes</p>
-                      <p className="mt-1 text-slate-800">{siteAccessStatus.visitDetails}</p>
-                    </div>
+                    <p>
+                      <span className="font-semibold text-slate-900">Notes:</span>{' '}
+                      <span className="leading-relaxed text-slate-800">{siteAccessStatus.visitDetails}</span>
+                    </p>
                   )}
                 </>
               ) : rescheduleRequired ? (
@@ -350,19 +350,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            {!isVisited && (
-              <button
-                type="button"
-                onClick={() => setShowInspectModal(true)}
-                className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
-              >
-                {rescheduleRequired
+            <button
+              type="button"
+              onClick={() => setShowInspectModal(true)}
+              className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
+            >
+              {isVisited
+                ? (siteAccessStatus.visitDetails ? 'Edit visit notes' : 'Add visit notes')
+                : rescheduleRequired
                   ? 'Reschedule inspection'
                   : isBooked
                     ? 'Manage inspection'
                     : 'Book inspection'}
-              </button>
-            )}
+            </button>
           </div>
         )}
       </AccordionItem>
