@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-20-f7edf0a6",
+    "date": "2026-08-20T23:31:32+08:00",
+    "title": "chore(property): untrack CSDI data file and gitignore it",
+    "summary": "chore(property): untrack CSDI data file and gitignore it",
+    "areas": [
+      "api"
+    ],
+    "commit": "f7edf0a6",
+    "files": [
+      "apps/api/.gitignore"
+    ]
+  },
+  {
     "id": "2026-08-20-94ba8bcc",
     "date": "2026-08-20T23:30:15+08:00",
     "title": "fix(property): override stale global DATABASE_URL in CSDI import",
