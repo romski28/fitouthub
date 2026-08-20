@@ -425,9 +425,9 @@ export default function ConversationLogsPage() {
           {/* Expanded: chat-style conversation + detail panel */}
           {expandedSession === session.sessionId && (
             <div className="border-t border-slate-100">
-              <div className="grid min-h-[60vh] max-h-[72vh] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="grid grid-cols-1 lg:h-[70vh] lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-hidden">
                 {/* Chat window */}
-                <div className="overflow-y-auto bg-slate-50/40 px-4 py-4">
+                <div className="min-h-0 overflow-y-auto bg-slate-50/40 px-4 py-4">
                   <div className="space-y-3">
                     {session.turns.map((log) => {
                       const isAssistant = log.role === 'assistant';
@@ -489,7 +489,7 @@ export default function ConversationLogsPage() {
                 </div>
 
                 {/* Detail panel */}
-                <div className="overflow-y-auto border-t border-slate-100 bg-slate-50/80 lg:border-l lg:border-t-0">
+                <div className="min-h-0 overflow-y-auto border-t border-slate-100 bg-slate-50/80 lg:border-l lg:border-t-0">
                   {selectedLog ? (
                     <DetailPanel log={selectedLog} deleting={deleting} onDelete={handleDelete} />
                   ) : (
