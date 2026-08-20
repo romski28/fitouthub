@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-20-7d82324b",
+    "date": "2026-08-20T23:40:45+08:00",
+    "title": "feat(property): add admin properties capture UI + gazetteer search",
+    "summary": "feat(property): add admin properties capture UI + gazetteer search",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7d82324b",
+    "files": [
+      "apps/api/src/properties/properties.controller.ts",
+      "apps/api/src/properties/properties.service.ts",
+      "apps/web/src/app/admin/properties/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-20-f7edf0a6",
     "date": "2026-08-20T23:31:32+08:00",
     "title": "chore(property): untrack CSDI data file and gitignore it",

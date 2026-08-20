@@ -36,6 +36,24 @@ export class PropertiesController {
     return this.propertiesService.searchProperties(q ?? '', districtAreaId);
   }
 
+  @Get('districts')
+  @UseGuards(CombinedAuthGuard)
+  async districts(@Request() req?: any) {
+    this.requireAuth(req);
+    return this.propertiesService.listDistricts();
+  }
+
+  @Get('gazetteer/search')
+  @UseGuards(CombinedAuthGuard)
+  async gazetteerSearch(
+    @Query('q') q?: string,
+    @Query('districtAreaId') districtAreaId?: string,
+    @Request() req?: any,
+  ) {
+    this.requireAuth(req);
+    return this.propertiesService.searchGazetteer(q ?? '', districtAreaId);
+  }
+
   @Get('admin/matches')
   @UseGuards(CombinedAuthGuard)
   async listMatches(@Query('status') status?: string, @Request() req?: any) {

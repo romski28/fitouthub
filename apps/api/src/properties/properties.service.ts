@@ -140,6 +140,54 @@ export class PropertiesService {
     };
   }
 
+  async listDistricts() {
+    return this.prisma.regionArea.findMany({
+      select: { id: true, code: true, name: true, nameZh: true, zoneId: true, sortOrder: true },
+      orderBy: [{ zoneId: 'asc' }, { sortOrder: 'asc' }],
+    });
+  }
+
+  async searchGazetteer(q: string, districtAreaId?: string) {
+    const query = normalizeText(q);
+    if (!query) return { results: [] };
+
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        nameEn: string | null;
+        nameZh: string | null;
+        addressFull: string | null;
+        districtAreaId: string | null;
+        districtName: string | null;
+        buildingType: string | null;
+        lat: number | null;
+        lng: number | null;
+        similarity: number;
+      }>
+    >`
+      SELECT b."id", b."nameEn", b."nameZh", b."addressFull", b."districtAreaId",
+             b."districtName", b."buildingType",
+             b."lat"::float8 AS lat, b."lng"::float8 AS lng,
+             GREATEST(
+               similarity(COALESCE(b."nameEn", ''), ${query}),
+               similarity(COALESCE(b."addressFull", ''), ${query})
+             ) AS similarity
+      FROM "BuildingGazetteer" b
+      WHERE b."isResidential" = true
+        AND (${districtAreaId ?? null}::text IS NULL OR b."districtAreaId" = ${districtAreaId ?? null})
+        AND (
+          COALESCE(b."nameEn", '') ILIKE ${'%' + query + '%'}
+          OR COALESCE(b."addressFull", '') ILIKE ${'%' + query + '%'}
+        )
+      ORDER BY similarity DESC
+      LIMIT 15
+    `;
+
+    return {
+      results: rows.map((r) => ({ ...r, similarity: Number(r.similarity) })),
+    };
+  }
+
   async getProperty(id: string) {
     const property = await this.prisma.property.findUnique({
       where: { id },
