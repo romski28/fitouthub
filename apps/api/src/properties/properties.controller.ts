@@ -25,6 +25,22 @@ export class PropertiesController {
     return this.propertiesService.upsertProperty(body);
   }
 
+  @Get()
+  @UseGuards(CombinedAuthGuard)
+  async list(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('q') q?: string,
+    @Request() req?: any,
+  ) {
+    this.requireAuth(req);
+    return this.propertiesService.listProperties({
+      skip: skip ? parseInt(skip, 10) : 0,
+      take: take ? parseInt(take, 10) : 100,
+      q,
+    });
+  }
+
   @Get('search')
   @UseGuards(CombinedAuthGuard)
   async search(

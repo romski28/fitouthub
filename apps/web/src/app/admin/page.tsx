@@ -751,6 +751,12 @@ export default function AdminDashboardPage() {
       stat: "Professional records",
     },
     {
+      title: "Properties",
+      description: "Canonical property addresses — capture, search, and dedupe.",
+      href: "/admin/properties",
+      stat: "Property records",
+    },
+    {
       title: "Users",
       description: "Client and admin account management.",
       href: "/admin/users",

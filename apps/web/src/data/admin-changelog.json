@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-20-5a626d3f",
+    "date": "2026-08-20T23:59:41+08:00",
+    "title": "feat(property): properties page tabs + DB list, add to data control",
+    "summary": "feat(property): properties page tabs + DB list, add to data control",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5a626d3f",
+    "files": [
+      "apps/api/src/properties/properties.controller.ts",
+      "apps/api/src/properties/properties.service.ts",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/admin/properties/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-20-7d82324b",
     "date": "2026-08-20T23:40:45+08:00",
     "title": "feat(property): add admin properties capture UI + gazetteer search",

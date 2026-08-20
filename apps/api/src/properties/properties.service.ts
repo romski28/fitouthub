@@ -30,6 +30,33 @@ const FLAG_THRESHOLD = 0.6;
 export class PropertiesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listProperties(params: { skip?: number; take?: number; q?: string }) {
+    const take = Math.min(params.take ?? 100, 250);
+    const skip = params.skip ?? 0;
+    const q = params.q?.trim() ?? '';
+    const where: any = q
+      ? {
+          OR: [
+            { buildingName: { contains: q, mode: 'insensitive' } },
+            { buildingNameZh: { contains: q, mode: 'insensitive' } },
+            { displayAddress: { contains: q, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    const [properties, total] = await Promise.all([
+      this.prisma.property.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.property.count({ where }),
+    ]);
+
+    return { properties, total, skip, take };
+  }
+
   async upsertProperty(input: UpsertPropertyInput) {
     if (!input.buildingName?.trim()) {
       throw new BadRequestException('buildingName is required');

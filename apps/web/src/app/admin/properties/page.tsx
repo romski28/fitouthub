@@ -53,6 +53,11 @@ export default function AdminPropertiesPage() {
   const [matches, setMatches] = useState<MatchCandidate[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'gov' | 'db'>('gov');
+  const [dbRows, setDbRows] = useState<any[]>([]);
+  const [dbTotal, setDbTotal] = useState(0);
+  const [dbQ, setDbQ] = useState('');
+  const [dbLoading, setDbLoading] = useState(false);
 
   const authHeaders = { Authorization: `Bearer ${accessToken}` };
 
@@ -115,6 +120,31 @@ export default function AdminPropertiesPage() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingQuery, districtAreaId, accessToken]);
+
+  const loadDb = useCallback(async (q: string) => {
+    setDbLoading(true);
+    try {
+      const params = new URLSearchParams({ skip: '0', take: '100' });
+      if (q.trim()) params.set('q', q.trim());
+      const res = await fetch(`${API_BASE_URL}/properties?${params}`, { headers: authHeaders });
+      if (!res.ok) throw new Error(`list ${res.status}`);
+      const data = await res.json();
+      setDbRows(data.properties ?? []);
+      setDbTotal(data.total ?? 0);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setDbLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (tab !== 'db' || !accessToken || user?.role !== 'admin') return;
+    const t = setTimeout(() => loadDb(dbQ), 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, dbQ, loadDb, accessToken, user]);
 
   const selectBuilding = (hit: GazetteerHit) => {
     setSelected(hit);
@@ -208,6 +238,28 @@ export default function AdminPropertiesPage() {
         <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
       )}
 
+      <div className="mb-4 flex gap-2 border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => setTab('gov')}
+          className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+            tab === 'gov' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Search HK Gov records
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('db')}
+          className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+            tab === 'db' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Database properties
+        </button>
+      </div>
+
+      {tab === 'gov' && (
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Capture form */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -361,6 +413,51 @@ export default function AdminPropertiesPage() {
           </ul>
         </div>
       </div>
+      )}
+
+      {tab === 'db' && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-900">Database properties</h2>
+            <input
+              value={dbQ}
+              onChange={(e) => setDbQ(e.target.value)}
+              placeholder="Search building or address…"
+              className="w-64 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            {dbTotal} record(s)
+            {dbRows.length > 0 ? ` — showing first ${dbRows.length}` : ''}
+          </p>
+
+          {dbLoading && <p className="mt-3 text-xs text-slate-400">Loading…</p>}
+          {!dbLoading && dbRows.length === 0 && (
+            <p className="mt-3 text-xs text-slate-400">No properties found.</p>
+          )}
+          {!dbLoading && dbRows.length > 0 && (
+            <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200">
+              {dbRows.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 bg-white px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-800">
+                      {p.displayAddress || p.buildingName}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {p.blockTower ? `${p.blockTower} · ` : ''}
+                      {p.floorLevel ? `${p.floorLevel}/F · ` : ''}
+                      {p.unitNumber ? `Flat ${p.unitNumber}` : ''}
+                    </p>
+                  </div>
+                  <code className="shrink-0 text-[10px] text-slate-400">
+                    {p.canonicalKey ? p.canonicalKey.slice(0, 12) : 'unresolved'}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
