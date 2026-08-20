@@ -201,24 +201,25 @@ model Identity {
 }
 
 model Persona {
-  id                String           @id @default(cuid())
-  identityId        String
-  identity          Identity         @relation(fields: [identityId], references: [id])
-  type              String           @default("CLIENT")
-  userId            String?          @unique
-  user              User?            @relation("PersonaToUser", fields: [userId], references: [id])
-  professionalId    String?          @unique
-  professional      Professional?    @relation("PersonaToProfessional", fields: [professionalId], references: [id])
-  landlordId        String?          @unique
-  landlord          Landlord?        @relation(fields: [landlordId], references: [id])
-  propertyManagerId String?          @unique
-  propertyManager   PropertyManager? @relation(fields: [propertyManagerId], references: [id])
-  estateAgentId     String?          @unique
-  estateAgent       EstateAgent?     @relation(fields: [estateAgentId], references: [id])
-  projectDelegateId String?          @unique
-  projectDelegate   ProjectDelegate? @relation(fields: [projectDelegateId], references: [id])
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id                   String                @id @default(cuid())
+  identityId           String
+  identity             Identity              @relation(fields: [identityId], references: [id])
+  type                 String                @default("CLIENT")
+  userId               String?               @unique
+  user                 User?                 @relation("PersonaToUser", fields: [userId], references: [id])
+  professionalId       String?               @unique
+  professional         Professional?         @relation("PersonaToProfessional", fields: [professionalId], references: [id])
+  landlordId           String?               @unique
+  landlord             Landlord?             @relation(fields: [landlordId], references: [id])
+  propertyManagerId    String?               @unique
+  propertyManager      PropertyManager?      @relation(fields: [propertyManagerId], references: [id])
+  estateAgentId        String?               @unique
+  estateAgent          EstateAgent?          @relation(fields: [estateAgentId], references: [id])
+  projectDelegateId    String?               @unique
+  projectDelegate      ProjectDelegate?      @relation(fields: [projectDelegateId], references: [id])
+  propertyAccountLinks PropertyAccountLink[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 model User {
@@ -465,32 +466,34 @@ model ProfessionalAvailability {
 }
 
 model RegionZone {
-  id        String                       @id @default(cuid())
-  code      String                       @unique
-  label     String
-  labelZh   String?
-  sortOrder Int                          @default(0)
-  mapSvgId  String?                      @unique
-  createdAt DateTime                     @default(now())
-  updatedAt DateTime                     @updatedAt
-  areas     RegionArea[]
-  coverage  ProfessionalRegionCoverage[]
+  id         String                       @id @default(cuid())
+  code       String                       @unique
+  label      String
+  labelZh    String?
+  sortOrder  Int                          @default(0)
+  mapSvgId   String?                      @unique
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  areas      RegionArea[]
+  coverage   ProfessionalRegionCoverage[]
+  properties Property[]
 
   @@index([sortOrder])
 }
 
 model RegionArea {
-  id        String                       @id @default(cuid())
-  zoneId    String
-  code      String                       @unique
-  name      String
-  nameZh    String?
-  sortOrder Int                          @default(0)
-  createdAt DateTime                     @default(now())
-  updatedAt DateTime                     @updatedAt
-  zone      RegionZone                   @relation(fields: [zoneId], references: [id], onDelete: Restrict)
-  aliases   RegionAreaAlias[]
-  coverage  ProfessionalRegionCoverage[]
+  id         String                       @id @default(cuid())
+  zoneId     String
+  code       String                       @unique
+  name       String
+  nameZh     String?
+  sortOrder  Int                          @default(0)
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  zone       RegionZone                   @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+  aliases    RegionAreaAlias[]
+  coverage   ProfessionalRegionCoverage[]
+  properties Property[]
 
   @@unique([zoneId, name])
   @@index([zoneId, sortOrder])
@@ -555,6 +558,7 @@ model Project {
   tradesRequired                  String[]                       @default([])
   servicesUsed                    String[]                       @default([])
   region                          String
+  propertyId                      String?
   startDate                       DateTime?
   endDate                         DateTime?
   siteInspectionAvailableOn       DateTime?
@@ -582,6 +586,7 @@ model Project {
   approvedBudgetTransaction       FinancialTransaction?          @relation("ApprovedBudgetTx", fields: [approvedBudgetTxId], references: [id])
   awardedProjectProfessional      ProjectProfessional?           @relation("AwardedProjectProfessional", fields: [awardedProjectProfessionalId], references: [id])
   aiIntake                        AiIntake?
+  property                        Property?                      @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   siteAccessRequests              SiteAccessRequest[]
   siteAccessVisits                SiteAccessVisit[]
   progressReports                 ProgressReport[]
@@ -617,6 +622,7 @@ model Project {
   @@index([lastProfessionalActivityAt(sort: Desc)])
   @@index([lastAdminActivityAt(sort: Desc)])
   @@index([lastSystemActivityAt(sort: Desc)])
+  @@index([propertyId])
 }
 
 model AcProject {
@@ -2361,4 +2367,112 @@ model ConversationReadState {
   @@unique([conversationId, actorType, actorId])
   @@index([conversationId])
   @@index([actorType, actorId])
+}
+
+// ============================================================
+// Canonical property address (one row per physical unit)
+// ============================================================
+
+model Property {
+  id             String   @id @default(cuid())
+  unitNumber     String?
+  floorLevel     String?
+  blockTower     String?
+  buildingName   String
+  buildingNameZh String?
+  street         String?
+  districtAreaId String?
+  zoneId         String?
+  googlePlaceId  String?
+  lat            Decimal? @db.Decimal(9, 6)
+  lng            Decimal? @db.Decimal(9, 6)
+  canonicalKey   String?  @unique
+  displayAddress String?
+  addressVisible Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  regionArea      RegionArea?              @relation(fields: [districtAreaId], references: [id], onDelete: SetNull)
+  zone            RegionZone?              @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  accountLinks    PropertyAccountLink[]
+  aliases         PropertyAlias[]
+  matchCandidates PropertyMatchCandidate[] @relation("PropertyMatchSource")
+  matchedAgainst  PropertyMatchCandidate[] @relation("PropertyMatchCandidateTarget")
+  projects        Project[]
+
+  @@index([districtAreaId])
+  @@index([zoneId])
+  @@index([buildingName])
+}
+
+model PropertyAccountLink {
+  id         String    @id @default(cuid())
+  propertyId String
+  personaId  String
+  role       String?
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  persona  Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, personaId])
+  @@index([personaId])
+}
+
+model PropertyAlias {
+  id              String   @id @default(cuid())
+  propertyId      String
+  alias           String
+  aliasNormalized String
+  createdAt       DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, aliasNormalized])
+  @@index([aliasNormalized])
+}
+
+model PropertyMatchCandidate {
+  id                  String    @id @default(cuid())
+  sourcePropertyId    String
+  candidatePropertyId String
+  similarity          Float
+  reasons             Json?
+  status              String    @default("pending")
+  resolvedBy          String?
+  resolvedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  sourceProperty    Property @relation("PropertyMatchSource", fields: [sourcePropertyId], references: [id], onDelete: Cascade)
+  candidateProperty Property @relation("PropertyMatchCandidateTarget", fields: [candidatePropertyId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([sourcePropertyId])
+  @@index([candidatePropertyId])
+}
+
+model BuildingGazetteer {
+  id             String   @id @default(cuid())
+  sourceId       String?
+  nameEn         String?
+  nameZh         String?
+  usageCode      String?
+  usageDesc      String?
+  category       String?
+  street         String?
+  districtAreaId String?
+  xCoord         Decimal? @db.Decimal(12, 3)
+  yCoord         Decimal? @db.Decimal(12, 3)
+  lat            Decimal? @db.Decimal(9, 6)
+  lng            Decimal? @db.Decimal(9, 6)
+  addressFull    String?
+  isResidential  Boolean  @default(false)
+  importedAt     DateTime @default(now())
+
+  @@index([category])
+  @@index([nameEn])
+  @@index([districtAreaId])
 }
