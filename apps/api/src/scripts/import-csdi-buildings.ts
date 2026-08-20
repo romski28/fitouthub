@@ -26,6 +26,37 @@ function extractName(address: string): string {
   return comma >= 0 ? a.slice(0, comma).trim() : a;
 }
 
+/** Split a CSV/TSV line, honouring double-quoted fields and "" escapes. */
+function parseDelimitedLine(line: string, delimiter: string): string[] {
+  const cells: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      cells.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells;
+}
+
 async function main() {
   const filePath = process.argv[2];
   const includeAll = process.argv.includes('--all');
@@ -64,7 +95,7 @@ async function main() {
     return null;
   };
 
-  const raw = readFileSync(filePath, 'utf8');
+  const raw = readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '');
   const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length === 0) {
     console.error('File is empty.');
@@ -72,7 +103,7 @@ async function main() {
   }
 
   const delimiter = lines[0].includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(delimiter).map((h) => h.trim());
+  const headers = parseDelimitedLine(lines[0], delimiter).map((h) => h.trim());
   const col: Record<string, number> = {};
   headers.forEach((h, i) => {
     col[h] = i;
@@ -97,7 +128,7 @@ async function main() {
   };
 
   for (const line of lines.slice(1)) {
-    const cells = line.split(delimiter);
+    const cells = parseDelimitedLine(line, delimiter);
     const usage = get(cells, 'NSEARCH5_E') || '';
     const bucket = usage || 'UNKNOWN';
     usageCounts.set(bucket, (usageCounts.get(bucket) || 0) + 1);

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-20-1e5f7fb5",
+    "date": "2026-08-20T23:22:13+08:00",
+    "title": "fix(property): parse quoted CSV fields in CSDI import",
+    "summary": "fix(property): parse quoted CSV fields in CSDI import",
+    "areas": [
+      "api"
+    ],
+    "commit": "1e5f7fb5",
+    "files": [
+      "apps/api/src/scripts/import-csdi-buildings.ts"
+    ]
+  },
+  {
     "id": "2026-08-20-d0b060c0",
     "date": "2026-08-20T23:14:44+08:00",
     "title": "feat(property): add CSDI building gazetteer import script",
