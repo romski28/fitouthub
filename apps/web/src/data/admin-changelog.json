@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-20-99507e51",
+    "date": "2026-08-20T23:03:48+08:00",
+    "title": "feat(property): add address normalizer + properties API (Phase B)",
+    "summary": "feat(property): add address normalizer + properties API (Phase B)",
+    "areas": [
+      "api"
+    ],
+    "commit": "99507e51",
+    "files": [
+      "apps/api/src/app.module.ts",
+      "apps/api/src/properties/address-normalizer.ts",
+      "apps/api/src/properties/properties.controller.ts",
+      "apps/api/src/properties/properties.module.ts",
+      "apps/api/src/properties/properties.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-20-5372d8d7",
     "date": "2026-08-20T22:55:01+08:00",
     "title": "feat(property): add canonical property address model (Phase A)",
