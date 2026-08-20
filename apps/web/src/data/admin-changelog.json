@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-20-d0b060c0",
+    "date": "2026-08-20T23:14:44+08:00",
+    "title": "feat(property): add CSDI building gazetteer import script",
+    "summary": "feat(property): add CSDI building gazetteer import script",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "d0b060c0",
+    "files": [
+      "MANUAL_SQL_ADD_BUILDING_GAZETTEER_COLUMNS.sql",
+      "apps/api/package.json",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/scripts/import-csdi-buildings.ts"
+    ]
+  },
+  {
     "id": "2026-08-20-99507e51",
     "date": "2026-08-20T23:03:48+08:00",
     "title": "feat(property): add address normalizer + properties API (Phase B)",

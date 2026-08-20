@@ -28,7 +28,8 @@
     "migrate:uploads:r2": "ts-node src/scripts/migrate-uploads-r2.ts",
     "backfill:media:storage": "ts-node src/scripts/backfill-media-storage.ts",
     "backfill:media:storage:apply": "ts-node src/scripts/backfill-media-storage.ts --apply",
-    "set:default-passwords": "ts-node src/scripts/set-default-passwords.ts"
+    "set:default-passwords": "ts-node src/scripts/set-default-passwords.ts",
+    "import:csdi:buildings": "ts-node src/scripts/import-csdi-buildings.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.645.0",

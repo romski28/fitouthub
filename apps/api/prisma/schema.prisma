@@ -2464,6 +2464,9 @@ model BuildingGazetteer {
   category       String?
   street         String?
   districtAreaId String?
+  districtName   String?
+  regionName     String?
+  buildingType   String?
   xCoord         Decimal? @db.Decimal(12, 3)
   yCoord         Decimal? @db.Decimal(12, 3)
   lat            Decimal? @db.Decimal(9, 6)
