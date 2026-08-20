@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-20-94ba8bcc",
+    "date": "2026-08-20T23:30:15+08:00",
+    "title": "fix(property): override stale global DATABASE_URL in CSDI import",
+    "summary": "fix(property): override stale global DATABASE_URL in CSDI import",
+    "areas": [
+      "api"
+    ],
+    "commit": "94ba8bcc",
+    "files": [
+      "apps/api/CDSI.csv",
+      "apps/api/src/scripts/import-csdi-buildings.ts"
+    ]
+  },
+  {
     "id": "2026-08-20-1e5f7fb5",
     "date": "2026-08-20T23:22:13+08:00",
     "title": "fix(property): parse quoted CSV fields in CSDI import",

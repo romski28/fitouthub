@@ -4,7 +4,8 @@ import { readFileSync } from 'fs';
 import { PrismaClient } from '@prisma/client';
 
 // Load environment variables from apps/api/.env
-config({ path: resolve(__dirname, '../../.env') });
+// override: true — a stale global DATABASE_URL would otherwise win and break the import.
+config({ path: resolve(__dirname, '../../.env'), override: true });
 
 const prisma = new PrismaClient();
 
