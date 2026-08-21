@@ -19,6 +19,7 @@ import { ChatTab } from './tabs/chat-tab';
 import { AcPlansTab } from './tabs/ac-plans-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { ProjectAccessModal } from '@/components/project-access-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
 import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
@@ -307,6 +308,7 @@ export default function ProjectDetailPage() {
   const [, setError] = useState<string | null>(null);
   const [submittingQuote, setSubmittingQuote] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showWorkerAccess, setShowWorkerAccess] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
     breakdown: emptyQuoteBreakdownForm() as QuoteBreakdownFormValues,
     notes: '',
@@ -1633,6 +1635,13 @@ export default function ProjectDetailPage() {
               <Link href="/professional-projects" className="text-sm font-semibold text-[rgba(126,58,33,0.92)] hover:underline">
                 ← Back to my projects
               </Link>
+              <button
+                type="button"
+                onClick={() => setShowWorkerAccess(true)}
+                className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#F5EEDE]"
+              >
+                👷 Worker access
+              </button>
             </div>
 
             <ProjectInfoCard
@@ -1775,6 +1784,12 @@ export default function ProjectDetailPage() {
         projectId={project?.project?.id}
         projectProfessionalId={projectProfessionalId}
         readOnly={Boolean(project?.quotedAt) && project?.status !== 'counter_requested'}
+      />
+      <ProjectAccessModal
+        isOpen={showWorkerAccess}
+        onClose={() => setShowWorkerAccess(false)}
+        accessToken={accessToken || ''}
+        projectId={project?.project?.id || ''}
       />
     </>
   );

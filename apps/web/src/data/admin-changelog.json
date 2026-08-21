@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-21-e8a8ddc8",
+    "date": "2026-08-21T23:59:57+08:00",
+    "title": "feat(worker): project access modal on pro project page (Phase 2 frontend)",
+    "summary": "feat(worker): project access modal on pro project page (Phase 2 frontend)",
+    "areas": [
+      "web"
+    ],
+    "commit": "e8a8ddc8",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/components/project-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-21-1de37b83",
     "date": "2026-08-21T23:49:28+08:00",
     "title": "feat(worker): project access grants + 48h magic link (Phase 2 backend)",
