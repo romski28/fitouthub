@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-08-21-7dbac50c",
+    "date": "2026-08-21T22:59:16+08:00",
+    "title": "feat(profile): owner-occupier persona + address manager on profile",
+    "summary": "feat(profile): owner-occupier persona + address manager on profile",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7dbac50c",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/address-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-08-21-76c0b380",
     "date": "2026-08-21T22:52:57+08:00",
     "title": "feat(property): Worker persona + cardinality-aware address links",

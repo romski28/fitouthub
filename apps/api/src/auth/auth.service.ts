@@ -134,7 +134,9 @@ export class AuthService {
     let user: any;
     let identity: any;
     try {
-      const personaType = dto.role === 'landlord' ? 'LANDLORD' : 'CLIENT';
+      const personaType = dto.role === 'landlord' ? 'LANDLORD'
+        : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : 'CLIENT';
 
       user = await (this.prisma as any).user.create({
         data: {
@@ -396,6 +398,7 @@ export class AuthService {
         : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
         : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
         : dto.role === 'project_delegate' ? 'PROJECT_DELEGATE'
+        : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
@@ -684,6 +687,16 @@ export class AuthService {
       profileId = user.id;
       role = 'project_delegate';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'OWNER_OCCUPIER') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Owner occupier profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = 'owner_occupier';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -701,7 +714,7 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'OWNER_OCCUPIER' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
       propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,

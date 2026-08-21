@@ -6,5 +6,5 @@ export class UpdateUserDto {
   locationPrimary?: string | null;
   locationSecondary?: string | null;
   locationTertiary?: string | null;
-  role?: 'client' | 'admin' | 'professional' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent' | 'project_delegate';
+  role?: 'client' | 'admin' | 'professional' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent' | 'project_delegate' | 'owner_occupier';
 }

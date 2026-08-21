@@ -14,6 +14,21 @@ import PhoneInput from '@/components/phone-input';
 import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { PasswordInput } from '@/components/password-input';
+import { AddressManager } from '@/components/address-manager';
+
+const addressModeForRole = (role?: string): 'single' | 'multi' | 'none' => {
+  switch (role) {
+    case 'client':
+    case 'owner_occupier':
+      return 'single';
+    case 'landlord':
+    case 'property_manager':
+    case 'estate_agent':
+      return 'multi';
+    default:
+      return 'none';
+  }
+};
 
 export default function ProfilePage() {
   const { isLoggedIn, user, accessToken, logout, userLocation, setUserLocation } = useAuth();
@@ -518,6 +533,13 @@ export default function ProfilePage() {
               </details>
             </section>
           </div>
+
+          <section className={paperCardClassName}>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Addresses</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">My addresses</h2>
+            <p className="mt-2 text-sm text-slate-700">Your property addresses, used for site inspections and project matching.</p>
+            <AddressManager accessToken={accessToken || ''} mode={addressModeForRole(user?.role)} />
+          </section>
 
           <section className={paperCardClassName}>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Session</p>
