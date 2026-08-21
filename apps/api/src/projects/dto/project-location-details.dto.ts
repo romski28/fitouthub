@@ -19,4 +19,5 @@ export class ProjectLocationDetailsDto {
   accessHoursDescription?: string;
   desiredStartDate?: string; // ISO date
   photoUrls?: string[];
+  propertyId?: string;
 }

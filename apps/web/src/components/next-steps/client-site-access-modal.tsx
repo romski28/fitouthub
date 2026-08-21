@@ -5,7 +5,7 @@ import { API_BASE_URL } from "@/config/api";
 import { fetchWithRetry } from "@/lib/http";
 import { useAuth } from "@/context/auth-context";
 import { useNextStepModal } from "@/context/next-step-modal-context";
-import { HK_DISTRICTS } from "@/lib/hk-districts";
+import { PropertyAddressPicker, type PropertyAddressValue } from "@/components/property-address-picker";
 import toast from "react-hot-toast";
 
 // ── Types ────────────────────────────────────────────────────────
@@ -115,23 +115,28 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
 
   // Address form
   const [showNewAddress, setShowNewAddress] = useState(false);
-  const [newAddressForm, setNewAddressForm] = useState({
+  const [newAddressForm, setNewAddressForm] = useState<PropertyAddressValue & { propertySize: string; propertySizeUnit: "sqft" | "sqm"; propertyType: string }>({
     buildingName: "",
+    buildingNameZh: null,
     unitNumber: "",
     floorLevel: "",
-    addressFull: "",
-    district: "",
+    blockTower: "",
+    districtAreaId: "",
+    districtName: "",
+    lat: null,
+    lng: null,
+    propertyId: "",
     propertySize: "",
-    propertySizeUnit: "sqft" as "sqft" | "sqm",
+    propertySizeUnit: "sqft",
     propertyType: "",
   });
   const [savingAddress, setSavingAddress] = useState(false);
 
   const addressFieldsComplete =
-    newAddressForm.addressFull.trim() &&
+    newAddressForm.buildingName.trim() &&
     newAddressForm.unitNumber.trim() &&
     newAddressForm.floorLevel.trim() &&
-    newAddressForm.district.trim();
+    newAddressForm.districtAreaId.trim();
 
   // Decline reason
   const [declineReason, setDeclineReason] = useState<Record<string, string>>({});
@@ -231,24 +236,53 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   // ── Handle new address ─────────────────────────────────────────
   const handleSaveNewAddress = async () => {
     const f = newAddressForm;
-    if (!f.addressFull.trim()) { toast.error("Street address is required"); return; }
+    if (!f.buildingName.trim()) { toast.error("Building name is required"); return; }
     if (!f.unitNumber.trim()) { toast.error("Unit number is required"); return; }
     if (!f.floorLevel.trim()) { toast.error("Floor level is required"); return; }
-    if (!f.district.trim()) { toast.error("District is required"); return; }
+    if (!f.districtAreaId.trim()) { toast.error("District is required"); return; }
 
     setSavingAddress(true);
     try {
+      // 1. Upsert the canonical property (dedupe + canonical key + geo).
+      const propRes = await fetch(`${API_BASE_URL}/properties`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buildingName: f.buildingName,
+          unitNumber: f.unitNumber,
+          floorLevel: f.floorLevel,
+          blockTower: f.blockTower || undefined,
+          districtAreaId: f.districtAreaId,
+          lat: f.lat ?? undefined,
+          lng: f.lng ?? undefined,
+        }),
+      });
+      if (!propRes.ok) {
+        const data = await propRes.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to save address");
+      }
+      const propData = await propRes.json();
+      const propertyId = propData?.property?.id || undefined;
+
+      // 2. Submit the location-details snapshot for the site-access flow,
+      //    linking the canonical property to the project.
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/location-details`, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          buildingName: f.buildingName || undefined,
+          addressFull: [
+            f.unitNumber && `Flat ${f.unitNumber}`,
+            f.floorLevel && `${f.floorLevel}/F`,
+            f.blockTower,
+            f.buildingName,
+            f.districtName,
+          ].filter(Boolean).join(", "),
+          buildingName: f.buildingName,
           unitNumber: f.unitNumber,
           floorLevel: f.floorLevel,
-          addressFull: f.addressFull,
-          district: f.district,
+          district: f.districtName,
+          propertyId,
           propertySize: f.propertySize || undefined,
-          propertySizeUnit: f.propertySize ? f.propertySizeUnit : undefined,
           propertyType: f.propertyType || undefined,
         }),
       });
@@ -258,7 +292,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       }
       toast.success("Address saved.");
       setShowNewAddress(false);
-      setNewAddressForm({ buildingName: "", unitNumber: "", floorLevel: "", addressFull: "", district: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" });
+      setNewAddressForm({ buildingName: "", buildingNameZh: null, unitNumber: "", floorLevel: "", blockTower: "", districtAreaId: "", districtName: "", lat: null, lng: null, propertyId: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to save address");
@@ -493,46 +527,11 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                 {/* New address form */}
                 {showNewAddress && (
                   <div className="mt-2 space-y-2 rounded-lg border border-[#D4C8A0] bg-white p-3">
-                    <input
-                      type="text"
-                      value={newAddressForm.buildingName}
-                      onChange={(e) => setNewAddressForm((f) => ({ ...f, buildingName: e.target.value }))}
-                      placeholder="Building name (optional)"
-                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
+                    <PropertyAddressPicker
+                      accessToken={accessToken || ""}
+                      value={newAddressForm}
+                      onChange={(v) => setNewAddressForm((f) => ({ ...f, ...v }))}
                     />
-                    <div className="grid gap-2 grid-cols-2">
-                      <input
-                        type="text"
-                        value={newAddressForm.unitNumber}
-                        onChange={(e) => setNewAddressForm((f) => ({ ...f, unitNumber: e.target.value }))}
-                        placeholder="Unit number *"
-                        className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        value={newAddressForm.floorLevel}
-                        onChange={(e) => setNewAddressForm((f) => ({ ...f, floorLevel: e.target.value }))}
-                        placeholder="Floor level *"
-                        className="rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={newAddressForm.addressFull}
-                      onChange={(e) => setNewAddressForm((f) => ({ ...f, addressFull: e.target.value }))}
-                      placeholder="Street address *"
-                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                    />
-                    <select
-                      value={newAddressForm.district}
-                      onChange={(e) => setNewAddressForm((f) => ({ ...f, district: e.target.value }))}
-                      className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Select district *</option>
-                      {HK_DISTRICTS.map((d: { areaCode: string; name: string }) => (
-                        <option key={d.areaCode} value={d.name}>{d.name}</option>
-                      ))}
-                    </select>
 
                     {/* Optional: Property size + type */}
                     <div className="grid gap-2 grid-cols-[1fr_auto]">
@@ -581,7 +580,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setShowNewAddress(false); setNewAddressForm({ buildingName: "", unitNumber: "", floorLevel: "", addressFull: "", district: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" }); }}
+                        onClick={() => { setShowNewAddress(false); setNewAddressForm({ buildingName: "", buildingNameZh: null, unitNumber: "", floorLevel: "", blockTower: "", districtAreaId: "", districtName: "", lat: null, lng: null, propertyId: "", propertySize: "", propertySizeUnit: "sqft", propertyType: "" }); }}
                         className="rounded-lg border border-[#D4C8A0] px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-[#F5EEDE] transition"
                       >
                         Cancel

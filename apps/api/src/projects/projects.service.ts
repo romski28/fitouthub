@@ -7978,6 +7978,7 @@ Please review the project details and respond with your quote or decline the inv
       accessHoursDescription?: string;
       desiredStartDate?: string;
       photoUrls?: string[];
+      propertyId?: string;
     },
   ) {
     const project = await this.assertClientProjectAccess(projectId, userId);
@@ -8124,6 +8125,7 @@ Please review the project details and respond with your quote or decline the inv
         locationDetailsStatus: 'submitted',
         locationDetailsProvidedAt: new Date(),
         locationDetailsRequiredAt: project.locationDetailsRequiredAt || new Date(),
+        ...(body.propertyId ? { propertyId: body.propertyId } : {}),
       },
     });
 

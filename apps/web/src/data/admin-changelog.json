@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-21-8e4b54e7",
+    "date": "2026-08-21T22:08:44+08:00",
+    "title": "feat(property): canonical address capture in client site-access modal",
+    "summary": "feat(property): canonical address capture in client site-access modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "8e4b54e7",
+    "files": [
+      "apps/api/src/projects/dto/project-location-details.dto.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx",
+      "apps/web/src/components/property-address-picker.tsx"
+    ]
+  },
+  {
     "id": "2026-08-20-5a626d3f",
     "date": "2026-08-20T23:59:41+08:00",
     "title": "feat(property): properties page tabs + DB list, add to data control",
