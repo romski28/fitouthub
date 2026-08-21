@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-22-d32a8a54",
+    "date": "2026-08-22T00:25:46+08:00",
+    "title": "feat(worker): 48h magic-link landing page + worker address note",
+    "summary": "feat(worker): 48h magic-link landing page + worker address note",
+    "areas": [
+      "web"
+    ],
+    "commit": "d32a8a54",
+    "files": [
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/app/worker-project-access/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-4a1b4e3f",
     "date": "2026-08-22T00:07:00+08:00",
     "title": "fix(worker): model workers as professionals, not client users",

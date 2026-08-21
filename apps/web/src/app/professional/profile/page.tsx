@@ -602,7 +602,11 @@ export default function ProfessionalProfilePage() {
           <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Addresses</p>
             <h2 className="mt-1 text-lg font-bold text-slate-900">Business address</h2>
-            <AddressManager accessToken={accessToken || ''} mode="single" />
+            {normalizedProfessionType === 'worker' ? (
+              <p className="mt-3 text-sm text-slate-600">Your business address is managed by your employer.</p>
+            ) : (
+              <AddressManager accessToken={accessToken || ''} mode="single" />
+            )}
           </div>
 
           {(normalizedProfessionType === 'company' || normalizedProfessionType === 'reseller' || normalizedProfessionType === 'contractor') && (
