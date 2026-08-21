@@ -597,7 +597,18 @@ export class ProfessionalAuthService {
       }
     }
 
-    return professional;
+    const persona = await (this.prisma as any).persona.findFirst({
+      where: { professionalId: id, type: 'PROFESSIONAL' },
+      select: { id: true },
+    });
+
+    return {
+      id: professional.id,
+      identityId: professional.identityId,
+      role: 'professional',
+      isProfessional: true,
+      personaId: persona?.id ?? null,
+    };
   }
 
   private generateTokens(professionalId: string, sessionToken?: string) {

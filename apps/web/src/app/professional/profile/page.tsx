@@ -19,6 +19,7 @@ import {
   zoneCodesToAreaCodes,
 } from '@/lib/hk-districts';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
+import { AddressManager } from '@/components/address-manager';
 
 interface ReferenceProject {
   id: string;
@@ -597,6 +598,12 @@ export default function ProfessionalProfilePage() {
         </div>
 
         <form id="professional-profile-form" onSubmit={handleProfileSave} className="space-y-4">
+          <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Addresses</p>
+            <h2 className="mt-1 text-lg font-bold text-slate-900">Business address</h2>
+            <AddressManager accessToken={accessToken || ''} mode="single" />
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-slate-800">Primary Contact</label>
