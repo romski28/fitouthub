@@ -1088,6 +1088,7 @@ model EmailToken {
   projectId      String
   professionalId String
   action         String
+  email          String?
   expiresAt      DateTime
   usedAt         DateTime?
   createdAt      DateTime     @default(now())
@@ -2517,4 +2518,19 @@ model WorkerInvite {
 
   @@index([employerProfessionalId])
   @@index([status])
+}
+
+model ProjectWorkerAccess {
+  id                      String    @id @default(cuid())
+  projectId               String
+  workerId                String?
+  email                   String?
+  grantedByProfessionalId String
+  expiresAt               DateTime?
+  revokedAt               DateTime?
+  createdAt               DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([workerId])
+  @@index([email])
 }

@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-08-21-1de37b83",
+    "date": "2026-08-21T23:49:28+08:00",
+    "title": "feat(worker): project access grants + 48h magic link (Phase 2 backend)",
+    "summary": "feat(worker): project access grants + 48h magic link (Phase 2 backend)",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "1de37b83",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_WORKER_ACCESS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/worker-invites/project-worker-access.controller.ts",
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/api/src/worker-invites/worker-invites.module.ts"
+    ]
+  },
+  {
     "id": "2026-08-21-db7ed553",
     "date": "2026-08-21T23:40:58+08:00",
     "title": "feat(worker): invites + team section + join-worker flow (Phase 1)",
