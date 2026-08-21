@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-08-21-db7ed553",
+    "date": "2026-08-21T23:40:58+08:00",
+    "title": "feat(worker): invites + team section + join-worker flow (Phase 1)",
+    "summary": "feat(worker): invites + team section + join-worker flow (Phase 1)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "db7ed553",
+    "files": [
+      "MANUAL_SQL_ADD_WORKER_INVITE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/worker-invites/worker-invites.controller.ts",
+      "apps/api/src/worker-invites/worker-invites.module.ts",
+      "apps/api/src/worker-invites/worker-invites.service.ts",
+      "apps/web/src/app/join-worker/page.tsx",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/worker-team-manager.tsx",
+      "apps/web/src/context/auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-08-21-78ccea9c",
     "date": "2026-08-21T23:11:14+08:00",
     "title": "feat(auth): worker persona registration + tenant/owner-occupier labels",

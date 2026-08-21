@@ -49,6 +49,7 @@ import { AcProjectsModule } from './ac-projects/ac-projects.module';
 import { ProgressReportsModule } from './progress-reports/progress-reports.module';
 import { ReminderModule } from './reminders/reminder.module';
 import { PropertiesModule } from './properties/properties.module';
+import { WorkerInvitesModule } from './worker-invites/worker-invites.module';
 import { HolidaysController } from './config/holidays.controller';
 import { PlatformFeeService } from './common/platform-fee.service';
 
@@ -81,6 +82,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     ProgressReportsModule,
     ReminderModule,
     PropertiesModule,
+    WorkerInvitesModule,
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',

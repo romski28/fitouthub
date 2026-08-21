@@ -55,6 +55,7 @@ interface AuthContextType {
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
+    employerProfessionalId?: string;
   }) => Promise<
     | { success: boolean; accessToken: string; refreshToken: string; user: User }
     | {
@@ -191,6 +192,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     allowPartnerOffers?: boolean;
     allowPlatformUpdates?: boolean;
     requireOtpVerification?: boolean;
+    employerProfessionalId?: string;
   }) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',

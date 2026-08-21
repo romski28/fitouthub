@@ -395,6 +395,7 @@ model Professional {
   acProjects                AcProject[]
   availability              ProfessionalAvailability[]
   workers                   Worker[]
+  workerInvites             WorkerInvite[]
 }
 
 model Landlord {
@@ -2493,8 +2494,27 @@ model Worker {
   employerProfessionalId String
   employerProfessional   Professional @relation(fields: [employerProfessionalId], references: [id], onDelete: Cascade)
   persona                Persona?
+  invites                WorkerInvite[]
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
 
   @@index([employerProfessionalId])
+}
+
+model WorkerInvite {
+  id                     String       @id @default(cuid())
+  token                  String       @unique @default(cuid())
+  email                  String
+  employerProfessionalId String
+  status                 String       @default("pending")
+  expiresAt              DateTime
+  acceptedAt             DateTime?
+  workerId               String?
+  createdAt              DateTime     @default(now())
+
+  employerProfessional Professional @relation(fields: [employerProfessionalId], references: [id], onDelete: Cascade)
+  worker               Worker?      @relation(fields: [workerId], references: [id], onDelete: SetNull)
+
+  @@index([employerProfessionalId])
+  @@index([status])
 }
