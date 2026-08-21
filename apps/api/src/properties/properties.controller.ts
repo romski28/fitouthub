@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { PropertiesService } from './properties.service';
 
@@ -16,6 +16,12 @@ export class PropertiesController {
     const actorId = this.requireAuth(req);
     if (req?.user?.role !== 'admin') throw new ForbiddenException('Admin access required');
     return actorId;
+  }
+
+  private actorPersonaId(req: any, bodyPersonaId?: string): string {
+    const personaId = req?.user?.personaId || bodyPersonaId;
+    if (!personaId) throw new ForbiddenException('No persona associated with this account');
+    return personaId;
   }
 
   @Post()
@@ -88,6 +94,13 @@ export class PropertiesController {
     return this.propertiesService.resolveMatchCandidate(id, body.action, actorId);
   }
 
+  @Get('me')
+  @UseGuards(CombinedAuthGuard)
+  async myProperties(@Request() req: any) {
+    this.requireAuth(req);
+    return this.propertiesService.listMyProperties(this.actorPersonaId(req));
+  }
+
   @Get(':id')
   @UseGuards(CombinedAuthGuard)
   async get(@Param('id') id: string, @Request() req: any) {
@@ -97,8 +110,27 @@ export class PropertiesController {
 
   @Post(':id/link')
   @UseGuards(CombinedAuthGuard)
-  async link(@Param('id') id: string, @Body() body: { personaId: string; role?: string }, @Request() req: any) {
+  async link(
+    @Param('id') id: string,
+    @Body() body: { personaId?: string; role?: string; setPrimary?: boolean },
+    @Request() req: any,
+  ) {
     this.requireAuth(req);
-    return this.propertiesService.linkAccount(id, body.personaId, body.role);
+    const personaId = this.actorPersonaId(req, body.personaId);
+    return this.propertiesService.linkAccount(id, personaId, { role: body.role, setPrimary: body.setPrimary });
+  }
+
+  @Delete(':id/link')
+  @UseGuards(CombinedAuthGuard)
+  async unlink(@Param('id') id: string, @Request() req: any) {
+    this.requireAuth(req);
+    return this.propertiesService.unlinkAccount(this.actorPersonaId(req), id);
+  }
+
+  @Post(':id/primary')
+  @UseGuards(CombinedAuthGuard)
+  async setPrimary(@Param('id') id: string, @Request() req: any) {
+    this.requireAuth(req);
+    return this.propertiesService.setPrimaryAccount(this.actorPersonaId(req), id);
   }
 }

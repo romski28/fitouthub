@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-08-21-76c0b380",
+    "date": "2026-08-21T22:52:57+08:00",
+    "title": "feat(property): Worker persona + cardinality-aware address links",
+    "summary": "feat(property): Worker persona + cardinality-aware address links",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "76c0b380",
+    "files": [
+      "MANUAL_SQL_ADD_WORKER_AND_ADDRESS_PRIMARY.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/properties/properties.controller.ts",
+      "apps/api/src/properties/properties.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-21-8e4b54e7",
     "date": "2026-08-21T22:08:44+08:00",
     "title": "feat(property): canonical address capture in client site-access modal",

@@ -117,10 +117,31 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       }
     }
 
+    // Resolve the persona id so controllers can scope address links to the actor.
+    let personaId: string | null = null;
+    if (payload.role) {
+      const personaType =
+        payload.role === 'professional' ? 'PROFESSIONAL'
+        : payload.role === 'landlord' ? 'LANDLORD'
+        : payload.role === 'property_manager' ? 'PROPERTY_MANAGER'
+        : payload.role === 'estate_agent' ? 'ESTATE_AGENT'
+        : payload.role === 'project_delegate' ? 'PROJECT_DELEGATE'
+        : payload.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : payload.role === 'worker' ? 'WORKER'
+        : 'CLIENT';
+      const persona = await (this.prisma as any).persona.findFirst({
+        where: { identityId: identity.id, type: personaType },
+        select: { id: true },
+      });
+      if (persona?.id) personaId = persona.id;
+    }
+
     return {
       id: resolvedId,
       role: payload.role || 'client',
       isProfessional: payload.role === 'professional',
+      identityId: identity.id,
+      personaId,
     };
   }
 }

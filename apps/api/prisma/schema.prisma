@@ -217,6 +217,8 @@ model Persona {
   estateAgent          EstateAgent?          @relation(fields: [estateAgentId], references: [id])
   projectDelegateId    String?               @unique
   projectDelegate      ProjectDelegate?      @relation(fields: [projectDelegateId], references: [id])
+  workerId             String?               @unique
+  worker               Worker?               @relation(fields: [workerId], references: [id])
   propertyAccountLinks PropertyAccountLink[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -246,6 +248,7 @@ model User {
   propertyManager                 PropertyManager?
   estateAgent                     EstateAgent?
   projectDelegate                 ProjectDelegate?         @relation("ProjectDelegateUser")
+  worker                          Worker?
   projects                        Project[]
   assistRequests                  ProjectAssistRequest[]   @relation("UserAssistRequests")
   privateChatThreads              PrivateChatThread[]
@@ -391,6 +394,7 @@ model Professional {
   regionCoverage            ProfessionalRegionCoverage[]
   acProjects                AcProject[]
   availability              ProfessionalAvailability[]
+  workers                   Worker[]
 }
 
 model Landlord {
@@ -2410,6 +2414,7 @@ model PropertyAccountLink {
   propertyId String
   personaId  String
   role       String?
+  isPrimary  Boolean   @default(false)
   verifiedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -2419,6 +2424,7 @@ model PropertyAccountLink {
 
   @@unique([propertyId, personaId])
   @@index([personaId])
+  @@index([personaId, isPrimary])
 }
 
 model PropertyAlias {
@@ -2478,4 +2484,17 @@ model BuildingGazetteer {
   @@index([category])
   @@index([nameEn])
   @@index([districtAreaId])
+}
+
+model Worker {
+  id                     String       @id @default(cuid())
+  userId                 String       @unique
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employerProfessionalId String
+  employerProfessional   Professional @relation(fields: [employerProfessionalId], references: [id], onDelete: Cascade)
+  persona                Persona?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  @@index([employerProfessionalId])
 }

@@ -224,7 +224,29 @@ export class PropertiesService {
     return property;
   }
 
-  async linkAccount(propertyId: string, personaId: string, role?: string) {
+  private personaCardinality(type: string): 'single' | 'multi' | 'none' {
+    switch (type) {
+      case 'CLIENT':
+      case 'OWNER_OCCUPIER':
+      case 'PROFESSIONAL':
+        return 'single';
+      case 'LANDLORD':
+      case 'PROPERTY_MANAGER':
+      case 'ESTATE_AGENT':
+        return 'multi';
+      case 'WORKER':
+      case 'PROJECT_DELEGATE':
+        return 'none';
+      default:
+        return 'multi';
+    }
+  }
+
+  async linkAccount(
+    propertyId: string,
+    personaId: string,
+    opts?: { role?: string; setPrimary?: boolean },
+  ) {
     const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) throw new NotFoundException('Property not found');
 
@@ -234,10 +256,89 @@ export class PropertiesService {
     });
     if (!persona) throw new BadRequestException('Persona not found');
 
+    const cardinality = this.personaCardinality(persona.type);
+    if (cardinality === 'none') {
+      throw new BadRequestException(`Persona type ${persona.type} cannot be linked to an address`);
+    }
+
+    const role = opts?.role ?? persona.type;
+
+    if (cardinality === 'single') {
+      // Replace the persona's single address.
+      await this.prisma.propertyAccountLink.deleteMany({ where: { personaId } });
+      return this.prisma.propertyAccountLink.create({
+        data: { propertyId, personaId, role, isPrimary: true },
+      });
+    }
+
+    const existingCount = await this.prisma.propertyAccountLink.count({ where: { personaId } });
+    const makePrimary = opts?.setPrimary || existingCount === 0;
+    if (makePrimary) {
+      await this.prisma.propertyAccountLink.updateMany({
+        where: { personaId, isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
     return this.prisma.propertyAccountLink.upsert({
       where: { propertyId_personaId: { propertyId, personaId } },
-      create: { propertyId, personaId, role: role ?? persona.type },
-      update: { role: role ?? persona.type },
+      create: { propertyId, personaId, role, isPrimary: makePrimary },
+      update: { role, ...(makePrimary ? { isPrimary: true } : {}) },
+    });
+  }
+
+  async listMyProperties(personaId: string) {
+    const links = await this.prisma.propertyAccountLink.findMany({
+      where: { personaId },
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+      include: { property: true },
+    });
+    return {
+      properties: links.map((l) => ({
+        ...l.property,
+        linkId: l.id,
+        linkRole: l.role,
+        isPrimary: l.isPrimary,
+      })),
+    };
+  }
+
+  async unlinkAccount(personaId: string, propertyId: string) {
+    const link = await this.prisma.propertyAccountLink.findUnique({
+      where: { propertyId_personaId: { propertyId, personaId } },
+    });
+    if (!link) throw new NotFoundException('Address link not found');
+
+    await this.prisma.propertyAccountLink.delete({ where: { id: link.id } });
+
+    if (link.isPrimary) {
+      const next = await this.prisma.propertyAccountLink.findFirst({
+        where: { personaId },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (next) {
+        await this.prisma.propertyAccountLink.update({
+          where: { id: next.id },
+          data: { isPrimary: true },
+        });
+      }
+    }
+    return { success: true };
+  }
+
+  async setPrimaryAccount(personaId: string, propertyId: string) {
+    const link = await this.prisma.propertyAccountLink.findUnique({
+      where: { propertyId_personaId: { propertyId, personaId } },
+    });
+    if (!link) throw new NotFoundException('Address link not found');
+
+    await this.prisma.propertyAccountLink.updateMany({
+      where: { personaId, isPrimary: true },
+      data: { isPrimary: false },
+    });
+    return this.prisma.propertyAccountLink.update({
+      where: { id: link.id },
+      data: { isPrimary: true },
     });
   }
 
