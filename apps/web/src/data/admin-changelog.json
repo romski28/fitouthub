@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-21-78ccea9c",
+    "date": "2026-08-21T23:11:14+08:00",
+    "title": "feat(auth): worker persona registration + tenant/owner-occupier labels",
+    "summary": "feat(auth): worker persona registration + tenant/owner-occupier labels",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "78ccea9c",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/web/src/components/auth-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-21-96a66b23",
     "date": "2026-08-21T23:05:35+08:00",
     "title": "feat(profile): professional business address + personaId in pro JWT",

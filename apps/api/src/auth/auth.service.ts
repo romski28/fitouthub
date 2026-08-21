@@ -136,6 +136,7 @@ export class AuthService {
     try {
       const personaType = dto.role === 'landlord' ? 'LANDLORD'
         : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : dto.role === 'worker' ? 'WORKER'
         : 'CLIENT';
 
       user = await (this.prisma as any).user.create({
@@ -174,6 +175,25 @@ export class AuthService {
         await (this.prisma as any).persona.update({
           where: { id: persona.id },
           data: { landlordId: landlord.id },
+        });
+      }
+      if (personaType === 'WORKER') {
+        if (!dto.employerProfessionalId) {
+          throw new BadRequestException('employerProfessionalId is required for workers');
+        }
+        const employer = await (this.prisma as any).professional.findUnique({
+          where: { id: dto.employerProfessionalId },
+          select: { id: true },
+        });
+        if (!employer) {
+          throw new BadRequestException('Employer professional not found');
+        }
+        const worker = await (this.prisma as any).worker.create({
+          data: { userId: user.id, employerProfessionalId: dto.employerProfessionalId },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { workerId: worker.id },
         });
       }
       await (this.prisma as any).user.update({
@@ -697,6 +717,25 @@ export class AuthService {
       profileId = user.id;
       role = 'owner_occupier';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'WORKER') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Worker profile not found.');
+      const worker = await (this.prisma as any).worker.findUnique({
+        where: { userId: user.id },
+        include: {
+          employerProfessional: {
+            select: { id: true, businessName: true, fullName: true, locationPrimary: true },
+          },
+        },
+      });
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profile.employer = worker?.employerProfessional ?? null;
+      profileId = user.id;
+      role = 'worker';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -714,12 +753,13 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'OWNER_OCCUPIER' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'OWNER_OCCUPIER' || selectedPersona.type === 'WORKER' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
       propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,
       estateAgent: selectedPersona.type === 'ESTATE_AGENT' ? profile : undefined,
       projectDelegate: selectedPersona.type === 'PROJECT_DELEGATE' ? profile : undefined,
+      worker: selectedPersona.type === 'WORKER' ? profile : undefined,
     };
   }
 

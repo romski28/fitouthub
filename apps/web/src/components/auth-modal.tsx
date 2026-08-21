@@ -58,10 +58,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { login: loginProfessional, register: registerProfessional, googleLogin: googleLoginProfessional } = useProfessionalAuth();
   const pageLanguage = locale === 'zh-HK' ? 'zh-HK' : 'en';
   const [activeTab, setActiveTab] = useState<'login' | 'join'>(defaultTab);
-  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'project_delegate'>('client');
+  const [userType, setUserType] = useState<'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'project_delegate' | 'owner_occupier'>('client');
 
   const personaOptions: Array<{ value: typeof userType; label: string; icon: string }> = [
-    { value: 'client', label: 'Client', icon: '👤' },
+    { value: 'client', label: 'Tenant', icon: '🏠' },
+    { value: 'owner_occupier', label: 'Owner Occupier', icon: '🏠' },
     { value: 'professional', label: 'Professional', icon: '👷' },
     { value: 'landlord', label: 'Landlord', icon: '🏘️' },
     { value: 'estate_agent', label: 'Estate Agent', icon: '🏷️' },
@@ -648,7 +649,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         disabled={loading}
                         className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left font-medium text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
                       >
-                        {p.type === 'CLIENT' ? '🏠 Client' : p.type === 'PROFESSIONAL' ? '🔧 Professional' : p.type === 'LANDLORD' ? '🏘️ Landlord' : `👤 ${p.type}`}
+                        {p.type === 'CLIENT' ? '🏠 Tenant' : p.type === 'OWNER_OCCUPIER' ? '🏠 Owner Occupier' : p.type === 'PROFESSIONAL' ? '🔧 Professional' : p.type === 'LANDLORD' ? '🏘️ Landlord' : p.type === 'WORKER' ? '🔧 Worker' : `👤 ${p.type}`}
                       </button>
                     ))}
                   </div>
