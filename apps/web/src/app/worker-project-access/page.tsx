@@ -51,7 +51,7 @@ function WorkerProjectAccessInner() {
   useEffect(() => {
     // Already logged in as a worker with a resolved link → straight to the project.
     if (resolved?.isRegisteredWorker && isLoggedIn) {
-      router.replace(`/professional-projects/${resolved.projectId}`);
+      router.replace(`/worker-project/${resolved.projectId}`);
     }
   }, [resolved, isLoggedIn, router]);
 
@@ -61,7 +61,7 @@ function WorkerProjectAccessInner() {
     setSubmitting(true);
     try {
       await login(form.email, form.password);
-      router.replace(`/professional-projects/${resolved?.projectId}`);
+      router.replace(`/worker-project/${resolved?.projectId}`);
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -84,7 +84,7 @@ function WorkerProjectAccessInner() {
         employerProfessionalId: resolved?.professionalId,
         requireOtpVerification: false,
       });
-      router.replace(`/professional-projects/${resolved?.projectId}`);
+      router.replace(`/worker-project/${resolved?.projectId}`);
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {

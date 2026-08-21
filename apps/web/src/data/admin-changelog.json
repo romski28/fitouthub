@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-08-22-9f87a0ee",
+    "date": "2026-08-22T00:35:40+08:00",
+    "title": "feat(worker): grant-enforced project access + on-site actions",
+    "summary": "feat(worker): grant-enforced project access + on-site actions",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9f87a0ee",
+    "files": [
+      "apps/api/src/worker-invites/project-worker-access.controller.ts",
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/api/src/worker-invites/worker-invites.module.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/worker-project-access/page.tsx",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx",
+      "apps/web/src/app/worker-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-d32a8a54",
     "date": "2026-08-22T00:25:46+08:00",
     "title": "feat(worker): 48h magic-link landing page + worker address note",

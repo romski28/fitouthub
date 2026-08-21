@@ -133,6 +133,14 @@ export default function ProfessionalProjectsPage() {
 
   // Only professionals can access this page
   useRoleGuard(['professional'], { fallback: '/' });
+
+  // Workers have no bid/quote project list — send them to their granted projects.
+  useEffect(() => {
+    if (professional?.professionType === 'worker') {
+      router.replace('/worker-projects');
+    }
+  }, [professional?.professionType, router]);
+
   const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

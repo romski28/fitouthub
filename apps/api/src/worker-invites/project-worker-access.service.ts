@@ -1,11 +1,22 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { ChatService } from '../chat/chat.service';
 
 const MAGIC_TTL_MS = 48 * 60 * 60 * 1000;
 
+export type WorkerAction = 'check_in' | 'start' | 'update' | 'complete';
+
 @Injectable()
 export class ProjectWorkerAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatService: ChatService,
+  ) {}
 
   private webBaseUrl(): string {
     return (
@@ -125,5 +136,185 @@ export class ProjectWorkerAccessService {
       isRegisteredWorker: worker?.professionType === 'worker',
       expiresAt: emailToken.expiresAt,
     };
+  }
+
+  /**
+   * Resolve the worker Professional and enforce an active, non-expired grant for
+   * the given project. Throws ForbiddenException when the actor is not a worker
+   * or has no live grant (matched by workerId or email).
+   */
+  private async assertWorkerAccess(projectId: string, professionalId: string) {
+    const worker = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        businessName: true,
+        professionType: true,
+        employerProfessionalId: true,
+      },
+    });
+    if (!worker) throw new ForbiddenException('Professional not found');
+    if (worker.professionType !== 'worker') {
+      throw new ForbiddenException('Only workers can access this project');
+    }
+
+    const now = new Date();
+    const grant = await this.prisma.projectWorkerAccess.findFirst({
+      where: {
+        projectId,
+        revokedAt: null,
+        OR: [
+          { workerId: professionalId },
+          ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),
+        ],
+        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!grant) {
+      throw new ForbiddenException('You do not have access to this project');
+    }
+
+    return { worker, grant };
+  }
+
+  /** Worker-scoped project detail — only readable with an active grant. */
+  async getWorkerProject(projectId: string, professionalId: string) {
+    const { worker, grant } = await this.assertWorkerAccess(projectId, professionalId);
+
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, status: { not: 'archived' } },
+      include: {
+        photos: true,
+        property: {
+          select: {
+            id: true,
+            displayAddress: true,
+            buildingName: true,
+            buildingNameZh: true,
+            unitNumber: true,
+            floorLevel: true,
+            blockTower: true,
+            street: true,
+          },
+        },
+      },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const employer = worker.employerProfessionalId
+      ? await this.prisma.professional.findUnique({
+          where: { id: worker.employerProfessionalId },
+          select: {
+            id: true,
+            businessName: true,
+            fullName: true,
+            phone: true,
+            serviceArea: true,
+            locationPrimary: true,
+            locationSecondary: true,
+            locationTertiary: true,
+          },
+        })
+      : null;
+
+    return {
+      project,
+      employer,
+      access: {
+        id: grant.id,
+        expiresAt: grant.expiresAt,
+        isOngoing: grant.expiresAt === null,
+      },
+      isWorkerAccess: true,
+    };
+  }
+
+  /** List of projects the worker currently has an active grant for. */
+  async listWorkerProjects(professionalId: string) {
+    const worker = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: { id: true, email: true, professionType: true },
+    });
+    if (!worker || worker.professionType !== 'worker') {
+      throw new ForbiddenException('Only workers can list projects');
+    }
+
+    const now = new Date();
+    const grants = await this.prisma.projectWorkerAccess.findMany({
+      where: {
+        revokedAt: null,
+        OR: [
+          { workerId: professionalId },
+          ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),
+        ],
+        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const projectIds = [...new Set(grants.map((g) => g.projectId))];
+    if (projectIds.length === 0) return [];
+
+    const projects = await this.prisma.project.findMany({
+      where: { id: { in: projectIds }, status: { not: 'archived' } },
+      select: {
+        id: true,
+        projectName: true,
+        clientName: true,
+        region: true,
+        notes: true,
+        endDate: true,
+        status: true,
+      },
+    });
+    const byId = new Map(projects.map((p) => [p.id, p]));
+
+    return grants
+      .filter((g) => byId.has(g.projectId))
+      .map((g) => ({
+        ...byId.get(g.projectId),
+        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null },
+        isWorkerAccess: true,
+      }));
+  }
+
+  /**
+   * Record a scoped on-site worker action. Grant is re-verified; the action is
+   * persisted as an attributed message on the project chat thread so the client
+   * and employer both see it.
+   */
+  async recordWorkerAction(
+    projectId: string,
+    professionalId: string,
+    action: WorkerAction,
+    note?: string,
+  ) {
+    const { worker } = await this.assertWorkerAccess(projectId, professionalId);
+
+    const labels: Record<WorkerAction, string> = {
+      check_in: 'checked in on site',
+      start: 'started work on site',
+      update: 'posted a progress update',
+      complete: 'marked the project complete',
+    };
+
+    const cleanNote = (note || '').trim();
+    const content = `👷 ${worker.fullName || worker.businessName || 'Worker'} ${labels[action]}${
+      cleanNote ? `: ${cleanNote}` : '.'
+    }`;
+
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    const message = await this.chatService.addProjectMessage(
+      thread.id,
+      'professional',
+      null,
+      professionalId,
+      content,
+    );
+
+    return { success: true, action, message };
   }
 }
