@@ -11,6 +11,5 @@ export class RegisterDto {
   allowPartnerOffers?: boolean;
   allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;
-  employerProfessionalId?: string;
-  role?: 'client' | 'professional' | 'reseller' | 'admin' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent' | 'project_delegate' | 'owner_occupier' | 'worker'; // defaults to 'client'
+  role?: 'client' | 'professional' | 'reseller' | 'admin' | 'mimo_boh' | 'surveyor' | 'landlord' | 'property_manager' | 'estate_agent' | 'project_delegate' | 'owner_occupier'; // defaults to 'client'
 }

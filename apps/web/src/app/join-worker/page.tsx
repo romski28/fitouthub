@@ -2,13 +2,13 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
+import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
 
 function JoinWorkerInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register } = useAuth();
+  const { register } = useProfessionalAuth();
   const token = searchParams.get('token') || '';
 
   const [invite, setInvite] = useState<{ email: string; employerProfessionalId: string; employer: { businessName?: string; fullName?: string } | null } | null>(null);
@@ -49,12 +49,11 @@ function JoinWorkerInner() {
     setSubmitting(true);
     try {
       await register({
-        nickname: `${form.firstName} ${form.surname}`.trim(),
         email: form.email,
         password: form.password,
-        firstName: form.firstName,
-        surname: form.surname,
-        role: 'worker',
+        fullName: `${form.firstName} ${form.surname}`.trim(),
+        businessName: `${form.firstName} ${form.surname}`.trim(),
+        professionType: 'worker',
         employerProfessionalId: invite?.employerProfessionalId,
         requireOtpVerification: false,
       });
@@ -64,7 +63,7 @@ function JoinWorkerInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email }),
       }).catch(() => {});
-      router.replace('/profile');
+      router.replace('/professional-projects');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {

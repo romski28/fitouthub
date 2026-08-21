@@ -5,7 +5,9 @@ import { API_BASE_URL } from '@/config/api';
 
 type WorkerRow = {
   id: string;
-  user: { email: string; firstName: string | null; surname: string | null } | null;
+  email: string;
+  fullName: string | null;
+  businessName: string | null;
 };
 type Grant = {
   id: string;
@@ -177,7 +179,7 @@ export function ProjectAccessModal({
                 <option value="">Select a worker…</option>
                 {workers.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {[w.user?.firstName, w.user?.surname].filter(Boolean).join(' ') || w.user?.email || 'Worker'}
+                    {w.fullName || w.businessName || w.email || 'Worker'}
                   </option>
                 ))}
               </select>

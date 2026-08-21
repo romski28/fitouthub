@@ -12,4 +12,5 @@ export class ProfessionalRegisterDto {
   allowPlatformUpdates?: boolean;
   requireOtpVerification?: boolean;
   emergencyCalloutAvailable?: boolean;
+  employerProfessionalId?: string;
 }

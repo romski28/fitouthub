@@ -127,7 +127,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         : payload.role === 'estate_agent' ? 'ESTATE_AGENT'
         : payload.role === 'project_delegate' ? 'PROJECT_DELEGATE'
         : payload.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
-        : payload.role === 'worker' ? 'WORKER'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.findFirst({
         where: { identityId: identity.id, type: personaType },

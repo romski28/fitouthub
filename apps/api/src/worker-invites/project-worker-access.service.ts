@@ -28,16 +28,16 @@ export class ProjectWorkerAccessService {
     if (!project) throw new NotFoundException('Project not found');
 
     if (input.workerId) {
-      const worker = await this.prisma.worker.findUnique({
+      const worker = await this.prisma.professional.findUnique({
         where: { id: input.workerId },
-        include: { user: { select: { email: true } } },
+        select: { id: true, email: true },
       });
       if (!worker) throw new BadRequestException('Worker not found');
       const access = await this.prisma.projectWorkerAccess.create({
         data: {
           projectId,
           workerId: worker.id,
-          email: worker.user?.email ?? null,
+          email: worker.email ?? null,
           grantedByProfessionalId: professionalId,
           expiresAt: null, // ongoing until revoked
         },
@@ -106,14 +106,11 @@ export class ProjectWorkerAccessService {
       throw new BadRequestException('This link has expired');
     }
 
-    const user = emailToken.email
-      ? await this.prisma.user.findUnique({ where: { email: emailToken.email } })
-      : null;
-    const worker = user
-      ? await this.prisma.worker.findUnique({ where: { userId: user.id } })
+    const worker = emailToken.email
+      ? await this.prisma.professional.findUnique({ where: { email: emailToken.email } })
       : null;
 
-    if (worker) {
+    if (worker && worker.professionType === 'worker') {
       await this.prisma.projectWorkerAccess.updateMany({
         where: { projectId: emailToken.projectId, email: emailToken.email, workerId: null },
         data: { workerId: worker.id },
@@ -125,7 +122,7 @@ export class ProjectWorkerAccessService {
       projectId: emailToken.projectId,
       projectName: emailToken.project?.projectName ?? null,
       professionalId: emailToken.professionalId,
-      isRegisteredWorker: !!worker,
+      isRegisteredWorker: worker?.professionType === 'worker',
       expiresAt: emailToken.expiresAt,
     };
   }

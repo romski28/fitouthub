@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-08-22-4a1b4e3f",
+    "date": "2026-08-22T00:07:00+08:00",
+    "title": "fix(worker): model workers as professionals, not client users",
+    "summary": "fix(worker): model workers as professionals, not client users",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "4a1b4e3f",
+    "files": [
+      "MANUAL_SQL_FIX_WORKER_AS_PROFESSIONAL.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/dto/register.dto.ts",
+      "apps/api/src/auth/jwt.strategy.ts",
+      "apps/api/src/professional-auth/dto/professional-register.dto.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts",
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/api/src/worker-invites/worker-invites.service.ts",
+      "apps/web/src/app/join-worker/page.tsx",
+      "apps/web/src/components/project-access-modal.tsx",
+      "apps/web/src/components/worker-team-manager.tsx",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-08-21-e8a8ddc8",
     "date": "2026-08-21T23:59:57+08:00",
     "title": "feat(worker): project access modal on pro project page (Phase 2 frontend)",

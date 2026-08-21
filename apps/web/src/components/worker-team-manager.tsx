@@ -6,7 +6,9 @@ import { API_BASE_URL } from '@/config/api';
 type Invite = { id: string; email: string; status: string; expiresAt: string; createdAt: string };
 type WorkerRow = {
   id: string;
-  user: { id: string; email: string; firstName: string | null; surname: string | null } | null;
+  email: string;
+  fullName: string | null;
+  businessName: string | null;
 };
 
 const statusTone: Record<string, string> = {
@@ -115,8 +117,8 @@ export function WorkerTeamManager({ accessToken }: { accessToken: string }) {
             {workers.map((w) => (
               <li key={w.id} className="flex items-center justify-between gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.82)] px-3 py-2 text-sm">
                 <span className="text-slate-800">
-                  {[w.user?.firstName, w.user?.surname].filter(Boolean).join(' ') || w.user?.email || 'Worker'}
-                  {w.user?.email ? <span className="ml-1 text-xs text-slate-400">· {w.user.email}</span> : null}
+                  {w.fullName || w.businessName || w.email || 'Worker'}
+                  <span className="ml-1 text-xs text-slate-400">· {w.email}</span>
                 </span>
               </li>
             ))}

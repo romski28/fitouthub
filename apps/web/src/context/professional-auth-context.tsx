@@ -41,6 +41,7 @@ interface ProfessionalAuthContextType {
     professionType?: string;
     fullName?: string;
     businessName?: string;
+    employerProfessionalId?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     preferredLanguage?: string;
     allowPartnerOffers?: boolean;
@@ -131,6 +132,7 @@ export const ProfessionalAuthProvider: React.FC<{ children: ReactNode }> = ({
     professionType?: string;
     fullName?: string;
     businessName?: string;
+    employerProfessionalId?: string;
     preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT';
     preferredLanguage?: string;
     allowPartnerOffers?: boolean;

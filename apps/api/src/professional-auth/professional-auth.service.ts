@@ -64,12 +64,25 @@ export class ProfessionalAuthService {
       otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     }
 
+    // Worker subtype requires an employer professional.
+    if ((dto.professionType || '').toLowerCase() === 'worker') {
+      if (!dto.employerProfessionalId) {
+        throw new BadRequestException('employerProfessionalId is required for workers');
+      }
+      const employer = await (this.prisma as any).professional.findUnique({
+        where: { id: dto.employerProfessionalId },
+        select: { id: true },
+      });
+      if (!employer) throw new BadRequestException('Employer professional not found');
+    }
+
     // Create professional account (auth fields live on Identity)
     const professional = await (this.prisma as any).professional.create({
       data: {
         email: dto.email,
         phone: dto.phone || '',
         professionType: dto.professionType || 'general',
+        employerProfessionalId: dto.employerProfessionalId ?? null,
         fullName: dto.fullName,
         businessName: dto.businessName,
         additionalData: dto.nickname ? { nickname: dto.nickname } : undefined,

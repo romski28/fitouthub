@@ -43,11 +43,9 @@ export class WorkerInvitesService {
   }
 
   async listWorkers(professionalId: string) {
-    return this.prisma.worker.findMany({
-      where: { employerProfessionalId: professionalId },
-      include: {
-        user: { select: { id: true, email: true, firstName: true, surname: true } },
-      },
+    return this.prisma.professional.findMany({
+      where: { employerProfessionalId: professionalId, professionType: 'worker' },
+      select: { id: true, email: true, fullName: true, businessName: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -88,13 +86,12 @@ export class WorkerInvitesService {
     if (!invite) throw new NotFoundException('Invite not found');
     if (invite.status !== 'pending') throw new BadRequestException(`Invite is ${invite.status}`);
 
-    const user = await this.prisma.user.findUnique({
+    const worker = await this.prisma.professional.findUnique({
       where: { email: (email || '').trim().toLowerCase() },
     });
-    const worker = user
-      ? await this.prisma.worker.findUnique({ where: { userId: user.id } })
-      : null;
-    if (!worker) throw new BadRequestException('Worker record not found');
+    if (!worker || worker.professionType !== 'worker') {
+      throw new BadRequestException('Worker record not found');
+    }
 
     return this.prisma.workerInvite.update({
       where: { id: invite.id },
