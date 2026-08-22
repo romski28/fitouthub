@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { fetchWithRetry } from "@/lib/http";
 import { useAuth } from "@/context/auth-context";
@@ -91,10 +92,24 @@ const formatTime12h = (iso?: string | null) => {
 const proName = (p: { fullName?: string; businessName?: string }) =>
   p.fullName || p.businessName || "Professional";
 
+const toSiteAddress = (p: any): SiteAddress | null =>
+  p?.id
+    ? {
+        id: p.id,
+        buildingName: p.buildingName ?? null,
+        displayAddress: p.displayAddress ?? null,
+        unitNumber: p.unitNumber ?? null,
+        floorLevel: p.floorLevel ?? null,
+        blockTower: p.blockTower ?? null,
+        street: p.street ?? null,
+      }
+    : null;
+
 // ── Component ────────────────────────────────────────────────────
 export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModalProps) {
   const { state } = useNextStepModal();
   const { accessToken } = useAuth();
+  const router = useRouter();
   const projectId = state.projectId || "";
 
   const [siteAddress, setSiteAddress] = useState<SiteAddress | null>(null);
@@ -180,8 +195,13 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     setLoading(true);
     setError(null);
     try {
-      const [projectRes, reqRes, visitRes] = await Promise.all([
+      const [projectRes, meRes, reqRes, visitRes] = await Promise.all([
         fetchWithRetry(`${API_BASE_URL}/projects/${projectId}?_ts=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        }),
+        fetchWithRetry(`${API_BASE_URL}/properties/me?_ts=${Date.now()}`, {
           method: "GET",
           cache: "no-store",
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -200,8 +220,9 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
 
       if (!projectRes.ok || !reqRes.ok || !visitRes.ok) throw new Error("Failed to load data");
 
-      const [projectData, reqData, visitData] = await Promise.all([
+      const [projectData, meData, reqData, visitData] = await Promise.all([
         projectRes.json().catch(() => ({})),
+        meRes.ok ? meRes.json().catch(() => ({})) : Promise.resolve({}),
         reqRes.json().catch(() => ({})),
         visitRes.json().catch(() => ({})),
       ]);
@@ -210,21 +231,11 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       setSiteAccessData(reqData?.siteAccessData || null);
       setVisits(visitData?.visits || []);
 
-      // Single site address read from the canonical Property table (project.property).
-      const prop = projectData?.property;
-      setSiteAddress(
-        prop?.id
-          ? {
-              id: prop.id,
-              buildingName: prop.buildingName ?? null,
-              displayAddress: prop.displayAddress ?? null,
-              unitNumber: prop.unitNumber ?? null,
-              floorLevel: prop.floorLevel ?? null,
-              blockTower: prop.blockTower ?? null,
-              street: prop.street ?? null,
-            }
-          : null,
-      );
+      // The client's site address is their linked property (new Property table);
+      // fall back to the project's property when no personal address is linked yet.
+      const linked = Array.isArray(meData?.properties) ? meData.properties : [];
+      const primary = linked.find((p: any) => p.isPrimary) || linked[0] || null;
+      setSiteAddress(toSiteAddress(primary) ?? toSiteAddress(projectData?.property));
     } catch (err: any) {
       setError(err.message || "Failed to load");
     } finally {
@@ -233,6 +244,14 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   }, [isOpen, projectId, accessToken]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const goToProfile = () => {
+    const returnPath =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/projects";
+    router.push(`/profile?returnTo=${encodeURIComponent(returnPath)}`);
+  };
 
   // ── Handle new address ─────────────────────────────────────────
   const handleSaveNewAddress = async () => {
@@ -265,7 +284,20 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
       const propData = await propRes.json();
       const propertyId = propData?.property?.id || undefined;
 
-      // 2. Submit the location-details snapshot for the site-access flow,
+      // 2. Link the canonical property to this account so it shows as "my address".
+      if (propertyId) {
+        const linkRes = await fetch(`${API_BASE_URL}/properties/${propertyId}/link`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ setPrimary: true }),
+        });
+        if (!linkRes.ok) {
+          const data = await linkRes.json().catch(() => ({}));
+          throw new Error(data.message || "Failed to link address");
+        }
+      }
+
+      // 3. Submit the location-details snapshot for the site-access flow,
       //    linking the canonical property to the project.
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/location-details`, {
         method: "POST",
@@ -496,38 +528,45 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
 
-                {!showNewAddress && siteAddress ? (
-                  <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                    <p className="text-sm font-medium text-slate-800">
-                      {siteAddress.displayAddress ||
-                        [siteAddress.blockTower, siteAddress.floorLevel, siteAddress.unitNumber, siteAddress.buildingName]
-                          .filter(Boolean)
-                          .join(" ") ||
-                        "Address on file"}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewAddress(true)}
-                      className="mt-2 rounded-lg border border-[#D4C8A0] px-3 py-1.5 text-xs font-semibold text-[#b94e2d] hover:bg-[#F5EEDE] transition"
-                    >
-                      Change address
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
-                    <p className="text-sm text-slate-600">
-                      {showNewAddress ? "Add a new site address" : "No address on file — add one to accept visits."}
-                    </p>
-                    {!showNewAddress && (
+                {!showNewAddress && (
+                  siteAddress ? (
+                    <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                      <p className="text-sm font-medium text-slate-800">
+                        {siteAddress.displayAddress ||
+                          [siteAddress.blockTower, siteAddress.floorLevel, siteAddress.unitNumber, siteAddress.buildingName]
+                            .filter(Boolean)
+                            .join(" ") ||
+                          "Address on file"}
+                      </p>
                       <button
                         type="button"
                         onClick={() => setShowNewAddress(true)}
-                        className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                        className="mt-2 rounded-lg border border-[#D4C8A0] px-3 py-1.5 text-xs font-semibold text-[#b94e2d] hover:bg-[#F5EEDE] transition"
                       >
-                        Add address
+                        Change address
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                      <p className="text-sm text-slate-600">No address on file — add one to accept visits.</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={goToProfile}
+                          className="rounded-lg bg-[#b94e2d] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#a84426] transition"
+                        >
+                          Complete address in profile
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowNewAddress(true)}
+                          className="rounded-lg border border-[#D4C8A0] px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-[#F5EEDE] transition"
+                        >
+                          Add address here
+                        </button>
+                      </div>
+                    </div>
+                  )
                 )}
 
                 {/* New address form */}

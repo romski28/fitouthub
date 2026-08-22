@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-22-c306ec21",
+    "date": "2026-08-22T14:42:06+08:00",
+    "title": "fix(site-access): modal reads tenant linked address; fallback + profile redirect",
+    "summary": "fix(site-access): modal reads tenant linked address; fallback + profile redirect",
+    "areas": [
+      "web"
+    ],
+    "commit": "c306ec21",
+    "files": [
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-766d1768",
     "date": "2026-08-22T14:31:38+08:00",
     "title": "fix(auth): remove Project Delegate from join modal; site modal reads Property table",

@@ -44,6 +44,13 @@ export default function ProfilePage() {
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
   const [mobile, setMobile] = useState('');
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search).get('returnTo');
+    if (p) setReturnTo(p);
+  }, []);
 
   const selectedLocationAreaCode = useMemo(
     () => deriveProjectAreaCodeFromLocation(locationDraft),
@@ -535,6 +542,15 @@ export default function ProfilePage() {
           </div>
 
           <section className={paperCardClassName}>
+            {returnTo && (
+              <button
+                type="button"
+                onClick={() => router.push(returnTo)}
+                className="mb-4 w-full rounded-xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.9)] px-4 py-2 text-sm font-semibold text-[#b94e2d] transition hover:bg-[rgba(255,127,80,0.08)]"
+              >
+                ← Back to site inspection
+              </button>
+            )}
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Addresses</p>
             <h2 className="mt-1 text-xl font-bold text-slate-900">My addresses</h2>
             <p className="mt-2 text-sm text-slate-700">Your property addresses, used for site inspections and project matching.</p>
