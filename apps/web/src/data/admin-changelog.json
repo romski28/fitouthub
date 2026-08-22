@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-22-56d1b00d",
+    "date": "2026-08-22T09:23:15+08:00",
+    "title": "docs: add manual smoke-test checklist for address/persona/worker flows",
+    "summary": "docs: add manual smoke-test checklist for address/persona/worker flows",
+    "areas": [
+      "infra"
+    ],
+    "commit": "56d1b00d",
+    "files": [
+      "SMOKE_TEST_CHECKLIST.md"
+    ]
+  },
+  {
     "id": "2026-08-22-a90dae7d",
     "date": "2026-08-22T00:43:03+08:00",
     "title": "test: add end-to-end smoke test for address + persona + worker flows",
