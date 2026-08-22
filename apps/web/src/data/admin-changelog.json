@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-22-b913d3f0",
+    "date": "2026-08-22T22:04:41+08:00",
+    "title": "fix(worker): show site address to granted workers in inspection modal",
+    "summary": "fix(worker): show site address to granted workers in inspection modal",
+    "areas": [
+      "api"
+    ],
+    "commit": "b913d3f0",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-22-d2687ac7",
     "date": "2026-08-22T21:24:50+08:00",
     "title": "fix(worker): site-inspection check-in view + green action buttons",

@@ -7902,35 +7902,44 @@ Please review the project details and respond with your quote or decline the inv
     const hasAccess =
       !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
 
+    const caller = await this.prisma.professional
+      .findUnique({
+        where: { id: professionalId },
+        select: { professionType: true },
+      })
+      .catch(() => null);
+    const isWorker = caller?.professionType === 'worker';
+
     const siteAccessData = hasAccess
-      ? await this.prisma.siteAccessData.findUnique({
-          where: { projectId },
-        })
+      ? await this.prisma.siteAccessData.findUnique({ where: { projectId } }).catch(() => null)
       : null;
 
     const projectSiteAddress = hasAccess
-      ? await this.getPrimaryProjectSiteAddress(projectId)
+      ? await this.getPrimaryProjectSiteAddress(projectId).catch(() => null)
       : null;
 
-    // Canonical Property address (new address table) — fallback when the legacy
-    // site-access snapshot is empty, so address + map render for pros and workers.
-    const canonicalAddress = hasAccess
-      ? await this.prisma.project
-          .findUnique({ where: { id: projectId }, select: { propertyId: true } })
-          .then((p) =>
-            p?.propertyId
-              ? this.prisma.property.findUnique({
-                  where: { id: p.propertyId },
-                  select: {
-                    displayAddress: true,
-                    buildingName: true,
-                    unitNumber: true,
-                    floorLevel: true,
-                  },
-                })
-              : null,
-          )
-      : null;
+    // Canonical Property address (new address table) — always resolved so granted
+    // workers can see the address even before the legacy snapshot is populated.
+    const canonicalAddress = await this.prisma.project
+      .findUnique({ where: { id: projectId }, select: { propertyId: true } })
+      .then((p) =>
+        p?.propertyId
+          ? this.prisma.property.findUnique({
+              where: { id: p.propertyId },
+              select: {
+                displayAddress: true,
+                buildingName: true,
+                unitNumber: true,
+                floorLevel: true,
+              },
+            })
+          : null,
+      )
+      .catch(() => null);
+
+    // Workers are on-site staff granted by the professional — always show them
+    // whatever address exists; pros only see it once access is approved.
+    const showAddress = hasAccess || isWorker;
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -7976,7 +7985,7 @@ Please review the project details and respond with your quote or decline the inv
           })
       : [];
 
-    const siteAccessDataPayload = hasAccess
+    const siteAccessDataPayload = showAddress
       ? {
           ...(siteAccessData || {}),
           addressFull: projectSiteAddress?.addressFull || siteAccessData?.addressFull || canonicalAddress?.displayAddress || null,
@@ -7989,6 +7998,18 @@ Please review the project details and respond with your quote or decline the inv
           postalCode: project?.locationDetails?.postalCode || null,
         }
       : null;
+
+    console.log('[getSiteAccessStatus]', {
+      projectId,
+      callerId: professionalId,
+      actorId,
+      isWorker,
+      requestId: latestAccessRequest?.id || null,
+      requestStatus: latestAccessRequest?.status || 'none',
+      hasAccess,
+      showAddress,
+      addressFull: siteAccessDataPayload?.addressFull || null,
+    });
 
     return {
       success: true,
