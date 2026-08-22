@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-22-ab5a748a",
+    "date": "2026-08-22T23:09:57+08:00",
+    "title": "fix(worker): resolve site inspection at project level for workers",
+    "summary": "fix(worker): resolve site inspection at project level for workers",
+    "areas": [
+      "api"
+    ],
+    "commit": "ab5a748a",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-22-ffb56331",
     "date": "2026-08-22T22:54:18+08:00",
     "title": "fix(worker): resolve QR/OTP site-inspection check-in to the professional",

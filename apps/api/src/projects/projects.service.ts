@@ -7921,30 +7921,47 @@ Please review the project details and respond with your quote or decline the inv
   }
 
   async getSiteAccessStatus(projectId: string, professionalId: string) {
-    const actorId = await this.resolveWorkerActor(projectId, professionalId);
+    const caller = await this.prisma.professional
+      .findUnique({
+        where: { id: professionalId },
+        select: { professionType: true },
+      })
+      .catch(() => null);
+    const isWorker = caller?.professionType === 'worker';
 
-    const projectProfessional =
-      await this.prisma.projectProfessional.findUnique({
-        where: {
-          projectId_professionalId: {
-            projectId,
-            professionalId: actorId,
+    let latestAccessRequest;
+    if (isWorker) {
+      // Workers are project-scoped staff: verify the grant, then read the
+      // project's latest site access request (owned by the booking professional).
+      await this.resolveWorkerActor(projectId, professionalId);
+      latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+        where: { projectId },
+        orderBy: { requestedAt: 'desc' },
+      });
+    } else {
+      const projectProfessional =
+        await this.prisma.projectProfessional.findUnique({
+          where: {
+            projectId_professionalId: {
+              projectId,
+              professionalId,
+            },
           },
+        });
+
+      if (!projectProfessional) {
+        throw new BadRequestException('Professional is not linked to this project');
+      }
+
+      latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
+        where: {
+          projectProfessionalId: projectProfessional.id,
+        },
+        orderBy: {
+          requestedAt: 'desc',
         },
       });
-
-    if (!projectProfessional) {
-      throw new BadRequestException('Professional is not linked to this project');
     }
-
-    const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({
-      where: {
-        projectProfessionalId: projectProfessional.id,
-      },
-      orderBy: {
-        requestedAt: 'desc',
-      },
-    });
 
     const approvedStatuses = [
       'approved_no_visit',
@@ -7957,14 +7974,6 @@ Please review the project details and respond with your quote or decline the inv
     );
     const hasAccess =
       !!latestAccessRequest && approvedStatuses.includes(latestAccessRequest.status);
-
-    const caller = await this.prisma.professional
-      .findUnique({
-        where: { id: professionalId },
-        select: { professionType: true },
-      })
-      .catch(() => null);
-    const isWorker = caller?.professionType === 'worker';
 
     const siteAccessData = hasAccess
       ? await this.prisma.siteAccessData.findUnique({ where: { projectId } }).catch(() => null)
@@ -8043,7 +8052,6 @@ Please review the project details and respond with your quote or decline the inv
     console.log('[getSiteAccessStatus]', {
       projectId,
       callerId: professionalId,
-      actorId,
       isWorker,
       requestId: latestAccessRequest?.id || null,
       requestStatus: latestAccessRequest?.status || 'none',
@@ -11110,8 +11118,6 @@ Please review the project details and respond with your quote or decline the inv
       tokenPrefix: token.slice(0, 12),
     });
 
-    let decodedGeneratedByUserId: string | null = null;
-
     // Support both JWT (QR scan) and 6-digit OTP (manual entry)
     if (/^\d{6}$/.test(token)) {
       // OTP lookup — check memory cache first, then DB
@@ -11151,35 +11157,21 @@ Please review the project details and respond with your quote or decline the inv
       if (decoded.projectId !== projectId) {
         throw new BadRequestException('QR code does not match this project');
       }
-
-      decodedGeneratedByUserId = decoded.generatedByUserId;
     }
 
-    // Find the professional — from JWT payload or from the site access request
+    // Resolve the professional from the project's approved/visited site access
+    // request (the pro the client approved), regardless of who generated the QR.
     let pro: { id: string; businessName: string | null; fullName: string | null } | null = null;
-    if (decodedGeneratedByUserId) {
-      pro = await this.prisma.professional.findFirst({
-        where: {
-          OR: [
-            { id: decodedGeneratedByUserId },
-            { userId: decodedGeneratedByUserId },
-          ],
-        },
+    const bookingRequest = await this.prisma.siteAccessRequest.findFirst({
+      where: { projectId, status: { in: ['approved_visit_scheduled', 'visited'] } },
+      orderBy: { respondedAt: 'desc' },
+      select: { professionalId: true },
+    });
+    if (bookingRequest) {
+      pro = await this.prisma.professional.findUnique({
+        where: { id: bookingRequest.professionalId },
         select: { id: true, businessName: true, fullName: true },
       });
-    } else {
-      // OTP path — find the professional with an approved visit for this project
-      const sar = await this.prisma.siteAccessRequest.findFirst({
-        where: { projectId, status: 'approved_visit_scheduled' },
-        orderBy: { respondedAt: 'desc' },
-        select: { professionalId: true },
-      });
-      if (sar) {
-        pro = await this.prisma.professional.findUnique({
-          where: { id: sar.professionalId },
-          select: { id: true, businessName: true, fullName: true },
-        });
-      }
     }
     if (!pro) throw new BadRequestException('Professional not found');
 
