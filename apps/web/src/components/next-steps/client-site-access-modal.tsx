@@ -27,21 +27,14 @@ interface SiteAccessRequest {
   };
 }
 
-interface ClientSiteAddress {
+interface SiteAddress {
   id: string;
-  label: string | null;
-  isProjectPrimary?: boolean;
   buildingName: string | null;
-  addressFull: string;
+  displayAddress: string | null;
   unitNumber: string | null;
   floorLevel: string | null;
-  district: string | null;
-  propertyType: string | null;
-  accessHoursType: string | null;
-  workingHoursWindow: string | null;
-  accessDetails: string | null;
-  onSiteContactName: string | null;
-  onSiteContactPhone: string | null;
+  blockTower: string | null;
+  street: string | null;
 }
 
 interface SiteAccessVisit {
@@ -104,8 +97,7 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
   const { accessToken } = useAuth();
   const projectId = state.projectId || "";
 
-  const [addresses, setAddresses] = useState<ClientSiteAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [siteAddress, setSiteAddress] = useState<SiteAddress | null>(null);
   const [requests, setRequests] = useState<SiteAccessRequest[]>([]);
   const [visits, setVisits] = useState<SiteAccessVisit[]>([]);
   const [siteAccessData, setSiteAccessData] = useState<any>(null);
@@ -188,8 +180,8 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     setLoading(true);
     setError(null);
     try {
-      const [addrRes, reqRes, visitRes] = await Promise.all([
-        fetchWithRetry(`${API_BASE_URL}/projects/${projectId}/site-addresses?_ts=${Date.now()}`, {
+      const [projectRes, reqRes, visitRes] = await Promise.all([
+        fetchWithRetry(`${API_BASE_URL}/projects/${projectId}?_ts=${Date.now()}`, {
           method: "GET",
           cache: "no-store",
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -206,24 +198,33 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
         }),
       ]);
 
-      if (!addrRes.ok || !reqRes.ok || !visitRes.ok) throw new Error("Failed to load data");
+      if (!projectRes.ok || !reqRes.ok || !visitRes.ok) throw new Error("Failed to load data");
 
-      const [addrData, reqData, visitData] = await Promise.all([
-        addrRes.json().catch(() => ({})),
+      const [projectData, reqData, visitData] = await Promise.all([
+        projectRes.json().catch(() => ({})),
         reqRes.json().catch(() => ({})),
         visitRes.json().catch(() => ({})),
       ]);
 
-      setAddresses(addrData?.addresses || []);
       setRequests(reqData?.requests || []);
       setSiteAccessData(reqData?.siteAccessData || null);
       setVisits(visitData?.visits || []);
 
-      // Pre-select primary address
-      const primary = (addrData?.addresses || []).find(
-        (a: ClientSiteAddress) => a.isProjectPrimary
+      // Single site address read from the canonical Property table (project.property).
+      const prop = projectData?.property;
+      setSiteAddress(
+        prop?.id
+          ? {
+              id: prop.id,
+              buildingName: prop.buildingName ?? null,
+              displayAddress: prop.displayAddress ?? null,
+              unitNumber: prop.unitNumber ?? null,
+              floorLevel: prop.floorLevel ?? null,
+              blockTower: prop.blockTower ?? null,
+              street: prop.street ?? null,
+            }
+          : null,
       );
-      if (primary) setSelectedAddressId(primary.id);
     } catch (err: any) {
       setError(err.message || "Failed to load");
     } finally {
@@ -306,17 +307,14 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
     setActionBusy(`accept-${requestId}`);
     try {
       const req = requests.find((r) => r.id === requestId);
-      const addr = addresses.find((a) => a.id === selectedAddressId);
+      const addr = siteAddress;
       const body: Record<string, any> = { status: "approved_visit_scheduled" };
       if (req?.visitScheduledAt) body.visitScheduledAt = req.visitScheduledAt;
       else if (req?.visitScheduledFor) body.visitScheduledFor = req.visitScheduledFor;
       if (addr) {
-        body.addressFull = addr.addressFull;
+        if (addr.displayAddress) body.addressFull = addr.displayAddress;
         if (addr.unitNumber) body.unitNumber = addr.unitNumber;
         if (addr.floorLevel) body.floorLevel = addr.floorLevel;
-        if (addr.accessDetails) body.accessDetails = addr.accessDetails;
-        if (addr.onSiteContactName) body.onSiteContactName = addr.onSiteContactName;
-        if (addr.onSiteContactPhone) body.onSiteContactPhone = addr.onSiteContactPhone;
       }
 
       const res = await fetch(`${API_BASE_URL}/projects/site-access-requests/${requestId}/respond`, {
@@ -498,31 +496,39 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
 
-                <select
-                  value={showNewAddress ? "__new__" : selectedAddressId}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "__new__") {
-                      setShowNewAddress(true);
-                      setSelectedAddressId("");
-                    } else if (val === "") {
-                      setShowNewAddress(false);
-                      setSelectedAddressId("");
-                    } else {
-                      setShowNewAddress(false);
-                      setSelectedAddressId(val);
-                    }
-                  }}
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%23999%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-8"
-                >
-                  <option value="">Select address or add new one</option>
-                  {addresses.map((addr) => (
-                    <option key={addr.id} value={addr.id}>
-                      {(addr.label || addr.buildingName || "Saved address").trim()} — {addr.addressFull}
-                    </option>
-                  ))}
-                  <option value="__new__">＋ Add new address</option>
-                </select>
+                {!showNewAddress && siteAddress ? (
+                  <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                    <p className="text-sm font-medium text-slate-800">
+                      {siteAddress.displayAddress ||
+                        [siteAddress.blockTower, siteAddress.floorLevel, siteAddress.unitNumber, siteAddress.buildingName]
+                          .filter(Boolean)
+                          .join(" ") ||
+                        "Address on file"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewAddress(true)}
+                      className="mt-2 rounded-lg border border-[#D4C8A0] px-3 py-1.5 text-xs font-semibold text-[#b94e2d] hover:bg-[#F5EEDE] transition"
+                    >
+                      Change address
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-[#D4C8A0] bg-white p-3">
+                    <p className="text-sm text-slate-600">
+                      {showNewAddress ? "Add a new site address" : "No address on file — add one to accept visits."}
+                    </p>
+                    {!showNewAddress && (
+                      <button
+                        type="button"
+                        onClick={() => setShowNewAddress(true)}
+                        className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                      >
+                        Add address
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* New address form */}
                 {showNewAddress && (
@@ -589,8 +595,8 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                   </div>
                 )}
 
-                {!selectedAddressId && !showNewAddress && addresses.length > 0 && (
-                  <p className="mt-1 text-xs text-amber-600">Select an address to accept visits</p>
+                {!siteAddress && !showNewAddress && (
+                  <p className="mt-1 text-xs text-amber-600">Add an address to accept visits</p>
                 )}
               </div>
 
@@ -618,8 +624,8 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                               <div className="flex gap-1.5 sm:shrink-0">
                                 <button
                                   onClick={() => handleAcceptRequest(req.id)}
-                                  disabled={!!actionBusy || !selectedAddressId}
-                                  title={!selectedAddressId ? "Select an address first" : "Accept this request"}
+                                  disabled={!!actionBusy || !siteAddress}
+                                  title={!siteAddress ? "Add an address first" : "Accept this request"}
                                   className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
                                 >
                                   {actionBusy === `accept-${req.id}` ? "..." : "Accept"}
@@ -686,8 +692,8 @@ export function ClientSiteAccessModal({ isOpen, onClose }: ClientSiteAccessModal
                           </div>
                           <button
                             onClick={() => handleConfirmVisit(v.id)}
-                            disabled={!!actionBusy || !selectedAddressId}
-                            title={!selectedAddressId ? "Select an address first" : "Confirm this visit"}
+                            disabled={!!actionBusy || !siteAddress}
+                            title={!siteAddress ? "Add an address first" : "Confirm this visit"}
                             className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40 transition"
                           >
                             {actionBusy === `confirm-${v.id}` ? "..." : "Confirm"}

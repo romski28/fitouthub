@@ -4191,6 +4191,7 @@ export class ProjectsService {
           },
           aiIntake: true,
           photos: true,
+          property: true,
         },
       });
       if (!project) return null;
@@ -4249,6 +4250,7 @@ export class ProjectsService {
             },
           },
           photos: true,
+          property: true,
         },
       });
       console.log('[ProjectsService.findOneForClient] Project found:', !!project);

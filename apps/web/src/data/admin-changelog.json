@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-22-766d1768",
+    "date": "2026-08-22T14:31:38+08:00",
+    "title": "fix(auth): remove Project Delegate from join modal; site modal reads Property table",
+    "summary": "fix(auth): remove Project Delegate from join modal; site modal reads Property table",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "766d1768",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/next-steps/client-site-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-56d1b00d",
     "date": "2026-08-22T09:23:15+08:00",
     "title": "docs: add manual smoke-test checklist for address/persona/worker flows",
