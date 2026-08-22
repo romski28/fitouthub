@@ -10945,6 +10945,10 @@ Please review the project details and respond with your quote or decline the inv
     professionalUserId: string,
     purpose: string = 'site_start',
   ): Promise<{ token: string; otp: string; expiresAt: string }> {
+    // Workers act on behalf of the project's professional so the QR/OTP resolves
+    // to the professional that actually owns the accepted site visit.
+    const actorId = await this.resolveWorkerActor(projectId, professionalUserId);
+
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
@@ -10980,7 +10984,7 @@ Please review the project details and respond with your quote or decline the inv
 
     const payload = {
       projectId,
-      generatedByUserId: professionalUserId,
+      generatedByUserId: actorId,
       purpose,
       otp,
     };
@@ -11098,6 +11102,13 @@ Please review the project details and respond with your quote or decline the inv
     token: string,
   ): Promise<{ success: boolean }> {
     const secret = process.env.JWT_SECRET || 'your-secret-key';
+
+    console.log('[confirmSiteInspection]', {
+      projectId,
+      clientUserId,
+      isOtp: /^\d{6}$/.test(token),
+      tokenPrefix: token.slice(0, 12),
+    });
 
     let decodedGeneratedByUserId: string | null = null;
 
