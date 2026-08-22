@@ -463,15 +463,10 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, wo
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">📍 Site Address</h3>
                 <p className="rounded-lg border border-[#D4C8A0] bg-white p-3 text-sm text-slate-800">
-                  {[
-                    address.buildingName,
-                    address.unitNumber,
-                    address.floorLevel,
-                    address.addressFull,
-                    address.district,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
+                  {address.addressFull ||
+                    [address.buildingName, address.unitNumber, address.floorLevel, address.district]
+                      .filter(Boolean)
+                      .join(', ')}
                 </p>
               </div>
 
@@ -487,9 +482,10 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, wo
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
-                        [address.buildingName, address.unitNumber, address.addressFull, address.district, "Hong Kong"]
-                          .filter(Boolean)
-                          .join(", ")
+                        (address.addressFull ||
+                          [address.buildingName, address.unitNumber, address.floorLevel, address.district]
+                            .filter(Boolean)
+                            .join(", ")) + ", Hong Kong"
                       )}`}
                     />
                   </div>

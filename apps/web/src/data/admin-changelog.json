@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-22-2bd9b91b",
+    "date": "2026-08-22T22:36:06+08:00",
+    "title": "fix(site-inspection): stop duplicating address in inspect-site modal",
+    "summary": "fix(site-inspection): stop duplicating address in inspect-site modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "2bd9b91b",
+    "files": [
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-0b87a8cb",
     "date": "2026-08-22T22:26:55+08:00",
     "title": "fix(worker): resolve site address from client persona-linked property",
