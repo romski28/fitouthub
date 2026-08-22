@@ -7382,7 +7382,11 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     if (request.professionalId !== professionalId) {
-      throw new BadRequestException('You do not have access to this request');
+      // Allow a granted worker to confirm the visit on behalf of the awarded pro.
+      const actorId = await this.resolveWorkerActor(request.projectId, professionalId);
+      if (request.professionalId !== actorId) {
+        throw new BadRequestException('You do not have access to this request');
+      }
     }
 
     if (!['approved_visit_scheduled', 'approved_no_visit', 'visited'].includes(request.status)) {
@@ -7805,13 +7809,70 @@ Please review the project details and respond with your quote or decline the inv
     };
   }
 
+  /**
+   * Resolve which professional a site-inspection action should act as.
+   * A worker (professionType 'worker') with an active, non-expired
+   * ProjectWorkerAccess grant acts on behalf of the project's awarded
+   * professional (falling back to the granting professional).
+   */
+  private async resolveWorkerActor(projectId: string, professionalId: string): Promise<string> {
+    // Fast path: the caller is the linked professional.
+    const linked = await this.prisma.projectProfessional.findUnique({
+      where: { projectId_professionalId: { projectId, professionalId } },
+      select: { professionalId: true },
+    });
+    if (linked) return professionalId;
+
+    // Worker path: verify an active grant, then act on behalf of the awarded pro.
+    const worker = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: { id: true, email: true, professionType: true },
+    });
+    if (!worker || worker.professionType !== 'worker') {
+      throw new BadRequestException('Professional is not linked to this project');
+    }
+
+    const now = new Date();
+    const grant = await this.prisma.projectWorkerAccess.findFirst({
+      where: {
+        projectId,
+        revokedAt: null,
+        OR: [
+          { workerId: professionalId },
+          ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),
+        ],
+        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!grant) {
+      throw new ForbiddenException('You do not have access to this project');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        awardedProjectProfessionalId: true,
+        awardedProjectProfessional: { select: { professionalId: true } },
+      },
+    });
+
+    return (
+      project?.awardedProjectProfessional?.professionalId ||
+      grant.grantedByProfessionalId ||
+      professionalId
+    );
+  }
+
   async getSiteAccessStatus(projectId: string, professionalId: string) {
+    const actorId = await this.resolveWorkerActor(projectId, professionalId);
+
     const projectProfessional =
       await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
-            professionalId,
+            professionalId: actorId,
           },
         },
       });
@@ -7849,6 +7910,26 @@ Please review the project details and respond with your quote or decline the inv
 
     const projectSiteAddress = hasAccess
       ? await this.getPrimaryProjectSiteAddress(projectId)
+      : null;
+
+    // Canonical Property address (new address table) — fallback when the legacy
+    // site-access snapshot is empty, so address + map render for pros and workers.
+    const canonicalAddress = hasAccess
+      ? await this.prisma.project
+          .findUnique({ where: { id: projectId }, select: { propertyId: true } })
+          .then((p) =>
+            p?.propertyId
+              ? this.prisma.property.findUnique({
+                  where: { id: p.propertyId },
+                  select: {
+                    displayAddress: true,
+                    buildingName: true,
+                    unitNumber: true,
+                    floorLevel: true,
+                  },
+                })
+              : null,
+          )
       : null;
 
     const project = await this.prisma.project.findUnique({
@@ -7898,13 +7979,13 @@ Please review the project details and respond with your quote or decline the inv
     const siteAccessDataPayload = hasAccess
       ? {
           ...(siteAccessData || {}),
-          addressFull: projectSiteAddress?.addressFull || siteAccessData?.addressFull || null,
-          unitNumber: projectSiteAddress?.unitNumber || siteAccessData?.unitNumber || null,
-          floorLevel: projectSiteAddress?.floorLevel || siteAccessData?.floorLevel || null,
+          addressFull: projectSiteAddress?.addressFull || siteAccessData?.addressFull || canonicalAddress?.displayAddress || null,
+          unitNumber: projectSiteAddress?.unitNumber || siteAccessData?.unitNumber || canonicalAddress?.unitNumber || null,
+          floorLevel: projectSiteAddress?.floorLevel || siteAccessData?.floorLevel || canonicalAddress?.floorLevel || null,
           accessDetails: projectSiteAddress?.accessDetails || siteAccessData?.accessDetails || null,
           onSiteContactName: projectSiteAddress?.onSiteContactName || siteAccessData?.onSiteContactName || null,
           onSiteContactPhone: projectSiteAddress?.onSiteContactPhone || siteAccessData?.onSiteContactPhone || null,
-          buildingName: projectSiteAddress?.buildingName || null,
+          buildingName: projectSiteAddress?.buildingName || canonicalAddress?.buildingName || null,
           postalCode: project?.locationDetails?.postalCode || null,
         }
       : null;

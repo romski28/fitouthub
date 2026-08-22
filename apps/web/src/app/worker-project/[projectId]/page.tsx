@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { API_BASE_URL } from '@/config/api';
+import { InspectSiteModal } from '@/components/next-steps/inspect-site-modal';
 
 type WorkerProject = {
   project: {
@@ -59,6 +60,7 @@ export default function WorkerProjectPage() {
   const [note, setNote] = useState('');
   const [busyAction, setBusyAction] = useState<Action | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [inspectionOpen, setInspectionOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!projectId || !accessToken) return;
@@ -218,6 +220,20 @@ export default function WorkerProjectPage() {
         </div>
 
         <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Site inspection</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Check in on site with the QR code or 6-digit code, record visit notes, and mark the visit complete.
+          </p>
+          <button
+            type="button"
+            onClick={() => setInspectionOpen(true)}
+            className="mt-3 w-full rounded-lg bg-[#b94e2d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#a84426] transition"
+          >
+            Open site inspection
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">On-site actions</h2>
           <p className="mt-1 text-xs text-slate-500">
             These actions are posted to the project thread and visible to your employer and the client.
@@ -250,6 +266,12 @@ export default function WorkerProjectPage() {
           </div>
         </div>
       </main>
+
+      <InspectSiteModal
+        isOpen={inspectionOpen}
+        onClose={() => setInspectionOpen(false)}
+        projectId={projectId}
+      />
     </div>
   );
 }

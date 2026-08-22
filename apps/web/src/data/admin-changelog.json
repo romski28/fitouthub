@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-22-a4c354c8",
+    "date": "2026-08-22T18:41:32+08:00",
+    "title": "feat(worker): open pro site-inspection modal with QR/OTP check-in",
+    "summary": "feat(worker): open pro site-inspection modal with QR/OTP check-in",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a4c354c8",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-22-c306ec21",
     "date": "2026-08-22T14:42:06+08:00",
     "title": "fix(site-access): modal reads tenant linked address; fallback + profile redirect",
