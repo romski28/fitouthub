@@ -7864,6 +7864,62 @@ Please review the project details and respond with your quote or decline the inv
     );
   }
 
+  /**
+   * Resolve the project's canonical address from the new Property table:
+   * the project's explicit property pointer, falling back to the client
+   * persona's primary linked property (e.g. address added via the profile page).
+   */
+  private async getCanonicalProjectAddress(projectId: string): Promise<{
+    displayAddress: string | null;
+    buildingName: string | null;
+    unitNumber: string | null;
+    floorLevel: string | null;
+  } | null> {
+    const project = await this.prisma.project
+      .findUnique({
+        where: { id: projectId },
+        select: { propertyId: true, userId: true, clientId: true },
+      })
+      .catch(() => null);
+
+    // 1. Project's explicit property pointer.
+    if (project?.propertyId) {
+      const prop = await this.prisma.property
+        .findUnique({
+          where: { id: project.propertyId },
+          select: { displayAddress: true, buildingName: true, unitNumber: true, floorLevel: true },
+        })
+        .catch(() => null);
+      if (prop) return prop;
+    }
+
+    // 2. Client persona's primary linked property (address added via profile).
+    const ownerId = project?.userId || project?.clientId || null;
+    if (ownerId) {
+      const persona = await this.prisma.persona
+        .findFirst({
+          where: { userId: ownerId },
+          select: { id: true },
+        })
+        .catch(() => null);
+      if (persona) {
+        const link = await this.prisma.propertyAccountLink
+          .findFirst({
+            where: { personaId: persona.id, isPrimary: true },
+            select: {
+              property: {
+                select: { displayAddress: true, buildingName: true, unitNumber: true, floorLevel: true },
+              },
+            },
+          })
+          .catch(() => null);
+        if (link?.property) return link.property;
+      }
+    }
+
+    return null;
+  }
+
   async getSiteAccessStatus(projectId: string, professionalId: string) {
     const actorId = await this.resolveWorkerActor(projectId, professionalId);
 
@@ -7918,24 +7974,9 @@ Please review the project details and respond with your quote or decline the inv
       ? await this.getPrimaryProjectSiteAddress(projectId).catch(() => null)
       : null;
 
-    // Canonical Property address (new address table) — always resolved so granted
-    // workers can see the address even before the legacy snapshot is populated.
-    const canonicalAddress = await this.prisma.project
-      .findUnique({ where: { id: projectId }, select: { propertyId: true } })
-      .then((p) =>
-        p?.propertyId
-          ? this.prisma.property.findUnique({
-              where: { id: p.propertyId },
-              select: {
-                displayAddress: true,
-                buildingName: true,
-                unitNumber: true,
-                floorLevel: true,
-              },
-            })
-          : null,
-      )
-      .catch(() => null);
+    // Canonical Property address (new address table) — the project's property
+    // pointer, falling back to the client persona's primary linked property.
+    const canonicalAddress = await this.getCanonicalProjectAddress(projectId);
 
     // Workers are on-site staff granted by the professional — always show them
     // whatever address exists; pros only see it once access is approved.
