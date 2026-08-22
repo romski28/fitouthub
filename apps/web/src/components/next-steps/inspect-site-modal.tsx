@@ -35,10 +35,11 @@ interface InspectSiteModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId?: string;
+  workerMode?: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────
-export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: InspectSiteModalProps) {
+export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, workerMode = false }: InspectSiteModalProps) {
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
   const projectId = projectIdProp || state.projectId || "";
@@ -274,7 +275,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp }: 
   const bookedTimes = new Set(status?.bookedInspectionTimes || []);
   const reqStatus = (status?.requestStatus || 'none').toLowerCase();
   const needsReschedule = status?.rescheduleRequired === true || status?.requiresReschedule === true;
-  const showBookingForm = mode === 'reschedule-propose' || !status?.requestId || needsReschedule;
+  const showBookingForm = !workerMode && (mode === 'reschedule-propose' || !status?.requestId || needsReschedule);
   const canRequest = Boolean(offeredDate && selectedTime);
 
   const handleRequestSlot = async () => {

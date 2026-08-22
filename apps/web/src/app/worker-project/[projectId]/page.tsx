@@ -227,7 +227,7 @@ export default function WorkerProjectPage() {
           <button
             type="button"
             onClick={() => setInspectionOpen(true)}
-            className="mt-3 w-full rounded-lg bg-[#b94e2d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#a84426] transition"
+            className="mt-3 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
           >
             Open site inspection
           </button>
@@ -258,7 +258,7 @@ export default function WorkerProjectPage() {
                 disabled={busyAction !== null}
                 onClick={() => submitAction(a.key)}
                 title={a.hint}
-                className="rounded-lg bg-[#b94e2d] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#a84426] disabled:opacity-50"
+                className="rounded-lg bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50"
               >
                 {busyAction === a.key ? 'Posting…' : a.label}
               </button>
@@ -271,6 +271,7 @@ export default function WorkerProjectPage() {
         isOpen={inspectionOpen}
         onClose={() => setInspectionOpen(false)}
         projectId={projectId}
+        workerMode
       />
     </div>
   );

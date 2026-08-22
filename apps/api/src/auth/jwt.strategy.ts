@@ -56,7 +56,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             return null;
           }
         }
-        return { id: pro.id, email: pro.email, role: 'professional' };
+        return { id: pro.id, email: pro.email, role: 'professional', isProfessional: true };
       }
 
       return null;
