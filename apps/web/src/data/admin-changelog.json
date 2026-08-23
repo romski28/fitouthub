@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-23-2c77b632",
+    "date": "2026-08-23T21:28:39+08:00",
+    "title": "chore(site-inspection): single-line diagnostics for QR mismatch trace",
+    "summary": "chore(site-inspection): single-line diagnostics for QR mismatch trace",
+    "areas": [
+      "api"
+    ],
+    "commit": "2c77b632",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-22-ab5a748a",
     "date": "2026-08-22T23:09:57+08:00",
     "title": "fix(worker): resolve site inspection at project level for workers",

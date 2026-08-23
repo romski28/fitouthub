@@ -8049,7 +8049,7 @@ Please review the project details and respond with your quote or decline the inv
         }
       : null;
 
-    console.log('[getSiteAccessStatus]', {
+    console.log('[getSiteAccessStatus] ' + JSON.stringify({
       projectId,
       callerId: professionalId,
       isWorker,
@@ -8058,7 +8058,7 @@ Please review the project details and respond with your quote or decline the inv
       hasAccess,
       showAddress,
       addressFull: siteAccessDataPayload?.addressFull || null,
-    });
+    }));
 
     return {
       success: true,
@@ -11000,6 +11000,8 @@ Please review the project details and respond with your quote or decline the inv
     const token = jwt.sign(payload, secret, { expiresIn: expiresInSeconds });
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 
+    console.log('[generateSiteStartToken] ' + JSON.stringify({ projectId, actorId, purpose, otp }));
+
     // Store OTP in both memory cache AND DB (survives restarts, shared across instances)
     const otpEntry = { projectId, purpose, expiresAt: Date.now() + expiresInSeconds * 1000 };
     this.otpCache.set(otp, otpEntry);
@@ -11111,12 +11113,7 @@ Please review the project details and respond with your quote or decline the inv
   ): Promise<{ success: boolean }> {
     const secret = process.env.JWT_SECRET || 'your-secret-key';
 
-    console.log('[confirmSiteInspection]', {
-      projectId,
-      clientUserId,
-      isOtp: /^\d{6}$/.test(token),
-      tokenPrefix: token.slice(0, 12),
-    });
+    console.log('[confirmSiteInspection] ' + JSON.stringify({ projectId, clientUserId, isOtp: /^\d{6}$/.test(token), tokenPrefix: token.slice(0, 12) }));
 
     // Support both JWT (QR scan) and 6-digit OTP (manual entry)
     if (/^\d{6}$/.test(token)) {
@@ -11155,6 +11152,7 @@ Please review the project details and respond with your quote or decline the inv
       }
 
       if (decoded.projectId !== projectId) {
+        console.log('[confirmSiteInspection:jwt-mismatch] ' + JSON.stringify({ decodedProjectId: decoded.projectId, projectId, purpose: decoded.purpose, decoded }));
         throw new BadRequestException('QR code does not match this project');
       }
     }
