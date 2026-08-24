@@ -263,6 +263,7 @@ export class ProjectWorkerAccessService {
     const grants = await this.prisma.projectWorkerAccess.findMany({
       where: {
         revokedAt: null,
+        consumedAt: null,
         OR: [
           { workerId: professionalId },
           ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),

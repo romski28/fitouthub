@@ -14,7 +14,20 @@ type WorkerProjectRow = {
   notes?: string | null;
   endDate?: string | null;
   status?: string;
-  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean };
+  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null };
+};
+
+const TASK_LABELS: Record<string, string> = {
+  site_inspection: '📍 Site inspection check-in',
+};
+
+const remainingLabel = (expiresAt?: string | null): string | null => {
+  if (!expiresAt) return null;
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return 'expired';
+  const hours = Math.floor(ms / 3600000);
+  if (hours < 1) return `${Math.max(1, Math.ceil(ms / 60000))}m left`;
+  return `${hours}h left`;
 };
 
 export default function WorkerProjectsPage() {
@@ -83,27 +96,32 @@ export default function WorkerProjectsPage() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {projects.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/worker-project/${p.id}`}
-                  className="block rounded-2xl border border-[#D4C8A0] bg-white p-5 shadow-sm transition hover:border-[#b94e2d]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="font-bold text-slate-900">{p.projectName}</h2>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {[p.clientName, p.region].filter(Boolean).join(' · ')}
-                      </p>
+            {projects.map((p) => {
+              const taskLabel = p.access?.task ? TASK_LABELS[p.access.task] : null;
+              const remaining = !p.access?.isOngoing ? remainingLabel(p.access?.expiresAt) : null;
+              return (
+                <li key={p.id}>
+                  <Link
+                    href={`/worker-project/${p.id}`}
+                    className="block rounded-2xl border border-[#D4C8A0] bg-white p-5 shadow-sm transition hover:border-[#b94e2d]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="font-bold text-slate-900">{p.projectName}</h2>
+                        {taskLabel && <p className="mt-1 text-sm font-medium text-[#b94e2d]">{taskLabel}</p>}
+                        <p className="mt-1 text-sm text-slate-500">
+                          {[p.clientName, p.region].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${p.access?.isOngoing ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {p.access?.isOngoing ? 'ongoing' : remaining || 'expires soon'}
+                      </span>
                     </div>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                      {p.access?.isOngoing ? 'ongoing' : '48h'}
-                    </span>
-                  </div>
-                  {p.notes && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{p.notes}</p>}
-                </Link>
-              </li>
-            ))}
+                    {p.notes && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{p.notes}</p>}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>

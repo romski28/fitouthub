@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-24-9ea46c12",
+    "date": "2026-08-24T11:39:16+08:00",
+    "title": "feat(worker): task board surfaces magic-link tasks with expiry",
+    "summary": "feat(worker): task board surfaces magic-link tasks with expiry",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "9ea46c12",
+    "files": [
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/web/src/app/worker-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-70abc6bd",
     "date": "2026-08-24T11:26:52+08:00",
     "title": "feat(worker): task-scope site-inspection magic links + burn on completion",
