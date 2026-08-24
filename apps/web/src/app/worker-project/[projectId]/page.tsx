@@ -15,6 +15,8 @@ type WorkerProject = {
     region: string;
     notes?: string | null;
     endDate?: string | null;
+    status?: string | null;
+    currentStage?: string | null;
     property?: {
       displayAddress?: string | null;
       buildingName?: string | null;
@@ -39,14 +41,60 @@ type WorkerProject = {
   access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null; consumedAt?: string | null };
 };
 
-type Action = 'check_in' | 'start' | 'update' | 'complete';
+type Action = 'start' | 'update' | 'complete';
 
 const ACTION_LABELS: { key: Action; label: string; hint: string }[] = [
-  { key: 'check_in', label: 'Checked in on site', hint: 'Record arrival and visit notes.' },
   { key: 'start', label: 'Started work', hint: 'Mark the project as started on site.' },
   { key: 'update', label: 'Post progress update', hint: 'Share a progress update with the project.' },
   { key: 'complete', label: 'Mark complete', hint: 'Record completion of your work.' },
 ];
+
+const STAGE_LABELS: Record<string, string> = {
+  CREATED: 'Project created',
+  BIDDING_ACTIVE: 'Bidding',
+  SITE_VISIT_SCHEDULED: 'Site visit scheduled',
+  SITE_VISIT_COMPLETE: 'Site visit complete',
+  QUOTE_RECEIVED: 'Quote received',
+  BIDDING_CLOSED: 'Bidding closed',
+  CONTRACT_PHASE: 'Contract phase',
+  PRE_WORK: 'Pre-work',
+  WORK_IN_PROGRESS: 'Work in progress',
+  MILESTONE_PENDING: 'Milestone pending',
+  PAYMENT_RELEASED: 'Payment released',
+  NEAR_COMPLETION: 'Near completion',
+  FINAL_INSPECTION: 'Final inspection',
+  COMPLETE: 'Complete',
+  WARRANTY_PERIOD: 'Warranty',
+  CLOSED: 'Closed',
+  PAUSED: 'Paused',
+  DISPUTED: 'Disputed',
+};
+
+const stageLabel = (stage?: string | null): string | null => {
+  if (!stage) return null;
+  const key = String(stage).toUpperCase();
+  return STAGE_LABELS[key] || stage.replace(/_/g, ' ');
+};
+
+// Stages where on-site work is happening (progress updates / completion apply).
+const ACTIVE_WORK_STAGES = new Set([
+  'WORK_IN_PROGRESS',
+  'MILESTONE_PENDING',
+  'PAYMENT_RELEASED',
+  'NEAR_COMPLETION',
+  'FINAL_INSPECTION',
+]);
+
+const actionAllowed = (action: Action, stage?: string | null): boolean => {
+  const s = String(stage || '').toUpperCase();
+  if (action === 'start') return s === 'PRE_WORK';
+  return ACTIVE_WORK_STAGES.has(s);
+};
+
+const actionGatedHint = (action: Action): string => {
+  if (action === 'start') return 'Available once the project is in pre-work and ready to start on site.';
+  return 'Available once work on site is in progress.';
+};
 
 export default function WorkerProjectPage() {
   const params = useParams<{ projectId: string }>();
@@ -105,7 +153,7 @@ export default function WorkerProjectPage() {
     setError(null);
     setToastMsg(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/professional/worker-project/${projectId}/${action === 'check_in' ? 'check-in' : action}`, {
+      const res = await fetch(`${API_BASE_URL}/professional/worker-project/${projectId}/${action}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ note }),
@@ -199,6 +247,8 @@ export default function WorkerProjectPage() {
   }
 
   const project = data?.project;
+  const stageKey = String(project?.currentStage || '').toUpperCase();
+  const stageText = stageLabel(project?.currentStage);
 
   return (
     <div className="min-h-screen bg-[#F5EEDE] pb-16">
@@ -224,6 +274,12 @@ export default function WorkerProjectPage() {
             <p className="mt-2 text-xs text-slate-400">
               {data.access.isOngoing ? 'Access: ongoing' : `Access expires ${data.access.expiresAt ? new Date(data.access.expiresAt).toLocaleString('en-HK') : ''}`}
             </p>
+          )}
+
+          {project?.currentStage && (
+            <span className="mt-3 inline-block rounded-full border border-[#D4C8A0] bg-[#FDFBF3] px-2.5 py-1 text-xs font-medium text-slate-600">
+              Stage: {stageLabel(project.currentStage)}
+            </span>
           )}
 
           {project?.property && (
@@ -341,6 +397,13 @@ export default function WorkerProjectPage() {
             These actions are posted to the project thread and visible to your employer and the client.
           </p>
 
+          <p className="mt-3 rounded-lg border border-[#D4C8A0] bg-[#FDFBF3] px-3 py-2 text-xs text-slate-500">
+            Project stage: <span className="font-semibold text-slate-700">{stageText || '—'}</span>
+            {stageKey !== 'PRE_WORK' && !ACTIVE_WORK_STAGES.has(stageKey) && (
+              <> · Actions unlock as the project moves toward work on site.</>
+            )}
+          </p>
+
           {error && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
           {toastMsg && <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{toastMsg}</div>}
 
@@ -353,18 +416,25 @@ export default function WorkerProjectPage() {
           />
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            {ACTION_LABELS.map((a) => (
-              <button
-                key={a.key}
-                type="button"
-                disabled={busyAction !== null}
-                onClick={() => submitAction(a.key)}
-                title={a.hint}
-                className="rounded-lg bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {busyAction === a.key ? 'Posting…' : a.label}
-              </button>
-            ))}
+            {ACTION_LABELS.map((a) => {
+              const allowed = actionAllowed(a.key, project?.currentStage);
+              return (
+                <button
+                  key={a.key}
+                  type="button"
+                  disabled={busyAction !== null || !allowed}
+                  onClick={() => submitAction(a.key)}
+                  title={allowed ? a.hint : actionGatedHint(a.key)}
+                  className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed ${
+                    allowed
+                      ? 'bg-emerald-600 text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50'
+                      : 'border border-[#D4C8A0] bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {busyAction === a.key ? 'Posting…' : a.label}
+                </button>
+              );
+            })}
           </div>
         </div>
         )}

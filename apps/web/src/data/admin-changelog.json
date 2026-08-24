@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-24-41051914",
+    "date": "2026-08-24T11:45:42+08:00",
+    "title": "feat(worker): gate on-site actions by project stage",
+    "summary": "feat(worker): gate on-site actions by project stage",
+    "areas": [
+      "web"
+    ],
+    "commit": "41051914",
+    "files": [
+      "apps/web/src/app/worker-project/[projectId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-9ea46c12",
     "date": "2026-08-24T11:39:16+08:00",
     "title": "feat(worker): task board surfaces magic-link tasks with expiry",
