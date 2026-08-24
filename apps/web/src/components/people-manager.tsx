@@ -37,13 +37,6 @@ type ContactRow = {
   linkedProfessionalId: string | null;
 };
 
-const statusTone: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700',
-  external: 'bg-slate-100 text-slate-500',
-  invited: 'bg-amber-100 text-amber-700',
-  joined: 'bg-emerald-100 text-emerald-700',
-};
-
 export function PeopleManager({ accessToken }: { accessToken: string }) {
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -63,6 +56,8 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingKind, setEditingKind] = useState<'worker' | 'contractor' | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -107,47 +102,71 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
 
   const openModal = (k: 'worker' | 'contractor') => {
     setKind(k);
+    setEditingId(null);
+    setEditingKind(null);
     setForm({ name: '', email: '', phone: '', trades: [], notes: '', invite: k === 'worker' });
     setError(null);
     setLink(null);
     setShowModal(true);
   };
 
-  const addWorker = async () => {
-    if (!form.email.trim()) {
-      setError('Email is required');
-      return;
-    }
-    setBusy(true);
+  const openEdit = (
+    k: 'worker' | 'contractor',
+    p: { id: string; name: string; email: string | null; phone: string | null; trades: string[]; notes: string | null },
+  ) => {
+    setKind(k);
+    setEditingId(p.id);
+    setEditingKind(k);
+    setForm({ name: p.name, email: p.email || '', phone: p.phone || '', trades: p.trades || [], notes: p.notes || '', invite: false });
     setError(null);
     setLink(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/professional/worker-invites`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          name: form.name || undefined,
-          phone: form.phone || undefined,
-          trades: form.trades,
-          notes: form.notes || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.message || 'Invite failed');
-      }
-      const data = await res.json();
-      setLink(data.inviteUrl || null);
-      await load();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
+    setShowModal(true);
   };
 
-  const addContractor = async () => {
+  const save = async () => {
+    if (kind === 'worker') {
+      if (!editingId && !form.email.trim()) {
+        setError('Email is required');
+        return;
+      }
+      setBusy(true);
+      setError(null);
+      setLink(null);
+      try {
+        const res = await fetch(
+          editingId
+            ? `${API_BASE_URL}/professional/workers/${editingId}`
+            : `${API_BASE_URL}/professional/worker-invites`,
+          {
+            method: editingId ? 'PUT' : 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: form.email,
+              name: form.name || undefined,
+              phone: form.phone || undefined,
+              trades: form.trades,
+              notes: form.notes || undefined,
+            }),
+          },
+        );
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error(e.message || (editingId ? 'Update failed' : 'Invite failed'));
+        }
+        if (!editingId) {
+          const data = await res.json();
+          setLink(data.inviteUrl || null);
+        }
+        await load();
+        if (editingId) setShowModal(false);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     if (!form.name.trim()) {
       setError('Name is required');
       return;
@@ -156,24 +175,27 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
     setError(null);
     setLink(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/professional/contacts`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          trades: form.trades,
-          phone: form.phone || undefined,
-          email: form.email || undefined,
-          notes: form.notes || undefined,
-        }),
-      });
+      const res = await fetch(
+        editingId ? `${API_BASE_URL}/professional/contacts/${editingId}` : `${API_BASE_URL}/professional/contacts`,
+        {
+          method: editingId ? 'PUT' : 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            trades: form.trades,
+            phone: form.phone || undefined,
+            email: form.email || undefined,
+            notes: form.notes || undefined,
+          }),
+        },
+      );
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
-        throw new Error(e.message || 'Failed to add contact');
+        throw new Error(e.message || 'Failed to save contact');
       }
-      const created = await res.json();
-      if (form.invite) {
-        const invRes = await fetch(`${API_BASE_URL}/professional/contacts/${created.id}/invite`, {
+      const savedId = editingId || (await res.json()).id;
+      if (form.invite && savedId) {
+        const invRes = await fetch(`${API_BASE_URL}/professional/contacts/${savedId}/invite`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -183,17 +205,12 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
         }
       }
       await load();
-      if (!form.invite) setShowModal(false);
+      if (editingId || !form.invite) setShowModal(false);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
-  };
-
-  const save = async () => {
-    if (kind === 'worker') await addWorker();
-    else await addContractor();
   };
 
   const revokeInvite = async (id: string) => {
@@ -237,6 +254,38 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
     }
   };
 
+  const people: {
+    key: string;
+    kind: 'worker' | 'contractor';
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    trades: string[];
+    notes: string | null;
+  }[] = [
+    ...workers.map((w) => ({
+      key: `w-${w.id}`,
+      kind: 'worker' as const,
+      id: w.id,
+      name: w.fullName || w.businessName || w.email,
+      email: w.email,
+      phone: w.phone,
+      trades: w.tradesOffered || [],
+      notes: w.notes,
+    })),
+    ...contacts.map((c) => ({
+      key: `c-${c.id}`,
+      kind: 'contractor' as const,
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      trades: c.trades || [],
+      notes: c.notes,
+    })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="mt-4 space-y-4">
       {error && (
@@ -256,34 +305,43 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
         </button>
       </div>
 
-      {/* Workers */}
-      {workers.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workers</p>
-          <ul className="mt-1.5 space-y-1.5">
-            {workers.map((w) => (
-              <li key={w.id} className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.82)] px-3 py-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-slate-800">{w.fullName || w.businessName || w.email}</span>
-                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">worker</span>
+      {/* People (workers + contractors) */}
+      {people.length > 0 && (
+        <ul className="space-y-1.5">
+          {people.map((p) => {
+            const visibleTrades = p.trades.slice(0, 3);
+            const extraTrades = p.trades.length - visibleTrades.length;
+            return (
+              <li key={p.key} className="flex items-center gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.82)] px-3 py-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => openEdit(p.kind, p)}
+                  className="shrink-0 text-left font-medium text-slate-800 underline-offset-2 hover:underline"
+                >
+                  {p.name}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs text-slate-500">
+                    {[p.email, p.phone && `📞 ${p.phone}`].filter(Boolean).join(' · ') || '—'}
+                  </p>
+                  {visibleTrades.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {visibleTrades.map((t) => (
+                        <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
+                      ))}
+                      {extraTrades > 0 && (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">+{extraTrades}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {(w.tradesOffered?.length > 0 || w.phone || w.notes) && (
-                  <div className="mt-1 space-y-0.5 text-xs text-slate-500">
-                    {w.tradesOffered?.length > 0 && (
-                      <p className="flex flex-wrap gap-1">
-                        {w.tradesOffered.map((t) => (
-                          <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
-                        ))}
-                      </p>
-                    )}
-                    {w.phone && <p>📞 {w.phone}</p>}
-                    {w.notes && <p className="italic">{w.notes}</p>}
-                  </div>
-                )}
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${p.kind === 'worker' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#FF7F50]/10 text-[#b94e2d]'}`}>
+                  {p.kind === 'worker' ? 'worker' : 'contractor'}
+                </span>
               </li>
-            ))}
-          </ul>
-        </div>
+            );
+          })}
+        </ul>
       )}
 
       {/* Pending worker invites */}
@@ -327,54 +385,12 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
         </div>
       )}
 
-      {/* Contractors */}
-      {contacts.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contractors</p>
-          <ul className="mt-1.5 space-y-1.5">
-            {contacts.map((c) => (
-              <li key={c.id} className="flex items-start justify-between gap-3 rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.82)] px-3 py-2 text-sm">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-slate-800">{c.name}</span>
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${statusTone[c.inviteStatus] || 'bg-slate-100 text-slate-500'}`}>
-                      {c.inviteStatus}
-                    </span>
-                  </div>
-                  {(c.trades.length > 0 || c.phone || c.email || c.notes) && (
-                    <div className="mt-1 text-xs text-slate-500">
-                      {c.trades.length > 0 && (
-                        <p className="flex flex-wrap gap-1">
-                          {c.trades.map((t) => (
-                            <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
-                          ))}
-                        </p>
-                      )}
-                      {(c.phone || c.email) && <p className="mt-0.5">{[c.phone && `📞 ${c.phone}`, c.email].filter(Boolean).join(' · ')}</p>}
-                      {c.notes && <p className="mt-0.5 italic">{c.notes}</p>}
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => removeContact(c.id)}
-                  className="shrink-0 rounded border border-red-200 px-2 py-0.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {/* Add person modal */}
       {showModal && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Add person</h2>
+              <h2 className="text-lg font-bold text-slate-900">{editingId ? 'Edit person' : 'Add person'}</h2>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
             </div>
 
@@ -385,15 +401,17 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
               <div className="flex gap-2">
                 <button
                   type="button"
+                  disabled={!!editingId}
                   onClick={() => setKind('worker')}
-                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === 'worker' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed ${kind === 'worker' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
                 >
                   👷 Worker
                 </button>
                 <button
                   type="button"
+                  disabled={!!editingId}
                   onClick={() => setKind('contractor')}
-                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === 'contractor' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed ${kind === 'contractor' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
                 >
                   🧰 Contractor
                 </button>
@@ -412,7 +430,8 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder={kind === 'worker' ? 'Email (required)' : 'Email (optional)'}
-                className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
+                disabled={!!editingId && kind === 'worker'}
+                className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d] disabled:bg-slate-100 disabled:text-slate-400"
               />
 
               <input
@@ -470,13 +489,23 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
               )}
 
               <div className="flex gap-2">
+                {editingId && editingKind === 'contractor' && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => { void removeContact(editingId); setShowModal(false); }}
+                    className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={busy}
                   onClick={save}
                   className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {busy ? '…' : kind === 'worker' ? 'Invite worker' : form.invite ? 'Add & invite' : 'Add contact'}
+                  {busy ? '…' : editingId ? 'Save' : kind === 'worker' ? 'Invite worker' : form.invite ? 'Add & invite' : 'Add contact'}
                 </button>
                 <button
                   type="button"

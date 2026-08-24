@@ -70,6 +70,32 @@ export class WorkerInvitesService {
     });
   }
 
+  async updateWorker(
+    professionalId: string,
+    workerId: string,
+    input: { name?: string; phone?: string; trades?: string[]; notes?: string },
+  ) {
+    const worker = await this.prisma.professional.findFirst({
+      where: { id: workerId, employerProfessionalId: professionalId, professionType: 'worker' },
+      select: { id: true, phone: true },
+    });
+    if (!worker) throw new NotFoundException('Worker not found');
+
+    const trades = Array.isArray(input.trades)
+      ? [...new Set(input.trades.map((t) => String(t).trim()).filter(Boolean))]
+      : undefined;
+
+    return this.prisma.professional.update({
+      where: { id: workerId },
+      data: {
+        fullName: input.name?.trim() || null,
+        phone: input.phone?.trim() || worker.phone,
+        ...(trades !== undefined ? { tradesOffered: trades } : {}),
+        notes: input.notes?.trim() || null,
+      },
+    });
+  }
+
   async revokeInvite(professionalId: string, id: string) {
     const invite = await this.prisma.workerInvite.findUnique({ where: { id } });
     if (!invite || invite.employerProfessionalId !== professionalId) {

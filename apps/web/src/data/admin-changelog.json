@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-24-df63c729",
+    "date": "2026-08-24T22:44:36+08:00",
+    "title": "feat(pro): single People list with click-to-edit",
+    "summary": "feat(pro): single People list with click-to-edit",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "df63c729",
+    "files": [
+      "apps/api/src/worker-invites/worker-invites.controller.ts",
+      "apps/api/src/worker-invites/worker-invites.service.ts",
+      "apps/web/src/components/people-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-a1efeb67",
     "date": "2026-08-24T22:29:38+08:00",
     "title": "feat(pro): symmetric People form with green actions and portal modal",

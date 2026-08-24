@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 import { WorkerInvitesService } from './worker-invites.service';
 
@@ -36,6 +36,17 @@ export class WorkerInvitesController {
   async workers(@Request() req: any) {
     const proId = this.professionalId(req);
     return this.workerInvitesService.listWorkers(proId);
+  }
+
+  @Put('professional/workers/:id')
+  @UseGuards(CombinedAuthGuard)
+  async updateWorker(
+    @Param('id') id: string,
+    @Body() body: { name?: string; phone?: string; trades?: string[]; notes?: string },
+    @Request() req: any,
+  ) {
+    const proId = this.professionalId(req);
+    return this.workerInvitesService.updateWorker(proId, id, body);
   }
 
   @Post('professional/worker-invites/:id/revoke')
