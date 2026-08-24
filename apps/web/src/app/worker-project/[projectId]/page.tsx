@@ -36,7 +36,7 @@ type WorkerProject = {
     locationSecondary?: string | null;
     locationTertiary?: string | null;
   } | null;
-  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean };
+  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic' };
 };
 
 type Action = 'check_in' | 'start' | 'update' | 'complete';
@@ -61,6 +61,11 @@ export default function WorkerProjectPage() {
   const [busyAction, setBusyAction] = useState<Action | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [inspectionOpen, setInspectionOpen] = useState(false);
+
+  const [chatMessages, setChatMessages] = useState<{ id: string; senderType: string; content: string; createdAt: string }[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [sendingChat, setSendingChat] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!projectId || !accessToken) return;
@@ -116,6 +121,51 @@ export default function WorkerProjectPage() {
       setError(e.message || 'Action failed');
     } finally {
       setBusyAction(null);
+    }
+  };
+
+  const isOngoing = data?.access?.accessType === 'ongoing';
+
+  const loadChat = useCallback(async () => {
+    if (!projectId || !accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/chat`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to load chat');
+      const body = await res.json().catch(() => ({}));
+      setChatMessages(Array.isArray(body?.messages) ? body.messages : []);
+    } catch (e: any) {
+      setChatError(e.message || 'Failed to load chat');
+    }
+  }, [projectId, accessToken]);
+
+  useEffect(() => {
+    if (isOngoing) loadChat();
+  }, [isOngoing, loadChat]);
+
+  const sendChat = async () => {
+    const content = chatInput.trim();
+    if (!content || sendingChat) return;
+    setSendingChat(true);
+    setChatError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/chat/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b.message || 'Failed to send');
+      }
+      setChatInput('');
+      const b = await res.json().catch(() => ({}));
+      if (b?.message) setChatMessages((prev) => [...prev, b.message]);
+    } catch (e: any) {
+      setChatError(e.message || 'Failed to send');
+    } finally {
+      setSendingChat(false);
     }
   };
 
@@ -218,6 +268,48 @@ export default function WorkerProjectPage() {
             </div>
           )}
         </div>
+
+        {isOngoing && (
+          <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Project chat</h2>
+            <p className="mt-1 text-xs text-slate-500">Message the client directly about this project.</p>
+
+            {chatError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{chatError}</div>}
+
+            <div className="mt-4 max-h-72 space-y-2 overflow-y-auto rounded-lg border border-[#D4C8A0] bg-[#FDFBF3] p-3">
+              {chatMessages.length === 0 && <p className="text-sm text-slate-400">No messages yet.</p>}
+              {chatMessages.map((m) => (
+                <div key={m.id} className={`flex ${m.senderType === 'professional' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.senderType === 'professional' ? 'bg-emerald-600 text-[#F5EEDE]' : 'bg-white text-slate-800 border border-[#D4C8A0]'}`}>
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                    <p className={`mt-1 text-[10px] ${m.senderType === 'professional' ? 'text-[#F5EEDE]/70' : 'text-slate-400'}`}>
+                      {new Date(m.createdAt).toLocaleString('en-HK')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendChat(); }}
+                placeholder="Type a message…"
+                className="flex-1 rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
+              />
+              <button
+                type="button"
+                onClick={sendChat}
+                disabled={sendingChat || !chatInput.trim()}
+                className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50 transition"
+              >
+                {sendingChat ? '…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">Site inspection</h2>

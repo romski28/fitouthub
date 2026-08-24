@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-24-ccecdc3a",
+    "date": "2026-08-24T08:52:26+08:00",
+    "title": "feat(worker): chat for ongoing grants; expose accessType",
+    "summary": "feat(worker): chat for ongoing grants; expose accessType",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ccecdc3a",
+    "files": [
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-23-2c77b632",
     "date": "2026-08-23T21:28:39+08:00",
     "title": "chore(site-inspection): single-line diagnostics for QR mismatch trace",

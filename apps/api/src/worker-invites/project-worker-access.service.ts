@@ -227,6 +227,7 @@ export class ProjectWorkerAccessService {
         id: grant.id,
         expiresAt: grant.expiresAt,
         isOngoing: grant.expiresAt === null,
+        accessType: grant.expiresAt === null ? 'ongoing' : 'magic',
       },
       isWorkerAccess: true,
     };
@@ -276,7 +277,7 @@ export class ProjectWorkerAccessService {
       .filter((g) => byId.has(g.projectId))
       .map((g) => ({
         ...byId.get(g.projectId),
-        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null },
+        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null, accessType: g.expiresAt === null ? 'ongoing' : 'magic' },
         isWorkerAccess: true,
       }));
   }
