@@ -18,10 +18,14 @@ export class WorkerInvitesService {
 
   async createInvite(
     professionalId: string,
-    input: { email: string; phone?: string; trade?: string; notes?: string },
+    input: { email: string; name?: string; phone?: string; trades?: string[]; notes?: string },
   ) {
     const cleanEmail = (input.email || '').trim().toLowerCase();
     if (!cleanEmail) throw new BadRequestException('Email is required');
+
+    const trades = Array.isArray(input.trades)
+      ? [...new Set(input.trades.map((t) => String(t).trim()).filter(Boolean))]
+      : [];
 
     const invite = await this.prisma.workerInvite.create({
       data: {
@@ -29,8 +33,9 @@ export class WorkerInvitesService {
         employerProfessionalId: professionalId,
         status: 'pending',
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+        name: input.name?.trim() || null,
         phone: input.phone?.trim() || null,
-        trade: input.trade?.trim() || null,
+        trades,
         notes: input.notes?.trim() || null,
       },
     });
@@ -110,11 +115,10 @@ export class WorkerInvitesService {
 
     // Apply invite-time metadata (mobile/trade/notes) to the worker row.
     const updateData: Record<string, unknown> = {};
+    if (invite.name && !worker.fullName) updateData.fullName = invite.name;
     if (invite.phone && !worker.phone) updateData.phone = invite.phone;
-    if (invite.trade) {
-      const trades = [...(worker.tradesOffered || [])];
-      if (!trades.includes(invite.trade)) trades.push(invite.trade);
-      updateData.tradesOffered = trades;
+    if (Array.isArray(invite.trades) && invite.trades.length > 0) {
+      updateData.tradesOffered = [...new Set([...(worker.tradesOffered || []), ...invite.trades])];
     }
     if (invite.notes) updateData.notes = invite.notes;
     if (Object.keys(updateData).length > 0) {

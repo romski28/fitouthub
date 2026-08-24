@@ -7,10 +7,16 @@
 -- ============================================================================
 
 ALTER TABLE "WorkerInvite"
+  ADD COLUMN IF NOT EXISTS "name" TEXT;
+
+ALTER TABLE "WorkerInvite"
   ADD COLUMN IF NOT EXISTS "phone" TEXT;
 
 ALTER TABLE "WorkerInvite"
-  ADD COLUMN IF NOT EXISTS "trade" TEXT;
+  ADD COLUMN IF NOT EXISTS "trades" TEXT[] NOT NULL DEFAULT '{}';
+
+ALTER TABLE "WorkerInvite"
+  DROP COLUMN IF EXISTS "trade";
 
 ALTER TABLE "WorkerInvite"
   ADD COLUMN IF NOT EXISTS "notes" TEXT;

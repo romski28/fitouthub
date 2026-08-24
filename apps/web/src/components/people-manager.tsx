@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL } from '@/config/api';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 
@@ -18,8 +19,9 @@ type InviteRow = {
   id: string;
   email: string;
   status: string;
+  name: string | null;
   phone: string | null;
-  trade: string | null;
+  trades: string[];
   notes: string | null;
   expiresAt: string;
 };
@@ -53,7 +55,6 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
     name: '',
     email: '',
     phone: '',
-    trade: '',
     trades: [] as string[],
     notes: '',
     invite: false,
@@ -106,7 +107,7 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
 
   const openModal = (k: 'worker' | 'contractor') => {
     setKind(k);
-    setForm({ name: '', email: '', phone: '', trade: '', trades: [], notes: '', invite: false });
+    setForm({ name: '', email: '', phone: '', trades: [], notes: '', invite: k === 'worker' });
     setError(null);
     setLink(null);
     setShowModal(true);
@@ -126,8 +127,9 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: form.email,
+          name: form.name || undefined,
           phone: form.phone || undefined,
-          trade: form.trade || undefined,
+          trades: form.trades,
           notes: form.notes || undefined,
         }),
       });
@@ -248,7 +250,7 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
         <button
           type="button"
           onClick={() => openModal('worker')}
-          className="rounded-lg bg-[#b94e2d] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#a84426]"
+          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700"
         >
           + Add person
         </button>
@@ -296,10 +298,19 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                     <span className="font-medium text-slate-800">{inv.email}</span>
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700">pending</span>
                   </div>
-                  {(inv.trade || inv.phone || inv.notes) && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      {[inv.trade, inv.phone && `📞 ${inv.phone}`, inv.notes].filter(Boolean).join(' · ')}
-                    </p>
+                  {(inv.trades?.length > 0 || inv.phone || inv.notes) && (
+                    <div className="mt-1 text-xs text-slate-500">
+                      {inv.trades?.length > 0 && (
+                        <p className="flex flex-wrap gap-1">
+                          {inv.trades.map((t) => (
+                            <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
+                          ))}
+                        </p>
+                      )}
+                      {(inv.phone || inv.notes) && (
+                        <p className="mt-0.5">{[inv.phone && `📞 ${inv.phone}`, inv.notes].filter(Boolean).join(' · ')}</p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <button
@@ -359,8 +370,8 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
       )}
 
       {/* Add person modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {showModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
               <h2 className="text-lg font-bold text-slate-900">Add person</h2>
@@ -375,36 +386,34 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                 <button
                   type="button"
                   onClick={() => setKind('worker')}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold ${kind === 'worker' ? 'border-[#b94e2d] bg-[#b94e2d] text-white' : 'border-[#D4C8A0] bg-white text-slate-600'}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === 'worker' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
                 >
                   👷 Worker
                 </button>
                 <button
                   type="button"
                   onClick={() => setKind('contractor')}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold ${kind === 'contractor' ? 'border-[#b94e2d] bg-[#b94e2d] text-white' : 'border-[#D4C8A0] bg-white text-slate-600'}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === 'contractor' ? 'bg-emerald-600 text-[#F5EEDE]' : 'border border-[#D4C8A0] bg-white text-slate-600'}`}
                 >
                   🧰 Contractor
                 </button>
               </div>
 
-              {kind === 'worker' ? (
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="Worker email (required)"
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
-                />
-              ) : (
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Name or company (required)"
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
-                />
-              )}
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder={kind === 'worker' ? 'Full name (optional)' : 'Name or company (required)'}
+                className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
+              />
+
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder={kind === 'worker' ? 'Email (required)' : 'Email (optional)'}
+                className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
+              />
 
               <input
                 type="text"
@@ -414,33 +423,20 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                 className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
               />
 
-              {kind === 'worker' ? (
+              <div>
+                <label className="block text-xs font-medium text-slate-600">Trades (Ctrl/Cmd-click for multiple)</label>
                 <select
-                  value={form.trade}
-                  onChange={(e) => setForm((f) => ({ ...f, trade: e.target.value }))}
-                  className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800"
+                  multiple
+                  value={form.trades}
+                  onChange={(e) => setForm((f) => ({ ...f, trades: Array.from(e.target.selectedOptions, (o) => o.value) }))}
+                  className="mt-1 w-full rounded-lg border border-[#D4C8A0] bg-white px-2 py-2 text-sm text-slate-800"
+                  size={4}
                 >
-                  <option value="">Trade (optional)</option>
                   {tradeOptions.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
-              ) : (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600">Trades (Ctrl/Cmd-click for multiple)</label>
-                  <select
-                    multiple
-                    value={form.trades}
-                    onChange={(e) => setForm((f) => ({ ...f, trades: Array.from(e.target.selectedOptions, (o) => o.value) }))}
-                    className="mt-1 w-full rounded-lg border border-[#D4C8A0] bg-white px-2 py-2 text-sm text-slate-800"
-                    size={4}
-                  >
-                    {tradeOptions.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              </div>
 
               <input
                 type="text"
@@ -450,17 +446,16 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                 className="w-full rounded-lg border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
               />
 
-              {kind === 'contractor' && (
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={form.invite}
-                    onChange={(e) => setForm((f) => ({ ...f, invite: e.target.checked }))}
-                    className="h-4 w-4 text-[#b94e2d]"
-                  />
-                  Invite to Mimo
-                </label>
-              )}
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={kind === 'worker' ? true : form.invite}
+                  disabled={kind === 'worker'}
+                  onChange={(e) => setForm((f) => ({ ...f, invite: e.target.checked }))}
+                  className="h-4 w-4 text-emerald-600"
+                />
+                Invite to Mimo
+              </label>
 
               {link && (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs">
@@ -479,7 +474,7 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                   type="button"
                   disabled={busy}
                   onClick={save}
-                  className="flex-1 rounded-lg bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a84426] disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {busy ? '…' : kind === 'worker' ? 'Invite worker' : form.invite ? 'Add & invite' : 'Add contact'}
                 </button>
@@ -493,7 +488,8 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

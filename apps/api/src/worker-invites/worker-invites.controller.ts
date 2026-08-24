@@ -17,7 +17,7 @@ export class WorkerInvitesController {
   @Post('professional/worker-invites')
   @UseGuards(CombinedAuthGuard)
   async create(
-    @Body() body: { email: string; phone?: string; trade?: string; notes?: string },
+    @Body() body: { email: string; name?: string; phone?: string; trades?: string[]; notes?: string },
     @Request() req: any,
   ) {
     const proId = this.professionalId(req);

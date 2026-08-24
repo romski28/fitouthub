@@ -2521,8 +2521,9 @@ model WorkerInvite {
   expiresAt              DateTime
   acceptedAt             DateTime?
   workerId               String?
+  name                   String?
   phone                  String?
-  trade                  String?
+  trades                 String[]  @default([])
   notes                  String?
   createdAt              DateTime     @default(now())
 
