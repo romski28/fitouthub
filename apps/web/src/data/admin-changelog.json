@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-24-4d676eb6",
+    "date": "2026-08-24T23:54:54+08:00",
+    "title": "style(pro): uniform People list text and pill trade chips",
+    "summary": "style(pro): uniform People list text and pill trade chips",
+    "areas": [
+      "web"
+    ],
+    "commit": "4d676eb6",
+    "files": [
+      "apps/web/src/components/people-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-df63c729",
     "date": "2026-08-24T22:44:36+08:00",
     "title": "feat(pro): single People list with click-to-edit",

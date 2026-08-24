@@ -321,21 +321,21 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                   {p.name}
                 </button>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-sm text-slate-500">
                     {[p.email, p.phone && `📞 ${p.phone}`].filter(Boolean).join(' · ') || '—'}
                   </p>
                   {visibleTrades.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {visibleTrades.map((t) => (
-                        <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
+                        <span key={t} className="rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-[#F5EEDE]">{t}</span>
                       ))}
                       {extraTrades > 0 && (
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">+{extraTrades}</span>
+                        <span className="rounded-full bg-emerald-600/80 px-2 py-0.5 text-xs font-semibold text-[#F5EEDE]">+{extraTrades}</span>
                       )}
                     </div>
                   )}
                 </div>
-                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${p.kind === 'worker' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#FF7F50]/10 text-[#b94e2d]'}`}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${p.kind === 'worker' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#FF7F50]/10 text-[#b94e2d]'}`}>
                   {p.kind === 'worker' ? 'worker' : 'contractor'}
                 </span>
               </li>
@@ -361,7 +361,7 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                       {inv.trades?.length > 0 && (
                         <p className="flex flex-wrap gap-1">
                           {inv.trades.map((t) => (
-                            <span key={t} className="rounded bg-[rgba(185,78,45,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[#b94e2d]">{t}</span>
+                            <span key={t} className="rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-[#F5EEDE]">{t}</span>
                           ))}
                         </p>
                       )}
