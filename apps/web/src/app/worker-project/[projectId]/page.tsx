@@ -36,7 +36,7 @@ type WorkerProject = {
     locationSecondary?: string | null;
     locationTertiary?: string | null;
   } | null;
-  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic' };
+  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null; consumedAt?: string | null };
 };
 
 type Action = 'check_in' | 'start' | 'update' | 'complete';
@@ -125,6 +125,15 @@ export default function WorkerProjectPage() {
   };
 
   const isOngoing = data?.access?.accessType === 'ongoing';
+  const isSiteInspectionTask =
+    data?.access?.accessType === 'magic' && data?.access?.task === 'site_inspection';
+
+  // Task-scoped magic link: land straight on the site-inspection check-in.
+  useEffect(() => {
+    if (isSiteInspectionTask && !loading) {
+      setInspectionOpen(true);
+    }
+  }, [isSiteInspectionTask, loading]);
 
   const loadChat = useCallback(async () => {
     if (!projectId || !accessToken) return;
@@ -325,6 +334,7 @@ export default function WorkerProjectPage() {
           </button>
         </div>
 
+        {!isSiteInspectionTask && (
         <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">On-site actions</h2>
           <p className="mt-1 text-xs text-slate-500">
@@ -357,6 +367,7 @@ export default function WorkerProjectPage() {
             ))}
           </div>
         </div>
+        )}
       </main>
 
       <InspectSiteModal

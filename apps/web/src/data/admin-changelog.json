@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-24-70abc6bd",
+    "date": "2026-08-24T11:26:52+08:00",
+    "title": "feat(worker): task-scope site-inspection magic links + burn on completion",
+    "summary": "feat(worker): task-scope site-inspection magic links + burn on completion",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "70abc6bd",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx",
+      "apps/web/src/components/project-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-37665cb7",
     "date": "2026-08-24T10:36:54+08:00",
     "title": "feat(worker): task-scoped magic links schema + plumbing",

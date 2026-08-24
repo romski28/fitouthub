@@ -95,7 +95,7 @@ export function ProjectAccessModal({
       const res = await fetch(`${API_BASE_URL}/projects/${projectId}/worker-access`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, task: 'site_inspection' }),
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));

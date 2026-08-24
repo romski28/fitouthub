@@ -7412,6 +7412,11 @@ Please review the project details and respond with your quote or decline the inv
       },
     });
 
+    // First visit burns any task-scoped magic link bound to site inspection.
+    if (!wasVisited) {
+      await this.burnWorkerTask(request.projectId, 'site_inspection');
+    }
+
     // Only announce the first visit — editing notes afterwards shouldn't re-announce.
     if (!wasVisited) {
       const professional = await this.prisma.professional.findUnique({
@@ -7862,6 +7867,16 @@ Please review the project details and respond with your quote or decline the inv
       grant.grantedByProfessionalId ||
       professionalId
     );
+  }
+
+  /** Burn task-scoped magic links once the task is complete. */
+  private async burnWorkerTask(projectId: string, task: string) {
+    await this.prisma.projectWorkerAccess
+      .updateMany({
+        where: { projectId, task, consumedAt: null },
+        data: { consumedAt: new Date() },
+      })
+      .catch(() => undefined);
   }
 
   /**
@@ -11202,6 +11217,9 @@ Please review the project details and respond with your quote or decline the inv
         data: { siteVisitedAt: new Date(), visitApprovedButNotDone: false },
       });
     }
+
+    // Burn task-scoped magic links bound to the site-inspection check-in.
+    await this.burnWorkerTask(projectId, 'site_inspection');
 
     // Invalidate pro's next-step cache so they see 'Submit quote' immediately
     await this.prisma.project.update({
