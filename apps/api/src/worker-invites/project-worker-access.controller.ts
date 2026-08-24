@@ -18,7 +18,7 @@ export class ProjectWorkerAccessController {
   @UseGuards(CombinedAuthGuard)
   async grant(
     @Param('projectId') projectId: string,
-    @Body() body: { workerId?: string; email?: string },
+    @Body() body: { workerId?: string; email?: string; task?: string },
     @Request() req: any,
   ) {
     const proId = this.professionalId(req);

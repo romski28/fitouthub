@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-24-37665cb7",
+    "date": "2026-08-24T10:36:54+08:00",
+    "title": "feat(worker): task-scoped magic links schema + plumbing",
+    "summary": "feat(worker): task-scoped magic links schema + plumbing",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "37665cb7",
+    "files": [
+      "MANUAL_SQL_ADD_WORKER_ACCESS_TASK.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/worker-invites/project-worker-access.controller.ts",
+      "apps/api/src/worker-invites/project-worker-access.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-24-419b8477",
     "date": "2026-08-24T09:19:14+08:00",
     "title": "fix(worker): allow ongoing workers to read project chat",

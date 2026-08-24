@@ -30,7 +30,7 @@ export class ProjectWorkerAccessService {
   async grant(
     projectId: string,
     professionalId: string,
-    input: { workerId?: string; email?: string },
+    input: { workerId?: string; email?: string; task?: string },
   ) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -50,6 +50,7 @@ export class ProjectWorkerAccessService {
           workerId: worker.id,
           email: worker.email ?? null,
           grantedByProfessionalId: professionalId,
+          task: input.task ?? null,
           expiresAt: null, // ongoing until revoked
         },
       });
@@ -66,6 +67,7 @@ export class ProjectWorkerAccessService {
           workerId: null,
           email,
           grantedByProfessionalId: professionalId,
+          task: input.task ?? null,
           expiresAt,
         },
       });
@@ -121,11 +123,21 @@ export class ProjectWorkerAccessService {
       ? await this.prisma.professional.findUnique({ where: { email: emailToken.email } })
       : null;
 
+    // Resolve the corresponding grant to read its task and consumption state.
+    const grant = await this.prisma.projectWorkerAccess.findFirst({
+      where: { projectId: emailToken.projectId, email: emailToken.email },
+      orderBy: { createdAt: 'desc' },
+    });
+
     if (worker && worker.professionType === 'worker') {
       await this.prisma.projectWorkerAccess.updateMany({
         where: { projectId: emailToken.projectId, email: emailToken.email, workerId: null },
         data: { workerId: worker.id },
       });
+    }
+
+    if (grant?.consumedAt) {
+      throw new BadRequestException('This link has already been used');
     }
 
     return {
@@ -135,6 +147,8 @@ export class ProjectWorkerAccessService {
       professionalId: emailToken.professionalId,
       isRegisteredWorker: worker?.professionType === 'worker',
       expiresAt: emailToken.expiresAt,
+      task: grant?.task ?? null,
+      consumedAt: grant?.consumedAt ?? null,
     };
   }
 
@@ -228,6 +242,8 @@ export class ProjectWorkerAccessService {
         expiresAt: grant.expiresAt,
         isOngoing: grant.expiresAt === null,
         accessType: grant.expiresAt === null ? 'ongoing' : 'magic',
+        task: grant.task ?? null,
+        consumedAt: grant.consumedAt ?? null,
       },
       isWorkerAccess: true,
     };
@@ -277,7 +293,7 @@ export class ProjectWorkerAccessService {
       .filter((g) => byId.has(g.projectId))
       .map((g) => ({
         ...byId.get(g.projectId),
-        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null, accessType: g.expiresAt === null ? 'ongoing' : 'magic' },
+        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null, accessType: g.expiresAt === null ? 'ongoing' : 'magic', task: g.task ?? null, consumedAt: g.consumedAt ?? null },
         isWorkerAccess: true,
       }));
   }

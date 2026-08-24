@@ -2510,11 +2510,14 @@ model ProjectWorkerAccess {
   workerId                String?
   email                   String?
   grantedByProfessionalId String
+  task                    String?
   expiresAt               DateTime?
+  consumedAt              DateTime?
   revokedAt               DateTime?
   createdAt               DateTime  @default(now())
 
   @@index([projectId])
   @@index([workerId])
   @@index([email])
+  @@index([task])
 }
