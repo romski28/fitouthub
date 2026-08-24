@@ -283,7 +283,7 @@ export default function WorkerProjectPage() {
             </span>
           )}
 
-          {project?.property && (
+          {data?.siteInspection?.phase !== 'booking' && project?.property && (
             <div className="mt-4 rounded-xl border border-[#D4C8A0] bg-[#FDFBF3] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#b94e2d]">Site address</p>
               <p className="mt-1 text-sm font-medium text-slate-800">

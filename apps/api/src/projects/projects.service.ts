@@ -8002,9 +8002,9 @@ Please review the project details and respond with your quote or decline the inv
     // pointer, falling back to the client persona's primary linked property.
     const canonicalAddress = await this.getCanonicalProjectAddress(projectId);
 
-    // Workers are on-site staff granted by the professional — always show them
-    // whatever address exists; pros only see it once access is approved.
-    const showAddress = hasAccess || isWorker;
+    // Workers are on-site staff granted by the professional, but the address is
+    // only revealed once the client has confirmed the inspection (hasAccess).
+    const showAddress = hasAccess;
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },

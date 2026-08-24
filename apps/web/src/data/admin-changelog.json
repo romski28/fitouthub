@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-24-7cf55c23",
+    "date": "2026-08-24T13:32:42+08:00",
+    "title": "fix(worker): separate site-inspection booking from check-in",
+    "summary": "fix(worker): separate site-inspection booking from check-in",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7cf55c23",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-cc866004",
     "date": "2026-08-24T13:09:48+08:00",
     "title": "feat(worker): site-inspection as a two-phase task-scoped pass",
