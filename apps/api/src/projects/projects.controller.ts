@@ -1501,6 +1501,17 @@ export class ProjectsController {
       !!req?.user?.isProfessional ||
       String(req?.user?.role || '').toLowerCase() === 'professional';
 
+    // Workers read the project chat without the awarded-pro read-marker gate
+    // (they are granted on-site staff, not the awarded professional).
+    if (isProfessional) {
+      const pro = await (this.prisma as any).professional
+        .findUnique({ where: { id: actorId }, select: { professionType: true } })
+        .catch(() => null);
+      if (pro?.professionType === 'worker') {
+        return thread;
+      }
+    }
+
     const marker = await this.updatesService.getMessageGroupReadMarker(
       actorId,
       isProfessional ? 'professional' : 'client',

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-24-419b8477",
+    "date": "2026-08-24T09:19:14+08:00",
+    "title": "fix(worker): allow ongoing workers to read project chat",
+    "summary": "fix(worker): allow ongoing workers to read project chat",
+    "areas": [
+      "api"
+    ],
+    "commit": "419b8477",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-08-24-ccecdc3a",
     "date": "2026-08-24T08:52:26+08:00",
     "title": "feat(worker): chat for ongoing grants; expose accessType",
