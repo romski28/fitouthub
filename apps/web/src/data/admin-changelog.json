@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-08-24-cc866004",
+    "date": "2026-08-24T13:09:48+08:00",
+    "title": "feat(worker): site-inspection as a two-phase task-scoped pass",
+    "summary": "feat(worker): site-inspection as a two-phase task-scoped pass",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "cc866004",
+    "files": [
+      "MANUAL_SQL_ADD_SITE_ACCESS_REQUEST_WORKER.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/worker-invites/project-worker-access.controller.ts",
+      "apps/api/src/worker-invites/project-worker-access.service.ts",
+      "apps/web/src/app/worker-project/[projectId]/page.tsx",
+      "apps/web/src/app/worker-projects/page.tsx",
+      "apps/web/src/components/next-steps/inspect-site-modal.tsx",
+      "apps/web/src/components/project-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-47f26db7",
     "date": "2026-08-24T13:00:03+08:00",
     "title": "fix(chat): route site-inspection messages to private client-pro thread",

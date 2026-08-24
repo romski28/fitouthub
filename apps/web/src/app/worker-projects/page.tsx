@@ -14,7 +14,7 @@ type WorkerProjectRow = {
   notes?: string | null;
   endDate?: string | null;
   status?: string;
-  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null };
+  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null; claimed?: boolean };
 };
 
 const TASK_LABELS: Record<string, string> = {
@@ -98,7 +98,9 @@ export default function WorkerProjectsPage() {
           <ul className="space-y-3">
             {projects.map((p) => {
               const taskLabel = p.access?.task ? TASK_LABELS[p.access.task] : null;
-              const remaining = !p.access?.isOngoing ? remainingLabel(p.access?.expiresAt) : null;
+              const isOngoing = p.access?.accessType === 'ongoing';
+              const claimedMagic = p.access?.accessType === 'magic' && p.access?.claimed === true;
+              const remaining = !isOngoing && !claimedMagic ? remainingLabel(p.access?.expiresAt) : null;
               return (
                 <li key={p.id}>
                   <Link
@@ -113,8 +115,8 @@ export default function WorkerProjectsPage() {
                           {[p.clientName, p.region].filter(Boolean).join(' · ')}
                         </p>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${p.access?.isOngoing ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                        {p.access?.isOngoing ? 'ongoing' : remaining || 'expires soon'}
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${isOngoing || claimedMagic ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {isOngoing ? 'ongoing' : claimedMagic ? 'active' : remaining || 'expires soon'}
                       </span>
                     </div>
                     {p.notes && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{p.notes}</p>}

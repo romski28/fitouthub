@@ -27,6 +27,57 @@ export class ProjectWorkerAccessService {
     );
   }
 
+  /**
+   * The site-inspection task is a single task with two phases:
+   *  - booking: no approved visit yet (or the client rescheduled) → worker proposes a slot
+   *  - check_in: an approved_visit_scheduled request exists → worker scans QR/OTP
+   * It is "active" while the project is in the site-inspection arc and the visit
+   * has not been completed, skipped, or approved as no-visit.
+   */
+  async getSiteInspectionTaskState(
+    projectId: string,
+  ): Promise<{ active: boolean; phase: 'booking' | 'check_in' | null }> {
+    const project = await this.prisma.project
+      .findUnique({
+        where: { id: projectId },
+        select: { currentStage: true },
+      })
+      .catch(() => null);
+    if (!project) return { active: false, phase: null };
+
+    const latest = await this.prisma.siteAccessRequest.findFirst({
+      where: { projectId },
+      orderBy: { requestedAt: 'desc' },
+      select: { status: true, visitDetails: true },
+    });
+
+    const stage = String(project.currentStage || '').toUpperCase();
+    const arcStages = ['BIDDING_ACTIVE', 'SITE_VISIT_SCHEDULED', 'PRE_WORK'];
+    const rescheduleRequired = Boolean(
+      latest?.visitDetails && latest.visitDetails.includes('Site availability changed to'),
+    );
+    const status = latest?.status || 'none';
+
+    // A client date change re-opens booking regardless of the prior approval.
+    if (rescheduleRequired) {
+      return { active: true, phase: 'booking' };
+    }
+
+    // Visit already done, skipped, or approved as no-visit → arc closed.
+    if (status === 'visited' || status === 'skipped' || status === 'approved_no_visit') {
+      return { active: false, phase: null };
+    }
+
+    if (!arcStages.includes(stage)) {
+      return { active: false, phase: null };
+    }
+
+    return {
+      active: true,
+      phase: status === 'approved_visit_scheduled' ? 'check_in' : 'booking',
+    };
+  }
+
   async grant(
     projectId: string,
     professionalId: string,
@@ -37,6 +88,26 @@ export class ProjectWorkerAccessService {
       select: { id: true },
     });
     if (!project) throw new NotFoundException('Project not found');
+
+    // Only a professional linked to this project may grant worker access.
+    const linked = await this.prisma.projectProfessional.findUnique({
+      where: { projectId_professionalId: { projectId, professionalId } },
+      select: { id: true },
+    });
+    if (!linked) {
+      throw new ForbiddenException('Only the project professional can grant worker access');
+    }
+
+    // Task-scoped magic links are only available while that task is current.
+    if (input.task) {
+      const state = await this.getSiteInspectionTaskState(projectId);
+      const isAvailable = input.task === 'site_inspection' && state.active;
+      if (!isAvailable) {
+        throw new BadRequestException(
+          'Site inspection is not currently available for this project',
+        );
+      }
+    }
 
     if (input.workerId) {
       const worker = await this.prisma.professional.findUnique({
@@ -179,11 +250,22 @@ export class ProjectWorkerAccessService {
       where: {
         projectId,
         revokedAt: null,
+        consumedAt: null,
         OR: [
           { workerId: professionalId },
           ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),
         ],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+        // Active grant: ongoing (no expiry), unclaimed magic link within its
+        // claim window, or a claimed task-scoped pass (valid until burnt).
+        AND: [
+          {
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } },
+              { workerId: { not: null }, task: { not: null } },
+            ],
+          },
+        ],
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -234,17 +316,22 @@ export class ProjectWorkerAccessService {
         })
       : null;
 
+    const task = grant.task ?? null;
+    const siteInspection = await this.getSiteInspectionTaskState(projectId);
+
     return {
       project,
       employer,
       access: {
         id: grant.id,
         expiresAt: grant.expiresAt,
-        isOngoing: grant.expiresAt === null,
-        accessType: grant.expiresAt === null ? 'ongoing' : 'magic',
-        task: grant.task ?? null,
+        isOngoing: !task,
+        accessType: task ? 'magic' : 'ongoing',
+        task,
         consumedAt: grant.consumedAt ?? null,
+        claimed: task ? grant.workerId === professionalId : false,
       },
+      siteInspection,
       isWorkerAccess: true,
     };
   }
@@ -268,7 +355,15 @@ export class ProjectWorkerAccessService {
           { workerId: professionalId },
           ...(worker.email ? [{ email: worker.email.toLowerCase() }] : []),
         ],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+        AND: [
+          {
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } },
+              { workerId: { not: null }, task: { not: null } },
+            ],
+          },
+        ],
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -292,11 +387,22 @@ export class ProjectWorkerAccessService {
 
     return grants
       .filter((g) => byId.has(g.projectId))
-      .map((g) => ({
-        ...byId.get(g.projectId),
-        access: { id: g.id, expiresAt: g.expiresAt, isOngoing: g.expiresAt === null, accessType: g.expiresAt === null ? 'ongoing' : 'magic', task: g.task ?? null, consumedAt: g.consumedAt ?? null },
-        isWorkerAccess: true,
-      }));
+      .map((g) => {
+        const task = g.task ?? null;
+        return {
+          ...byId.get(g.projectId),
+          access: {
+            id: g.id,
+            expiresAt: g.expiresAt,
+            isOngoing: !task,
+            accessType: task ? 'magic' : 'ongoing',
+            task,
+            consumedAt: g.consumedAt ?? null,
+            claimed: task ? g.workerId === professionalId : false,
+          },
+          isWorkerAccess: true,
+        };
+      });
   }
 
   /**

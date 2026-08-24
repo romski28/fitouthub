@@ -6715,12 +6715,27 @@ Please review the project details and respond with your quote or decline the inv
       visitScheduledAt?: string;
     },
   ) {
+    // A granted worker books on behalf of the awarded professional; the request
+    // stays owned by the professional's ProjectProfessional row and records the
+    // worker as the requester.
+    const actorId = await this.resolveWorkerActor(projectId, professionalId);
+    const isWorkerCaller = actorId !== professionalId;
+
+    let workerName: string | null = null;
+    if (isWorkerCaller) {
+      const worker = await this.prisma.professional.findUnique({
+        where: { id: professionalId },
+        select: { businessName: true, fullName: true },
+      });
+      workerName = worker?.businessName || worker?.fullName || 'Worker';
+    }
+
     const projectProfessional =
       await this.prisma.projectProfessional.findUnique({
         where: {
           projectId_professionalId: {
             projectId,
-            professionalId,
+            professionalId: actorId,
           },
         },
         include: {
@@ -6819,10 +6834,11 @@ Please review the project details and respond with your quote or decline the inv
       data: {
         projectId,
         projectProfessionalId: projectProfessional.id,
-        professionalId,
+        professionalId: actorId,
         status: 'pending',
         visitScheduledFor: requestedVisitFor,
         visitScheduledAt: requestedVisitAt,
+        ...(isWorkerCaller ? { requestedByWorkerId: professionalId } : {}),
       },
     });
 
@@ -6844,14 +6860,15 @@ Please review the project details and respond with your quote or decline the inv
       projectProfessional.professional?.businessName ||
       projectProfessional.professional?.fullName ||
       'Professional';
+    const bookingActorName = isWorkerCaller ? `👷 ${workerName}` : professionalName;
     await this.addProjectProfessionalMessage(
       projectProfessional.id,
       'professional',
       null,
-      professionalId,
+      actorId,
       requestedVisitAt
-        ? `${professionalName} would like to visit site on ${this.formatHongKongDateTimeLabel(requestedVisitAt)}. Check your address details and accept request.`
-        : `${professionalName} requested site access on ${this.formatDateTime(new Date())}.`,
+        ? `${bookingActorName} would like to visit site on ${this.formatHongKongDateTimeLabel(requestedVisitAt)}. Check your address details and accept request.`
+        : `${bookingActorName} requested site access on ${this.formatDateTime(new Date())}.`,
     );
 
     return {
@@ -6935,6 +6952,9 @@ Please review the project details and respond with your quote or decline the inv
         respondedAt: new Date(),
       },
     });
+
+    // Visit skipped → close any task-scoped site-inspection pass.
+    await this.burnWorkerTask(projectId, 'site_inspection');
 
     // Auto-accept if still pending
     if (pp.status === 'pending') {
@@ -7315,6 +7335,11 @@ Please review the project details and respond with your quote or decline the inv
       null,
       siteAccessApprovalMessage,
     );
+
+    // No visit needed → close any task-scoped site-inspection pass.
+    if (approvedStatus === 'approved_no_visit') {
+      await this.burnWorkerTask(request.projectId, 'site_inspection');
+    }
 
     // Send notification to professional
     try {

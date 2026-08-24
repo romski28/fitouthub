@@ -37,17 +37,21 @@ export function ProjectAccessModal({
   const [error, setError] = useState<string | null>(null);
   const [magicUrl, setMagicUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [taskState, setTaskState] = useState<{ active: boolean; phase: 'booking' | 'check_in' | null } | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [wkRes, gRes] = await Promise.all([
+      const [wkRes, gRes, tsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/professional/workers`, { headers: { Authorization: `Bearer ${accessToken}` } }),
         fetch(`${API_BASE_URL}/projects/${projectId}/worker-access`, { headers: { Authorization: `Bearer ${accessToken}` } }),
+        fetch(`${API_BASE_URL}/projects/${projectId}/worker-access/task-state`, { headers: { Authorization: `Bearer ${accessToken}` } }),
       ]);
       const wk = wkRes.ok ? await wkRes.json() : [];
       const g = gRes.ok ? await gRes.json() : [];
+      const ts = tsRes.ok ? await tsRes.json().catch(() => null) : null;
       setWorkers(Array.isArray(wk) ? wk : []);
       setGrants(Array.isArray(g) ? g : []);
+      setTaskState(ts || null);
     } catch (e: any) {
       setError(e.message);
     }
@@ -188,8 +192,17 @@ export function ProjectAccessModal({
                 Grant access
               </button>
             </div>
+          ) : taskState?.active === false ? (
+            <p className="rounded-lg border border-[#D4C8A0] bg-[#FDFBF3] px-3 py-2 text-xs text-slate-500">
+              Site inspection is not currently available for this project. Use the registered-worker tab for ongoing access.
+            </p>
           ) : (
             <div className="space-y-2">
+              <p className="text-xs text-slate-500">
+                {taskState?.phase === 'booking'
+                  ? 'Send a 48h link so a worker can book a site inspection slot.'
+                  : 'Send a 48h link so a worker can check in on site.'}
+              </p>
               <input
                 type="email"
                 value={email}

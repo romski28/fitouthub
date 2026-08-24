@@ -36,10 +36,11 @@ interface InspectSiteModalProps {
   onClose: () => void;
   projectId?: string;
   workerMode?: boolean;
+  siteInspectionPhase?: 'booking' | 'check_in' | null;
 }
 
 // ── Component ────────────────────────────────────────────────────
-export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, workerMode = false }: InspectSiteModalProps) {
+export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, workerMode = false, siteInspectionPhase = null }: InspectSiteModalProps) {
   const { accessToken } = useProfessionalAuth();
   const { state } = useNextStepModal();
   const projectId = projectIdProp || state.projectId || "";
@@ -275,7 +276,9 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, wo
   const bookedTimes = new Set(status?.bookedInspectionTimes || []);
   const reqStatus = (status?.requestStatus || 'none').toLowerCase();
   const needsReschedule = status?.rescheduleRequired === true || status?.requiresReschedule === true;
-  const showBookingForm = !workerMode && (mode === 'reschedule-propose' || !status?.requestId || needsReschedule);
+  const showBookingForm =
+    siteInspectionPhase === 'booking' ||
+    (!workerMode && (mode === 'reschedule-propose' || !status?.requestId || needsReschedule));
   const canRequest = Boolean(offeredDate && selectedTime);
 
   const handleRequestSlot = async () => {
@@ -336,7 +339,7 @@ export function InspectSiteModal({ isOpen, onClose, projectId: projectIdProp, wo
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-[#D4C8A0] px-5 py-4">
           <h2 className="text-lg font-bold text-slate-900">
-            {mode === 'book'
+            {mode === 'book' || siteInspectionPhase === 'booking'
               ? 'Book a site inspection slot'
               : mode === 'reschedule-propose'
                 ? 'Request a new inspection time'

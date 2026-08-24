@@ -1646,6 +1646,7 @@ model SiteAccessRequest {
   status                  SiteAccessRequestStatus @default(pending)
   requestedAt             DateTime                @default(now())
   respondedAt             DateTime?
+  requestedByWorkerId     String?
   visitScheduledFor       DateTime?               @db.Date
   visitScheduledAt        DateTime?
   visitedAt               DateTime?
@@ -1667,6 +1668,7 @@ model SiteAccessRequest {
   @@index([professionalId])
   @@index([status])
   @@index([projectId, status])
+  @@index([requestedByWorkerId])
 }
 
 model SiteAccessVisit {

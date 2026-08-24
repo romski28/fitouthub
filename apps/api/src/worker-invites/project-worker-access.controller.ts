@@ -32,6 +32,13 @@ export class ProjectWorkerAccessController {
     return this.projectWorkerAccessService.list(projectId, proId);
   }
 
+  @Get('projects/:projectId/worker-access/task-state')
+  @UseGuards(CombinedAuthGuard)
+  async taskState(@Param('projectId') projectId: string, @Request() req: any) {
+    this.professionalId(req);
+    return this.projectWorkerAccessService.getSiteInspectionTaskState(projectId);
+  }
+
   @Post('projects/:projectId/worker-access/:grantId/revoke')
   @UseGuards(CombinedAuthGuard)
   async revoke(

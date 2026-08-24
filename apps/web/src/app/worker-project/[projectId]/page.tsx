@@ -38,7 +38,8 @@ type WorkerProject = {
     locationSecondary?: string | null;
     locationTertiary?: string | null;
   } | null;
-  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null; consumedAt?: string | null };
+  access?: { id: string; expiresAt?: string | null; isOngoing?: boolean; accessType?: 'ongoing' | 'magic'; task?: string | null; consumedAt?: string | null; claimed?: boolean };
+  siteInspection?: { active: boolean; phase?: 'booking' | 'check_in' | null };
 };
 
 type Action = 'start' | 'update' | 'complete';
@@ -377,17 +378,25 @@ export default function WorkerProjectPage() {
         )}
 
         <div className="rounded-2xl border border-[#D4C8A0] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">Site inspection</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            {data?.siteInspection?.phase === 'booking' ? 'Book a site inspection' : 'Site inspection'}
+          </h2>
           <p className="mt-1 text-xs text-slate-500">
-            Check in on site with the QR code or 6-digit code, record visit notes, and mark the visit complete.
+            {data?.siteInspection?.active === false
+              ? 'Site inspection is not currently needed for this project.'
+              : data?.siteInspection?.phase === 'booking'
+                ? 'Propose a visit time that works for you. The client will confirm your slot.'
+                : 'Check in on site with the QR code or 6-digit code, record visit notes, and mark the visit complete.'}
           </p>
-          <button
-            type="button"
-            onClick={() => setInspectionOpen(true)}
-            className="mt-3 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
-          >
-            Open site inspection
-          </button>
+          {data?.siteInspection?.active !== false && (
+            <button
+              type="button"
+              onClick={() => setInspectionOpen(true)}
+              className="mt-3 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
+            >
+              {data?.siteInspection?.phase === 'booking' ? 'Book a site inspection' : 'Open site inspection'}
+            </button>
+          )}
         </div>
 
         {!isSiteInspectionTask && (
@@ -445,6 +454,7 @@ export default function WorkerProjectPage() {
         onClose={() => setInspectionOpen(false)}
         projectId={projectId}
         workerMode
+        siteInspectionPhase={data?.siteInspection?.phase ?? null}
       />
     </div>
   );
