@@ -393,8 +393,30 @@ model Professional {
   acProjects                AcProject[]
   availability              ProfessionalAvailability[]
   workerInvites             WorkerInvite[]
+  professionalContacts      ProfessionalContact[]
   employer                  Professional? @relation("ProfessionalEmployer", fields: [employerProfessionalId], references: [id], onDelete: SetNull)
   employees                 Professional[] @relation("ProfessionalEmployer")
+}
+
+model ProfessionalContact {
+  id                   String    @id @default(cuid())
+  ownerProfessionalId  String
+  name                 String
+  trades               String[]  @default([])
+  phone                String?
+  email                String?
+  notes                String?
+  inviteStatus         String    @default("external") // external | invited | joined
+  inviteToken          String?   @unique
+  inviteSentAt         DateTime?
+  linkedProfessionalId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  owner Professional @relation(fields: [ownerProfessionalId], references: [id], onDelete: Cascade)
+
+  @@index([ownerProfessionalId])
+  @@index([email])
 }
 
 model Landlord {

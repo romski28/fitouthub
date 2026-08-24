@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-08-24-ca722e22",
+    "date": "2026-08-24T21:37:25+08:00",
+    "title": "feat(pro): private contractor address book",
+    "summary": "feat(pro): private contractor address book",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "ca722e22",
+    "files": [
+      "MANUAL_SQL_ADD_PROFESSIONAL_CONTACTS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/contacts/contacts.controller.ts",
+      "apps/api/src/contacts/contacts.module.ts",
+      "apps/api/src/contacts/contacts.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/professional-address-book.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-7cf55c23",
     "date": "2026-08-24T13:32:42+08:00",
     "title": "fix(worker): separate site-inspection booking from check-in",
