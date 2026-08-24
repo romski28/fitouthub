@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-24-47f26db7",
+    "date": "2026-08-24T13:00:03+08:00",
+    "title": "fix(chat): route site-inspection messages to private client-pro thread",
+    "summary": "fix(chat): route site-inspection messages to private client-pro thread",
+    "areas": [
+      "api"
+    ],
+    "commit": "47f26db7",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-24-67b72c21",
     "date": "2026-08-24T11:49:24+08:00",
     "title": "feat(worker): worker access entry point on project list cards",
