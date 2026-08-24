@@ -11,6 +11,7 @@ import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
 import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
+import { ProjectAccessModal } from '@/components/project-access-modal';
 import { useRoleGuard } from '@/hooks/use-role-guard';
 import { fetchWithRetry } from '@/lib/http';
 import {
@@ -163,6 +164,7 @@ export default function ProfessionalProjectsPage() {
   const [skipLoading, setSkipLoading] = useState(false);
   const [declineProject, setDeclineProject] = useState<ProjectProfessional | null>(null);
   const [declineReason, setDeclineReason] = useState('');
+  const [workerAccessProjectId, setWorkerAccessProjectId] = useState<string | null>(null);
   const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const projectIds = useMemo(
@@ -826,6 +828,20 @@ export default function ProfessionalProjectsPage() {
                               Decline project
                             </button>
                           )}
+                          {!isRestricted && !isStopStatus && !quoteOverdue && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setWorkerAccessProjectId(projectProf.project.id);
+                              }}
+                              className="rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-[#F5EEDE]"
+                              title="Grant a worker access to this project"
+                            >
+                              👷 Worker access
+                            </button>
+                          )}
                         </div>
                     </div>
                   </div>
@@ -942,6 +958,13 @@ export default function ProfessionalProjectsPage() {
             </div>
           </div>
         )}
+
+        <ProjectAccessModal
+          isOpen={workerAccessProjectId !== null}
+          onClose={() => setWorkerAccessProjectId(null)}
+          accessToken={accessToken || ''}
+          projectId={workerAccessProjectId || ''}
+        />
 
         </div>
       </div>

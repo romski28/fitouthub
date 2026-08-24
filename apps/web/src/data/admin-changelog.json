@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-24-67b72c21",
+    "date": "2026-08-24T11:49:24+08:00",
+    "title": "feat(worker): worker access entry point on project list cards",
+    "summary": "feat(worker): worker access entry point on project list cards",
+    "areas": [
+      "web"
+    ],
+    "commit": "67b72c21",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-41051914",
     "date": "2026-08-24T11:45:42+08:00",
     "title": "feat(worker): gate on-site actions by project stage",
