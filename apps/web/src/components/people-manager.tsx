@@ -335,7 +335,7 @@ export function PeopleManager({ accessToken }: { accessToken: string }) {
                     </div>
                   )}
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${p.kind === 'worker' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#FF7F50]/10 text-[#b94e2d]'}`}>
+                <span className="shrink-0 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase text-[#F5EEDE]">
                   {p.kind === 'worker' ? 'worker' : 'contractor'}
                 </span>
               </li>

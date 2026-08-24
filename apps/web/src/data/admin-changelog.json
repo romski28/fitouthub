@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-25-50569596",
+    "date": "2026-08-25T00:01:11+08:00",
+    "title": "style(pro): unify worker/contractor badges as green pills",
+    "summary": "style(pro): unify worker/contractor badges as green pills",
+    "areas": [
+      "web"
+    ],
+    "commit": "50569596",
+    "files": [
+      "apps/web/src/components/people-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-4d676eb6",
     "date": "2026-08-24T23:54:54+08:00",
     "title": "style(pro): uniform People list text and pill trade chips",
