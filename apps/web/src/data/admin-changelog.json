@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-08-24-f602d133",
+    "date": "2026-08-24T22:08:45+08:00",
+    "title": "feat(pro): unified People manager for workers and contractors",
+    "summary": "feat(pro): unified People manager for workers and contractors",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "f602d133",
+    "files": [
+      "MANUAL_SQL_ADD_PEOPLE_SYMMETRY.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/worker-invites/worker-invites.controller.ts",
+      "apps/api/src/worker-invites/worker-invites.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/components/people-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-08-24-ca722e22",
     "date": "2026-08-24T21:37:25+08:00",
     "title": "feat(pro): private contractor address book",

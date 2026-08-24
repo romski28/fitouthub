@@ -16,8 +16,11 @@ export class WorkerInvitesService {
     );
   }
 
-  async createInvite(professionalId: string, email: string) {
-    const cleanEmail = (email || '').trim().toLowerCase();
+  async createInvite(
+    professionalId: string,
+    input: { email: string; phone?: string; trade?: string; notes?: string },
+  ) {
+    const cleanEmail = (input.email || '').trim().toLowerCase();
     if (!cleanEmail) throw new BadRequestException('Email is required');
 
     const invite = await this.prisma.workerInvite.create({
@@ -26,6 +29,9 @@ export class WorkerInvitesService {
         employerProfessionalId: professionalId,
         status: 'pending',
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+        phone: input.phone?.trim() || null,
+        trade: input.trade?.trim() || null,
+        notes: input.notes?.trim() || null,
       },
     });
 
@@ -45,7 +51,16 @@ export class WorkerInvitesService {
   async listWorkers(professionalId: string) {
     return this.prisma.professional.findMany({
       where: { employerProfessionalId: professionalId, professionType: 'worker' },
-      select: { id: true, email: true, fullName: true, businessName: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        businessName: true,
+        phone: true,
+        tradesOffered: true,
+        notes: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -91,6 +106,19 @@ export class WorkerInvitesService {
     });
     if (!worker || worker.professionType !== 'worker') {
       throw new BadRequestException('Worker record not found');
+    }
+
+    // Apply invite-time metadata (mobile/trade/notes) to the worker row.
+    const updateData: Record<string, unknown> = {};
+    if (invite.phone && !worker.phone) updateData.phone = invite.phone;
+    if (invite.trade) {
+      const trades = [...(worker.tradesOffered || [])];
+      if (!trades.includes(invite.trade)) trades.push(invite.trade);
+      updateData.tradesOffered = trades;
+    }
+    if (invite.notes) updateData.notes = invite.notes;
+    if (Object.keys(updateData).length > 0) {
+      await this.prisma.professional.update({ where: { id: worker.id }, data: updateData });
     }
 
     return this.prisma.workerInvite.update({

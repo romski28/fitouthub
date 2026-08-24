@@ -16,9 +16,12 @@ export class WorkerInvitesController {
 
   @Post('professional/worker-invites')
   @UseGuards(CombinedAuthGuard)
-  async create(@Body() body: { email: string }, @Request() req: any) {
+  async create(
+    @Body() body: { email: string; phone?: string; trade?: string; notes?: string },
+    @Request() req: any,
+  ) {
     const proId = this.professionalId(req);
-    return this.workerInvitesService.createInvite(proId, body.email);
+    return this.workerInvitesService.createInvite(proId, body);
   }
 
   @Get('professional/worker-invites')

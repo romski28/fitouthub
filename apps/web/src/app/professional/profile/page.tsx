@@ -20,8 +20,7 @@ import {
 } from '@/lib/hk-districts';
 import { tradesmen as fallbackTradesmen } from '@/data/tradesmen';
 import { AddressManager } from '@/components/address-manager';
-import { WorkerTeamManager } from '@/components/worker-team-manager';
-import { ProfessionalAddressBook } from '@/components/professional-address-book';
+import { PeopleManager } from '@/components/people-manager';
 
 interface ReferenceProject {
   id: string;
@@ -610,22 +609,14 @@ export default function ProfessionalProfilePage() {
             )}
           </div>
 
-          {(normalizedProfessionType === 'company' || normalizedProfessionType === 'reseller' || normalizedProfessionType === 'contractor') && (
-            <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Team</p>
-              <h2 className="mt-1 text-lg font-bold text-slate-900">Workers</h2>
-              <WorkerTeamManager accessToken={accessToken || ''} />
-            </div>
-          )}
-
           {normalizedProfessionType !== 'worker' && (
             <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Network</p>
-              <h2 className="mt-1 text-lg font-bold text-slate-900">Private address book</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Team</p>
+              <h2 className="mt-1 text-lg font-bold text-slate-900">People</h2>
               <p className="mt-1 text-xs text-slate-600">
-                Contractors you may work with who are not yet on Mimo. Invite them when you're ready.
+                Workers on your team and external contractors you may work with.
               </p>
-              <ProfessionalAddressBook accessToken={accessToken || ''} />
+              <PeopleManager accessToken={accessToken || ''} />
             </div>
           )}
 

@@ -350,6 +350,7 @@ model Professional {
   fullName                  String?
   businessName              String?
   serviceArea               String?
+  notes                     String?
   createdAt                 DateTime                       @default(now())
   updatedAt                 DateTime                       @updatedAt
   email                     String                         @unique
@@ -2520,6 +2521,9 @@ model WorkerInvite {
   expiresAt              DateTime
   acceptedAt             DateTime?
   workerId               String?
+  phone                  String?
+  trade                  String?
+  notes                  String?
   createdAt              DateTime     @default(now())
 
   employerProfessional Professional @relation(fields: [employerProfessionalId], references: [id], onDelete: Cascade)
