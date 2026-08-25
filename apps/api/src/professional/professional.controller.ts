@@ -1331,6 +1331,7 @@ export class ProfessionalController {
               notes: true,
               tradesRequired: true,
               endDate: true,
+              currentStage: true,
             },
           },
         },

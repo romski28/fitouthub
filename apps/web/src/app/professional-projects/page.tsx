@@ -43,6 +43,7 @@ interface ProjectProfessional {
     notes?: string;
     isEmergency?: boolean;
     endDate?: string;
+    currentStage?: string;
   };
   status: string;
   source?: string;
@@ -80,6 +81,13 @@ const professionalCardBorderByStatus: Record<string, string> = {
   pending: 'border-amber-300/70',
   declined: 'border-rose-300/80',
   rejected: 'border-rose-300/80',
+};
+
+const TAB_LABELS: Record<string, string> = {
+  open: 'Open tenders',
+  invitations: 'Invitations',
+  projects: 'Your projects',
+  closed: 'Closed',
 };
 
 const getQuoteDeadlineState = (projectProfessional: ProjectProfessional): QuoteDeadlineState | null => {
@@ -178,8 +186,8 @@ export default function ProfessionalProjectsPage() {
   const [workerAccessProjectId, setWorkerAccessProjectId] = useState<string | null>(null);
   const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
-  const [activeTab, setActiveTab] = useState<'my-projects' | 'find-work'>('find-work');
-  const [findWorkView, setFindWorkView] = useState<'open' | 'invitations' | 'bids' | 'past'>('open');
+  const [activeTab, setActiveTab] = useState<'open' | 'invitations' | 'projects' | 'closed'>('open');
+  const [mobileTabOpen, setMobileTabOpen] = useState(false);
   const [discoverProjects, setDiscoverProjects] = useState<DiscoverProject[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [applyingIds, setApplyingIds] = useState<Set<string>>(new Set());
@@ -207,25 +215,27 @@ export default function ProfessionalProjectsPage() {
 
     return counts;
   }, [updatesSummary]);
-  const invitedProjects = projects.filter((p) => p.status === 'pending' && p.source !== 'discovered');
-  const bidProjects = projects.filter(
-    (p) =>
+  const invitations = projects.filter((p) => p.status === 'pending' && p.source !== 'discovered');
+  const isCompletedStage = (stage?: string) => stage === 'COMPLETE' || stage === 'warranty_period';
+  const yourProjects = projects.filter((p) => {
+    const isWon = p.status === 'awarded';
+    const isBidding =
       ['accepted', 'quoted', 'counter_requested'].includes(p.status) ||
-      (p.status === 'pending' && p.source === 'discovered'),
-  );
-  const awardedProjects = projects.filter((p) => p.status === 'awarded');
-  const pastProjects = projects.filter((p) =>
-    ['declined', 'rejected', 'withdrawn'].includes(p.status),
-  );
+      (p.status === 'pending' && p.source === 'discovered');
+    return isBidding || (isWon && !isCompletedStage(p.project.currentStage));
+  });
+  const closedProjects = projects.filter((p) => {
+    const isWon = p.status === 'awarded';
+    return (isWon && isCompletedStage(p.project.currentStage)) ||
+      ['declined', 'rejected', 'withdrawn'].includes(p.status);
+  });
 
   const currentProjectList: ProjectProfessional[] =
-    activeTab === 'my-projects'
-      ? awardedProjects
-      : findWorkView === 'invitations'
-        ? invitedProjects
-        : findWorkView === 'bids'
-          ? bidProjects
-          : pastProjects;
+    activeTab === 'invitations'
+      ? invitations
+      : activeTab === 'projects'
+        ? yourProjects
+        : closedProjects;
 
   const openProfessionalNextStepModal = useCallback(
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
@@ -590,7 +600,7 @@ export default function ProfessionalProjectsPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.message || 'Failed to apply');
       }
-      toast.success('Application sent! It now appears under "Your bids".');
+      toast.success('Application sent! It now appears under "Your projects".');
       setDiscoverProjects((prev) => prev.filter((p) => p.id !== project.id));
       // Refresh the project list so the new bid appears under "Your bids".
       try {
@@ -673,7 +683,7 @@ export default function ProfessionalProjectsPage() {
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight text-slate-900">
-                {activeTab === 'my-projects' ? 'My Projects' : 'Find Work'}
+                {TAB_LABELS[activeTab]}
               </h1>
               <div className="flex items-center gap-3">
                 {nextStepsLoading && (
@@ -753,36 +763,56 @@ export default function ProfessionalProjectsPage() {
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="inline-flex w-fit rounded-xl border border-[rgba(120,53,15,0.15)] bg-white/60 p-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('my-projects')}
-                  className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${activeTab === 'my-projects' ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-600 hover:text-slate-900'}`}
-                >
-                  My Projects
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('find-work')}
-                  className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${activeTab === 'find-work' ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-600 hover:text-slate-900'}`}
-                >
-                  Find Work
-                </button>
+            <div>
+              {/* Desktop tabs */}
+              <div className="hidden sm:inline-flex w-fit rounded-xl border border-[rgba(120,53,15,0.15)] bg-white/60 p-1">
+                {(['open', 'invitations', 'projects', 'closed'] as const).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveTab(key)}
+                    className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${activeTab === key ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    {TAB_LABELS[key]}
+                  </button>
+                ))}
               </div>
-              {activeTab === 'find-work' && (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <SubViewChip label="Open tenders" value={discoverProjects.length} active={findWorkView === 'open'} onClick={() => setFindWorkView('open')} />
-                  <SubViewChip label="Invitations" value={invitedProjects.length} active={findWorkView === 'invitations'} onClick={() => setFindWorkView('invitations')} />
-                  <SubViewChip label="Your bids" value={bidProjects.length} active={findWorkView === 'bids'} onClick={() => setFindWorkView('bids')} />
-                  <SubViewChip label="Past" value={pastProjects.length} active={findWorkView === 'past'} onClick={() => setFindWorkView('past')} />
-                </div>
-              )}
+              {/* Mobile tabs (popup) */}
+              <div className="relative sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => setMobileTabOpen((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-xl border border-[rgba(120,53,15,0.15)] bg-white/60 px-4 py-2 text-sm font-semibold text-slate-800"
+                >
+                  <span>{TAB_LABELS[activeTab]}</span>
+                  <span className="text-slate-500">▾</span>
+                </button>
+                {mobileTabOpen && (
+                  <>
+                    <button type="button" className="fixed inset-0 z-30 cursor-default" onClick={() => setMobileTabOpen(false)} aria-label="Close tabs" />
+                    <div className="absolute inset-x-0 z-40 mt-1 overflow-hidden rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
+                      {(['open', 'invitations', 'projects', 'closed'] as const).map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(key);
+                            setMobileTabOpen(false);
+                          }}
+                          className={`block w-full px-4 py-3 text-left text-sm font-semibold transition ${activeTab === key ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-700 hover:bg-white/60'}`}
+                        >
+                          {TAB_LABELS[key]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Cards */}
-          {activeTab === 'find-work' && findWorkView === 'open' ? (
+          {activeTab === 'open' ? (
             <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -849,13 +879,11 @@ export default function ProfessionalProjectsPage() {
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                      {activeTab === 'my-projects'
-                        ? 'Awarded'
-                        : findWorkView === 'invitations'
-                          ? 'Action required'
-                          : findWorkView === 'bids'
-                            ? 'In play'
-                            : 'Past'}
+                      {activeTab === 'invitations'
+                        ? 'Action required'
+                        : activeTab === 'projects'
+                          ? 'Active'
+                          : 'Closed'}
                     </p>
                     <h2 className="text-xl font-bold text-slate-900">
                   {currentProjectList.length} Projects in this view
@@ -881,7 +909,20 @@ export default function ProfessionalProjectsPage() {
                 const isStopStatus = ['declined', 'rejected'].includes((projectProf.status || '').toLowerCase());
                 const isRestricted = Boolean(projectProf.accessRestricted);
                 const isEmergencyProject = projectProf.project.isEmergency === true;
-                const baseBorder = professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
+                const isWon = projectProf.status === 'awarded';
+                const isBidding =
+                  ['accepted', 'quoted', 'counter_requested'].includes(projectProf.status) ||
+                  (projectProf.status === 'pending' && projectProf.source === 'discovered');
+                const isWonCompleted =
+                  isWon &&
+                  (projectProf.project.currentStage === 'COMPLETE' ||
+                    projectProf.project.currentStage === 'warranty_period');
+                const baseBorder =
+                  isWon && !isWonCompleted
+                    ? 'border-emerald-600'
+                    : isBidding
+                      ? 'border-[#FF7F50]'
+                      : professionalCardBorderByStatus[projectProf.status] || 'border-white/20';
                 const unreadCount = unreadByProjectId[String(projectProf.project.id)] || 0;
                 const primaryActionHref = primaryAction ? getProfessionalShowMeHref(projectProf.id, primaryAction.actionKey) : `/professional-projects/${projectProf.id}`;
                 return (
@@ -1151,19 +1192,17 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {(activeTab === 'find-work' && findWorkView === 'open'
+        {(activeTab === 'open'
           ? discoverProjects.length === 0 && !discoverLoading
           : currentProjectList.length === 0) && !loading ? (
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
-            {activeTab === 'my-projects'
-              ? 'No awarded projects yet. Winning a tender moves it here.'
-              : findWorkView === 'open'
-                ? 'No open tenders match your trades right now. Check back soon.'
-                : findWorkView === 'invitations'
-                  ? 'No invitations right now. New matches will appear here.'
-                  : findWorkView === 'bids'
-                    ? 'No bids yet. Find an open tender and request to quote.'
-                    : 'No past bids.'}
+            {activeTab === 'open'
+              ? 'No open tenders match your trades right now. Check back soon.'
+              : activeTab === 'invitations'
+                ? 'No invitations right now. New matches will appear here.'
+                : activeTab === 'projects'
+                  ? 'No active projects yet. Find an open tender and request to quote.'
+                  : 'No closed projects yet.'}
           </div>
         ) : null}
 
@@ -1271,33 +1310,6 @@ export default function ProfessionalProjectsPage() {
 
         </div>
       </div>
-  );
-}
-
-function SubViewChip({
-  label,
-  value,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition ${
-        active
-          ? 'bg-[#b94e2d] text-[#F5EEDE]'
-          : 'bg-white/40 text-slate-700 hover:bg-white/60'
-      }`}
-    >
-      <span className="text-[11px] font-semibold uppercase tracking-wide">{label}</span>
-      <span className={`text-lg font-bold ${active ? 'text-[#F5EEDE]' : 'text-slate-900'}`}>{value}</span>
-    </button>
   );
 }
 
