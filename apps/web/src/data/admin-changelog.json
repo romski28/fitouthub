@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-26-e9ceddb1",
+    "date": "2026-08-26T00:08:24+08:00",
+    "title": "feat(quote): extended quote scope + B2B fee split (backend)",
+    "summary": "feat(quote): extended quote scope + B2B fee split (backend)",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "e9ceddb1",
+    "files": [
+      "MANUAL_SQL_ADD_QUOTE_SCOPE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts"
+    ]
+  },
+  {
     "id": "2026-08-25-4922fa2d",
     "date": "2026-08-25T22:00:54+08:00",
     "title": "refactor(pro): clean up project list chrome and color trade chips",

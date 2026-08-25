@@ -33,6 +33,10 @@ import {
   withClientQuoteBreakdown,
 } from '../projects/quote-breakdown';
 
+// Markup applied to subcontracted (B2B) portions of a quote in place of the
+// 10% platform fee. 1.0 = pass-through at cost; tunable later via env.
+const B2B_MARKUP_MULTIPLIER = Number(process.env.B2B_MARKUP_MULTIPLIER ?? 1);
+
 @Controller('professional')
 export class ProfessionalController {
   constructor(
@@ -1680,13 +1684,76 @@ export class ProfessionalController {
     }
   }
 
+  @Get('projects/:projectProfessionalId/quote-scope')
+  @UseGuards(AuthGuard('jwt'))
+  async getQuoteScope(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: {
+        id: projectProfessionalId,
+        professionalId,
+        status: { in: this.activeProfessionalStatuses },
+      },
+      include: {
+        project: { select: { tradesRequired: true } },
+      },
+    });
+
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const pro = await (this.prisma as any).professional.findUnique({
+      where: { id: professionalId },
+      select: { primaryTrade: true, tradesOffered: true },
+    });
+
+    const projectTrades: string[] = (projectProfessional.project?.tradesRequired || []).map(
+      (t: string) => String(t),
+    );
+
+    const selfTokens = new Set<string>();
+    if (pro?.primaryTrade) selfTokens.add(String(pro.primaryTrade).trim().toLowerCase());
+    (pro?.tradesOffered || []).forEach((t: string) => {
+      if (t) selfTokens.add(String(t).trim().toLowerCase());
+    });
+    const isSelf = (trade: string) => {
+      const t = String(trade || '').trim().toLowerCase();
+      return Array.from(selfTokens).some((token) => token.includes(t) || t.includes(token));
+    };
+
+    const contacts = await (this.prisma as any).professionalContact.findMany({
+      where: { ownerProfessionalId: professionalId },
+      select: { id: true, name: true, trades: true },
+    });
+
+    return {
+      projectProfessionalId,
+      tradesRequired: projectTrades,
+      quoteRequestedTrades: projectProfessional.quoteRequestedTrades || [],
+      selfTrades: projectTrades.filter(isSelf),
+      additionalTrades: projectTrades.filter((t) => !isSelf(t)),
+      tradesOffered: pro?.tradesOffered || [],
+      primaryTrade: pro?.primaryTrade || null,
+      contacts,
+    };
+  }
+
   @Post('projects/:projectProfessionalId/quote-preview')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async previewQuoteFee(
     @Request() req: any,
     @Param('projectProfessionalId') projectProfessionalId: string,
-    @Body() body: { quoteAmount: number | string },
+    @Body()
+    body: {
+      quoteAmount: number | string;
+      subcontracting?: Array<{ kind?: string; amount?: number | string }>;
+    },
   ) {
     const professionalId = req.user.id || req.user.sub;
     const quoteAmount = parseFloat(String(body?.quoteAmount));
@@ -1712,6 +1779,39 @@ export class ProfessionalController {
 
     if (!projectProfessional) {
       throw new BadRequestException('Project not found');
+    }
+
+    const subcontractingInput = Array.isArray(body?.subcontracting)
+      ? body.subcontracting
+      : [];
+    const hasTradePlan = subcontractingInput.length > 0;
+
+    let selfBase = 0;
+    let b2bBase = 0;
+    if (hasTradePlan) {
+      for (const entry of subcontractingInput) {
+        const amount = Math.round((Number(entry?.amount ?? 0) + Number.EPSILON) * 100) / 100;
+        const kind = String(entry?.kind || '').trim().toLowerCase();
+        if (kind === 'self') selfBase += amount;
+        else b2bBase += amount;
+      }
+    }
+
+    if (hasTradePlan) {
+      const selfFee = await this.platformFeeService.calculateGrossPrice(
+        selfBase,
+        professionalId,
+        projectProfessional.project?.clientId,
+      );
+      const b2bGross = Math.round((b2bBase * B2B_MARKUP_MULTIPLIER + Number.EPSILON) * 100) / 100;
+      const grossAmount = Math.round((selfFee.grossAmount + b2bGross + Number.EPSILON) * 100) / 100;
+      const baseAmount = Math.round((selfBase + b2bBase + Number.EPSILON) * 100) / 100;
+      return {
+        baseAmount,
+        platformFeePercent: baseAmount > 0 ? Math.round(((grossAmount - baseAmount) / baseAmount) * 10000) / 100 : 0,
+        platformFeeAmount: Math.round((grossAmount - baseAmount + Number.EPSILON) * 100) / 100,
+        grossAmount,
+      };
     }
 
     const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
@@ -1742,6 +1842,17 @@ export class ProfessionalController {
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number | string;
       quoteEstimatedDurationUnit?: string;
+      quotedTrades?: string[];
+      subcontracting?: Array<{
+        trade?: string;
+        kind?: string;
+        amount?: number | string;
+        contactId?: string;
+        professionalId?: string;
+        b2bCost?: number | string;
+        multiplier?: number | string;
+        status?: string;
+      }>;
     },
   ) {
     try {
@@ -1814,26 +1925,93 @@ export class ProfessionalController {
         }
       }
 
-      // Calculate gross price (with platform fee) from professional's base quote
-      const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
-        quoteAmount,
-        professionalId,
-        projectProfessional.project?.clientId,
-      );
+      // ── Trade plan (extended scope) vs self-only quote ──────────────────
+      const hasTradePlan = Array.isArray(body.subcontracting) && body.subcontracting.length > 0;
+      const roundMoney = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 
-      const storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
+      let selfBase = 0;
+      let b2bBase = 0;
+      const normalizedSubcontracting: any[] = [];
+      if (hasTradePlan) {
+        for (const entry of body.subcontracting!) {
+          const amount = roundMoney(Number(entry?.amount ?? 0));
+          const kind = String(entry?.kind || '').trim().toLowerCase();
+          if (!Number.isFinite(amount) || amount < 0) {
+            throw new BadRequestException('Invalid trade line amount');
+          }
+          const rawMultiplier = Number(entry?.multiplier ?? B2B_MARKUP_MULTIPLIER);
+          normalizedSubcontracting.push({
+            trade: String(entry?.trade || '').trim(),
+            kind,
+            amount,
+            contactId: entry?.contactId || null,
+            professionalId: entry?.professionalId || null,
+            b2bCost: entry?.b2bCost != null ? Number(entry.b2bCost) : null,
+            multiplier: Number.isFinite(rawMultiplier) ? rawMultiplier : B2B_MARKUP_MULTIPLIER,
+            status: String(entry?.status || 'tbc'),
+          });
+          if (kind === 'self') selfBase += amount;
+          else b2bBase += amount;
+        }
+        selfBase = roundMoney(selfBase);
+        b2bBase = roundMoney(b2bBase);
+      }
+
+      const quotedTrades = Array.isArray(body.quotedTrades)
+        ? this.normalizeUniqueStrings(body.quotedTrades)
+        : normalizedSubcontracting.map((e) => e.trade).filter(Boolean);
+
+      let feeBreakdown: any;
+      let storedBreakdown: any = null;
+      let grossAmount: number;
+
+      if (hasTradePlan) {
+        if (selfBase + b2bBase <= 0) {
+          throw new BadRequestException('Quote total must be greater than 0');
+        }
+        // Platform fee applies only to the self-delivered portion; the
+        // subcontracted (B2B) portion is fee-exempt and marked up by the multiplier.
+        const selfFee = await this.platformFeeService.calculateGrossPrice(
+          selfBase,
+          professionalId,
+          projectProfessional.project?.clientId,
+        );
+        const b2bGross = roundMoney(b2bBase * B2B_MARKUP_MULTIPLIER);
+        grossAmount = roundMoney(selfFee.grossAmount + b2bGross);
+        const baseTotal = roundMoney(selfBase + b2bBase);
+        feeBreakdown = {
+          ...selfFee,
+          baseAmount: baseTotal,
+          platformFeeAmount: roundMoney(grossAmount - baseTotal),
+          effectivePercent: baseTotal > 0 ? roundMoney(((grossAmount - baseTotal) / baseTotal) * 100) : 0,
+          grossAmount,
+          b2bBaseAmount: b2bBase,
+          b2bGrossAmount: b2bGross,
+          b2bMultiplier: B2B_MARKUP_MULTIPLIER,
+        };
+      } else {
+        feeBreakdown = await this.platformFeeService.calculateGrossPrice(
+          quoteAmount,
+          professionalId,
+          projectProfessional.project?.clientId,
+        );
+        grossAmount = feeBreakdown.grossAmount;
+        storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
+      }
 
       await (this.prisma as any).projectProfessional.update({
         where: { id: projectProfessionalId },
         data: {
           quoteBaseAmount: feeBreakdown.baseAmount,
-          quoteAmount: feeBreakdown.grossAmount,  // Client sees this (gross with fee)
+          quoteAmount: grossAmount, // Client sees this (gross with fee)
           quotePlatformFeeAmount: feeBreakdown.platformFeeAmount,
           quotePlatformFeePercent: feeBreakdown.effectivePercent,
           quotePricingVersion: feeBreakdown.pricingVersion,
           quotePlatformFeeBreakdown: feeBreakdown as any,
           quoteBreakdown: storedBreakdown as any,
           feeCalculatedAt: feeBreakdown.calculatedAt,
+          quotedTrades,
+          subcontracting: hasTradePlan ? normalizedSubcontracting : null,
           quoteNotes: body.quoteNotes || '',
           quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
           quoteEstimatedDurationMinutes:
@@ -1872,11 +2050,12 @@ export class ProfessionalController {
         icon: '💰',
         title: 'Quotation Submitted',
         fields: [
-          ...(isNaN(quoteAmount) ? [] : [{ label: 'Amount', value: `HK$${quoteAmount.toLocaleString?.() ?? quoteAmount}` }]),
+          { label: 'Amount', value: `HK$${Number(feeBreakdown.baseAmount).toLocaleString?.() ?? feeBreakdown.baseAmount}` },
           ...getStoredQuoteBreakdownClientItems(storedBreakdown).map((item) => ({
             label: item.label,
             value: `HK$${item.amount.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
           })),
+          ...(quotedTrades.length > 0 ? [{ label: 'Covers', value: quotedTrades.join(', ') }] : []),
           { label: 'Start', value: _fmtDate(quoteSchedule.quoteEstimatedStartAt) },
           { label: 'Duration', value: this.formatDurationMinutes(quoteSchedule.quoteEstimatedDurationMinutes) },
           ...(body.quoteNotes ? [{ label: 'Notes', value: body.quoteNotes }] : []),
@@ -1912,7 +2091,7 @@ export class ProfessionalController {
               updated.professional?.businessName ||
               'A professional',
             projectName: updated.project?.projectName || 'Your Project',
-            quoteAmount: Number(quoteAmount) || 0,
+            quoteAmount: Number(grossAmount) || 0,
             quoteBreakdownLines: getQuoteBreakdownDisplayLines(storedBreakdown),
             projectId: updated.project?.id,
             baseUrl,
@@ -1939,7 +2118,7 @@ export class ProfessionalController {
           details: `Submitted quote for ${updated.project?.projectName || 'project'}`,
           metadata: {
             projectProfessionalId,
-            quoteAmount: Number(quoteAmount) || 0,
+            quoteAmount: Number(grossAmount) || 0,
           },
           status: 'success',
         });
@@ -1953,7 +2132,7 @@ export class ProfessionalController {
         const proName = updated.professional?.fullName || updated.professional?.businessName || 'A professional';
         void this.pushService.sendToUser(clientUserId, {
           title: 'New Quote Received',
-          body: `${proName} submitted a quote of HK$${Number(quoteAmount).toLocaleString()} for "${updated.project?.projectName}".`,
+          body: `${proName} submitted a quote of HK$${Number(grossAmount).toLocaleString()} for "${updated.project?.projectName}".`,
           url: `/projects/${updated.project?.id}?tab=quotes`,
           tag: `quote-submitted-${projectProfessionalId}`,
         });
@@ -1975,6 +2154,38 @@ export class ProfessionalController {
       console.error('Error submitting quote:', error);
       throw error;
     }
+  }
+
+  @Patch('projects/:projectProfessionalId/subcontracting')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async updateSubcontracting(
+    @Request() req: any,
+    @Param('projectProfessionalId') projectProfessionalId: string,
+    @Body() body: { subcontracting: any[] },
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const projectProfessional = await (this.prisma as any).projectProfessional.findFirst({
+      where: { id: projectProfessionalId, professionalId },
+    });
+    if (!projectProfessional) {
+      throw new BadRequestException('Project not found');
+    }
+    if (!projectProfessional.quotedAt) {
+      throw new BadRequestException('Submit your quote before defining your team');
+    }
+    if (projectProfessional.status === 'awarded') {
+      throw new BadRequestException('Team is locked after award');
+    }
+
+    const normalized = Array.isArray(body.subcontracting) ? body.subcontracting : [];
+    await (this.prisma as any).projectProfessional.update({
+      where: { id: projectProfessionalId },
+      data: { subcontracting: normalized },
+    });
+
+    return { success: true, subcontracting: normalized };
   }
 
   @Post('projects/:projectProfessionalId/accept')
