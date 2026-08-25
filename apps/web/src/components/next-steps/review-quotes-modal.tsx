@@ -18,6 +18,8 @@ interface QuotedProfessional {
   professionalId: string;
   status: string;
   source?: string;
+  quotedTrades?: string[];
+  subcontracting?: Array<{ trade?: string; kind?: string; status?: string }> | null;
   quoteAmount?: string | number;
   quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
@@ -77,6 +79,21 @@ const formatDuration = (minutes?: number, unit?: 'hours' | 'days') => {
     return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')} hr${hours === 1 ? '' : 's'}`;
   }
   return `${minutes} min`;
+};
+
+const getCoverage = (
+  pp: QuotedProfessional,
+): { covered: string[]; tbc: number; defined: number; missing: string[] } | null => {
+  const sub = Array.isArray(pp.subcontracting) ? pp.subcontracting : [];
+  if (sub.length === 0) return null;
+  const covered = sub.map((s) => String(s?.trade || '')).filter(Boolean);
+  const tbc = sub.filter((s) => String(s?.status || '') === 'tbc').length;
+  const defined = sub.length - tbc;
+  const snapshot = Array.isArray(pp.projectTradesSnapshot) ? pp.projectTradesSnapshot : [];
+  const missing = snapshot.filter(
+    (t) => !covered.some((c) => c.toLowerCase() === String(t).toLowerCase()),
+  );
+  return { covered, tbc, defined, missing };
 };
 
 export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
@@ -330,6 +347,18 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                           {pp.source === 'discovered' && (
                             <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">Open applicant</span>
                           )}
+                          {(() => {
+                            const coverage = getCoverage(pp);
+                            return coverage ? (
+                              <div className="mt-1 text-[10px] leading-snug text-slate-500">
+                                <span className="font-semibold text-emerald-700">Covers {coverage.covered.length} trade{coverage.covered.length === 1 ? '' : 's'}</span>
+                                {coverage.missing.length > 0 && (
+                                  <span className="text-rose-600"> · Missing: {coverage.missing.join(', ')}</span>
+                                )}
+                                <span> · Team: {coverage.defined} defined, {coverage.tbc} TBC</span>
+                              </div>
+                            ) : null;
+                          })()}
                         </td>
                         <td className="py-2.5 px-2 text-slate-600 whitespace-nowrap">{sd || '—'}</td>
                         <td className="py-2.5 px-2 text-slate-600">{dur || '—'}</td>
@@ -428,6 +457,18 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                           </span>
                         )}
                       </div>
+                      {(() => {
+                        const coverage = getCoverage(pp);
+                        return coverage ? (
+                          <p className="mt-1.5 text-[11px] leading-snug text-slate-500">
+                            <span className="font-semibold text-emerald-700">Covers {coverage.covered.length} trade{coverage.covered.length === 1 ? '' : 's'}</span>
+                            {coverage.missing.length > 0 && (
+                              <span className="text-rose-600"> · Missing: {coverage.missing.join(', ')}</span>
+                            )}
+                            <span> · Team: {coverage.defined} defined, {coverage.tbc} TBC</span>
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
 
                     <div className="text-right shrink-0">

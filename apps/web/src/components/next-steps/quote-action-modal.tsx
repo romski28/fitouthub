@@ -154,6 +154,13 @@ export function QuoteActionModal({
   const [platformFeeAmount, setPlatformFeeAmount] = useState<number | undefined>();
   const [grossAmount, setGrossAmount] = useState<number | undefined>();
   const [loadingFeePreview, setLoadingFeePreview] = useState(false);
+  const [quoteScope, setQuoteScope] = useState<{
+    tradesRequired: string[];
+    selfTrades: string[];
+    additionalTrades: string[];
+  } | null>(null);
+  const [selectedAdditional, setSelectedAdditional] = useState<Record<string, boolean>>({});
+  const [tradeAmounts, setTradeAmounts] = useState<Record<string, string>>({});
 
   const projectProfessionalId = useMemo(
     () => projectProfessionalIdProp || inferProjectProfessionalId(state.projectDetailsPath),
@@ -190,6 +197,9 @@ export function QuoteActionModal({
       setPlatformFeeAmount(undefined);
       setGrossAmount(undefined);
       setLoadingFeePreview(false);
+      setQuoteScope(null);
+      setSelectedAdditional({});
+      setTradeAmounts({});
     }
   }, [isOpen]);
 
@@ -276,7 +286,41 @@ export function QuoteActionModal({
   }, [accessToken, isOpen, projectProfessionalId, projectId]);
 
   useEffect(() => {
-    const amount = getQuoteBreakdownFormTotal(breakdown);
+    if (!isOpen || !accessToken || !projectProfessionalId) return;
+
+    fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote-scope`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setQuoteScope({
+          tradesRequired: data.tradesRequired || [],
+          selfTrades: data.selfTrades || [],
+          additionalTrades: data.additionalTrades || [],
+        });
+        const initialAmounts: Record<string, string> = {};
+        (data.tradesRequired || []).forEach((t: string) => {
+          initialAmounts[t] = '';
+        });
+        setTradeAmounts(initialAmounts);
+        setSelectedAdditional({});
+      })
+      .catch(() => {
+        /* best-effort */
+      });
+  }, [isOpen, accessToken, projectProfessionalId]);
+
+  useEffect(() => {
+    const isTradePanel = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
+    const panelTotal = isTradePanel
+      ? Object.entries(tradeAmounts).reduce((sum, [trade, val]) => {
+          const selected =
+            (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true;
+          return selected ? sum + (parseFloat(val) || 0) : sum;
+        }, 0)
+      : 0;
+    const amount = isTradePanel ? panelTotal : getQuoteBreakdownFormTotal(breakdown);
 
     if (!isOpen || !accessToken || !projectProfessionalId || amount <= 0) {
       setPlatformFeePercent(undefined);
@@ -284,6 +328,19 @@ export function QuoteActionModal({
       setGrossAmount(undefined);
       return;
     }
+
+    const subcontracting = isTradePanel
+      ? Object.entries(tradeAmounts)
+          .filter(
+            ([trade]) =>
+              (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
+          )
+          .map(([trade, val]) => ({
+            trade,
+            kind: (quoteScope?.selfTrades || []).includes(trade) ? 'self' : 'tbc',
+            amount: parseFloat(val) || 0,
+          }))
+      : undefined;
 
     // Debounce the preview call
     const timeoutId = setTimeout(async () => {
@@ -297,7 +354,7 @@ export function QuoteActionModal({
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ quoteAmount: amount }),
+            body: JSON.stringify({ quoteAmount: amount, subcontracting }),
           },
         );
 
@@ -323,7 +380,7 @@ export function QuoteActionModal({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [accessToken, breakdown, isOpen, projectProfessionalId]);
+  }, [accessToken, breakdown, isOpen, projectProfessionalId, quoteScope, tradeAmounts, selectedAdditional]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -342,9 +399,22 @@ export function QuoteActionModal({
       return;
     }
 
-    const numericAmount = getQuoteBreakdownFormTotal(breakdown);
+    const tradePlanActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
+    let numericAmount = getQuoteBreakdownFormTotal(breakdown);
+    if (tradePlanActive) {
+      numericAmount = Object.entries(tradeAmounts)
+        .filter(
+          ([trade]) =>
+            (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
+        )
+        .reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
+    }
     if (numericAmount <= 0) {
-      setError('Please enter a valid quote breakdown');
+      setError(
+        tradePlanActive
+          ? 'Please enter a price for the trades you are covering'
+          : 'Please enter a valid quote breakdown',
+      );
       return;
     }
 
@@ -378,19 +448,42 @@ export function QuoteActionModal({
     }
 
     const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`).toISOString();
-    const quoteBreakdown = buildQuoteBreakdownPayload(breakdown, {
-      isEmergency: isEmergencyProject,
-      projectScale,
-    });
-    const payload = {
+    const subcontracting = tradePlanActive
+      ? Object.entries(tradeAmounts)
+          .filter(
+            ([trade]) =>
+              (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
+          )
+          .map(([trade, val]) => {
+            const isSelf = (quoteScope?.selfTrades || []).includes(trade);
+            return {
+              trade,
+              kind: isSelf ? 'self' : 'tbc',
+              amount: parseFloat(val) || 0,
+              status: isSelf ? 'defined' : 'tbc',
+            };
+          })
+      : undefined;
+    const quoteBreakdown = tradePlanActive
+      ? undefined
+      : buildQuoteBreakdownPayload(breakdown, {
+          isEmergency: isEmergencyProject,
+          projectScale,
+        });
+    const payload: any = {
       quoteAmount: numericAmount,
-      quoteBreakdown,
       quoteNotes: notes,
       quoteEstimatedStartAt,
       // API normalizes this value using the provided unit.
       quoteEstimatedDurationMinutes: durationValue,
       quoteEstimatedDurationUnit: estimatedDurationUnit,
     };
+    if (tradePlanActive) {
+      payload.quotedTrades = (subcontracting || []).map((s: any) => s.trade);
+      payload.subcontracting = subcontracting;
+    } else {
+      payload.quoteBreakdown = quoteBreakdown;
+    }
 
     const isRevisedQuote = state.actionKey === 'PREPARE_REVISED_QUOTE';
     const endpoint = isRevisedQuote
@@ -478,7 +571,15 @@ export function QuoteActionModal({
   const hourOptions = isEmergencyProject
     ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
     : Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0'));
-  const enteredTotal = getQuoteBreakdownFormTotal(breakdown);
+  const tradePanelActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
+  const tradePanelTotal = tradePanelActive
+    ? Object.entries(tradeAmounts).reduce((sum, [trade, val]) => {
+        const isSelected =
+          (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true;
+        return isSelected ? sum + (parseFloat(val) || 0) : sum;
+      }, 0)
+    : 0;
+  const enteredTotal = tradePanelActive ? tradePanelTotal : getQuoteBreakdownFormTotal(breakdown);
 
   if (showSuccess) {
     return <ProQuoteSuccessModal isOpen={isOpen} onClose={handleClose} />;
@@ -534,42 +635,104 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
-                  <div className={`grid grid-cols-1 gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-                    {breakdownFields.map((field) => (
-                      <label key={field.code} className="block">
-                        <span className="mb-1 block text-sm font-semibold text-stone-700">{field.label}{field.required ? ' *' : ''}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={breakdown[field.key]}
-                          onChange={(e) => setBreakdown((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                          className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                          placeholder="0.00"
-                          disabled={submitting || readOnly}
-                          required={field.required}
-                        />
-                      </label>
-                    ))}
-                  </div>
+                  {tradePanelActive && quoteScope ? (
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
+                        This project needs trades beyond your own. Tick the additional trades you want to cover and price each trade.
+                      </div>
+                      {quoteScope.tradesRequired.map((trade) => {
+                        const isSelf = quoteScope.selfTrades.includes(trade);
+                        const isSelected = isSelf || selectedAdditional[trade] === true;
+                        return (
+                          <div
+                            key={trade}
+                            className={`rounded-lg border px-3 py-2 ${
+                              isSelected
+                                ? 'border-emerald-300 bg-emerald-50/50'
+                                : 'border-[rgba(120,53,15,0.16)] bg-white/60'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                disabled={isSelf || submitting || readOnly}
+                                onChange={(e) =>
+                                  setSelectedAdditional((prev) => ({ ...prev, [trade]: e.target.checked }))
+                                }
+                                className="h-4 w-4 accent-emerald-600"
+                              />
+                              <span className="flex-1 text-sm font-semibold text-stone-700">
+                                {trade}
+                                {isSelf ? (
+                                  <span className="ml-1 text-xs font-normal text-emerald-700">(your trade)</span>
+                                ) : null}
+                              </span>
+                              {isSelected ? (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={tradeAmounts[trade] || ''}
+                                  onChange={(e) =>
+                                    setTradeAmounts((prev) => ({ ...prev, [trade]: e.target.value }))
+                                  }
+                                  className="w-32 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-right text-stone-800 outline-none focus:border-amber-500"
+                                  disabled={submitting || readOnly}
+                                />
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
+                        <p>Your price (all covered trades): {formatHKD(enteredTotal)}</p>
+                        <p className="mt-0.5 text-[10px] text-stone-500">
+                          You can add your team for the additional trades after submitting — the price is locked once submitted.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`grid grid-cols-1 gap-4 ${breakdownFields.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                        {breakdownFields.map((field) => (
+                          <label key={field.code} className="block">
+                            <span className="mb-1 block text-sm font-semibold text-stone-700">{field.label}{field.required ? ' *' : ''}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={breakdown[field.key]}
+                              onChange={(e) => setBreakdown((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                              className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
+                              placeholder="0.00"
+                              disabled={submitting || readOnly}
+                              required={field.required}
+                            />
+                          </label>
+                        ))}
+                      </div>
 
-                  {parseFloat(breakdown.otherItems || '0') > 0 && (
-                    <label className="block">
-                      <span className="mb-1 block text-sm font-semibold text-stone-700">Other items description</span>
-                      <textarea
-                        value={breakdown.otherItemsDescription}
-                        onChange={(e) => setBreakdown((prev) => ({ ...prev, otherItemsDescription: e.target.value }))}
-                        rows={2}
-                        className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
-                        placeholder="e.g. Disposal of old fixtures, protective covers..."
-                        disabled={submitting || readOnly}
-                      />
-                    </label>
+                      {parseFloat(breakdown.otherItems || '0') > 0 && (
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-semibold text-stone-700">Other items description</span>
+                          <textarea
+                            value={breakdown.otherItemsDescription}
+                            onChange={(e) => setBreakdown((prev) => ({ ...prev, otherItemsDescription: e.target.value }))}
+                            rows={2}
+                            className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-stone-800 outline-none focus:border-amber-500"
+                            placeholder="e.g. Disposal of old fixtures, protective covers..."
+                            disabled={submitting || readOnly}
+                          />
+                        </label>
+                      )}
+
+                      <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
+                        <p>Your price (supplies + labour + other): {formatHKD(enteredTotal)}</p>
+                      </div>
+                    </>
                   )}
-
-                  <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
-                    <p>Your price (supplies + labour + other): {formatHKD(enteredTotal)}</p>
-                  </div>
 
                   {siteInspectionAvailableOn ? (
                     <div className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-700">

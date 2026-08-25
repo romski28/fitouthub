@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-26-0a9d5c81",
+    "date": "2026-08-26T00:19:29+08:00",
+    "title": "feat(quote): pro trade selection + client coverage view",
+    "summary": "feat(quote): pro trade selection + client coverage view",
+    "areas": [
+      "web"
+    ],
+    "commit": "0a9d5c81",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-e9ceddb1",
     "date": "2026-08-26T00:08:24+08:00",
     "title": "feat(quote): extended quote scope + B2B fee split (backend)",
