@@ -22,7 +22,6 @@ import { PlatformFeeService } from '../common/platform-fee.service';
 import { UpdatesService } from '../updates/updates.service';
 import { ActivityLogService } from '../activity-log.service';
 import { PushNotificationService } from '../notifications/push-notification.service';
-import { ProjectsService } from '../projects/projects.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
 import { buildPublicAssetUrl } from '../storage/media-assets.util';
@@ -43,7 +42,6 @@ export class ProfessionalController {
     private updatesService: UpdatesService,
     private activityLogService: ActivityLogService,
     private pushService: PushNotificationService,
-    private projectsService: ProjectsService,
   ) {}
 
   private readonly visibleProfessionalStatuses = [
@@ -1301,65 +1299,6 @@ export class ProfessionalController {
       }
     });
 
-    return { success: true };
-  }
-
-  @Get('discover/projects')
-  @UseGuards(AuthGuard('jwt'))
-  async discoverOpenProjects(@Request() req: any) {
-    const professionalId = req.user.id || req.user.sub;
-    return this.projectsService.discoverOpenProjects(professionalId);
-  }
-
-  @Post('discover/projects/:projectId/apply')
-  @UseGuards(AuthGuard('jwt'))
-  async applyToOpenTender(
-    @Param('projectId') projectId: string,
-    @Request() req: any,
-  ) {
-    const professionalId = req.user.id || req.user.sub;
-    return this.projectsService.applyToOpenTender(projectId, professionalId);
-  }
-
-  @Get('notifications')
-  @UseGuards(AuthGuard('jwt'))
-  async listNotifications(@Request() req: any) {
-    const professionalId = req.user.id || req.user.sub;
-    const notifications = await this.prisma.appNotification.findMany({
-      where: { professionalId },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-    const unreadCount = await this.prisma.appNotification.count({
-      where: { professionalId, readAt: null },
-    });
-    return { notifications, unreadCount };
-  }
-
-  @Post('notifications/read-all')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.OK)
-  async markAllNotificationsRead(@Request() req: any) {
-    const professionalId = req.user.id || req.user.sub;
-    await this.prisma.appNotification.updateMany({
-      where: { professionalId, readAt: null },
-      data: { readAt: new Date() },
-    });
-    return { success: true };
-  }
-
-  @Post('notifications/:id/read')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.OK)
-  async markNotificationRead(
-    @Param('id') id: string,
-    @Request() req: any,
-  ) {
-    const professionalId = req.user.id || req.user.sub;
-    await this.prisma.appNotification.updateMany({
-      where: { id, professionalId },
-      data: { readAt: new Date() },
-    });
     return { success: true };
   }
 

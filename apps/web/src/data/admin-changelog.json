@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-25-ec2c30e0",
+    "date": "2026-08-25T13:28:17+08:00",
+    "title": "fix(api): resolve ProfessionalController DI error on Render",
+    "summary": "fix(api): resolve ProfessionalController DI error on Render",
+    "areas": [
+      "api"
+    ],
+    "commit": "ec2c30e0",
+    "files": [
+      "apps/api/src/app.module.ts",
+      "apps/api/src/notifications/app-notifications.controller.ts",
+      "apps/api/src/notifications/notification.module.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/professional-discover.controller.ts"
+    ]
+  },
+  {
     "id": "2026-08-25-3be1fcf4",
     "date": "2026-08-25T09:13:18+08:00",
     "title": "feat(tender): pro discover, apply, and in-app notifications for open tenders",

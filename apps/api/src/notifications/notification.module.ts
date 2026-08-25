@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { NotificationService } from './notification.service';
 import { PushNotificationService } from './push-notification.service';
 import { PushNotificationController } from './push-notification.controller';
+import { AppNotificationsController } from './app-notifications.controller';
 import { TwilioProvider } from './twilio.provider';
 import { NotificationWebhookController } from './notification-webhook.controller';
 import { NotificationPreferencesController } from './notification-preferences.controller';
@@ -12,7 +13,7 @@ import { CombinedAuthGuard } from '../chat/auth-combined.guard';
 
 @Module({
   imports: [ConfigModule, SupportRequestsModule],
-  controllers: [NotificationWebhookController, NotificationPreferencesController, PushNotificationController],
+  controllers: [NotificationWebhookController, NotificationPreferencesController, PushNotificationController, AppNotificationsController],
   providers: [NotificationService, PushNotificationService, TwilioProvider, PrismaService, CombinedAuthGuard],
   exports: [NotificationService, PushNotificationService],
 })

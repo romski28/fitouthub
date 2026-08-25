@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { ProjectsController } from './projects/projects.controller';
+import { ProfessionalDiscoverController } from './projects/professional-discover.controller';
 import { ProjectsService } from './projects/projects.service';
 import { NextStepService } from './projects/next-step.service';
 import { NextStepConfigController } from './projects/next-step-config.controller';
@@ -94,6 +95,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
   controllers: [
     AppController,
     ProjectsController,
+    ProfessionalDiscoverController,
     UploadsController,
     ReportsController,
     AssistRequestsController,
