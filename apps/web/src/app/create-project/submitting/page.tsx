@@ -225,7 +225,7 @@ export default function SubmittingPage() {
             <MimoSpinner size="md" className="mx-auto mb-3" />
             <p className="text-base font-bold text-[#4A3623]">Requesting quotes...</p>
             <p className="mt-1 text-sm text-[rgba(126,58,33,0.65)]">
-              Inviting matching professionals and preparing your project dashboard.
+              Publishing your project to the marketplace and preparing your dashboard.
             </p>
           </>
         )}

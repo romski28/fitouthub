@@ -791,7 +791,7 @@ export default function CreateProjectPage() {
                           : 'Get prices from everyone'}
                       </button>
                       <p className="text-sm text-slate-600">
-                        We will ask all local matching trades to send in pricing for your project.
+                        Your project is published to the marketplace, where matching trades can send pricing.
                         {openTenderCount !== null && openTenderCount > 0 && (
                           <> Up to {openTenderCount} professional{openTenderCount === 1 ? '' : 's'} match your project.</>
                         )}

@@ -4398,7 +4398,7 @@ export class ProjectsService {
     location?: string;
     isEmergency?: boolean;
   }) {
-    const { trades, location, isEmergency } = params;
+    const { trades, isEmergency } = params;
     try {
       const where: any = {
         professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
@@ -4414,15 +4414,6 @@ export class ProjectsService {
           { primaryTrade: { equals: trade, mode: 'insensitive' } },
           { tradesOffered: { has: trade } },
         ]);
-      }
-
-      if (location) {
-        const locFilters = [
-          { locationPrimary: { contains: location, mode: 'insensitive' } },
-          { locationSecondary: { contains: location, mode: 'insensitive' } },
-          { servicePrimaries: { has: location } },
-        ];
-        where.AND = [...(where.AND || []), { OR: locFilters }];
       }
 
       const count = await (this.prisma as any).professional.count({ where });
@@ -4457,34 +4448,6 @@ export class ProjectsService {
     );
   }
 
-  private professionalCoversRegion(professional: any, region: string | null | undefined): boolean {
-    if (!region) return true;
-    const parts = String(region)
-      .split(',')
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    if (parts.length === 0) return true;
-
-    const hasLocationData =
-      Boolean(professional?.locationPrimary) ||
-      Boolean(professional?.locationSecondary) ||
-      (Array.isArray(professional?.servicePrimaries) && professional.servicePrimaries.length > 0);
-
-    // Pros without location data see everything; others are region-filtered.
-    if (!hasLocationData) return true;
-
-    const primary = String(professional.locationPrimary || '').toLowerCase();
-    const secondary = String(professional.locationSecondary || '').toLowerCase();
-    const services = (professional.servicePrimaries || []).map((s: any) => String(s).toLowerCase());
-
-    return parts.some(
-      (part) =>
-        primary.includes(part) ||
-        secondary.includes(part) ||
-        services.some((s: string) => s.includes(part) || part.includes(s)),
-    );
-  }
-
   private isDiscoverableTender(project: any): boolean {
     return (
       project.currentStage === ProjectStage.BIDDING_ACTIVE &&
@@ -4504,9 +4467,6 @@ export class ProjectsService {
         status: true,
         primaryTrade: true,
         tradesOffered: true,
-        locationPrimary: true,
-        locationSecondary: true,
-        servicePrimaries: true,
         emergencyCalloutAvailable: true,
       },
     });
@@ -4546,7 +4506,6 @@ export class ProjectsService {
       // Already involved (invited / applied / quoted / awarded) -> not in open list.
       if ((project.professionals || []).length > 0) continue;
       if (project.isEmergency && !professional.emergencyCalloutAvailable) continue;
-      if (!this.professionalCoversRegion(professional, project.region)) continue;
 
       const matchedTrades = this.getMatchedProjectTrades(professional, project.tradesRequired);
       if (matchedTrades.length === 0) continue;
@@ -4686,68 +4645,42 @@ ${scope.otherRequiredTrades.length > 0 ? `Other required trades: ${scope.otherRe
     return { success: true, projectId };
   }
 
+  /**
+   * Publish a project to the open-tender marketplace.
+   *
+   * No professionals are directly invited. The project becomes discoverable so
+   * any qualifying pro (at least one trade match + emergency availability;
+   * location is the pro's own travel decision) can see it in "Open tenders"
+   * and apply via the marketplace.
+   */
   async inviteAllMatchingProfessionals(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
         id: true,
+        userId: true,
+        clientId: true,
         tradesRequired: true,
-        region: true,
         isEmergency: true,
       },
     });
 
     if (!project) throw new NotFoundException('Project not found');
-
-    const where: any = {
-      professionType: { in: [...this.PROJECT_SELECTABLE_PROFESSION_TYPES] },
-      status: 'approved',
-    };
-
-    if (project.isEmergency) {
-      where.emergencyCalloutAvailable = true;
+    if (project.userId !== userId && project.clientId !== userId) {
+      throw new ForbiddenException('Only the project owner can open this tender');
     }
 
-    const projectTrades = (project.tradesRequired || []) as string[];
-    if (projectTrades.length > 0) {
-      where.OR = [
-        { primaryTrade: { in: projectTrades, mode: 'insensitive' } },
-        { tradesOffered: { hasSome: projectTrades } },
-      ];
+    let matchingCount = 0;
+    try {
+      const result = await this.countMatchingProfessionals({
+        trades: project.tradesRequired || [],
+        isEmergency: project.isEmergency,
+      });
+      matchingCount = result?.count || 0;
+    } catch {
+      /* non-fatal */
     }
 
-    const loc = project.region;
-    if (loc) {
-      const parts = loc.split(',').map(s => s.trim()).filter(Boolean);
-      where.AND = [
-        ...(where.AND || []),
-        {
-          OR: [
-            ...parts.flatMap(part => [
-              { locationPrimary: { contains: part, mode: 'insensitive' } },
-              { locationSecondary: { contains: part, mode: 'insensitive' } },
-            ]),
-            { servicePrimaries: { hasSome: parts } },
-          ],
-        },
-      ];
-    }
-
-    const professionals = await (this.prisma as any).professional.findMany({
-      where,
-      select: { id: true },
-    });
-
-    const professionalIds: string[] = professionals.map((p: any) => p.id);
-
-    if (professionalIds.length === 0) {
-      throw new BadRequestException('No matching professionals found for open tender');
-    }
-
-    const result = await this.inviteProfessionals(projectId, professionalIds);
-
-    // Transition project to BIDDING_ACTIVE and open it for discovery now that
-    // professionals are invited.
     await this.prisma.project.update({
       where: { id: projectId },
       data: {
@@ -4758,7 +4691,7 @@ ${scope.otherRequiredTrades.length > 0 ? `Other required trades: ${scope.otherRe
       },
     });
 
-    return result;
+    return { success: true, published: true, matchingCount };
   }
 
   async inviteProfessionals(projectId: string, professionalIds: string[]) {

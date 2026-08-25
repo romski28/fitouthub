@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-26-d91a4553",
+    "date": "2026-08-26T00:59:05+08:00",
+    "title": "fix(tender): publish open tenders to the marketplace, don't invite",
+    "summary": "fix(tender): publish open tenders to the marketplace, don't invite",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "d91a4553",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/page.tsx",
+      "apps/web/src/app/create-project/submitting/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-0a9d5c81",
     "date": "2026-08-26T00:19:29+08:00",
     "title": "feat(quote): pro trade selection + client coverage view",
