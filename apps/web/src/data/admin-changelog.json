@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-25-4922fa2d",
+    "date": "2026-08-25T22:00:54+08:00",
+    "title": "refactor(pro): clean up project list chrome and color trade chips",
+    "summary": "refactor(pro): clean up project list chrome and color trade chips",
+    "areas": [
+      "web"
+    ],
+    "commit": "4922fa2d",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-25-e777bf1c",
     "date": "2026-08-25T21:33:15+08:00",
     "title": "refactor(pro): four-tab project list (Open/Invitations/Your projects/Closed)",

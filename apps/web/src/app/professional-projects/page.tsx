@@ -9,7 +9,6 @@ import { colors } from '@/styles/theme';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
-import { ProjectSentimentBadge } from '@/components/project-sentiment-badge';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAccessModal } from '@/components/project-access-modal';
 import { useRoleGuard } from '@/hooks/use-role-guard';
@@ -191,9 +190,7 @@ export default function ProfessionalProjectsPage() {
   const [discoverProjects, setDiscoverProjects] = useState<DiscoverProject[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [applyingIds, setApplyingIds] = useState<Set<string>>(new Set());
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [proTrades, setProTrades] = useState<string[]>([]);
   const projectIds = useMemo(
     () => projects
       .filter((p) => !p.accessRestricted)
@@ -405,22 +402,26 @@ export default function ProfessionalProjectsPage() {
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
 
-    const fetchNotifications = async () => {
+    const fetchProTrades = async () => {
       try {
-        const res = await fetchWithRetry(`${API_BASE_URL}/professional/notifications`, {
+        const res = await fetchWithRetry(`${API_BASE_URL}/professional/me`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         });
         if (!res.ok) return;
         const data = await res.json();
-        setNotifications(Array.isArray(data?.notifications) ? data.notifications : []);
-        setUnreadNotifCount(Number(data?.unreadCount) || 0);
+        const tokens = new Set<string>();
+        if (data?.primaryTrade) tokens.add(String(data.primaryTrade).trim().toLowerCase());
+        (Array.isArray(data?.tradesOffered) ? data.tradesOffered : []).forEach((t: string) => {
+          if (t) tokens.add(String(t).trim().toLowerCase());
+        });
+        setProTrades(Array.from(tokens));
       } catch {
         /* ignore */
       }
     };
 
-    fetchNotifications();
+    fetchProTrades();
   }, [isLoggedIn, accessToken]);
 
   useEffect(() => {
@@ -629,37 +630,14 @@ export default function ProfessionalProjectsPage() {
     }
   };
 
-  const markAllNotificationsRead = async () => {
-    if (!accessToken) return;
-    setUnreadNotifCount(0);
-    setNotifications((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
-    );
-    try {
-      await fetch(`${API_BASE_URL}/professional/notifications/read-all`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      });
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const markNotificationRead = async (id: string) => {
-    if (!accessToken) return;
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n)),
-    );
-    setUnreadNotifCount((prev) => Math.max(0, prev - 1));
-    try {
-      await fetch(`${API_BASE_URL}/professional/notifications/${id}/read`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      });
-    } catch {
-      /* ignore */
-    }
-  };
+  const tradeMatchesPro = useCallback(
+    (trade?: string): boolean => {
+      const t = String(trade || '').trim().toLowerCase();
+      if (!t) return false;
+      return proTrades.some((token) => token.includes(t) || t.includes(token));
+    },
+    [proTrades],
+  );
 
   if (isLoggedIn === undefined || loading) {
     return <PageLoadingState message="Loading projects..." />;
@@ -681,7 +659,6 @@ export default function ProfessionalProjectsPage() {
         <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
               <h1 className="text-2xl font-bold leading-tight text-slate-900">
                 {TAB_LABELS[activeTab]}
               </h1>
@@ -700,67 +677,6 @@ export default function ProfessionalProjectsPage() {
                 >
                   ↻ Refresh all
                 </button>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setNotifOpen((v) => !v)}
-                    className="relative rounded-lg border border-[rgba(120,53,15,0.2)] bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-50"
-                    aria-label="Notifications"
-                  >
-                    🔔
-                    {unreadNotifCount > 0 && (
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                        {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
-                      </span>
-                    )}
-                  </button>
-                  {notifOpen && (
-                    <>
-                      <button
-                        type="button"
-                        className="fixed inset-0 z-30 cursor-default"
-                        onClick={() => setNotifOpen(false)}
-                        aria-label="Close notifications"
-                      />
-                      <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-[rgba(120,53,15,0.12)] px-4 py-2">
-                          <p className="text-sm font-bold text-slate-900">Notifications</p>
-                          {unreadNotifCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={markAllNotificationsRead}
-                              className="text-xs font-semibold text-emerald-700 hover:underline"
-                            >
-                              Mark all read
-                            </button>
-                          )}
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                          {notifications.length === 0 ? (
-                            <p className="px-4 py-6 text-center text-xs text-slate-500">No notifications yet.</p>
-                          ) : (
-                            notifications.map((n: any) => (
-                              <button
-                                key={n.id}
-                                type="button"
-                                onClick={() => {
-                                  markNotificationRead(n.id);
-                                  if (n.url && typeof window !== 'undefined') {
-                                    window.location.href = n.url;
-                                  }
-                                }}
-                                className={`block w-full border-b border-[rgba(120,53,15,0.08)] px-4 py-3 text-left transition hover:bg-white/60 ${n.readAt ? 'opacity-60' : ''}`}
-                              >
-                                <p className="text-sm font-semibold text-slate-900">{n.title}</p>
-                                <p className="mt-0.5 text-xs text-slate-600">{n.body}</p>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
               </div>
             </div>
             <div>
@@ -816,7 +732,6 @@ export default function ProfessionalProjectsPage() {
             <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Open tenders</p>
                   <h2 className="text-xl font-bold text-slate-900">{discoverProjects.length} matching tenders</h2>
                 </div>
               </div>
@@ -838,14 +753,23 @@ export default function ProfessionalProjectsPage() {
                         <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
                           {d.isEmergency ? `🚨 ${d.projectName}` : d.projectName}
                         </span>
-                        {d.matchingTrades.map((t) => (
-                          <span
-                            key={`${d.id}-${t}`}
-                            className="rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800"
-                          >
-                            {t}
-                          </span>
-                        ))}
+                        {d.tradesRequired.map((t) => {
+                          const matches = d.matchingTrades.some(
+                            (m) => m.toLowerCase() === t.toLowerCase(),
+                          );
+                          return (
+                            <span
+                              key={`${d.id}-${t}`}
+                              className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                                matches
+                                  ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
+                                  : 'border border-slate-300 bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {t}
+                            </span>
+                          );
+                        })}
                       </div>
                       <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
                         {d.notes}
@@ -878,13 +802,6 @@ export default function ProfessionalProjectsPage() {
             <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                      {activeTab === 'invitations'
-                        ? 'Action required'
-                        : activeTab === 'projects'
-                          ? 'Active'
-                          : 'Closed'}
-                    </p>
                     <h2 className="text-xl font-bold text-slate-900">
                   {currentProjectList.length} Projects in this view
                 </h2>
@@ -980,26 +897,27 @@ export default function ProfessionalProjectsPage() {
                             {/* Trade/scope chips */}
                             {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
                               projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
-                                projectProf.quoteRequestedTrades.map((trade) => (
-                                  <span
-                                    key={`requested-${projectProf.id}-${trade}`}
-                                    className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                                      quoteOverdue || isStopStatus
-                                        ? 'border border-amber-200/60 bg-amber-100/20 text-amber-100'
-                                        : 'border border-amber-300 bg-amber-50 text-amber-800'
-                                    }`}
-                                  >
-                                    {trade}
-                                  </span>
-                                ))
+                                projectProf.quoteRequestedTrades.map((trade) => {
+                                  const matches = tradeMatchesPro(trade);
+                                  return (
+                                    <span
+                                      key={`requested-${projectProf.id}-${trade}`}
+                                      className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                                        quoteOverdue || isStopStatus
+                                          ? matches
+                                            ? 'border border-emerald-300/40 bg-emerald-400/20 text-emerald-100'
+                                            : 'border border-slate-300/40 bg-slate-400/20 text-slate-200'
+                                          : matches
+                                            ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
+                                            : 'border border-slate-300 bg-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      {trade}
+                                    </span>
+                                  );
+                                })
                               ) : null
                             ) : null}
-                            <ProjectSentimentBadge
-                              projectId={projectProf.project.id}
-                              storageScope="professional"
-                              iconOnly
-                              size="lg"
-                            />
                             <button
                               type="button"
                               onClick={(e) => {
