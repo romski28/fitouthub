@@ -396,6 +396,7 @@ model Professional {
   availability              ProfessionalAvailability[]
   workerInvites             WorkerInvite[]
   professionalContacts      ProfessionalContact[]
+  tenderDismissals          TenderDismissal[]
   employer                  Professional? @relation("ProfessionalEmployer", fields: [employerProfessionalId], references: [id], onDelete: SetNull)
   employees                 Professional[] @relation("ProfessionalEmployer")
 }
@@ -643,6 +644,7 @@ model Project {
   supportRequests                 SupportRequest[]
   paymentPlan                     ProjectPaymentPlan?
   acProjects                      AcProject[]
+  tenderDismissals                TenderDismissal[]
   // On-site start confirmation
   siteStartedAt                   DateTime?
   siteStartConfirmedById          String? // userId of the client who confirmed the QR scan
@@ -1907,6 +1909,20 @@ model AppNotification {
 
   @@index([professionalId, readAt])
   @@index([createdAt(sort: Desc)])
+}
+
+model TenderDismissal {
+  id             String    @id @default(cuid())
+  professionalId String
+  projectId      String
+  createdAt      DateTime  @default(now())
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, projectId])
+  @@index([professionalId])
+  @@index([projectId])
 }
 
 model NextStepConfig {

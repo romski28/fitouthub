@@ -43,4 +43,16 @@ export class ProfessionalDiscoverController {
       this.resolveProfessionalId(req),
     );
   }
+
+  @Post('projects/:projectId/dismiss')
+  @UseGuards(CombinedAuthGuard)
+  async dismissOpenTender(
+    @Param('projectId') projectId: string,
+    @Request() req: any,
+  ) {
+    return this.projectsService.dismissOpenTender(
+      projectId,
+      this.resolveProfessionalId(req),
+    );
+  }
 }

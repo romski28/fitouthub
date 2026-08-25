@@ -83,9 +83,8 @@ const professionalCardBorderByStatus: Record<string, string> = {
 };
 
 const TAB_LABELS: Record<string, string> = {
-  open: 'Open tenders',
-  invitations: 'Invitations',
-  projects: 'Your projects',
+  feed: 'New project feed',
+  projects: 'My projects',
   closed: 'Closed',
 };
 
@@ -185,8 +184,10 @@ export default function ProfessionalProjectsPage() {
   const [workerAccessProjectId, setWorkerAccessProjectId] = useState<string | null>(null);
   const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
-  const [activeTab, setActiveTab] = useState<'open' | 'invitations' | 'projects' | 'closed'>('open');
+  const [activeTab, setActiveTab] = useState<'feed' | 'projects' | 'closed'>('feed');
   const [mobileTabOpen, setMobileTabOpen] = useState(false);
+  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [discoverProjects, setDiscoverProjects] = useState<DiscoverProject[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [applyingIds, setApplyingIds] = useState<Set<string>>(new Set());
@@ -228,11 +229,7 @@ export default function ProfessionalProjectsPage() {
   });
 
   const currentProjectList: ProjectProfessional[] =
-    activeTab === 'invitations'
-      ? invitations
-      : activeTab === 'projects'
-        ? yourProjects
-        : closedProjects;
+    activeTab === 'projects' ? yourProjects : closedProjects;
 
   const openProfessionalNextStepModal = useCallback(
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
@@ -601,7 +598,7 @@ export default function ProfessionalProjectsPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.message || 'Failed to apply');
       }
-      toast.success('Application sent! It now appears under "Your projects".');
+      toast.success('Added to My projects.');
       setDiscoverProjects((prev) => prev.filter((p) => p.id !== project.id));
       // Refresh the project list so the new bid appears under "Your bids".
       try {
@@ -628,6 +625,25 @@ export default function ProfessionalProjectsPage() {
         return next;
       });
     }
+  };
+
+  const handleDismissOpenTender = (project: DiscoverProject) => {
+    if (!accessToken) return;
+    setDismissingIds((prev) => new Set(prev).add(project.id));
+    window.setTimeout(() => {
+      setDismissedIds((prev) => new Set(prev).add(project.id));
+      setDismissingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(project.id);
+        return next;
+      });
+      fetch(`${API_BASE_URL}/professional/discover/projects/${project.id}/dismiss`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      }).catch(() => {
+        /* non-fatal */
+      });
+    }, 300);
   };
 
   const tradeMatchesPro = useCallback(
@@ -682,7 +698,7 @@ export default function ProfessionalProjectsPage() {
             <div>
               {/* Desktop tabs */}
               <div className="hidden sm:inline-flex w-fit rounded-xl border border-[rgba(120,53,15,0.15)] bg-white/60 p-1">
-                {(['open', 'invitations', 'projects', 'closed'] as const).map((key) => (
+                {(['feed', 'projects', 'closed'] as const).map((key) => (
                   <button
                     key={key}
                     type="button"
@@ -707,7 +723,7 @@ export default function ProfessionalProjectsPage() {
                   <>
                     <button type="button" className="fixed inset-0 z-30 cursor-default" onClick={() => setMobileTabOpen(false)} aria-label="Close tabs" />
                     <div className="absolute inset-x-0 z-40 mt-1 overflow-hidden rounded-xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
-                      {(['open', 'invitations', 'projects', 'closed'] as const).map((key) => (
+                      {(['feed', 'projects', 'closed'] as const).map((key) => (
                         <button
                           key={key}
                           type="button"
@@ -728,73 +744,146 @@ export default function ProfessionalProjectsPage() {
           </div>
 
           {/* Cards */}
-          {activeTab === 'open' ? (
+          {activeTab === 'feed' ? (
             <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{discoverProjects.length} matching tenders</h2>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    {invitations.length + discoverProjects.filter((d) => !dismissedIds.has(d.id)).length} new projects
+                  </h2>
                 </div>
               </div>
-              {discoverLoading ? (
+              {discoverLoading && invitations.length === 0 ? (
                 <div className="space-y-2">
                   <div className="h-20 animate-pulse rounded-lg bg-slate-200" />
                   <div className="h-20 animate-pulse rounded-lg bg-slate-200" />
                 </div>
-              ) : discoverProjects.length === 0 ? (
-                <p className="py-6 text-sm text-slate-600">No open tenders match your trades right now. Check back soon.</p>
+              ) : invitations.length === 0 && discoverProjects.filter((d) => !dismissedIds.has(d.id)).length === 0 ? (
+                <p className="py-6 text-sm text-slate-600">Nothing new right now. Check back soon.</p>
               ) : (
                 <div className="space-y-2">
-                  {discoverProjects.map((d) => (
-                    <div
-                      key={`discover-${d.id}`}
-                      className="rounded-lg border-[3px] border-emerald-600/40 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
-                          {d.isEmergency ? `🚨 ${d.projectName}` : d.projectName}
-                        </span>
-                        {d.tradesRequired.map((t) => {
-                          const matches = d.matchingTrades.some(
-                            (m) => m.toLowerCase() === t.toLowerCase(),
-                          );
-                          return (
+                  {invitations.map((pp) => {
+                    const deadline = getQuoteDeadlineState(pp);
+                    return (
+                      <div key={`invite-${pp.id}`} className="rounded-lg border-[3px] border-amber-300/70 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                            {pp.project.isEmergency ? `🚨 ${pp.project.projectName}` : pp.project.projectName}
+                          </span>
+                          <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Invitation</span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {(pp.quoteRequestedTrades || []).map((t) => (
                             <span
-                              key={`${d.id}-${t}`}
+                              key={`${pp.id}-${t}`}
                               className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                                matches
+                                tradeMatchesPro(t)
                                   ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
                                   : 'border border-slate-300 bg-slate-100 text-slate-600'
                               }`}
                             >
                               {t}
                             </span>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
-                        {d.notes}
-                        {d.region ? ` · ${d.region}` : ''}
-                        {d.endDate
-                          ? ` · Proposed completion ${new Date(d.endDate).toLocaleDateString('en-HK', { day: '2-digit', month: 'short' })}`
-                          : ''}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-slate-500">
-                          {d.tradesRequired.length} trade{d.tradesRequired.length === 1 ? '' : 's'} required
-                        </span>
-                        <div className="ml-auto">
+                          ))}
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                          {pp.project.notes}
+                          {pp.project.region ? ` · ${pp.project.region}` : ''}
+                          {pp.project.endDate
+                            ? ` · Completion ${new Date(pp.project.endDate).toLocaleDateString('en-HK', { day: '2-digit', month: 'short' })}`
+                            : ''}
+                        </p>
+                        {deadline ? (
+                          <p className={`mt-1 text-xs font-semibold ${deadline.isOverdue ? 'text-rose-600' : 'text-amber-700'}`}>
+                            {deadline.isOverdue
+                              ? `Deadline missed · ${Math.max(1, Math.round(deadline.overdueHours / 24))}d ago`
+                              : `⏳ ${deadline.remainingLabel} to respond`}
+                          </p>
+                        ) : null}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleApply(d)}
-                            disabled={applyingIds.has(d.id)}
+                            onClick={() => handleQuickAccept(pp)}
+                            disabled={acceptingIds.has(pp.id)}
                             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                           >
-                            {applyingIds.has(d.id) ? 'Applying…' : 'Request to quote'}
+                            {acceptingIds.has(pp.id) ? 'Sending…' : "I'm interested"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickDecline(pp)}
+                            className="rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                          >
+                            Not interested
                           </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  {discoverProjects
+                    .filter((d) => !dismissedIds.has(d.id))
+                    .map((d) => (
+                      <div
+                        key={`discover-${d.id}`}
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                          dismissingIds.has(d.id)
+                            ? 'max-h-0 -translate-x-full opacity-0'
+                            : 'max-h-[400px] translate-x-0 opacity-100'
+                        }`}
+                      >
+                        <div className="rounded-lg border-[3px] border-emerald-600/40 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                              {d.isEmergency ? `🚨 ${d.projectName}` : d.projectName}
+                            </span>
+                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase text-[#F5EEDE]">Open tender</span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {d.tradesRequired.map((t) => {
+                              const matches = d.matchingTrades.some(
+                                (m) => m.toLowerCase() === t.toLowerCase(),
+                              );
+                              return (
+                                <span
+                                  key={`${d.id}-${t}`}
+                                  className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                                    matches
+                                      ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
+                                      : 'border border-slate-300 bg-slate-100 text-slate-600'
+                                  }`}
+                                >
+                                  {t}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                            {d.notes}
+                            {d.region ? ` · ${d.region}` : ''}
+                            {d.endDate
+                              ? ` · Completion ${new Date(d.endDate).toLocaleDateString('en-HK', { day: '2-digit', month: 'short' })}`
+                              : ''}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleApply(d)}
+                              disabled={applyingIds.has(d.id)}
+                              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              {applyingIds.has(d.id) ? 'Sending…' : "I'm interested"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDismissOpenTender(d)}
+                              className="rounded-lg border border-[#D4C8A0] bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                            >
+                              Not interested
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
@@ -1110,17 +1199,15 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {(activeTab === 'open'
-          ? discoverProjects.length === 0 && !discoverLoading
+        {(activeTab === 'feed'
+          ? invitations.length === 0 && discoverProjects.filter((d) => !dismissedIds.has(d.id)).length === 0 && !discoverLoading
           : currentProjectList.length === 0) && !loading ? (
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
-            {activeTab === 'open'
-              ? 'No open tenders match your trades right now. Check back soon.'
-              : activeTab === 'invitations'
-                ? 'No invitations right now. New matches will appear here.'
-                : activeTab === 'projects'
-                  ? 'No active projects yet. Find an open tender and request to quote.'
-                  : 'No closed projects yet.'}
+            {activeTab === 'feed'
+              ? 'Nothing new right now. Check back soon.'
+              : activeTab === 'projects'
+                ? 'No active projects yet. Find work in the New project feed.'
+                : 'No closed projects yet.'}
           </div>
         ) : null}
 

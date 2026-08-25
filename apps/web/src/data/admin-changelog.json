@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-26-6c7e19b0",
+    "date": "2026-08-26T07:57:28+08:00",
+    "title": "feat(pro): merge invitations + open tenders into New project feed",
+    "summary": "feat(pro): merge invitations + open tenders into New project feed",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "6c7e19b0",
+    "files": [
+      "MANUAL_SQL_ADD_TENDER_DISMISSAL.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/professional-discover.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-d91a4553",
     "date": "2026-08-26T00:59:05+08:00",
     "title": "fix(tender): publish open tenders to the marketplace, don't invite",

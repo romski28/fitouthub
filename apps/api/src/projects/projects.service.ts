@@ -4482,6 +4482,7 @@ export class ProjectsService {
         tenderOpenedAt: { not: null },
         tenderClosedAt: null,
         status: { not: this.ARCHIVED_STATUS },
+        tenderDismissals: { none: { professionalId } },
       },
       select: {
         id: true,
@@ -4620,6 +4621,16 @@ ${scope.otherRequiredTrades.length > 0 ? `Other required trades: ${scope.otherRe
     }
 
     return projectProfessional;
+  }
+
+  /** Dismiss an open tender so it never reappears in the pro's feed. */
+  async dismissOpenTender(projectId: string, professionalId: string) {
+    await this.prisma.tenderDismissal.upsert({
+      where: { professionalId_projectId: { professionalId, projectId } },
+      update: {},
+      create: { professionalId, projectId },
+    });
+    return { success: true };
   }
 
   /** Close a tender so no further self-nominations are accepted. */
