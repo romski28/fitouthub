@@ -4446,6 +4446,246 @@ export class ProjectsService {
     }
   }
 
+  private getMatchedProjectTrades(professional: any, projectTrades: string[] | null | undefined): string[] {
+    const tokens = this.getProfessionalTradeTokens(professional);
+    const normalized = this.normalizeTradeLabels(projectTrades || []);
+    return normalized.filter((trade) =>
+      tokens.some(
+        (token) =>
+          token.includes(trade.toLowerCase()) || trade.toLowerCase().includes(token),
+      ),
+    );
+  }
+
+  private professionalCoversRegion(professional: any, region: string | null | undefined): boolean {
+    if (!region) return true;
+    const parts = String(region)
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (parts.length === 0) return true;
+
+    const hasLocationData =
+      Boolean(professional?.locationPrimary) ||
+      Boolean(professional?.locationSecondary) ||
+      (Array.isArray(professional?.servicePrimaries) && professional.servicePrimaries.length > 0);
+
+    // Pros without location data see everything; others are region-filtered.
+    if (!hasLocationData) return true;
+
+    const primary = String(professional.locationPrimary || '').toLowerCase();
+    const secondary = String(professional.locationSecondary || '').toLowerCase();
+    const services = (professional.servicePrimaries || []).map((s: any) => String(s).toLowerCase());
+
+    return parts.some(
+      (part) =>
+        primary.includes(part) ||
+        secondary.includes(part) ||
+        services.some((s: string) => s.includes(part) || part.includes(s)),
+    );
+  }
+
+  private isDiscoverableTender(project: any): boolean {
+    return (
+      project.currentStage === ProjectStage.BIDDING_ACTIVE &&
+      project.onlySelectedProfessionalsCanBid === false &&
+      !project.awardedProjectProfessionalId &&
+      Boolean(project.tenderOpenedAt) &&
+      !project.tenderClosedAt
+    );
+  }
+
+  /** Pull-side: open tenders a pro can browse and apply to. */
+  async discoverOpenProjects(professionalId: string) {
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: {
+        id: true,
+        status: true,
+        primaryTrade: true,
+        tradesOffered: true,
+        locationPrimary: true,
+        locationSecondary: true,
+        servicePrimaries: true,
+        emergencyCalloutAvailable: true,
+      },
+    });
+
+    if (!professional) throw new NotFoundException('Professional not found');
+    if (professional.status !== 'approved') return [];
+
+    const projects = await this.prisma.project.findMany({
+      where: {
+        currentStage: ProjectStage.BIDDING_ACTIVE,
+        onlySelectedProfessionalsCanBid: false,
+        awardedProjectProfessionalId: null,
+        tenderOpenedAt: { not: null },
+        tenderClosedAt: null,
+        status: { not: this.ARCHIVED_STATUS },
+      },
+      select: {
+        id: true,
+        projectName: true,
+        region: true,
+        budget: true,
+        notes: true,
+        tradesRequired: true,
+        isEmergency: true,
+        endDate: true,
+        tenderOpenedAt: true,
+        professionals: {
+          where: { professionalId },
+          select: { id: true, status: true },
+        },
+      },
+      orderBy: { tenderOpenedAt: 'desc' },
+    });
+
+    const results: any[] = [];
+    for (const project of projects) {
+      // Already involved (invited / applied / quoted / awarded) -> not in open list.
+      if ((project.professionals || []).length > 0) continue;
+      if (project.isEmergency && !professional.emergencyCalloutAvailable) continue;
+      if (!this.professionalCoversRegion(professional, project.region)) continue;
+
+      const matchedTrades = this.getMatchedProjectTrades(professional, project.tradesRequired);
+      if (matchedTrades.length === 0) continue;
+
+      const { professionals: _omit, ...rest } = project as any;
+      results.push({ ...rest, matchingTrades: matchedTrades });
+    }
+
+    return results;
+  }
+
+  /** Self-nomination: pro applies to an open tender they are not yet involved in. */
+  async applyToOpenTender(projectId: string, professionalId: string) {
+    const professional = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: {
+        id: true,
+        status: true,
+        primaryTrade: true,
+        tradesOffered: true,
+        emergencyCalloutAvailable: true,
+        fullName: true,
+        businessName: true,
+      },
+    });
+
+    if (!professional) throw new NotFoundException('Professional not found');
+    if (professional.status !== 'approved') {
+      throw new ForbiddenException('Only approved professionals can apply');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        projectName: true,
+        region: true,
+        tradesRequired: true,
+        isEmergency: true,
+        currentStage: true,
+        onlySelectedProfessionalsCanBid: true,
+        awardedProjectProfessionalId: true,
+        tenderOpenedAt: true,
+        tenderClosedAt: true,
+        userId: true,
+        clientId: true,
+      },
+    });
+
+    if (!project) throw new NotFoundException('Project not found');
+    if (!this.isDiscoverableTender(project)) {
+      throw new BadRequestException('This project is not open for applications');
+    }
+    if (project.isEmergency && !professional.emergencyCalloutAvailable) {
+      throw new BadRequestException('This emergency project requires emergency availability');
+    }
+
+    const matchedTrades = this.getMatchedProjectTrades(professional, project.tradesRequired);
+    if (matchedTrades.length === 0) {
+      throw new BadRequestException('None of your trades match this project');
+    }
+
+    const scope = this.deriveInvitationTradeScope(project.tradesRequired || [], professional);
+
+    const projectProfessional = await this.prisma.projectProfessional.upsert({
+      where: { projectId_professionalId: { projectId, professionalId } },
+      update: {
+        source: 'discovered',
+        ...this.buildProjectProfessionalTradeScopeWrite({
+          status: 'pending',
+          requestedTrades: scope.requestedTrades,
+          projectTrades: scope.projectTrades,
+          includeTradeScope: true,
+        }),
+      },
+      create: {
+        projectId,
+        professionalId,
+        source: 'discovered',
+        ...this.buildProjectProfessionalTradeScopeWrite({
+          status: 'pending',
+          requestedTrades: scope.requestedTrades,
+          projectTrades: scope.projectTrades,
+          includeTradeScope: true,
+        }),
+      },
+    });
+
+    const proName = professional.fullName || professional.businessName || 'A professional';
+    const applicationMessage = `📩 ${proName} applied to this open tender.
+
+Requested trades: ${scope.requestedTrades.join(', ') || 'To be confirmed'}
+${scope.otherRequiredTrades.length > 0 ? `Other required trades: ${scope.otherRequiredTrades.join(', ')}` : ''}`.trim();
+
+    await this.prisma.message.create({
+      data: {
+        projectProfessionalId: projectProfessional.id,
+        senderType: 'professional',
+        senderProfessionalId: professionalId,
+        content: applicationMessage,
+      },
+    });
+
+    const clientActorId = project.userId || project.clientId;
+    if (clientActorId) {
+      void this.pushService.sendToUser(clientActorId, {
+        title: 'New Tender Application',
+        body: `${proName} applied to "${project.projectName}".`,
+        url: `/projects/${projectId}?tab=professionals`,
+        tag: `tender-apply-${projectId}-${professionalId}`,
+      }).catch(() => {});
+    }
+
+    return projectProfessional;
+  }
+
+  /** Close a tender so no further self-nominations are accepted. */
+  async closeTender(projectId: string, userId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, userId: true, clientId: true, tenderOpenedAt: true, tenderClosedAt: true },
+    });
+
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.userId !== userId && project.clientId !== userId) {
+      throw new ForbiddenException('Only the project owner can close the tender');
+    }
+    if (!project.tenderOpenedAt) {
+      throw new BadRequestException('This project has no open tender');
+    }
+
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { tenderClosedAt: new Date() },
+    });
+
+    return { success: true, projectId };
+  }
+
   async inviteAllMatchingProfessionals(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -4506,10 +4746,16 @@ export class ProjectsService {
 
     const result = await this.inviteProfessionals(projectId, professionalIds);
 
-    // Transition project to BIDDING_ACTIVE now that professionals are invited
+    // Transition project to BIDDING_ACTIVE and open it for discovery now that
+    // professionals are invited.
     await this.prisma.project.update({
       where: { id: projectId },
-      data: { currentStage: ProjectStage.BIDDING_ACTIVE },
+      data: {
+        currentStage: ProjectStage.BIDDING_ACTIVE,
+        onlySelectedProfessionalsCanBid: false,
+        tenderOpenedAt: new Date(),
+        tenderClosedAt: null,
+      },
     });
 
     return result;
@@ -4629,6 +4875,11 @@ Please review the project details and respond with your quote or decline the inv
     });
 
     await Promise.all(messagePromises);
+
+    const ppIdByProfessionalId = new Map<string, string>();
+    for (const jr of junctionResults) {
+      ppIdByProfessionalId.set(String(jr.professionalId), String(jr.id));
+    }
 
     // Generate tokens for all professionals in parallel (no rate limit concern)
     const tokenData: Array<{ professional: typeof professionals[0]; acceptToken: string; declineToken: string; authToken: string }> = [];
@@ -4805,6 +5056,25 @@ Please review the project details and respond with your quote or decline the inv
           tag: `project-invite-${projectId}-${professional.id}`,
         });
       } catch { /* push is fire-and-forget */ }
+
+      // In-app notification for the pro feed/bell (always, independent of push)
+      try {
+        const ppId = ppIdByProfessionalId.get(professional.id);
+        await this.prisma.appNotification.create({
+          data: {
+            professionalId: professional.id,
+            type: 'project_invitation',
+            title: 'New Project Invitation',
+            body: `You've been invited to quote on "${project.projectName}" in ${project.region}.`,
+            url: ppId ? `/professional-projects/${ppId}` : `/professional-projects?projectId=${projectId}`,
+          },
+        });
+      } catch (err) {
+        console.error('[ProjectsService.inviteProfessionals] appNotification failed', {
+          professionalId: professional.id,
+          error: err?.message,
+        });
+      }
 
       this.pushNotificationAuditRecipient(notificationAudit, recipientAudit);
     }

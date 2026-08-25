@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-08-25-3be1fcf4",
+    "date": "2026-08-25T09:13:18+08:00",
+    "title": "feat(tender): pro discover, apply, and in-app notifications for open tenders",
+    "summary": "feat(tender): pro discover, apply, and in-app notifications for open tenders",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "3be1fcf4",
+    "files": [
+      "MANUAL_SQL_ADD_TENDER_DISCOVERY.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/next-steps/review-quotes-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-25-50569596",
     "date": "2026-08-25T00:01:11+08:00",
     "title": "style(pro): unify worker/contractor badges as green pills",

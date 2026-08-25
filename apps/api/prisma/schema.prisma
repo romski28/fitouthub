@@ -389,6 +389,7 @@ model Professional {
   notificationLogs          NotificationLog[]
   notificationPreferences   NotificationPreference?
   pushSubscriptions         PushSubscription[]
+  appNotifications          AppNotification[]
   nextStepActions           NextStepAction[]
   regionCoverage            ProfessionalRegionCoverage[]
   acProjects                AcProject[]
@@ -591,6 +592,8 @@ model Project {
   siteInspectionAvailableOn       DateTime?
   isEmergency                     Boolean                        @default(false)
   onlySelectedProfessionalsCanBid Boolean                        @default(true)
+  tenderOpenedAt                  DateTime?
+  tenderClosedAt                  DateTime?
   contractorContactName           String?
   contractorContactPhone          String?
   contractorContactEmail          String?
@@ -726,6 +729,7 @@ model ProjectProfessional {
   projectId                     String
   professionalId                String
   status                        String                         @default("pending")
+  source                        String                         @default("invited") // invited | discovered
   respondedAt                   DateTime?
   quoteAmount                   Decimal?                       @db.Decimal(12, 2)
   quoteBaseAmount               Decimal?                       @db.Decimal(12, 2)
@@ -1884,6 +1888,23 @@ model PushSubscription {
   @@index([professionalId])
   @@index([active])
   @@index([platform])
+}
+
+model AppNotification {
+  id             String    @id @default(cuid())
+  professionalId String
+  type           String    @default("info") // tender_match | project_invitation | ...
+  title          String
+  body           String
+  url            String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId, readAt])
+  @@index([createdAt(sort: Desc)])
 }
 
 model NextStepConfig {

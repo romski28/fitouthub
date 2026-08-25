@@ -566,6 +566,17 @@ export class ProjectsController {
     return this.projectsService.inviteAllMatchingProfessionals(projectId, userId);
   }
 
+  @Post(':id/close-tender')
+  @UseGuards(CombinedAuthGuard)
+  async closeTender(
+    @Param('id') projectId: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.projectsService.closeTender(projectId, userId);
+  }
+
   @Post()
   @UseGuards(CombinedAuthGuard)
   async create(@Body() createProjectDto: CreateProjectDto, @Request() req: any) {

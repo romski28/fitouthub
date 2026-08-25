@@ -17,6 +17,7 @@ interface QuotedProfessional {
   id: string;
   professionalId: string;
   status: string;
+  source?: string;
   quoteAmount?: string | number;
   quoteBreakdown?: StoredQuoteBreakdown | null;
   quoteNotes?: string;
@@ -326,6 +327,9 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                             {name}
                           </button>
                           {isCheapest && <span className="ml-1.5 rounded-full bg-emerald-600/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Best</span>}
+                          {pp.source === 'discovered' && (
+                            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">Open applicant</span>
+                          )}
                         </td>
                         <td className="py-2.5 px-2 text-slate-600 whitespace-nowrap">{sd || '—'}</td>
                         <td className="py-2.5 px-2 text-slate-600">{dur || '—'}</td>
@@ -416,6 +420,11 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                         {isFastest && (
                           <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                             Fastest
+                          </span>
+                        )}
+                        {pp.source === 'discovered' && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                            Open applicant
                           </span>
                         )}
                       </div>

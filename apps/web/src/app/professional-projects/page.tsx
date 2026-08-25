@@ -45,6 +45,7 @@ interface ProjectProfessional {
     endDate?: string;
   };
   status: string;
+  source?: string;
   accessRestricted?: boolean;
   quoteAmount?: string;
   quoteBaseAmount?: string;
@@ -52,7 +53,18 @@ interface ProjectProfessional {
   quotedAt?: string;
 }
 
-type SummaryTone = 'slate' | 'amber' | 'emerald' | 'blue' | 'purple' | 'rose';
+interface DiscoverProject {
+  id: string;
+  projectName: string;
+  region?: string;
+  budget?: string;
+  notes?: string;
+  tradesRequired: string[];
+  isEmergency?: boolean;
+  endDate?: string;
+  tenderOpenedAt?: string;
+  matchingTrades: string[];
+}
 
 type QuoteDeadlineState = {
   isOverdue: boolean;
@@ -142,7 +154,6 @@ export default function ProfessionalProjectsPage() {
     }
   }, [professional?.professionType, router]);
 
-  const [filterStatus, setFilterStatus] = useState<'all'|'pending'|'accepted'|'declined'|'quoted'|'awarded'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>(() => {
@@ -167,6 +178,14 @@ export default function ProfessionalProjectsPage() {
   const [workerAccessProjectId, setWorkerAccessProjectId] = useState<string | null>(null);
   const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
+  const [activeTab, setActiveTab] = useState<'my-projects' | 'find-work'>('find-work');
+  const [findWorkView, setFindWorkView] = useState<'open' | 'invitations' | 'bids' | 'past'>('open');
+  const [discoverProjects, setDiscoverProjects] = useState<DiscoverProject[]>([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [applyingIds, setApplyingIds] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
   const projectIds = useMemo(
     () => projects
       .filter((p) => !p.accessRestricted)
@@ -188,16 +207,25 @@ export default function ProfessionalProjectsPage() {
 
     return counts;
   }, [updatesSummary]);
-  const totals = {
-    total: projects.length,
-    pending: projects.filter(p => p.status === 'pending').length,
-    accepted: projects.filter(p => p.status === 'accepted').length,
-    quoted: projects.filter(p => p.status === 'quoted').length,
-    awarded: projects.filter(p => p.status === 'awarded').length,
-    declined: projects.filter(p => p.status === 'rejected' || p.status === 'declined').length,
-  };
-  const dashboardProjects = projects
-    .filter((p) => filterStatus === 'all' ? true : (p.status === filterStatus || (filterStatus==='declined' && (p.status==='rejected' || p.status==='declined'))));
+  const invitedProjects = projects.filter((p) => p.status === 'pending' && p.source !== 'discovered');
+  const bidProjects = projects.filter(
+    (p) =>
+      ['accepted', 'quoted', 'counter_requested'].includes(p.status) ||
+      (p.status === 'pending' && p.source === 'discovered'),
+  );
+  const awardedProjects = projects.filter((p) => p.status === 'awarded');
+  const pastProjects = projects.filter((p) =>
+    ['declined', 'rejected', 'withdrawn'].includes(p.status),
+  );
+
+  const currentProjectList: ProjectProfessional[] =
+    activeTab === 'my-projects'
+      ? awardedProjects
+      : findWorkView === 'invitations'
+        ? invitedProjects
+        : findWorkView === 'bids'
+          ? bidProjects
+          : pastProjects;
 
   const openProfessionalNextStepModal = useCallback(
     async (action: NextStepAction, projectId: string, projectProfessionalId: string) => {
@@ -340,6 +368,50 @@ export default function ProfessionalProjectsPage() {
 
     fetchProjects();
   }, [isLoggedIn, accessToken, router]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken) return;
+
+    const fetchDiscover = async () => {
+      setDiscoverLoading(true);
+      try {
+        const res = await fetchWithRetry(`${API_BASE_URL}/professional/discover/projects`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) throw new Error('Failed to load open tenders');
+        const data = await res.json();
+        setDiscoverProjects(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.warn('[professional-projects] discover failed', err);
+      } finally {
+        setDiscoverLoading(false);
+      }
+    };
+
+    fetchDiscover();
+  }, [isLoggedIn, accessToken]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetchWithRetry(`${API_BASE_URL}/professional/notifications`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setNotifications(Array.isArray(data?.notifications) ? data.notifications : []);
+        setUnreadNotifCount(Number(data?.unreadCount) || 0);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    fetchNotifications();
+  }, [isLoggedIn, accessToken]);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken || projectIds.length === 0) return;
@@ -506,6 +578,79 @@ export default function ProfessionalProjectsPage() {
     }
   };
 
+  const handleApply = async (project: DiscoverProject) => {
+    if (!accessToken) return;
+    setApplyingIds((prev) => new Set(prev).add(project.id));
+    try {
+      const res = await fetch(`${API_BASE_URL}/professional/discover/projects/${project.id}/apply`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || 'Failed to apply');
+      }
+      toast.success('Application sent! It now appears under "Your bids".');
+      setDiscoverProjects((prev) => prev.filter((p) => p.id !== project.id));
+      // Refresh the project list so the new bid appears under "Your bids".
+      try {
+        const response = await fetchWithRetry(`${API_BASE_URL}/professional/projects`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const list: ProjectProfessional[] = (Array.isArray(data) ? data : data.projects || []).filter(
+            (p: ProjectProfessional) => p.status !== 'selected',
+          );
+          setProjects(list);
+        }
+      } catch {
+        /* ignore */
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to apply');
+    } finally {
+      setApplyingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(project.id);
+        return next;
+      });
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    if (!accessToken) return;
+    setUnreadNotifCount(0);
+    setNotifications((prev) =>
+      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
+    );
+    try {
+      await fetch(`${API_BASE_URL}/professional/notifications/read-all`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const markNotificationRead = async (id: string) => {
+    if (!accessToken) return;
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n)),
+    );
+    setUnreadNotifCount((prev) => Math.max(0, prev - 1));
+    try {
+      await fetch(`${API_BASE_URL}/professional/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      });
+    } catch {
+      /* ignore */
+    }
+  };
+
   if (isLoggedIn === undefined || loading) {
     return <PageLoadingState message="Loading projects..." />;
   }
@@ -527,7 +672,9 @@ export default function ProfessionalProjectsPage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{professional?.fullName || professional?.businessName || 'Projects'}</p>
-              <h1 className="text-2xl font-bold leading-tight text-slate-900">My Projects</h1>
+              <h1 className="text-2xl font-bold leading-tight text-slate-900">
+                {activeTab === 'my-projects' ? 'My Projects' : 'Find Work'}
+              </h1>
               <div className="flex items-center gap-3">
                 {nextStepsLoading && (
                   <p className="text-xs text-slate-400 animate-pulse">
@@ -543,34 +690,180 @@ export default function ProfessionalProjectsPage() {
                 >
                   ↻ Refresh all
                 </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setNotifOpen((v) => !v)}
+                    className="relative rounded-lg border border-[rgba(120,53,15,0.2)] bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-50"
+                    aria-label="Notifications"
+                  >
+                    🔔
+                    {unreadNotifCount > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                        {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                      </span>
+                    )}
+                  </button>
+                  {notifOpen && (
+                    <>
+                      <button
+                        type="button"
+                        className="fixed inset-0 z-30 cursor-default"
+                        onClick={() => setNotifOpen(false)}
+                        aria-label="Close notifications"
+                      />
+                      <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-[rgba(120,53,15,0.12)] px-4 py-2">
+                          <p className="text-sm font-bold text-slate-900">Notifications</p>
+                          {unreadNotifCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={markAllNotificationsRead}
+                              className="text-xs font-semibold text-emerald-700 hover:underline"
+                            >
+                              Mark all read
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <p className="px-4 py-6 text-center text-xs text-slate-500">No notifications yet.</p>
+                          ) : (
+                            notifications.map((n: any) => (
+                              <button
+                                key={n.id}
+                                type="button"
+                                onClick={() => {
+                                  markNotificationRead(n.id);
+                                  if (n.url && typeof window !== 'undefined') {
+                                    window.location.href = n.url;
+                                  }
+                                }}
+                                className={`block w-full border-b border-[rgba(120,53,15,0.08)] px-4 py-3 text-left transition hover:bg-white/60 ${n.readAt ? 'opacity-60' : ''}`}
+                              >
+                                <p className="text-sm font-semibold text-slate-900">{n.title}</p>
+                                <p className="mt-0.5 text-xs text-slate-600">{n.body}</p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
-                <SummaryCard label="Total" value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
-                <SummaryCard label="Pending" value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
-                <SummaryCard label="Accepted" value={totals.accepted} tone="emerald" filterStatus="accepted" currentFilter={filterStatus} onClick={() => setFilterStatus('accepted')} />
-                <SummaryCard label="Quoted" value={totals.quoted} tone="blue" filterStatus="quoted" currentFilter={filterStatus} onClick={() => setFilterStatus('quoted')} />
-                <SummaryCard label="Awarded" value={totals.awarded} tone="purple" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
-                <SummaryCard label="Declined" value={totals.declined} tone="rose" filterStatus="declined" currentFilter={filterStatus} onClick={() => setFilterStatus('declined')} />
+              <div className="inline-flex w-fit rounded-xl border border-[rgba(120,53,15,0.15)] bg-white/60 p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('my-projects')}
+                  className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${activeTab === 'my-projects' ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  My Projects
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('find-work')}
+                  className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${activeTab === 'find-work' ? 'bg-[#b94e2d] text-[#F5EEDE]' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  Find Work
+                </button>
               </div>
-              <p className="text-[10px] text-center text-slate-600 italic">Click on a status to filter</p>
+              {activeTab === 'find-work' && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <SubViewChip label="Open tenders" value={discoverProjects.length} active={findWorkView === 'open'} onClick={() => setFindWorkView('open')} />
+                  <SubViewChip label="Invitations" value={invitedProjects.length} active={findWorkView === 'invitations'} onClick={() => setFindWorkView('invitations')} />
+                  <SubViewChip label="Your bids" value={bidProjects.length} active={findWorkView === 'bids'} onClick={() => setFindWorkView('bids')} />
+                  <SubViewChip label="Past" value={pastProjects.length} active={findWorkView === 'past'} onClick={() => setFindWorkView('past')} />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Project cards — inside the same container */}
-          {dashboardProjects.length > 0 && (
+          {/* Cards */}
+          {activeTab === 'find-work' && findWorkView === 'open' ? (
+            <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Open tenders</p>
+                  <h2 className="text-xl font-bold text-slate-900">{discoverProjects.length} matching tenders</h2>
+                </div>
+              </div>
+              {discoverLoading ? (
+                <div className="space-y-2">
+                  <div className="h-20 animate-pulse rounded-lg bg-slate-200" />
+                  <div className="h-20 animate-pulse rounded-lg bg-slate-200" />
+                </div>
+              ) : discoverProjects.length === 0 ? (
+                <p className="py-6 text-sm text-slate-600">No open tenders match your trades right now. Check back soon.</p>
+              ) : (
+                <div className="space-y-2">
+                  {discoverProjects.map((d) => (
+                    <div
+                      key={`discover-${d.id}`}
+                      className="rounded-lg border-[3px] border-emerald-600/40 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
+                          {d.isEmergency ? `🚨 ${d.projectName}` : d.projectName}
+                        </span>
+                        {d.matchingTrades.map((t) => (
+                          <span
+                            key={`${d.id}-${t}`}
+                            className="rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                        {d.notes}
+                        {d.region ? ` · ${d.region}` : ''}
+                        {d.endDate
+                          ? ` · Proposed completion ${new Date(d.endDate).toLocaleDateString('en-HK', { day: '2-digit', month: 'short' })}`
+                          : ''}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-slate-500">
+                          {d.tradesRequired.length} trade{d.tradesRequired.length === 1 ? '' : 's'} required
+                        </span>
+                        <div className="ml-auto">
+                          <button
+                            type="button"
+                            onClick={() => handleApply(d)}
+                            disabled={applyingIds.has(d.id)}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {applyingIds.has(d.id) ? 'Applying…' : 'Request to quote'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : currentProjectList.length > 0 ? (
             <div className="mt-5 pt-4 border-t border-[rgba(120,53,15,0.12)]">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                      {activeTab === 'my-projects'
+                        ? 'Awarded'
+                        : findWorkView === 'invitations'
+                          ? 'Action required'
+                          : findWorkView === 'bids'
+                            ? 'In play'
+                            : 'Past'}
+                    </p>
                     <h2 className="text-xl font-bold text-slate-900">
-                  {dashboardProjects.length} Projects in this view
+                  {currentProjectList.length} Projects in this view
                 </h2>
               </div>
             </div>
             <div className="space-y-2">
-              {dashboardProjects.map((projectProf) => {
+              {currentProjectList.map((projectProf) => {
                 const quoteDeadlineState = getQuoteDeadlineState(projectProf);
                 const quoteOverdue = Boolean(quoteDeadlineState?.isOverdue);
                 const actions = (nextStepMap[projectProf.project.id] || []).filter((action) => {
@@ -849,7 +1142,7 @@ export default function ProfessionalProjectsPage() {
               })}
             </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {error && (
@@ -858,9 +1151,19 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {dashboardProjects.length === 0 ? (
+        {(activeTab === 'find-work' && findWorkView === 'open'
+          ? discoverProjects.length === 0 && !discoverLoading
+          : currentProjectList.length === 0) && !loading ? (
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
-            No immediate actions. Check Recent Activity for updates.
+            {activeTab === 'my-projects'
+              ? 'No awarded projects yet. Winning a tender moves it here.'
+              : findWorkView === 'open'
+                ? 'No open tenders match your trades right now. Check back soon.'
+                : findWorkView === 'invitations'
+                  ? 'No invitations right now. New matches will appear here.'
+                  : findWorkView === 'bids'
+                    ? 'No bids yet. Find an open tender and request to quote.'
+                    : 'No past bids.'}
           </div>
         ) : null}
 
@@ -971,42 +1274,29 @@ export default function ProfessionalProjectsPage() {
   );
 }
 
-function SummaryCard({ 
-  label, 
-  value, 
-  tone, 
-  filterStatus, 
-  currentFilter, 
-  onClick 
-}: { 
-  label: string; 
-  value: number; 
-  tone: SummaryTone; 
-  filterStatus: string;
-  currentFilter: string;
+function SubViewChip({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  active: boolean;
   onClick: () => void;
 }) {
-  const toneMap: Record<SummaryTone, { valueColor: string; activeRing: string }> = {
-    slate: { valueColor: 'text-slate-900', activeRing: 'ring-slate-700' },
-    amber: { valueColor: 'text-amber-700', activeRing: 'ring-amber-300' },
-    emerald: { valueColor: 'text-emerald-700', activeRing: 'ring-emerald-300' },
-    blue: { valueColor: 'text-blue-700', activeRing: 'ring-blue-300' },
-    purple: { valueColor: 'text-purple-700', activeRing: 'ring-purple-300' },
-    rose: { valueColor: 'text-rose-700', activeRing: 'ring-rose-300' },
-  };
-
-  const { valueColor, activeRing } = toneMap[tone];
-  const isActive = currentFilter === filterStatus;
-
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`rounded-lg bg-white/40 px-3 py-2 text-left transition-all hover:bg-white/60 ${
-        isActive ? `ring-2 ${activeRing} bg-white/60` : ''
+      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition ${
+        active
+          ? 'bg-[#b94e2d] text-[#F5EEDE]'
+          : 'bg-white/40 text-slate-700 hover:bg-white/60'
       }`}
     >
-      <p className="text-[11px] uppercase tracking-wide text-slate-700">{label}</p>
-      <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
+      <span className="text-[11px] font-semibold uppercase tracking-wide">{label}</span>
+      <span className={`text-lg font-bold ${active ? 'text-[#F5EEDE]' : 'text-slate-900'}`}>{value}</span>
     </button>
   );
 }
