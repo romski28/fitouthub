@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-26-7044c6cd",
+    "date": "2026-08-26T08:26:55+08:00",
+    "title": "fix(pro): show all required trades on project cards, colour-coded",
+    "summary": "fix(pro): show all required trades on project cards, colour-coded",
+    "areas": [
+      "web"
+    ],
+    "commit": "7044c6cd",
+    "files": [
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-383ae982",
     "date": "2026-08-26T08:18:07+08:00",
     "title": "refactor(pro): smooth card exit animation on interested/dismiss",

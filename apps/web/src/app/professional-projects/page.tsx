@@ -806,7 +806,10 @@ export default function ProfessionalProjectsPage() {
                           <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Invitation</span>
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1.5">
-                          {(pp.quoteRequestedTrades || []).map((t) => (
+                          {(pp.projectTradesSnapshot && pp.projectTradesSnapshot.length > 0
+                            ? pp.projectTradesSnapshot
+                            : pp.quoteRequestedTrades || []
+                          ).map((t) => (
                             <span
                               key={`${pp.id}-${t}`}
                               className={`rounded-lg px-2 py-1 text-xs font-semibold ${
@@ -1017,29 +1020,30 @@ export default function ProfessionalProjectsPage() {
                             </Link>
                           )}
                           <div className="sm:ml-auto shrink-0 flex items-center gap-2">
-                            {/* Trade/scope chips */}
-                            {!isRestricted && (projectProf.quoteRequestedTrades?.length || projectProf.projectTradesSnapshot?.length) ? (
-                              projectProf.quoteRequestedTrades && projectProf.quoteRequestedTrades.length > 0 ? (
-                                projectProf.quoteRequestedTrades.map((trade) => {
-                                  const matches = tradeMatchesPro(trade);
-                                  return (
-                                    <span
-                                      key={`requested-${projectProf.id}-${trade}`}
-                                      className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                                        quoteOverdue || isStopStatus
-                                          ? matches
-                                            ? 'border border-emerald-300/40 bg-emerald-400/20 text-emerald-100'
-                                            : 'border border-slate-300/40 bg-slate-400/20 text-slate-200'
-                                          : matches
-                                            ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
-                                            : 'border border-slate-300 bg-slate-100 text-slate-600'
-                                      }`}
-                                    >
-                                      {trade}
-                                    </span>
-                                  );
-                                })
-                              ) : null
+                            {/* Trade/scope chips — all required trades, green = supplied by pro */}
+                            {!isRestricted && (projectProf.projectTradesSnapshot?.length || projectProf.quoteRequestedTrades?.length) ? (
+                              (projectProf.projectTradesSnapshot && projectProf.projectTradesSnapshot.length > 0
+                                ? projectProf.projectTradesSnapshot
+                                : projectProf.quoteRequestedTrades || []
+                              ).map((trade) => {
+                                const matches = tradeMatchesPro(trade);
+                                return (
+                                  <span
+                                    key={`scope-${projectProf.id}-${trade}`}
+                                    className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                                      quoteOverdue || isStopStatus
+                                        ? matches
+                                          ? 'border border-emerald-300/40 bg-emerald-400/20 text-emerald-100'
+                                          : 'border border-slate-300/40 bg-slate-400/20 text-slate-200'
+                                        : matches
+                                          ? 'border border-emerald-300 bg-emerald-100 text-emerald-800'
+                                          : 'border border-slate-300 bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {trade}
+                                  </span>
+                                );
+                              })
                             ) : null}
                             <button
                               type="button"
