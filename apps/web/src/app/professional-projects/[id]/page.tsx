@@ -41,6 +41,17 @@ interface ProjectDetail {
   professionalId?: string;
   quoteRequestedTrades?: string[];
   projectTradesSnapshot?: string[];
+  quotedTrades?: string[];
+  subcontracting?: Array<{
+    trade: string;
+    kind: string;
+    amount?: number | string;
+    contactId?: string | null;
+    professionalId?: string | null;
+    b2bCost?: number | string | null;
+    multiplier?: number | string | null;
+    status?: string;
+  }> | null;
   project: {
     id: string;
     projectName: string;

@@ -5,6 +5,7 @@ import { AccordionItem, AccordionGroup } from '@/components/project-tabs';
 import { ProjectAiPanel } from '@/components/project-ai-panel';
 import { ProjectAiScopePanel } from '@/components/project-ai-scope-panel';
 import { InspectSiteModal } from '@/components/next-steps/inspect-site-modal';
+import { TeamBuilderModal, type SubcontractEntry } from '@/components/team-builder-modal';
 import { getProjectScope } from '@/lib/project-scope';
 import {
   getQuoteBreakdownBaseTotal,
@@ -30,6 +31,8 @@ interface OverviewTabProps {
     id: string;
     quoteRequestedTrades?: string[];
     projectTradesSnapshot?: string[];
+    quotedTrades?: string[];
+    subcontracting?: SubcontractEntry[] | null;
     project: {
       id: string;
       projectName: string;
@@ -177,6 +180,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const showQuoteCard = !isDeclinedOrRejected && (hasQuoted || ['pending', 'accepted', 'counter_requested'].includes(project.status));
   const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({ 'project-overview': true });
   const [showInspectModal, setShowInspectModal] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [localPlan, setLocalPlan] = useState<SubcontractEntry[] | null>(null);
 
   const requestedTradeScope = Array.isArray(project.quoteRequestedTrades)
     ? project.quoteRequestedTrades.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
@@ -184,6 +189,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const projectTradeScope = Array.isArray(project.projectTradesSnapshot)
     ? project.projectTradesSnapshot.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
     : [];
+  const subcontractingPlan = localPlan ?? (Array.isArray(project.subcontracting) ? project.subcontracting : []);
+  const teamTrades = subcontractingPlan.filter((e) => e.kind !== 'self');
+  const isAwarded = project.status === 'awarded';
   const mimoExtras = Array.isArray(project.project.mimoProjectExtras)
     ? project.project.mimoProjectExtras
     : [];
@@ -287,6 +295,49 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 );
               })}
             </p>
+          )}
+        </div>
+      </AccordionItem>
+
+      {/* Your team */}
+      <AccordionItem
+        id="your-team"
+        title="Your team"
+        isOpen={expandedAccordions['your-team'] !== false}
+        onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+      >
+        <div className="space-y-3">
+          {teamTrades.length === 0 ? (
+            <p className="text-sm text-slate-600">No additional trades — you cover the whole project yourself.</p>
+          ) : (
+            <>
+              <div className="space-y-1">
+                {teamTrades.map((e) => (
+                  <div
+                    key={e.trade}
+                    className="flex items-center justify-between rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] px-3 py-2 text-sm"
+                  >
+                    <span className="font-semibold text-slate-800">{e.trade}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        e.status === 'defined' ? 'bg-emerald-600 text-[#F5EEDE]' : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {e.status === 'defined' ? 'Assigned' : 'TBC'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {!isAwarded && (
+                <button
+                  type="button"
+                  onClick={() => setShowTeamModal(true)}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  Define your team
+                </button>
+              )}
+            </>
           )}
         </div>
       </AccordionItem>
@@ -480,6 +531,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         isOpen={showInspectModal}
         onClose={() => setShowInspectModal(false)}
         projectId={projectId}
+      />
+
+      <TeamBuilderModal
+        isOpen={showTeamModal}
+        onClose={() => setShowTeamModal(false)}
+        projectProfessionalId={project.id}
+        accessToken={accessToken || ''}
+        subcontracting={subcontractingPlan}
+        projectName={project.project.projectName}
+        isAwarded={isAwarded}
+        onSaved={(next) => setLocalPlan(next)}
       />
     </>
   );

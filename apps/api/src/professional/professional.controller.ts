@@ -7,6 +7,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   HttpCode,
@@ -1634,6 +1635,8 @@ export class ProfessionalController {
             updatedAt: true,
             quoteRequestedTrades: true,
             projectTradesSnapshot: true,
+            quotedTrades: true,
+            subcontracting: true,
             project: {
               select: {
                 id: true,
@@ -1741,6 +1744,58 @@ export class ProfessionalController {
       primaryTrade: pro?.primaryTrade || null,
       contacts,
     };
+  }
+
+  @Get('team/search')
+  @UseGuards(AuthGuard('jwt'))
+  async searchTeamPros(
+    @Request() req: any,
+    @Query('q') q?: string,
+    @Query('trade') trade?: string,
+  ) {
+    const professionalId = req.user.id || req.user.sub;
+
+    const conditions: any[] = [];
+    if (q && String(q).trim()) {
+      const term = String(q).trim();
+      conditions.push(
+        { fullName: { contains: term, mode: 'insensitive' } },
+        { businessName: { contains: term, mode: 'insensitive' } },
+      );
+    }
+    if (trade && String(trade).trim()) {
+      const tradeTerm = String(trade).trim();
+      conditions.push(
+        { primaryTrade: { contains: tradeTerm, mode: 'insensitive' } },
+        { tradesOffered: { has: tradeTerm } },
+      );
+    }
+
+    const where: any = {
+      status: 'approved',
+      professionType: { in: ['contractor', 'company'] },
+      id: { not: professionalId },
+    };
+    if (conditions.length > 0) {
+      where.OR = conditions;
+    }
+
+    const pros = await (this.prisma as any).professional.findMany({
+      where,
+      select: {
+        id: true,
+        fullName: true,
+        businessName: true,
+        primaryTrade: true,
+        tradesOffered: true,
+        locationPrimary: true,
+        locationSecondary: true,
+      },
+      orderBy: { businessName: 'asc' },
+      take: 20,
+    });
+
+    return { pros };
   }
 
   @Post('projects/:projectProfessionalId/quote-preview')

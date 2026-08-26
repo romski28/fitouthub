@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-26-ce4023d6",
+    "date": "2026-08-26T09:05:03+08:00",
+    "title": "feat(quote): define-your-team UI for subcontracted trades",
+    "summary": "feat(quote): define-your-team UI for subcontracted trades",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ce4023d6",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/team-builder-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-7044c6cd",
     "date": "2026-08-26T08:26:55+08:00",
     "title": "fix(pro): show all required trades on project cards, colour-coded",
