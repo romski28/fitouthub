@@ -186,7 +186,7 @@ export default function ProfessionalProjectsPage() {
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'projects' | 'closed'>('feed');
   const [mobileTabOpen, setMobileTabOpen] = useState(false);
-  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
+  const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [discoverProjects, setDiscoverProjects] = useState<DiscoverProject[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
@@ -273,23 +273,51 @@ export default function ProfessionalProjectsPage() {
     [accessToken, nextStepCacheScope, openModal, professional?.id, router],
   );
 
+  const EXIT_MS = 500;
+
+  const animateCardOut = (id: string, onDone: () => void) => {
+    setExitingIds((prev) => new Set(prev).add(id));
+    window.setTimeout(() => {
+      onDone();
+      setExitingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, EXIT_MS);
+  };
+
   const handleQuickAccept = async (projectProf: ProjectProfessional) => {
     const ppId = projectProf.id;
-    setAcceptingIds(prev => new Set(prev).add(ppId));
+    setAcceptingIds((prev) => new Set(prev).add(ppId));
     try {
       const res = await fetch(`${API_BASE_URL}/professional/projects/${ppId}/accept`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Failed to accept');
-      toast.success('Project accepted! You can now submit your quote.');
-      setProjects(prev => prev.map(p => p.id === ppId ? { ...p, status: 'accepted' } : p));
-      const actions = await fetchPrimaryNextSteps(projectProf.project.id, accessToken!, { cacheScope: nextStepCacheScope, forceRefresh: true });
-      if (actions) setNextStepMap(prev => ({ ...prev, [projectProf.project.id]: actions }));
+      toast.success('Added to My projects.');
+      // Wait for the accept (emails included) before animating out, then move
+      // the project to My projects so the list closes smoothly.
+      animateCardOut(ppId, () => {
+        setProjects((prev) =>
+          prev.map((p) => (p.id === ppId ? { ...p, status: 'accepted' } : p)),
+        );
+        fetchPrimaryNextSteps(projectProf.project.id, accessToken!, {
+          cacheScope: nextStepCacheScope,
+          forceRefresh: true,
+        }).then((actions) => {
+          if (actions) setNextStepMap((prev) => ({ ...prev, [projectProf.project.id]: actions }));
+        });
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to accept project');
     } finally {
-      setAcceptingIds(prev => { const next = new Set(prev); next.delete(ppId); return next; });
+      setAcceptingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(ppId);
+        return next;
+      });
     }
   };
 
@@ -599,8 +627,7 @@ export default function ProfessionalProjectsPage() {
         throw new Error(body?.message || 'Failed to apply');
       }
       toast.success('Added to My projects.');
-      setDiscoverProjects((prev) => prev.filter((p) => p.id !== project.id));
-      // Refresh the project list so the new bid appears under "Your bids".
+      // Refresh the project list so the new bid appears under My projects.
       try {
         const response = await fetchWithRetry(`${API_BASE_URL}/professional/projects`, {
           method: 'GET',
@@ -616,6 +643,10 @@ export default function ProfessionalProjectsPage() {
       } catch {
         /* ignore */
       }
+      // Animate the card out, then remove it from the feed.
+      animateCardOut(project.id, () => {
+        setDiscoverProjects((prev) => prev.filter((p) => p.id !== project.id));
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to apply');
     } finally {
@@ -629,21 +660,15 @@ export default function ProfessionalProjectsPage() {
 
   const handleDismissOpenTender = (project: DiscoverProject) => {
     if (!accessToken) return;
-    setDismissingIds((prev) => new Set(prev).add(project.id));
-    window.setTimeout(() => {
+    animateCardOut(project.id, () => {
       setDismissedIds((prev) => new Set(prev).add(project.id));
-      setDismissingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(project.id);
-        return next;
-      });
       fetch(`${API_BASE_URL}/professional/discover/projects/${project.id}/dismiss`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       }).catch(() => {
         /* non-fatal */
       });
-    }, 300);
+    });
   };
 
   const tradeMatchesPro = useCallback(
@@ -765,7 +790,15 @@ export default function ProfessionalProjectsPage() {
                   {invitations.map((pp) => {
                     const deadline = getQuoteDeadlineState(pp);
                     return (
-                      <div key={`invite-${pp.id}`} className="rounded-lg border-[3px] border-amber-300/70 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm">
+                      <div
+                        key={`invite-${pp.id}`}
+                        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                          exitingIds.has(pp.id)
+                            ? 'max-h-0 -translate-x-full opacity-0'
+                            : 'max-h-[400px] translate-x-0 opacity-100'
+                        }`}
+                      >
+                        <div className="rounded-lg border-[3px] border-amber-300/70 bg-[var(--mimo-project-paper)] px-4 py-3 shadow-sm">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="min-w-0 flex-1 truncate text-[1.2rem] font-bold leading-tight text-slate-900">
                             {pp.project.isEmergency ? `🚨 ${pp.project.projectName}` : pp.project.projectName}
@@ -817,6 +850,7 @@ export default function ProfessionalProjectsPage() {
                             Not interested
                           </button>
                         </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -825,8 +859,8 @@ export default function ProfessionalProjectsPage() {
                     .map((d) => (
                       <div
                         key={`discover-${d.id}`}
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                          dismissingIds.has(d.id)
+                        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                          exitingIds.has(d.id)
                             ? 'max-h-0 -translate-x-full opacity-0'
                             : 'max-h-[400px] translate-x-0 opacity-100'
                         }`}
