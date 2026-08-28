@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-dcd13260",
+    "date": "2026-08-28T12:46:03+08:00",
+    "title": "feat(quote): add per-trade vs lump-sum pricing toggle",
+    "summary": "feat(quote): add per-trade vs lump-sum pricing toggle",
+    "areas": [
+      "web"
+    ],
+    "commit": "dcd13260",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-73c847ec",
     "date": "2026-08-28T10:37:49+08:00",
     "title": "style(pro): unify overview CTA buttons to green/paper, right-align",

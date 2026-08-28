@@ -180,6 +180,7 @@ export function QuoteActionModal({
   const [selectedAdditional, setSelectedAdditional] = useState<Record<string, boolean>>({});
   const [tradeLines, setTradeLines] = useState<Record<string, TradeLine>>({});
   const [existingPlan, setExistingPlan] = useState<any[]>([]);
+  const [pricingMode, setPricingMode] = useState<'per-trade' | 'lump'>('per-trade');
 
   const projectProfessionalId = useMemo(
     () => projectProfessionalIdProp || inferProjectProfessionalId(state.projectDetailsPath),
@@ -220,6 +221,7 @@ export function QuoteActionModal({
       setSelectedAdditional({});
       setTradeLines({});
       setExistingPlan([]);
+      setPricingMode('per-trade');
     }
   }, [isOpen]);
 
@@ -237,6 +239,13 @@ export function QuoteActionModal({
         if (!response.ok) return;
         const detail = await response.json();
         setBreakdown(parseQuoteBreakdownForm(detail?.quoteBreakdown, detail?.quoteBaseAmount || detail?.quoteAmount));
+        const lumpItems = (detail?.quoteBreakdown as any)?.baseItems || (detail?.quoteBreakdown as any)?.items;
+        const hasExistingPerTrade = Array.isArray(detail?.subcontracting) && (detail?.subcontracting as any[]).length > 0;
+        if (hasExistingPerTrade) {
+          setPricingMode('per-trade');
+        } else if (Array.isArray(lumpItems) && lumpItems.length > 0) {
+          setPricingMode('lump');
+        }
         const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
         setRequestedCompletionBy(formatCompletionDate(endDateRaw));
         setRequestedCompletionDeadline(parseCompletionDeadline(endDateRaw));
@@ -354,6 +363,9 @@ export function QuoteActionModal({
       });
   }, [isOpen, accessToken, projectProfessionalId]);
 
+  const hasTradeScope = Boolean(quoteScope && (quoteScope.tradesRequired || []).length > 0);
+  const tradePanelActive = pricingMode === 'per-trade' && hasTradeScope;
+
   // Build the per-trade plan from the current form, preserving team assignments
   // (kind / assignee) already stored on the project so quote submission never wipes them.
   function buildPlanFromForm() {
@@ -397,9 +409,8 @@ export function QuoteActionModal({
   }
 
   useEffect(() => {
-    const isTradePanel = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
-    const subcontracting = isTradePanel ? buildPlanFromForm() : undefined;
-    const amount = isTradePanel
+    const subcontracting = tradePanelActive ? buildPlanFromForm() : undefined;
+    const amount = tradePanelActive
       ? (subcontracting || []).reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
       : getQuoteBreakdownFormTotal(breakdown);
 
@@ -448,7 +459,7 @@ export function QuoteActionModal({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [accessToken, breakdown, isOpen, projectProfessionalId, quoteScope, tradeLines, selectedAdditional, existingPlan]);
+  }, [accessToken, breakdown, isOpen, projectProfessionalId, quoteScope, tradeLines, selectedAdditional, existingPlan, tradePanelActive]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -467,7 +478,7 @@ export function QuoteActionModal({
       return;
     }
 
-    const tradePlanActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
+    const tradePlanActive = tradePanelActive;
     const subcontracting = tradePlanActive ? buildPlanFromForm() : undefined;
     let numericAmount = getQuoteBreakdownFormTotal(breakdown);
     if (tradePlanActive) {
@@ -632,7 +643,6 @@ export function QuoteActionModal({
   const hourOptions = isEmergencyProject
     ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
     : Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0'));
-  const tradePanelActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
   const tradePanelTotal = tradePanelActive
     ? (buildPlanFromForm() || []).reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
     : 0;
@@ -692,11 +702,33 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
+                  {hasTradeScope && (
+                    <div className="grid grid-cols-2 gap-1 rounded-lg border border-[rgba(120,53,15,0.16)] bg-white/60 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setPricingMode('per-trade')}
+                        disabled={submitting || readOnly}
+                        className={`rounded-md px-3 py-2 text-sm font-semibold transition ${pricingMode === 'per-trade' ? 'bg-emerald-600 text-[#F5EEDE]' : 'text-stone-600 hover:bg-[rgba(245,238,219,0.9)]'}`}
+                      >
+                        Price each trade
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPricingMode('lump')}
+                        disabled={submitting || readOnly}
+                        className={`rounded-md px-3 py-2 text-sm font-semibold transition ${pricingMode === 'lump' ? 'bg-emerald-600 text-[#F5EEDE]' : 'text-stone-600 hover:bg-[rgba(245,238,219,0.9)]'}`}
+                      >
+                        Single lump sum
+                      </button>
+                    </div>
+                  )}
                   {tradePanelActive && quoteScope ? (
                     <div className="space-y-3">
-                      <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
-                        This project needs trades beyond your own. Tick the additional trades you want to cover and price each trade.
-                      </div>
+                      {quoteScope.additionalTrades.length > 0 && (
+                        <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
+                          This project needs trades beyond your own. Tick the additional trades you want to cover and price each trade.
+                        </div>
+                      )}
                       {quoteScope.tradesRequired.map((trade) => {
                         const isSelf = quoteScope.selfTrades.includes(trade);
                         const isSelected = isSelf || selectedAdditional[trade] === true;
@@ -800,9 +832,11 @@ export function QuoteActionModal({
                       })}
                       <div className="rounded-lg border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.55)] px-3 py-2 text-xs text-stone-600">
                         <p>Your price (all covered trades): {formatHKD(enteredTotal)}</p>
-                        <p className="mt-0.5 text-[10px] text-stone-500">
-                          You can add your team for the additional trades after submitting — the price is locked once submitted.
-                        </p>
+                        {quoteScope.additionalTrades.length > 0 && (
+                          <p className="mt-0.5 text-[10px] text-stone-500">
+                            You can add your team for the additional trades after submitting — the price is locked once submitted.
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : (
