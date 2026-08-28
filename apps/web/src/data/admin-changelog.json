@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-008090ae",
+    "date": "2026-08-28T13:12:19+08:00",
+    "title": "fix(api): cast nullable subcontracting JSON on revise to satisfy Prisma types",
+    "summary": "fix(api): cast nullable subcontracting JSON on revise to satisfy Prisma types",
+    "areas": [
+      "api"
+    ],
+    "commit": "008090ae",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-08-28-b7180af9",
     "date": "2026-08-28T13:08:14+08:00",
     "title": "feat(quote): persist pricing mode (lump vs per-trade) across save and review",

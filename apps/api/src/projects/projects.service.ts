@@ -10064,7 +10064,7 @@ Please review the project details and respond with your quote or decline the inv
         quoteBreakdown: storedBreakdown as any,
         feeCalculatedAt: feeBreakdown.calculatedAt,
         quotedTrades: resolvedQuotedTrades,
-        subcontracting: hasTradePlan ? normalizedSubcontracting : null,
+        subcontracting: (hasTradePlan ? normalizedSubcontracting : null) as any,
         quotePricingMode: hasTradePlan ? 'per-trade' : 'lump',
         quoteNotes,
         quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
