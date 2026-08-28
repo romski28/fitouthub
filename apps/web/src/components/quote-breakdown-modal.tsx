@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import {
-  getQuoteBreakdownClientItems,
+  getQuoteBreakdownBaseItems,
   getQuoteBreakdownClientTotal,
   type StoredQuoteBreakdown,
 } from '@/lib/quote-breakdown';
@@ -74,6 +74,16 @@ const formatDuration = (minutes?: number | null) => {
   return `${minutes} min`;
 };
 
+const tradeAmount = (entry: {
+  amount?: number | string;
+  labour?: number | string;
+  supplies?: number | string;
+  other?: number | string;
+}) => {
+  if (Number(entry.amount ?? 0) > 0) return Number(entry.amount);
+  return (Number(entry.labour) || 0) + (Number(entry.supplies) || 0) + (Number(entry.other) || 0);
+};
+
 export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownModalProps) {
   const [showSchedule, setShowSchedule] = React.useState(false);
 
@@ -83,10 +93,15 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
 
   if (!isOpen || !quote) return null;
 
-  const items = getQuoteBreakdownClientItems(quote.quoteBreakdown);
-  const total = getQuoteBreakdownClientTotal(quote.quoteBreakdown, quote.quoteAmount);
+  const items = getQuoteBreakdownBaseItems(quote.quoteBreakdown);
+  const finalTotal = getQuoteBreakdownClientTotal(quote.quoteBreakdown, quote.quoteAmount);
   const trades = Array.isArray(quote.subcontracting) ? quote.subcontracting : [];
   const isPerTrade = quote.quotePricingMode === 'per-trade' && trades.length > 0;
+  const rawTotal = isPerTrade
+    ? trades.reduce((sum, t) => sum + tradeAmount(t), 0)
+    : items.reduce((sum, i) => sum + (i.amount || 0), 0);
+  const platformFee = Math.max(0, finalTotal - rawTotal);
+  const hasBreakdown = isPerTrade || items.length > 0;
 
   const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
@@ -121,10 +136,7 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
               {isPerTrade ? (
                 <div className="overflow-hidden rounded-xl border border-[#D4C8A0] bg-white">
                   {trades.map((entry, idx) => {
-                    const amount =
-                      Number(entry.amount ?? 0) > 0
-                        ? Number(entry.amount)
-                        : (Number(entry.labour) || 0) + (Number(entry.supplies) || 0) + (Number(entry.other) || 0);
+                    const amount = tradeAmount(entry);
                     const labour = Number(entry.labour) || 0;
                     const supplies = Number(entry.supplies) || 0;
                     const other = Number(entry.other) || 0;
@@ -183,14 +195,24 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
               ) : null}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-[#D4C8A0] px-5 py-4 shrink-0">
-              <p className="text-sm font-semibold text-slate-500">Total</p>
-              <p className="text-xl font-bold text-slate-900">{formatHKD(total)}</p>
+            <div className="border-t border-[#D4C8A0] px-5 py-4 shrink-0 space-y-1.5">
+              {hasBreakdown && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-slate-500">Subtotal</p>
+                  <p className="text-sm font-semibold text-slate-700">{formatHKD(rawTotal)}</p>
+                </div>
+              )}
+              {hasBreakdown && platformFee > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-slate-500">Platform fee</p>
+                  <p className="text-sm font-semibold text-slate-700">{formatHKD(platformFee)}</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-700">Total</p>
+                <p className="text-xl font-bold text-slate-900">{formatHKD(finalTotal)}</p>
+              </div>
             </div>
-
-            {isPerTrade && (
-              <p className="px-5 pb-2 -mt-1 text-[10px] text-slate-400">Trade prices exclude the platform fee; the total includes it.</p>
-            )}
 
             <div className="border-t border-[#D4C8A0] px-5 py-3 shrink-0">
               <button

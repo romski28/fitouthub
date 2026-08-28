@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-c4bbeabe",
+    "date": "2026-08-28T21:40:42+08:00",
+    "title": "feat(client): show subtotal + platform fee + total in quote view",
+    "summary": "feat(client): show subtotal + platform fee + total in quote view",
+    "areas": [
+      "web"
+    ],
+    "commit": "c4bbeabe",
+    "files": [
+      "apps/web/src/components/quote-breakdown-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-9084e352",
     "date": "2026-08-28T16:53:21+08:00",
     "title": "feat(client): rework quote comparison and view for per-trade pricing",
