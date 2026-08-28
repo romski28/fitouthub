@@ -16,6 +16,19 @@ export interface QuoteDetail {
   quoteEstimatedStartAt?: string | null;
   quoteEstimatedDurationMinutes?: number | null;
   quoteEstimatedDurationUnit?: 'hours' | 'days' | null;
+  quotePricingMode?: 'lump' | 'per-trade' | null;
+  subcontracting?: Array<{
+    trade?: string;
+    kind?: string;
+    labour?: number | string;
+    supplies?: number | string;
+    other?: number | string;
+    amount?: number | string;
+    otherNotes?: string | null;
+    status?: string;
+    name?: string | null;
+  }> | null;
+  quotedTrades?: string[] | null;
 }
 
 interface QuoteBreakdownModalProps {
@@ -72,6 +85,8 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
 
   const items = getQuoteBreakdownClientItems(quote.quoteBreakdown);
   const total = getQuoteBreakdownClientTotal(quote.quoteBreakdown, quote.quoteAmount);
+  const trades = Array.isArray(quote.subcontracting) ? quote.subcontracting : [];
+  const isPerTrade = quote.quotePricingMode === 'per-trade' && trades.length > 0;
 
   const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
@@ -103,7 +118,43 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
             </div>
 
             <div className="next-step-scrollbar flex-1 overflow-y-auto px-5 py-4">
-              {items.length === 0 ? (
+              {isPerTrade ? (
+                <div className="overflow-hidden rounded-xl border border-[#D4C8A0] bg-white">
+                  {trades.map((entry, idx) => {
+                    const amount =
+                      Number(entry.amount ?? 0) > 0
+                        ? Number(entry.amount)
+                        : (Number(entry.labour) || 0) + (Number(entry.supplies) || 0) + (Number(entry.other) || 0);
+                    const labour = Number(entry.labour) || 0;
+                    const supplies = Number(entry.supplies) || 0;
+                    const other = Number(entry.other) || 0;
+                    const hasSplit = labour > 0 || supplies > 0 || other > 0;
+                    return (
+                      <div
+                        key={`${entry.trade}-${idx}`}
+                        className={`flex items-start justify-between gap-4 px-4 py-3 ${idx > 0 ? 'border-t border-[rgba(120,53,15,0.10)]' : ''}`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-800">{entry.trade || 'Trade'}</p>
+                          {hasSplit && (
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {labour > 0 && `Labour ${formatHKD(labour)}`}
+                              {labour > 0 && (supplies > 0 || other > 0) && ' · '}
+                              {supplies > 0 && `Hardware ${formatHKD(supplies)}`}
+                              {(labour > 0 || supplies > 0) && other > 0 && ' · '}
+                              {other > 0 && `Other ${formatHKD(other)}`}
+                            </p>
+                          )}
+                          {entry.otherNotes ? (
+                            <p className="mt-0.5 text-xs italic leading-relaxed text-slate-500">{entry.otherNotes}</p>
+                          ) : null}
+                        </div>
+                        <p className="shrink-0 text-sm font-semibold text-slate-900">{formatHKD(amount)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : items.length === 0 ? (
                 <p className="py-8 text-center text-sm text-slate-500">No itemised breakdown was provided.</p>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-[#D4C8A0] bg-white">
@@ -136,6 +187,10 @@ export function QuoteBreakdownModal({ isOpen, onClose, quote }: QuoteBreakdownMo
               <p className="text-sm font-semibold text-slate-500">Total</p>
               <p className="text-xl font-bold text-slate-900">{formatHKD(total)}</p>
             </div>
+
+            {isPerTrade && (
+              <p className="px-5 pb-2 -mt-1 text-[10px] text-slate-400">Trade prices exclude the platform fee; the total includes it.</p>
+            )}
 
             <div className="border-t border-[#D4C8A0] px-5 py-3 shrink-0">
               <button

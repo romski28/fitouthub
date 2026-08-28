@@ -5,8 +5,9 @@ import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { ProfessionalDetailsModal } from '@/components/professional-details-modal';
+import { QuoteBreakdownModal, type QuoteDetail } from '@/components/quote-breakdown-modal';
 import type { Professional } from '@/lib/types';
-import { getQuoteBreakdownClientItems, getQuoteBreakdownBaseTotal, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
+import { getQuoteBreakdownClientTotal, type StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 
 interface ReviewQuotesModalProps {
   isOpen: boolean;
@@ -19,9 +20,20 @@ interface QuotedProfessional {
   status: string;
   source?: string;
   quotedTrades?: string[];
-  subcontracting?: Array<{ trade?: string; kind?: string; status?: string }> | null;
+  subcontracting?: Array<{
+    trade?: string;
+    kind?: string;
+    labour?: number | string;
+    supplies?: number | string;
+    other?: number | string;
+    amount?: number | string;
+    otherNotes?: string | null;
+    status?: string;
+    name?: string | null;
+  }> | null;
   quoteAmount?: string | number;
   quoteBreakdown?: StoredQuoteBreakdown | null;
+  quotePricingMode?: 'lump' | 'per-trade' | null;
   quoteNotes?: string;
   quoteEstimatedStartAt?: string;
   quoteEstimatedDurationMinutes?: number;
@@ -81,21 +93,6 @@ const formatDuration = (minutes?: number, unit?: 'hours' | 'days') => {
   return `${minutes} min`;
 };
 
-const getCoverage = (
-  pp: QuotedProfessional,
-): { covered: string[]; tbc: number; defined: number; missing: string[] } | null => {
-  const sub = Array.isArray(pp.subcontracting) ? pp.subcontracting : [];
-  if (sub.length === 0) return null;
-  const covered = sub.map((s) => String(s?.trade || '')).filter(Boolean);
-  const tbc = sub.filter((s) => String(s?.status || '') === 'tbc').length;
-  const defined = sub.length - tbc;
-  const snapshot = Array.isArray(pp.projectTradesSnapshot) ? pp.projectTradesSnapshot : [];
-  const missing = snapshot.filter(
-    (t) => !covered.some((c) => c.toLowerCase() === String(t).toLowerCase()),
-  );
-  return { covered, tbc, defined, missing };
-};
-
 export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const { accessToken } = useAuth();
   const { state, openModal } = useNextStepModal();
@@ -108,7 +105,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   const [detailsPro, setDetailsPro] = useState<Professional | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [termsExpanded, setTermsExpanded] = useState(true);
+  const [viewQuote, setViewQuote] = useState<QuoteDetail | null>(null);
   const hasNotifiedCompletionRef = useRef(false);
 
   const handleOpenProDetails = async (professionalId: string) => {
@@ -122,6 +119,21 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         setDetailsOpen(true);
       }
     } catch { /* silently fail */ }
+  };
+
+  const openQuoteView = (pp: QuotedProfessional) => {
+    setViewQuote({
+      name: pp.professional.fullName || pp.professional.businessName || 'Professional',
+      quoteAmount: pp.quoteAmount ?? null,
+      quoteBreakdown: pp.quoteBreakdown ?? null,
+      quoteNotes: pp.quoteNotes ?? null,
+      quoteEstimatedStartAt: pp.quoteEstimatedStartAt ?? null,
+      quoteEstimatedDurationMinutes: pp.quoteEstimatedDurationMinutes ?? null,
+      quoteEstimatedDurationUnit: pp.quoteEstimatedDurationUnit ?? null,
+      quotePricingMode: pp.quotePricingMode ?? null,
+      subcontracting: pp.subcontracting ?? null,
+      quotedTrades: pp.quotedTrades ?? null,
+    });
   };
 
   const projectId = state.projectId;
@@ -152,7 +164,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
   useEffect(() => {
     if (isOpen) {
       setShowDetails(false);
-      setTermsExpanded(true);
+      setViewQuote(null);
       setAcceptError(null);
       hasNotifiedCompletionRef.current = false;
       fetchQuotes();
@@ -228,7 +240,6 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
     (a, b) => (a.quoteEstimatedDurationMinutes ?? 0) - (b.quoteEstimatedDurationMinutes ?? 0),
   )[0]?.id;
   const detailsBody = state.modalContent?.detailsBody;
-  const hasDetails = Boolean(detailsBody);
   const title = state.modalContent?.title || 'Review Quotes';
 
   return (
@@ -239,43 +250,19 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
         <div className="relative h-[86dvh] min-h-[420px] max-h-[760px] [transform-style:preserve-3d] transition-transform duration-500 ease-out" style={{ transform: showDetails ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
           <div className="absolute inset-0 flex flex-col h-full overflow-hidden rounded-t-2xl border border-[#D4C8A0] bg-[#F5EEDE] shadow-2xl sm:rounded-2xl [backface-visibility:hidden]" aria-hidden={showDetails}>
             <div className="relative flex items-center justify-between border-b border-[#D4C8A0] px-5 pb-4 pt-5 shrink-0">
-              {hasDetails && (
-                <button
-                  type="button"
-                  onClick={() => setShowDetails(true)}
-                  className="absolute right-5 top-5 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
-                  aria-label="Show details"
-                >
-                  i
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowDetails(true)}
+                className="absolute right-5 top-5 z-20 h-8 w-8 rounded-full border border-[#D4C8A0] bg-white text-lg font-semibold text-slate-600 transition hover:bg-[#F5EEDE]"
+                aria-label="Show quotation terms"
+              >
+                i
+              </button>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 mb-0.5">Quotes received</p>
                 <h2 className="text-lg font-bold text-slate-900 leading-tight">
                   {title}
                 </h2>
-              </div>
-            </div>
-
-            <div className="shrink-0 px-5 pt-4">
-              <div className="rounded-lg border border-[#D4C8A0] bg-white px-4 py-3 text-xs text-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setTermsExpanded((prev) => !prev)}
-                  className="flex w-full items-center justify-between gap-3 text-left"
-                  aria-expanded={termsExpanded}
-                  aria-label="Toggle quotation terms"
-                >
-                  <p className="font-semibold text-slate-800">Quotation Terms</p>
-                  <span className="text-slate-500 text-[11px] font-semibold">
-                    {termsExpanded ? 'Hide' : 'Show'}
-                  </span>
-                </button>
-                {termsExpanded && (
-                  <p className="mt-1 leading-relaxed">
-                    Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
-                  </p>
-                )}
               </div>
             </div>
 
@@ -311,9 +298,6 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                     <th className="py-2 pr-3">Professional</th>
                     <th className="py-2 px-2 whitespace-nowrap">Start</th>
                     <th className="py-2 px-2">Duration</th>
-                    <th className="py-2 px-2 text-right">Supplies</th>
-                    <th className="py-2 px-2 text-right">Labour</th>
-                    <th className="py-2 px-2 text-right">Other</th>
                     <th className="py-2 pl-2 text-right">Total*</th>
                     <th className="py-2 pl-3 w-24"></th>
                   </tr>
@@ -322,15 +306,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   {professionals.map((pp) => {
                     const name = pp.professional.fullName || pp.professional.businessName || 'Professional';
                     const isCheapest = pp.id === cheapestId && withQuoteNums.length > 1;
-                    const rawTableItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
-                    const tblItems = rawTableItems.some(i => i.code === 'other_items')
-                      ? rawTableItems
-                      : [...rawTableItems, { code: 'other_items' as const, label: 'Other items', amount: 0, displayOrder: 99 }];
-                    const tblBase = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
-                    const tblGross = Math.round(tblBase * 1.1);
-                    const suppliesAmt = tblItems.find(i => i.code === 'supplies')?.amount ?? 0;
-                    const labourAmt = tblItems.find(i => i.code === 'labour')?.amount ?? 0;
-                    const otherAmt = tblItems.find(i => i.code === 'other_items')?.amount ?? 0;
+                    const grossTotal = getQuoteBreakdownClientTotal(pp.quoteBreakdown, pp.quoteAmount);
                     const sd = formatShortDate(pp.quoteEstimatedStartAt);
                     const dur = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
                     return (
@@ -344,28 +320,22 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                             {name}
                           </button>
                           {isCheapest && <span className="ml-1.5 rounded-full bg-emerald-600/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Best</span>}
-                          {pp.source === 'discovered' && (
-                            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">Open applicant</span>
-                          )}
-                          {(() => {
-                            const coverage = getCoverage(pp);
-                            return coverage ? (
-                              <div className="mt-1 text-[10px] leading-snug text-slate-500">
-                                <span className="font-semibold text-emerald-700">Covers {coverage.covered.length} trade{coverage.covered.length === 1 ? '' : 's'}</span>
-                                {coverage.missing.length > 0 && (
-                                  <span className="text-rose-600"> · Missing: {coverage.missing.join(', ')}</span>
-                                )}
-                                <span> · Team: {coverage.defined} defined, {coverage.tbc} TBC</span>
-                              </div>
-                            ) : null;
-                          })()}
+                          <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${pp.source === 'discovered' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
+                            {pp.source === 'discovered' ? 'Open tender' : 'Invited'}
+                          </span>
                         </td>
                         <td className="py-2.5 px-2 text-slate-600 whitespace-nowrap">{sd || '—'}</td>
                         <td className="py-2.5 px-2 text-slate-600">{dur || '—'}</td>
-                        <td className="py-2.5 px-2 text-right text-slate-700">{formatHKD(suppliesAmt)}</td>
-                        <td className="py-2.5 px-2 text-right text-slate-700">{formatHKD(labourAmt)}</td>
-                        <td className="py-2.5 px-2 text-right text-slate-700">{otherAmt > 0 ? formatHKD(otherAmt) : '—'}</td>
-                        <td className="py-2.5 pl-2 text-right font-bold text-slate-900">{formatHKD(tblGross)}</td>
+                        <td className="py-2.5 pl-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => openQuoteView(pp)}
+                            className="font-bold text-[#b94e2d] hover:underline transition"
+                            title="View quotation"
+                          >
+                            {formatHKD(grossTotal)}
+                          </button>
+                        </td>
                         <td className="py-2.5 pl-3">
                           <button
                             type="button"
@@ -381,7 +351,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                   })}
                 </tbody>
               </table>
-              <p className="mt-2 text-[10px] text-slate-400">* Total includes 10% platform fee</p>
+              <p className="mt-2 text-[10px] text-slate-400">* Total includes platform fee</p>
             </div>
           )}
 
@@ -395,12 +365,7 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
               const isFastest = pp.id === fastestId && withDuration.length > 1;
               const startDate = formatShortDate(pp.quoteEstimatedStartAt);
               const duration = formatDuration(pp.quoteEstimatedDurationMinutes, pp.quoteEstimatedDurationUnit);
-              const rawItems = getQuoteBreakdownClientItems(pp.quoteBreakdown);
-              const breakdownItems = rawItems.some(i => i.code === 'other_items')
-                ? rawItems
-                : [...rawItems, { code: 'other_items' as const, label: 'Other items', amount: 0, displayOrder: 99 }];
-              const baseTotal = getQuoteBreakdownBaseTotal(pp.quoteBreakdown, pp.quoteAmount);
-              const grossTotal = Math.round(baseTotal * 1.1);
+              const grossTotal = getQuoteBreakdownClientTotal(pp.quoteBreakdown, pp.quoteAmount);
               const isAccepting = acceptingId === pp.id;
 
               return (
@@ -419,106 +384,53 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
                       >
                         {name}
                       </button>
-                      {(pp.quoteRequestedTrades?.length || pp.projectTradesSnapshot?.length) && (
-                        <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                          {pp.quoteRequestedTrades?.length
-                            ? `Quote for ${pp.quoteRequestedTrades.join(', ')}`
-                            : 'Quote for full scope'}
-                          {pp.projectTradesSnapshot?.length
-                            ? (() => {
-                                const alsoRequired = pp.projectTradesSnapshot
-                                  .filter((trade) => !(pp.quoteRequestedTrades || []).some((requested) => requested.toLowerCase() === trade.toLowerCase()));
-                                return alsoRequired.length > 0
-                                  ? ` · Also required: ${alsoRequired.join(', ')}`
-                                  : '';
-                              })()
-                            : ''}
-                        </p>
-                      )}
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {isCheapest && (
-                          <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
-                            Cheapest
-                          </span>
+                          <span className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Best</span>
                         )}
                         {isSoonest && (
-                          <span className="rounded-full bg-sky-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                            Soonest
-                          </span>
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700">Soonest</span>
                         )}
                         {isFastest && (
-                          <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                            Fastest
-                          </span>
+                          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">Fastest</span>
                         )}
-                        {pp.source === 'discovered' && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                            Open applicant
-                          </span>
-                        )}
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${pp.source === 'discovered' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
+                          {pp.source === 'discovered' ? 'Open tender' : 'Invited'}
+                        </span>
                       </div>
-                      {(() => {
-                        const coverage = getCoverage(pp);
-                        return coverage ? (
-                          <p className="mt-1.5 text-[11px] leading-snug text-slate-500">
-                            <span className="font-semibold text-emerald-700">Covers {coverage.covered.length} trade{coverage.covered.length === 1 ? '' : 's'}</span>
-                            {coverage.missing.length > 0 && (
-                              <span className="text-rose-600"> · Missing: {coverage.missing.join(', ')}</span>
-                            )}
-                            <span> · Team: {coverage.defined} defined, {coverage.tbc} TBC</span>
-                          </p>
-                        ) : null;
-                      })()}
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openQuoteView(pp)}
+                      className="text-right shrink-0"
+                      title="View quotation"
+                    >
                       <span
                         className={`rounded-md border px-3 py-1.5 text-lg font-bold leading-none block ${
                           isCheapest
-                            ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-200'
+                            ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-700'
                             : 'border-[#D4C8A0] bg-white text-slate-700'
                         }`}
                       >
                         {formatHKD(grossTotal)}
                       </span>
-                    </div>
+                    </button>
                   </div>
 
-                  {(breakdownItems.length > 0 || startDate || duration || pp.quoteNotes) && (
-                    <div className="mb-3 space-y-1">
-                      {breakdownItems.length > 0 && (
-                        <div className="space-y-1">
-                          {breakdownItems.map((item) => (
-                            <div key={`${pp.id}-${item.code}`} className="flex items-center justify-between rounded-lg border border-[#D4C8A0] bg-[#F5EEDE] px-3 py-1.5 text-xs">
-                              <span className="text-slate-600">{item.label}</span>
-                              <div className="text-right">
-                                <span className="font-semibold text-slate-900">{formatHKD(item.amount)}</span>
-                                {item.code === 'other_items' && item.notes && (
-                                  <p className="mt-0.5 text-[10px] text-slate-400 italic">{item.notes}</p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                  {(startDate || duration) && (
+                    <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      {startDate && (
+                        <span>
+                          <span className="text-slate-500">Start </span>
+                          {startDate}
+                        </span>
                       )}
-                      {(startDate || duration) && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                          {startDate && (
-                            <span>
-                              <span className="text-slate-500">Start </span>
-                              {startDate}
-                            </span>
-                          )}
-                          {duration && (
-                            <span>
-                              <span className="text-slate-500">Duration </span>
-                              {duration}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {pp.quoteNotes && (
-                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">{pp.quoteNotes}</p>
+                      {duration && (
+                        <span>
+                          <span className="text-slate-500">Duration </span>
+                          {duration}
+                        </span>
                       )}
                     </div>
                   )}
@@ -579,9 +491,17 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
             </button>
 
             <div className="next-step-scrollbar flex-1 overflow-y-auto px-6 pb-6 pt-12 text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
-              <h3 className="mt-3 text-2xl font-bold text-emerald-300">{title || 'Step details'}</h3>
-              <p className="mt-5 text-sm leading-relaxed text-slate-700">{detailsBody}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">Quotation terms</p>
+              <h3 className="mt-3 text-2xl font-bold text-emerald-300">Quotation Terms</h3>
+              <p className="mt-5 text-sm leading-relaxed text-slate-700">
+                Quotations are based on your project description, images, and information you&apos;ve provided. Professionals have the right to visit the site at no cost to you to inspect the project. If site conditions differ materially from your description, the professional may request a quotation adjustment with Mimo approval.
+              </p>
+              {detailsBody ? (
+                <>
+                  <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-blue-200/80">More information</p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{detailsBody}</p>
+                </>
+              ) : null}
             </div>
 
             <div className="mt-auto border-t border-[#D4C8A0] px-5 py-4">
@@ -602,6 +522,12 @@ export function ReviewQuotesModal({ isOpen, onClose }: ReviewQuotesModalProps) {
       isOpen={detailsOpen}
       onClose={() => setDetailsOpen(false)}
       professional={detailsPro}
+    />
+
+    <QuoteBreakdownModal
+      isOpen={viewQuote !== null}
+      onClose={() => setViewQuote(null)}
+      quote={viewQuote}
     />
     </>
   );

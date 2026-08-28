@@ -493,6 +493,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       quoteEstimatedStartAt: pp?.quoteEstimatedStartAt ?? null,
       quoteEstimatedDurationMinutes: pp?.quoteEstimatedDurationMinutes ?? null,
       quoteEstimatedDurationUnit: pp?.quoteEstimatedDurationUnit ?? null,
+      quotePricingMode: pp?.quotePricingMode ?? null,
+      subcontracting: pp?.subcontracting ?? null,
+      quotedTrades: pp?.quotedTrades ?? null,
     });
     setQuoteModalOpen(true);
   };
