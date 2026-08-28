@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-261547a2",
+    "date": "2026-08-28T10:00:32+08:00",
+    "title": "refactor(pro): reorder overview panels, drop duplicate project/region",
+    "summary": "refactor(pro): reorder overview panels, drop duplicate project/region",
+    "areas": [
+      "web"
+    ],
+    "commit": "261547a2",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-5a2a5cf1",
     "date": "2026-08-28T08:56:39+08:00",
     "title": "feat(quote): per-trade labour/hardware/other breakdown with team persistence",

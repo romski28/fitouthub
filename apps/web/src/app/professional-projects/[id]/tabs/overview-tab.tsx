@@ -249,9 +249,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       >
         <div className="space-y-2 text-sm text-slate-700">
           <div className="flex flex-wrap gap-x-6 gap-y-1">
-            <p><span className="font-semibold text-slate-900">Project:</span> {project.project.projectName}</p>
             <p><span className="font-semibold text-slate-900">Client:</span> {project.project.clientName}</p>
-            <p><span className="font-semibold text-slate-900">Region:</span> {project.project.region}</p>
           </div>
           {project.project.budget && (
             <p><span className="font-semibold text-slate-900">Budget:</span> HK$ {Number(project.project.budget).toLocaleString()}</p>
@@ -294,56 +292,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 );
               })}
             </p>
-          )}
-        </div>
-      </AccordionItem>
-
-      {/* Your team */}
-      <AccordionItem
-        id="your-team"
-        title="Your team"
-        isOpen={expandedAccordions['your-team'] !== false}
-        onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
-      >
-        <div className="space-y-3">
-          {subcontractingPlan.length === 0 ? (
-            <p className="text-sm text-slate-600">No team plan yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {subcontractingPlan.map((e) => {
-                const assigned = e.status === 'defined';
-                const name =
-                  e.kind === 'self'
-                    ? 'Self'
-                    : e.kind === 'contact' || e.kind === 'platform'
-                      ? e.name || 'Assigned'
-                      : null;
-                return (
-                  <div
-                    key={e.trade}
-                    className={`rounded-lg border px-3 py-2 text-sm ${
-                      assigned
-                        ? 'border-emerald-600 bg-emerald-600 text-[#F5EEDE]'
-                        : 'border-[rgba(120,53,15,0.16)] bg-white/70 text-slate-700'
-                    }`}
-                  >
-                    <span className="font-semibold">{e.trade}</span>
-                    <span className={`mt-0.5 block text-xs ${assigned ? 'text-[#F5EEDE]/90' : 'text-slate-500'}`}>
-                      {assigned ? name : 'Not assigned'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {!isAwarded && (
-            <button
-              type="button"
-              onClick={() => setShowTeamModal(true)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              Build your team
-            </button>
           )}
         </div>
       </AccordionItem>
@@ -424,42 +372,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         )}
       </AccordionItem>
 
-      {mimoExtras.length > 0 && (
-        <AccordionItem
-          id="mimo-services"
-          title="Mimo Added Services"
-          isOpen={expandedAccordions['mimo-services'] !== false}
-          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {mimoExtras.map((extra) => (
-              <div
-                key={extra.id}
-                className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.72)] px-4 py-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-900">{formatExtraTypeLabel(extra.extraType)}</p>
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}
-                  >
-                    {formatExtraStatusLabel(extra.status)}
-                  </span>
-                </div>
-                <div className="mt-2 space-y-1 text-xs text-slate-600">
-                  {extra.price ? (
-                    <p>
-                      Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}
-                    </p>
-                  ) : null}
-                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
-                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        </AccordionItem>
-      )}
-
       {/* Your Quote */}
       {showQuoteCard && (
         <AccordionItem
@@ -503,6 +415,92 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             </>
           )}
+        </AccordionItem>
+      )}
+
+      {/* Your team */}
+      <AccordionItem
+        id="your-team"
+        title="Your team"
+        isOpen={expandedAccordions['your-team'] !== false}
+        onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+      >
+        <div className="space-y-3">
+          {subcontractingPlan.length === 0 ? (
+            <p className="text-sm text-slate-600">No team plan yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {subcontractingPlan.map((e) => {
+                const assigned = e.status === 'defined';
+                const name =
+                  e.kind === 'self'
+                    ? 'Self'
+                    : e.kind === 'contact' || e.kind === 'platform'
+                      ? e.name || 'Assigned'
+                      : null;
+                return (
+                  <div
+                    key={e.trade}
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      assigned
+                        ? 'border-emerald-600 bg-emerald-600 text-[#F5EEDE]'
+                        : 'border-[rgba(120,53,15,0.16)] bg-white/70 text-slate-700'
+                    }`}
+                  >
+                    <span className="font-semibold">{e.trade}</span>
+                    <span className={`mt-0.5 block text-xs ${assigned ? 'text-[#F5EEDE]/90' : 'text-slate-500'}`}>
+                      {assigned ? name : 'Not assigned'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {!isAwarded && (
+            <button
+              type="button"
+              onClick={() => setShowTeamModal(true)}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Build your team
+            </button>
+          )}
+        </div>
+      </AccordionItem>
+
+      {mimoExtras.length > 0 && (
+        <AccordionItem
+          id="mimo-services"
+          title="Mimo Added Services"
+          isOpen={expandedAccordions['mimo-services'] !== false}
+          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            {mimoExtras.map((extra) => (
+              <div
+                key={extra.id}
+                className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.72)] px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">{formatExtraTypeLabel(extra.extraType)}</p>
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}
+                  >
+                    {formatExtraStatusLabel(extra.status)}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-slate-600">
+                  {extra.price ? (
+                    <p>
+                      Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}
+                    </p>
+                  ) : null}
+                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
+                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
+                </div>
+              </div>
+            ))}
+          </div>
         </AccordionItem>
       )}
 
