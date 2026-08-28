@@ -239,12 +239,16 @@ export function QuoteActionModal({
         if (!response.ok) return;
         const detail = await response.json();
         setBreakdown(parseQuoteBreakdownForm(detail?.quoteBreakdown, detail?.quoteBaseAmount || detail?.quoteAmount));
-        const lumpItems = (detail?.quoteBreakdown as any)?.baseItems || (detail?.quoteBreakdown as any)?.items;
-        const hasExistingPerTrade = Array.isArray(detail?.subcontracting) && (detail?.subcontracting as any[]).length > 0;
-        if (hasExistingPerTrade) {
-          setPricingMode('per-trade');
-        } else if (Array.isArray(lumpItems) && lumpItems.length > 0) {
-          setPricingMode('lump');
+        if (detail?.quotePricingMode === 'per-trade' || detail?.quotePricingMode === 'lump') {
+          setPricingMode(detail.quotePricingMode);
+        } else {
+          const lumpItems = (detail?.quoteBreakdown as any)?.baseItems || (detail?.quoteBreakdown as any)?.items;
+          const hasExistingPerTrade = Array.isArray(detail?.subcontracting) && (detail?.subcontracting as any[]).length > 0;
+          if (hasExistingPerTrade) {
+            setPricingMode('per-trade');
+          } else if (Array.isArray(lumpItems) && lumpItems.length > 0) {
+            setPricingMode('lump');
+          }
         }
         const endDateRaw = detail?.project?.endDate || detail?.endDate || null;
         setRequestedCompletionBy(formatCompletionDate(endDateRaw));

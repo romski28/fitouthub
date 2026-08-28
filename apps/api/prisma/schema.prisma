@@ -752,6 +752,7 @@ model ProjectProfessional {
   projectTradesSnapshot         String[]                       @default([])
   quotedTrades                  String[]                       @default([])
   subcontracting                Json?
+  quotePricingMode              String?                        @default("lump") // lump | per-trade
   quoteReminderSentAt           DateTime?
   quoteExtendedUntil            DateTime?
   visitApprovedButNotDone       Boolean                        @default(false)

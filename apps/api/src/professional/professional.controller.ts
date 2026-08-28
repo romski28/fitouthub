@@ -33,6 +33,10 @@ import {
   normalizeQuoteBreakdownInput,
   withClientQuoteBreakdown,
 } from '../projects/quote-breakdown';
+import {
+  buildTradePlanFeeBreakdown,
+  normalizeSubcontracting,
+} from '../projects/quote-fee';
 
 // Markup applied to subcontracted (B2B) portions of a quote in place of the
 // 10% platform fee. 1.0 = pass-through at cost; tunable later via env.
@@ -1637,6 +1641,7 @@ export class ProfessionalController {
             projectTradesSnapshot: true,
             quotedTrades: true,
             subcontracting: true,
+            quotePricingMode: true,
             project: {
               select: {
                 id: true,
@@ -2035,49 +2040,11 @@ export class ProfessionalController {
         }
       }
 
-      // ── Trade plan (extended scope) vs self-only quote ──────────────────
+      // ── Trade plan (per-trade) vs lump-sum quote ─────────────────────────
       const hasTradePlan = Array.isArray(body.subcontracting) && body.subcontracting.length > 0;
-      const roundMoney = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
-
-      let selfBase = 0;
-      let b2bBase = 0;
-      const normalizedSubcontracting: any[] = [];
-      if (hasTradePlan) {
-        for (const entry of body.subcontracting!) {
-          const kind = String(entry?.kind || '').trim().toLowerCase();
-          const labour = roundMoney(Number(entry?.labour ?? 0));
-          const supplies = roundMoney(Number(entry?.supplies ?? 0));
-          const other = roundMoney(Number(entry?.other ?? 0));
-          const passedAmount = roundMoney(Number(entry?.amount ?? 0));
-          const amount =
-            labour + supplies + other > 0
-              ? roundMoney(labour + supplies + other)
-              : passedAmount;
-          if (!Number.isFinite(amount) || amount < 0) {
-            throw new BadRequestException('Invalid trade line amount');
-          }
-          const rawMultiplier = Number(entry?.multiplier ?? B2B_MARKUP_MULTIPLIER);
-          normalizedSubcontracting.push({
-            trade: String(entry?.trade || '').trim(),
-            kind,
-            amount,
-            labour,
-            supplies,
-            other,
-            otherNotes: entry?.otherNotes || null,
-            contactId: entry?.contactId || null,
-            professionalId: entry?.professionalId || null,
-            b2bCost: entry?.b2bCost != null ? Number(entry.b2bCost) : null,
-            multiplier: Number.isFinite(rawMultiplier) ? rawMultiplier : B2B_MARKUP_MULTIPLIER,
-            status: String(entry?.status || 'tbc'),
-            name: entry?.name || null,
-          });
-          if (kind === 'self') selfBase += amount;
-          else b2bBase += amount;
-        }
-        selfBase = roundMoney(selfBase);
-        b2bBase = roundMoney(b2bBase);
-      }
+      const { normalized: normalizedSubcontracting, selfBase, b2bBase } = normalizeSubcontracting(
+        hasTradePlan ? body.subcontracting : undefined,
+      );
 
       const quotedTrades = Array.isArray(body.quotedTrades)
         ? this.normalizeUniqueStrings(body.quotedTrades)
@@ -2098,19 +2065,8 @@ export class ProfessionalController {
           professionalId,
           projectProfessional.project?.clientId,
         );
-        const b2bGross = roundMoney(b2bBase * B2B_MARKUP_MULTIPLIER);
-        grossAmount = roundMoney(selfFee.grossAmount + b2bGross);
-        const baseTotal = roundMoney(selfBase + b2bBase);
-        feeBreakdown = {
-          ...selfFee,
-          baseAmount: baseTotal,
-          platformFeeAmount: roundMoney(grossAmount - baseTotal),
-          effectivePercent: baseTotal > 0 ? roundMoney(((grossAmount - baseTotal) / baseTotal) * 100) : 0,
-          grossAmount,
-          b2bBaseAmount: b2bBase,
-          b2bGrossAmount: b2bGross,
-          b2bMultiplier: B2B_MARKUP_MULTIPLIER,
-        };
+        feeBreakdown = buildTradePlanFeeBreakdown(selfBase, b2bBase, selfFee);
+        grossAmount = feeBreakdown.grossAmount;
       } else {
         feeBreakdown = await this.platformFeeService.calculateGrossPrice(
           quoteAmount,
@@ -2134,6 +2090,7 @@ export class ProfessionalController {
           feeCalculatedAt: feeBreakdown.calculatedAt,
           quotedTrades,
           subcontracting: hasTradePlan ? normalizedSubcontracting : null,
+          quotePricingMode: hasTradePlan ? 'per-trade' : 'lump',
           quoteNotes: body.quoteNotes || '',
           quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
           quoteEstimatedDurationMinutes:

@@ -1233,6 +1233,22 @@ export class ProjectsController {
       quoteEstimatedStartAt?: string;
       quoteEstimatedDurationMinutes?: number;
       quoteEstimatedDurationUnit?: string;
+      quotedTrades?: string[];
+      subcontracting?: Array<{
+        trade?: string;
+        kind?: string;
+        amount?: number | string;
+        labour?: number | string;
+        supplies?: number | string;
+        other?: number | string;
+        otherNotes?: string;
+        contactId?: string;
+        professionalId?: string;
+        b2bCost?: number | string;
+        multiplier?: number | string;
+        status?: string;
+        name?: string;
+      }>;
     },
   ) {
     return this.projectsService.updateQuote(
@@ -1244,6 +1260,8 @@ export class ProjectsController {
       body.quoteEstimatedStartAt,
       body.quoteEstimatedDurationMinutes,
       body.quoteEstimatedDurationUnit,
+      body.subcontracting,
+      body.quotedTrades,
     );
   }
 

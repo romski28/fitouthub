@@ -23,6 +23,10 @@ import {
   normalizeQuoteBreakdownInput,
   withClientQuoteBreakdown,
 } from './quote-breakdown';
+import {
+  buildTradePlanFeeBreakdown,
+  normalizeSubcontracting,
+} from './quote-fee';
 
 type NotificationDeliveryStatus = 'sent' | 'failed' | 'skipped';
 type NotificationActorType = 'professional' | 'client' | 'reseller' | 'platform' | 'unknown';
@@ -9961,6 +9965,22 @@ Please review the project details and respond with your quote or decline the inv
     quoteEstimatedStartAt?: string,
     quoteEstimatedDurationMinutes?: number,
     quoteEstimatedDurationUnit?: string,
+    subcontracting?: Array<{
+      trade?: string;
+      kind?: string;
+      amount?: number | string;
+      labour?: number | string;
+      supplies?: number | string;
+      other?: number | string;
+      otherNotes?: string;
+      contactId?: string;
+      professionalId?: string;
+      b2bCost?: number | string;
+      multiplier?: number | string;
+      status?: string;
+      name?: string;
+    }>,
+    quotedTrades?: string[],
   ) {
     // Verify ProjectProfessional exists
     const projectProfessional =
@@ -9995,16 +10015,36 @@ Please review the project details and respond with your quote or decline the inv
       isEmergency: Boolean((projectProfessional.project as any)?.isEmergency),
     });
 
-    const baseQuoteAmount = normalizedBreakdown?.baseTotal ?? quoteAmount;
-
-    // Calculate gross price (with platform fee) from professional's base quote
-    const feeBreakdown = await this.platformFeeService.calculateGrossPrice(
-      baseQuoteAmount,
-      professionalId,
-      projectProfessional.project?.clientId || undefined,
+    const hasTradePlan = Array.isArray(subcontracting) && subcontracting.length > 0;
+    const { normalized: normalizedSubcontracting, selfBase, b2bBase } = normalizeSubcontracting(
+      hasTradePlan ? subcontracting : undefined,
     );
+    const resolvedQuotedTrades = Array.isArray(quotedTrades)
+      ? Array.from(new Set(quotedTrades.map((t) => String(t || '').trim()).filter(Boolean)))
+      : normalizedSubcontracting.map((e) => e.trade).filter(Boolean);
 
-    const storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
+    let feeBreakdown: any;
+    let storedBreakdown: any = null;
+
+    if (hasTradePlan) {
+      if (selfBase + b2bBase <= 0) {
+        throw new BadRequestException('Quote total must be greater than 0');
+      }
+      const selfFee = await this.platformFeeService.calculateGrossPrice(
+        selfBase,
+        professionalId,
+        projectProfessional.project?.clientId || undefined,
+      );
+      feeBreakdown = buildTradePlanFeeBreakdown(selfBase, b2bBase, selfFee);
+    } else {
+      const baseQuoteAmount = normalizedBreakdown?.baseTotal ?? quoteAmount;
+      feeBreakdown = await this.platformFeeService.calculateGrossPrice(
+        baseQuoteAmount,
+        professionalId,
+        projectProfessional.project?.clientId || undefined,
+      );
+      storedBreakdown = withClientQuoteBreakdown(normalizedBreakdown, feeBreakdown.grossAmount);
+    }
 
     // Update quote
     const updated = await this.prisma.projectProfessional.update({
@@ -10023,6 +10063,9 @@ Please review the project details and respond with your quote or decline the inv
         quotePlatformFeeBreakdown: feeBreakdown as any,
         quoteBreakdown: storedBreakdown as any,
         feeCalculatedAt: feeBreakdown.calculatedAt,
+        quotedTrades: resolvedQuotedTrades,
+        subcontracting: hasTradePlan ? normalizedSubcontracting : null,
+        quotePricingMode: hasTradePlan ? 'per-trade' : 'lump',
         quoteNotes,
         quoteEstimatedStartAt: quoteSchedule.quoteEstimatedStartAt,
         quoteEstimatedDurationMinutes:

@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-08-28-b7180af9",
+    "date": "2026-08-28T13:08:14+08:00",
+    "title": "feat(quote): persist pricing mode (lump vs per-trade) across save and review",
+    "summary": "feat(quote): persist pricing mode (lump vs per-trade) across save and review",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "b7180af9",
+    "files": [
+      "MANUAL_SQL_ADD_QUOTE_PRICING_MODE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/projects/quote-fee.ts",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-dcd13260",
     "date": "2026-08-28T12:46:03+08:00",
     "title": "feat(quote): add per-trade vs lump-sum pricing toggle",
