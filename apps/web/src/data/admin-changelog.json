@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-28-fefe80c6",
+    "date": "2026-08-28T08:33:42+08:00",
+    "title": "fix(team): show assignee names and persist platform pro selection",
+    "summary": "fix(team): show assignee names and persist platform pro selection",
+    "areas": [
+      "web"
+    ],
+    "commit": "fefe80c6",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/team-builder-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-1f1b4182",
     "date": "2026-08-28T08:18:13+08:00",
     "title": "feat(team): all-trade team builder with Self option + filtered platform search",

@@ -13,6 +13,7 @@ export interface SubcontractEntry {
   b2bCost?: number | string | null;
   multiplier?: number | string | null;
   status?: string;
+  name?: string;
 }
 
 interface Contact {
@@ -66,7 +67,6 @@ export function TeamBuilderModal({
   const [searchResults, setSearchResults] = useState<PlatformPro[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchForTrade, setSearchForTrade] = useState<string | null>(null);
-  const [platformSelections, setPlatformSelections] = useState<Record<string, PlatformPro>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -74,7 +74,6 @@ export function TeamBuilderModal({
     setSearch('');
     setSearchResults([]);
     setSearchForTrade(null);
-    setPlatformSelections({});
     if (!projectProfessionalId || !accessToken) return;
 
     fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote-scope`, {
@@ -135,34 +134,29 @@ export function TeamBuilderModal({
 
   const assign = (trade: string, kind: 'self' | 'contact' | 'tbc', contactId?: string | null) => {
     setEntries((prev) =>
-      prev.map((e) =>
-        e.trade === trade
-          ? {
-              ...e,
-              kind,
-              contactId: kind === 'contact' ? contactId || null : null,
-              professionalId: null,
-              status: kind === 'tbc' ? 'tbc' : 'defined',
-            }
-          : e,
-      ),
+      prev.map((e) => {
+        if (e.trade !== trade) return e;
+        const contact = kind === 'contact' ? contacts.find((c) => c.id === contactId) : null;
+        return {
+          ...e,
+          kind,
+          contactId: kind === 'contact' ? contactId || null : null,
+          professionalId: null,
+          status: kind === 'tbc' ? 'tbc' : 'defined',
+          name: kind === 'contact' && contact ? contact.name : undefined,
+        };
+      }),
     );
-    setPlatformSelections((prev) => {
-      const next = { ...prev };
-      delete next[trade];
-      return next;
-    });
   };
 
   const assignPro = (trade: string, pro: PlatformPro) => {
     setEntries((prev) =>
       prev.map((e) =>
         e.trade === trade
-          ? { ...e, kind: 'platform', professionalId: pro.id, contactId: null, status: 'defined' }
+          ? { ...e, kind: 'platform', professionalId: pro.id, contactId: null, status: 'defined', name: displayName(pro) }
           : e,
       ),
     );
-    setPlatformSelections((prev) => ({ ...prev, [trade]: pro }));
     setSearchForTrade(null);
     setSearch('');
     setSearchResults([]);
@@ -204,7 +198,7 @@ export function TeamBuilderModal({
       >
         <div className="flex items-center justify-between border-b border-[rgba(120,53,15,0.12)] px-5 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Define your team</h2>
+            <h2 className="text-lg font-bold text-slate-900">Build your team</h2>
             {projectName ? <p className="text-xs text-slate-500">{projectName}</p> : null}
           </div>
           <button
@@ -231,8 +225,6 @@ export function TeamBuilderModal({
                   entry.kind === 'contact' && entry.contactId
                     ? contacts.find((c) => c.id === entry.contactId)
                     : null;
-                const platformPro =
-                  entry.kind === 'platform' ? platformSelections[entry.trade] : null;
                 const selectValue =
                   entry.kind === 'self'
                     ? 'self'
@@ -263,8 +255,8 @@ export function TeamBuilderModal({
                       <p className="mt-2 text-xs text-slate-500">
                         {entry.kind === 'self'
                           ? 'Delivered by you'
-                          : platformPro
-                            ? `🤝 ${displayName(platformPro)}`
+                          : entry.kind === 'platform'
+                            ? `🤝 ${entry.name || 'Platform professional'}`
                             : assignedContact
                               ? assignedContact.name
                               : 'Not assigned'}
@@ -290,9 +282,9 @@ export function TeamBuilderModal({
                           <option value="tbc">Not assigned yet</option>
                         </select>
 
-                        {entry.kind === 'platform' && platformPro ? (
+                        {entry.kind === 'platform' ? (
                           <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm">
-                            <span className="font-semibold text-emerald-800">🤝 {displayName(platformPro)}</span>
+                            <span className="font-semibold text-emerald-800">🤝 {entry.name || 'Platform professional'}</span>
                             <button
                               type="button"
                               onClick={() => assign(entry.trade, 'tbc')}

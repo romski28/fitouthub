@@ -190,7 +190,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     ? project.projectTradesSnapshot.filter((trade) => typeof trade === 'string' && trade.trim().length > 0)
     : [];
   const subcontractingPlan = localPlan ?? (Array.isArray(project.subcontracting) ? project.subcontracting : []);
-  const teamTrades = subcontractingPlan.filter((e) => e.kind !== 'self');
   const isAwarded = project.status === 'awarded';
   const mimoExtras = Array.isArray(project.project.mimoProjectExtras)
     ? project.project.mimoProjectExtras
@@ -307,37 +306,44 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
       >
         <div className="space-y-3">
-          {teamTrades.length === 0 ? (
-            <p className="text-sm text-slate-600">No additional trades — you cover the whole project yourself.</p>
+          {subcontractingPlan.length === 0 ? (
+            <p className="text-sm text-slate-600">No team plan yet.</p>
           ) : (
-            <>
-              <div className="space-y-1">
-                {teamTrades.map((e) => (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {subcontractingPlan.map((e) => {
+                const assigned = e.status === 'defined';
+                const name =
+                  e.kind === 'self'
+                    ? 'Self'
+                    : e.kind === 'contact' || e.kind === 'platform'
+                      ? e.name || 'Assigned'
+                      : null;
+                return (
                   <div
                     key={e.trade}
-                    className="flex items-center justify-between rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] px-3 py-2 text-sm"
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      assigned
+                        ? 'border-emerald-600 bg-emerald-600 text-[#F5EEDE]'
+                        : 'border-[rgba(120,53,15,0.16)] bg-white/70 text-slate-700'
+                    }`}
                   >
-                    <span className="font-semibold text-slate-800">{e.trade}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                        e.status === 'defined' ? 'bg-emerald-600 text-[#F5EEDE]' : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {e.status === 'defined' ? 'Assigned' : 'TBC'}
+                    <span className="font-semibold">{e.trade}</span>
+                    <span className={`mt-0.5 block text-xs ${assigned ? 'text-[#F5EEDE]/90' : 'text-slate-500'}`}>
+                      {assigned ? name : 'Not assigned'}
                     </span>
                   </div>
-                ))}
-              </div>
-              {!isAwarded && (
-                <button
-                  type="button"
-                  onClick={() => setShowTeamModal(true)}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-                >
-                  Define your team
-                </button>
-              )}
-            </>
+                );
+              })}
+            </div>
+          )}
+          {!isAwarded && (
+            <button
+              type="button"
+              onClick={() => setShowTeamModal(true)}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Build your team
+            </button>
           )}
         </div>
       </AccordionItem>
