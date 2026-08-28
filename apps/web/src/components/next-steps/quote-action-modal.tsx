@@ -181,6 +181,8 @@ export function QuoteActionModal({
   const [tradeLines, setTradeLines] = useState<Record<string, TradeLine>>({});
   const [existingPlan, setExistingPlan] = useState<any[]>([]);
   const [pricingMode, setPricingMode] = useState<'per-trade' | 'lump'>('per-trade');
+  const [quoteDetailLoaded, setQuoteDetailLoaded] = useState(false);
+  const [quoteScopeLoaded, setQuoteScopeLoaded] = useState(false);
 
   const projectProfessionalId = useMemo(
     () => projectProfessionalIdProp || inferProjectProfessionalId(state.projectDetailsPath),
@@ -222,6 +224,8 @@ export function QuoteActionModal({
       setTradeLines({});
       setExistingPlan([]);
       setPricingMode('per-trade');
+      setQuoteDetailLoaded(false);
+      setQuoteScopeLoaded(false);
     }
   }, [isOpen]);
 
@@ -312,6 +316,8 @@ export function QuoteActionModal({
         }
       } catch {
         // Keep this best-effort only; quote flow must remain available.
+      } finally {
+        setQuoteDetailLoaded(true);
       }
     };
 
@@ -364,11 +370,13 @@ export function QuoteActionModal({
       })
       .catch(() => {
         /* best-effort */
-      });
+      })
+      .finally(() => setQuoteScopeLoaded(true));
   }, [isOpen, accessToken, projectProfessionalId]);
 
   const hasTradeScope = Boolean(quoteScope && (quoteScope.tradesRequired || []).length > 0);
   const tradePanelActive = pricingMode === 'per-trade' && hasTradeScope;
+  const quoteDataReady = quoteDetailLoaded && quoteScopeLoaded;
 
   // Build the per-trade plan from the current form, preserving team assignments
   // (kind / assignee) already stored on the project so quote submission never wipes them.
@@ -706,6 +714,17 @@ export function QuoteActionModal({
                 </div>
 
                 <div className="next-step-scrollbar flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
+                  {!quoteDataReady ? (
+                    <div className="flex flex-col items-center pt-16 text-center">
+                      <p className="text-sm font-semibold text-stone-600">Getting things sorted</p>
+                      <div className="mt-3 flex items-center gap-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-600" style={{ animationDelay: '0ms' }} />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-600" style={{ animationDelay: '150ms' }} />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-600" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  ) : (
+                  <>
                   {hasTradeScope && (
                     <div className="grid grid-cols-2 gap-1 rounded-lg border border-[rgba(120,53,15,0.16)] bg-white/60 p-1">
                       <button
@@ -1025,6 +1044,8 @@ export function QuoteActionModal({
                       {error}
                     </div>
                   ) : null}
+                  </>
+                  )}
                 </div>
 
                   <div className="shrink-0 flex items-center justify-end gap-2 sm:gap-3 border-t border-[rgba(120,53,15,0.12)] px-4 sm:px-6 py-4">
@@ -1049,7 +1070,7 @@ export function QuoteActionModal({
                         <button
                           type="submit"
                           className="min-w-fit rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          disabled={submitting}
+                          disabled={submitting || !quoteDataReady}
                         >
                           {submitting ? 'Submitting...' : primaryButtonLabel}
                         </button>

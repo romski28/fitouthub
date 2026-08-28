@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-2f9a413d",
+    "date": "2026-08-28T13:30:26+08:00",
+    "title": "feat(quote): show loading state while quote options load",
+    "summary": "feat(quote): show loading state while quote options load",
+    "areas": [
+      "web"
+    ],
+    "commit": "2f9a413d",
+    "files": [
+      "apps/web/src/components/next-steps/quote-action-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-008090ae",
     "date": "2026-08-28T13:12:19+08:00",
     "title": "fix(api): cast nullable subcontracting JSON on revise to satisfy Prisma types",
