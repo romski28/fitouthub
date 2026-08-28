@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-73c847ec",
+    "date": "2026-08-28T10:37:49+08:00",
+    "title": "style(pro): unify overview CTA buttons to green/paper, right-align",
+    "summary": "style(pro): unify overview CTA buttons to green/paper, right-align",
+    "areas": [
+      "web"
+    ],
+    "commit": "73c847ec",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-ead99d3e",
     "date": "2026-08-28T10:24:15+08:00",
     "title": "refactor(mimo): move added-services panel from pro overview to admin detail",

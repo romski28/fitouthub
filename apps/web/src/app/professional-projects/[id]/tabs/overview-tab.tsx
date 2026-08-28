@@ -310,19 +310,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowInspectModal(true)}
-              className="rounded-lg bg-[rgba(126,58,33,0.92)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgba(100,45,26,0.96)] transition"
-            >
-              {isVisited
-                ? (siteAccessStatus.visitDetails ? 'Edit visit notes' : 'Add visit notes')
-                : rescheduleRequired
-                  ? 'Reschedule inspection'
-                  : isBooked
-                    ? 'Manage inspection'
-                    : 'Book inspection'}
-            </button>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowInspectModal(true)}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
+              >
+                {isVisited
+                  ? (siteAccessStatus.visitDetails ? 'Edit visit notes' : 'Add visit notes')
+                  : rescheduleRequired
+                    ? 'Reschedule inspection'
+                    : isBooked
+                      ? 'Manage inspection'
+                      : 'Book inspection'}
+              </button>
+            </div>
           </div>
         )}
       </AccordionItem>
@@ -341,7 +343,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <button
                 type="button"
                 onClick={onOpenQuoteModal}
-                className="rounded-lg bg-[#FF7F50] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E67245] transition"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
               >
                 Submit quote
               </button>
@@ -363,7 +365,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <button
                   type="button"
                   onClick={onOpenQuoteModal}
-                  className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                  className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] hover:bg-emerald-700 transition"
                 >
                   View quote
                 </button>
@@ -412,13 +414,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
           {!isAwarded && (
-            <button
-              type="button"
-              onClick={() => setShowTeamModal(true)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              Build your team
-            </button>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTeamModal(true)}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-[#F5EEDE] transition hover:bg-emerald-700"
+              >
+                Build your team
+              </button>
+            </div>
           )}
         </div>
       </AccordionItem>
