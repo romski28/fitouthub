@@ -8,6 +8,10 @@ export interface SubcontractEntry {
   trade: string;
   kind: string;
   amount?: number | string;
+  labour?: number | string;
+  supplies?: number | string;
+  other?: number | string;
+  otherNotes?: string;
   contactId?: string | null;
   professionalId?: string | null;
   b2bCost?: number | string | null;

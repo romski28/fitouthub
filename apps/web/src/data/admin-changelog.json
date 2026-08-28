@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-28-5a2a5cf1",
+    "date": "2026-08-28T08:56:39+08:00",
+    "title": "feat(quote): per-trade labour/hardware/other breakdown with team persistence",
+    "summary": "feat(quote): per-trade labour/hardware/other breakdown with team persistence",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "5a2a5cf1",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/team-builder-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-fefe80c6",
     "date": "2026-08-28T08:33:42+08:00",
     "title": "fix(team): show assignee names and persist platform pro selection",

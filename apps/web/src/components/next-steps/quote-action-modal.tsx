@@ -112,6 +112,24 @@ const formatHKD = (value?: number | string): string => {
   return `HK$${num.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
+interface TradeLine {
+  labour: string;
+  supplies: string;
+  other: string;
+  otherNotes: string;
+}
+
+const EMPTY_TRADE_LINE: TradeLine = { labour: '', supplies: '', other: '', otherNotes: '' };
+
+const tradeLineTotal = (line?: TradeLine): number => {
+  if (!line) return 0;
+  return (
+    (parseFloat(line.labour) || 0) +
+    (parseFloat(line.supplies) || 0) +
+    (parseFloat(line.other) || 0)
+  );
+};
+
 function inferProjectProfessionalId(path?: string): string | null {
   if (!path) return null;
   const [pathname] = path.split('?');
@@ -160,7 +178,8 @@ export function QuoteActionModal({
     additionalTrades: string[];
   } | null>(null);
   const [selectedAdditional, setSelectedAdditional] = useState<Record<string, boolean>>({});
-  const [tradeAmounts, setTradeAmounts] = useState<Record<string, string>>({});
+  const [tradeLines, setTradeLines] = useState<Record<string, TradeLine>>({});
+  const [existingPlan, setExistingPlan] = useState<any[]>([]);
 
   const projectProfessionalId = useMemo(
     () => projectProfessionalIdProp || inferProjectProfessionalId(state.projectDetailsPath),
@@ -199,7 +218,8 @@ export function QuoteActionModal({
       setLoadingFeePreview(false);
       setQuoteScope(null);
       setSelectedAdditional({});
-      setTradeAmounts({});
+      setTradeLines({});
+      setExistingPlan([]);
     }
   }, [isOpen]);
 
@@ -301,32 +321,87 @@ export function QuoteActionModal({
         });
         // Pre-fill from any existing team plan so "team first, quote later" carries through.
         const plan = Array.isArray(data.subcontracting) ? data.subcontracting : [];
-        const initialAmounts: Record<string, string> = {};
+        const initialLines: Record<string, TradeLine> = {};
         const initialSelected: Record<string, boolean> = {};
         (data.tradesRequired || []).forEach((t: string) => {
           const entry = plan.find((e: any) => e && e.trade === t);
-          initialAmounts[t] = entry && entry.amount != null ? String(entry.amount) : '';
+          if (entry && entry.labour != null) {
+            initialLines[t] = {
+              labour: String(entry.labour),
+              supplies: entry.supplies != null ? String(entry.supplies) : '',
+              other: entry.other != null ? String(entry.other) : '',
+              otherNotes: entry.otherNotes ? String(entry.otherNotes) : '',
+            };
+          } else if (entry && entry.amount != null) {
+            // Legacy single-amount plan entries map onto labour.
+            initialLines[t] = {
+              labour: String(entry.amount),
+              supplies: '',
+              other: '',
+              otherNotes: '',
+            };
+          }
           const isSelf = (data.selfTrades || []).includes(t);
-          if (!isSelf && entry && entry.kind !== 'self') initialSelected[t] = true;
+          // Any non-self trade already in the plan is covered, whatever its kind.
+          if (!isSelf && entry) initialSelected[t] = true;
         });
-        setTradeAmounts(initialAmounts);
+        setTradeLines(initialLines);
         setSelectedAdditional(initialSelected);
+        setExistingPlan(plan);
       })
       .catch(() => {
         /* best-effort */
       });
   }, [isOpen, accessToken, projectProfessionalId]);
 
+  // Build the per-trade plan from the current form, preserving team assignments
+  // (kind / assignee) already stored on the project so quote submission never wipes them.
+  function buildPlanFromForm() {
+    if (!quoteScope) return [];
+    const selfTrades = quoteScope.selfTrades || [];
+    const tradesRequired = quoteScope.tradesRequired || [];
+    const covered = tradesRequired.filter(
+      (trade) => selfTrades.includes(trade) || selectedAdditional[trade] === true,
+    );
+    return covered.map((trade) => {
+      const line = tradeLines[trade] || EMPTY_TRADE_LINE;
+      const amount = tradeLineTotal(line);
+      const existing = existingPlan.find((e: any) => e && e.trade === trade);
+      const isSelf = selfTrades.includes(trade);
+      const base: any = {
+        trade,
+        labour: parseFloat(line.labour) || 0,
+        supplies: parseFloat(line.supplies) || 0,
+        other: parseFloat(line.other) || 0,
+        otherNotes: line.otherNotes || null,
+        amount,
+      };
+      if (existing) {
+        return {
+          ...base,
+          kind: existing.kind || (isSelf ? 'self' : 'tbc'),
+          contactId: existing.contactId ?? null,
+          professionalId: existing.professionalId ?? null,
+          b2bCost: existing.b2bCost ?? null,
+          multiplier: existing.multiplier ?? null,
+          status: existing.status || (isSelf ? 'defined' : 'tbc'),
+          name: existing.name ?? null,
+        };
+      }
+      return {
+        ...base,
+        kind: isSelf ? 'self' : 'tbc',
+        status: isSelf ? 'defined' : 'tbc',
+      };
+    });
+  }
+
   useEffect(() => {
     const isTradePanel = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
-    const panelTotal = isTradePanel
-      ? Object.entries(tradeAmounts).reduce((sum, [trade, val]) => {
-          const selected =
-            (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true;
-          return selected ? sum + (parseFloat(val) || 0) : sum;
-        }, 0)
-      : 0;
-    const amount = isTradePanel ? panelTotal : getQuoteBreakdownFormTotal(breakdown);
+    const subcontracting = isTradePanel ? buildPlanFromForm() : undefined;
+    const amount = isTradePanel
+      ? (subcontracting || []).reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
+      : getQuoteBreakdownFormTotal(breakdown);
 
     if (!isOpen || !accessToken || !projectProfessionalId || amount <= 0) {
       setPlatformFeePercent(undefined);
@@ -334,19 +409,6 @@ export function QuoteActionModal({
       setGrossAmount(undefined);
       return;
     }
-
-    const subcontracting = isTradePanel
-      ? Object.entries(tradeAmounts)
-          .filter(
-            ([trade]) =>
-              (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
-          )
-          .map(([trade, val]) => ({
-            trade,
-            kind: (quoteScope?.selfTrades || []).includes(trade) ? 'self' : 'tbc',
-            amount: parseFloat(val) || 0,
-          }))
-      : undefined;
 
     // Debounce the preview call
     const timeoutId = setTimeout(async () => {
@@ -386,7 +448,7 @@ export function QuoteActionModal({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [accessToken, breakdown, isOpen, projectProfessionalId, quoteScope, tradeAmounts, selectedAdditional]);
+  }, [accessToken, breakdown, isOpen, projectProfessionalId, quoteScope, tradeLines, selectedAdditional, existingPlan]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -406,14 +468,13 @@ export function QuoteActionModal({
     }
 
     const tradePlanActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
+    const subcontracting = tradePlanActive ? buildPlanFromForm() : undefined;
     let numericAmount = getQuoteBreakdownFormTotal(breakdown);
     if (tradePlanActive) {
-      numericAmount = Object.entries(tradeAmounts)
-        .filter(
-          ([trade]) =>
-            (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
-        )
-        .reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
+      numericAmount = (subcontracting || []).reduce(
+        (sum, entry) => sum + (Number(entry.amount) || 0),
+        0,
+      );
     }
     if (numericAmount <= 0) {
       setError(
@@ -422,6 +483,16 @@ export function QuoteActionModal({
           : 'Please enter a valid quote breakdown',
       );
       return;
+    }
+
+    if (tradePlanActive) {
+      const missingNarrative = (subcontracting || []).find(
+        (s: any) => (Number(s.other) || 0) > 0 && !(s.otherNotes || '').trim(),
+      );
+      if (missingNarrative) {
+        setError(`Please add a description for the "Other" amount on ${missingNarrative.trade}.`);
+        return;
+      }
     }
 
     if (!estimatedStartDate || !estimatedStartHour || !estimatedStartMinute) {
@@ -454,22 +525,6 @@ export function QuoteActionModal({
     }
 
     const quoteEstimatedStartAt = new Date(`${estimatedStartDate}T${estimatedStartHour}:${estimatedStartMinute}`).toISOString();
-    const subcontracting = tradePlanActive
-      ? Object.entries(tradeAmounts)
-          .filter(
-            ([trade]) =>
-              (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true,
-          )
-          .map(([trade, val]) => {
-            const isSelf = (quoteScope?.selfTrades || []).includes(trade);
-            return {
-              trade,
-              kind: isSelf ? 'self' : 'tbc',
-              amount: parseFloat(val) || 0,
-              status: isSelf ? 'defined' : 'tbc',
-            };
-          })
-      : undefined;
     const quoteBreakdown = tradePlanActive
       ? undefined
       : buildQuoteBreakdownPayload(breakdown, {
@@ -579,11 +634,7 @@ export function QuoteActionModal({
     : Array.from({ length: 11 }, (_, i) => String(i + 8).padStart(2, '0'));
   const tradePanelActive = Boolean(quoteScope && quoteScope.additionalTrades.length > 0);
   const tradePanelTotal = tradePanelActive
-    ? Object.entries(tradeAmounts).reduce((sum, [trade, val]) => {
-        const isSelected =
-          (quoteScope?.selfTrades || []).includes(trade) || selectedAdditional[trade] === true;
-        return isSelected ? sum + (parseFloat(val) || 0) : sum;
-      }, 0)
+    ? (buildPlanFromForm() || []).reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
     : 0;
   const enteredTotal = tradePanelActive ? tradePanelTotal : getQuoteBreakdownFormTotal(breakdown);
 
@@ -649,6 +700,12 @@ export function QuoteActionModal({
                       {quoteScope.tradesRequired.map((trade) => {
                         const isSelf = quoteScope.selfTrades.includes(trade);
                         const isSelected = isSelf || selectedAdditional[trade] === true;
+                        const line = tradeLines[trade] || EMPTY_TRADE_LINE;
+                        const setLine = (patch: Partial<TradeLine>) =>
+                          setTradeLines((prev) => ({
+                            ...prev,
+                            [trade]: { ...EMPTY_TRADE_LINE, ...(prev[trade] || {}), ...patch },
+                          }));
                         return (
                           <div
                             key={trade}
@@ -675,20 +732,69 @@ export function QuoteActionModal({
                                 ) : null}
                               </span>
                               {isSelected ? (
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  value={tradeAmounts[trade] || ''}
-                                  onChange={(e) =>
-                                    setTradeAmounts((prev) => ({ ...prev, [trade]: e.target.value }))
-                                  }
-                                  className="w-32 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-right text-stone-800 outline-none focus:border-amber-500"
-                                  disabled={submitting || readOnly}
-                                />
+                                <span className="text-sm font-semibold text-stone-700">
+                                  {formatHKD(tradeLineTotal(line))}
+                                </span>
                               ) : null}
                             </div>
+                            {isSelected ? (
+                              <div className="mt-2 grid grid-cols-3 gap-2">
+                                <label className="block">
+                                  <span className="mb-1 block text-[10px] font-medium text-stone-500">Labour</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={line.labour}
+                                    onChange={(e) => setLine({ labour: e.target.value })}
+                                    className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-right text-stone-800 outline-none focus:border-amber-500"
+                                    disabled={submitting || readOnly}
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="mb-1 block text-[10px] font-medium text-stone-500">Hardware</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={line.supplies}
+                                    onChange={(e) => setLine({ supplies: e.target.value })}
+                                    className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-right text-stone-800 outline-none focus:border-amber-500"
+                                    disabled={submitting || readOnly}
+                                  />
+                                </label>
+                                <label className="block">
+                                  <span className="mb-1 block text-[10px] font-medium text-stone-500">Other</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={line.other}
+                                    onChange={(e) => setLine({ other: e.target.value })}
+                                    className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-right text-stone-800 outline-none focus:border-amber-500"
+                                    disabled={submitting || readOnly}
+                                  />
+                                </label>
+                              </div>
+                            ) : null}
+                            {isSelected && (parseFloat(line.other) || 0) > 0 ? (
+                              <div className="mt-2">
+                                <span className="mb-1 block text-[10px] font-medium text-stone-500">
+                                  Other description <span className="text-amber-700">(required when Other has a value)</span>
+                                </span>
+                                <textarea
+                                  value={line.otherNotes}
+                                  onChange={(e) => setLine({ otherNotes: e.target.value })}
+                                  rows={2}
+                                  placeholder="e.g. skip hire, disposal, permits…"
+                                  className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-2 py-1 text-sm text-stone-800 outline-none focus:border-amber-500"
+                                  disabled={submitting || readOnly}
+                                />
+                              </div>
+                            ) : null}
                           </div>
                         );
                       })}

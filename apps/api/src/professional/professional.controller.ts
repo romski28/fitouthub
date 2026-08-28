@@ -1952,11 +1952,16 @@ export class ProfessionalController {
         trade?: string;
         kind?: string;
         amount?: number | string;
+        labour?: number | string;
+        supplies?: number | string;
+        other?: number | string;
+        otherNotes?: string;
         contactId?: string;
         professionalId?: string;
         b2bCost?: number | string;
         multiplier?: number | string;
         status?: string;
+        name?: string;
       }>;
     },
   ) {
@@ -2039,8 +2044,15 @@ export class ProfessionalController {
       const normalizedSubcontracting: any[] = [];
       if (hasTradePlan) {
         for (const entry of body.subcontracting!) {
-          const amount = roundMoney(Number(entry?.amount ?? 0));
           const kind = String(entry?.kind || '').trim().toLowerCase();
+          const labour = roundMoney(Number(entry?.labour ?? 0));
+          const supplies = roundMoney(Number(entry?.supplies ?? 0));
+          const other = roundMoney(Number(entry?.other ?? 0));
+          const passedAmount = roundMoney(Number(entry?.amount ?? 0));
+          const amount =
+            labour + supplies + other > 0
+              ? roundMoney(labour + supplies + other)
+              : passedAmount;
           if (!Number.isFinite(amount) || amount < 0) {
             throw new BadRequestException('Invalid trade line amount');
           }
@@ -2049,11 +2061,16 @@ export class ProfessionalController {
             trade: String(entry?.trade || '').trim(),
             kind,
             amount,
+            labour,
+            supplies,
+            other,
+            otherNotes: entry?.otherNotes || null,
             contactId: entry?.contactId || null,
             professionalId: entry?.professionalId || null,
             b2bCost: entry?.b2bCost != null ? Number(entry.b2bCost) : null,
             multiplier: Number.isFinite(rawMultiplier) ? rawMultiplier : B2B_MARKUP_MULTIPLIER,
             status: String(entry?.status || 'tbc'),
+            name: entry?.name || null,
           });
           if (kind === 'self') selfBase += amount;
           else b2bBase += amount;
