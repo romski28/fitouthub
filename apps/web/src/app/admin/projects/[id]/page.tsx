@@ -47,6 +47,15 @@ interface ProjectDetail {
   endDate?: string;
   professionals?: ProjectProfessional[];
   tradesRequired?: string[];
+  mimoProjectExtras?: Array<{
+    id: string;
+    extraType: 'survey' | 'design' | string;
+    status: string;
+    price?: number | string | null;
+    currency?: string | null;
+    requestedAt?: string;
+    scheduledAt?: string | null;
+  }>;
   aiIntake?: {
     id?: string;
     [key: string]: unknown;
@@ -71,6 +80,48 @@ const formatHKD = (value?: number | string) => {
   const num = typeof value === "number" ? value : Number(value);
   if (Number.isNaN(num)) return `HK$ ${value}`;
   return `HK$ ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
+const formatDateTime = (value?: string) => {
+  if (!value) return "—";
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return "—";
+  }
+};
+
+const formatExtraTypeLabel = (value?: string) => {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "survey") return "Mimo Surveying+";
+  if (normalized === "design") return "Mimo Interior Design";
+  return value || "Mimo service";
+};
+
+const formatExtraStatusLabel = (value?: string) => {
+  const normalized = String(value || "").toLowerCase();
+  if (!normalized) return "Unknown";
+  return normalized.replace(/_/g, " ");
+};
+
+const getExtraStatusClasses = (value?: string) => {
+  const normalized = String(value || "").toLowerCase();
+  if (["scheduled", "in_progress"].includes(normalized)) {
+    return "border-sky-300 bg-sky-50 text-sky-700";
+  }
+  if (normalized === "completed") {
+    return "border-emerald-300 bg-emerald-50 text-emerald-700";
+  }
+  if (["declined", "cancelled"].includes(normalized)) {
+    return "border-rose-300 bg-rose-50 text-rose-700";
+  }
+  return "border-amber-300 bg-amber-50 text-amber-700";
 };
 
 export default function AdminProjectDetailPage({ params }: { params: { id: string } }) {
@@ -275,6 +326,34 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
         awardedDisplayName={project.professionals?.find((pp) => pp.status === 'awarded')?.professional.fullName ||
           project.professionals?.find((pp) => pp.status === 'awarded')?.professional.businessName}
       />
+
+      {project.mimoProjectExtras && project.mimoProjectExtras.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-900">Mimo Added Services</h2>
+            <p className="text-sm text-slate-600">Mimo-delivered Surveying+ and Design services for this project.</p>
+          </div>
+          <div className="p-5 grid gap-3 sm:grid-cols-2">
+            {project.mimoProjectExtras.map((extra) => (
+              <div key={extra.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">{formatExtraTypeLabel(extra.extraType)}</p>
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}>
+                    {formatExtraStatusLabel(extra.status)}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-slate-600">
+                  {extra.price ? (
+                    <p>Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}</p>
+                  ) : null}
+                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
+                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {project.aiIntake && (
         <>

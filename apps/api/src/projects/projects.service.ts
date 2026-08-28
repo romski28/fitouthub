@@ -4195,9 +4195,11 @@ export class ProjectsService {
         },
       });
       if (!project) return null;
+      const mimoProjectExtras = await this.listProjectExtras(project.id);
       const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
       return {
         ...project,
+        mimoProjectExtras,
         ...walletTransferTimeline,
         professionals: this.dedupeProfessionals((project as any).professionals),
         photos: this.resolveProjectPhotos((project as any).photos),

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-28-ead99d3e",
+    "date": "2026-08-28T10:24:15+08:00",
+    "title": "refactor(mimo): move added-services panel from pro overview to admin detail",
+    "summary": "refactor(mimo): move added-services panel from pro overview to admin detail",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ead99d3e",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/admin/projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-261547a2",
     "date": "2026-08-28T10:00:32+08:00",
     "title": "refactor(pro): reorder overview panels, drop duplicate project/region",

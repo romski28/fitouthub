@@ -84,21 +84,6 @@ interface OverviewTabProps {
   siteAccessError?: string | null;
 }
 
-const formatDateTime = (value?: string) => {
-  if (!value) return '—';
-  try {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(value));
-  } catch {
-    return '—';
-  }
-};
-
 const formatDuration = (minutes?: number) => {
   if (!minutes || !Number.isFinite(minutes)) return '—';
   if (minutes >= 1440 && minutes % 1440 === 0) {
@@ -135,33 +120,6 @@ const formatHKD = (value?: number | string): string => {
   return `HK$${num.toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 };
 
-const formatExtraTypeLabel = (value?: string) => {
-  const normalized = String(value || '').toLowerCase();
-  if (normalized === 'survey') return 'Mimo Surveying+';
-  if (normalized === 'design') return 'Mimo Interior Design';
-  return value || 'Mimo service';
-};
-
-const formatExtraStatusLabel = (value?: string) => {
-  const normalized = String(value || '').toLowerCase();
-  if (!normalized) return 'Unknown';
-  return normalized.replace(/_/g, ' ');
-};
-
-const getExtraStatusClasses = (value?: string) => {
-  const normalized = String(value || '').toLowerCase();
-  if (['scheduled', 'in_progress'].includes(normalized)) {
-    return 'border-sky-300 bg-sky-50 text-sky-700';
-  }
-  if (normalized === 'completed') {
-    return 'border-emerald-300 bg-emerald-50 text-emerald-700';
-  }
-  if (['declined', 'cancelled'].includes(normalized)) {
-    return 'border-rose-300 bg-rose-50 text-rose-700';
-  }
-  return 'border-amber-300 bg-amber-50 text-amber-700';
-};
-
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   project,
   onOpenQuoteModal,
@@ -191,9 +149,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     : [];
   const subcontractingPlan = localPlan ?? (Array.isArray(project.subcontracting) ? project.subcontracting : []);
   const isAwarded = project.status === 'awarded';
-  const mimoExtras = Array.isArray(project.project.mimoProjectExtras)
-    ? project.project.mimoProjectExtras
-    : [];
   const existingBreakdownTotal = getQuoteBreakdownBaseTotal(project.quoteBreakdown, project.quoteBaseAmount || project.quoteAmount);
 
   const sarStatus = (siteAccessStatus?.requestStatus || 'none').toLowerCase();
@@ -467,42 +422,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
         </div>
       </AccordionItem>
-
-      {mimoExtras.length > 0 && (
-        <AccordionItem
-          id="mimo-services"
-          title="Mimo Added Services"
-          isOpen={expandedAccordions['mimo-services'] !== false}
-          onToggle={(id) => setExpandedAccordions((prev) => ({ ...prev, [id]: !prev[id] }))}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {mimoExtras.map((extra) => (
-              <div
-                key={extra.id}
-                className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(245,238,219,0.72)] px-4 py-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-900">{formatExtraTypeLabel(extra.extraType)}</p>
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getExtraStatusClasses(extra.status)}`}
-                  >
-                    {formatExtraStatusLabel(extra.status)}
-                  </span>
-                </div>
-                <div className="mt-2 space-y-1 text-xs text-slate-600">
-                  {extra.price ? (
-                    <p>
-                      Price: {String(extra.currency || 'HKD').toUpperCase()} {Number(extra.price).toLocaleString('en-HK')}
-                    </p>
-                  ) : null}
-                  {extra.requestedAt ? <p>Requested: {formatDateTime(extra.requestedAt)}</p> : null}
-                  {extra.scheduledAt ? <p>Scheduled: {formatDateTime(extra.scheduledAt)}</p> : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        </AccordionItem>
-      )}
 
       {project.project.aiIntake && (
         <AccordionItem
