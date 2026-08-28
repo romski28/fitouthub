@@ -19,6 +19,7 @@ interface Contact {
   id: string;
   name: string;
   trades?: string[];
+  type?: string;
 }
 
 interface PlatformPro {
@@ -29,6 +30,8 @@ interface PlatformPro {
   tradesOffered?: string[];
   locationPrimary?: string;
   locationSecondary?: string;
+  professionType?: string;
+  local?: boolean;
 }
 
 interface TeamBuilderModalProps {
@@ -38,6 +41,7 @@ interface TeamBuilderModalProps {
   accessToken: string;
   subcontracting: SubcontractEntry[] | null | undefined;
   projectName?: string;
+  region?: string;
   isAwarded?: boolean;
   onSaved?: (next: SubcontractEntry[]) => void;
 }
@@ -52,6 +56,7 @@ export function TeamBuilderModal({
   accessToken,
   subcontracting,
   projectName,
+  region,
   isAwarded = false,
   onSaved,
 }: TeamBuilderModalProps) {
@@ -61,31 +66,49 @@ export function TeamBuilderModal({
   const [searchResults, setSearchResults] = useState<PlatformPro[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchForTrade, setSearchForTrade] = useState<string | null>(null);
+  const [platformSelections, setPlatformSelections] = useState<Record<string, PlatformPro>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      const nonSelf = (subcontracting || []).filter((e) => e.kind !== 'self');
-      setEntries(nonSelf.map((e) => ({ ...e })));
-      setSearch('');
-      setSearchResults([]);
-      setSearchForTrade(null);
-    }
-  }, [isOpen, subcontracting]);
+    if (!isOpen) return;
+    setSearch('');
+    setSearchResults([]);
+    setSearchForTrade(null);
+    setPlatformSelections({});
+    if (!projectProfessionalId || !accessToken) return;
 
-  useEffect(() => {
-    if (!isOpen || !projectProfessionalId || !accessToken) return;
     fetch(`${API_BASE_URL}/professional/projects/${projectProfessionalId}/quote-scope`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.contacts) setContacts(Array.isArray(data.contacts) ? data.contacts : []);
+        if (!data) return;
+        const tradesRequired: string[] = Array.isArray(data.tradesRequired)
+          ? data.tradesRequired
+          : [];
+        const selfTrades: string[] = Array.isArray(data.selfTrades) ? data.selfTrades : [];
+        if (Array.isArray(data.contacts)) setContacts(data.contacts);
+        const existingPlan: SubcontractEntry[] = Array.isArray(data.subcontracting)
+          ? data.subcontracting
+          : Array.isArray(subcontracting)
+            ? subcontracting
+            : [];
+        const planByTrade = new Map<string, SubcontractEntry>(
+          existingPlan.map((e) => [e.trade, e]),
+        );
+        setEntries(
+          tradesRequired.map((trade) => {
+            const existing = planByTrade.get(trade);
+            if (existing) return { ...existing, trade };
+            const isSelf = selfTrades.includes(trade);
+            return { trade, kind: isSelf ? 'self' : 'tbc', status: isSelf ? 'defined' : 'tbc' };
+          }),
+        );
       })
       .catch(() => {
         /* best-effort */
       });
-  }, [isOpen, projectProfessionalId, accessToken]);
+  }, [isOpen, projectProfessionalId, accessToken, subcontracting]);
 
   const runSearch = useCallback(
     async (q: string, trade?: string) => {
@@ -95,6 +118,7 @@ export function TeamBuilderModal({
         const params = new URLSearchParams();
         if (q && q.trim()) params.set('q', q.trim());
         if (trade && trade.trim()) params.set('trade', trade.trim());
+        if (region && region.trim()) params.set('region', region.trim());
         const res = await fetch(`${API_BASE_URL}/professional/team/search?${params.toString()}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -106,23 +130,28 @@ export function TeamBuilderModal({
         setSearching(false);
       }
     },
-    [accessToken],
+    [accessToken, region],
   );
 
-  const assignContact = (trade: string, contactId: string) => {
+  const assign = (trade: string, kind: 'self' | 'contact' | 'tbc', contactId?: string | null) => {
     setEntries((prev) =>
       prev.map((e) =>
         e.trade === trade
           ? {
               ...e,
-              kind: contactId ? 'contact' : 'tbc',
-              contactId: contactId || null,
+              kind,
+              contactId: kind === 'contact' ? contactId || null : null,
               professionalId: null,
-              status: contactId ? 'defined' : 'tbc',
+              status: kind === 'tbc' ? 'tbc' : 'defined',
             }
           : e,
       ),
     );
+    setPlatformSelections((prev) => {
+      const next = { ...prev };
+      delete next[trade];
+      return next;
+    });
   };
 
   const assignPro = (trade: string, pro: PlatformPro) => {
@@ -133,6 +162,7 @@ export function TeamBuilderModal({
           : e,
       ),
     );
+    setPlatformSelections((prev) => ({ ...prev, [trade]: pro }));
     setSearchForTrade(null);
     setSearch('');
     setSearchResults([]);
@@ -142,14 +172,12 @@ export function TeamBuilderModal({
     if (!accessToken || !projectProfessionalId) return;
     setSaving(true);
     try {
-      const selfEntries = (subcontracting || []).filter((e) => e.kind === 'self');
-      const fullPlan = [...selfEntries, ...entries];
       const res = await fetch(
         `${API_BASE_URL}/professional/projects/${projectProfessionalId}/subcontracting`,
         {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subcontracting: fullPlan }),
+          body: JSON.stringify({ subcontracting: entries }),
         },
       );
       if (!res.ok) {
@@ -157,7 +185,7 @@ export function TeamBuilderModal({
         throw new Error(data?.message || 'Failed to save team');
       }
       toast.success('Team updated.');
-      onSaved?.(fullPlan);
+      onSaved?.(entries);
       onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save team');
@@ -191,25 +219,26 @@ export function TeamBuilderModal({
 
         <div className="next-step-scrollbar max-h-[65vh] overflow-y-auto px-5 py-4 space-y-3">
           {entries.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-600">
-              No additional trades to assign — you are covering the whole project yourself.
-            </p>
+            <p className="py-6 text-center text-sm text-slate-600">Loading trades…</p>
           ) : (
             <>
               <p className="text-xs text-slate-600">
-                Assign who will deliver each additional trade. These are your subcontractors, not
-                platform workers with access.
+                Assign who delivers each trade — yourself, a personal contact, or a platform
+                professional. These are subcontractors, not platform workers with access.
               </p>
               {entries.map((entry) => {
-                const assignedContact = entry.contactId
-                  ? contacts.find((c) => c.id === entry.contactId)
-                  : null;
-                const assignedName = entry.kind === 'platform'
-                  ? (() => {
-                      // We don't keep pro names in the stored plan, so show a generic label.
-                      return 'Platform professional';
-                    })()
-                  : assignedContact?.name;
+                const assignedContact =
+                  entry.kind === 'contact' && entry.contactId
+                    ? contacts.find((c) => c.id === entry.contactId)
+                    : null;
+                const platformPro =
+                  entry.kind === 'platform' ? platformSelections[entry.trade] : null;
+                const selectValue =
+                  entry.kind === 'self'
+                    ? 'self'
+                    : entry.kind === 'contact'
+                      ? entry.contactId || 'tbc'
+                      : 'tbc';
                 return (
                   <div key={entry.trade} className="rounded-lg border border-[rgba(120,53,15,0.16)] bg-white/70 p-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -226,28 +255,54 @@ export function TeamBuilderModal({
                             : 'bg-amber-100 text-amber-800'
                         }`}
                       >
-                        {entry.status === 'defined' ? 'Assigned' : 'TBC'}
+                        {entry.kind === 'self' ? 'Self' : entry.status === 'defined' ? 'Assigned' : 'TBC'}
                       </span>
                     </div>
 
                     {isAwarded ? (
                       <p className="mt-2 text-xs text-slate-500">
-                        {assignedName || 'Not assigned'}
+                        {entry.kind === 'self'
+                          ? 'Delivered by you'
+                          : platformPro
+                            ? `🤝 ${displayName(platformPro)}`
+                            : assignedContact
+                              ? assignedContact.name
+                              : 'Not assigned'}
                       </p>
                     ) : (
                       <div className="mt-2 space-y-2">
                         <select
-                          value={entry.contactId || ''}
-                          onChange={(e) => assignContact(entry.trade, e.target.value)}
+                          value={selectValue}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === 'self') assign(entry.trade, 'self');
+                            else if (v === 'tbc') assign(entry.trade, 'tbc');
+                            else assign(entry.trade, 'contact', v);
+                          }}
                           className="w-full rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-sm text-stone-800 outline-none focus:border-amber-500"
                         >
-                          <option value="">Not assigned yet</option>
+                          <option value="self">👤 Self (I'll deliver it)</option>
                           {contacts.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.name}
+                              {c.type === 'worker' ? '👷' : '🧑‍🔧'} {c.name}
                             </option>
                           ))}
+                          <option value="tbc">Not assigned yet</option>
                         </select>
+
+                        {entry.kind === 'platform' && platformPro ? (
+                          <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm">
+                            <span className="font-semibold text-emerald-800">🤝 {displayName(platformPro)}</span>
+                            <button
+                              type="button"
+                              onClick={() => assign(entry.trade, 'tbc')}
+                              className="text-xs font-semibold text-slate-500 hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : null}
+
                         <div>
                           {searchForTrade === entry.trade ? (
                             <div className="space-y-2">
@@ -259,7 +314,7 @@ export function TeamBuilderModal({
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') runSearch(search, entry.trade);
                                   }}
-                                  placeholder="Search platform pros…"
+                                  placeholder={`Filter ${entry.trade.toLowerCase()} pros…`}
                                   className="flex-1 rounded-lg border border-[rgba(120,53,15,0.22)] bg-white/70 px-3 py-2 text-sm text-stone-800 outline-none focus:border-amber-500"
                                 />
                                 <button
@@ -283,6 +338,14 @@ export function TeamBuilderModal({
                                     >
                                       <span>
                                         <span className="font-semibold text-slate-800">{displayName(pro)}</span>
+                                        {pro.local ? (
+                                          <span className="ml-1" title="Local">📍</span>
+                                        ) : null}
+                                        {pro.professionType === 'company' ? (
+                                          <span className="ml-1" title="Company">🏢</span>
+                                        ) : (
+                                          <span className="ml-1" title="Contractor">👷</span>
+                                        )}
                                         {pro.primaryTrade ? (
                                           <span className="ml-1 text-xs text-slate-500">· {pro.primaryTrade}</span>
                                         ) : null}
@@ -310,7 +373,10 @@ export function TeamBuilderModal({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => setSearchForTrade(entry.trade)}
+                              onClick={() => {
+                                setSearchForTrade(entry.trade);
+                                void runSearch('', entry.trade);
+                              }}
                               className="text-xs font-semibold text-emerald-700 hover:underline"
                             >
                               + Find a platform professional

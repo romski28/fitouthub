@@ -1729,10 +1729,35 @@ export class ProfessionalController {
       return Array.from(selfTokens).some((token) => token.includes(t) || t.includes(token));
     };
 
-    const contacts = await (this.prisma as any).professionalContact.findMany({
-      where: { ownerProfessionalId: professionalId },
-      select: { id: true, name: true, trades: true },
-    });
+    const [contractorContacts, workers] = await Promise.all([
+      (this.prisma as any).professionalContact.findMany({
+        where: { ownerProfessionalId: professionalId },
+        select: { id: true, name: true, trades: true },
+      }),
+      (this.prisma as any).professional.findMany({
+        where: {
+          employerProfessionalId: professionalId,
+          professionType: 'worker',
+          status: { not: 'rejected' },
+        },
+        select: { id: true, fullName: true, businessName: true, primaryTrade: true, tradesOffered: true },
+      }),
+    ]);
+
+    const contacts = [
+      ...(contractorContacts || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        trades: c.trades || [],
+        type: 'contractor',
+      })),
+      ...(workers || []).map((w: any) => ({
+        id: w.id,
+        name: w.businessName || w.fullName || 'Worker',
+        trades: [w.primaryTrade, ...(w.tradesOffered || [])].filter(Boolean),
+        type: 'worker',
+      })),
+    ];
 
     return {
       projectProfessionalId,
@@ -1743,6 +1768,7 @@ export class ProfessionalController {
       tradesOffered: pro?.tradesOffered || [],
       primaryTrade: pro?.primaryTrade || null,
       contacts,
+      subcontracting: projectProfessional.subcontracting || [],
     };
   }
 
@@ -1752,6 +1778,7 @@ export class ProfessionalController {
     @Request() req: any,
     @Query('q') q?: string,
     @Query('trade') trade?: string,
+    @Query('region') region?: string,
   ) {
     const professionalId = req.user.id || req.user.sub;
 
@@ -1790,12 +1817,35 @@ export class ProfessionalController {
         tradesOffered: true,
         locationPrimary: true,
         locationSecondary: true,
+        servicePrimaries: true,
+        professionType: true,
       },
       orderBy: { businessName: 'asc' },
       take: 20,
     });
 
-    return { pros };
+    const regionParts = region
+      ? String(region)
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+
+    const prosWithLocal = pros.map((p: any) => {
+      const locStrings = [
+        p.locationPrimary,
+        p.locationSecondary,
+        ...(Array.isArray(p.servicePrimaries) ? p.servicePrimaries : []),
+      ]
+        .filter(Boolean)
+        .map((s: string) => String(s).toLowerCase());
+      const local =
+        regionParts.length === 0 ||
+        regionParts.some((rp) => locStrings.some((l) => l.includes(rp) || rp.includes(l)));
+      return { ...p, local };
+    });
+
+    return { pros: prosWithLocal };
   }
 
   @Post('projects/:projectProfessionalId/quote-preview')
@@ -2226,9 +2276,6 @@ export class ProfessionalController {
     });
     if (!projectProfessional) {
       throw new BadRequestException('Project not found');
-    }
-    if (!projectProfessional.quotedAt) {
-      throw new BadRequestException('Submit your quote before defining your team');
     }
     if (projectProfessional.status === 'awarded') {
       throw new BadRequestException('Team is locked after award');

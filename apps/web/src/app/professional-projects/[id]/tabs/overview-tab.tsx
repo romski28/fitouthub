@@ -540,6 +540,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         accessToken={accessToken || ''}
         subcontracting={subcontractingPlan}
         projectName={project.project.projectName}
+        region={project.project.region}
         isAwarded={isAwarded}
         onSaved={(next) => setLocalPlan(next)}
       />

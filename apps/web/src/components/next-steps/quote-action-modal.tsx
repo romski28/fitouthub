@@ -299,12 +299,18 @@ export function QuoteActionModal({
           selfTrades: data.selfTrades || [],
           additionalTrades: data.additionalTrades || [],
         });
+        // Pre-fill from any existing team plan so "team first, quote later" carries through.
+        const plan = Array.isArray(data.subcontracting) ? data.subcontracting : [];
         const initialAmounts: Record<string, string> = {};
+        const initialSelected: Record<string, boolean> = {};
         (data.tradesRequired || []).forEach((t: string) => {
-          initialAmounts[t] = '';
+          const entry = plan.find((e: any) => e && e.trade === t);
+          initialAmounts[t] = entry && entry.amount != null ? String(entry.amount) : '';
+          const isSelf = (data.selfTrades || []).includes(t);
+          if (!isSelf && entry && entry.kind !== 'self') initialSelected[t] = true;
         });
         setTradeAmounts(initialAmounts);
-        setSelectedAdditional({});
+        setSelectedAdditional(initialSelected);
       })
       .catch(() => {
         /* best-effort */

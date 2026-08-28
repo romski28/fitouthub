@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-28-1f1b4182",
+    "date": "2026-08-28T08:18:13+08:00",
+    "title": "feat(team): all-trade team builder with Self option + filtered platform search",
+    "summary": "feat(team): all-trade team builder with Self option + filtered platform search",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1f1b4182",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/web/src/app/professional-projects/[id]/tabs/overview-tab.tsx",
+      "apps/web/src/components/next-steps/quote-action-modal.tsx",
+      "apps/web/src/components/team-builder-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-08-26-ce4023d6",
     "date": "2026-08-26T09:05:03+08:00",
     "title": "feat(quote): define-your-team UI for subcontracted trades",
