@@ -726,12 +726,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${isOpenInvitation ? 'border-blue-600 bg-blue-600 text-white' : 'border-[#818589] bg-[#818589] text-white'}`}>
-                {isOpenInvitation ? 'Open' : 'Closed'}
+                {isOpenInvitation ? 'Open tender' : 'Closed tender'}
               </span>
             </div>
           </div>
 
-          {biddingRows.length > 0 && (
+          {!awardedProfessional && biddingRows.length > 0 && (
             <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
               <div className="divide-y divide-[rgba(120,53,15,0.10)]">
                 {biddingRows.map((row) => {
@@ -778,13 +778,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
 
-          {isOpenInvitation && quotedCount === 0 && (
+          {!awardedProfessional && isOpenInvitation && quotedCount === 0 && (
             <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-4 py-3 text-sm text-slate-600">
               No quotes received on your project yet.
             </div>
           )}
 
-          {(onOpenSiteInspection || onCompareAward) && (
+          {!awardedProfessional && (onOpenSiteInspection || onCompareAward) && (
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
               {onOpenSiteInspection && (
                 <button
@@ -855,7 +855,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   )}
                 </div>
               )}
-              {(proDeclinedProfessionals.length > 0 || notAwardedProfessionals.length > 0) && (
+              {!awardedProfessional && (proDeclinedProfessionals.length > 0 || notAwardedProfessionals.length > 0) && (
                 <div className="rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.66)] p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Other professionals</p>
                   <div className="mt-2 space-y-1.5">
