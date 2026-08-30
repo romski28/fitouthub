@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-30-3db04a84",
+    "date": "2026-08-30T09:25:34+08:00",
+    "title": "fix(client): remove misleading empty bidding-status state",
+    "summary": "fix(client): remove misleading empty bidding-status state",
+    "areas": [
+      "web"
+    ],
+    "commit": "3db04a84",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-28-c4bbeabe",
     "date": "2026-08-28T21:40:42+08:00",
     "title": "feat(client): show subtotal + platform fee + total in quote view",

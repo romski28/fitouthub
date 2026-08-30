@@ -745,10 +745,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
-            {biddingRows.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-slate-600">No professionals invited yet.</div>
-            ) : (
+          {biddingRows.length > 0 && (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
               <div className="divide-y divide-[rgba(120,53,15,0.10)]">
                 {biddingRows.map((row) => {
                   const quoteChip = quotationStatusOf(row.pp);
@@ -791,8 +789,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   );
                 })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {(onOpenSiteInspection || onCompareAward) && (
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
