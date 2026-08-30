@@ -2722,21 +2722,6 @@ export default function ClientProjectDetailPage() {
           </div>
         )}
 
-        {(!project.professionals || project.professionals.length === 0) && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center space-y-4">
-            <div className="text-slate-600">
-              <p className="text-base font-semibold mb-2">No professionals invited yet</p>
-              <p className="text-sm">Start by searching for professionals who match your project needs.</p>
-            </div>
-            <Link
-              href={`/professionals?projectId=${projectId}${project.tradesRequired?.[0] ? `&trade=${encodeURIComponent(project.tradesRequired[0])}` : ''}`}
-              className="inline-block rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-sm font-semibold transition"
-            >
-              Search & Invite Professionals
-            </Link>
-          </div>
-        )}
-
         <BackToTop />
       </div>
 

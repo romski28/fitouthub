@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-30-ec70bdb6",
+    "date": "2026-08-30T09:57:56+08:00",
+    "title": "feat(client): show invitation type and no-quotes state in bidding status",
+    "summary": "feat(client): show invitation type and no-quotes state in bidding status",
+    "areas": [
+      "web"
+    ],
+    "commit": "ec70bdb6",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/overview-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-08-30-3db04a84",
     "date": "2026-08-30T09:25:34+08:00",
     "title": "fix(client): remove misleading empty bidding-status state",

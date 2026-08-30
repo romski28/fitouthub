@@ -19,6 +19,7 @@ interface ProjectDetail {
   projectName: string;
   region: string;
   status?: string;
+  onlySelectedProfessionalsCanBid?: boolean;
   budget?: string;
   approvedBudget?: string;
   notes?: string;
@@ -195,21 +196,6 @@ const CHIP_TONES = {
   negative: 'border-rose-500 bg-rose-500 text-white',
 } as const;
 
-const projectStatusChipOf = (status?: string): { label: string; cls: string } => {
-  const normalized = String(status || 'pending').toLowerCase();
-  const label = String(status || 'pending').replace(/_/g, ' ');
-  if (['awarded', 'approved', 'completed', 'started'].includes(normalized)) {
-    return { label, cls: CHIP_TONES.done };
-  }
-  if (['quoted', 'counter_requested'].includes(normalized)) {
-    return { label, cls: CHIP_TONES.active };
-  }
-  if (['withdrawn', 'rejected'].includes(normalized)) {
-    return { label, cls: CHIP_TONES.negative };
-  }
-  return { label, cls: CHIP_TONES.waiting };
-};
-
 type TimelineMetric = {
   label: string;
   value: string;
@@ -379,7 +365,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   };
 
   const projectStatus = project.status ?? 'pending';
-  const projectStatusChip = projectStatusChipOf(projectStatus);
+  const isOpenInvitation = project.onlySelectedProfessionalsCanBid === false;
   const hasAiInsights = Boolean(
     project.aiIntake &&
       (project.aiIntake.assumptions || project.aiIntake.risks || project.aiIntake.project),
@@ -739,8 +725,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${projectStatusChip.cls}`}>
-                {projectStatusChip.label}
+              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${isOpenInvitation ? 'border-blue-600 bg-blue-600 text-white' : 'border-[#818589] bg-[#818589] text-white'}`}>
+                {isOpenInvitation ? 'Open' : 'Closed'}
               </span>
             </div>
           </div>
@@ -789,6 +775,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {isOpenInvitation && quotedCount === 0 && (
+            <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-4 py-3 text-sm text-slate-600">
+              No quotes received on your project yet.
             </div>
           )}
 
