@@ -4399,6 +4399,50 @@ export class ProjectsService {
     return this.dedupeProfessionals(pros);
   }
 
+  async getPmQueue() {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        currentStage: ProjectStage.BIDDING_ACTIVE,
+        pmId: null,
+        status: { notIn: ['withdrawn', 'archived'] },
+      },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        projectName: true,
+        region: true,
+        tradesRequired: true,
+        isEmergency: true,
+        onlySelectedProfessionalsCanBid: true,
+        tenderOpenedAt: true,
+        createdAt: true,
+        status: true,
+        currentStage: true,
+        user: {
+          select: { firstName: true, surname: true, email: true },
+        },
+      },
+    });
+    return projects;
+  }
+
+  async claimProjectForPm(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true, currentStage: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId) throw new BadRequestException('Project is already claimed');
+    if (project.currentStage !== ProjectStage.BIDDING_ACTIVE) {
+      throw new BadRequestException('Project is not currently open for tendering');
+    }
+    return this.prisma.project.update({
+      where: { id: projectId },
+      data: { pmId: pmUserId },
+      select: { id: true, projectName: true, pmId: true },
+    });
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;

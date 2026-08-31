@@ -555,6 +555,25 @@ export class ProjectsController {
     return this.projectsService.getProjectProfessionals(projectId);
   }
 
+  @Get('pm/queue')
+  @UseGuards(AuthGuard('jwt'))
+  async getPmQueue(@Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can view the queue');
+    }
+    const projects = await this.projectsService.getPmQueue();
+    return { projects, count: projects.length };
+  }
+
+  @Post(':id/pm-claim')
+  @UseGuards(AuthGuard('jwt'))
+  async claimProjectForPm(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can claim projects');
+    }
+    return this.projectsService.claimProjectForPm(projectId, req.user?.id);
+  }
+
   @Post(':id/open-tender')
   @UseGuards(CombinedAuthGuard)
   async openTender(

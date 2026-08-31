@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-31-65824fd2",
+    "date": "2026-08-31T23:17:02+08:00",
+    "title": "feat(pm): add PM queue + claim (Phase 1)",
+    "summary": "feat(pm): add PM queue + claim (Phase 1)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "65824fd2",
+    "files": [
+      "MANUAL_SQL_ADD_PM_FIELDS.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/page.tsx"
+    ]
+  },
+  {
     "id": "2026-08-31-d4f8b60a",
     "date": "2026-08-31T22:56:56+08:00",
     "title": "feat(pm): add project_manager role + PM account creation (Phase 0)",

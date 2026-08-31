@@ -595,6 +595,9 @@ model Project {
   onlySelectedProfessionalsCanBid Boolean                        @default(true)
   tenderOpenedAt                  DateTime?
   tenderClosedAt                  DateTime?
+  pmId                            String?
+  releasedForQuotationAt          DateTime?
+  releasedByPmId                  String?
   contractorContactName           String?
   contractorContactPhone          String?
   contractorContactEmail          String?
