@@ -462,6 +462,7 @@ export class ProjectsController {
         | 'professional'
         | 'surveyor'
         | 'mimo_boh'
+        | 'project_manager'
         | undefined;
       const isProfessionalFlag = req.user?.isProfessional;
 
@@ -469,6 +470,8 @@ export class ProjectsController {
 
       let role: 'client' | 'professional' | 'admin' | 'surveyor' | 'mimo_boh' = 'client';
       if (tokenRole === 'admin') {
+        role = 'admin';
+      } else if (tokenRole === 'project_manager') {
         role = 'admin';
       } else if (tokenRole === 'professional' || isProfessionalFlag) {
         role = 'professional';
@@ -572,6 +575,25 @@ export class ProjectsController {
       throw new ForbiddenException('Only project managers can claim projects');
     }
     return this.projectsService.claimProjectForPm(projectId, req.user?.id);
+  }
+
+  @Get('pm/mine')
+  @UseGuards(AuthGuard('jwt'))
+  async getPmProjects(@Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can view their projects');
+    }
+    const projects = await this.projectsService.getPmProjects(req.user?.id);
+    return { projects, count: projects.length };
+  }
+
+  @Post(':id/pm-release')
+  @UseGuards(AuthGuard('jwt'))
+  async releaseProjectForPm(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can release projects');
+    }
+    return this.projectsService.releaseProjectForPm(projectId, req.user?.id);
   }
 
   @Post(':id/open-tender')

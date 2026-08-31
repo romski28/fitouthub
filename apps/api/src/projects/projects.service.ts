@@ -4443,6 +4443,72 @@ export class ProjectsService {
     });
   }
 
+  async getPmProjects(pmUserId: string) {
+    return this.prisma.project.findMany({
+      where: { pmId: pmUserId },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        projectName: true,
+        region: true,
+        tradesRequired: true,
+        isEmergency: true,
+        onlySelectedProfessionalsCanBid: true,
+        tenderOpenedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        status: true,
+        currentStage: true,
+        releasedForQuotationAt: true,
+        user: {
+          select: { firstName: true, surname: true, email: true },
+        },
+      },
+    });
+  }
+
+  async releaseProjectForPm(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true, releasedForQuotationAt: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned project manager can release this project');
+    }
+    if (project.releasedForQuotationAt) {
+      throw new BadRequestException('Project has already been released for quotation');
+    }
+    const released = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        releasedForQuotationAt: new Date(),
+        releasedByPmId: pmUserId,
+      },
+      select: { id: true, projectName: true, releasedForQuotationAt: true, releasedByPmId: true },
+    });
+
+    // Send invitations to any professionals selected but not yet invited.
+    // Invitations are held until the PM releases the project for quotation.
+    try {
+      const pending = await this.prisma.projectProfessional.findMany({
+        where: { projectId, status: 'pending' },
+        select: { professionalId: true },
+      });
+      const ids = Array.from(new Set(pending.map((p) => p.professionalId).filter(Boolean)));
+      if (ids.length > 0) {
+        await this.inviteProfessionals(projectId, ids);
+      }
+    } catch (error) {
+      console.error('[ProjectsService.releaseProjectForPm] failed to send pending invitations', {
+        projectId,
+        error: (error as Error)?.message,
+      });
+    }
+
+    return released;
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;
@@ -4504,6 +4570,7 @@ export class ProjectsService {
       project.onlySelectedProfessionalsCanBid === false &&
       !project.awardedProjectProfessionalId &&
       Boolean(project.tenderOpenedAt) &&
+      Boolean(project.releasedForQuotationAt) &&
       !project.tenderClosedAt
     );
   }
@@ -4823,6 +4890,11 @@ ${scope.otherRequiredTrades.length > 0 ? `Other required trades: ${scope.otherRe
         throw error;
       }
       this.throwProjectProfessionalTradeScopeSchemaError(error);
+    }
+
+    if (!project.releasedForQuotationAt) {
+      // Hold invitations until the PM releases the project for quotation.
+      return { success: true, invitedCount: ids.length, deferred: true, status: 'pending_release' };
     }
 
     // Create invitation messages for each professional
@@ -5422,7 +5494,7 @@ Please review the project details and respond with your quote or decline the inv
       }
     }
 
-    if (professionals.length > 0 && project.professionals.length > 0) {
+    if (project.releasedForQuotationAt && professionals.length > 0 && project.professionals.length > 0) {
       const messagePromises = project.professionals.map(async (projectProfessional) => {
         const professional = professionals.find(p => p.id === projectProfessional.professionalId);
         if (!professional) return;
@@ -5486,11 +5558,12 @@ Please review the project details and respond with your quote or decline the inv
     }
 
     // Generate secure tokens and send invitation emails for each professional
+    // (held until the PM releases the project for quotation)
     const tokenPromises: any[] = [];
     const emailPromises: any[] = [];
     const directNotificationPromises: any[] = [];
 
-    for (const professional of professionals) {
+    for (const professional of (project.releasedForQuotationAt ? professionals : [])) {
       const acceptToken = createId();
       const declineToken = createId();
       const authToken = createId();
@@ -10043,6 +10116,10 @@ Please review the project details and respond with your quote or decline the inv
 
     if (!projectProfessional) {
       throw new Error('Professional not invited to this project');
+    }
+
+    if (!projectProfessional.project.releasedForQuotationAt) {
+      throw new BadRequestException('This project has not been released for quotation yet');
     }
 
     const quoteSchedule = this.normalizeQuoteSchedule(

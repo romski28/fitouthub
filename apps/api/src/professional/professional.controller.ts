@@ -1988,6 +1988,7 @@ export class ProfessionalController {
               isEmergency: true,
               projectScale: true,
               clientId: true,
+              releasedForQuotationAt: true,
             },
           },
         },
@@ -1995,6 +1996,10 @@ export class ProfessionalController {
 
       if (!projectProfessional) {
         throw new BadRequestException('Project not found');
+      }
+
+      if (!projectProfessional.project?.releasedForQuotationAt) {
+        throw new BadRequestException('This project has not been released for quotation yet');
       }
 
       const normalizedBreakdown = normalizeQuoteBreakdownInput(body.quoteBreakdown, {

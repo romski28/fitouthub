@@ -17,6 +17,8 @@ type QueueProject = {
   createdAt?: string;
   status?: string;
   currentStage?: string;
+  releasedForQuotationAt?: string | null;
+  updatedAt?: string;
   user?: {
     firstName?: string;
     surname?: string;
@@ -45,6 +47,8 @@ export default function PmQueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [myProjects, setMyProjects] = useState<QueueProject[]>([]);
+  const [myLoading, setMyLoading] = useState(true);
 
   const fetchQueue = useCallback(async () => {
     if (!accessToken) return;
@@ -67,9 +71,27 @@ export default function PmQueuePage() {
     }
   }, [accessToken]);
 
+  const fetchMyProjects = useCallback(async () => {
+    if (!accessToken) return;
+    setMyLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/pm/mine`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setMyProjects(Array.isArray(data?.projects) ? data.projects : []);
+    } catch {
+      /* best-effort */
+    } finally {
+      setMyLoading(false);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     void fetchQueue();
-  }, [fetchQueue]);
+    void fetchMyProjects();
+  }, [fetchQueue, fetchMyProjects]);
 
   const handleClaim = async (projectId: string) => {
     if (!accessToken) return;
@@ -106,7 +128,43 @@ export default function PmQueuePage() {
       {/* Header */}
       <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Project Manager</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">The Queue</h1>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">My Projects</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Projects you own, awaiting quotation release.
+        </p>
+      </div>
+
+      {myLoading ? (
+        <div className="py-6 text-center text-slate-500 text-sm">Loading…</div>
+      ) : myProjects.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500 text-sm">
+          You haven&apos;t claimed any projects yet. Claim one from the queue below.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {myProjects.map((project) => (
+            <Link
+              key={project.id}
+              href={`/pm/projects/${project.id}`}
+              className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-300"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold text-slate-900">{project.projectName}</h3>
+                  <p className="mt-0.5 text-sm text-slate-500">{project.region || "No location"}</p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${project.releasedForQuotationAt ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
+                  {project.releasedForQuotationAt ? "Released" : "Awaiting release"}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Queue */}
+      <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">The Queue</h2>
         <p className="mt-1 text-sm text-slate-600">
           Newly registered projects awaiting a project manager. Claim one to take ownership.
         </p>
