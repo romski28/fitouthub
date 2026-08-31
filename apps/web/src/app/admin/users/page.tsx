@@ -63,6 +63,7 @@ export default function AdminUsersPage() {
       client: users.filter(u => u.role === 'client' || u.role === 'homeowner').length,
       surveyor: users.filter(u => u.role === 'surveyor').length,
       mimoBoh: users.filter(u => u.role === 'mimo_boh').length,
+      projectManager: users.filter(u => u.role === 'project_manager').length,
       lastMonth: users.filter(u => new Date(u.createdAt) > oneMonthAgo).length,
     };
   }, [users]);
@@ -205,6 +206,7 @@ export default function AdminUsersPage() {
             { label: "Professional", value: "professional" },
             { label: "Surveyor", value: "surveyor" },
             { label: "Mimo BoH", value: "mimo_boh" },
+            { label: "Project Manager", value: "project_manager" },
           ],
           required: true,
         },
@@ -236,6 +238,7 @@ export default function AdminUsersPage() {
         { label: "Professional", value: "professional" },
         { label: "Surveyor", value: "surveyor" },
         { label: "Mimo BoH", value: "mimo_boh" },
+        { label: "Project Manager", value: "project_manager" },
       ],
       required: true,
     },
@@ -255,7 +258,7 @@ export default function AdminUsersPage() {
             <h1 className="text-2xl font-bold leading-tight">Users</h1>
             <p className="text-sm text-slate-200/90">{users.length} total users</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Admin</p>
               <p className="text-lg font-bold text-white">{totals.admin}</p>
@@ -275,6 +278,10 @@ export default function AdminUsersPage() {
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Mimo BoH</p>
               <p className="text-lg font-bold text-orange-300">{totals.mimoBoh}</p>
+            </div>
+            <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">PM</p>
+              <p className="text-lg font-bold text-purple-300">{totals.projectManager}</p>
             </div>
             <div className="rounded-lg bg-white/10 px-3 py-2 text-left">
               <p className="text-[11px] uppercase tracking-wide text-slate-200">Last Month</p>
