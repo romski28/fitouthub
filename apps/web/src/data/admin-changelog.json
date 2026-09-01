@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-7ae0ceac",
+    "date": "2026-09-01T23:06:32+08:00",
+    "title": "fix(pm): repair chat-event-card corruption from restyle",
+    "summary": "fix(pm): repair chat-event-card corruption from restyle",
+    "areas": [
+      "web"
+    ],
+    "commit": "7ae0ceac",
+    "files": [
+      "apps/web/src/components/chat-event-card.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-3990153a",
     "date": "2026-09-01T21:54:47+08:00",
     "title": "style(pm): restyle generic chat event card to blue info theme",

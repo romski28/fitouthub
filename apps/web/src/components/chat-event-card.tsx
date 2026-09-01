@@ -16,7 +16,12 @@ export default function ChatEventCard({ event, isCurrentUser = false, onAction }
       ? 'border-rose-400/50 bg-rose-500/10 text-rose-50'
       : isCurrentUser
         ? 'border-2 border-[#ff6b5b] bg-emerald-500 text-white'
-      : 'border-blue-400/50 bg-blue-600 text-white';
+        : 'border-blue-400/50 bg-blue-600 text-white';
+  const titleTone = isAward
+    ? 'text-amber-200'
+    : isNotSelected
+      ? 'text-rose-200'
+      : isCurrentUser
         ? 'text-[#ff6b5b]'
         : 'text-sky-200';
   const iconTone = isAward
@@ -25,7 +30,13 @@ export default function ChatEventCard({ event, isCurrentUser = false, onAction }
       ? 'bg-rose-400/20'
       : isCurrentUser
         ? 'bg-white/20'
-      : 'bg-white/20';
+        : 'bg-white/20';
+
+  return (
+    <div className={`rounded-xl border px-3 py-3 ${toneClasses}`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg ${iconTone}`}>
+          {event.icon}
         </div>
         <div className="min-w-0 flex-1">
           <p className={`text-base font-semibold leading-relaxed ${titleTone}`}>{event.title}</p>
