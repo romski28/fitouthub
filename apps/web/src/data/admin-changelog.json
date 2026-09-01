@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-01-abcc0f5a",
+    "date": "2026-09-01T11:40:11+08:00",
+    "title": "feat(pm): notify client on PM claim and tender release",
+    "summary": "feat(pm): notify client on PM claim and tender release",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "abcc0f5a",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/create-project/submitting/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-03572e97",
     "date": "2026-09-01T01:21:34+08:00",
     "title": "feat(pm): PM role end-to-end + gate tender until release",

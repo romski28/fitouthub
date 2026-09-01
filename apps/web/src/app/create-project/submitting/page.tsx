@@ -187,9 +187,7 @@ export default function SubmittingPage() {
         setCompletedProjectId(project.id);
         setCompletedSurveyStep(payload.requiresSurveyService === true);
         setSubmissionComplete(true);
-        toast.success(hasSelectedPros
-          ? 'Project created and bidding is now open to your selected professionals.'
-          : 'Project created! Bidding is now open to all matching professionals.');
+        toast.success('Your project has been registered and will be reviewed by a Mimo PM.');
       } catch (err: any) {
         setError(err.message || 'Failed to create project');
         toast.error(err.message || 'Failed to create project');
@@ -223,9 +221,9 @@ export default function SubmittingPage() {
         {!safetyExpanded && (
           <>
             <MimoSpinner size="md" className="mx-auto mb-3" />
-            <p className="text-base font-bold text-[#4A3623]">Requesting quotes...</p>
+            <p className="text-base font-bold text-[#4A3623]">Registering your project...</p>
             <p className="mt-1 text-sm text-[rgba(126,58,33,0.65)]">
-              Publishing your project to the marketplace and preparing your dashboard.
+              A Mimo PM will review your project before tendering begins.
             </p>
           </>
         )}

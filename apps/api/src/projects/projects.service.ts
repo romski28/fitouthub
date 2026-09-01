@@ -4436,11 +4436,16 @@ export class ProjectsService {
     if (project.currentStage !== ProjectStage.BIDDING_ACTIVE) {
       throw new BadRequestException('Project is not currently open for tendering');
     }
-    return this.prisma.project.update({
+    const claimed = await this.prisma.project.update({
       where: { id: projectId },
       data: { pmId: pmUserId },
       select: { id: true, projectName: true, pmId: true },
     });
+
+    // Introduce the PM to the client.
+    await this.notifyClientPmProgress(projectId, 'claimed');
+
+    return claimed;
   }
 
   async getPmProjects(pmUserId: string) {
@@ -4506,7 +4511,89 @@ export class ProjectsService {
       });
     }
 
+    // Notify the client that tendering has begun.
+    await this.notifyClientPmProgress(projectId, 'released');
+
     return released;
+  }
+
+  private async notifyClientPmProgress(
+    projectId: string,
+    kind: 'claimed' | 'released',
+  ): Promise<void> {
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: {
+          id: true,
+          projectName: true,
+          userId: true,
+          pmId: true,
+          user: { select: { firstName: true, surname: true, mobile: true } },
+        },
+      });
+      if (!project?.userId) return;
+
+      const pmUser = project.pmId
+        ? await this.prisma.user
+            .findUnique({
+              where: { id: project.pmId },
+              select: { firstName: true, surname: true, nickname: true },
+            })
+            .catch(() => null)
+        : null;
+      const pmName =
+        (pmUser ? `${pmUser.firstName || ''} ${pmUser.surname || ''}`.trim() : '') ||
+        pmUser?.nickname ||
+        'your Mimo PM';
+      const clientFirstName = project.user?.firstName || 'there';
+
+      const chatMessage =
+        kind === 'claimed'
+          ? `👋 Hi ${clientFirstName}, ${pmName} is now your Mimo Project Manager.\n\nThey'll review your brief and release your project for quotation shortly. You'll be notified once tendering begins.`
+          : `🚀 Good news, ${clientFirstName} — your project "${project.projectName}" has been released for tender.\n\nProfessionals can now submit their quotes.`;
+
+      // Project chat (always).
+      const thread = await this.chatService.getOrCreateProjectThread(projectId);
+      await this.chatService.addProjectMessage(thread.id, 'foh', null, null, chatMessage);
+
+      // Push (fire-and-forget).
+      void this.pushService
+        .sendToUser(project.userId, {
+          title:
+            kind === 'claimed'
+              ? 'Your Mimo PM has picked up your project'
+              : 'Your project is now open for quotes',
+          body:
+            kind === 'claimed'
+              ? `${pmName} will review and release your project for quotation.`
+              : `"${project.projectName}" has been released for tender.`,
+          url: `/projects/${projectId}?tab=messages`,
+          tag: `pm-${kind}-${projectId}`,
+        })
+        .catch(() => {});
+
+      // Preferred method (WhatsApp/SMS via notification preferences).
+      if (project.user?.mobile) {
+        void this.notificationService
+          .send({
+            userId: project.userId,
+            phoneNumber: project.user.mobile,
+            eventType: kind === 'claimed' ? 'pm_project_claimed' : 'pm_project_released',
+            message:
+              kind === 'claimed'
+                ? `Hi ${clientFirstName}, ${pmName} is now your Mimo Project Manager and is reviewing your project.`
+                : `Good news! Your project "${project.projectName}" has been released for tender.`,
+          })
+          .catch(() => {});
+      }
+    } catch (error) {
+      console.error('[ProjectsService.notifyClientPmProgress] failed', {
+        projectId,
+        kind,
+        error: (error as Error)?.message,
+      });
+    }
   }
 
   async countMatchingProfessionals(params: {
