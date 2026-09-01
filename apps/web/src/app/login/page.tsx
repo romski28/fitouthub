@@ -11,7 +11,11 @@ export default function LoginPage() {
   const { openLoginModal } = useAuthModalControl();
 
   const postLoginPath =
-    role === 'surveyor' || role === 'mimo_boh' ? '/survey-ops' : '/projects';
+    role === 'surveyor' || role === 'mimo_boh'
+      ? '/survey-ops'
+      : role === 'project_manager'
+      ? '/pm'
+      : '/projects';
 
   useEffect(() => {
     // If already logged in, redirect to home

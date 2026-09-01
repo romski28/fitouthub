@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-01-46ba669e",
+    "date": "2026-09-01T12:07:23+08:00",
+    "title": "fix(pm): route project_manager to PM portal after login",
+    "summary": "fix(pm): route project_manager to PM portal after login",
+    "areas": [
+      "web"
+    ],
+    "commit": "46ba669e",
+    "files": [
+      "apps/web/src/app/login/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-c4267214",
     "date": "2026-09-01T12:00:10+08:00",
     "title": "fix(pm): allow project_manager in User.role check constraint",

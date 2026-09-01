@@ -123,6 +123,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (normalizedRole === 'project_delegate') {
       return '/project-delegate';
     }
+    if (normalizedRole === 'project_manager') {
+      return '/pm';
+    }
     return '/projects';
   };
 

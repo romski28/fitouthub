@@ -82,6 +82,7 @@ export const Navbar: React.FC = () => {
   const showAuthed = hydrated && isLoggedIn && user;
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const isAdmin = Boolean(user && user.role === 'admin');
+  const isPm = Boolean(user && user.role === 'project_manager');
   const showProjectsLink = hydrated && isLoggedIn && !profIsLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showPublicLinks = !showProfessionalAuthed;
@@ -171,6 +172,14 @@ export const Navbar: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                       >
                         Admin Portal
+                      </Link>
+                    ) : isPm ? (
+                      <Link
+                        href="/pm"
+                        className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded border border-emerald-200 font-semibold"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        PM Portal
                       </Link>
                     ) : (
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
