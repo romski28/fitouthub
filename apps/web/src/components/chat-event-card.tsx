@@ -1,11 +1,12 @@
-import type { ChatEvent } from '@/lib/chat-event-parser';
+import type { ChatEvent, ChatEventAction } from '@/lib/chat-event-parser';
 
 interface ChatEventCardProps {
   event: ChatEvent;
   isCurrentUser?: boolean;
+  onAction?: (action: ChatEventAction) => void;
 }
 
-export default function ChatEventCard({ event, isCurrentUser = false }: ChatEventCardProps) {
+export default function ChatEventCard({ event, isCurrentUser = false, onAction }: ChatEventCardProps) {
   const isAward = event.type === 'quote-accepted';
   const isNotSelected = event.type === 'quote-not-selected';
 
@@ -51,6 +52,21 @@ export default function ChatEventCard({ event, isCurrentUser = false }: ChatEven
                 </div>
               ))}
             </dl>
+          ) : null}
+
+          {event.actions && event.actions.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {event.actions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => onAction?.(action)}
+                  className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
       </div>

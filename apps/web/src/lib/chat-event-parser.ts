@@ -5,12 +5,19 @@ export interface ChatEventField {
   value: string;
 }
 
+export interface ChatEventAction {
+  id: string;
+  label: string;
+  kind?: string;
+}
+
 export interface ChatEvent {
   type: ChatEventType;
   icon: string;
   title: string;
   summary?: string;
   fields?: ChatEventField[];
+  actions?: ChatEventAction[];
   rawContent: string;
 }
 
@@ -20,6 +27,7 @@ interface StructuredChatEvent {
   title?: string;
   summary?: string;
   fields?: ChatEventField[];
+  actions?: ChatEventAction[];
 }
 
 const STRUCTURED_PREFIX = '[[event]]';
@@ -30,6 +38,7 @@ export function buildStructuredChatEventMessage(event: {
   title: string;
   summary?: string;
   fields?: ChatEventField[];
+  actions?: ChatEventAction[];
 }) {
   const payload: StructuredChatEvent = {
     type: (event.type || 'generic').trim(),
@@ -38,6 +47,9 @@ export function buildStructuredChatEventMessage(event: {
     summary: event.summary,
     fields: Array.isArray(event.fields)
       ? event.fields.filter((field) => field.label?.trim() && field.value?.trim())
+      : undefined,
+    actions: Array.isArray(event.actions)
+      ? event.actions.filter((action) => action.id?.trim() && action.label?.trim())
       : undefined,
   };
 
@@ -62,6 +74,7 @@ function parseStructuredEvent(content: string): ChatEvent | null {
       title: parsed.title || 'Update',
       summary: parsed.summary,
       fields: parsed.fields,
+      actions: parsed.actions,
       rawContent: content,
     };
   } catch {

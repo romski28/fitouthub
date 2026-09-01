@@ -26,6 +26,7 @@ type PmProject = {
   releasedByPmId?: string | null;
   notes?: string;
   photos?: Array<{ id: string; url: string; note?: string | null }>;
+  mimoProjectExtras?: Array<{ id: string; extraType: string; status: string; title?: string }>;
   user?: { firstName?: string; surname?: string; email?: string };
 };
 
@@ -258,6 +259,23 @@ export default function PmProjectDetailPage() {
             </div>
           )}
 
+          {project.mimoProjectExtras && project.mimoProjectExtras.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {project.mimoProjectExtras.map((extra) => (
+                <span
+                  key={extra.id}
+                  className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
+                >
+                  {extra.extraType === 'survey'
+                    ? '🏗️ Surveying+'
+                    : extra.extraType === 'design'
+                    ? '🎨 Interior Design'
+                    : extra.title || extra.extraType}
+                </span>
+              ))}
+            </div>
+          )}
+
           {project.notes && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project notes</p>
@@ -275,7 +293,7 @@ export default function PmProjectDetailPage() {
               <p className="font-medium text-slate-800">{project.currentStage || "—"}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-500">Tender opened</p>
+              <p className="text-xs text-slate-500">Project registered</p>
               <p className="font-medium text-slate-800">{formatDate(project.tenderOpenedAt)}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
