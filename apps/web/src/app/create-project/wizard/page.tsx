@@ -1302,12 +1302,6 @@ export default function CreateProjectWizardPage() {
     const mergedSummary = [
       summary.trim(),
       followUpBlock ? `Additional Questions & Answers:\n${followUpBlock}` : '',
-      typeof requiresSurveyService === 'boolean'
-        ? `Survey service requested: ${requiresSurveyService ? 'Yes' : 'No'}`
-        : '',
-      typeof requiresDesignService === 'boolean'
-        ? `Design service requested: ${requiresDesignService ? 'Yes' : 'No'}`
-        : '',
     ].filter(Boolean).join('\n\n');
 
     const resolvedRegion = [location.secondary, location.primary]

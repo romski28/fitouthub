@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-01-9a35b1df",
+    "date": "2026-09-01T21:14:10+08:00",
+    "title": "fix(pm): drop service-requested meta lines, add client name to hero",
+    "summary": "fix(pm): drop service-requested meta lines, add client name to hero",
+    "areas": [
+      "web"
+    ],
+    "commit": "9a35b1df",
+    "files": [
+      "apps/web/src/app/create-project/wizard/page.tsx",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-23697b60",
     "date": "2026-09-01T21:04:29+08:00",
     "title": "style(pm): enlarge service badges, unify action button styling",

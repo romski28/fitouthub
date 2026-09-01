@@ -25,6 +25,7 @@ type PmProject = {
   releasedForQuotationAt?: string | null;
   releasedByPmId?: string | null;
   notes?: string;
+  clientName?: string;
   photos?: Array<{ id: string; url: string; note?: string | null }>;
   mimoProjectExtras?: Array<{ id: string; extraType: string; status: string; title?: string }>;
   user?: { firstName?: string; surname?: string; email?: string };
@@ -234,9 +235,7 @@ export default function PmProjectDetailPage() {
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-slate-900">{project.projectName}</h1>
               <p className="mt-1 text-sm text-slate-500">
-                {[project.region, project.user ? `${project.user.firstName || ""} ${project.user.surname || ""}`.trim() : null]
-                  .filter(Boolean)
-                  .join(" · ") || "No location"}
+                For {project.clientName || `${project.user?.firstName || ""} ${project.user?.surname || ""}`.trim() || "the client"} in {project.region || "your location"}
               </p>
             </div>
             <span
