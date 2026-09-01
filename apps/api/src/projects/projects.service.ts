@@ -4715,6 +4715,160 @@ export class ProjectsService {
     return { success: true };
   }
 
+  private async listPmCallBusyIntervals(
+    pmId: string,
+    windowStart: Date,
+    windowEnd: Date,
+  ): Promise<TimeInterval[]> {
+    try {
+      const bookings = await this.prisma.pmCallBooking.findMany({
+        where: {
+          pmId,
+          status: 'scheduled',
+          scheduledAt: { lt: windowEnd, gt: windowStart },
+        },
+        orderBy: { scheduledAt: 'asc' },
+        select: { scheduledAt: true },
+      });
+      return bookings.map((b) => {
+        const startsAt = new Date(b.scheduledAt);
+        return {
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000),
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  async getPmCallAvailability(projectId: string, cursor?: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    const pmId = project.pmId;
+    if (!pmId) throw new BadRequestException('No PM assigned to this project');
+
+    const durationMinutes = this.MIMO_SURVEY_SLOT_STEP_MINUTES;
+    const tomorrowStartUtc = this.getTomorrowStartUtcInHk();
+    let cursorDate = cursor ? new Date(cursor) : tomorrowStartUtc;
+    if (Number.isNaN(cursorDate.getTime())) {
+      throw new BadRequestException('Invalid availability cursor');
+    }
+    if (cursorDate < tomorrowStartUtc) cursorDate = tomorrowStartUtc;
+    cursorDate = this.alignToSlotStep(cursorDate);
+    cursorDate = this.moveToNextValidWindowStart(cursorDate);
+
+    const lookaheadEnd = new Date(
+      cursorDate.getTime() + this.MIMO_SURVEY_MAX_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+    );
+    let busyWindowStart = cursorDate;
+    let busyWindowEnd = new Date(
+      cursorDate.getTime() + this.MIMO_SURVEY_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+    );
+    let busyIntervals = await this.listPmCallBusyIntervals(pmId, busyWindowStart, busyWindowEnd);
+
+    const slots: Array<{ startsAt: string; endsAt: string }> = [];
+    let pointer = cursorDate;
+
+    while (slots.length < 5 && pointer < lookaheadEnd) {
+      pointer = this.alignToSlotStep(pointer);
+      pointer = this.moveToNextValidWindowStart(pointer);
+
+      if (pointer >= busyWindowEnd) {
+        busyWindowStart = pointer;
+        busyWindowEnd = new Date(
+          pointer.getTime() + this.MIMO_SURVEY_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000,
+        );
+        busyIntervals = await this.listPmCallBusyIntervals(pmId, busyWindowStart, busyWindowEnd);
+      }
+
+      const slotEnd = new Date(pointer.getTime() + durationMinutes * 60 * 1000);
+
+      if (!this.isValidSurveyWindow(pointer, durationMinutes)) {
+        pointer = new Date(pointer.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+        continue;
+      }
+
+      const blockingInterval = this.findBlockingInterval(pointer, slotEnd, busyIntervals);
+      if (blockingInterval) {
+        pointer = new Date(pointer.getTime() + this.MIMO_SURVEY_SLOT_STEP_MINUTES * 60 * 1000);
+        continue;
+      }
+
+      slots.push({ startsAt: pointer.toISOString(), endsAt: slotEnd.toISOString() });
+      pointer = slotEnd;
+    }
+
+    return {
+      durationMinutes,
+      timezone: 'Asia/Hong_Kong',
+      slots,
+      nextCursor: slots.length > 0 ? slots[slots.length - 1].startsAt : null,
+    };
+  }
+
+  async bookPmCall(projectId: string, clientUserId: string, proposedDate: string) {
+    const scheduledAt = new Date(proposedDate);
+    if (!proposedDate || Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException('A valid call time is required');
+    }
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true, userId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.userId !== clientUserId) {
+      throw new ForbiddenException('Only the client can book a call');
+    }
+    const pmId = project.pmId;
+    if (!pmId) throw new BadRequestException('No PM assigned to this project');
+
+    const durationMinutes = this.MIMO_SURVEY_SLOT_STEP_MINUTES;
+    const tomorrowStartUtc = this.getTomorrowStartUtcInHk();
+    if (scheduledAt < tomorrowStartUtc) {
+      throw new BadRequestException('Call time must be from tomorrow onwards');
+    }
+    if (!this.isValidSurveyWindow(scheduledAt, durationMinutes)) {
+      throw new BadRequestException('Selected time is outside working hours');
+    }
+
+    const bookingEnd = new Date(scheduledAt.getTime() + durationMinutes * 60 * 1000);
+    const busyIntervals = await this.listPmCallBusyIntervals(pmId, scheduledAt, bookingEnd);
+    if (this.findBlockingInterval(scheduledAt, bookingEnd, busyIntervals)) {
+      throw new BadRequestException('Selected slot is no longer available. Please choose another slot.');
+    }
+
+    const booking = await this.prisma.pmCallBooking.create({
+      data: { projectId, pmId, clientId: clientUserId, scheduledAt, status: 'scheduled' },
+    });
+    return { success: true, booking };
+  }
+
+  async pmRequestCall(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can request a call');
+    }
+    const content = `[[event]]\n${JSON.stringify({
+      type: 'generic',
+      icon: '📞',
+      title: 'Book a call with your PM',
+      summary:
+        "We'd like to arrange a call to discuss your project. Please pick a time that suits you.\n\nIf you can't or don't want a call, please reply here to let us know why.",
+      actions: [{ id: 'book-call', label: 'Book call', kind: 'book-call' }],
+    })}`;
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    return { success: true };
+  }
+
   async pmRedefineScope(projectId: string, pmUserId: string, additionalContext?: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },

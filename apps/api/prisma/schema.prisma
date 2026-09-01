@@ -611,6 +611,7 @@ model Project {
   emailTokens                     EmailToken[]
   user                            User?                          @relation(fields: [userId], references: [id])
   photos                          ProjectPhoto[]
+  pmCallBookings                  PmCallBooking[]
   professionals                   ProjectProfessional[]
   assistRequests                  ProjectAssistRequest[]
   chatThread                      ProjectChatThread?
@@ -727,6 +728,21 @@ model ProjectPhoto {
 
   @@index([projectId])
   @@index([uploadedById])
+}
+
+model PmCallBooking {
+  id          String    @id @default(cuid())
+  projectId   String
+  pmId        String
+  clientId    String
+  scheduledAt DateTime
+  status      String    @default("scheduled")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([pmId])
+  @@index([projectId])
 }
 
 model ProjectProfessional {

@@ -10,6 +10,7 @@ import ChatImageAttachment from './chat-image-attachment';
 import ChatEventCard from './chat-event-card';
 import ChatImageUploader from './chat-image-uploader';
 import ClientImageUploadModal from './client-image-upload-modal';
+import BookPmCallModal from './book-pm-call-modal';
 
 interface ProjectChatProps {
   projectId: string;
@@ -168,12 +169,15 @@ export default function ProjectChat({
   const { user } = useAuth();
   const { openModal } = useNextStepModal();
   const [imageUploadOpen, setImageUploadOpen] = useState(false);
+  const [callBookingOpen, setCallBookingOpen] = useState(false);
 
   const handleAction = (action: { id: string; label: string; kind?: string }) => {
     if (action.kind === 'book-survey' && currentUserRole === 'client' && user?.id) {
       openModal('BOOK_MIMO_SURVEY', projectId, `/projects/${projectId}`, user.id, 'client');
     } else if (action.kind === 'upload-images' && currentUserRole === 'client') {
       setImageUploadOpen(true);
+    } else if (action.kind === 'book-call' && currentUserRole === 'client') {
+      setCallBookingOpen(true);
     }
   };
 
@@ -325,6 +329,13 @@ export default function ProjectChat({
       <ClientImageUploadModal
         isOpen={imageUploadOpen}
         onClose={() => setImageUploadOpen(false)}
+        projectId={projectId}
+        accessToken={accessToken}
+      />
+
+      <BookPmCallModal
+        isOpen={callBookingOpen}
+        onClose={() => setCallBookingOpen(false)}
         projectId={projectId}
         accessToken={accessToken}
       />

@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-09-01-9c0e1e3e",
+    "date": "2026-09-01T20:27:25+08:00",
+    "title": "feat(pm): call-request card with per-PM availability calendar",
+    "summary": "feat(pm): call-request card with per-PM availability calendar",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "9c0e1e3e",
+    "files": [
+      "MANUAL_SQL_ADD_PM_CALL_BOOKING.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx",
+      "apps/web/src/components/book-pm-call-modal.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-379c1785",
     "date": "2026-09-01T20:15:01+08:00",
     "title": "feat(pm): image-request chat card end-to-end",

@@ -57,8 +57,6 @@ export default function PmProjectDetailPage() {
   const [releasing, setReleasing] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [callDate, setCallDate] = useState("");
-  const [callTime, setCallTime] = useState("");
   const [arrangingCall, setArrangingCall] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
   const [addingPhotos, setAddingPhotos] = useState(false);
@@ -139,19 +137,12 @@ export default function PmProjectDetailPage() {
   };
 
   const handleArrangeCall = async () => {
-    if (!callDate || !callTime) {
-      toast.error("Please pick a date and time");
-      return;
-    }
     setArrangingCall(true);
     try {
-      const content = `📞 Could we arrange a call to discuss your project?\n\nProposed time: ${callDate} at ${callTime} (HKT). Please confirm a time that suits you.`;
-      await postPmAction(`/projects/${projectId}/pm-message`, { content });
-      setCallDate("");
-      setCallTime("");
+      await postPmAction(`/projects/${projectId}/pm-request-call`);
       toast.success("Call request sent to the client");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to arrange call");
+      toast.error(err instanceof Error ? err.message : "Failed to request call");
     } finally {
       setArrangingCall(false);
     }
@@ -364,32 +355,6 @@ export default function PmProjectDetailPage() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-600">Arrange call</label>
-              <div className="mt-1 flex flex-wrap gap-2">
-                <input
-                  type="date"
-                  value={callDate}
-                  onChange={(e) => setCallDate(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-                <input
-                  type="time"
-                  value={callTime}
-                  onChange={(e) => setCallTime(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={handleArrangeCall}
-                  disabled={arrangingCall}
-                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {arrangingCall ? "Sending…" : "Request call"}
-                </button>
-              </div>
-            </div>
-
-            <div>
               <label className="text-xs font-medium text-slate-600">Add images</label>
               <div className="mt-1 flex items-center gap-3">
                 <ChatImageUploader
@@ -411,6 +376,14 @@ export default function PmProjectDetailPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleArrangeCall}
+                disabled={arrangingCall}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {arrangingCall ? "Requesting…" : "Request call"}
+              </button>
               <button
                 type="button"
                 onClick={handleArrangeSurvey}

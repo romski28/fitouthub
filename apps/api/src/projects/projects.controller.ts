@@ -638,6 +638,49 @@ export class ProjectsController {
     return this.projectsService.pmRequestImages(projectId, req.user?.id);
   }
 
+  @Post(':id/pm-request-call')
+  @UseGuards(AuthGuard('jwt'))
+  async pmRequestCall(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can request a call');
+    }
+    return this.projectsService.pmRequestCall(projectId, req.user?.id);
+  }
+
+  @Get(':id/pm-call/availability')
+  @UseGuards(CombinedAuthGuard)
+  async getPmCallAvailability(
+    @Param('id') projectId: string,
+    @Query('cursor') cursor: string | undefined,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isProfessional = Boolean(req.user?.isProfessional);
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (tokenRole === 'professional' || isProfessional) {
+      throw new ForbiddenException('Only clients can view call availability');
+    }
+    return this.projectsService.getPmCallAvailability(projectId, cursor ? String(cursor) : undefined);
+  }
+
+  @Post(':id/pm-call/book')
+  @UseGuards(CombinedAuthGuard)
+  async bookPmCall(
+    @Param('id') projectId: string,
+    @Body() body: { proposedDate: string },
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isProfessional = Boolean(req.user?.isProfessional);
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (tokenRole === 'professional' || isProfessional) {
+      throw new ForbiddenException('Only clients can book a call');
+    }
+    return this.projectsService.bookPmCall(projectId, userId, body?.proposedDate);
+  }
+
   @Post(':id/pm-arrange-survey')
   @UseGuards(AuthGuard('jwt'))
   async pmArrangeSurvey(@Param('id') projectId: string, @Request() req: any) {
