@@ -118,7 +118,7 @@ export default function BookPmCallModal({
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
         <h2 className="text-xl font-bold text-slate-900">Book a call with your PM</h2>
         <p className="mt-1 text-sm text-slate-600">
           Pick an available time slot to speak with your Project Manager.
@@ -164,7 +164,7 @@ export default function BookPmCallModal({
         </div>
 
         {slots.length > 0 ? (
-          <div className="mt-2 grid gap-2">
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {slots.map((slot) => {
               const isSelected = selectedSlotStart === slot.startsAt;
               return (

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-2ee2a789",
+    "date": "2026-09-01T23:41:29+08:00",
+    "title": "fix(pm): add scroll + two-column slots to call booking modal",
+    "summary": "fix(pm): add scroll + two-column slots to call booking modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "2ee2a789",
+    "files": [
+      "apps/web/src/components/book-pm-call-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-da88eeac",
     "date": "2026-09-01T23:25:49+08:00",
     "title": "fix(pm): add scroll + two-column slots to survey booking modal",
