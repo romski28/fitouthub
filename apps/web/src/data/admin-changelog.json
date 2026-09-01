@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-c4267214",
+    "date": "2026-09-01T12:00:10+08:00",
+    "title": "fix(pm): allow project_manager in User.role check constraint",
+    "summary": "fix(pm): allow project_manager in User.role check constraint",
+    "areas": [
+      "infra"
+    ],
+    "commit": "c4267214",
+    "files": [
+      "MANUAL_SQL_ADD_PM_ROLE_CHECK.sql"
+    ]
+  },
+  {
     "id": "2026-09-01-abcc0f5a",
     "date": "2026-09-01T11:40:11+08:00",
     "title": "feat(pm): notify client on PM claim and tender release",
