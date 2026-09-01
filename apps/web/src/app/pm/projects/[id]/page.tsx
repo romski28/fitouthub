@@ -306,8 +306,8 @@ export default function PmProjectDetailPage() {
             </div>
           </div>
 
-          {/* Photos */}
-          <div className="space-y-2">
+          {/* Images */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">Project images</h3>
             {project.photos && project.photos.length > 0 ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -327,12 +327,37 @@ export default function PmProjectDetailPage() {
             ) : (
               <p className="text-sm text-slate-500">No images yet.</p>
             )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <ChatImageUploader
+                onFilesSelected={setPendingPhotos}
+                maxImages={5}
+                disabled={addingPhotos}
+                isUploading={addingPhotos}
+                uploadingCount={pendingPhotos.length}
+              />
+              <button
+                type="button"
+                onClick={handleAddPhotos}
+                disabled={addingPhotos || pendingPhotos.length === 0}
+                className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {addingPhotos ? "Uploading…" : "Upload"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRequestImages}
+                disabled={requestingImages}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {requestingImages ? "Requesting…" : "Request images"}
+              </button>
+            </div>
           </div>
 
-          {/* Quick actions */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900">Quick actions</h3>
-
+          {/* Scope */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900">Project scope</h3>
             <div>
               <label className="text-xs font-medium text-slate-600">Ask for more info</label>
               <div className="mt-1 flex gap-2">
@@ -353,62 +378,34 @@ export default function PmProjectDetailPage() {
                 </button>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleRedefineScope}
+              disabled={refiningScope}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {refiningScope ? "Refining…" : "Redefine scope"}
+            </button>
+          </div>
 
-            <div>
-              <label className="text-xs font-medium text-slate-600">Add images</label>
-              <div className="mt-1 flex items-center gap-3">
-                <ChatImageUploader
-                  onFilesSelected={setPendingPhotos}
-                  maxImages={5}
-                  disabled={addingPhotos}
-                  isUploading={addingPhotos}
-                  uploadingCount={pendingPhotos.length}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddPhotos}
-                  disabled={addingPhotos || pendingPhotos.length === 0}
-                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {addingPhotos ? "Uploading…" : "Upload"}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleArrangeCall}
-                disabled={arrangingCall}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-              >
-                {arrangingCall ? "Requesting…" : "Request call"}
-              </button>
-              <button
-                type="button"
-                onClick={handleArrangeSurvey}
-                disabled={arrangingSurvey}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-              >
-                {arrangingSurvey ? "Requesting…" : "Request survey"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRequestImages}
-                disabled={requestingImages}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-              >
-                {requestingImages ? "Requesting…" : "Request images"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRedefineScope}
-                disabled={refiningScope}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-              >
-                {refiningScope ? "Refining…" : "Redefine scope"}
-              </button>
-            </div>
+          {/* Requests */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleArrangeCall}
+              disabled={arrangingCall}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {arrangingCall ? "Requesting…" : "Request call"}
+            </button>
+            <button
+              type="button"
+              onClick={handleArrangeSurvey}
+              disabled={arrangingSurvey}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {arrangingSurvey ? "Requesting…" : "Request survey"}
+            </button>
           </div>
 
           {!project.releasedForQuotationAt && (

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-c4788547",
+    "date": "2026-09-01T20:42:24+08:00",
+    "title": "refactor(pm): group quick actions into images / scope / request sections",
+    "summary": "refactor(pm): group quick actions into images / scope / request sections",
+    "areas": [
+      "web"
+    ],
+    "commit": "c4788547",
+    "files": [
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-9c0e1e3e",
     "date": "2026-09-01T20:27:25+08:00",
     "title": "feat(pm): call-request card with per-PM availability calendar",
