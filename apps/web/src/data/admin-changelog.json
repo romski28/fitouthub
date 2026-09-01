@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-85e41bc3",
+    "date": "2026-09-01T21:42:21+08:00",
+    "title": "fix(pm): surface PM-client project chat during tender",
+    "summary": "fix(pm): surface PM-client project chat during tender",
+    "areas": [
+      "web"
+    ],
+    "commit": "85e41bc3",
+    "files": [
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-9a35b1df",
     "date": "2026-09-01T21:14:10+08:00",
     "title": "fix(pm): drop service-requested meta lines, add client name to hero",

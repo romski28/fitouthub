@@ -114,7 +114,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   assistResolvedAt,
 }) => {
   const hasProfessionals = Array.isArray(professionals) && professionals.length > 0;
-  const isAssistView = !hasProfessionals || viewingAssistChat;
+  const isAssistView = viewingAssistChat;
   const selectedAssistOptionValue =
     assistRequestId && assistThreads.some((thread) => thread.id === assistRequestId)
       ? `assist-${assistRequestId}`
@@ -125,9 +125,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
       <div>
         <div className="mb-3">
           <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
-          <p className="text-sm text-slate-600">Communicate with all awarded professionals and Mimo</p>
+          <p className="text-sm text-slate-600">Communicate with your Mimo Project Manager{hasProfessionals ? ' and awarded professionals' : ''}</p>
           {!hasProfessionals && (
-            <p className="mt-1 text-xs text-slate-600">No professionals invited yet. FoH General chat is still available.</p>
+            <p className="mt-1 text-xs text-slate-600">Your Mimo Project Manager will communicate with you here.</p>
           )}
         </div>
 
@@ -141,9 +141,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                   ? selectedAssistOptionValue
                   : selectedProfessional
                     ? `professional-${selectedProfessional.id}`
-                    : hasProfessionals
-                      ? 'project'
-                      : 'fitouthub'
+                    : 'project'
               }
               onChange={(e) => {
                 const val = e.target.value;
@@ -169,7 +167,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
               }}
               className="w-full rounded-md border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-[rgba(215,107,78,0.75)] focus:outline-none"
             >
-              {hasProfessionals && <option value="project">Project (Team chat)</option>}
+              <option value="project">Project (Team chat)</option>
               {hasProfessionals && professionals.map((pp) => {
                 const displayName = pp.professional.fullName || pp.professional.businessName || pp.professional.email;
                 return (
@@ -192,10 +190,10 @@ export const ChatTab: React.FC<ChatTabProps> = ({
           </div>
 
           {/* Team Chat View */}
-          {hasProfessionals && !isAssistView && !selectedProfessional && (
+          {!isAssistView && !selectedProfessional && (
             <div>
               <div className="border-b border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.82)] p-4">
-                <p className="text-sm text-slate-700">Chat with all awarded professionals</p>
+                <p className="text-sm text-slate-700">Chat with your Project Manager and team</p>
               </div>
               <ProjectChat
                 projectId={projectId}
