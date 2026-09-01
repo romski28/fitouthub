@@ -16,13 +16,7 @@ export default function ChatEventCard({ event, isCurrentUser = false, onAction }
       ? 'border-rose-400/50 bg-rose-500/10 text-rose-50'
       : isCurrentUser
         ? 'border-2 border-[#ff6b5b] bg-emerald-500 text-white'
-        : 'border-sky-400/40 bg-sky-500/10 text-slate-100';
-
-  const titleTone = isAward
-    ? 'text-amber-200'
-    : isNotSelected
-      ? 'text-rose-200'
-      : isCurrentUser
+      : 'border-blue-400/50 bg-blue-600 text-white';
         ? 'text-[#ff6b5b]'
         : 'text-sky-200';
   const iconTone = isAward
@@ -31,13 +25,7 @@ export default function ChatEventCard({ event, isCurrentUser = false, onAction }
       ? 'bg-rose-400/20'
       : isCurrentUser
         ? 'bg-white/20'
-        : 'bg-sky-500/20';
-
-  return (
-    <div className={`rounded-xl border px-3 py-3 ${toneClasses}`}>
-      <div className="flex items-start gap-3">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg ${iconTone}`}>
-          {event.icon}
+      : 'bg-white/20';
         </div>
         <div className="min-w-0 flex-1">
           <p className={`text-base font-semibold leading-relaxed ${titleTone}`}>{event.title}</p>
@@ -61,7 +49,7 @@ export default function ChatEventCard({ event, isCurrentUser = false, onAction }
                   key={action.id}
                   type="button"
                   onClick={() => onAction?.(action)}
-                  className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/25"
+                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
                 >
                   {action.label}
                 </button>

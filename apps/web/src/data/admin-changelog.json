@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-3990153a",
+    "date": "2026-09-01T21:54:47+08:00",
+    "title": "style(pm): restyle generic chat event card to blue info theme",
+    "summary": "style(pm): restyle generic chat event card to blue info theme",
+    "areas": [
+      "web"
+    ],
+    "commit": "3990153a",
+    "files": [
+      "apps/web/src/components/chat-event-card.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-85e41bc3",
     "date": "2026-09-01T21:42:21+08:00",
     "title": "fix(pm): surface PM-client project chat during tender",
