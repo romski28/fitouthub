@@ -26,6 +26,17 @@ admin.
   chat) when drilled into a project.
 - **Exclusive ownership** (one PM per project); absence coverage via a temporary
   share/handoff (mechanism TBD — see open questions).
+- **PM chat identity:** `senderType: 'pm'` with `senderUserId` = the PM's user
+  id (no schema migration — `senderType` is a plain string).
+- **PM↔client chat** reuses the per-project `ProjectChatThread`; PM messages
+  surface in the existing `UpdatesModal` aggregation (`project-general`).
+- **Tender Q&A concierge:** during tender (release → award) professionals
+  contact the PM only, not the client; the client is hidden from per-pro
+  threads. After award the awarded pro + PM share the project chat. See
+  `PM_TENDER_CONCIERGE_PLAN.md`.
+- **PM project detail** gains images plus quick actions (ask for more info,
+  arrange call with date/time picker, add images, arrange survey, redefine
+  scope).
 
 ## 3. Role model
 
@@ -140,3 +151,8 @@ Resolved:
 Remaining (minor, for build phase):
 1. `onLeave` as a simple `User` boolean vs a date range (start/end)?
 2. Exact queue tag label/severity for on-leave pending actions.
+
+## 11. Detailed build plan
+
+`PM_TENDER_CONCIERGE_PLAN.md` — phased plan for PM chat identity, message
+aggregation, PM project-detail quick actions, and the tender Q&A concierge.
