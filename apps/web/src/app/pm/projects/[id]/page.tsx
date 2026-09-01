@@ -64,6 +64,7 @@ export default function PmProjectDetailPage() {
   const [arrangingSurvey, setArrangingSurvey] = useState(false);
   const [refiningScope, setRefiningScope] = useState(false);
   const [requestingImages, setRequestingImages] = useState(false);
+  const [pmScope, setPmScope] = useState<{ summary?: string | null; scopeEntryCount?: number; versionCount?: number } | null>(null);
 
   const fetchProject = useCallback(async () => {
     if (!accessToken || !projectId) return;
@@ -89,6 +90,22 @@ export default function PmProjectDetailPage() {
   useEffect(() => {
     void fetchProject();
   }, [fetchProject]);
+
+  const fetchScope = useCallback(async () => {
+    if (!accessToken || !projectId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/pm-scope`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) setPmScope(await res.json());
+    } catch {
+      /* ignore */
+    }
+  }, [accessToken, projectId]);
+
+  useEffect(() => {
+    void fetchScope();
+  }, [fetchScope]);
 
   const handleRelease = async () => {
     if (!accessToken || !projectId) return;
@@ -127,11 +144,11 @@ export default function PmProjectDetailPage() {
     if (!messageText.trim()) return;
     setSendingMessage(true);
     try {
-      await postPmAction(`/projects/${projectId}/pm-message`, { content: messageText });
+      await postPmAction(`/projects/${projectId}/pm-request-info`, { question: messageText });
       setMessageText("");
-      toast.success("Message sent to the client");
+      toast.success("Question sent to the client");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send message");
+      toast.error(err instanceof Error ? err.message : "Failed to send question");
     } finally {
       setSendingMessage(false);
     }
@@ -196,6 +213,7 @@ export default function PmProjectDetailPage() {
     try {
       await postPmAction(`/projects/${projectId}/pm-redefine-scope`, {});
       toast.success("Scope refinement started");
+      setTimeout(() => { void fetchScope(); }, 8000);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to refine scope");
     } finally {
@@ -361,6 +379,12 @@ export default function PmProjectDetailPage() {
           {/* Scope */}
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">Project scope</h3>
+            {pmScope?.summary ? (
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current scope summary</p>
+                <p className="mt-1 text-sm whitespace-pre-wrap text-slate-700">{pmScope.summary}</p>
+              </div>
+            ) : null}
             <div>
               <label className="text-xs font-medium text-slate-600">Ask for more info</label>
               <div className="mt-1 flex gap-2">

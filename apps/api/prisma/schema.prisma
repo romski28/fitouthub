@@ -612,6 +612,7 @@ model Project {
   user                            User?                          @relation(fields: [userId], references: [id])
   photos                          ProjectPhoto[]
   pmCallBookings                  PmCallBooking[]
+  scopeQna                        ProjectScopeQna[]
   professionals                   ProjectProfessional[]
   assistRequests                  ProjectAssistRequest[]
   chatThread                      ProjectChatThread?
@@ -742,6 +743,19 @@ model PmCallBooking {
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([pmId])
+  @@index([projectId])
+}
+
+model ProjectScopeQna {
+  id         String    @id @default(cuid())
+  projectId  String
+  question   String
+  answer     String?
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@index([projectId])
 }
 

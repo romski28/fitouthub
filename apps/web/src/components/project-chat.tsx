@@ -11,6 +11,7 @@ import ChatEventCard from './chat-event-card';
 import ChatImageUploader from './chat-image-uploader';
 import ClientImageUploadModal from './client-image-upload-modal';
 import BookPmCallModal from './book-pm-call-modal';
+import AnswerQuestionModal from './answer-question-modal';
 
 interface ProjectChatProps {
   projectId: string;
@@ -170,14 +171,17 @@ export default function ProjectChat({
   const { openModal } = useNextStepModal();
   const [imageUploadOpen, setImageUploadOpen] = useState(false);
   const [callBookingOpen, setCallBookingOpen] = useState(false);
+  const [answerQnaId, setAnswerQnaId] = useState<string | null>(null);
 
-  const handleAction = (action: { id: string; label: string; kind?: string }) => {
+  const handleAction = (action: { id: string; label: string; kind?: string; payload?: Record<string, string> }) => {
     if (action.kind === 'book-survey' && currentUserRole === 'client' && user?.id) {
       openModal('BOOK_MIMO_SURVEY', projectId, `/projects/${projectId}`, user.id, 'client');
     } else if (action.kind === 'upload-images' && currentUserRole === 'client') {
       setImageUploadOpen(true);
     } else if (action.kind === 'book-call' && currentUserRole === 'client') {
       setCallBookingOpen(true);
+    } else if (action.kind === 'answer-question' && currentUserRole === 'client' && action.payload?.qnaId) {
+      setAnswerQnaId(action.payload.qnaId);
     }
   };
 
@@ -337,6 +341,14 @@ export default function ProjectChat({
         isOpen={callBookingOpen}
         onClose={() => setCallBookingOpen(false)}
         projectId={projectId}
+        accessToken={accessToken}
+      />
+
+      <AnswerQuestionModal
+        isOpen={!!answerQnaId}
+        onClose={() => setAnswerQnaId(null)}
+        projectId={projectId}
+        qnaId={answerQnaId || ''}
         accessToken={accessToken}
       />
     </div>

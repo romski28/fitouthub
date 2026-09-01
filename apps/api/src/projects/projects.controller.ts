@@ -647,6 +647,46 @@ export class ProjectsController {
     return this.projectsService.pmRequestCall(projectId, req.user?.id);
   }
 
+  @Post(':id/pm-request-info')
+  @UseGuards(AuthGuard('jwt'))
+  async pmRequestInfo(
+    @Param('id') projectId: string,
+    @Body() body: { question: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can request info');
+    }
+    return this.projectsService.pmRequestInfo(projectId, req.user?.id, body?.question);
+  }
+
+  @Post(':id/scope-qna/:qnaId/answer')
+  @UseGuards(CombinedAuthGuard)
+  async addScopeQnaAnswer(
+    @Param('id') projectId: string,
+    @Param('qnaId') qnaId: string,
+    @Body() body: { answer: string },
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    const tokenRole = String(req.user?.role || '').toLowerCase();
+    const isProfessional = Boolean(req.user?.isProfessional);
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (tokenRole === 'professional' || isProfessional) {
+      throw new ForbiddenException('Only clients can answer scope questions');
+    }
+    return this.projectsService.addScopeQnaAnswer(projectId, qnaId, userId, body?.answer);
+  }
+
+  @Get(':id/pm-scope')
+  @UseGuards(AuthGuard('jwt'))
+  async getPmScope(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can view the scope');
+    }
+    return this.projectsService.getPmScope(projectId, req.user?.id);
+  }
+
   @Get(':id/pm-call/availability')
   @UseGuards(CombinedAuthGuard)
   async getPmCallAvailability(

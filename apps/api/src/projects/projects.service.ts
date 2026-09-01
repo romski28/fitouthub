@@ -4869,6 +4869,87 @@ export class ProjectsService {
     return { success: true };
   }
 
+  async pmRequestInfo(projectId: string, pmUserId: string, question: string) {
+    if (!question || !question.trim()) {
+      throw new BadRequestException('Question is required');
+    }
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can request more info');
+    }
+
+    const qna = await this.prisma.projectScopeQna.create({
+      data: { projectId, question: question.trim() },
+    });
+
+    const content = `[[event]]\n${JSON.stringify({
+      type: 'generic',
+      icon: '❓',
+      title: 'Question from your PM',
+      summary: `${question.trim()}\n\nPlease answer so we can refine your project scope.`,
+      actions: [{ id: 'answer-question', label: 'Answer', kind: 'answer-question', payload: { qnaId: qna.id } }],
+    })}`;
+
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    return { success: true, qnaId: qna.id };
+  }
+
+  async addScopeQnaAnswer(projectId: string, qnaId: string, clientUserId: string, answer: string) {
+    if (!answer || !answer.trim()) {
+      throw new BadRequestException('Answer is required');
+    }
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, userId: true },
+    });
+    if (!project || project.userId !== clientUserId) {
+      throw new ForbiddenException('Only the client can answer this question');
+    }
+    const qna = await this.prisma.projectScopeQna.findUnique({
+      where: { id: qnaId },
+      select: { id: true, projectId: true },
+    });
+    if (!qna || qna.projectId !== projectId) {
+      throw new NotFoundException('Question not found');
+    }
+    const updated = await this.prisma.projectScopeQna.update({
+      where: { id: qnaId },
+      data: { answer: answer.trim() },
+    });
+    return { success: true, qna: updated };
+  }
+
+  async getPmScope(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can view the scope');
+    }
+    const result: any = await this.aiService.getProjectScope(projectId, {
+      actorId: pmUserId,
+      role: 'admin',
+    });
+    const scope = result?.scope;
+    let summary: string | null = null;
+    const ps = scope?.projectSummary;
+    if (typeof ps === 'string') summary = ps;
+    else if (ps && typeof ps === 'object') summary = ps.summary || ps.title || null;
+    return {
+      summary,
+      scopeEntryCount: Array.isArray(scope?.scopeOfWorks) ? scope.scopeOfWorks.length : 0,
+      versionCount: result?.versionCount ?? 0,
+      workflowStatus: result?.workflowStatus ?? null,
+    };
+  }
+
   async pmRedefineScope(projectId: string, pmUserId: string, additionalContext?: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -4878,19 +4959,38 @@ export class ProjectsService {
     if (project.pmId !== pmUserId) {
       throw new ForbiddenException('Only the assigned PM can refine the scope');
     }
+
+    // Collect answered-but-unconsumed scope Q&A as additional context.
+    const pendingQna = await this.prisma.projectScopeQna.findMany({
+      where: { projectId, answer: { not: null }, consumedAt: null },
+      orderBy: { createdAt: 'asc' },
+    });
+    const qnaContext = pendingQna
+      .map((q) => `Q: ${q.question}\nA: ${q.answer}`)
+      .join('\n\n');
+    const combinedContext = [additionalContext, qnaContext].filter(Boolean).join('\n\n');
+
     void this.aiService
       .generateProjectScope(
         projectId,
         { actorId: pmUserId, role: 'admin' },
-        { additionalContext: additionalContext || undefined },
+        { additionalContext: combinedContext || undefined },
       )
+      .then(async () => {
+        if (pendingQna.length > 0) {
+          await this.prisma.projectScopeQna.updateMany({
+            where: { id: { in: pendingQna.map((q) => q.id) } },
+            data: { consumedAt: new Date() },
+          });
+        }
+      })
       .catch((error) => {
         console.error('[ProjectsService.pmRedefineScope] failed', {
           projectId,
           error: (error as Error)?.message,
         });
       });
-    return { success: true, started: true };
+    return { success: true, started: true, consumedCount: pendingQna.length };
   }
 
   async countMatchingProfessionals(params: {

@@ -9,6 +9,7 @@ export interface ChatEventAction {
   id: string;
   label: string;
   kind?: string;
+  payload?: Record<string, string>;
 }
 
 export interface ChatEvent {

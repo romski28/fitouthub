@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-09-01-50ab284f",
+    "date": "2026-09-01T23:59:48+08:00",
+    "title": "feat(pm): structured scope Q&A feeding AI scope regeneration",
+    "summary": "feat(pm): structured scope Q&A feeding AI scope regeneration",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "50ab284f",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_SCOPE_QNA.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx",
+      "apps/web/src/components/answer-question-modal.tsx",
+      "apps/web/src/components/project-chat.tsx",
+      "apps/web/src/lib/chat-event-parser.ts"
+    ]
+  },
+  {
     "id": "2026-09-01-2ee2a789",
     "date": "2026-09-01T23:41:29+08:00",
     "title": "fix(pm): add scroll + two-column slots to call booking modal",
