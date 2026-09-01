@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-01-94ec9973",
+    "date": "2026-09-01T12:47:23+08:00",
+    "title": "refactor(pm): tabbed PM home with PM Home breadcrumb",
+    "summary": "refactor(pm): tabbed PM home with PM Home breadcrumb",
+    "areas": [
+      "web"
+    ],
+    "commit": "94ec9973",
+    "files": [
+      "apps/web/src/app/pm/page.tsx",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-46ba669e",
     "date": "2026-09-01T12:07:23+08:00",
     "title": "fix(pm): route project_manager to PM portal after login",

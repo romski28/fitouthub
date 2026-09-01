@@ -42,7 +42,7 @@ function formatDate(date?: string | null): string {
 }
 
 export default function PmProjectDetailPage() {
-  useRoleGuard(["project_manager"], { fallback: "/admin" });
+  useRoleGuard(["project_manager"], { fallback: "/" });
   const params = useParams();
   const projectId = params?.id as string;
   const { accessToken } = useAuth();
@@ -100,8 +100,10 @@ export default function PmProjectDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      <div className="flex items-center gap-3 text-sm">
-        <Link href="/pm" className="font-semibold text-slate-900 hover:text-slate-700">← My Projects</Link>
+      <div className="flex items-center gap-3 text-sm bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+        <Link href="/pm" className="font-semibold text-slate-900 hover:text-slate-700">PM Home</Link>
+        <span className="text-slate-300">/</span>
+        <span className="text-slate-500">Project</span>
       </div>
 
       {loading && <div className="py-10 text-center text-slate-500 text-sm">Loading project…</div>}
