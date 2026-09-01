@@ -4596,6 +4596,92 @@ export class ProjectsService {
     }
   }
 
+  async pmSendMessage(projectId: string, pmUserId: string, content: string) {
+    if (!content || !content.trim()) {
+      throw new BadRequestException('Message content is required');
+    }
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can message this client');
+    }
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    const message = await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content.trim());
+    return { success: true, message };
+  }
+
+  async addProjectPhotos(
+    projectId: string,
+    urls: string[],
+    note?: string,
+    uploadedById?: string,
+    uploadedByRole?: string,
+  ) {
+    if (!Array.isArray(urls) || urls.length === 0) {
+      throw new BadRequestException('At least one photo URL is required');
+    }
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    await this.prisma.projectPhoto.createMany({
+      data: urls.map((url) => ({
+        projectId,
+        url,
+        note: note || null,
+        uploadedById: uploadedById || null,
+        uploadedByRole: uploadedByRole || null,
+      })),
+    });
+    return { success: true, count: urls.length };
+  }
+
+  async pmArrangeSurvey(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true, projectName: true, clientName: true, region: true, userId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can arrange a survey');
+    }
+    await this.persistProjectExtraRequest(projectId, 'survey', {
+      title: 'Mimo Surveying+',
+      summary: 'PM requested a Mimo Surveying+ site survey for this project.',
+      source: 'pm_arrange_survey',
+    });
+    await this.signalAdminFeedForProjectExtras(project, ['survey']);
+    return { success: true };
+  }
+
+  async pmRedefineScope(projectId: string, pmUserId: string, additionalContext?: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can refine the scope');
+    }
+    void this.aiService
+      .generateProjectScope(
+        projectId,
+        { actorId: pmUserId, role: 'admin' },
+        { additionalContext: additionalContext || undefined },
+      )
+      .catch((error) => {
+        console.error('[ProjectsService.pmRedefineScope] failed', {
+          projectId,
+          error: (error as Error)?.message,
+        });
+      });
+    return { success: true, started: true };
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;

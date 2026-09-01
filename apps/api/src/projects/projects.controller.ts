@@ -596,6 +596,60 @@ export class ProjectsController {
     return this.projectsService.releaseProjectForPm(projectId, req.user?.id);
   }
 
+  @Post(':id/pm-message')
+  @UseGuards(AuthGuard('jwt'))
+  async pmSendMessage(
+    @Param('id') projectId: string,
+    @Body() body: { content: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can message clients');
+    }
+    return this.projectsService.pmSendMessage(projectId, req.user?.id, body?.content);
+  }
+
+  @Post(':id/photos')
+  @UseGuards(AuthGuard('jwt'))
+  async addProjectPhotos(
+    @Param('id') projectId: string,
+    @Body() body: { urls: string[]; note?: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can add project photos');
+    }
+    return this.projectsService.addProjectPhotos(
+      projectId,
+      body?.urls,
+      body?.note,
+      req.user?.id,
+      'pm',
+    );
+  }
+
+  @Post(':id/pm-arrange-survey')
+  @UseGuards(AuthGuard('jwt'))
+  async pmArrangeSurvey(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can arrange a survey');
+    }
+    return this.projectsService.pmArrangeSurvey(projectId, req.user?.id);
+  }
+
+  @Post(':id/pm-redefine-scope')
+  @UseGuards(AuthGuard('jwt'))
+  async pmRedefineScope(
+    @Param('id') projectId: string,
+    @Body() body: { additionalContext?: string },
+    @Request() req: any,
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can refine the scope');
+    }
+    return this.projectsService.pmRedefineScope(projectId, req.user?.id, body?.additionalContext);
+  }
+
   @Post(':id/open-tender')
   @UseGuards(CombinedAuthGuard)
   async openTender(

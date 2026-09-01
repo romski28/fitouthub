@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/config/api";
 import { useAuth } from "@/context/auth-context";
 import { useRoleGuard } from "@/hooks/use-role-guard";
+import ChatImageUploader from "@/components/chat-image-uploader";
 
 type PmProject = {
   id: string;
@@ -23,6 +25,7 @@ type PmProject = {
   releasedForQuotationAt?: string | null;
   releasedByPmId?: string | null;
   notes?: string;
+  photos?: Array<{ id: string; url: string; note?: string | null }>;
   user?: { firstName?: string; surname?: string; email?: string };
 };
 
@@ -51,6 +54,15 @@ export default function PmProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [callDate, setCallDate] = useState("");
+  const [callTime, setCallTime] = useState("");
+  const [arrangingCall, setArrangingCall] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
+  const [addingPhotos, setAddingPhotos] = useState(false);
+  const [arrangingSurvey, setArrangingSurvey] = useState(false);
+  const [refiningScope, setRefiningScope] = useState(false);
 
   const fetchProject = useCallback(async () => {
     if (!accessToken || !projectId) return;
@@ -95,6 +107,105 @@ export default function PmProjectDetailPage() {
       setError(err instanceof Error ? err.message : "Failed to release project");
     } finally {
       setReleasing(false);
+    }
+  };
+
+  const postPmAction = async (url: string, body?: unknown) => {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || `Request failed (${res.status})`);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) return;
+    setSendingMessage(true);
+    try {
+      await postPmAction(`/projects/${projectId}/pm-message`, { content: messageText });
+      setMessageText("");
+      toast.success("Message sent to the client");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send message");
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const handleArrangeCall = async () => {
+    if (!callDate || !callTime) {
+      toast.error("Please pick a date and time");
+      return;
+    }
+    setArrangingCall(true);
+    try {
+      const content = `📞 Could we arrange a call to discuss your project?\n\nProposed time: ${callDate} at ${callTime} (HKT). Please confirm a time that suits you.`;
+      await postPmAction(`/projects/${projectId}/pm-message`, { content });
+      setCallDate("");
+      setCallTime("");
+      toast.success("Call request sent to the client");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to arrange call");
+    } finally {
+      setArrangingCall(false);
+    }
+  };
+
+  const handleAddPhotos = async () => {
+    if (pendingPhotos.length === 0) return;
+    setAddingPhotos(true);
+    try {
+      const formData = new FormData();
+      pendingPhotos.forEach((f) => formData.append("files", f));
+      formData.append("projectId", projectId);
+      const uploadRes = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/uploads`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text();
+        throw new Error(text || "Image upload failed");
+      }
+      const uploadData = await uploadRes.json();
+      const urls: string[] = uploadData.urls || [];
+      if (urls.length === 0) throw new Error("No URLs returned from upload");
+      await postPmAction(`/projects/${projectId}/photos`, { urls });
+      setPendingPhotos([]);
+      toast.success("Photos added");
+      await fetchProject();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add photos");
+    } finally {
+      setAddingPhotos(false);
+    }
+  };
+
+  const handleArrangeSurvey = async () => {
+    setArrangingSurvey(true);
+    try {
+      await postPmAction(`/projects/${projectId}/pm-arrange-survey`);
+      toast.success("Survey request sent to the Mimo survey team");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to arrange survey");
+    } finally {
+      setArrangingSurvey(false);
+    }
+  };
+
+  const handleRedefineScope = async () => {
+    setRefiningScope(true);
+    try {
+      await postPmAction(`/projects/${projectId}/pm-redefine-scope`, {});
+      toast.success("Scope refinement started");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to refine scope");
+    } finally {
+      setRefiningScope(false);
     }
   };
 
@@ -170,6 +281,121 @@ export default function PmProjectDetailPage() {
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Released at</p>
               <p className="font-medium text-slate-800">{formatDate(project.releasedForQuotationAt)}</p>
+            </div>
+          </div>
+
+          {/* Photos */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-900">Project images</h3>
+            {project.photos && project.photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {project.photos.map((photo) => (
+                  <a
+                    key={photo.id}
+                    href={photo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative block aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.url} alt={photo.note || "Project image"} className="h-full w-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No images yet.</p>
+            )}
+          </div>
+
+          {/* Quick actions */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900">Quick actions</h3>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Ask for more info</label>
+              <div className="mt-1 flex gap-2">
+                <textarea
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  rows={2}
+                  placeholder="Ask the client a question…"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !messageText.trim()}
+                  className="shrink-0 self-end rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {sendingMessage ? "Sending…" : "Send"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Arrange call</label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <input
+                  type="date"
+                  value={callDate}
+                  onChange={(e) => setCallDate(e.target.value)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+                <input
+                  type="time"
+                  value={callTime}
+                  onChange={(e) => setCallTime(e.target.value)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleArrangeCall}
+                  disabled={arrangingCall}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {arrangingCall ? "Sending…" : "Request call"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Add images</label>
+              <div className="mt-1 flex items-center gap-3">
+                <ChatImageUploader
+                  onFilesSelected={setPendingPhotos}
+                  maxImages={5}
+                  disabled={addingPhotos}
+                  isUploading={addingPhotos}
+                  uploadingCount={pendingPhotos.length}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPhotos}
+                  disabled={addingPhotos || pendingPhotos.length === 0}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {addingPhotos ? "Uploading…" : "Upload"}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleArrangeSurvey}
+                disabled={arrangingSurvey}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {arrangingSurvey ? "Arranging…" : "Arrange survey"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRedefineScope}
+                disabled={refiningScope}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {refiningScope ? "Refining…" : "Redefine scope"}
+              </button>
             </div>
           </div>
 

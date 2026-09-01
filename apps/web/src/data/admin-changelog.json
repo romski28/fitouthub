@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-01-e97363b2",
+    "date": "2026-09-01T15:18:30+08:00",
+    "title": "feat(pm): PM project detail — photos + quick actions (Phase C)",
+    "summary": "feat(pm): PM project detail — photos + quick actions (Phase C)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e97363b2",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-2b279c2a",
     "date": "2026-09-01T15:01:13+08:00",
     "title": "feat(pm): add PM chat identity (Phase A)",
