@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { useConversation, type ConversationMessage as ChatMessage } from '@/hooks/use-conversation';
 import { parseChatEvent } from '@/lib/chat-event-parser';
+import { useAuth } from '@/context/auth-context';
+import { useNextStepModal } from '@/context/next-step-modal-context';
 import ChatImageAttachment from './chat-image-attachment';
 import ChatEventCard from './chat-event-card';
 import ChatImageUploader from './chat-image-uploader';
@@ -162,6 +164,15 @@ export default function ProjectChat({
     return msg.senderType === currentUserRole;
   };
 
+  const { user } = useAuth();
+  const { openModal } = useNextStepModal();
+
+  const handleAction = (action: { id: string; label: string; kind?: string }) => {
+    if (action.kind === 'book-survey' && currentUserRole === 'client' && user?.id) {
+      openModal('BOOK_MIMO_SURVEY', projectId, `/projects/${projectId}`, user.id, 'client');
+    }
+  };
+
   return (
     <div className={`min-w-0 max-w-full overflow-x-hidden rounded-lg border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.82)] shadow-sm${fillHeight ? ' flex h-full min-h-0 flex-col' : ''} ${className}`}>
       {/* Header */}
@@ -233,7 +244,7 @@ export default function ProjectChat({
                     )}
 
                     {/* Message content */}
-                    {msg.content && (event ? <ChatEventCard event={event} isCurrentUser={isCurrent} /> : <div className="whitespace-pre-wrap break-words">{msg.content}</div>)}
+                    {msg.content && (event ? <ChatEventCard event={event} isCurrentUser={isCurrent} onAction={handleAction} /> : <div className="whitespace-pre-wrap break-words">{msg.content}</div>)}
 
                     {/* Image attachments */}
                     {msg.attachments && msg.attachments.length > 0 && (

@@ -4658,6 +4658,35 @@ export class ProjectsService {
     return { success: true };
   }
 
+  async pmRequestSurvey(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can request a survey');
+    }
+    // Persist the survey extra so the client can book against the calendar.
+    await this.persistProjectExtraRequest(projectId, 'survey', {
+      title: 'Mimo Surveying+',
+      summary: 'PM requested the client book a Mimo Surveying+ site survey.',
+      source: 'pm_request_survey',
+    });
+    // Post a survey-request card (structured event) to the project thread.
+    const content = `[[event]]\n${JSON.stringify({
+      type: 'generic',
+      icon: '🏗️',
+      title: 'Book your site survey',
+      summary:
+        "We'd like to arrange a Mimo Surveying+ visit to better understand your project site.\n\nIf you can't or don't want a survey, please reply here to let us know why.",
+      actions: [{ id: 'book-survey', label: 'Book survey', kind: 'book-survey' }],
+    })}`;
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    return { success: true };
+  }
+
   async pmRedefineScope(projectId: string, pmUserId: string, additionalContext?: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },

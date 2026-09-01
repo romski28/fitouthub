@@ -637,6 +637,15 @@ export class ProjectsController {
     return this.projectsService.pmArrangeSurvey(projectId, req.user?.id);
   }
 
+  @Post(':id/pm-request-survey')
+  @UseGuards(AuthGuard('jwt'))
+  async pmRequestSurvey(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can request a survey');
+    }
+    return this.projectsService.pmRequestSurvey(projectId, req.user?.id);
+  }
+
   @Post(':id/pm-redefine-scope')
   @UseGuards(AuthGuard('jwt'))
   async pmRedefineScope(

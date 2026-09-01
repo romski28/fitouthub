@@ -189,10 +189,10 @@ export default function PmProjectDetailPage() {
   const handleArrangeSurvey = async () => {
     setArrangingSurvey(true);
     try {
-      await postPmAction(`/projects/${projectId}/pm-arrange-survey`);
-      toast.success("Survey request sent to the Mimo survey team");
+      await postPmAction(`/projects/${projectId}/pm-request-survey`);
+      toast.success("Survey booking request sent to the client");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to arrange survey");
+      toast.error(err instanceof Error ? err.message : "Failed to request survey");
     } finally {
       setArrangingSurvey(false);
     }
@@ -404,7 +404,7 @@ export default function PmProjectDetailPage() {
                 disabled={arrangingSurvey}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
-                {arrangingSurvey ? "Arranging…" : "Arrange survey"}
+                {arrangingSurvey ? "Requesting…" : "Request survey"}
               </button>
               <button
                 type="button"

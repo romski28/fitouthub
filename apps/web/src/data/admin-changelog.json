@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-01-3be75b49",
+    "date": "2026-09-01T20:06:39+08:00",
+    "title": "feat(pm): survey-request chat card end-to-end",
+    "summary": "feat(pm): survey-request chat card end-to-end",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "3be75b49",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-db50116a",
     "date": "2026-09-01T19:33:22+08:00",
     "title": "feat(pm): PM detail extras badges + interactive chat-card actions",
