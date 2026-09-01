@@ -264,11 +264,15 @@ export default function PmProjectDetailPage() {
           )}
 
           {project.mimoProjectExtras && project.mimoProjectExtras.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {project.mimoProjectExtras.map((extra) => (
                 <span
                   key={extra.id}
-                  className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                    extra.extraType === 'design'
+                      ? 'border-pink-300 bg-pink-50 text-pink-800'
+                      : 'border-indigo-300 bg-indigo-50 text-indigo-800'
+                  }`}
                 >
                   {extra.extraType === 'survey'
                     ? '🏗️ Surveying+'
@@ -348,9 +352,9 @@ export default function PmProjectDetailPage() {
                 type="button"
                 onClick={handleRequestImages}
                 disabled={requestingImages}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
               >
-                {requestingImages ? "Requesting…" : "Request images"}
+                {requestingImages ? "Requesting…" : "📸 Request images"}
               </button>
             </div>
           </div>
@@ -382,9 +386,9 @@ export default function PmProjectDetailPage() {
               type="button"
               onClick={handleRedefineScope}
               disabled={refiningScope}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
-              {refiningScope ? "Refining…" : "Redefine scope"}
+              {refiningScope ? "Refining…" : "✨ Redefine scope"}
             </button>
           </div>
 
@@ -394,17 +398,17 @@ export default function PmProjectDetailPage() {
               type="button"
               onClick={handleArrangeCall}
               disabled={arrangingCall}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
-              {arrangingCall ? "Requesting…" : "Request call"}
+              {arrangingCall ? "Requesting…" : "📞 Request call"}
             </button>
             <button
               type="button"
               onClick={handleArrangeSurvey}
               disabled={arrangingSurvey}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
-              {arrangingSurvey ? "Requesting…" : "Request survey"}
+              {arrangingSurvey ? "Requesting…" : "🏗️ Request survey"}
             </button>
           </div>
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-23697b60",
+    "date": "2026-09-01T21:04:29+08:00",
+    "title": "style(pm): enlarge service badges, unify action button styling",
+    "summary": "style(pm): enlarge service badges, unify action button styling",
+    "areas": [
+      "web"
+    ],
+    "commit": "23697b60",
+    "files": [
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-c4788547",
     "date": "2026-09-01T20:42:24+08:00",
     "title": "refactor(pm): group quick actions into images / scope / request sections",
