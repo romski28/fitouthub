@@ -616,16 +616,26 @@ export class ProjectsController {
     @Body() body: { urls: string[]; note?: string },
     @Request() req: any,
   ) {
-    if (req.user?.role !== 'project_manager') {
-      throw new ForbiddenException('Only project managers can add project photos');
+    const role = req.user?.role;
+    if (role !== 'project_manager' && role !== 'client') {
+      throw new ForbiddenException('Not authorised to add project photos');
     }
     return this.projectsService.addProjectPhotos(
       projectId,
       body?.urls,
       body?.note,
       req.user?.id,
-      'pm',
+      role === 'project_manager' ? 'pm' : 'client',
     );
+  }
+
+  @Post(':id/pm-request-images')
+  @UseGuards(AuthGuard('jwt'))
+  async pmRequestImages(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can request images');
+    }
+    return this.projectsService.pmRequestImages(projectId, req.user?.id);
   }
 
   @Post(':id/pm-arrange-survey')

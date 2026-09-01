@@ -64,6 +64,7 @@ export default function PmProjectDetailPage() {
   const [addingPhotos, setAddingPhotos] = useState(false);
   const [arrangingSurvey, setArrangingSurvey] = useState(false);
   const [refiningScope, setRefiningScope] = useState(false);
+  const [requestingImages, setRequestingImages] = useState(false);
 
   const fetchProject = useCallback(async () => {
     if (!accessToken || !projectId) return;
@@ -207,6 +208,18 @@ export default function PmProjectDetailPage() {
       toast.error(err instanceof Error ? err.message : "Failed to refine scope");
     } finally {
       setRefiningScope(false);
+    }
+  };
+
+  const handleRequestImages = async () => {
+    setRequestingImages(true);
+    try {
+      await postPmAction(`/projects/${projectId}/pm-request-images`);
+      toast.success("Image request sent to the client");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to request images");
+    } finally {
+      setRequestingImages(false);
     }
   };
 
@@ -405,6 +418,14 @@ export default function PmProjectDetailPage() {
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 {arrangingSurvey ? "Requesting…" : "Request survey"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRequestImages}
+                disabled={requestingImages}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {requestingImages ? "Requesting…" : "Request images"}
               </button>
               <button
                 type="button"

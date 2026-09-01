@@ -9,6 +9,7 @@ import { useNextStepModal } from '@/context/next-step-modal-context';
 import ChatImageAttachment from './chat-image-attachment';
 import ChatEventCard from './chat-event-card';
 import ChatImageUploader from './chat-image-uploader';
+import ClientImageUploadModal from './client-image-upload-modal';
 
 interface ProjectChatProps {
   projectId: string;
@@ -166,10 +167,13 @@ export default function ProjectChat({
 
   const { user } = useAuth();
   const { openModal } = useNextStepModal();
+  const [imageUploadOpen, setImageUploadOpen] = useState(false);
 
   const handleAction = (action: { id: string; label: string; kind?: string }) => {
     if (action.kind === 'book-survey' && currentUserRole === 'client' && user?.id) {
       openModal('BOOK_MIMO_SURVEY', projectId, `/projects/${projectId}`, user.id, 'client');
+    } else if (action.kind === 'upload-images' && currentUserRole === 'client') {
+      setImageUploadOpen(true);
     }
   };
 
@@ -317,6 +321,13 @@ export default function ProjectChat({
           </button>
         </div>
       </form>
+
+      <ClientImageUploadModal
+        isOpen={imageUploadOpen}
+        onClose={() => setImageUploadOpen(false)}
+        projectId={projectId}
+        accessToken={accessToken}
+      />
     </div>
   );
 }

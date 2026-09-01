@@ -4625,9 +4625,15 @@ export class ProjectsService {
     }
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true },
+      select: { id: true, userId: true, pmId: true },
     });
     if (!project) throw new NotFoundException('Project not found');
+    if (uploadedByRole === 'pm' && uploadedById && project.pmId !== uploadedById) {
+      throw new ForbiddenException('Only the assigned PM can add photos to this project');
+    }
+    if (uploadedByRole === 'client' && uploadedById && project.userId !== uploadedById) {
+      throw new ForbiddenException('You can only add photos to your own project');
+    }
     await this.prisma.projectPhoto.createMany({
       data: urls.map((url) => ({
         projectId,
@@ -4681,6 +4687,28 @@ export class ProjectsService {
       summary:
         "We'd like to arrange a Mimo Surveying+ visit to better understand your project site.\n\nIf you can't or don't want a survey, please reply here to let us know why.",
       actions: [{ id: 'book-survey', label: 'Book survey', kind: 'book-survey' }],
+    })}`;
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    return { success: true };
+  }
+
+  async pmRequestImages(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId !== pmUserId) {
+      throw new ForbiddenException('Only the assigned PM can request images');
+    }
+    const content = `[[event]]\n${JSON.stringify({
+      type: 'generic',
+      icon: '📸',
+      title: 'Add project images',
+      summary:
+        "Please add photos (or videos) of your project so the team can better visualise the work — this may help avoid a site inspection.\n\nIf you can't or don't want to add images, please reply here to let us know why.",
+      actions: [{ id: 'upload-images', label: 'Upload images', kind: 'upload-images' }],
     })}`;
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
     await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
