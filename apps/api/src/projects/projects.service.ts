@@ -4555,7 +4555,7 @@ export class ProjectsService {
 
       // Project chat (always).
       const thread = await this.chatService.getOrCreateProjectThread(projectId);
-      await this.chatService.addProjectMessage(thread.id, 'foh', null, null, chatMessage);
+      await this.chatService.addProjectMessage(thread.id, 'pm', project.pmId ?? null, null, chatMessage);
 
       // Push (fire-and-forget).
       void this.pushService

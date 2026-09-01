@@ -1026,7 +1026,7 @@ export class ChatService {
 
     await this.activityLogService.record({
       actorType: senderType === 'user' ? 'client' : senderType || 'system',
-      actorName: senderType === 'professional' ? 'Professional' : senderType === 'client' || senderType === 'user' ? 'Client' : 'System',
+      actorName: senderType === 'professional' ? 'Professional' : senderType === 'pm' ? 'Project Manager' : senderType === 'client' || senderType === 'user' ? 'Client' : 'System',
       action: 'project_chat_message_sent',
       resource: 'ProjectChatThread',
       resourceId: threadId,
@@ -1054,9 +1054,16 @@ export class ChatService {
     const projectClientId: string | undefined = thread.project?.userId ?? undefined;
     console.log(`[chat.push:project] senderType=${senderType}, clientId=${projectClientId}, proId=${senderProId}`);
     void this.pushService.sendToUserAndProfessional(
-      senderType === 'professional' ? projectClientId : undefined,
+      senderType === 'professional' || senderType === 'pm' ? projectClientId : undefined,
       senderType === 'user' ? (senderProId ?? undefined) : undefined,
-      { title: 'New message', body: `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`, url: `/projects/${thread.projectId}?tab=messages`, tag: `proj-chat-${threadId}` },
+      {
+        title: 'New message',
+        body: senderType === 'pm'
+          ? 'Your Mimo PM sent you a message'
+          : `${senderType === 'professional' ? 'Client' : 'Professional'} sent you a message`,
+        url: `/projects/${thread.projectId}?tab=messages`,
+        tag: `proj-chat-${threadId}`,
+      },
     );
 
     return this.mapProjectMessageDto(message);

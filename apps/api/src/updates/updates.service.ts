@@ -164,6 +164,20 @@ export class UpdatesService {
     private activityLogService: ActivityLogService,
   ) {}
 
+  private async resolvePmSenderName(senderUserId?: string | null): Promise<string> {
+    if (!senderUserId) return 'Mimo PM';
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: senderUserId },
+        select: { firstName: true, surname: true, nickname: true },
+      });
+      if (!user) return 'Mimo PM';
+      return `${user.firstName || ''} ${user.surname || ''}`.trim() || user.nickname || 'Mimo PM';
+    } catch {
+      return 'Mimo PM';
+    }
+  }
+
   private async recordPlatformSignalOnce(params: {
     action: string;
     resource: string;
@@ -2074,6 +2088,7 @@ export class UpdatesService {
               content: true,
               createdAt: true,
               senderType: true,
+              senderUserId: true,
             },
           },
         },
@@ -2104,6 +2119,8 @@ export class UpdatesService {
                 ? 'Professional'
                 : latestMessage.senderType === 'client'
                 ? 'Client'
+                : latestMessage.senderType === 'pm'
+                ? await this.resolvePmSenderName(latestMessage.senderUserId)
                 : 'Project Team',
           },
           chatType: 'project-general',
@@ -2316,6 +2333,7 @@ export class UpdatesService {
               content: true,
               createdAt: true,
               senderType: true,
+              senderUserId: true,
             },
           },
         },
@@ -2346,6 +2364,8 @@ export class UpdatesService {
                 ? 'Professional'
                 : latestMessage.senderType === 'client'
                 ? 'Client'
+                : latestMessage.senderType === 'pm'
+                ? await this.resolvePmSenderName(latestMessage.senderUserId)
                 : 'Project Team',
           },
           chatType: 'project-general',

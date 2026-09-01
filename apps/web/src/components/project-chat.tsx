@@ -151,6 +151,7 @@ export default function ProjectChat({
   const getSenderLabel = (msg: ChatMessage): string => {
     if (msg.senderName) return msg.senderName;
     if (msg.senderType === 'foh') return 'Mimo';
+    if (msg.senderType === 'pm') return 'Mimo PM';
     if (msg.senderType === 'client') return 'Client';
     if (msg.senderType === 'professional') return 'Professional';
     return 'Unknown';
@@ -196,6 +197,7 @@ export default function ProjectChat({
           messages.map((msg) => {
             const isCurrent = isCurrentUser(msg);
             const isFoh = msg.senderType === 'foh';
+            const isPm = msg.senderType === 'pm';
             const event = parseChatEvent(msg.content || '');
             
             return (
@@ -217,13 +219,15 @@ export default function ProjectChat({
                         ? ''
                         : isCurrent
                         ? 'bg-[rgba(215,107,78,0.95)] text-white'
+                        : isPm
+                        ? 'border border-emerald-300 bg-emerald-50 text-slate-800'
                         : isFoh
                         ? 'border border-[rgba(215,107,78,0.25)] bg-[rgba(255,240,232,0.92)] text-slate-800'
                         : 'border border-[rgba(120,53,15,0.18)] bg-[rgba(245,238,219,0.95)] text-slate-800'
                     }`}
                   >
                     {!isCurrent && (
-                      <div className={`mb-1 text-xs font-semibold ${isFoh ? 'text-[rgba(176,74,46,0.95)]' : 'text-slate-600'}`}>
+                      <div className={`mb-1 text-xs font-semibold ${isPm ? 'text-emerald-700' : isFoh ? 'text-[rgba(176,74,46,0.95)]' : 'text-slate-600'}`}>
                         {getSenderLabel(msg)}
                       </div>
                     )}

@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-01-2b279c2a",
+    "date": "2026-09-01T15:01:13+08:00",
+    "title": "feat(pm): add PM chat identity (Phase A)",
+    "summary": "feat(pm): add PM chat identity (Phase A)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2b279c2a",
+    "files": [
+      "apps/api/src/chat/chat.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/updates/updates.service.ts",
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-829a965a",
     "date": "2026-09-01T14:54:09+08:00",
     "title": "docs(pm): persist tender concierge + quick actions plan",
