@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-da88eeac",
+    "date": "2026-09-01T23:25:49+08:00",
+    "title": "fix(pm): add scroll + two-column slots to survey booking modal",
+    "summary": "fix(pm): add scroll + two-column slots to survey booking modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "da88eeac",
+    "files": [
+      "apps/web/src/components/next-steps/book-mimo-survey-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-7ae0ceac",
     "date": "2026-09-01T23:06:32+08:00",
     "title": "fix(pm): repair chat-event-card corruption from restyle",

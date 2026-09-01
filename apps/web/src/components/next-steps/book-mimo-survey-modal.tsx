@@ -247,7 +247,7 @@ export function BookMimoSurveyModal({
         }
       }}
     >
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         <div className="border-b border-slate-700 px-6 py-4">
           <h2 className="text-xl font-bold text-emerald-300">{modalContent.title || 'Book in your site survey'}</h2>
           <p className="mt-2 text-sm text-slate-200">
@@ -255,7 +255,7 @@ export function BookMimoSurveyModal({
           </p>
         </div>
 
-        <div className="space-y-4 px-6 py-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {error ? (
             <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
               {error}
@@ -322,7 +322,7 @@ export function BookMimoSurveyModal({
             </div>
 
             {slots.length > 0 ? (
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {slots.map((slot) => {
                   const isSelected = selectedSlotStart === slot.startsAt;
                   return (
