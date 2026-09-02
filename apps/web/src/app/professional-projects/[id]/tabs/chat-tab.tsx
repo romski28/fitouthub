@@ -49,7 +49,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
       <div>
         <div className="mb-3">
           <h2 className="text-lg font-bold text-slate-900">Project Chat</h2>
-          <p className="text-sm text-slate-600">Communicate with your client and project team</p>
+          <p className="text-sm text-slate-600">Communicate with your {isAwarded ? 'client' : 'project manager'} and project team</p>
         </div>
 
         <div className="rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(245,238,219,0.75)] shadow-sm overflow-hidden">
@@ -61,7 +61,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
             className="w-full rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
           >
             <option value="project">Project (Team chat)</option>
-            <option value="direct">Direct with client</option>
+            <option value="direct">{isAwarded ? 'Direct with client' : 'Ask the PM'}</option>
           </select>
         </div>
 
@@ -101,9 +101,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 </svg>
                 <div>
                   <h3 className="font-bold text-amber-900 text-sm">
-                    Private Chat with {clientName || 'Client'}
+                    {isAwarded ? `Private Chat with ${clientName || 'Client'}` : 'Private Chat with your PM'}
                   </h3>
-                  <p className="text-xs text-amber-700">Only visible to you, the client, and Mimo</p>
+                  <p className="text-xs text-amber-700">{isAwarded ? 'Only visible to you, the client, and Mimo' : 'Only visible to you and your PM'}</p>
                 </div>
               </div>
 
@@ -122,7 +122,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
               <div className="max-h-96 overflow-y-auto space-y-3 border border-[rgba(120,53,15,0.14)] rounded-2xl p-4 bg-[rgba(255,250,240,0.95)]">
                 {messages.length === 0 ? (
                   <div className="text-center text-sm text-slate-500">
-                    No messages yet. Start the conversation!
+                    {isAwarded ? 'No messages yet. Start the conversation!' : 'No messages yet. Ask the PM a question.'}
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -176,7 +176,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                       onSendMessage();
                     }
                   }}
-                  placeholder="Type your message..."
+                  placeholder={isAwarded ? 'Type your message...' : 'Ask the PM a question...'}
                   className="flex-1 rounded-lg border border-[rgba(120,53,15,0.2)] bg-[rgba(255,250,240,0.95)] px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[rgba(120,53,15,0.45)] focus:outline-none"
                   disabled={sending || directChatLocked}
                 />
