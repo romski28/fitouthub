@@ -5263,6 +5263,109 @@ export class ProjectsService {
     throw new BadRequestException('Invalid threadType');
   }
 
+  /** Full message feed for a single PM project (general + per-pro threads). */
+  async getPmProjectMessages(projectId: string, pmUserId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, pmId: true, userId: true, clientId: true },
+    });
+    if (!project || project.pmId !== pmUserId) {
+      throw new ForbiddenException('Not authorized');
+    }
+
+    const clientId = project.userId || project.clientId;
+    const clientUser = clientId
+      ? await this.prisma.user.findUnique({
+          where: { id: clientId },
+          select: { firstName: true, surname: true },
+        })
+      : null;
+    const clientName = clientUser
+      ? `${clientUser.firstName ?? ''} ${clientUser.surname ?? ''}`.trim()
+      : 'Client';
+
+    const generalThreads = await this.prisma.projectChatThread.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, senderType: true, senderUserId: true, content: true, createdAt: true },
+        },
+      },
+    });
+
+    const proThreads = await this.prisma.projectProfessional.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        professional: { select: { businessName: true, fullName: true } },
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            senderType: true,
+            senderProfessionalId: true,
+            senderClientId: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    const items: Array<{
+      id: string;
+      threadType: 'project-professional' | 'project-general';
+      threadId: string;
+      senderName: string;
+      senderType: string;
+      content: string;
+      createdAt: string;
+    }> = [];
+
+    for (const t of generalThreads) {
+      for (const m of t.messages) {
+        items.push({
+          id: m.id,
+          threadType: 'project-general',
+          threadId: t.id,
+          senderName: m.senderType === 'pm' ? 'PM' : clientName,
+          senderType: m.senderType,
+          content: m.content,
+          createdAt: m.createdAt.toISOString(),
+        });
+      }
+    }
+
+    for (const t of proThreads) {
+      const proName = t.professional.businessName || t.professional.fullName || 'Professional';
+      for (const m of t.messages) {
+        items.push({
+          id: m.id,
+          threadType: 'project-professional',
+          threadId: t.id,
+          senderName:
+            m.senderType === 'pm'
+              ? 'PM'
+              : m.senderType === 'professional'
+                ? proName
+                : clientName,
+          senderType: m.senderType,
+          content: m.content,
+          createdAt: m.createdAt.toISOString(),
+        });
+      }
+    }
+
+    items.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+
+    return {
+      items,
+      generalThreadId: generalThreads[0]?.id ?? null,
+    };
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;

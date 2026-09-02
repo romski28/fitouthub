@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-02-a6ccc684",
+    "date": "2026-09-02T13:19:20+08:00",
+    "title": "feat(pm): per-project message feed on PM project screen",
+    "summary": "feat(pm): per-project message feed on PM project screen",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "a6ccc684",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-e19b8a92",
     "date": "2026-09-02T13:15:23+08:00",
     "title": "feat(pm): dashboard-style PM home (inbox + queue + projects)",

@@ -31,6 +31,16 @@ type PmProject = {
   user?: { firstName?: string; surname?: string; email?: string };
 };
 
+type PmMessage = {
+  id: string;
+  threadType: "project-professional" | "project-general";
+  threadId: string;
+  senderName: string;
+  senderType: string;
+  content: string;
+  createdAt: string;
+};
+
 function formatDate(date?: string | null): string {
   if (!date) return "—";
   try {
@@ -76,6 +86,11 @@ export default function PmProjectDetailPage() {
       createdAt?: string;
     }>;
   } | null>(null);
+  const [pmMessages, setPmMessages] = useState<PmMessage[]>([]);
+  const [generalThreadId, setGeneralThreadId] = useState<string | null>(null);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
 
   const fetchProject = useCallback(async () => {
     if (!accessToken || !projectId) return;
@@ -117,6 +132,48 @@ export default function PmProjectDetailPage() {
   useEffect(() => {
     void fetchScope();
   }, [fetchScope]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!accessToken || !projectId) return;
+    setMessagesLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/pm-messages`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPmMessages(Array.isArray(data?.items) ? data.items : []);
+        setGeneralThreadId(data?.generalThreadId ?? null);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setMessagesLoading(false);
+    }
+  }, [accessToken, projectId]);
+
+  useEffect(() => {
+    void fetchMessages();
+  }, [fetchMessages]);
+
+  const handleReply = async () => {
+    if (!accessToken || !projectId || !replyText.trim() || !generalThreadId) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/pm/inbox/reply`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ threadType: "project-general", threadId: generalThreadId, content: replyText.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to send message");
+      setReplyText("");
+      await fetchMessages();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send message");
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const handleRelease = async () => {
     if (!accessToken || !projectId) return;
@@ -488,6 +545,61 @@ export default function PmProjectDetailPage() {
             >
               {arrangingSurvey ? "Requesting…" : "🏗️ Request survey"}
             </button>
+          </div>
+
+          {/* Messages */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Messages</h3>
+              <button
+                type="button"
+                onClick={() => void fetchMessages()}
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+              >
+                Refresh
+              </button>
+            </div>
+            {messagesLoading ? (
+              <p className="text-sm text-slate-500">Loading…</p>
+            ) : pmMessages.length === 0 ? (
+              <p className="text-sm text-slate-500">No messages yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {pmMessages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`rounded-lg px-3 py-2 ${
+                      m.senderType === "pm"
+                        ? "border border-emerald-100 bg-emerald-50"
+                        : "border border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-800">{m.senderName}</span>
+                      <span className="text-[10px] text-slate-400">{formatDate(m.createdAt)}</span>
+                    </div>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{m.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                rows={2}
+                placeholder="Reply to the client…"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleReply}
+                disabled={sendingReply || !replyText.trim() || !generalThreadId}
+                className="shrink-0 self-end rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {sendingReply ? "Sending…" : "Send"}
+              </button>
+            </div>
           </div>
 
           {!project.releasedForQuotationAt && (

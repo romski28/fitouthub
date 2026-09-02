@@ -596,6 +596,15 @@ export class ProjectsController {
     return this.projectsService.getPmUnreadInbox(req.user?.id);
   }
 
+  @Get(':id/pm-messages')
+  @UseGuards(AuthGuard('jwt'))
+  async getPmProjectMessages(@Param('id') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can view project messages');
+    }
+    return this.projectsService.getPmProjectMessages(projectId, req.user?.id);
+  }
+
   @Post('pm/inbox/read')
   @UseGuards(AuthGuard('jwt'))
   async pmMarkInboxRead(
