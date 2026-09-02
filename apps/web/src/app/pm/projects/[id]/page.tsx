@@ -8,6 +8,8 @@ import { API_BASE_URL } from "@/config/api";
 import { useAuth } from "@/context/auth-context";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import ChatImageUploader from "@/components/chat-image-uploader";
+import ChatEventCard from "@/components/chat-event-card";
+import { parseChatEvent } from "@/lib/chat-event-parser";
 
 type PmProject = {
   id: string;
@@ -565,22 +567,31 @@ export default function PmProjectDetailPage() {
               <p className="text-sm text-slate-500">No messages yet.</p>
             ) : (
               <div className="space-y-2">
-                {pmMessages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`rounded-lg px-3 py-2 ${
-                      m.senderType === "pm"
-                        ? "border border-emerald-100 bg-emerald-50"
-                        : "border border-slate-200 bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-800">{m.senderName}</span>
-                      <span className="text-[10px] text-slate-400">{formatDate(m.createdAt)}</span>
+                {pmMessages.map((m) => {
+                  const event = parseChatEvent(m.content);
+                  return (
+                    <div
+                      key={m.id}
+                      className={`rounded-lg px-3 py-2 ${
+                        m.senderType === "pm"
+                          ? "border border-emerald-100 bg-emerald-50"
+                          : "border border-slate-200 bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-800">{m.senderName}</span>
+                        <span className="text-[10px] text-slate-400">{formatDate(m.createdAt)}</span>
+                      </div>
+                      {event ? (
+                        <div className="mt-1.5">
+                          <ChatEventCard event={event} isCurrentUser={m.senderType === "pm"} />
+                        </div>
+                      ) : (
+                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{m.content}</p>
+                      )}
                     </div>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{m.content}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             <div className="flex gap-2">

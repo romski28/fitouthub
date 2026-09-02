@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-02-cfd2ecef",
+    "date": "2026-09-02T16:48:31+08:00",
+    "title": "feat(pm): tidy inbox layout and render chat cards in PM viewers",
+    "summary": "feat(pm): tidy inbox layout and render chat cards in PM viewers",
+    "areas": [
+      "web"
+    ],
+    "commit": "cfd2ecef",
+    "files": [
+      "apps/web/src/app/pm/page.tsx",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-1aa0b106",
     "date": "2026-09-02T16:20:48+08:00",
     "title": "fix(tender): align discover feed with apply gate on PM release",
