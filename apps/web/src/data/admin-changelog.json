@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-9b959ad6",
+    "date": "2026-09-02T15:35:21+08:00",
+    "title": "fix(pm): scope PM inbox to messages addressed to the PM",
+    "summary": "fix(pm): scope PM inbox to messages addressed to the PM",
+    "areas": [
+      "api"
+    ],
+    "commit": "9b959ad6",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-a6ccc684",
     "date": "2026-09-02T13:19:20+08:00",
     "title": "feat(pm): per-project message feed on PM project screen",

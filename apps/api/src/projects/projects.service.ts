@@ -5047,11 +5047,11 @@ export class ProjectsService {
     }
     const projectById = new Map(projects.map((p) => [p.id, p]));
 
-    // Per-pro (Message) unread
+    // Per-pro (Message) unread — only pro -> PM messages are addressed to the PM
     const proMessages = await this.prisma.message.findMany({
       where: {
         projectProfessional: { projectId: { in: projectIds } },
-        senderType: { not: 'pm' },
+        senderType: 'professional',
         readByPmAt: null,
       },
       orderBy: { createdAt: 'desc' },
@@ -5076,7 +5076,7 @@ export class ProjectsService {
       ? await this.prisma.projectChatMessage.findMany({
           where: {
             threadId: { in: threadIds },
-            senderType: { not: 'pm' },
+            senderType: { in: ['client', 'user'] },
             readByPmAt: null,
           },
           orderBy: { createdAt: 'desc' },
