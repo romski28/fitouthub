@@ -654,36 +654,43 @@ export default function PmProjectDetailPage() {
             ) : (
               /* Contact list */
               <div className="space-y-0.5">
-                {pmThreads.map((t) => (
-                  <button
-                    key={threadKey(t)}
-                    type="button"
-                    onClick={() => void openThread(t)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-100"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
-                      {t.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-semibold text-slate-900">{t.name}</span>
-                        {t.lastMessage && (
-                          <span className="shrink-0 text-[10px] text-slate-400">{formatDate(t.lastMessage.createdAt)}</span>
-                        )}
+                {pmThreads.map((t) => {
+                  const lastEvent = t.lastMessage ? parseChatEvent(t.lastMessage.content) : null;
+                  return (
+                    <button
+                      key={threadKey(t)}
+                      type="button"
+                      onClick={() => void openThread(t)}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-100"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                        {t.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs text-slate-500">
-                          {t.lastMessage ? t.lastMessage.content : "No messages yet"}
-                        </span>
-                        {t.unreadCount > 0 && (
-                          <span className="shrink-0 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                            {t.unreadCount}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-900">{t.name}</span>
+                          {t.lastMessage && (
+                            <span className="shrink-0 text-[10px] text-slate-400">{formatDate(t.lastMessage.createdAt)}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-xs text-slate-500">
+                            {!t.lastMessage
+                              ? "No messages yet"
+                              : lastEvent
+                                ? `${lastEvent.icon} ${lastEvent.title}`
+                                : t.lastMessage.content}
                           </span>
-                        )}
+                          {t.unreadCount > 0 && (
+                            <span className="shrink-0 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                              {t.unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
