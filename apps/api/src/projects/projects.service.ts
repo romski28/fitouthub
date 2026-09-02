@@ -4938,10 +4938,23 @@ export class ProjectsService {
       role: 'admin',
     });
     const scope = result?.scope;
-    let summary: string | null = null;
     const ps = scope?.projectSummary;
-    if (typeof ps === 'string') summary = ps;
-    else if (ps && typeof ps === 'object') summary = ps.summary || ps.title || null;
+    const projectWithSummary = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        notes: true,
+        aiIntake: { select: { summary: true } },
+      },
+    });
+    const scopeSummary =
+      ps && typeof ps === 'object' && typeof (ps as any).summary === 'string'
+        ? ((ps as any).summary as string).trim()
+        : '';
+    const summary =
+      projectWithSummary?.aiIntake?.summary?.trim() ||
+      scopeSummary ||
+      projectWithSummary?.notes?.trim() ||
+      null;
 
     const scopeQna = await this.prisma.projectScopeQna.findMany({
       where: { projectId },

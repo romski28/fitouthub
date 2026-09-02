@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-02-70205cff",
+    "date": "2026-09-02T09:02:43+08:00",
+    "title": "fix(pm): persist scope summary so 'Redefine scope' is visible",
+    "summary": "fix(pm): persist scope summary so 'Redefine scope' is visible",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "70205cff",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-6c8953cb",
     "date": "2026-09-02T08:13:26+08:00",
     "title": "feat(pm): surface scope Q&A in PM project detail",

@@ -225,7 +225,11 @@ export default function PmProjectDetailPage() {
     try {
       await postPmAction(`/projects/${projectId}/pm-redefine-scope`, {});
       toast.success("Scope refinement started");
-      setTimeout(() => { void fetchScope(); }, 8000);
+      // The AI regeneration is async; poll briefly until the summary updates.
+      for (let attempt = 1; attempt <= 5; attempt += 1) {
+        await new Promise((r) => setTimeout(r, 4000));
+        await fetchScope();
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to refine scope");
     } finally {

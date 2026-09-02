@@ -94,6 +94,7 @@ type ScopeVersion = {
     deadline?: string;
   };
   projectSummary: {
+    summary: string;
     projectType: string;
     location: string;
     assumptions: string[];
@@ -4760,6 +4761,9 @@ Additional inputs:
 
 Return JSON with keys:
 projectSummary, scopeOfWorks, milestones, programme, confidence.
+projectSummary must be an object with a "summary" field (a concise 2-4 sentence
+plain-English description of the whole job), plus "projectType", "location",
+"assumptions" (string[]) and "constraints" (string[]).
 scopeOfWorks[] items must include:
 id, workPackage, deliverable, primaryTrade, durationMinDays, durationMaxDays, dependencies, phase, milestoneCode, notes.
 programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
@@ -4770,6 +4774,15 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       output.projectSummary && typeof output.projectSummary === 'object' && !Array.isArray(output.projectSummary)
         ? (output.projectSummary as Record<string, unknown>)
         : {};
+
+    const summaryText =
+      typeof output.projectSummary === 'string'
+        ? output.projectSummary.trim()
+        : typeof outputSummary.summary === 'string'
+          ? outputSummary.summary.trim()
+          : typeof outputSummary.summaryText === 'string'
+            ? outputSummary.summaryText.trim()
+            : '';
 
     const outputWorks = Array.isArray(output.scopeOfWorks) ? output.scopeOfWorks : [];
 
@@ -4856,6 +4869,7 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
         deadline: input.deadline?.trim() || undefined,
       },
       projectSummary: {
+        summary: summaryText,
         projectType: typeof outputSummary.projectType === 'string' ? outputSummary.projectType : 'renovation',
         location: typeof outputSummary.location === 'string'
           ? outputSummary.location
@@ -4880,6 +4894,18 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
     };
 
     await this.saveScopeContainer(context.intake.id, context.projectJson, container);
+
+    // Persist the human-readable summary so it flows through getProjectScope
+    // (client / pro / PM overviews) and reflects the latest regeneration.
+    if (summaryText) {
+      await this.prisma.aiIntake.update({
+        where: { id: context.intake.id },
+        data: { summary: summaryText },
+        select: { id: true },
+      }).catch((err) => {
+        this.logger.warn(`[generateProjectScope] failed to persist summary: ${(err as Error)?.message}`);
+      });
+    }
 
     await this.activityLogService.record({
       actorType: actor.role,
