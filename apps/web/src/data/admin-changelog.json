@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-ad22062e",
+    "date": "2026-09-02T16:59:12+08:00",
+    "title": "style(pm): inline inbox actions with colored buttons + card border",
+    "summary": "style(pm): inline inbox actions with colored buttons + card border",
+    "areas": [
+      "web"
+    ],
+    "commit": "ad22062e",
+    "files": [
+      "apps/web/src/app/pm/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-cfd2ecef",
     "date": "2026-09-02T16:48:31+08:00",
     "title": "feat(pm): tidy inbox layout and render chat cards in PM viewers",

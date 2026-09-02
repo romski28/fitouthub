@@ -241,49 +241,53 @@ export default function PmHomePage() {
             const event = parseChatEvent(item.content);
             return (
               <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                {/* From -> To -> when */}
-                <div className="flex items-center gap-1 text-[11px]">
-                  <span className="font-semibold text-slate-800">{item.senderName}</span>
-                  <span className="text-slate-400">→</span>
-                  <span className="text-slate-500">You</span>
-                  <span className="ml-auto shrink-0 text-[10px] text-slate-400">{formatRelativeTime(item.createdAt)}</span>
-                </div>
-
-                {/* Project title */}
-                <p className="mt-0.5 text-xs font-medium text-emerald-700">{item.projectName}</p>
-
-                {/* One line of text, or a card if structured */}
-                {event ? (
-                  <div className="mt-1.5">
-                    <ChatEventCard event={event} />
+                {/* Row 1: from -> to -> when  +  Read it */}
+                <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-1 text-[11px]">
+                    <span className="font-semibold text-slate-800">{item.senderName}</span>
+                    <span className="text-slate-400">→</span>
+                    <span className="text-slate-500">You</span>
+                    <span className="shrink-0 text-[10px] text-slate-400">{formatRelativeTime(item.createdAt)}</span>
                   </div>
-                ) : (
-                  <p className="mt-1 line-clamp-1 text-xs text-slate-600">{item.content}</p>
-                )}
-
-                {/* Three stacked right-aligned actions */}
-                <div className="mt-2 flex flex-col items-end gap-1">
                   <button
                     type="button"
                     onClick={() => void handleMarkRead(item)}
-                    className="rounded px-2 py-0.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    className="shrink-0 rounded bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-orange-600"
                   >
                     Read it
                   </button>
+                </div>
+
+                {/* Row 2: project title  +  Open project */}
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="min-w-0 flex-1 truncate text-xs font-medium text-emerald-700">{item.projectName}</p>
                   <Link
                     href={`/pm/projects/${item.projectId}`}
                     onClick={() => void handleMarkRead(item)}
-                    className="rounded px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50"
+                    className="shrink-0 rounded bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-blue-700"
                   >
                     Open project
                   </Link>
+                </div>
+
+                {/* Row 3: message (one line or card)  +  Reply */}
+                <div className="mt-1 flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    {event ? (
+                      <div className="overflow-hidden rounded-xl border border-slate-300">
+                        <ChatEventCard event={event} />
+                      </div>
+                    ) : (
+                      <p className="line-clamp-1 text-xs text-slate-600">{item.content}</p>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       setReplyOpenId(replyOpenId === item.id ? null : item.id);
                       setReplyText("");
                     }}
-                    className="rounded px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+                    className="shrink-0 rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
                   >
                     Reply
                   </button>
