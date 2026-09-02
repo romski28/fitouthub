@@ -5454,6 +5454,10 @@ export class ProjectsService {
         onlySelectedProfessionalsCanBid: false,
         awardedProjectProfessionalId: null,
         tenderOpenedAt: { not: null },
+        // Gate on the PM release so the feed matches applyToOpenTender's
+        // isDiscoverableTender check (otherwise unreleased projects appear here
+        // but "I'm interested" rejects them).
+        releasedForQuotationAt: { not: null },
         tenderClosedAt: null,
         status: { not: this.ARCHIVED_STATUS },
         tenderDismissals: { none: { professionalId } },

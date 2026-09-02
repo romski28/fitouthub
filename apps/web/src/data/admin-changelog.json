@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-1aa0b106",
+    "date": "2026-09-02T16:20:48+08:00",
+    "title": "fix(tender): align discover feed with apply gate on PM release",
+    "summary": "fix(tender): align discover feed with apply gate on PM release",
+    "areas": [
+      "api"
+    ],
+    "commit": "1aa0b106",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-9b959ad6",
     "date": "2026-09-02T15:35:21+08:00",
     "title": "fix(pm): scope PM inbox to messages addressed to the PM",
