@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-c53ca574",
+    "date": "2026-09-02T09:26:32+08:00",
+    "title": "chore(pm): add scope Q&A backfill SQL",
+    "summary": "chore(pm): add scope Q&A backfill SQL",
+    "areas": [
+      "infra"
+    ],
+    "commit": "c53ca574",
+    "files": [
+      "BACKFILL_SCOPE_QNA.sql"
+    ]
+  },
+  {
     "id": "2026-09-02-70205cff",
     "date": "2026-09-02T09:02:43+08:00",
     "title": "fix(pm): persist scope summary so 'Redefine scope' is visible",
