@@ -5030,6 +5030,179 @@ export class ProjectsService {
     return { success: true, started: true, consumedCount: pendingQna.length };
   }
 
+  /**
+   * PM tender-concierge inbox: the most recent unread messages across all of
+   * the PM's projects — both per-pro (`project-professional`) threads and the
+   * client `project-general` thread. Unread = `readByPmAt` is null and the
+   * message was not sent by the PM.
+   */
+  async getPmUnreadInbox(pmUserId: string, limit = 20) {
+    const projects = await this.prisma.project.findMany({
+      where: { pmId: pmUserId },
+      select: { id: true, projectName: true, userId: true, clientId: true },
+    });
+    const projectIds = projects.map((p) => p.id);
+    if (projectIds.length === 0) {
+      return { items: [] };
+    }
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+
+    // Per-pro (Message) unread
+    const proMessages = await this.prisma.message.findMany({
+      where: {
+        projectProfessional: { projectId: { in: projectIds } },
+        senderType: { not: 'pm' },
+        readByPmAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit * 2,
+      include: {
+        projectProfessional: {
+          select: {
+            projectId: true,
+            professional: { select: { businessName: true, fullName: true } },
+          },
+        },
+      },
+    });
+
+    // Project-general (ProjectChatMessage) unread
+    const threads = await this.prisma.projectChatThread.findMany({
+      where: { projectId: { in: projectIds } },
+      select: { id: true, projectId: true },
+    });
+    const threadIds = threads.map((t) => t.id);
+    const generalMessages = threadIds.length > 0
+      ? await this.prisma.projectChatMessage.findMany({
+          where: {
+            threadId: { in: threadIds },
+            senderType: { not: 'pm' },
+            readByPmAt: null,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit * 2,
+          include: { thread: { select: { projectId: true } } },
+        })
+      : [];
+
+    // Resolve client names (client is a User)
+    const clientUserIds = [...new Set(
+      projects.map((p) => p.userId || p.clientId).filter((v): v is string => Boolean(v)),
+    )];
+    const users = clientUserIds.length > 0
+      ? await this.prisma.user.findMany({
+          where: { id: { in: clientUserIds } },
+          select: { id: true, firstName: true, surname: true },
+        })
+      : [];
+    const userNameById = new Map(
+      users.map((u) => [u.id, `${u.firstName ?? ''} ${u.surname ?? ''}`.trim()]),
+    );
+
+    const items: Array<{
+      id: string;
+      threadType: 'project-professional' | 'project-general';
+      threadId: string;
+      projectId: string;
+      projectName: string;
+      senderName: string;
+      senderType: string;
+      content: string;
+      createdAt: string;
+    }> = [];
+
+    for (const m of proMessages) {
+      const pp = m.projectProfessional;
+      const proj = projectById.get(pp.projectId);
+      const pro = pp.professional;
+      items.push({
+        id: m.id,
+        threadType: 'project-professional',
+        threadId: m.projectProfessionalId,
+        projectId: pp.projectId,
+        projectName: proj?.projectName || 'Project',
+        senderName:
+          m.senderType === 'professional'
+            ? pro?.businessName || pro?.fullName || 'Professional'
+            : userNameById.get(m.senderClientId || '') || 'Client',
+        senderType: m.senderType,
+        content: m.content,
+        createdAt: m.createdAt.toISOString(),
+      });
+    }
+
+    for (const m of generalMessages) {
+      const projectId = m.thread?.projectId;
+      const proj = projectById.get(projectId);
+      items.push({
+        id: m.id,
+        threadType: 'project-general',
+        threadId: m.threadId,
+        projectId,
+        projectName: proj?.projectName || 'Project',
+        senderName:
+          m.senderType === 'client' || m.senderType === 'user'
+            ? userNameById.get(m.senderUserId || '') || 'Client'
+            : 'Professional',
+        senderType: m.senderType,
+        content: m.content,
+        createdAt: m.createdAt.toISOString(),
+      });
+    }
+
+    items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return { items: items.slice(0, limit) };
+  }
+
+  /** Mark a PM thread (per-pro or project-general) as read for the PM. */
+  async pmMarkThreadRead(
+    pmUserId: string,
+    body: { threadType: string; threadId: string },
+  ) {
+    const { threadType, threadId } = body;
+    if (!threadType || !threadId) {
+      throw new BadRequestException('threadType and threadId are required');
+    }
+
+    if (threadType === 'project-professional') {
+      const pp = await this.prisma.projectProfessional.findUnique({
+        where: { id: threadId },
+        select: { project: { select: { pmId: true } } },
+      });
+      if (!pp || pp.project.pmId !== pmUserId) {
+        throw new ForbiddenException('Not authorized');
+      }
+      await this.prisma.message.updateMany({
+        where: {
+          projectProfessionalId: threadId,
+          senderType: { not: 'pm' },
+          readByPmAt: null,
+        },
+        data: { readByPmAt: new Date() },
+      });
+    } else if (threadType === 'project-general') {
+      const thread = await this.prisma.projectChatThread.findUnique({
+        where: { id: threadId },
+        select: { project: { select: { pmId: true } } },
+      });
+      if (!thread || thread.project.pmId !== pmUserId) {
+        throw new ForbiddenException('Not authorized');
+      }
+      await this.prisma.projectChatMessage.updateMany({
+        where: {
+          threadId,
+          senderType: { not: 'pm' },
+          readByPmAt: null,
+        },
+        data: { readByPmAt: new Date() },
+      });
+    } else {
+      throw new BadRequestException('Invalid threadType');
+    }
+
+    return { success: true };
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;

@@ -587,6 +587,27 @@ export class ProjectsController {
     return { projects, count: projects.length };
   }
 
+  @Get('pm/inbox/unread')
+  @UseGuards(AuthGuard('jwt'))
+  async getPmInbox(@Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can view their inbox');
+    }
+    return this.projectsService.getPmUnreadInbox(req.user?.id);
+  }
+
+  @Post('pm/inbox/read')
+  @UseGuards(AuthGuard('jwt'))
+  async pmMarkInboxRead(
+    @Request() req: any,
+    @Body() body: { threadType: string; threadId: string },
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can mark messages read');
+    }
+    return this.projectsService.pmMarkThreadRead(req.user?.id, body);
+  }
+
   @Post(':id/pm-release')
   @UseGuards(AuthGuard('jwt'))
   async releaseProjectForPm(@Param('id') projectId: string, @Request() req: any) {

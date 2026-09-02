@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-02-e9356b9f",
+    "date": "2026-09-02T11:29:01+08:00",
+    "title": "feat(pm): PM read state + unread inbox endpoints (Phase D step 1-2)",
+    "summary": "feat(pm): PM read state + unread inbox endpoints (Phase D step 1-2)",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "e9356b9f",
+    "files": [
+      "MANUAL_SQL_ADD_PM_READ_STATE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-f2046659",
     "date": "2026-09-02T09:47:38+08:00",
     "title": "fix(pm): resolve scope intake by projectId and add summary fallback",

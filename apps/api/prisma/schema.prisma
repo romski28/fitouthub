@@ -1366,19 +1366,22 @@ model QuestionnaireAnswer {
 model Message {
   id                    String    @id @default(cuid())
   projectProfessionalId String
-  senderType            String // 'professional' | 'client'
+  senderType            String // 'professional' | 'client' | 'pm'
   senderProfessionalId  String?
   senderClientId        String?
+  senderPmId            String?
   content               String
   createdAt             DateTime  @default(now())
   readByProfessionalAt  DateTime?
   readByClientAt        DateTime?
+  readByPmAt            DateTime?
 
   projectProfessional ProjectProfessional @relation(fields: [projectProfessionalId], references: [id], onDelete: Cascade)
 
   @@index([projectProfessionalId])
   @@index([senderType])
   @@index([createdAt])
+  @@index([readByPmAt])
 }
 
 model ProjectAssistRequest {
@@ -1537,7 +1540,7 @@ model ProjectChatThread {
 model ProjectChatMessage {
   id             String            @id @default(cuid())
   threadId       String
-  senderType     String // 'client' | 'professional' | 'foh'
+  senderType     String // 'client' | 'professional' | 'foh' | 'pm'
   senderUserId   String?
   senderProId    String?
   threadScope    String?
@@ -1548,12 +1551,14 @@ model ProjectChatMessage {
   readByClientAt DateTime?
   readByProAt    DateTime?
   readByFohAt    DateTime?
+  readByPmAt     DateTime?
   thread         ProjectChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([threadId, threadScope, threadScopeId])
   @@index([senderType])
   @@index([createdAt])
+  @@index([readByPmAt])
 }
 
 model ServiceMapping {
