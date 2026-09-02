@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-e19b8a92",
+    "date": "2026-09-02T13:15:23+08:00",
+    "title": "feat(pm): dashboard-style PM home (inbox + queue + projects)",
+    "summary": "feat(pm): dashboard-style PM home (inbox + queue + projects)",
+    "areas": [
+      "web"
+    ],
+    "commit": "e19b8a92",
+    "files": [
+      "apps/web/src/app/pm/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-14d2a0eb",
     "date": "2026-09-02T11:34:14+08:00",
     "title": "feat(pm): tender concierge routing, inline reply, client shielding",

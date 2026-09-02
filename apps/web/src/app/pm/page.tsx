@@ -26,6 +26,18 @@ type QueueProject = {
   };
 };
 
+type InboxItem = {
+  id: string;
+  threadType: "project-professional" | "project-general";
+  threadId: string;
+  projectId: string;
+  projectName: string;
+  senderName: string;
+  senderType: string;
+  content: string;
+  createdAt: string;
+};
+
 function formatDate(date?: string): string {
   if (!date) return "—";
   try {
@@ -39,17 +51,45 @@ function formatDate(date?: string): string {
   }
 }
 
-export default function PmQueuePage() {
+function formatRelativeTime(date?: string): string {
+  if (!date) return "";
+  const then = new Date(date).getTime();
+  const now = Date.now();
+  const diffSec = Math.round((now - then) / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return formatDate(date);
+}
+
+export default function PmHomePage() {
   useRoleGuard(["project_manager"], { fallback: "/" });
   const { accessToken } = useAuth();
 
+  // Queue
   const [projects, setProjects] = useState<QueueProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [showAllQueue, setShowAllQueue] = useState(false);
+
+  // My projects
   const [myProjects, setMyProjects] = useState<QueueProject[]>([]);
   const [myLoading, setMyLoading] = useState(true);
-  const [tab, setTab] = useState<"queue" | "mine">("queue");
+
+  // Inbox
+  const [inbox, setInbox] = useState<InboxItem[]>([]);
+  const [inboxLoading, setInboxLoading] = useState(true);
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+
+  // Mobile tab picker (desktop shows all sections side-by-side)
+  const [mobileTab, setMobileTab] = useState<"inbox" | "queue" | "mine">("inbox");
 
   const fetchQueue = useCallback(async () => {
     if (!accessToken) return;
@@ -89,10 +129,34 @@ export default function PmQueuePage() {
     }
   }, [accessToken]);
 
+  const fetchInbox = useCallback(async () => {
+    if (!accessToken) return;
+    setInboxLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/pm/inbox/unread`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setInbox(Array.isArray(data?.items) ? data.items : []);
+    } catch {
+      /* best-effort */
+    } finally {
+      setInboxLoading(false);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     void fetchQueue();
     void fetchMyProjects();
-  }, [fetchQueue, fetchMyProjects]);
+    void fetchInbox();
+  }, [fetchQueue, fetchMyProjects, fetchInbox]);
+
+  // Auto-refresh the inbox every 60s
+  useEffect(() => {
+    const id = setInterval(() => void fetchInbox(), 60000);
+    return () => clearInterval(id);
+  }, [fetchInbox]);
 
   const handleClaim = async (projectId: string) => {
     if (!accessToken) return;
@@ -115,157 +179,286 @@ export default function PmQueuePage() {
     }
   };
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-3 text-sm bg-white border border-slate-200 rounded-lg px-4 py-2.5">
-        <Link href="/pm" className="font-semibold text-slate-900 hover:text-slate-700">PM Home</Link>
-        <span className="text-slate-300">/</span>
-        <span className="text-slate-500">{tab === "mine" ? "My Projects" : "The Queue"}</span>
-      </div>
+  const handleMarkRead = async (item: InboxItem) => {
+    if (!accessToken) return;
+    await fetch(`${API_BASE_URL}/projects/pm/inbox/read`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ threadType: item.threadType, threadId: item.threadId }),
+    }).catch(() => undefined);
+    void fetchInbox();
+  };
 
-      {/* Header */}
-      <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Project Manager</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">PM Home</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Claim new projects from the queue, then release them for quotation.
-        </p>
-      </div>
+  const handleReply = async (item: InboxItem) => {
+    if (!accessToken || !replyText.trim()) return;
+    setReplyingId(item.id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/pm/inbox/reply`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ threadType: item.threadType, threadId: item.threadId, content: replyText.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to send reply");
+      setReplyText("");
+      setReplyOpenId(null);
+      await handleMarkRead(item);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send reply");
+    } finally {
+      setReplyingId(null);
+    }
+  };
 
-      {/* Tabs */}
-      <div className="flex rounded-lg border border-slate-200 bg-white p-1">
+  const sortedQueue = [...projects].sort(
+    (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime(),
+  );
+  const visibleQueue = showAllQueue ? sortedQueue : sortedQueue.slice(0, 10);
+
+  const inboxSection = (
+    <section className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">Inbox</h2>
+          <p className="text-xs text-slate-500">{inbox.length} unread</p>
+        </div>
         <button
           type="button"
-          onClick={() => setTab("queue")}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
-            tab === "queue" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
-          }`}
+          onClick={() => void fetchInbox()}
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
         >
-          The Queue
+          Refresh
         </button>
-        <button
-          type="button"
-          onClick={() => setTab("mine")}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
-            tab === "mine" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          My Projects
-        </button>
-      </div>
-
-      {tab === "queue" ? (
-        <>
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">The Queue</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Newly registered projects awaiting a project manager. Claim one to take ownership.
-            </p>
-          </div>
-
-          {loading && (
-            <div className="py-10 text-center text-slate-500 text-sm">Loading queue…</div>
-          )}
-
-          {error && (
-            <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-          )}
-
-          {!loading && !error && projects.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 text-sm">
-              The queue is empty. New projects will appear here once a client puts them out to tender.
-            </div>
-          )}
-
-          {!loading && projects.length > 0 && (
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
-                        New Project
-                      </span>
-                      {project.isEmergency && (
-                        <span className="inline-flex shrink-0 items-center rounded-full border border-rose-300 bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700">
-                          Emergency
-                        </span>
-                      )}
-                      {project.onlySelectedProfessionalsCanBid === false && (
-                        <span className="inline-flex shrink-0 items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
-                          Open tender
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="mt-2 text-base font-semibold text-slate-900">{project.projectName}</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">
-                      {[project.region, project.user ? `${project.user.firstName || ""} ${project.user.surname || ""}`.trim() : null]
-                        .filter(Boolean)
-                        .join(" · ") || "No location"}
-                    </p>
-                    {project.tradesRequired && project.tradesRequired.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {project.tradesRequired.map((trade) => (
-                          <span
-                            key={trade}
-                            className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600"
-                          >
-                            {trade}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <p className="mt-2 text-xs text-slate-400">Registered {formatDate(project.createdAt)}</p>
+      </header>
+      <div className="space-y-2 p-2">
+        {inboxLoading ? (
+          <div className="py-8 text-center text-xs text-slate-500">Loading…</div>
+        ) : inbox.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-500">You&apos;re all caught up.</div>
+        ) : (
+          inbox.map((item) => (
+            <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-xs font-semibold text-slate-800">{item.senderName}</span>
+                    <span className="shrink-0 text-[10px] text-slate-400">{formatRelativeTime(item.createdAt)}</span>
                   </div>
-
                   <button
                     type="button"
-                    disabled={!!claimingId}
-                    onClick={() => handleClaim(project.id)}
-                    className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                    onClick={() => void handleMarkRead(item)}
+                    className="mt-0.5 block text-left text-[11px] font-medium text-emerald-700 hover:underline"
                   >
-                    {claimingId === project.id ? "Claiming…" : "Claim"}
+                    {item.projectName}
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          {myLoading ? (
-            <div className="py-6 text-center text-slate-500 text-sm">Loading…</div>
-          ) : myProjects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500 text-sm">
-              You haven&apos;t claimed any projects yet. Claim one from the queue.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {myProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/pm/projects/${project.id}`}
-                  className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-300"
+                <button
+                  type="button"
+                  onClick={() => void handleMarkRead(item)}
+                  title="Mark read"
+                  className="shrink-0 text-xs text-slate-400 hover:text-slate-600"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-slate-900">{project.projectName}</h3>
-                      <p className="mt-0.5 text-sm text-slate-500">{project.region || "No location"}</p>
-                    </div>
-                    <span className={`shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${project.releasedForQuotationAt ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
-                      {project.releasedForQuotationAt ? "Released" : "Awaiting release"}
-                    </span>
-                  </div>
+                  ✕
+                </button>
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{item.content}</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <Link
+                  href={`/pm/projects/${item.projectId}`}
+                  onClick={() => void handleMarkRead(item)}
+                  className="rounded px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50"
+                >
+                  Open
                 </Link>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplyOpenId(replyOpenId === item.id ? null : item.id);
+                    setReplyText("");
+                  }}
+                  className="rounded px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Reply
+                </button>
+              </div>
+              {replyOpenId === item.id && (
+                <div className="mt-1.5">
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    rows={2}
+                    placeholder="Reply…"
+                    className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleReply(item)}
+                    disabled={replyingId === item.id || !replyText.trim()}
+                    className="mt-1 rounded bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {replyingId === item.id ? "Sending…" : "Send"}
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </>
-      )}
+          ))
+        )}
+      </div>
+    </section>
+  );
+
+  const queueSection = (
+    <section className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">The Queue</h2>
+          <p className="text-xs text-slate-500">{projects.length} awaiting</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void fetchQueue()}
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+        >
+          Refresh
+        </button>
+      </header>
+      <div className="space-y-2 p-2">
+        {loading ? (
+          <div className="py-8 text-center text-xs text-slate-500">Loading…</div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+        ) : visibleQueue.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-500">Queue empty.</div>
+        ) : (
+          visibleQueue.map((project) => (
+            <div key={project.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="truncate text-xs font-semibold text-slate-900">{project.projectName}</h3>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                    {[project.region, project.user ? `${project.user.firstName || ""} ${project.user.surname || ""}`.trim() : null]
+                      .filter(Boolean)
+                      .join(" · ") || "No location"}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-slate-400">Registered {formatDate(project.createdAt)}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!!claimingId}
+                  onClick={() => void handleClaim(project.id)}
+                  className="shrink-0 rounded bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {claimingId === project.id ? "Claiming…" : "Claim"}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+        {!loading && projects.length > 10 && (
+          <button
+            type="button"
+            onClick={() => setShowAllQueue((v) => !v)}
+            className="w-full rounded py-1 text-center text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+          >
+            {showAllQueue ? "Show fewer" : `Show all (${projects.length})`}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+
+  const mineSection = (
+    <section className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">My Projects</h2>
+          <p className="text-xs text-slate-500">{myProjects.length} claimed</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void fetchMyProjects()}
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+        >
+          Refresh
+        </button>
+      </header>
+      <div className="space-y-2 p-2">
+        {myLoading ? (
+          <div className="py-8 text-center text-xs text-slate-500">Loading…</div>
+        ) : myProjects.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-500">No claimed projects yet.</div>
+        ) : (
+          myProjects.map((project) => (
+            <Link
+              key={project.id}
+              href={`/pm/projects/${project.id}`}
+              className="block rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-emerald-300"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="truncate text-xs font-semibold text-slate-900">{project.projectName}</h3>
+                <span
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                    project.releasedForQuotationAt
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : "border-amber-300 bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {project.releasedForQuotationAt ? "Released" : "Awaiting release"}
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] text-slate-500">{project.region || "No location"}</p>
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
+  );
+
+  const mobileTabs = [
+    { key: "inbox" as const, label: "Inbox", count: inbox.length },
+    { key: "queue" as const, label: "Queue", count: projects.length },
+    { key: "mine" as const, label: "My Projects", count: myProjects.length },
+  ];
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-4">
+      {/* Compact header */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold text-slate-900">PM Home</h1>
+          <p className="text-xs text-slate-500">Claim projects, release tenders, and answer questions.</p>
+        </div>
+      </div>
+
+      {/* Mobile tab picker */}
+      <div className="mb-3 flex rounded-lg border border-slate-200 bg-white p-1 md:hidden">
+        {mobileTabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setMobileTab(t.key)}
+            className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+              mobileTab === t.key ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {t.label}
+            {t.count > 0 ? ` (${t.count})` : ""}
+          </button>
+        ))}
+      </div>
+
+      {/* Mobile: active section only */}
+      <div className="space-y-3 md:hidden">
+        {mobileTab === "inbox" && inboxSection}
+        {mobileTab === "queue" && queueSection}
+        {mobileTab === "mine" && mineSection}
+      </div>
+
+      {/* Desktop: side-by-side sections */}
+      <div className="hidden grid-cols-2 items-start gap-4 md:grid xl:grid-cols-3">
+        {inboxSection}
+        {queueSection}
+        {mineSection}
+      </div>
     </div>
   );
 }
