@@ -1566,6 +1566,8 @@ export class ProjectsService {
       console.warn('[ProjectsService.bookMimoSurvey] Calendar/assignment sync skipped:', err?.message || err);
     }
 
+    await this.resolveEventCard(projectId, 'survey', { bookedAt: scheduledAt.toISOString() }).catch(() => undefined);
+
     return {
       projectId: project.id,
       projectName: project.projectName,
@@ -4643,6 +4645,9 @@ export class ProjectsService {
         uploadedByRole: uploadedByRole || null,
       })),
     });
+    if (uploadedByRole === 'client') {
+      await this.resolveEventCard(projectId, 'images', { imageCount: urls.length }).catch(() => undefined);
+    }
     return { success: true, count: urls.length };
   }
 
@@ -4682,6 +4687,8 @@ export class ProjectsService {
     // Post a survey-request card (structured event) to the project thread.
     const content = `[[event]]\n${JSON.stringify({
       type: 'generic',
+      eventId: createId(),
+      kind: 'survey',
       icon: '🏗️',
       title: 'Book your site survey',
       summary:
@@ -4704,6 +4711,8 @@ export class ProjectsService {
     }
     const content = `[[event]]\n${JSON.stringify({
       type: 'generic',
+      eventId: createId(),
+      kind: 'images',
       icon: '📸',
       title: 'Add project images',
       summary:
@@ -4844,6 +4853,7 @@ export class ProjectsService {
     const booking = await this.prisma.pmCallBooking.create({
       data: { projectId, pmId, clientId: clientUserId, scheduledAt, status: 'scheduled' },
     });
+    await this.resolveEventCard(projectId, 'call', { bookedAt: scheduledAt.toISOString() }).catch(() => undefined);
     return { success: true, booking };
   }
 
@@ -4858,6 +4868,8 @@ export class ProjectsService {
     }
     const content = `[[event]]\n${JSON.stringify({
       type: 'generic',
+      eventId: createId(),
+      kind: 'call',
       icon: '📞',
       title: 'Book a call with your PM',
       summary:
@@ -4888,6 +4900,8 @@ export class ProjectsService {
 
     const content = `[[event]]\n${JSON.stringify({
       type: 'generic',
+      eventId: qna.id,
+      kind: 'question',
       icon: '❓',
       title: 'Question from your PM',
       summary: `${question.trim()}\n\nPlease answer so we can refine your project scope.`,
@@ -4897,6 +4911,53 @@ export class ProjectsService {
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
     await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
     return { success: true, qnaId: qna.id };
+  }
+
+  /** Parse a `[[event]]\n{json}` card payload, or null if not a card. */
+  private parseEventCardContent(content: string): Record<string, any> | null {
+    if (!content || !content.startsWith('[[event]]')) return null;
+    const raw = content.slice('[[event]]'.length).trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as Record<string, any>;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Mark the latest unresolved event card of a given `kind` on a project as
+   * resolved, merging the result patch into its JSON so the UI can reflect it
+   * (e.g. question answered, images added, call/survey booked).
+   */
+  private async resolveEventCard(
+    projectId: string,
+    kind: string,
+    patch: Record<string, unknown>,
+  ): Promise<void> {
+    const thread = await this.prisma.projectChatThread.findUnique({
+      where: { projectId },
+      select: { id: true },
+    });
+    if (!thread) return;
+
+    const messages = await this.prisma.projectChatMessage.findMany({
+      where: { threadId: thread.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, content: true },
+    });
+
+    for (const m of messages) {
+      const event = this.parseEventCardContent(m.content);
+      if (!event || event.kind !== kind || event.resolved) continue;
+      const updated = { ...event, resolved: true, ...patch };
+      await this.prisma.projectChatMessage.update({
+        where: { id: m.id },
+        data: { content: `[[event]]\n${JSON.stringify(updated)}` },
+      });
+      return;
+    }
   }
 
   async addScopeQnaAnswer(projectId: string, qnaId: string, clientUserId: string, answer: string) {
@@ -4921,6 +4982,7 @@ export class ProjectsService {
       where: { id: qnaId },
       data: { answer: answer.trim() },
     });
+    await this.resolveEventCard(projectId, 'question', { answer: answer.trim() }).catch(() => undefined);
     return { success: true, qna: updated };
   }
 

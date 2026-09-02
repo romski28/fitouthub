@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-02-eac4af37",
+    "date": "2026-09-02T21:31:28+08:00",
+    "title": "feat(pm): adaptive chat cards that reflect completion",
+    "summary": "feat(pm): adaptive chat cards that reflect completion",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "eac4af37",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/components/chat-event-card.tsx",
+      "apps/web/src/lib/chat-event-parser.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-378d57d8",
     "date": "2026-09-02T18:14:52+08:00",
     "title": "feat(pm): 'Ask the PM' copy on pro chat during tender",

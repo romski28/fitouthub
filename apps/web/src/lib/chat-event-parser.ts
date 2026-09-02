@@ -19,6 +19,13 @@ export interface ChatEvent {
   summary?: string;
   fields?: ChatEventField[];
   actions?: ChatEventAction[];
+  eventId?: string;
+  kind?: string;
+  resolved?: boolean;
+  answer?: string;
+  imageCount?: number;
+  bookedAt?: string;
+  booked?: boolean;
   rawContent: string;
 }
 
@@ -29,6 +36,13 @@ interface StructuredChatEvent {
   summary?: string;
   fields?: ChatEventField[];
   actions?: ChatEventAction[];
+  eventId?: string;
+  kind?: string;
+  resolved?: boolean;
+  answer?: string;
+  imageCount?: number;
+  bookedAt?: string;
+  booked?: boolean;
 }
 
 const STRUCTURED_PREFIX = '[[event]]';
@@ -76,6 +90,13 @@ function parseStructuredEvent(content: string): ChatEvent | null {
       summary: parsed.summary,
       fields: parsed.fields,
       actions: parsed.actions,
+      eventId: parsed.eventId,
+      kind: parsed.kind,
+      resolved: parsed.resolved === true,
+      answer: parsed.answer,
+      imageCount: parsed.imageCount,
+      bookedAt: parsed.bookedAt,
+      booked: parsed.booked === true,
       rawContent: content,
     };
   } catch {
