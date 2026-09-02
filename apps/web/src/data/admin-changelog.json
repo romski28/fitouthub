@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-02-30195721",
+    "date": "2026-09-02T17:09:35+08:00",
+    "title": "style(pm): refine inbox cards, uniform buttons, reply expand/cancel",
+    "summary": "style(pm): refine inbox cards, uniform buttons, reply expand/cancel",
+    "areas": [
+      "web"
+    ],
+    "commit": "30195721",
+    "files": [
+      "apps/web/src/app/pm/page.tsx",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-ad22062e",
     "date": "2026-09-02T16:59:12+08:00",
     "title": "style(pm): inline inbox actions with colored buttons + card border",

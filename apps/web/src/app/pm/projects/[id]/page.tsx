@@ -583,7 +583,7 @@ export default function PmProjectDetailPage() {
                         <span className="text-[10px] text-slate-400">{formatDate(m.createdAt)}</span>
                       </div>
                       {event ? (
-                        <div className="mt-1.5">
+                        <div className="mt-1.5 overflow-hidden rounded-xl border border-slate-700">
                           <ChatEventCard event={event} isCurrentUser={m.senderType === "pm"} />
                         </div>
                       ) : (

@@ -239,6 +239,7 @@ export default function PmHomePage() {
         ) : (
           inbox.map((item) => {
             const event = parseChatEvent(item.content);
+            const isReplying = replyOpenId === item.id;
             return (
               <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                 {/* Row 1: from -> to -> when  +  Read it */}
@@ -252,7 +253,7 @@ export default function PmHomePage() {
                   <button
                     type="button"
                     onClick={() => void handleMarkRead(item)}
-                    className="shrink-0 rounded bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-orange-600"
+                    className="w-28 shrink-0 whitespace-nowrap rounded bg-orange-500 px-2 py-0.5 text-center text-[11px] font-normal text-white hover:bg-orange-600"
                   >
                     Read it
                   </button>
@@ -264,39 +265,45 @@ export default function PmHomePage() {
                   <Link
                     href={`/pm/projects/${item.projectId}`}
                     onClick={() => void handleMarkRead(item)}
-                    className="shrink-0 rounded bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-blue-700"
+                    className="w-28 shrink-0 whitespace-nowrap rounded bg-blue-600 px-2 py-0.5 text-center text-[11px] font-normal text-white hover:bg-blue-700"
                   >
                     Open project
                   </Link>
                 </div>
 
-                {/* Row 3: message (one line or card)  +  Reply */}
-                <div className="mt-1 flex items-start gap-2">
-                  <div className="min-w-0 flex-1">
+                {/* Row 3: message preview (type only for cards)  +  Reply */}
+                {!isReplying && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      {event ? (
+                        <p className="line-clamp-1 text-xs text-slate-600">
+                          {event.icon} {event.title}
+                        </p>
+                      ) : (
+                        <p className="line-clamp-1 text-xs text-slate-600">{item.content}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyOpenId(item.id);
+                        setReplyText("");
+                      }}
+                      className="w-28 shrink-0 whitespace-nowrap rounded bg-emerald-600 px-2 py-0.5 text-center text-[11px] font-normal text-white hover:bg-emerald-700"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                )}
+
+                {/* Reply expansion: full message + cancel/send (replaces the preview row) */}
+                {isReplying && (
+                  <div className="mt-2 space-y-1.5">
                     {event ? (
-                      <div className="overflow-hidden rounded-xl border border-slate-300">
+                      <div className="overflow-hidden rounded-xl border border-slate-700">
                         <ChatEventCard event={event} />
                       </div>
                     ) : (
-                      <p className="line-clamp-1 text-xs text-slate-600">{item.content}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReplyOpenId(replyOpenId === item.id ? null : item.id);
-                      setReplyText("");
-                    }}
-                    className="shrink-0 rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
-                  >
-                    Reply
-                  </button>
-                </div>
-
-                {/* Reply expansion: full message + reply box */}
-                {replyOpenId === item.id && (
-                  <div className="mt-2 space-y-1.5">
-                    {!event && (
                       <p className="whitespace-pre-wrap text-xs text-slate-600">{item.content}</p>
                     )}
                     <textarea
@@ -306,14 +313,26 @@ export default function PmHomePage() {
                       placeholder="Reply…"
                       className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
                     />
-                    <button
-                      type="button"
-                      onClick={() => void handleReply(item)}
-                      disabled={replyingId === item.id || !replyText.trim()}
-                      className="rounded bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {replyingId === item.id ? "Sending…" : "Send"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyOpenId(null);
+                          setReplyText("");
+                        }}
+                        className="rounded bg-red-600 px-3 py-1 text-xs font-normal text-white hover:bg-red-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleReply(item)}
+                        disabled={replyingId === item.id || !replyText.trim()}
+                        className="rounded bg-emerald-600 px-3 py-1 text-xs font-normal text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {replyingId === item.id ? "Sending…" : "Send"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
