@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-02-f2046659",
+    "date": "2026-09-02T09:47:38+08:00",
+    "title": "fix(pm): resolve scope intake by projectId and add summary fallback",
+    "summary": "fix(pm): resolve scope intake by projectId and add summary fallback",
+    "areas": [
+      "api"
+    ],
+    "commit": "f2046659",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-c53ca574",
     "date": "2026-09-02T09:26:32+08:00",
     "title": "chore(pm): add scope Q&A backfill SQL",

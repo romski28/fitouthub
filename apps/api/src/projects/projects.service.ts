@@ -4946,12 +4946,21 @@ export class ProjectsService {
         aiIntake: { select: { summary: true } },
       },
     });
+    // The intake may be linked via AiIntake.projectId rather than
+    // Project.aiIntakeId — resolve by projectId as a fallback.
+    const intakeByProjectId = projectWithSummary?.aiIntake
+      ? null
+      : await this.prisma.aiIntake.findUnique({
+          where: { projectId },
+          select: { summary: true },
+        }).catch(() => null);
     const scopeSummary =
       ps && typeof ps === 'object' && typeof (ps as any).summary === 'string'
         ? ((ps as any).summary as string).trim()
         : '';
     const summary =
       projectWithSummary?.aiIntake?.summary?.trim() ||
+      intakeByProjectId?.summary?.trim() ||
       scopeSummary ||
       projectWithSummary?.notes?.trim() ||
       null;

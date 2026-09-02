@@ -4525,6 +4525,22 @@ Return ONLY valid JSON (no markdown):
 
     let intake = project.aiIntake;
     if (!intake) {
+      // The project may be linked to its intake via AiIntake.projectId rather
+      // than Project.aiIntakeId (both relations exist). Resolve by projectId
+      // first so scope always lives in a single, stable intake record.
+      intake = await this.prisma.aiIntake.findUnique({
+        where: { projectId },
+        select: {
+          id: true,
+          summary: true,
+          scope: true,
+          locationPrimary: true,
+          trades: true,
+          project: true,
+        },
+      });
+    }
+    if (!intake) {
       const requestId = `scope_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
       intake = await this.prisma.aiIntake.create({
         data: {
@@ -4807,6 +4823,15 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
       );
     }).filter((entry) => entry.workPackage.length > 0);
 
+    // Fallback summary in case the model omits the "summary" field: build a
+    // readable one-liner from the generated work packages so the PM/client
+    // always see a visible change after regeneration.
+    const finalSummary =
+      summaryText ||
+      (entries.length > 0
+        ? `Renovation covering: ${entries.map((e) => e.workPackage).join(', ')}`
+        : '');
+
     const milestonesRaw = Array.isArray(output.milestones) ? output.milestones : [];
     const milestones = milestonesRaw
       .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
@@ -4869,7 +4894,7 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
         deadline: input.deadline?.trim() || undefined,
       },
       projectSummary: {
-        summary: summaryText,
+        summary: finalSummary,
         projectType: typeof outputSummary.projectType === 'string' ? outputSummary.projectType : 'renovation',
         location: typeof outputSummary.location === 'string'
           ? outputSummary.location
@@ -4897,14 +4922,17 @@ programme must include: startDay, finishDay, criticalPath, timelineByPhase[].`;
 
     // Persist the human-readable summary so it flows through getProjectScope
     // (client / pro / PM overviews) and reflects the latest regeneration.
-    if (summaryText) {
+    if (finalSummary) {
       await this.prisma.aiIntake.update({
         where: { id: context.intake.id },
-        data: { summary: summaryText },
+        data: { summary: finalSummary },
         select: { id: true },
       }).catch((err) => {
         this.logger.warn(`[generateProjectScope] failed to persist summary: ${(err as Error)?.message}`);
       });
+      this.logger.log(`[generateProjectScope] persisted summary (${finalSummary.length} chars) for intake=${context.intake.id}`);
+    } else {
+      this.logger.warn(`[generateProjectScope] no summary to persist (summaryText=${summaryText.length} chars, entries=${entries.length})`);
     }
 
     await this.activityLogService.record({
