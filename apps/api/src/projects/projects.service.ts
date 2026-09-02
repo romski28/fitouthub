@@ -5206,14 +5206,15 @@ export class ProjectsService {
   /** PM replies to an inbox thread (per-pro or project-general). */
   async pmReply(
     pmUserId: string,
-    body: { threadType: string; threadId: string; content: string },
+    body: { threadType: string; threadId?: string | null; projectId?: string | null; content: string },
   ) {
-    const { threadType, threadId, content } = body;
-    if (!threadType || !threadId || !content?.trim()) {
-      throw new BadRequestException('threadType, threadId and content are required');
+    const { threadType, threadId, projectId, content } = body;
+    if (!threadType || !content?.trim()) {
+      throw new BadRequestException('threadType and content are required');
     }
 
     if (threadType === 'project-professional') {
+      if (!threadId) throw new BadRequestException('threadId is required');
       const pp = await this.prisma.projectProfessional.findUnique({
         where: { id: threadId },
         select: {
@@ -5243,15 +5244,27 @@ export class ProjectsService {
     }
 
     if (threadType === 'project-general') {
-      const thread = await this.prisma.projectChatThread.findUnique({
-        where: { id: threadId },
-        select: { id: true, projectId: true, project: { select: { pmId: true } } },
+      // Resolve the project id from the thread if only a threadId was provided.
+      let pid = projectId;
+      if (!pid && threadId) {
+        const th = await this.prisma.projectChatThread.findUnique({
+          where: { id: threadId },
+          select: { projectId: true },
+        });
+        pid = th?.projectId ?? null;
+      }
+      if (!pid) throw new BadRequestException('projectId is required');
+
+      const project = await this.prisma.project.findUnique({
+        where: { id: pid },
+        select: { id: true, pmId: true },
       });
-      if (!thread || thread.project.pmId !== pmUserId) {
+      if (!project || project.pmId !== pmUserId) {
         throw new ForbiddenException('Not authorized');
       }
+      const thread = await this.chatService.getOrCreateProjectThread(pid);
       const message = await this.chatService.addProjectMessage(
-        threadId,
+        thread.id,
         'pm',
         pmUserId,
         null,
@@ -5263,7 +5276,7 @@ export class ProjectsService {
     throw new BadRequestException('Invalid threadType');
   }
 
-  /** Full message feed for a single PM project (general + per-pro threads). */
+  /** Contact threads (client + pros) for a single PM project. */
   async getPmProjectMessages(projectId: string, pmUserId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -5290,7 +5303,14 @@ export class ProjectsService {
         id: true,
         messages: {
           orderBy: { createdAt: 'asc' },
-          select: { id: true, senderType: true, senderUserId: true, content: true, createdAt: true },
+          select: {
+            id: true,
+            senderType: true,
+            senderUserId: true,
+            content: true,
+            createdAt: true,
+            readByPmAt: true,
+          },
         },
       },
     });
@@ -5309,61 +5329,90 @@ export class ProjectsService {
             senderClientId: true,
             content: true,
             createdAt: true,
+            readByPmAt: true,
           },
         },
       },
     });
 
-    const items: Array<{
-      id: string;
+    type Thread = {
+      threadId: string | null;
       threadType: 'project-professional' | 'project-general';
-      threadId: string;
-      senderName: string;
-      senderType: string;
-      content: string;
-      createdAt: string;
-    }> = [];
+      name: string;
+      role: 'client' | 'professional';
+      unreadCount: number;
+      lastMessage: { content: string; createdAt: string; senderType: string } | null;
+      messages: Array<{
+        id: string;
+        senderName: string;
+        senderType: string;
+        content: string;
+        createdAt: string;
+      }>;
+    };
 
-    for (const t of generalThreads) {
-      for (const m of t.messages) {
-        items.push({
-          id: m.id,
-          threadType: 'project-general',
-          threadId: t.id,
-          senderName: m.senderType === 'pm' ? 'PM' : clientName,
-          senderType: m.senderType,
-          content: m.content,
-          createdAt: m.createdAt.toISOString(),
-        });
-      }
-    }
+    const threads: Thread[] = [];
 
+    const buildThread = (
+      threadType: Thread['threadType'],
+      threadId: string | null,
+      name: string,
+      role: Thread['role'],
+      rawMessages: Array<{
+        id: string;
+        senderType: string;
+        content: string;
+        createdAt: Date;
+        readByPmAt: Date | null;
+      }>,
+      resolveSender: (senderType: string) => string,
+    ) => {
+      const messages = rawMessages.map((m) => ({
+        id: m.id,
+        senderName: resolveSender(m.senderType),
+        senderType: m.senderType,
+        content: m.content,
+        createdAt: m.createdAt.toISOString(),
+      }));
+      const unreadCount = rawMessages.filter((m) => m.senderType !== 'pm' && !m.readByPmAt).length;
+      const last = messages[messages.length - 1] ?? null;
+      threads.push({
+        threadId,
+        threadType,
+        name,
+        role,
+        unreadCount,
+        lastMessage: last ? { content: last.content, createdAt: last.createdAt, senderType: last.senderType } : null,
+        messages,
+      });
+    };
+
+    // Client (project-general) — always present so the PM can start a chat.
+    const gt = generalThreads[0];
+    buildThread(
+      'project-general',
+      gt?.id ?? null,
+      clientName,
+      'client',
+      gt?.messages ?? [],
+      (st) => (st === 'pm' ? 'PM' : clientName),
+    );
+
+    // Pros (per-pro threads).
     for (const t of proThreads) {
       const proName = t.professional.businessName || t.professional.fullName || 'Professional';
-      for (const m of t.messages) {
-        items.push({
-          id: m.id,
-          threadType: 'project-professional',
-          threadId: t.id,
-          senderName:
-            m.senderType === 'pm'
-              ? 'PM'
-              : m.senderType === 'professional'
-                ? proName
-                : clientName,
-          senderType: m.senderType,
-          content: m.content,
-          createdAt: m.createdAt.toISOString(),
-        });
-      }
+      buildThread('project-professional', t.id, proName, 'professional', t.messages, (st) =>
+        st === 'pm' ? 'PM' : st === 'professional' ? proName : clientName,
+      );
     }
 
-    items.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+    threads.sort((a, b) => {
+      const at = a.lastMessage?.createdAt ?? '';
+      const bt = b.lastMessage?.createdAt ?? '';
+      return at < bt ? 1 : -1;
+    });
 
-    return {
-      items,
-      generalThreadId: generalThreads[0]?.id ?? null,
-    };
+    return { threads };
   }
 
   async countMatchingProfessionals(params: {

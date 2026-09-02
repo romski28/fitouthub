@@ -621,7 +621,7 @@ export class ProjectsController {
   @UseGuards(AuthGuard('jwt'))
   async pmReply(
     @Request() req: any,
-    @Body() body: { threadType: string; threadId: string; content: string },
+    @Body() body: { threadType: string; threadId?: string | null; projectId?: string | null; content: string },
   ) {
     if (req.user?.role !== 'project_manager') {
       throw new ForbiddenException('Only project managers can reply from the inbox');

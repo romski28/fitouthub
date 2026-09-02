@@ -33,15 +33,25 @@ type PmProject = {
   user?: { firstName?: string; surname?: string; email?: string };
 };
 
-type PmMessage = {
-  id: string;
+type PmThread = {
+  threadId: string | null;
   threadType: "project-professional" | "project-general";
-  threadId: string;
-  senderName: string;
-  senderType: string;
-  content: string;
-  createdAt: string;
+  name: string;
+  role: "client" | "professional";
+  unreadCount: number;
+  lastMessage: { content: string; createdAt: string; senderType: string } | null;
+  messages: Array<{
+    id: string;
+    senderName: string;
+    senderType: string;
+    content: string;
+    createdAt: string;
+  }>;
 };
+
+function threadKey(t: PmThread): string {
+  return t.threadType === "project-general" ? "general" : `pro:${t.threadId}`;
+}
 
 function formatDate(date?: string | null): string {
   if (!date) return "—";
@@ -88,9 +98,9 @@ export default function PmProjectDetailPage() {
       createdAt?: string;
     }>;
   } | null>(null);
-  const [pmMessages, setPmMessages] = useState<PmMessage[]>([]);
-  const [generalThreadId, setGeneralThreadId] = useState<string | null>(null);
+  const [pmThreads, setPmThreads] = useState<PmThread[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [activeThreadKey, setActiveThreadKey] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
 
@@ -135,7 +145,7 @@ export default function PmProjectDetailPage() {
     void fetchScope();
   }, [fetchScope]);
 
-  const fetchMessages = useCallback(async () => {
+  const fetchThreads = useCallback(async () => {
     if (!accessToken || !projectId) return;
     setMessagesLoading(true);
     try {
@@ -144,8 +154,7 @@ export default function PmProjectDetailPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setPmMessages(Array.isArray(data?.items) ? data.items : []);
-        setGeneralThreadId(data?.generalThreadId ?? null);
+        setPmThreads(Array.isArray(data?.threads) ? data.threads : []);
       }
     } catch {
       /* ignore */
@@ -155,21 +164,41 @@ export default function PmProjectDetailPage() {
   }, [accessToken, projectId]);
 
   useEffect(() => {
-    void fetchMessages();
-  }, [fetchMessages]);
+    void fetchThreads();
+  }, [fetchThreads]);
+
+  const activeThread = pmThreads.find((t) => threadKey(t) === activeThreadKey) ?? null;
+
+  const openThread = async (t: PmThread) => {
+    setActiveThreadKey(threadKey(t));
+    setReplyText("");
+    if (t.threadId && t.unreadCount > 0) {
+      await fetch(`${API_BASE_URL}/projects/pm/inbox/read`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ threadType: t.threadType, threadId: t.threadId }),
+      }).catch(() => undefined);
+      void fetchThreads();
+    }
+  };
 
   const handleReply = async () => {
-    if (!accessToken || !projectId || !replyText.trim() || !generalThreadId) return;
+    if (!accessToken || !projectId || !replyText.trim() || !activeThread) return;
     setSendingReply(true);
     try {
       const res = await fetch(`${API_BASE_URL}/projects/pm/inbox/reply`, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ threadType: "project-general", threadId: generalThreadId, content: replyText.trim() }),
+        body: JSON.stringify({
+          threadType: activeThread.threadType,
+          threadId: activeThread.threadId ?? undefined,
+          projectId: activeThread.threadType === "project-general" ? projectId : undefined,
+          content: replyText.trim(),
+        }),
       });
       if (!res.ok) throw new Error("Failed to send message");
       setReplyText("");
-      await fetchMessages();
+      await fetchThreads();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send message");
     } finally {
@@ -555,62 +584,108 @@ export default function PmProjectDetailPage() {
               <h3 className="text-sm font-semibold text-slate-900">Messages</h3>
               <button
                 type="button"
-                onClick={() => void fetchMessages()}
+                onClick={() => void fetchThreads()}
                 className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
               >
                 Refresh
               </button>
             </div>
+
             {messagesLoading ? (
               <p className="text-sm text-slate-500">Loading…</p>
-            ) : pmMessages.length === 0 ? (
-              <p className="text-sm text-slate-500">No messages yet.</p>
-            ) : (
+            ) : activeThread ? (
+              /* Conversation panel */
               <div className="space-y-2">
-                {pmMessages.map((m) => {
-                  const event = parseChatEvent(m.content);
-                  return (
-                    <div
-                      key={m.id}
-                      className={`rounded-lg px-3 py-2 ${
-                        m.senderType === "pm"
-                          ? "border border-emerald-100 bg-emerald-50"
-                          : "border border-slate-200 bg-white"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-800">{m.senderName}</span>
-                        <span className="text-[10px] text-slate-400">{formatDate(m.createdAt)}</span>
-                      </div>
-                      {event ? (
-                        <div className="mt-1.5 overflow-hidden rounded-xl border border-slate-700">
-                          <ChatEventCard event={event} isCurrentUser={m.senderType === "pm"} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveThreadKey(null);
+                    setReplyText("");
+                  }}
+                  className="text-xs font-semibold text-emerald-700 hover:underline"
+                >
+                  ← Contacts
+                </button>
+                <div className="space-y-2">
+                  {activeThread.messages.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-slate-500">No messages yet. Say hello.</p>
+                  ) : (
+                    activeThread.messages.map((m) => {
+                      const event = parseChatEvent(m.content);
+                      const isMine = m.senderType === "pm";
+                      return (
+                        <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[85%] rounded-lg px-3 py-2 ${isMine ? "bg-emerald-100" : "border border-slate-200 bg-white"}`}>
+                            {!isMine && <p className="text-[10px] font-semibold text-slate-500">{m.senderName}</p>}
+                            {event ? (
+                              <div className="mt-1 overflow-hidden rounded-lg border border-slate-700">
+                                <ChatEventCard event={event} isCurrentUser={isMine} />
+                              </div>
+                            ) : (
+                              <p className="whitespace-pre-wrap text-sm text-slate-700">{m.content}</p>
+                            )}
+                            <p className="mt-0.5 text-right text-[10px] text-slate-400">{formatDate(m.createdAt)}</p>
+                          </div>
                         </div>
-                      ) : (
-                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{m.content}</p>
-                      )}
+                      );
+                    })
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    rows={2}
+                    placeholder={`Reply to ${activeThread.name}…`}
+                    className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleReply}
+                    disabled={sendingReply || !replyText.trim()}
+                    className="shrink-0 self-end rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {sendingReply ? "Sending…" : "Send"}
+                  </button>
+                </div>
+              </div>
+            ) : pmThreads.length === 0 ? (
+              <p className="text-sm text-slate-500">No contacts yet.</p>
+            ) : (
+              /* Contact list */
+              <div className="space-y-0.5">
+                {pmThreads.map((t) => (
+                  <button
+                    key={threadKey(t)}
+                    type="button"
+                    onClick={() => void openThread(t)}
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-100"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                      {t.name.charAt(0).toUpperCase()}
                     </div>
-                  );
-                })}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-semibold text-slate-900">{t.name}</span>
+                        {t.lastMessage && (
+                          <span className="shrink-0 text-[10px] text-slate-400">{formatDate(t.lastMessage.createdAt)}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs text-slate-500">
+                          {t.lastMessage ? t.lastMessage.content : "No messages yet"}
+                        </span>
+                        {t.unreadCount > 0 && (
+                          <span className="shrink-0 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {t.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
-            <div className="flex gap-2">
-              <textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                rows={2}
-                placeholder="Reply to the client…"
-                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={handleReply}
-                disabled={sendingReply || !replyText.trim() || !generalThreadId}
-                className="shrink-0 self-end rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {sendingReply ? "Sending…" : "Send"}
-              </button>
-            </div>
           </div>
 
           {!project.releasedForQuotationAt && (

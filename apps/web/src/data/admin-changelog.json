@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-02-f3ada638",
+    "date": "2026-09-02T17:35:52+08:00",
+    "title": "feat(pm): WhatsApp-style contact list for project messages",
+    "summary": "feat(pm): WhatsApp-style contact list for project messages",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f3ada638",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-02-30195721",
     "date": "2026-09-02T17:09:35+08:00",
     "title": "style(pm): refine inbox cards, uniform buttons, reply expand/cancel",
