@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-02-62e906a9",
+    "date": "2026-09-02T08:06:04+08:00",
+    "title": "fix(pm): render chat modals via portal to overlay viewport",
+    "summary": "fix(pm): render chat modals via portal to overlay viewport",
+    "areas": [
+      "web"
+    ],
+    "commit": "62e906a9",
+    "files": [
+      "apps/web/src/components/project-chat.tsx"
+    ]
+  },
+  {
     "id": "2026-09-01-50ab284f",
     "date": "2026-09-01T23:59:48+08:00",
     "title": "feat(pm): structured scope Q&A feeding AI scope regeneration",

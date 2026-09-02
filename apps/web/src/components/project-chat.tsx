@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL } from '@/config/api';
 import { useConversation, type ConversationMessage as ChatMessage } from '@/hooks/use-conversation';
 import { parseChatEvent } from '@/lib/chat-event-parser';
@@ -330,27 +331,34 @@ export default function ProjectChat({
         </div>
       </form>
 
-      <ClientImageUploadModal
-        isOpen={imageUploadOpen}
-        onClose={() => setImageUploadOpen(false)}
-        projectId={projectId}
-        accessToken={accessToken}
-      />
+      {typeof document !== 'undefined'
+        ? createPortal(
+            <>
+              <ClientImageUploadModal
+                isOpen={imageUploadOpen}
+                onClose={() => setImageUploadOpen(false)}
+                projectId={projectId}
+                accessToken={accessToken}
+              />
 
-      <BookPmCallModal
-        isOpen={callBookingOpen}
-        onClose={() => setCallBookingOpen(false)}
-        projectId={projectId}
-        accessToken={accessToken}
-      />
+              <BookPmCallModal
+                isOpen={callBookingOpen}
+                onClose={() => setCallBookingOpen(false)}
+                projectId={projectId}
+                accessToken={accessToken}
+              />
 
-      <AnswerQuestionModal
-        isOpen={!!answerQnaId}
-        onClose={() => setAnswerQnaId(null)}
-        projectId={projectId}
-        qnaId={answerQnaId || ''}
-        accessToken={accessToken}
-      />
+              <AnswerQuestionModal
+                isOpen={!!answerQnaId}
+                onClose={() => setAnswerQnaId(null)}
+                projectId={projectId}
+                qnaId={answerQnaId || ''}
+                accessToken={accessToken}
+              />
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
