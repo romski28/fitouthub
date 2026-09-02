@@ -2012,8 +2012,20 @@ export class UpdatesService {
       const projectProfessionalThreads = await this.prisma.projectProfessional.findMany({
         where: {
           project: {
-            OR: [{ userId }, { clientId: userId }],
-            status: { not: 'archived' },
+            AND: [
+              { OR: [{ userId }, { clientId: userId }] },
+              { status: { not: 'archived' } },
+              {
+                // Tender concierge: while the project is released-but-not-awarded,
+                // the PM (not the client) is the pro's counterparty — shield these
+                // per-pro threads from the client's updates so the client only sees
+                // the project-general (PM <-> client) thread.
+                OR: [
+                  { releasedForQuotationAt: null },
+                  { awardedProjectProfessionalId: { not: null } },
+                ],
+              },
+            ],
           },
         },
         select: {
@@ -2265,7 +2277,7 @@ export class UpdatesService {
             select: { id: true, projectName: true, clientName: true },
           },
           messages: {
-            where: { senderType: 'client' },
+            where: { senderType: { in: ['client', 'pm'] } },
             orderBy: { createdAt: 'desc' },
             take: 1,
             select: {
@@ -2273,6 +2285,7 @@ export class UpdatesService {
               content: true,
               createdAt: true,
               senderType: true,
+              senderPmId: true,
             },
           },
         },
@@ -2298,7 +2311,10 @@ export class UpdatesService {
             content: latestMessage.content,
             createdAt: latestMessage.createdAt,
             senderType: latestMessage.senderType,
-            senderName: thread.project.clientName || 'Client',
+            senderName:
+              latestMessage.senderType === 'pm'
+                ? await this.resolvePmSenderName(latestMessage.senderPmId)
+                : thread.project.clientName || 'Client',
           },
           chatType: 'project-professional',
           threadId: thread.id,
@@ -2600,7 +2616,7 @@ export class UpdatesService {
         await this.prisma.message.updateMany({
           where: {
             projectProfessionalId: threadId,
-            senderType: 'client',
+            senderType: { in: ['client', 'pm'] },
             readByProfessionalAt: null,
           },
           data: { readByProfessionalAt: new Date() },
@@ -2893,7 +2909,7 @@ export class UpdatesService {
         this.prisma.message.findFirst({
           where: {
             projectProfessionalId: threadId,
-            senderType: 'client',
+            senderType: { in: ['client', 'pm'] },
             readByProfessionalAt: { not: null },
           },
           orderBy: { readByProfessionalAt: 'desc' },
@@ -2902,7 +2918,7 @@ export class UpdatesService {
         this.prisma.message.findFirst({
           where: {
             projectProfessionalId: threadId,
-            senderType: 'client',
+            senderType: { in: ['client', 'pm'] },
             readByProfessionalAt: null,
           },
           orderBy: { createdAt: 'asc' },
@@ -2911,7 +2927,7 @@ export class UpdatesService {
         this.prisma.message.count({
           where: {
             projectProfessionalId: threadId,
-            senderType: 'client',
+            senderType: { in: ['client', 'pm'] },
             readByProfessionalAt: null,
           },
         }),

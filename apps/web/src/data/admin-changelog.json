@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-02-14d2a0eb",
+    "date": "2026-09-02T11:34:14+08:00",
+    "title": "feat(pm): tender concierge routing, inline reply, client shielding",
+    "summary": "feat(pm): tender concierge routing, inline reply, client shielding",
+    "areas": [
+      "api"
+    ],
+    "commit": "14d2a0eb",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/api/src/updates/updates.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-02-e9356b9f",
     "date": "2026-09-02T11:29:01+08:00",
     "title": "feat(pm): PM read state + unread inbox endpoints (Phase D step 1-2)",

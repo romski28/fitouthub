@@ -5203,6 +5203,66 @@ export class ProjectsService {
     return { success: true };
   }
 
+  /** PM replies to an inbox thread (per-pro or project-general). */
+  async pmReply(
+    pmUserId: string,
+    body: { threadType: string; threadId: string; content: string },
+  ) {
+    const { threadType, threadId, content } = body;
+    if (!threadType || !threadId || !content?.trim()) {
+      throw new BadRequestException('threadType, threadId and content are required');
+    }
+
+    if (threadType === 'project-professional') {
+      const pp = await this.prisma.projectProfessional.findUnique({
+        where: { id: threadId },
+        select: {
+          id: true,
+          professionalId: true,
+          project: { select: { pmId: true, projectName: true } },
+        },
+      });
+      if (!pp || pp.project.pmId !== pmUserId) {
+        throw new ForbiddenException('Not authorized');
+      }
+      const message = await this.prisma.message.create({
+        data: {
+          projectProfessionalId: threadId,
+          senderType: 'pm',
+          senderPmId: pmUserId,
+          content: content.trim(),
+        },
+      });
+      void this.pushService.sendToProfessional(pp.professionalId, {
+        title: 'New message from your Mimo PM',
+        body: content.trim().slice(0, 120),
+        url: `/professional/projects/${threadId}`,
+        tag: `pp-chat-${threadId}`,
+      }).catch(() => undefined);
+      return { success: true, message };
+    }
+
+    if (threadType === 'project-general') {
+      const thread = await this.prisma.projectChatThread.findUnique({
+        where: { id: threadId },
+        select: { id: true, projectId: true, project: { select: { pmId: true } } },
+      });
+      if (!thread || thread.project.pmId !== pmUserId) {
+        throw new ForbiddenException('Not authorized');
+      }
+      const message = await this.chatService.addProjectMessage(
+        threadId,
+        'pm',
+        pmUserId,
+        null,
+        content.trim(),
+      );
+      return { success: true, message };
+    }
+
+    throw new BadRequestException('Invalid threadType');
+  }
+
   async countMatchingProfessionals(params: {
     trades: string[];
     location?: string;

@@ -2522,6 +2522,18 @@ export class ProfessionalController {
         professionalId,
         status: { in: this.activeProfessionalStatuses },
       },
+      select: {
+        id: true,
+        project: {
+          select: {
+            id: true,
+            projectName: true,
+            pmId: true,
+            releasedForQuotationAt: true,
+            awardedProjectProfessionalId: true,
+          },
+        },
+      },
     });
     if (!projectProfessional) {
       throw new ForbiddenException('Messaging is no longer available for this project');
@@ -2535,6 +2547,23 @@ export class ProfessionalController {
         content: body.content.trim(),
       },
     });
+
+    // Tender concierge: while released-but-not-awarded, the PM is the pro's
+    // counterparty — notify the PM (not the client) of the new message.
+    const project = projectProfessional.project;
+    if (
+      project?.pmId &&
+      project.releasedForQuotationAt &&
+      !project.awardedProjectProfessionalId
+    ) {
+      void this.pushService.sendToUser(project.pmId, {
+        title: 'New question from a professional',
+        body: `Re "${project.projectName}": ${body.content.trim().slice(0, 120)}`,
+        url: `/pm/projects/${project.id}`,
+        tag: `pm-tender-chat-${projectProfessionalId}`,
+      }).catch(() => undefined);
+    }
+
     return { success: true, message };
   }
 

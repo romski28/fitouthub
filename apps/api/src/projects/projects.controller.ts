@@ -608,6 +608,18 @@ export class ProjectsController {
     return this.projectsService.pmMarkThreadRead(req.user?.id, body);
   }
 
+  @Post('pm/inbox/reply')
+  @UseGuards(AuthGuard('jwt'))
+  async pmReply(
+    @Request() req: any,
+    @Body() body: { threadType: string; threadId: string; content: string },
+  ) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only project managers can reply from the inbox');
+    }
+    return this.projectsService.pmReply(req.user?.id, body);
+  }
+
   @Post(':id/pm-release')
   @UseGuards(AuthGuard('jwt'))
   async releaseProjectForPm(@Param('id') projectId: string, @Request() req: any) {
