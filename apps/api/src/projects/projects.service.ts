@@ -4942,11 +4942,26 @@ export class ProjectsService {
     const ps = scope?.projectSummary;
     if (typeof ps === 'string') summary = ps;
     else if (ps && typeof ps === 'object') summary = ps.summary || ps.title || null;
+
+    const scopeQna = await this.prisma.projectScopeQna.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        question: true,
+        answer: true,
+        consumedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
     return {
       summary,
       scopeEntryCount: Array.isArray(scope?.scopeOfWorks) ? scope.scopeOfWorks.length : 0,
       versionCount: result?.versionCount ?? 0,
       workflowStatus: result?.workflowStatus ?? null,
+      scopeQna,
     };
   }
 

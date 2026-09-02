@@ -64,7 +64,18 @@ export default function PmProjectDetailPage() {
   const [arrangingSurvey, setArrangingSurvey] = useState(false);
   const [refiningScope, setRefiningScope] = useState(false);
   const [requestingImages, setRequestingImages] = useState(false);
-  const [pmScope, setPmScope] = useState<{ summary?: string | null; scopeEntryCount?: number; versionCount?: number } | null>(null);
+  const [pmScope, setPmScope] = useState<{
+    summary?: string | null;
+    scopeEntryCount?: number;
+    versionCount?: number;
+    scopeQna?: Array<{
+      id: string;
+      question: string;
+      answer?: string | null;
+      consumedAt?: string | null;
+      createdAt?: string;
+    }>;
+  } | null>(null);
 
   const fetchProject = useCallback(async () => {
     if (!accessToken || !projectId) return;
@@ -147,6 +158,7 @@ export default function PmProjectDetailPage() {
       await postPmAction(`/projects/${projectId}/pm-request-info`, { question: messageText });
       setMessageText("");
       toast.success("Question sent to the client");
+      void fetchScope();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send question");
     } finally {
@@ -385,6 +397,45 @@ export default function PmProjectDetailPage() {
                 <p className="mt-1 text-sm whitespace-pre-wrap text-slate-700">{pmScope.summary}</p>
               </div>
             ) : null}
+
+            {pmScope?.scopeQna && pmScope.scopeQna.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Questions &amp; answers ({pmScope.scopeQna.length})
+                </p>
+                <ul className="space-y-2">
+                  {pmScope.scopeQna.map((q) => {
+                    const answered = Boolean(q.answer);
+                    const consumed = Boolean(q.consumedAt);
+                    return (
+                      <li key={q.id} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-slate-800">❓ {q.question}</p>
+                          <span
+                            className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                              consumed
+                                ? "border-slate-300 bg-slate-100 text-slate-500"
+                                : answered
+                                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                : "border-amber-300 bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            {consumed ? "Used in scope" : answered ? "Answered" : "Awaiting answer"}
+                          </span>
+                        </div>
+                        {answered ? (
+                          <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap">{q.answer}</p>
+                        ) : (
+                          <p className="mt-1 text-xs text-slate-400">The client hasn't answered yet.</p>
+                        )}
+                        <p className="mt-1 text-[11px] text-slate-400">{formatDate(q.createdAt)}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-medium text-slate-600">Ask for more info</label>
               <div className="mt-1 flex gap-2">
