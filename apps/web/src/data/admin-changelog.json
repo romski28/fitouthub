@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-03-369342f1",
+    "date": "2026-09-03T21:30:32+08:00",
+    "title": "fix(ai): resolve scope from the latest intake in the session",
+    "summary": "fix(ai): resolve scope from the latest intake in the session",
+    "areas": [
+      "api"
+    ],
+    "commit": "369342f1",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-03-206c55ec",
     "date": "2026-09-03T19:26:05+08:00",
     "title": "fix(ai): include chat conversation in project scope generation",

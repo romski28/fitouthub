@@ -5005,7 +5005,7 @@ export class ProjectsService {
       where: { id: projectId },
       select: {
         notes: true,
-        aiIntake: { select: { summary: true } },
+        aiIntake: { select: { summary: true, sessionId: true } },
       },
     });
     // The intake may be linked via AiIntake.projectId rather than
@@ -5014,13 +5014,27 @@ export class ProjectsService {
       ? null
       : await this.prisma.aiIntake.findUnique({
           where: { projectId },
-          select: { summary: true },
+          select: { summary: true, sessionId: true },
         }).catch(() => null);
+    // Resolve the LATEST intake in the session — the project may be linked to
+    // an earlier wrap-up turn whose summary predates the final Q&A answers.
+    const linkedIntake = projectWithSummary?.aiIntake ?? intakeByProjectId;
+    const latestIntakeSummary = linkedIntake?.sessionId
+      ? await this.prisma.aiIntake
+          .findFirst({
+            where: { sessionId: linkedIntake.sessionId },
+            orderBy: { createdAt: 'desc' },
+            select: { summary: true },
+          })
+          .then((r) => r?.summary?.trim() || null)
+          .catch(() => null)
+      : null;
     const scopeSummary =
       ps && typeof ps === 'object' && typeof (ps as any).summary === 'string'
         ? ((ps as any).summary as string).trim()
         : '';
     const summary =
+      latestIntakeSummary ||
       projectWithSummary?.aiIntake?.summary?.trim() ||
       intakeByProjectId?.summary?.trim() ||
       scopeSummary ||

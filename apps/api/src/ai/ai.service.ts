@@ -4570,6 +4570,32 @@ Return ONLY valid JSON (no markdown):
       });
     }
 
+    // The project is often linked to an EARLIER conversational turn (the
+    // wrap-up "no"/"that's all" turn) whose summary was compiled before the
+    // final Q&A answers arrived. Resolve to the LATEST intake in the same
+    // session so scope generation reads the freshest summary, trades, and
+    // scope container — otherwise every detail shared after the wrap-up is
+    // silently dropped (e.g. shelf type, wall material, dimensions).
+    if (intake.sessionId) {
+      const latest = await this.prisma.aiIntake
+        .findFirst({
+          where: { sessionId: intake.sessionId },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            sessionId: true,
+            rawPrompt: true,
+            summary: true,
+            scope: true,
+            locationPrimary: true,
+            trades: true,
+            project: true,
+          },
+        })
+        .catch(() => null);
+      if (latest) intake = latest;
+    }
+
     const projectJson =
       intake.project && typeof intake.project === 'object' && !Array.isArray(intake.project)
         ? ({ ...(intake.project as Record<string, unknown>) } as Record<string, unknown>)
