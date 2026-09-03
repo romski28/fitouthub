@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-09-03-206c55ec",
+    "date": "2026-09-03T19:26:05+08:00",
+    "title": "fix(ai): include chat conversation in project scope generation",
+    "summary": "fix(ai): include chat conversation in project scope generation",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "206c55ec",
+    "files": [
+      "apps/api/src/ai/ai.service.ts",
+      "apps/web/src/app/pm/layout.tsx",
+      "apps/web/src/components/footer-wrapper.tsx",
+      "apps/web/src/components/main-wrapper.tsx",
+      "apps/web/src/components/navbar-wrapper.tsx"
+    ]
+  },
+  {
     "id": "2026-09-03-e999beda",
     "date": "2026-09-03T15:40:14+08:00",
     "title": "feat(pm): private PM channel + simplified client chat",

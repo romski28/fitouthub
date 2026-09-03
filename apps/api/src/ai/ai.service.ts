@@ -4490,6 +4490,8 @@ Return ONLY valid JSON (no markdown):
         aiIntake: {
           select: {
             id: true,
+            sessionId: true,
+            rawPrompt: true,
             summary: true,
             scope: true,
             locationPrimary: true,
@@ -4532,6 +4534,8 @@ Return ONLY valid JSON (no markdown):
         where: { projectId },
         select: {
           id: true,
+          sessionId: true,
+          rawPrompt: true,
           summary: true,
           scope: true,
           locationPrimary: true,
@@ -4555,6 +4559,8 @@ Return ONLY valid JSON (no markdown):
         },
         select: {
           id: true,
+          sessionId: true,
+          rawPrompt: true,
           summary: true,
           scope: true,
           locationPrimary: true,
@@ -4748,6 +4754,41 @@ Return ONLY valid JSON (no markdown):
     };
   }
 
+  /**
+   * Reconstruct the client↔Mimo briefing conversation from the intake thread
+   * chain so scope generation includes every detail the client shared during
+   * the AI chat (e.g. shelf type, wall material, dimensions) — not just the
+   * possibly-stale `intake.summary`.
+   */
+  private async collectScopeConversationTranscript(
+    intake?: { id: string; sessionId?: string | null; rawPrompt?: string | null } | null,
+  ): Promise<string> {
+    if (!intake) return '';
+
+    let latest = intake;
+    if (intake.sessionId) {
+      const found = await this.prisma.aiIntake
+        .findFirst({
+          where: { sessionId: intake.sessionId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, sessionId: true, rawPrompt: true, rawOutput: true },
+        })
+        .catch(() => null);
+      if (found) latest = found as unknown as typeof intake;
+    }
+
+    const turns = await this.collectThreadConversationTurns(
+      latest as { id: string; project?: unknown; rawPrompt?: string | null },
+      latest.rawPrompt || intake.rawPrompt || '',
+    );
+    if (turns.length < 2) return '';
+
+    const transcript = turns
+      .map((t) => `${t.role === 'user' ? 'Client' : 'Mimo'}: ${t.text}`)
+      .join('\n\n');
+    return transcript.slice(0, 6000);
+  }
+
   async generateProjectScope(
     projectId: string,
     actor: ProjectActor,
@@ -4762,11 +4803,18 @@ Return ONLY valid JSON (no markdown):
     const context = await this.resolveProjectScopeContext(projectId, actor);
     const nextVersion = context.container.versions.length + 1;
 
+    const conversationTranscript = await this.collectScopeConversationTranscript(
+      context.intake as { id: string; sessionId?: string | null; rawPrompt?: string | null },
+    );
+
     const prompt = `Project:
 - Name: ${context.project.projectName || 'Unnamed project'}
 - Location: ${context.project.region || context.intake.locationPrimary || 'Hong Kong'}
 - Existing summary: ${context.intake.summary || context.intake.scope || context.project.notes || 'Not provided'}
 - Trades: ${(context.intake.trades && context.intake.trades.length > 0 ? context.intake.trades : context.project.tradesRequired || []).join(', ') || 'To be determined'}
+
+Client briefing conversation (verbatim — treat every stated detail as a firm requirement):
+${conversationTranscript || 'Not provided'}
 
 Additional inputs:
 - Site constraints: ${input.siteConstraints || 'Not provided'}

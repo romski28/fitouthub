@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation';
 export function MainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminPath = pathname?.startsWith('/admin');
+  const isPmPath = pathname?.startsWith('/pm');
   const isHomePath = pathname === '/';
   const isProjectsListPath = pathname === '/projects' || pathname === '/professional-projects';
   const isGetStartedPath = pathname === '/get-started';
   const isCreateProjectWizardPath = pathname?.startsWith('/create-project/wizard');
 
-  // Admin and get-started pages manage their own layout completely
-  if (isAdminPath || isGetStartedPath) {
+  // Admin, pm, and get-started pages manage their own layout completely
+  if (isAdminPath || isPmPath || isGetStartedPath) {
     return <>{children}</>;
   }
 
