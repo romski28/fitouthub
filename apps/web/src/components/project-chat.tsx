@@ -57,6 +57,7 @@ export default function ProjectChat({
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
   const [newMessage, setNewMessage] = useState('');
+  const [refreshTick, setRefreshTick] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const didInitialPositionRef = useRef(false);
   const previousMessageCountRef = useRef(0);
@@ -76,7 +77,7 @@ export default function ProjectChat({
     threadScope,
     threadScopeId,
     accessToken,
-    refreshToken,
+    refreshToken: refreshToken + refreshTick,
     onMessageSent,
   });
 
@@ -176,7 +177,16 @@ export default function ProjectChat({
 
   const handleAction = (action: { id: string; label: string; kind?: string; payload?: Record<string, string> }) => {
     if (action.kind === 'book-survey' && currentUserRole === 'client' && user?.id) {
-      openModal('BOOK_MIMO_SURVEY', projectId, `/projects/${projectId}`, user.id, 'client');
+      openModal(
+        'BOOK_MIMO_SURVEY',
+        projectId,
+        `/projects/${projectId}`,
+        user.id,
+        'client',
+        undefined,
+        undefined,
+        () => setRefreshTick((t) => t + 1),
+      );
     } else if (action.kind === 'upload-images' && currentUserRole === 'client') {
       setImageUploadOpen(true);
     } else if (action.kind === 'book-call' && currentUserRole === 'client') {
@@ -336,21 +346,30 @@ export default function ProjectChat({
             <>
               <ClientImageUploadModal
                 isOpen={imageUploadOpen}
-                onClose={() => setImageUploadOpen(false)}
+                onClose={() => {
+                  setImageUploadOpen(false);
+                  setRefreshTick((t) => t + 1);
+                }}
                 projectId={projectId}
                 accessToken={accessToken}
               />
 
               <BookPmCallModal
                 isOpen={callBookingOpen}
-                onClose={() => setCallBookingOpen(false)}
+                onClose={() => {
+                  setCallBookingOpen(false);
+                  setRefreshTick((t) => t + 1);
+                }}
                 projectId={projectId}
                 accessToken={accessToken}
               />
 
               <AnswerQuestionModal
                 isOpen={!!answerQnaId}
-                onClose={() => setAnswerQnaId(null)}
+                onClose={() => {
+                  setAnswerQnaId(null);
+                  setRefreshTick((t) => t + 1);
+                }}
                 projectId={projectId}
                 qnaId={answerQnaId || ''}
                 accessToken={accessToken}
