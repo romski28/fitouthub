@@ -2503,47 +2503,7 @@ export default function ClientProjectDetailPage() {
           <>
             <ChatTab
               projectId={projectId}
-              professionals={project.professionals || []}
               accessToken={accessToken || ''}
-              selectedProfessional={selectedProfessional}
-              onSelectProfessional={setSelectedProfessional}
-              viewingAssistChat={viewingAssistChat}
-              onViewingAssistChatChange={setViewingAssistChat}
-              assistRequestId={assistRequestId}
-              assistThreads={assistThreads
-                .filter((thread) => !!thread.id)
-                .map((thread) => ({
-                  id: thread.id as string,
-                  status: thread.status,
-                  caseNumber: thread.case?.caseNumber,
-                  createdAt: thread.createdAt,
-                }))}
-              onSelectAssistThread={handleSelectAssistThread}
-              messages={messages}
-              privateFirstUnreadMessageId={privateFirstUnreadMessageId}
-              newMessage={newMessage}
-              onNewMessageChange={setNewMessage}
-              onSendMessage={handleSendMessage}
-              loadingMessages={loadingMessages}
-              sending={sending}
-              messageError={messageError}
-              pendingFiles={pendingFiles}
-              onPendingFilesChange={setPendingFiles}
-              uploaderClearKey={uploaderClearKey}
-              assistMessages={assistMessages}
-              assistFirstUnreadMessageId={assistFirstUnreadMessageId}
-              assistNewMessage={assistNewMessage}
-              onAssistNewMessageChange={setAssistNewMessage}
-              onSendAssistMessage={handleSendAssistMessage}
-              assistLoading={assistLoading}
-              assistSending={assistSending}
-              assistError={assistError}
-              assistHasMore={assistHasMore}
-              assistLoadingOlder={assistLoadingOlder}
-              onLoadOlderAssistMessages={handleLoadOlderAssistMessages}
-              assistStatus={assistStatus}
-              assistClosureDueAt={assistClosureDueAt}
-              assistResolvedAt={assistResolvedAt}
             />
           </>
         )}

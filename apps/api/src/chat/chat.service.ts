@@ -954,7 +954,10 @@ export class ChatService {
             String(message.threadScope || '').toLowerCase() === scope &&
             String(message.threadScopeId || '') === scopeId,
           )
-        : thread.messages;
+        : thread.messages.filter(
+            // Team view excludes the private PM<->client channel.
+            (message: any) => String(message.threadScope || '').toLowerCase() !== 'pm-private',
+          );
 
     return this.mapProjectThreadDto({
       ...thread,

@@ -4696,7 +4696,7 @@ export class ProjectsService {
       actions: [{ id: 'book-survey', label: 'Book survey', kind: 'book-survey' }],
     })}`;
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content, [], { threadScope: 'pm-private', threadScopeId: 'pm-private' });
     return { success: true };
   }
 
@@ -4720,7 +4720,7 @@ export class ProjectsService {
       actions: [{ id: 'upload-images', label: 'Upload images', kind: 'upload-images' }],
     })}`;
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content, [], { threadScope: 'pm-private', threadScopeId: 'pm-private' });
     return { success: true };
   }
 
@@ -4877,7 +4877,7 @@ export class ProjectsService {
       actions: [{ id: 'book-call', label: 'Book call', kind: 'book-call' }],
     })}`;
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content, [], { threadScope: 'pm-private', threadScopeId: 'pm-private' });
     return { success: true };
   }
 
@@ -4909,7 +4909,7 @@ export class ProjectsService {
     })}`;
 
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content);
+    await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content, [], { threadScope: 'pm-private', threadScopeId: 'pm-private' });
     return { success: true, qnaId: qna.id };
   }
 
@@ -4942,7 +4942,7 @@ export class ProjectsService {
     if (!thread) return;
 
     const messages = await this.prisma.projectChatMessage.findMany({
-      where: { threadId: thread.id },
+      where: { threadId: thread.id, threadScope: 'pm-private' },
       orderBy: { createdAt: 'desc' },
       take: 50,
       select: { id: true, content: true },
