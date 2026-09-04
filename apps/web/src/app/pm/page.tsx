@@ -174,6 +174,8 @@ export default function PmHomePage() {
         throw new Error(text || `Failed to claim (${res.status})`);
       }
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      // Refresh "My Projects" so the newly claimed project appears there.
+      void fetchMyProjects();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to claim project");
     } finally {
