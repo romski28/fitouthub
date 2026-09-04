@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-04-d8aa2189",
+    "date": "2026-09-04T16:45:27+08:00",
+    "title": "style(pm): rename inbox buttons to 'Mark as read' and 'Open / Reply'",
+    "summary": "style(pm): rename inbox buttons to 'Mark as read' and 'Open / Reply'",
+    "areas": [
+      "web"
+    ],
+    "commit": "d8aa2189",
+    "files": [
+      "apps/web/src/app/pm/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-04-da95dddc",
     "date": "2026-09-04T12:25:02+08:00",
     "title": "fix(pm): gate team thread to awarded + open tender on PM release",

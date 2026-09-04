@@ -257,7 +257,7 @@ export default function PmHomePage() {
                     onClick={() => void handleMarkRead(item)}
                     className="w-28 shrink-0 whitespace-nowrap rounded bg-orange-500 px-2 py-0.5 text-center text-[11px] font-normal text-white hover:bg-orange-600"
                   >
-                    Read it
+                    Mark as read
                   </button>
                 </div>
 
@@ -293,7 +293,7 @@ export default function PmHomePage() {
                       }}
                       className="w-28 shrink-0 whitespace-nowrap rounded bg-emerald-600 px-2 py-0.5 text-center text-[11px] font-normal text-white hover:bg-emerald-700"
                     >
-                      Reply
+                      Open / Reply
                     </button>
                   </div>
                 )}
