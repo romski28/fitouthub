@@ -35,7 +35,7 @@ type PmProject = {
 
 type PmThread = {
   threadId: string | null;
-  threadType: "project-professional" | "project-general";
+  threadType: "project-professional" | "project-general" | "project-private";
   name: string;
   role: "client" | "professional";
   unreadCount: number;
@@ -50,7 +50,9 @@ type PmThread = {
 };
 
 function threadKey(t: PmThread): string {
-  return t.threadType === "project-general" ? "general" : `pro:${t.threadId}`;
+  if (t.threadType === "project-general") return "general";
+  if (t.threadType === "project-private") return "private";
+  return `pro:${t.threadId}`;
 }
 
 function formatDate(date?: string | null): string {
@@ -192,7 +194,10 @@ export default function PmProjectDetailPage() {
         body: JSON.stringify({
           threadType: activeThread.threadType,
           threadId: activeThread.threadId ?? undefined,
-          projectId: activeThread.threadType === "project-general" ? projectId : undefined,
+          projectId:
+            activeThread.threadType === "project-general" || activeThread.threadType === "project-private"
+              ? projectId
+              : undefined,
           content: replyText.trim(),
         }),
       });

@@ -5177,7 +5177,7 @@ export class ProjectsService {
 
     const items: Array<{
       id: string;
-      threadType: 'project-professional' | 'project-general';
+      threadType: 'project-professional' | 'project-general' | 'project-private';
       threadId: string;
       projectId: string;
       projectName: string;
@@ -5210,9 +5210,10 @@ export class ProjectsService {
     for (const m of generalMessages) {
       const projectId = m.thread?.projectId;
       const proj = projectById.get(projectId);
+      const isPrivate = String(m.threadScope || '').toLowerCase() === 'pm-private';
       items.push({
         id: m.id,
-        threadType: 'project-general',
+        threadType: isPrivate ? 'project-private' : 'project-general',
         threadId: m.threadId,
         projectId,
         projectName: proj?.projectName || 'Project',
@@ -5256,7 +5257,7 @@ export class ProjectsService {
         },
         data: { readByPmAt: new Date() },
       });
-    } else if (threadType === 'project-general') {
+    } else if (threadType === 'project-general' || threadType === 'project-private') {
       const thread = await this.prisma.projectChatThread.findUnique({
         where: { id: threadId },
         select: { project: { select: { pmId: true } } },
@@ -5264,9 +5265,11 @@ export class ProjectsService {
       if (!thread || thread.project.pmId !== pmUserId) {
         throw new ForbiddenException('Not authorized');
       }
+      const isPrivate = threadType === 'project-private';
       await this.prisma.projectChatMessage.updateMany({
         where: {
           threadId,
+          threadScope: isPrivate ? 'pm-private' : null,
           senderType: { not: 'pm' },
           readByPmAt: null,
         },
@@ -5319,7 +5322,7 @@ export class ProjectsService {
       return { success: true, message };
     }
 
-    if (threadType === 'project-general') {
+    if (threadType === 'project-general' || threadType === 'project-private') {
       // Resolve the project id from the thread if only a threadId was provided.
       let pid = projectId;
       if (!pid && threadId) {
@@ -5339,12 +5342,15 @@ export class ProjectsService {
         throw new ForbiddenException('Not authorized');
       }
       const thread = await this.chatService.getOrCreateProjectThread(pid);
+      const isPrivate = threadType === 'project-private';
       const message = await this.chatService.addProjectMessage(
         thread.id,
         'pm',
         pmUserId,
         null,
         content.trim(),
+        [],
+        isPrivate ? { threadScope: 'pm-private', threadScopeId: 'pm-private' } : undefined,
       );
       return { success: true, message };
     }
@@ -5391,6 +5397,7 @@ export class ProjectsService {
             senderType: true,
             senderUserId: true,
             senderProId: true,
+            threadScope: true,
             content: true,
             createdAt: true,
             readByPmAt: true,
@@ -5421,7 +5428,7 @@ export class ProjectsService {
 
     type Thread = {
       threadId: string | null;
-      threadType: 'project-professional' | 'project-general';
+      threadType: 'project-professional' | 'project-general' | 'project-private';
       name: string;
       role: 'client' | 'professional';
       unreadCount: number;
@@ -5480,17 +5487,36 @@ export class ProjectsService {
       if (t.professional.id) proNameByProfessionalId.set(t.professional.id, proName);
     }
 
-    // Team (project-general) — the ProjectChatThread. Before award this is the
-    // PM <-> client channel; once awarded it becomes the full team chat
-    // (client + awarded pro + PM), so surface it as "Team" with correct names.
-    const isAwarded = (project.status || '').toLowerCase() === 'awarded';
+    // The single ProjectChatThread holds two distinct scopes:
+    //   - pm-private  -> the private client <-> PM channel.
+    //   - (default)   -> the project team chat (PM + client + pros + FoH).
+    // Surface them as two separate threads so the PM sees them distinctly.
     const gt = generalThreads[0];
+    const gtMessages = gt?.messages ?? [];
+    const privateMessages = gtMessages.filter(
+      (m) => String(m.threadScope || '').toLowerCase() === 'pm-private',
+    );
+    const teamMessages = gtMessages.filter(
+      (m) => String(m.threadScope || '').toLowerCase() !== 'pm-private',
+    );
+
+    // 1) Private client <-> PM channel.
+    buildThread(
+      'project-private',
+      gt?.id ?? null,
+      clientName,
+      'client',
+      privateMessages,
+      (st) => (st === 'pm' ? 'PM' : clientName),
+    );
+
+    // 2) Project team chat (PM + client + pros + FoH).
     buildThread(
       'project-general',
       gt?.id ?? null,
-      isAwarded ? 'Team' : clientName,
+      'Project',
       'client',
-      gt?.messages ?? [],
+      teamMessages,
       (st, proId) => {
         if (st === 'pm') return 'PM';
         if (st === 'foh') return 'Mimo';

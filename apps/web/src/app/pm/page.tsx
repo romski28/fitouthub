@@ -30,7 +30,7 @@ type QueueProject = {
 
 type InboxItem = {
   id: string;
-  threadType: "project-professional" | "project-general";
+  threadType: "project-professional" | "project-general" | "project-private";
   threadId: string;
   projectId: string;
   projectName: string;

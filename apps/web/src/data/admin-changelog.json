@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-04-ff96283b",
+    "date": "2026-09-04T11:58:40+08:00",
+    "title": "fix(pm): distinct client-PM, team, and per-pro threads",
+    "summary": "fix(pm): distinct client-PM, team, and per-pro threads",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ff96283b",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/pm/page.tsx",
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-04-7519b26f",
     "date": "2026-09-04T11:35:51+08:00",
     "title": "feat(pm): surface team thread in PM messages panel once awarded",
