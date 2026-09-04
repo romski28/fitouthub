@@ -4491,6 +4491,13 @@ export class ProjectsService {
       data: {
         releasedForQuotationAt: new Date(),
         releasedByPmId: pmUserId,
+        // Opening the tender: make it discoverable (and appliable) by qualifying
+        // pros. Without tenderOpenedAt + onlySelectedProfessionalsCanBid=false
+        // the pro discover feed (which requires both) would never surface it.
+        tenderOpenedAt: new Date(),
+        tenderClosedAt: null,
+        onlySelectedProfessionalsCanBid: false,
+        currentStage: ProjectStage.BIDDING_ACTIVE,
       },
       select: { id: true, projectName: true, releasedForQuotationAt: true, releasedByPmId: true },
     });
@@ -5510,20 +5517,24 @@ export class ProjectsService {
       (st) => (st === 'pm' ? 'PM' : clientName),
     );
 
-    // 2) Project team chat (PM + client + pros + FoH).
-    buildThread(
-      'project-general',
-      gt?.id ?? null,
-      'Project',
-      'client',
-      teamMessages,
-      (st, proId) => {
-        if (st === 'pm') return 'PM';
-        if (st === 'foh') return 'Mimo';
-        if (st === 'professional') return proNameByProfessionalId.get(proId || '') || 'Professional';
-        return clientName;
-      },
-    );
+    // 2) Project team chat (PM + client + pros + FoH) — only once awarded, since
+    // team chat opens when the pro is awarded (pre-award the team thread is empty).
+    const isAwarded = (project.status || '').toLowerCase() === 'awarded';
+    if (isAwarded) {
+      buildThread(
+        'project-general',
+        gt?.id ?? null,
+        'Project',
+        'client',
+        teamMessages,
+        (st, proId) => {
+          if (st === 'pm') return 'PM';
+          if (st === 'foh') return 'Mimo';
+          if (st === 'professional') return proNameByProfessionalId.get(proId || '') || 'Professional';
+          return clientName;
+        },
+      );
+    }
 
     // Pros (per-pro threads).
     for (const t of proThreads) {

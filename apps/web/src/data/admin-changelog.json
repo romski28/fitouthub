@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-04-da95dddc",
+    "date": "2026-09-04T12:25:02+08:00",
+    "title": "fix(pm): gate team thread to awarded + open tender on PM release",
+    "summary": "fix(pm): gate team thread to awarded + open tender on PM release",
+    "areas": [
+      "api"
+    ],
+    "commit": "da95dddc",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-04-ff96283b",
     "date": "2026-09-04T11:58:40+08:00",
     "title": "fix(pm): distinct client-PM, team, and per-pro threads",
