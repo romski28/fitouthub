@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-04-0602d83e",
+    "date": "2026-09-04T10:34:20+08:00",
+    "title": "fix(pm): show project registered date from createdAt",
+    "summary": "fix(pm): show project registered date from createdAt",
+    "areas": [
+      "web"
+    ],
+    "commit": "0602d83e",
+    "files": [
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-04-8b4d3cd6",
     "date": "2026-09-04T09:43:11+08:00",
     "title": "fix(pm): refresh My Projects after claiming a project",

@@ -423,7 +423,7 @@ export default function PmProjectDetailPage() {
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Project registered</p>
-              <p className="font-medium text-slate-800">{formatDate(project.tenderOpenedAt)}</p>
+              <p className="font-medium text-slate-800">{formatDate(project.createdAt)}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Released at</p>
