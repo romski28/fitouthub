@@ -5356,7 +5356,14 @@ export class ProjectsService {
   async getPmProjectMessages(projectId: string, pmUserId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true, pmId: true, userId: true, clientId: true },
+      select: {
+        id: true,
+        pmId: true,
+        userId: true,
+        clientId: true,
+        status: true,
+        awardedProjectProfessionalId: true,
+      },
     });
     if (!project || project.pmId !== pmUserId) {
       throw new ForbiddenException('Not authorized');
@@ -5383,6 +5390,7 @@ export class ProjectsService {
             id: true,
             senderType: true,
             senderUserId: true,
+            senderProId: true,
             content: true,
             createdAt: true,
             readByPmAt: true,
@@ -5395,7 +5403,7 @@ export class ProjectsService {
       where: { projectId },
       select: {
         id: true,
-        professional: { select: { businessName: true, fullName: true } },
+        professional: { select: { id: true, businessName: true, fullName: true } },
         messages: {
           orderBy: { createdAt: 'asc' },
           select: {
@@ -5437,15 +5445,16 @@ export class ProjectsService {
       rawMessages: Array<{
         id: string;
         senderType: string;
+        senderProId?: string | null;
         content: string;
         createdAt: Date;
         readByPmAt: Date | null;
       }>,
-      resolveSender: (senderType: string) => string,
+      resolveSender: (senderType: string, senderProId?: string | null) => string,
     ) => {
       const messages = rawMessages.map((m) => ({
         id: m.id,
-        senderName: resolveSender(m.senderType),
+        senderName: resolveSender(m.senderType, m.senderProId),
         senderType: m.senderType,
         content: m.content,
         createdAt: m.createdAt.toISOString(),
@@ -5463,15 +5472,31 @@ export class ProjectsService {
       });
     };
 
-    // Client (project-general) — always present so the PM can start a chat.
+    // Resolve professional names for the team thread's pro senders (senderProId
+    // references Professional.id on the ProjectChatMessage).
+    const proNameByProfessionalId = new Map<string, string>();
+    for (const t of proThreads) {
+      const proName = t.professional.businessName || t.professional.fullName || 'Professional';
+      if (t.professional.id) proNameByProfessionalId.set(t.professional.id, proName);
+    }
+
+    // Team (project-general) — the ProjectChatThread. Before award this is the
+    // PM <-> client channel; once awarded it becomes the full team chat
+    // (client + awarded pro + PM), so surface it as "Team" with correct names.
+    const isAwarded = (project.status || '').toLowerCase() === 'awarded';
     const gt = generalThreads[0];
     buildThread(
       'project-general',
       gt?.id ?? null,
-      clientName,
+      isAwarded ? 'Team' : clientName,
       'client',
       gt?.messages ?? [],
-      (st) => (st === 'pm' ? 'PM' : clientName),
+      (st, proId) => {
+        if (st === 'pm') return 'PM';
+        if (st === 'foh') return 'Mimo';
+        if (st === 'professional') return proNameByProfessionalId.get(proId || '') || 'Professional';
+        return clientName;
+      },
     );
 
     // Pros (per-pro threads).
