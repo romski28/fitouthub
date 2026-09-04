@@ -451,9 +451,9 @@ export default function PmHomePage() {
   );
 
   const mobileTabs = [
-    { key: "inbox" as const, label: "Inbox", count: inbox.length },
     { key: "queue" as const, label: "Queue", count: projects.length },
     { key: "mine" as const, label: "My Projects", count: myProjects.length },
+    { key: "inbox" as const, label: "Inbox", count: inbox.length },
   ];
 
   return (
@@ -492,9 +492,9 @@ export default function PmHomePage() {
 
       {/* Desktop: side-by-side sections */}
       <div className="hidden grid-cols-2 items-start gap-4 md:grid xl:grid-cols-3">
-        {inboxSection}
         {queueSection}
         {mineSection}
+        {inboxSection}
       </div>
     </div>
   );

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-04-3ed93e52",
+    "date": "2026-09-04T09:36:18+08:00",
+    "title": "style(pm): reorder dashboard sections to queue, my projects, inbox",
+    "summary": "style(pm): reorder dashboard sections to queue, my projects, inbox",
+    "areas": [
+      "web"
+    ],
+    "commit": "3ed93e52",
+    "files": [
+      "apps/web/src/app/pm/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-03-369342f1",
     "date": "2026-09-03T21:30:32+08:00",
     "title": "fix(ai): resolve scope from the latest intake in the session",
