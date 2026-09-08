@@ -1341,6 +1341,7 @@ export class ProfessionalController {
               tradesRequired: true,
               endDate: true,
               currentStage: true,
+              tenderClosesAt: true,
             },
           },
         },
@@ -1989,6 +1990,7 @@ export class ProfessionalController {
               projectScale: true,
               clientId: true,
               releasedForQuotationAt: true,
+              tenderClosesAt: true,
             },
           },
         },
@@ -2024,25 +2026,27 @@ export class ProfessionalController {
         throw new BadRequestException('You have already submitted a quote for this project');
       }
 
+      const quoteExtendedUntil = projectProfessional.quoteExtendedUntil
+        ? new Date(projectProfessional.quoteExtendedUntil)
+        : null;
+      const tenderClosesAt = projectProfessional.project?.tenderClosesAt
+        ? new Date(projectProfessional.project.tenderClosesAt)
+        : null;
+      // Legacy fallback: projects released before tenderClosesAt existed used a
+      // per-pro window anchored on when the pro was first associated.
       const inviteCreatedAt = projectProfessional.createdAt
         ? new Date(projectProfessional.createdAt)
         : null;
       const quoteWindowMs = projectProfessional.project?.isEmergency
         ? 1 * 60 * 60 * 1000
         : 3 * 24 * 60 * 60 * 1000;
+      const fallbackDeadline = inviteCreatedAt
+        ? new Date(inviteCreatedAt.getTime() + quoteWindowMs)
+        : null;
 
-      if (inviteCreatedAt) {
-        const extendedUntil = projectProfessional.quoteExtendedUntil
-          ? new Date(projectProfessional.quoteExtendedUntil)
-          : null;
-        const quoteDeadline = extendedUntil ?? new Date(inviteCreatedAt.getTime() + quoteWindowMs);
-        if (new Date() > quoteDeadline) {
-          throw new BadRequestException(
-            projectProfessional.project?.isEmergency
-              ? 'Initial quote window closed (1 hour from invitation)'
-              : 'Initial quote window closed (3 days from invitation)',
-          );
-        }
+      const quoteDeadline = quoteExtendedUntil ?? tenderClosesAt ?? fallbackDeadline;
+      if (quoteDeadline && new Date() > quoteDeadline) {
+        throw new BadRequestException('The quotation window has closed');
       }
 
       // ── Trade plan (per-trade) vs lump-sum quote ─────────────────────────

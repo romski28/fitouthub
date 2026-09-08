@@ -7313,25 +7313,25 @@ Please review the project details and respond with your quote or decline the inv
       throw new Error('You have already submitted a quote for this project');
     }
 
+    const quoteExtendedUntil = (projectProfessional as any).quoteExtendedUntil
+      ? new Date((projectProfessional as any).quoteExtendedUntil)
+      : null;
+    const tenderClosesAt = projectProfessional.project?.tenderClosesAt
+      ? new Date(projectProfessional.project.tenderClosesAt)
+      : null;
     const inviteCreatedAt = projectProfessional.createdAt
       ? new Date(projectProfessional.createdAt)
       : null;
     const quoteWindowMs = projectProfessional.project?.isEmergency
       ? 1 * 60 * 60 * 1000
       : 3 * 24 * 60 * 60 * 1000;
+    const fallbackDeadline = inviteCreatedAt
+      ? new Date(inviteCreatedAt.getTime() + quoteWindowMs)
+      : null;
 
-    if (inviteCreatedAt) {
-      const extendedUntil = (projectProfessional as any).quoteExtendedUntil
-        ? new Date((projectProfessional as any).quoteExtendedUntil)
-        : null;
-      const quoteDeadline = extendedUntil ?? new Date(inviteCreatedAt.getTime() + quoteWindowMs);
-      if (new Date() > quoteDeadline) {
-        throw new Error(
-          projectProfessional.project?.isEmergency
-            ? 'Initial quote window closed (1 hour from invitation)'
-            : 'Initial quote window closed (3 days from invitation)',
-        );
-      }
+    const quoteDeadline = quoteExtendedUntil ?? tenderClosesAt ?? fallbackDeadline;
+    if (quoteDeadline && new Date() > quoteDeadline) {
+      throw new Error('The quotation window has closed');
     }
 
     const latestAccessRequest = await this.prisma.siteAccessRequest.findFirst({

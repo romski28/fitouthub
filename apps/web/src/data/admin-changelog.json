@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-08-e451d5a6",
+    "date": "2026-09-08T13:29:10+08:00",
+    "title": "fix(tender): align per-pro quote deadline with tender close",
+    "summary": "fix(tender): align per-pro quote deadline with tender close",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e451d5a6",
+    "files": [
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-08-b4796077",
     "date": "2026-09-08T13:20:37+08:00",
     "title": "feat(pm): auto-close tenders and surface close time",

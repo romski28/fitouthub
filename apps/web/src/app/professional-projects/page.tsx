@@ -43,6 +43,7 @@ interface ProjectProfessional {
     isEmergency?: boolean;
     endDate?: string;
     currentStage?: string;
+    tenderClosesAt?: string;
   };
   status: string;
   source?: string;
@@ -97,17 +98,17 @@ const getQuoteDeadlineState = (projectProfessional: ProjectProfessional): QuoteD
     return null;
   }
 
-  const invitedAtMs = new Date(projectProfessional.createdAt).getTime();
-  if (!Number.isFinite(invitedAtMs)) {
-    return null;
-  }
-
   const quoteWindowMs = projectProfessional.project.isEmergency
     ? 1 * 60 * 60 * 1000
     : 3 * 24 * 60 * 60 * 1000;
+  const invitedAtMs = new Date(projectProfessional.createdAt).getTime();
   const effectiveDeadlineMs = projectProfessional.quoteExtendedUntil
     ? new Date(projectProfessional.quoteExtendedUntil).getTime()
-    : invitedAtMs + quoteWindowMs;
+    : projectProfessional.project.tenderClosesAt
+      ? new Date(projectProfessional.project.tenderClosesAt).getTime()
+      : Number.isFinite(invitedAtMs)
+        ? invitedAtMs + quoteWindowMs
+        : NaN;
 
   if (!Number.isFinite(effectiveDeadlineMs)) {
     return null;
