@@ -20,6 +20,7 @@ type QueueProject = {
   status?: string;
   currentStage?: string;
   releasedForQuotationAt?: string | null;
+  tenderClosesAt?: string | null;
   updatedAt?: string;
   user?: {
     firstName?: string;
@@ -66,6 +67,19 @@ function formatRelativeTime(date?: string): string {
   const diffDay = Math.round(diffHr / 24);
   if (diffDay < 7) return `${diffDay}d ago`;
   return formatDate(date);
+}
+
+function tenderCloseLabel(project: { releasedForQuotationAt?: string | null; tenderClosesAt?: string | null }): string {
+  if (!project.releasedForQuotationAt) return "Awaiting release";
+  if (!project.tenderClosesAt) return "Released";
+  const ms = new Date(project.tenderClosesAt).getTime() - Date.now();
+  if (ms <= 0) return "Closed";
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `Closes in ${min}m`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `Closes in ${hr}h`;
+  const day = Math.round(hr / 24);
+  return `Closes in ${day}d`;
 }
 
 export default function PmHomePage() {
@@ -436,12 +450,14 @@ export default function PmHomePage() {
                 <h3 className="truncate text-xs font-semibold text-slate-900">{project.projectName}</h3>
                 <span
                   className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                    project.releasedForQuotationAt
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                      : "border-amber-300 bg-amber-50 text-amber-700"
+                    !project.releasedForQuotationAt
+                      ? "border-amber-300 bg-amber-50 text-amber-700"
+                      : project.tenderClosesAt && new Date(project.tenderClosesAt).getTime() <= Date.now()
+                        ? "border-slate-300 bg-slate-100 text-slate-500"
+                        : "border-emerald-300 bg-emerald-50 text-emerald-700"
                   }`}
                 >
-                  {project.releasedForQuotationAt ? "Released" : "Awaiting release"}
+                  {tenderCloseLabel(project)}
                 </span>
               </div>
               <p className="mt-0.5 text-[11px] text-slate-500">{project.region || "No location"}</p>

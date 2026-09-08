@@ -20,6 +20,7 @@ type PmProject = {
   onlySelectedProfessionalsCanBid?: boolean;
   tenderOpenedAt?: string;
   tenderClosedAt?: string;
+  tenderClosesAt?: string | null;
   createdAt?: string;
   status?: string;
   currentStage?: string;
@@ -433,6 +434,10 @@ export default function PmProjectDetailPage() {
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <p className="text-xs text-slate-500">Released at</p>
               <p className="font-medium text-slate-800">{formatDate(project.releasedForQuotationAt)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-500">Tender closes</p>
+              <p className="font-medium text-slate-800">{formatDate(project.tenderClosesAt)}</p>
             </div>
           </div>
 

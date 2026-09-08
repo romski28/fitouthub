@@ -4467,6 +4467,7 @@ export class ProjectsService {
         status: true,
         currentStage: true,
         releasedForQuotationAt: true,
+        tenderClosesAt: true,
         user: {
           select: { firstName: true, surname: true, email: true },
         },
@@ -4474,10 +4475,25 @@ export class ProjectsService {
     });
   }
 
+  /**
+   * Compute the scheduled tender close time from a release time.
+   * - Emergency: exact +1 hour.
+   * - Standard:  end of day (23:59:59 Hong Kong, UTC+8) on the 3rd day after release.
+   */
+  private computeTenderClosesAt(releasedAt: Date, isEmergency: boolean): Date {
+    if (isEmergency) {
+      return new Date(releasedAt.getTime() + 1 * 60 * 60 * 1000);
+    }
+    const HK_OFFSET_MS = 8 * 60 * 60 * 1000;
+    const hk = new Date(releasedAt.getTime() + HK_OFFSET_MS);
+    const day = new Date(Date.UTC(hk.getUTCFullYear(), hk.getUTCMonth(), hk.getUTCDate() + 3));
+    return new Date(day.getTime() + (23 * 60 * 60 + 59 * 60 + 59) * 1000 + 999 - HK_OFFSET_MS);
+  }
+
   async releaseProjectForPm(projectId: string, pmUserId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true, pmId: true, releasedForQuotationAt: true },
+      select: { id: true, pmId: true, releasedForQuotationAt: true, isEmergency: true },
     });
     if (!project) throw new NotFoundException('Project not found');
     if (project.pmId !== pmUserId) {
@@ -4486,20 +4502,22 @@ export class ProjectsService {
     if (project.releasedForQuotationAt) {
       throw new BadRequestException('Project has already been released for quotation');
     }
+    const releasedAt = new Date();
     const released = await this.prisma.project.update({
       where: { id: projectId },
       data: {
-        releasedForQuotationAt: new Date(),
+        releasedForQuotationAt: releasedAt,
         releasedByPmId: pmUserId,
         // Opening the tender: make it discoverable (and appliable) by qualifying
         // pros. Without tenderOpenedAt + onlySelectedProfessionalsCanBid=false
         // the pro discover feed (which requires both) would never surface it.
-        tenderOpenedAt: new Date(),
+        tenderOpenedAt: releasedAt,
         tenderClosedAt: null,
+        tenderClosesAt: this.computeTenderClosesAt(releasedAt, project.isEmergency),
         onlySelectedProfessionalsCanBid: false,
         currentStage: ProjectStage.BIDDING_ACTIVE,
       },
-      select: { id: true, projectName: true, releasedForQuotationAt: true, releasedByPmId: true },
+      select: { id: true, projectName: true, releasedForQuotationAt: true, releasedByPmId: true, tenderClosesAt: true },
     });
 
     // Send invitations to any professionals selected but not yet invited.
@@ -5609,13 +5627,15 @@ export class ProjectsService {
   }
 
   private isDiscoverableTender(project: any): boolean {
+    const now = Date.now();
     return (
       project.currentStage === ProjectStage.BIDDING_ACTIVE &&
       project.onlySelectedProfessionalsCanBid === false &&
       !project.awardedProjectProfessionalId &&
       Boolean(project.tenderOpenedAt) &&
       Boolean(project.releasedForQuotationAt) &&
-      !project.tenderClosedAt
+      !project.tenderClosedAt &&
+      (!project.tenderClosesAt || new Date(project.tenderClosesAt).getTime() > now)
     );
   }
 
@@ -5646,6 +5666,12 @@ export class ProjectsService {
         // but "I'm interested" rejects them).
         releasedForQuotationAt: { not: null },
         tenderClosedAt: null,
+        // Auto-close: exclude tenders whose scheduled close time has passed
+        // (null = legacy releases that predate tenderClosesAt).
+        OR: [
+          { tenderClosesAt: { gte: new Date() } },
+          { tenderClosesAt: null },
+        ],
         status: { not: this.ARCHIVED_STATUS },
         tenderDismissals: { none: { professionalId } },
       },
