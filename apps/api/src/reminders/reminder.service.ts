@@ -278,14 +278,44 @@ export class ReminderService {
   }
 
   /** Today's digest items for a given actor, used by the in-app "Today" card. */
-  async getTodayItems(actor: { role: 'client' | 'professional'; id: string }): Promise<DigestItem[]> {
+  async getTodayItems(
+    actor: { role: 'client' | 'professional'; id: string },
+  ): Promise<{ items: DigestItem[]; openTenders: number }> {
     const todayRange = this.getTodayRangeHKT();
     if (actor.role === 'professional') {
       const map = await this.collectProItems(todayRange);
-      return map.get(actor.id) ?? [];
+      const openTenders = await this.countOpenTendersForPro(actor.id);
+      return { items: map.get(actor.id) ?? [], openTenders };
     }
     const map = await this.collectClientItems(todayRange);
-    return map.get(actor.id) ?? [];
+    const openTenders = await this.countOpenTendersForClient(actor.id);
+    return { items: map.get(actor.id) ?? [], openTenders };
+  }
+
+  private async countOpenTendersForPro(professionalId: string): Promise<number> {
+    return this.prisma.projectProfessional.count({
+      where: {
+        professionalId,
+        status: { in: ['pending', 'accepted'] },
+        quotedAt: null,
+        project: {
+          awardedProjectProfessionalId: null,
+          releasedForQuotationAt: { not: null },
+          tenderClosesAt: { gt: new Date() },
+        },
+      },
+    });
+  }
+
+  private async countOpenTendersForClient(userId: string): Promise<number> {
+    return this.prisma.project.count({
+      where: {
+        OR: [{ userId }, { clientId: userId }],
+        awardedProjectProfessionalId: null,
+        releasedForQuotationAt: { not: null },
+        tenderClosesAt: { gt: new Date() },
+      },
+    });
   }
 
   // NOTE: the methods below (processAcceptedVisits, processScheduledAccessRequests,

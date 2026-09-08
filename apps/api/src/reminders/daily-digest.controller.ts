@@ -18,10 +18,9 @@ export class DailyDigestController {
     const actorId = req?.user?.id ?? req?.user?.userId ?? req?.user?.sub;
     if (!actorId) throw new UnauthorizedException('Authentication required');
 
-    const items = await this.reminderService.getTodayItems({
+    return this.reminderService.getTodayItems({
       role: isProfessional ? 'professional' : 'client',
       id: actorId,
     });
-    return { items };
   }
 }

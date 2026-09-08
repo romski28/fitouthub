@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-08-6f4d883c",
+    "date": "2026-09-08T15:34:17+08:00",
+    "title": "feat(digest): visible empty state + open-tender count on Today card",
+    "summary": "feat(digest): visible empty state + open-tender count on Today card",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6f4d883c",
+    "files": [
+      "apps/api/src/reminders/daily-digest.controller.ts",
+      "apps/api/src/reminders/reminder.service.ts",
+      "apps/web/src/components/today-digest-card.tsx"
+    ]
+  },
+  {
     "id": "2026-09-08-7bc168a3",
     "date": "2026-09-08T15:07:30+08:00",
     "title": "feat(reminders): daily digests for pros and clients + in-app Today card",
