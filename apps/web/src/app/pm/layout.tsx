@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { useAuthModalControl } from "@/context/auth-modal-control";
@@ -18,10 +18,17 @@ export default function PmLayout({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Close the profile menu on outside click
+  // Close the profile menu on outside click — but ignore clicks inside the
+  // dropdown, otherwise the mousedown closes the menu before the Logout/Profile
+  // button's click event fires (which is why logout was unreliable).
+  const profileRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!profileMenuOpen) return;
-    const onPointerDown = () => setProfileMenuOpen(false);
+    const onPointerDown = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [profileMenuOpen]);
@@ -42,7 +49,7 @@ export default function PmLayout({ children }: { children: React.ReactNode }) {
             <LanguageSwitcher />
 
             {showAuthed ? (
-              <div className="relative">
+              <div className="relative" ref={profileRef}>
                 <button
                   type="button"
                   onClick={() => setProfileMenuOpen((v) => !v)}

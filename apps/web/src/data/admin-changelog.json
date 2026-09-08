@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-08-6ee2a731",
+    "date": "2026-09-08T12:53:57+08:00",
+    "title": "fix(pm): make navbar logout reliable",
+    "summary": "fix(pm): make navbar logout reliable",
+    "areas": [
+      "web"
+    ],
+    "commit": "6ee2a731",
+    "files": [
+      "apps/web/src/app/pm/layout.tsx"
+    ]
+  },
+  {
     "id": "2026-09-04-d8aa2189",
     "date": "2026-09-04T16:45:27+08:00",
     "title": "style(pm): rename inbox buttons to 'Mark as read' and 'Open / Reply'",
