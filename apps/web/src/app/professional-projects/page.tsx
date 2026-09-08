@@ -1241,15 +1241,11 @@ export default function ProfessionalProjectsPage() {
           </div>
         )}
 
-        {(activeTab === 'feed'
-          ? invitations.length === 0 && discoverProjects.filter((d) => !dismissedIds.has(d.id)).length === 0 && !discoverLoading
-          : currentProjectList.length === 0) && !loading ? (
+        {activeTab !== 'feed' && currentProjectList.length === 0 && !loading ? (
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-6 text-sm text-slate-600">
-            {activeTab === 'feed'
-              ? 'Nothing new right now. Check back soon.'
-              : activeTab === 'projects'
-                ? 'No active projects yet. Find work in the New project feed.'
-                : 'No closed projects yet.'}
+            {activeTab === 'projects'
+              ? 'No active projects yet. Find work in the New project feed.'
+              : 'No closed projects yet.'}
           </div>
         ) : null}
 

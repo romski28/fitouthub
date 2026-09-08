@@ -57,7 +57,7 @@ export function TodayDigestCard({
   const nothingDue = items.length === 0;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-900">Here&apos;s your day</h3>
 
       {openTenders > 0 && (

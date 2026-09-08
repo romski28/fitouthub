@@ -80,7 +80,9 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <div className="space-y-4">
-      <TodayDigestCard role="client" accessToken={accessToken} />
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-6">
+        <TodayDigestCard role="client" accessToken={accessToken} />
+      </div>
       <ProjectsClient projects={projects} clientId={params?.clientId} initialShowCreateModal={params?.createNew === 'true'} />
     </div>
   );
