@@ -78,6 +78,8 @@ interface ProjectDetail {
   locationDetailsRequiredAt?: string;
   locationDetailsProvidedAt?: string;
   currentStage?: string;
+  releasedForQuotationAt?: string;
+  tenderClosesAt?: string;
   professionals?: ProjectProfessional[];
   startDate?: string;
   endDate?: string;

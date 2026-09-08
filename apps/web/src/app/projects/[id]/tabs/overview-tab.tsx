@@ -20,6 +20,8 @@ interface ProjectDetail {
   region: string;
   status?: string;
   onlySelectedProfessionalsCanBid?: boolean;
+  releasedForQuotationAt?: string;
+  tenderClosesAt?: string;
   budget?: string;
   approvedBudget?: string;
   notes?: string;
@@ -124,6 +126,19 @@ const formatDateTime = (date?: string) => {
   } catch {
     return '—';
   }
+};
+
+const tenderCountdown = (closesAt?: string): string => {
+  if (!closesAt) return '—';
+  const ms = new Date(closesAt).getTime() - Date.now();
+  if (ms <= 0) return 'Closed';
+  const totalMin = Math.floor(ms / 60000);
+  const days = Math.floor(totalMin / (24 * 60));
+  const hours = Math.floor((totalMin % (24 * 60)) / 60);
+  const minutes = totalMin % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${Math.max(1, minutes)}m`;
 };
 
 const formatDuration = (minutes?: number) => {
@@ -730,6 +745,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </span>
             </div>
           </div>
+
+          {(project.releasedForQuotationAt || project.tenderClosesAt) && (
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)] px-4 py-3 text-sm">
+              {project.releasedForQuotationAt && (
+                <span className="text-slate-600">
+                  <span className="font-semibold text-slate-800">Released:</span>{' '}
+                  {formatDateTime(project.releasedForQuotationAt)}
+                </span>
+              )}
+              {project.tenderClosesAt && (
+                <span className="text-slate-600">
+                  <span className="font-semibold text-slate-800">Closes in:</span>{' '}
+                  {tenderCountdown(project.tenderClosesAt)}
+                </span>
+              )}
+            </div>
+          )}
 
           {!awardedProfessional && biddingRows.length > 0 && (
             <div className="mt-4 overflow-hidden rounded-2xl border border-[rgba(120,53,15,0.12)] bg-[rgba(255,250,240,0.72)]">
