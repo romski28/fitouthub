@@ -26,11 +26,19 @@ export class ReminderController {
     private readonly notificationService: NotificationService,
   ) {}
 
-  @Post('run-day-before')
+  @Post('run-pro-digest')
   @HttpCode(200)
-  async runDayBeforeReminders(@Req() req: any) {
+  async runProDigest(@Req() req: any) {
     this.assertInternalSecret(req);
-    await this.reminderService.sendDayBeforeReminders();
+    await this.reminderService.sendProDailyDigest();
+    return { success: true };
+  }
+
+  @Post('run-client-digest')
+  @HttpCode(200)
+  async runClientDigest(@Req() req: any) {
+    this.assertInternalSecret(req);
+    await this.reminderService.sendClientDailyDigest();
     return { success: true };
   }
 

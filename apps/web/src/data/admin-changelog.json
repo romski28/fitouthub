@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-09-08-7bc168a3",
+    "date": "2026-09-08T15:07:30+08:00",
+    "title": "feat(reminders): daily digests for pros and clients + in-app Today card",
+    "summary": "feat(reminders): daily digests for pros and clients + in-app Today card",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "7bc168a3",
+    "files": [
+      "apps/api/src/reminders/daily-digest.controller.ts",
+      "apps/api/src/reminders/reminder.controller.ts",
+      "apps/api/src/reminders/reminder.module.ts",
+      "apps/api/src/reminders/reminder.service.ts",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/page.tsx",
+      "apps/web/src/components/today-digest-card.tsx"
+    ]
+  },
+  {
     "id": "2026-09-08-51d06a90",
     "date": "2026-09-08T14:10:15+08:00",
     "title": "feat(client): surface tender release + close countdown on overview",

@@ -9,6 +9,7 @@ import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { getFreshProjectsCache, setProjectsCache } from '@/lib/projects-cache';
 import { useRoleGuard } from '@/hooks/use-role-guard';
+import { TodayDigestCard } from '@/components/today-digest-card';
 
 export default function ProjectsPage({ searchParams }: { searchParams: Promise<{ clientId?: string; createNew?: string }> }) {
   const router = useRouter();
@@ -77,5 +78,10 @@ export default function ProjectsPage({ searchParams }: { searchParams: Promise<{
     return null;
   }
 
-  return <ProjectsClient projects={projects} clientId={params?.clientId} initialShowCreateModal={params?.createNew === 'true'} />;
+  return (
+    <div className="space-y-4">
+      <TodayDigestCard role="client" accessToken={accessToken} />
+      <ProjectsClient projects={projects} clientId={params?.clientId} initialShowCreateModal={params?.createNew === 'true'} />
+    </div>
+  );
 }

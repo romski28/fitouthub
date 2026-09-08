@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { NotificationService } from '../notifications/notification.service';
+import { PushNotificationService } from '../notifications/push-notification.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 
@@ -12,32 +13,286 @@ export class ReminderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly pushNotificationService: PushNotificationService,
     private readonly emailService: EmailService,
     private readonly chatService: ChatService,
   ) {}
 
   /**
-   * Runs daily at 09:00 Hong Kong Time.
-   * Sends day-before reminders for all confirmed site visits and scheduled
-   * site access requests occurring tomorrow. Both the client and the
-   * professional receive a tailored WhatsApp/SMS + email message.
-   * An idempotency key per (appointment × role × date) prevents duplicate
-   * sends if the cron fires more than once in a day.
+   * Two daily digests replace the old "day-before" individual reminders:
+   *   - Pros    @ 07:30 HK — quotes due today, site visits today, milestones today.
+   *   - Clients @ 09:00 HK — award nudges (tender closed, unawarded), site visits today.
+   *
+   * Each recipient gets ONE consolidated message (email + SMS/WhatsApp + push)
+   * rather than a "hosepipe" of individual notices. Idempotency via ReminderLog
+   * (per recipient × date) prevents duplicate sends. Emergency (1h) tenders are
+   * excluded from the pro quote reminder.
    */
-  @Cron('0 9 * * *', { timeZone: 'Asia/Hong_Kong' })
-  async sendDayBeforeReminders(): Promise<void> {
-    this.logger.log('Running day-before site visit reminder job');
 
-    const tomorrowRange = this.getTomorrowRangeHKT();
+  @Cron('30 7 * * *', { timeZone: 'Asia/Hong_Kong' })
+  async sendProDailyDigest(): Promise<void> {
+    this.logger.log('Running pro daily digest job');
+    const todayRange = this.getTodayRangeHKT();
+    const dateKey = this.getDateKeyHKT(new Date());
 
-    await Promise.all([
-      this.processAcceptedVisits(tomorrowRange),
-      this.processScheduledAccessRequests(tomorrowRange),
-      this.processScheduledMilestones(),
-    ]);
-
-    this.logger.log('Day-before reminder job complete');
+    const byPro = await this.collectProItems(todayRange);
+    let sent = 0;
+    for (const [professionalId, items] of byPro) {
+      if (items.length === 0) continue;
+      await this.sendProDigest(professionalId, items, dateKey);
+      sent += 1;
+    }
+    this.logger.log(`Pro digest complete: ${sent} professionals`);
   }
+
+  @Cron('0 9 * * *', { timeZone: 'Asia/Hong_Kong' })
+  async sendClientDailyDigest(): Promise<void> {
+    this.logger.log('Running client daily digest job');
+    const todayRange = this.getTodayRangeHKT();
+    const dateKey = this.getDateKeyHKT(new Date());
+
+    const byClient = await this.collectClientItems(todayRange);
+    let sent = 0;
+    for (const [userId, items] of byClient) {
+      if (items.length === 0) continue;
+      await this.sendClientDigest(userId, items, dateKey);
+      sent += 1;
+    }
+    this.logger.log(`Client digest complete: ${sent} clients`);
+  }
+
+  // ─── Collectors ───────────────────────────────────────────────────────────
+
+  private async collectProItems(todayRange: DateRange): Promise<Map<string, DigestItem[]>> {
+    const map = new Map<string, DigestItem[]>();
+    const push = (key: string | null | undefined, item: DigestItem) => {
+      if (!key) return;
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    };
+
+    // Quotes due today (tender closing today). Emergency (1h) tenders are skipped.
+    const quotePps = await this.prisma.projectProfessional.findMany({
+      where: {
+        status: { in: ['pending', 'accepted'] },
+        quotedAt: null,
+        project: {
+          isEmergency: false,
+          awardedProjectProfessionalId: null,
+          tenderClosesAt: { gte: todayRange.start, lt: todayRange.end },
+        },
+      },
+      select: {
+        id: true,
+        professionalId: true,
+        project: { select: { projectName: true } },
+      },
+    });
+    for (const pp of quotePps) {
+      push(pp.professionalId, {
+        kind: 'quote_due',
+        title: 'Submit your quote',
+        detail: `Quote due today for "${pp.project.projectName}".`,
+        link: `/professional-projects/${pp.id}`,
+      });
+    }
+
+    // Site visits today.
+    const visits = await this.prisma.siteAccessVisit.findMany({
+      where: { status: 'accepted', proposedAt: { gte: todayRange.start, lt: todayRange.end } },
+      select: {
+        professionalId: true,
+        proposedAt: true,
+        project: { select: { projectName: true } },
+      },
+    });
+    for (const v of visits) {
+      push(v.professionalId, {
+        kind: 'site_visit',
+        title: 'Site visit today',
+        detail: `Visit for "${v.project.projectName}" at ${this.formatTimeHKT(v.proposedAt)}.`,
+        link: '/professional-projects',
+      });
+    }
+
+    // Milestones starting today.
+    const milestones = await this.prisma.projectMilestone.findMany({
+      where: {
+        status: { in: ['not_started', 'in_progress'] },
+        plannedStartDate: { gte: todayRange.start, lt: todayRange.end },
+        projectProfessionalId: { not: null },
+      },
+      select: {
+        title: true,
+        plannedStartDate: true,
+        projectProfessional: {
+          select: { professionalId: true, project: { select: { projectName: true } } },
+        },
+      },
+    });
+    for (const m of milestones) {
+      push(m.projectProfessional?.professionalId, {
+        kind: 'milestone',
+        title: 'Milestone starts today',
+        detail: `"${m.title}" for "${m.projectProfessional?.project.projectName}".`,
+        link: '/professional-projects',
+      });
+    }
+
+    return map;
+  }
+
+  private async collectClientItems(todayRange: DateRange): Promise<Map<string, DigestItem[]>> {
+    const map = new Map<string, DigestItem[]>();
+    const push = (key: string | null | undefined, item: DigestItem) => {
+      if (!key) return;
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    };
+
+    // Award nudges — every day a tender is closed but not yet awarded.
+    const projects = await this.prisma.project.findMany({
+      where: {
+        awardedProjectProfessionalId: null,
+        releasedForQuotationAt: { not: null },
+        tenderClosesAt: { lt: new Date() },
+        status: { not: 'archived' },
+      },
+      select: { id: true, projectName: true, userId: true, clientId: true },
+    });
+    for (const p of projects) {
+      push(p.userId || p.clientId, {
+        kind: 'award_nudge',
+        title: 'Award your project',
+        detail: `Tender closed for "${p.projectName}" — award a pro to move forward.`,
+        link: `/projects/${p.id}`,
+      });
+    }
+
+    // Site visits today.
+    const visits = await this.prisma.siteAccessVisit.findMany({
+      where: { status: 'accepted', proposedAt: { gte: todayRange.start, lt: todayRange.end } },
+      select: {
+        proposedAt: true,
+        project: { select: { projectName: true, userId: true, clientId: true } },
+      },
+    });
+    for (const v of visits) {
+      push(v.project.userId || v.project.clientId, {
+        kind: 'site_visit',
+        title: 'Site visit today',
+        detail: `Your contractor visits "${v.project.projectName}" at ${this.formatTimeHKT(v.proposedAt)}.`,
+        link: '/projects',
+      });
+    }
+
+    return map;
+  }
+
+  // ─── Digest senders ───────────────────────────────────────────────────────
+
+  private async sendProDigest(professionalId: string, items: DigestItem[], dateKey: string): Promise<void> {
+    const key = `digest:pro:${professionalId}:${dateKey}`;
+    if (await this.alreadySent(key)) return;
+
+    const pro = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: { id: true, fullName: true, businessName: true, phone: true, email: true },
+    });
+    if (!pro) return;
+
+    const name = pro.fullName || pro.businessName || 'there';
+    const heading = `${items.length} item${items.length === 1 ? '' : 's'} today`;
+
+    if (pro.email) {
+      await this.sendDigestEmail({
+        to: pro.email,
+        subject: `Your Mimo day — ${heading}`,
+        greeting: `Hi ${name},`,
+        items,
+        ctaUrl: `${this.webUrl()}/professional-projects`,
+      });
+    }
+    if (pro.phone) {
+      await this.notificationService.send({
+        professionalId,
+        phoneNumber: pro.phone,
+        eventType: 'daily_digest',
+        message: `Hi ${name}, you have ${heading} on Mimo. Open the app for details.`,
+      });
+    }
+    await this.pushNotificationService.sendToProfessional(professionalId, {
+      title: 'You have things to do today',
+      body: 'Go to the app for details',
+      url: `${this.webUrl()}/professional-projects`,
+      tag: `digest-pro-${dateKey}`,
+    });
+
+    await this.markSent(key);
+  }
+
+  private async sendClientDigest(userId: string, items: DigestItem[], dateKey: string): Promise<void> {
+    const key = `digest:client:${userId}:${dateKey}`;
+    if (await this.alreadySent(key)) return;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, firstName: true, mobile: true, email: true },
+    });
+    if (!user) return;
+
+    const name = user.firstName || 'there';
+    const heading = `${items.length} item${items.length === 1 ? '' : 's'} today`;
+
+    if (user.email) {
+      await this.sendDigestEmail({
+        to: user.email,
+        subject: `Your Mimo day — ${heading}`,
+        greeting: `Hi ${name},`,
+        items,
+        ctaUrl: `${this.webUrl()}/projects`,
+      });
+    }
+    if (user.mobile) {
+      await this.notificationService.send({
+        userId,
+        phoneNumber: user.mobile,
+        eventType: 'daily_digest',
+        message: `Hi ${name}, you have ${heading} on Mimo. Open the app for details.`,
+      });
+    }
+    await this.pushNotificationService.sendToUser(userId, {
+      title: 'You have things to do today',
+      body: 'Go to the app for details',
+      url: `${this.webUrl()}/projects`,
+      tag: `digest-client-${dateKey}`,
+    });
+
+    await this.markSent(key);
+  }
+
+  private webUrl(): string {
+    return process.env.WEB_APP_URL || 'https://fitouthub.com';
+  }
+
+  /** Today's digest items for a given actor, used by the in-app "Today" card. */
+  async getTodayItems(actor: { role: 'client' | 'professional'; id: string }): Promise<DigestItem[]> {
+    const todayRange = this.getTodayRangeHKT();
+    if (actor.role === 'professional') {
+      const map = await this.collectProItems(todayRange);
+      return map.get(actor.id) ?? [];
+    }
+    const map = await this.collectClientItems(todayRange);
+    return map.get(actor.id) ?? [];
+  }
+
+  // NOTE: the methods below (processAcceptedVisits, processScheduledAccessRequests,
+  // sendClientReminder, sendProfessionalReminder, sendReminderEmail, and
+  // processScheduledMilestones) are the superseded "day-before" individual
+  // reminder pipeline. They are no longer called (replaced by the daily digests)
+  // and are retained for now pending cleanup.
 
   // ─── Accepted SiteAccessVisits ────────────────────────────────────────────
 
@@ -297,6 +552,43 @@ export class ReminderService {
     }
   }
 
+  // ─── Digest email helper ──────────────────────────────────────────────────
+
+  private async sendDigestEmail(params: {
+    to: string;
+    subject: string;
+    greeting: string;
+    items: DigestItem[];
+    ctaUrl: string;
+  }): Promise<void> {
+    const itemsHtml = params.items
+      .map(
+        (it) =>
+          `<li style="margin-bottom:8px;"><strong>${it.title}</strong><br/><span style="color:#4b5563;">${it.detail}</span> <a href="${params.ctaUrl}${it.link}" style="color:#4f46e5;">View</a></li>`,
+      )
+      .join('');
+    try {
+      await (this.emailService as any).resend?.emails.send({
+        from: 'Mimo <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: params.subject,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+            <h2 style="color:#4f46e5;">Your Mimo Day</h2>
+            <p>${params.greeting}</p>
+            <p>Here is your day on Mimo:</p>
+            <ul style="padding-left:18px;">${itemsHtml}</ul>
+            <p style="margin-top:24px;">
+              <a href="${params.ctaUrl}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Open Mimo</a>
+            </p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      this.logger.warn(`Digest email failed for ${params.to}: ${(err as Error).message}`);
+    }
+  }
+
   // ─── Idempotency ───────────────────────────────────────────────────────────
 
   private async alreadySent(key: string): Promise<boolean> {
@@ -431,6 +723,25 @@ export class ReminderService {
     };
   }
 
+  private getTodayRangeHKT(): DateRange {
+    const nowHKT = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }),
+    );
+    const startHKT = new Date(nowHKT);
+    startHKT.setHours(0, 0, 0, 0);
+    const endHKT = new Date(startHKT);
+    endHKT.setDate(endHKT.getDate() + 1);
+    const hktOffsetMs = 8 * 60 * 60 * 1000;
+    return {
+      start: new Date(startHKT.getTime() - hktOffsetMs),
+      end: new Date(endHKT.getTime() - hktOffsetMs),
+    };
+  }
+
+  private getDateKeyHKT(date: Date): string {
+    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' });
+  }
+
   private formatDateHKT(date: Date): string {
     return date.toLocaleDateString('en-GB', {
       timeZone: 'Asia/Hong_Kong',
@@ -453,3 +764,12 @@ interface DateRange {
   start: Date;
   end: Date;
 }
+
+interface DigestItem {
+  kind: 'quote_due' | 'site_visit' | 'milestone' | 'award_nudge';
+  title: string;
+  detail: string;
+  link: string;
+}
+
+export type { DigestItem };
