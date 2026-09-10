@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-10-b5352697",
+    "date": "2026-09-10T19:48:51+08:00",
+    "title": "refactor(auth): unify professional token issuance to identity-based payload",
+    "summary": "refactor(auth): unify professional token issuance to identity-based payload",
+    "areas": [
+      "api"
+    ],
+    "commit": "b5352697",
+    "files": [
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-10-07dd60b0",
     "date": "2026-09-10T17:21:49+08:00",
     "title": "fix(auth): make jwt-professional accept unified tokens, fix set-password",

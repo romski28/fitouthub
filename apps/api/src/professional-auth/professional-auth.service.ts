@@ -154,7 +154,7 @@ export class ProfessionalAuthService {
       where: { id: identity.id },
       data: { sessionToken },
     });
-    const tokens = this.generateTokens(professional.id, sessionToken);
+    const tokens = this.generateTokens(identity.id, sessionToken);
 
     return {
       success: true,
@@ -200,7 +200,7 @@ export class ProfessionalAuthService {
         data: { sessionToken },
       });
 
-      const tokens = this.generateTokens(existingProfessional.id, sessionToken);
+      const tokens = this.generateTokens(existingProfessional.identityId, sessionToken);
 
       return {
         success: true,
@@ -346,7 +346,7 @@ export class ProfessionalAuthService {
       data: { sessionToken },
     });
 
-    const tokens = this.generateTokens(professional.id, sessionToken);
+    const tokens = this.generateTokens(identity.id, sessionToken);
 
     return {
       success: true,
@@ -434,7 +434,7 @@ export class ProfessionalAuthService {
       where: { id: identity.id },
       data: { sessionToken },
     });
-    const tokens = this.generateTokens(professional.id, sessionToken);
+    const tokens = this.generateTokens(identity.id, sessionToken);
 
     try {
       await (this.prisma as any).activityLog.create({
@@ -638,8 +638,8 @@ export class ProfessionalAuthService {
     return this.validateProfessional(persona.professionalId, sessionToken);
   }
 
-  private generateTokens(professionalId: string, sessionToken?: string) {
-    const payload: Record<string, any> = { sub: professionalId, type: 'professional' };
+  private generateTokens(identityId: string, sessionToken?: string) {
+    const payload: Record<string, any> = { sub: identityId, role: 'professional' };
     if (sessionToken) {
       payload.sessionToken = sessionToken;
     }
@@ -663,37 +663,48 @@ export class ProfessionalAuthService {
         secret: process.env.JWT_SECRET || 'secret-key',
       });
 
-      // Validate professional still exists
-      const professional = await (this.prisma as any).professional.findUnique({
-        where: { id: decoded.sub },
-        select: { id: true, identityId: true },
-      });
+      // Resolve the professional from either the legacy (sub=professionalId)
+      // or unified (sub=identityId) token shape.
+      let professional: { id: string; identityId: string | null } | null;
+      if (decoded.type === 'professional') {
+        professional = await (this.prisma as any).professional.findUnique({
+          where: { id: decoded.sub },
+          select: { id: true, identityId: true },
+        });
+      } else {
+        const persona = await (this.prisma as any).persona.findFirst({
+          where: { identityId: decoded.sub, type: 'PROFESSIONAL' },
+          select: { professionalId: true },
+        });
+        professional = persona?.professionalId
+          ? await (this.prisma as any).professional.findUnique({
+              where: { id: persona.professionalId },
+              select: { id: true, identityId: true },
+            })
+          : null;
+      }
 
-      if (!professional) {
+      if (!professional?.identityId) {
         throw new UnauthorizedException('Professional not found');
       }
 
       // Use Identity for session token
       let sessionToken: string | null = null;
-      if (professional.identityId) {
-        const identity = await (this.prisma as any).identity.findUnique({
-          where: { id: professional.identityId },
-          select: { sessionToken: true },
-        });
-        sessionToken = identity?.sessionToken || null;
-      }
+      const identity = await (this.prisma as any).identity.findUnique({
+        where: { id: professional.identityId },
+        select: { sessionToken: true },
+      });
+      sessionToken = identity?.sessionToken || null;
       if (!sessionToken) {
         sessionToken = randomUUID();
-        if (professional.identityId) {
-          await (this.prisma as any).identity.update({
-            where: { id: professional.identityId },
-            data: { sessionToken },
-          });
-        }
+        await (this.prisma as any).identity.update({
+          where: { id: professional.identityId },
+          data: { sessionToken },
+        });
       }
 
-      // Generate new tokens
-      const tokens = this.generateTokens(decoded.sub, sessionToken);
+      // Re-issue a unified token.
+      const tokens = this.generateTokens(professional.identityId, sessionToken);
 
       return {
         success: true,
