@@ -622,7 +622,7 @@ export class MilestonesService {
 
     // Get all milestones for these project-professional relationships
     const ppIds = projectProfessionals.map((pp) => pp.id);
-    
+
     const milestones = await this.prisma.projectMilestone.findMany({
       where: {
         projectProfessionalId: { in: ppIds },
@@ -646,7 +646,90 @@ export class MilestonesService {
       },
     });
 
-    return milestones;
+    // Accepted site visits with a proposed time.
+    const visits = await this.prisma.siteAccessVisit.findMany({
+      where: { professionalId, status: 'accepted' },
+      include: {
+        project: { select: { id: true, projectName: true } },
+      },
+    });
+
+    // Open quote deadlines (invited/agreed but no quote submitted yet).
+    const quotePps = await this.prisma.projectProfessional.findMany({
+      where: {
+        professionalId,
+        status: { in: ['pending', 'accepted'] },
+        quotedAt: null,
+        project: { awardedProjectProfessionalId: null },
+      },
+      include: {
+        project: {
+          select: { id: true, projectName: true, tenderClosesAt: true },
+        },
+      },
+    });
+
+    // Merge everything into a single, date-keyed event list.
+    const events: Array<Record<string, unknown>> = [];
+
+    for (const m of milestones) {
+      events.push({
+        type: 'milestone',
+        id: m.id,
+        title: m.title,
+        projectName: m.projectProfessional?.project.projectName ?? '',
+        projectProfessionalId: m.projectProfessionalId,
+        date: this.toHKTDateKey(m.plannedStartDate as Date),
+        timeSlot: m.startTimeSlot,
+        status: m.status,
+        percentComplete: m.percentComplete,
+        siteAccessRequired: m.siteAccessRequired,
+        description: m.description,
+      });
+    }
+
+    for (const v of visits) {
+      events.push({
+        type: 'site_visit',
+        id: `visit_${v.id}`,
+        title: 'Site visit',
+        projectName: v.project.projectName,
+        projectProfessionalId: v.projectProfessionalId,
+        date: this.toHKTDateKey(v.proposedAt),
+        timeSlot: this.toHKTTimeLabel(v.proposedAt),
+        description: v.notes,
+      });
+    }
+
+    for (const pp of quotePps) {
+      const deadline = pp.quoteExtendedUntil ?? pp.project.tenderClosesAt;
+      if (!deadline) continue;
+      events.push({
+        type: 'quote_due',
+        id: `quote_${pp.id}`,
+        title: 'Quote due',
+        projectName: pp.project.projectName,
+        projectProfessionalId: pp.id,
+        date: this.toHKTDateKey(deadline),
+        timeSlot: this.toHKTTimeLabel(deadline),
+      });
+    }
+
+    return events;
+  }
+
+  private toHKTDateKey(date: Date): string {
+    return new Date(date).toLocaleDateString('en-CA', {
+      timeZone: 'Asia/Hong_Kong',
+    });
+  }
+
+  private toHKTTimeLabel(date: Date): string {
+    return new Date(date).toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Hong_Kong',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   async resetProjectMilestonesToDefault(projectProfessionalId: string, professionalId: string) {
