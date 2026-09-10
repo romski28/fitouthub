@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { MilestonesService } from './milestones.service';
 import {
@@ -23,6 +24,14 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('milestones')
 export class MilestonesController {
   constructor(private milestonesService: MilestonesService) {}
+
+  private professionalId(req: any): string {
+    const id: string | undefined = req?.user?.id;
+    if (!id || req?.user?.role !== 'professional') {
+      throw new ForbiddenException('Professional access required');
+    }
+    return id;
+  }
 
   @Get('templates/trade/:tradeId')
   async getTemplatesByTrade(@Param('tradeId') tradeId: string) {
@@ -49,15 +58,12 @@ export class MilestonesController {
   }
 
   @Post('project-professional/:projectProfessionalId/reset-default')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async resetProjectMilestonesToDefault(
     @Param('projectProfessionalId') projectProfessionalId: string,
     @Req() req: any,
   ) {
-    const professionalId = req.user?.id || req.user?.sub;
-    if (!professionalId) {
-      throw new BadRequestException('Professional authentication required');
-    }
+    const professionalId = this.professionalId(req);
 
     return this.milestonesService.resetProjectMilestonesToDefault(
       projectProfessionalId,
@@ -66,16 +72,18 @@ export class MilestonesController {
   }
 
   @Get('calendar/:professionalId')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async getProfessionalCalendar(
     @Param('professionalId') professionalId: string,
     @Req() req: any,
   ) {
-    return this.milestonesService.getProfessionalCalendar(professionalId);
+    return this.milestonesService.getProfessionalCalendar(
+      this.professionalId(req),
+    );
   }
 
   @Post('check-conflicts')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async checkMilestoneConflicts(
     @Body() body: {
       professionalId: string;
@@ -87,6 +95,7 @@ export class MilestonesController {
     },
     @Req() req: any,
   ) {
+    this.professionalId(req);
     if (!body.professionalId || !body.plannedStartDate) {
       throw new BadRequestException('professionalId and plannedStartDate are required');
     }
@@ -94,7 +103,7 @@ export class MilestonesController {
   }
 
   @Post('check-availability')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async checkAvailability(
     @Body() body: {
       professionalId: string;
@@ -104,6 +113,7 @@ export class MilestonesController {
     },
     @Req() req: any,
   ) {
+    this.professionalId(req);
     if (!body.professionalId || !body.date) {
       throw new BadRequestException('professionalId and date are required');
     }
@@ -111,7 +121,7 @@ export class MilestonesController {
   }
 
   @Post('check-availability-batch')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async checkAvailabilityBatch(
     @Body() body: {
       professionalId: string;
@@ -120,6 +130,7 @@ export class MilestonesController {
     },
     @Req() req: any,
   ) {
+    this.professionalId(req);
     if (!body.professionalId || !body.dates?.length) {
       throw new BadRequestException('professionalId and dates are required');
     }
@@ -132,11 +143,12 @@ export class MilestonesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async createMilestone(
     @Body() createMilestoneDto: CreateMilestoneDto,
     @Req() req: any,
   ) {
+    this.professionalId(req);
     try {
       console.log(`[MilestonesController] POST /milestones received:`, {
         projectId: createMilestoneDto.projectId,
@@ -156,11 +168,12 @@ export class MilestonesController {
   }
 
   @Post('batch')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async createMultipleMilestones(
     @Body() data: CreateMultipleMilestonesDto,
     @Req() req: any,
   ) {
+    this.professionalId(req);
     try {
       console.log(`[MilestonesController] Batch POST received:`, {
         projectId: data.projectId,
@@ -176,12 +189,13 @@ export class MilestonesController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async updateMilestone(
     @Param('id') id: string,
     @Body() updateMilestoneDto: UpdateMilestoneDto,
     @Req() req: any,
   ) {
+    this.professionalId(req);
     try {
       console.log(`[MilestonesController] PUT /milestones/${id} received:`, JSON.stringify(updateMilestoneDto, null, 2));
       const result = await this.milestonesService.updateMilestone(id, updateMilestoneDto);
@@ -241,18 +255,20 @@ export class MilestonesController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async deleteMilestone(@Param('id') id: string, @Req() req: any) {
+    this.professionalId(req);
     return this.milestonesService.deleteMilestone(id);
   }
 
   @Post(':id/photos')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async addPhotoToMilestone(
     @Param('id') id: string,
     @Body() body: { photoUrls: string[] },
     @Req() req: any,
   ) {
+    this.professionalId(req);
     if (!body.photoUrls || !Array.isArray(body.photoUrls)) {
       throw new BadRequestException('photoUrls must be an array');
     }
@@ -260,12 +276,13 @@ export class MilestonesController {
   }
 
   @Delete(':id/photos/:photoUrl')
-  @UseGuards(AuthGuard('jwt-professional'))
+  @UseGuards(AuthGuard('jwt'))
   async removePhotoFromMilestone(
     @Param('id') id: string,
     @Param('photoUrl') photoUrl: string,
     @Req() req: any,
   ) {
+    this.professionalId(req);
     // Decode the URL since it comes as a parameter
     const decodedUrl = decodeURIComponent(photoUrl);
     return this.milestonesService.removePhotoFromMilestone(id, decodedUrl);
