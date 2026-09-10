@@ -191,6 +191,108 @@ export class ReminderService {
     return map;
   }
 
+  /** Upcoming (today + tomorrow) milestones for a client's projects — inspection/payment readiness. */
+  private async collectClientUpcomingMilestones(
+    userId: string,
+    map: Map<string, DigestItem[]>,
+  ): Promise<void> {
+    const push = (item: DigestItem) => {
+      const list = map.get(userId) ?? [];
+      list.push(item);
+      map.set(userId, list);
+    };
+
+    const todayRange = this.getTodayRangeHKT();
+    const tomorrowEnd = new Date(todayRange.start.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+    const milestones = await this.prisma.projectMilestone.findMany({
+      where: {
+        plannedStartDate: { gte: new Date(), lt: tomorrowEnd },
+        status: { in: ['not_started', 'in_progress'] },
+        projectProfessional: {
+          project: { OR: [{ userId }, { clientId: userId }] },
+        },
+      },
+      select: {
+        title: true,
+        plannedStartDate: true,
+        projectProfessional: {
+          select: { project: { select: { id: true, projectName: true } } },
+        },
+      },
+    });
+
+    for (const m of milestones) {
+      const isToday = m.plannedStartDate
+        ? new Date(m.plannedStartDate).getTime() < todayRange.end.getTime()
+        : true;
+      push({
+        kind: 'milestone',
+        title: `Milestone ${isToday ? 'today' : 'tomorrow'}: ${m.title}`,
+        detail: `"${m.projectProfessional?.project.projectName}" — ready for inspection or payment.`,
+        link: `/projects/${m.projectProfessional?.project.id}`,
+      });
+    }
+  }
+
+  /** Outstanding payments for a client: escrow deposit due, release to approve, invoice to review. */
+  private async collectClientOutstandingPayments(
+    userId: string,
+    map: Map<string, DigestItem[]>,
+  ): Promise<void> {
+    const push = (item: DigestItem) => {
+      const list = map.get(userId) ?? [];
+      list.push(item);
+      map.set(userId, list);
+    };
+
+    const dueMilestones = await this.prisma.paymentMilestone.findMany({
+      where: {
+        status: { in: ['escrow_requested', 'release_requested'] },
+        paymentPlan: {
+          project: { OR: [{ userId }, { clientId: userId }] },
+        },
+      },
+      select: {
+        title: true,
+        status: true,
+        amount: true,
+        paymentPlan: {
+          select: { project: { select: { id: true, projectName: true } } },
+        },
+      },
+    });
+
+    for (const pm of dueMilestones) {
+      const isEscrow = pm.status === 'escrow_requested';
+      push({
+        kind: 'payment_due',
+        title: isEscrow ? 'Escrow deposit due' : 'Payment release to approve',
+        detail: `${pm.title} — HKD ${Number(pm.amount).toLocaleString('en-HK')} for "${pm.paymentPlan.project.projectName}".`,
+        link: `/projects/${pm.paymentPlan.project.id}`,
+      });
+    }
+
+    const invoices = await this.prisma.milestoneProcurementEvidence.findMany({
+      where: {
+        status: 'pending',
+        project: { OR: [{ userId }, { clientId: userId }] },
+      },
+      select: {
+        project: { select: { id: true, projectName: true } },
+      },
+    });
+
+    for (const inv of invoices) {
+      push({
+        kind: 'payment_due',
+        title: 'Invoice to review',
+        detail: `A professional submitted an invoice for "${inv.project.projectName}".`,
+        link: `/projects/${inv.project.id}`,
+      });
+    }
+  }
+
   // ─── Digest senders ───────────────────────────────────────────────────────
 
   private async sendProDigest(professionalId: string, items: DigestItem[], dateKey: string): Promise<void> {
@@ -288,6 +390,8 @@ export class ReminderService {
       return { items: map.get(actor.id) ?? [], openTenders };
     }
     const map = await this.collectClientItems(todayRange);
+    await this.collectClientUpcomingMilestones(actor.id, map);
+    await this.collectClientOutstandingPayments(actor.id, map);
     const openTenders = await this.countOpenTendersForClient(actor.id);
     return { items: map.get(actor.id) ?? [], openTenders };
   }
@@ -796,7 +900,7 @@ interface DateRange {
 }
 
 interface DigestItem {
-  kind: 'quote_due' | 'site_visit' | 'milestone' | 'award_nudge';
+  kind: 'quote_due' | 'site_visit' | 'milestone' | 'award_nudge' | 'payment_due';
   title: string;
   detail: string;
   link: string;
