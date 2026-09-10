@@ -624,6 +624,20 @@ export class ProfessionalAuthService {
     };
   }
 
+  /** Resolve a professional from a unified-auth identity id (role === 'professional' tokens). */
+  async validateProfessionalByIdentity(identityId: string, sessionToken?: string) {
+    const persona = await (this.prisma as any).persona.findFirst({
+      where: { identityId, type: 'PROFESSIONAL' },
+      select: { professionalId: true },
+    });
+
+    if (!persona?.professionalId) {
+      throw new UnauthorizedException('Professional not found');
+    }
+
+    return this.validateProfessional(persona.professionalId, sessionToken);
+  }
+
   private generateTokens(professionalId: string, sessionToken?: string) {
     const payload: Record<string, any> = { sub: professionalId, type: 'professional' };
     if (sessionToken) {

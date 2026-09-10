@@ -76,7 +76,7 @@ export class ProfessionalAuthController {
   @UseGuards(AuthGuard('jwt-professional'))
   @HttpCode(HttpStatus.OK)
   async setPassword(@Request() req: any, @Body() dto: SetPasswordDto) {
-    return this.professionalAuthService.setPassword(req.user.sub, dto.password);
+    return this.professionalAuthService.setPassword(req.user.id, dto.password);
   }
 
   @Post('refresh')

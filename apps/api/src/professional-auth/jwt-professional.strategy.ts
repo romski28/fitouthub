@@ -17,11 +17,16 @@ export class JwtProfessionalStrategy extends PassportStrategy(
   }
 
   async validate(payload: any) {
-    // Only allow professional tokens (tokens with type: 'professional')
-    if (payload.type !== 'professional') {
-      return null;
+    // Legacy professional token: type === 'professional', sub === professionalId.
+    if (payload.type === 'professional') {
+      return this.professionalAuthService.validateProfessional(payload.sub, payload.sessionToken);
     }
 
-    return this.professionalAuthService.validateProfessional(payload.sub, payload.sessionToken);
+    // Unified-auth token: role === 'professional', sub === identity.id.
+    if (payload.role === 'professional') {
+      return this.professionalAuthService.validateProfessionalByIdentity(payload.sub, payload.sessionToken);
+    }
+
+    return null;
   }
 }

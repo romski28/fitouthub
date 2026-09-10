@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-10-07dd60b0",
+    "date": "2026-09-10T17:21:49+08:00",
+    "title": "fix(auth): make jwt-professional accept unified tokens, fix set-password",
+    "summary": "fix(auth): make jwt-professional accept unified tokens, fix set-password",
+    "areas": [
+      "api"
+    ],
+    "commit": "07dd60b0",
+    "files": [
+      "apps/api/src/professional-auth/jwt-professional.strategy.ts",
+      "apps/api/src/professional-auth/professional-auth.controller.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-10-8d06477e",
     "date": "2026-09-10T17:07:29+08:00",
     "title": "feat(calendar): absorb site visits and quote deadlines into pro calendar",
