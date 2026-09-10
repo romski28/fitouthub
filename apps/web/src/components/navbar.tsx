@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
+import { useTodayModal } from '@/context/today-modal-context';
 import { clearAiClientState } from '@/lib/client-session';
 import { LanguageSwitcher } from './language-switcher';
 import { EmergencyModal } from './emergency-modal';
@@ -23,6 +24,7 @@ export const Navbar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { openJoinModal, openLoginModal } = useAuthModalControl();
+  const { count, openToday } = useTodayModal();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -132,15 +134,30 @@ export const Navbar: React.FC = () => {
               </Link>
             ) : null}
             {showProfessionalProjectsLink ? (
-              <>
-                <Link className="hover:text-slate-900" href="/professional-projects">
-                  {t('projects')}
-                </Link>
-                <Link className="hover:text-slate-900" href="/professional/calendar">
-                  Calendar
-                </Link>
-              </>
+              <Link className="hover:text-slate-900" href="/professional-projects">
+                {t('projects')}
+              </Link>
             ) : null}
+
+            {(showProjectsLink || showProfessionalProjectsLink) && (
+              <button
+                type="button"
+                onClick={openToday}
+                className="relative rounded-md p-2 text-slate-700 hover:bg-slate-100"
+                aria-label="Your day"
+                title="Your day"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <rect x="3" y="4" width="18" height="17" rx="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+                </svg>
+                {count > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                    {count > 9 ? '9+' : count}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Language Switcher */}
             <LanguageSwitcher />
@@ -323,6 +340,25 @@ export const Navbar: React.FC = () => {
                   {t('join')}
                 </button>
               </div>
+            )}
+
+            {(showProjectsLink || showProfessionalProjectsLink) && (
+              <button
+                type="button"
+                onClick={openToday}
+                className="relative rounded-md p-2 text-slate-700 hover:bg-slate-100"
+                aria-label="Your day"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <rect x="3" y="4" width="18" height="17" rx="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+                </svg>
+                {count > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                    {count > 9 ? '9+' : count}
+                  </span>
+                )}
+              </button>
             )}
 
             <LanguageSwitcher />

@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-09-10-811f8ef1",
+    "date": "2026-09-10T15:46:47+08:00",
+    "title": "feat(today): replace digest panel with a 'Today' modal + header calendar icon",
+    "summary": "feat(today): replace digest panel with a 'Today' modal + header calendar icon",
+    "areas": [
+      "web"
+    ],
+    "commit": "811f8ef1",
+    "files": [
+      "apps/web/src/app/layout.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/app/projects/page.tsx",
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/today-modal.tsx",
+      "apps/web/src/context/today-modal-context.tsx"
+    ]
+  },
+  {
     "id": "2026-09-10-c88356ff",
     "date": "2026-09-10T15:00:24+08:00",
     "title": "feat(digest): add client milestones and outstanding payments to today payload",

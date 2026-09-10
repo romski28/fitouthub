@@ -19,6 +19,7 @@ import { MainWrapper } from "@/components/main-wrapper";
 import { AdminFab } from "@/components/admin-fab";
 import { SiteWallpaperShell } from "@/components/site-wallpaper-shell";
 import { PwaProvider } from "@/components/pwa-provider";
+import { TodayModalProvider } from "@/context/today-modal-context";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -112,6 +113,7 @@ export default async function RootLayout({
             <ProfessionalAuthProvider>
               <AuthModalControlProvider>
                 <NextStepModalProvider>
+                <TodayModalProvider>
                 <PwaProvider />
                 <Toaster position="top-right" />
                 <div className="relative min-h-screen bg-[var(--mimo-paper)] text-slate-900">
@@ -132,6 +134,7 @@ export default async function RootLayout({
                 <CornerRibbon />
                 <FloatingChat />
                 <AdminFab />
+                </TodayModalProvider>
                 </NextStepModalProvider>
               </AuthModalControlProvider>
             </ProfessionalAuthProvider>

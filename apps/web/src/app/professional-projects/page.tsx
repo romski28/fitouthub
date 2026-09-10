@@ -9,7 +9,6 @@ import { colors } from '@/styles/theme';
 import Link from 'next/link';
 import { BackToTop } from '@/components/back-to-top';
 import { UpdatesButton } from '@/components/updates-button';
-import { TodayDigestCard } from '@/components/today-digest-card';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { ProjectAccessModal } from '@/components/project-access-modal';
 import { useRoleGuard } from '@/hooks/use-role-guard';
@@ -697,8 +696,6 @@ export default function ProfessionalProjectsPage() {
           <div className="fixed bottom-[260px] right-6 z-30">
             <UpdatesButton onSummaryChange={setUpdatesSummary} />
         </div>
-
-        <TodayDigestCard role="professional" accessToken={accessToken} />
 
         {/* Hero (match client styling) */}
         <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
