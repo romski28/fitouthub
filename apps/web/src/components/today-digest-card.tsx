@@ -18,7 +18,7 @@ export function TodayDigestCard({
   role: 'client' | 'professional';
   accessToken?: string | null;
 }) {
-  const [data, setData] = useState<{ items: DigestItem[]; openTenders: number } | null>(null);
+  const [data, setData] = useState<{ items: DigestItem[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,7 +36,6 @@ export function TodayDigestCard({
         if (!cancelled) {
           setData({
             items: Array.isArray(d?.items) ? d.items : [],
-            openTenders: Number(d?.openTenders) || 0,
           });
         }
       })
@@ -53,18 +52,12 @@ export function TodayDigestCard({
 
   if (loading || !data) return null;
 
-  const { items, openTenders } = data;
+  const { items } = data;
   const nothingDue = items.length === 0;
 
   return (
     <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 p-5 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-900">Here&apos;s your day</h3>
-
-      {openTenders > 0 && (
-        <p className="mt-1 text-xs text-slate-500">
-          {openTenders} tender{openTenders === 1 ? '' : 's'} close this week
-        </p>
-      )}
 
       {nothingDue ? (
         <p className="mt-2 text-sm text-slate-500">Nothing due today — you&apos;re all caught up.</p>

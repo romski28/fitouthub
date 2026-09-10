@@ -87,7 +87,10 @@ export type Project = {
     | 'quoted'
     | 'awarded'
     | 'declined'
-    | 'counter_requested';
+    | 'counter_requested'
+    | 'started'
+    | 'completed'
+    | 'rated';
   notes?: string;
   createdAt?: string;
   updatedAt?: string;

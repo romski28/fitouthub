@@ -41,7 +41,7 @@ const clientCardBorderByStatus: Record<string, string> = {
 
 type AssistStatus = "open" | "in_progress" | "closed";
 
-type SummaryTone = 'slate' | 'emerald' | 'amber' | 'rose';
+type SummaryTone = 'slate' | 'emerald' | 'amber' | 'violet' | 'rose';
 
 const clientActionSectionMap: Record<string, string> = {};
 const clientActionQueryMap: Record<string, Record<string, string>> = {
@@ -593,6 +593,8 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
     if (filterStatus !== 'all') {
       if (filterStatus === 'withdrawn') {
         result = result.filter((p) => p.status === 'withdrawn' || p.status === 'rejected');
+      } else if (filterStatus === 'completed') {
+        result = result.filter((p) => p.status === 'completed' || p.status === 'rated');
       } else {
         result = result.filter((p) => p.status === filterStatus);
       }
@@ -607,6 +609,9 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
         if (filterStatus === 'all') return true;
         if (filterStatus === 'withdrawn') {
           return project.status === 'withdrawn' || project.status === 'rejected';
+        }
+        if (filterStatus === 'completed') {
+          return project.status === 'completed' || project.status === 'rated';
         }
         return project.status === filterStatus;
       })
@@ -636,6 +641,7 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
       total: items.length,
       approved: items.filter((p) => p.status === "awarded").length,
       pending: items.filter((p) => p.status === "pending").length,
+      completed: items.filter((p) => p.status === "completed" || p.status === "rated").length,
       withdrawn: items.filter((p) => p.status === "rejected" || p.status === "withdrawn").length,
     };
   }, [items]);
@@ -818,7 +824,6 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
           <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Action Required</p>
                 <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   My projects
                   {nextStepsLoading && (
@@ -842,10 +847,11 @@ export function ProjectsClient({ projects, clientId, initialShowCreateModal = fa
                 >
                   {t('createNew')}
                 </button>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
                   <SummaryCard label={t('total')} value={totals.total} tone="slate" filterStatus="all" currentFilter={filterStatus} onClick={() => setFilterStatus('all')} />
                   <SummaryCard label={t('stats.awarded')} value={totals.approved} tone="emerald" filterStatus="awarded" currentFilter={filterStatus} onClick={() => setFilterStatus('awarded')} />
                   <SummaryCard label={t('stats.pending')} value={totals.pending} tone="amber" filterStatus="pending" currentFilter={filterStatus} onClick={() => setFilterStatus('pending')} />
+                  <SummaryCard label="COMPLETED" value={totals.completed} tone="violet" filterStatus="completed" currentFilter={filterStatus} onClick={() => setFilterStatus('completed')} />
                   <SummaryCard label="WITHDRAWN" value={totals.withdrawn} tone="rose" filterStatus="withdrawn" currentFilter={filterStatus} onClick={() => setFilterStatus('withdrawn')} />
                 </div>
                 <p className="text-[10px] text-center italic text-slate-600">Click on a status to filter</p>
@@ -1017,6 +1023,7 @@ function SummaryCard({
     slate: { valueColor: 'text-slate-900', activeRing: 'ring-slate-700' },
     amber: { valueColor: 'text-amber-700', activeRing: 'ring-amber-300' },
     emerald: { valueColor: 'text-emerald-700', activeRing: 'ring-emerald-300' },
+    violet: { valueColor: 'text-violet-700', activeRing: 'ring-violet-300' },
     rose: { valueColor: 'text-rose-700', activeRing: 'ring-rose-300' },
   };
 
