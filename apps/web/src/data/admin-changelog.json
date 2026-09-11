@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-11-42862724",
+    "date": "2026-09-11T11:30:11+08:00",
+    "title": "fix(join): scroll errors into view, require email-or-mobile, relabel checkboxes",
+    "summary": "fix(join): scroll errors into view, require email-or-mobile, relabel checkboxes",
+    "areas": [
+      "web"
+    ],
+    "commit": "42862724",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-09-11-2e45af10",
     "date": "2026-09-11T09:44:06+08:00",
     "title": "fix(today-modal, otp): stop modal re-popping, add OTP skip, unverified banner",

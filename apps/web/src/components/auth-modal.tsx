@@ -99,6 +99,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   const googleContainerRef = React.useRef<HTMLDivElement | null>(null);
   const googleInitializedRef = React.useRef(false);
+  const errorRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
   const shouldShowJoinShortcut =
     activeTab === 'login' &&
     loginMethod === 'google' &&
@@ -361,6 +367,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
     }
 
+    if (!clientForm.email.trim() && !clientForm.mobile.trim()) {
+        setError(modalT('emailOrMobileRequired'));
+        return;
+    }
+
     setLoading(true);
     try {
       const result = await register({
@@ -415,6 +426,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     if (professionalForm.password !== professionalForm.confirmPassword) {
         setError(modalT('passwordMismatch'));
+        return;
+    }
+
+    if (!professionalForm.email.trim() && !professionalForm.phone.trim()) {
+        setError(modalT('emailOrMobileRequired'));
         return;
     }
 
@@ -618,7 +634,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Content */}
         <div className="p-6">
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div ref={errorRef} className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
               {error}
               {shouldShowJoinShortcut && (
                 <div className="mt-3">
@@ -841,7 +857,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="email"
                       value={clientForm.email}
                       onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                      required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                     <p className="mt-1 text-xs text-slate-400">Your email will be your username</p>
@@ -886,7 +901,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      {t('signup.mobile')} ({commonT('optional')})
+                      {t('signup.mobile')}
                     </label>
                     <div className="mt-1">
                       <PhoneInput
@@ -1075,7 +1090,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="email"
                       value={professionalForm.email}
                       onChange={(e) => setProfessionalForm({ ...professionalForm, email: e.target.value })}
-                      required
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                     />
                   </div>
@@ -1087,7 +1101,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <PhoneInput
                         value={professionalForm.phone}
                         onChange={(val) => setProfessionalForm({ ...professionalForm, phone: val })}
-                        required
                       />
                     </div>
                   </div>
