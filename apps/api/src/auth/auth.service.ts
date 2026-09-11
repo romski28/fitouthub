@@ -135,6 +135,8 @@ export class AuthService {
     let identity: any;
     try {
       const personaType = dto.role === 'landlord' ? 'LANDLORD'
+        : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
+        : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
         : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
         : 'CLIENT';
 
@@ -174,6 +176,24 @@ export class AuthService {
         await (this.prisma as any).persona.update({
           where: { id: persona.id },
           data: { landlordId: landlord.id },
+        });
+      }
+      if (personaType === 'PROPERTY_MANAGER') {
+        const pm = await (this.prisma as any).propertyManager.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { propertyManagerId: pm.id },
+        });
+      }
+      if (personaType === 'ESTATE_AGENT') {
+        const ea = await (this.prisma as any).estateAgent.create({
+          data: { userId: user.id },
+        });
+        await (this.prisma as any).persona.update({
+          where: { id: persona.id },
+          data: { estateAgentId: ea.id },
         });
       }
       await (this.prisma as any).user.update({

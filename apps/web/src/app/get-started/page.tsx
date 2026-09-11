@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import { API_BASE_URL } from '@/config/api';
 import { useAuth } from '@/context/auth-context';
 import { useAuthModalControl } from '@/context/auth-modal-control';
@@ -13,7 +12,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { PolicyDocumentModal } from '@/components/policy-document-modal';
 import PhoneInput from '@/components/phone-input';
 
-type Role = 'client' | 'professional' | 'landlord';
+type Role = 'client' | 'professional' | 'landlord' | 'estate_agent' | 'property_manager' | 'owner_occupier';
 type SignInMethod = 'email' | 'google' | null;
 
 declare global {
@@ -64,17 +63,37 @@ function passwordStrength(password: string): number {
 }
 
 const stepsByRole: Record<Role, string[]> = {
-  client: ['Sign in method', 'About you'],
-  professional: ['Sign in method', 'About your business'],
-  landlord: ['Sign in method', 'About you'],
+  client: ['Sign in method', 'About you', 'Contact & agreements'],
+  professional: ['Sign in method', 'About your business', 'Contact & agreements'],
+  landlord: ['Sign in method', 'About you', 'Contact & agreements'],
+  estate_agent: ['Sign in method', 'About you', 'Contact & agreements'],
+  property_manager: ['Sign in method', 'About you', 'Contact & agreements'],
+  owner_occupier: ['Sign in method', 'About you', 'Contact & agreements'],
 };
+
+const ROLE_LANDING: Record<Role, string> = {
+  client: '/projects',
+  professional: '/professional-projects',
+  landlord: '/landlord',
+  estate_agent: '/estate-agent',
+  property_manager: '/property-manager',
+  owner_occupier: '/projects',
+};
+
+const personaCards: Array<{ role: Role; icon: string; label: string; desc: string; border: string }> = [
+  { role: 'client', icon: '🏠', label: 'Tenant', desc: 'Plan and control your renovation', border: 'border-[#FF6B5B]/40' },
+  { role: 'owner_occupier', icon: '🏠', label: 'Owner Occupier', desc: 'Renovate your own home', border: 'border-rose-300/40' },
+  { role: 'professional', icon: '👷', label: 'Professional', desc: 'Win premium renovation projects', border: 'border-[#0E7C3A]/40' },
+  { role: 'landlord', icon: '🏘️', label: 'Landlord', desc: 'Manage your properties', border: 'border-amber-500/40' },
+  { role: 'estate_agent', icon: '🏷️', label: 'Estate Agent', desc: 'Connect clients with pros', border: 'border-violet-400/40' },
+  { role: 'property_manager', icon: '🏢', label: 'Property Manager', desc: 'Coordinate maintenance', border: 'border-cyan-400/40' },
+];
 
 export default function GetStartedPage() {
   const router = useRouter();
-  const { openLoginModal, openJoinModal } = useAuthModalControl();
+  const { openLoginModal } = useAuthModalControl();
   const { login: clientLogin } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
-  const locale = useLocale();
   const [role, setRole] = useState<Role | null>(null);
   const [step, setStep] = useState(0);
   const [method, setMethod] = useState<SignInMethod>(null);
@@ -131,8 +150,9 @@ export default function GetStartedPage() {
     const params = new URLSearchParams(window.location.search);
     const roleParam = params.get('role');
     const stepParam = params.get('step');
-    if (roleParam === 'client' || roleParam === 'professional' || roleParam === 'landlord') {
-      setRole(roleParam);
+    const validRoles: Role[] = ['client', 'professional', 'landlord', 'estate_agent', 'property_manager', 'owner_occupier'];
+    if (roleParam && validRoles.includes(roleParam as Role)) {
+      setRole(roleParam as Role);
     }
     if (stepParam) {
       const parsed = parseInt(stepParam, 10);
@@ -165,7 +185,7 @@ export default function GetStartedPage() {
     localStorage.setItem('accessToken', result.accessToken);
     localStorage.setItem('refreshToken', result.refreshToken);
     localStorage.setItem('user', JSON.stringify(result.user));
-    window.location.href = consumePostLoginRedirect() || '/projects';
+    window.location.href = consumePostLoginRedirect() || ROLE_LANDING[role || 'client'];
   };
 
   const saveProfessionalSession = (result: ProfessionalSessionResult) => {
@@ -181,7 +201,7 @@ export default function GetStartedPage() {
     setError(null);
     try {
       const startEndpoint =
-        role === 'client'
+        role !== 'professional'
           ? `${API_BASE_URL}/auth/oauth/google/start`
           : `${API_BASE_URL}/professional/auth/oauth/google/start`;
 
@@ -197,7 +217,7 @@ export default function GetStartedPage() {
       }
 
       if (data.existingUser) {
-        if (role === 'client') saveClientSession(data);
+        if (role !== 'professional') saveClientSession(data);
         else saveProfessionalSession(data);
         return;
       }
@@ -205,7 +225,7 @@ export default function GetStartedPage() {
       if (data.onboardingRequired) {
         setGoogleOnboardingToken(data.onboardingToken);
         setMethod('google');
-        if (role === 'client') {
+        if (role !== 'professional') {
           setClientForm((prev) => ({
             ...prev,
             email: data.profile?.email || prev.email,
@@ -259,10 +279,6 @@ export default function GetStartedPage() {
   };
 
   const handleChooseRole = (nextRole: Role) => {
-    if (nextRole === 'landlord') {
-      openJoinModal();
-      return;
-    }
     setRole(nextRole);
     setStep(0);
     setMethod(null);
@@ -274,7 +290,7 @@ export default function GetStartedPage() {
   const validateCurrentStep = (): string | null => {
     if (!role) return 'Choose your path to continue.';
 
-    if (role === 'client') {
+    if (role !== 'professional') {
       if (step === 0) {
         if (!method) return 'Choose email or Google to continue.';
         if (method === 'email') {
@@ -290,6 +306,10 @@ export default function GetStartedPage() {
         if (!clientForm.firstName || !clientForm.surname) {
           return 'First name and surname are required.';
         }
+        if (!clientForm.nickname) return 'Display name is required.';
+      }
+      if (step === 2) {
+        if (!clientForm.preferredContactMethod) return 'Choose a preferred contact method.';
         if (!clientForm.agreeToTerms || !clientForm.agreeToSecurity) {
           return 'Please accept Terms and Security Statement.';
         }
@@ -316,6 +336,9 @@ export default function GetStartedPage() {
         if (method === 'email' && !professionalForm.password) {
           return 'Password is required when using email sign-up.';
         }
+      }
+      if (step === 2) {
+        if (!professionalForm.preferredContactMethod) return 'Choose a preferred contact method.';
         if (!professionalForm.agreeToTerms || !professionalForm.agreeToSecurity) {
           return 'Please accept Terms and Security Statement.';
         }
@@ -336,14 +359,14 @@ export default function GetStartedPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             onboardingToken: googleOnboardingToken,
-            nickname: clientForm.firstName || 'User',
+            nickname: clientForm.nickname || clientForm.firstName || 'User',
             firstName: clientForm.firstName,
             surname: clientForm.surname,
             mobile: clientForm.mobile || undefined,
-            preferredLanguage: locale,
-            preferredContactMethod: 'APP_NOTIFICATIONS',
-            allowPartnerOffers: false,
-            allowPlatformUpdates: true,
+            preferredLanguage: clientForm.preferredLanguage,
+            preferredContactMethod: clientForm.preferredContactMethod,
+            allowPartnerOffers: clientForm.allowPartnerOffers,
+            allowPlatformUpdates: clientForm.allowPlatformUpdates,
           }),
         });
         const data = await response.json();
@@ -356,18 +379,18 @@ export default function GetStartedPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nickname: clientForm.firstName || 'User',
+          nickname: clientForm.nickname || clientForm.firstName || 'User',
           firstName: clientForm.firstName,
           surname: clientForm.surname,
           email: clientForm.email,
           mobile: clientForm.mobile || undefined,
-          preferredContactMethod: 'APP_NOTIFICATIONS',
-          preferredLanguage: locale,
-          allowPartnerOffers: false,
-          allowPlatformUpdates: true,
+          preferredContactMethod: clientForm.preferredContactMethod,
+          preferredLanguage: clientForm.preferredLanguage,
+          allowPartnerOffers: clientForm.allowPartnerOffers,
+          allowPlatformUpdates: clientForm.allowPlatformUpdates,
           requireOtpVerification: true,
           password: clientForm.password,
-          role: 'client',
+          role: role || 'client',
         }),
       });
       const data = await response.json();
@@ -399,11 +422,11 @@ export default function GetStartedPage() {
             fullName: professionalForm.fullName,
             businessName: professionalForm.businessName,
             phone: professionalForm.phone,
-            nickname: professionalForm.fullName || professionalForm.businessName || 'Pro',
-            preferredContactMethod: 'APP_NOTIFICATIONS',
-            preferredLanguage: locale,
-            allowPartnerOffers: false,
-            allowPlatformUpdates: true,
+            nickname: professionalForm.nickname || professionalForm.fullName || professionalForm.businessName || 'Pro',
+            preferredContactMethod: professionalForm.preferredContactMethod,
+            preferredLanguage: professionalForm.preferredLanguage,
+            allowPartnerOffers: professionalForm.allowPartnerOffers,
+            allowPlatformUpdates: professionalForm.allowPlatformUpdates,
             emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
           }),
         });
@@ -423,11 +446,11 @@ export default function GetStartedPage() {
           professionType: professionalForm.professionType,
           fullName: professionalForm.fullName,
           businessName: professionalForm.businessName,
-          nickname: professionalForm.fullName || professionalForm.businessName || 'Pro',
-          preferredContactMethod: 'APP_NOTIFICATIONS',
-          preferredLanguage: locale,
-          allowPartnerOffers: false,
-          allowPlatformUpdates: true,
+          nickname: professionalForm.nickname || professionalForm.fullName || professionalForm.businessName || 'Pro',
+          preferredContactMethod: professionalForm.preferredContactMethod,
+          preferredLanguage: professionalForm.preferredLanguage,
+          allowPartnerOffers: professionalForm.allowPartnerOffers,
+          allowPlatformUpdates: professionalForm.allowPlatformUpdates,
           requireOtpVerification: true,
           emergencyCalloutAvailable: professionalForm.emergencyCalloutAvailable,
         }),
@@ -462,7 +485,7 @@ export default function GetStartedPage() {
 
     // Check duplicate email before advancing from step 0
     if (step === 0 && method === 'email') {
-      const email = role === 'client' ? clientForm.email : professionalForm.email;
+      const email = role !== 'professional' ? clientForm.email : professionalForm.email;
       if (email) {
         setLoading(true);
         try {
@@ -483,7 +506,7 @@ export default function GetStartedPage() {
 
     const isLast = step >= stepsByRole[role].length - 1;
     if (isLast) {
-      if (role === 'client') await submitClient();
+      if (role !== 'professional') await submitClient();
       if (role === 'professional') await submitProfessional();
       return;
     }
@@ -541,7 +564,7 @@ export default function GetStartedPage() {
         await clientLogin(pendingOtp.email, pendingOtp.password);
         setVerificationSuccess(true);
         setTimeout(() => {
-          router.push(consumePostLoginRedirect() || '/projects');
+          router.push(consumePostLoginRedirect() || ROLE_LANDING[role || 'client']);
         }, 2000);
       } else {
         if (!pendingOtp.password) throw new Error('Missing password for login.');
@@ -586,12 +609,12 @@ export default function GetStartedPage() {
 
   const pageTitle = useMemo(() => {
     if (!role) return "Let's get you in.";
-    if (role === 'client') {
-      const titles = ['How do you want in?', 'Tell us about you.'];
-      return titles[step] ?? 'Almost done!';
+    if (role !== 'professional') {
+      const titles = ['How do you want in?', 'Tell us about you.', 'Contact & agreements'];
+      return titles[step] ?? 'Contact & agreements';
     }
-    const titles = ['How do you want in?', 'About your business'];
-    return titles[step] ?? 'About your business';
+    const titles = ['How do you want in?', 'About your business', 'Contact & agreements'];
+    return titles[step] ?? 'Contact & agreements';
   }, [role, step]);
 
   const checkIcon = <span className="text-amber-400">✓</span>;
@@ -634,7 +657,7 @@ export default function GetStartedPage() {
                 {role === 'professional' && step === 1 && (
                   <span className="text-lg font-black text-[#1A1A1A]">Join us</span>
                 )}
-                {role === 'client' && step === 1 && (
+                {role !== 'professional' && step === 1 && (
                   <span className="text-lg font-black text-[#1A1A1A]">Tell us about you</span>
                 )}
               </div>
@@ -648,43 +671,18 @@ export default function GetStartedPage() {
               {!role && (
                 <div className="space-y-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B5B]">Choose your path</p>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {/* Client card */}
-                    <button
-                      onClick={() => handleChooseRole('client')}
-                      className="group relative rounded-2xl border border-[#FF6B5B]/40 bg-gradient-to-br from-[#FF6B5B]/10 to-[#FF6B5B]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#FF6B5B]/50"
-                    >
-                      <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
-                        <Image src="/assets/images/sarah-character-pack/sarah-800.webp" alt="Sarah" width={112} height={160} className="object-contain" />
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-red-700">Client</p>
-                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Plan and control your renovation</p>
-                      <p className="mt-2 text-sm text-[#4E4A42]">Compare quotes, track progress, and use escrow-backed payments.</p>
-                    </button>
-                    {/* Professional card */}
-                    <button
-                      onClick={() => handleChooseRole('professional')}
-                      className="group relative rounded-2xl border border-[#0E7C3A]/40 bg-gradient-to-br from-[#0E7C3A]/10 to-[#0E7C3A]/15 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-[#0E7C3A]/50"
-                    >
-                      <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none">
-                        <Image src="/assets/images/tradesmen-character-pack/ben-800.webp" alt="Ben" width={112} height={160} className="object-contain" />
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-blue-700">Professional</p>
-                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Win premium renovation projects</p>
-                      <p className="mt-2 text-sm text-[#4E4A42]">Showcase your trade, manage milestones, and reduce admin overhead.</p>
-                    </button>
-                    {/* Landlord card */}
-                    <button
-                      onClick={() => handleChooseRole('landlord')}
-                      className="group relative rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-100/60 to-amber-50/40 pb-5 pl-5 pr-28 pt-5 text-left transition hover:-translate-y-1 hover:border-amber-500/50"
-                    >
-                      <div className="pointer-events-none absolute bottom-0 -right-6 w-28 select-none flex items-end justify-center">
-                        <div className="h-24 w-20 rounded-t-2xl bg-amber-200/60" />
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-amber-700">Landlord</p>
-                      <p className="mt-2 text-xl font-extrabold text-[#1A1A1A]">Manage properties with ease</p>
-                      <p className="mt-2 text-sm text-[#4E4A42]">Request quotes, coordinate maintenance, and keep tenants happy across your portfolio.</p>
-                    </button>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {personaCards.map((p) => (
+                      <button
+                        key={p.role}
+                        onClick={() => handleChooseRole(p.role)}
+                        className={`group rounded-xl border ${p.border} bg-white/10 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:bg-white/15`}
+                      >
+                        <span className="text-2xl">{p.icon}</span>
+                        <p className="mt-1 text-sm font-bold text-[#1A1A1A]">{p.label}</p>
+                        <p className="mt-0.5 text-xs text-[#5B5851]">{p.desc}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -692,7 +690,7 @@ export default function GetStartedPage() {
               {role && (
                 <div className="space-y-6">
                   <div className={`space-y-3 ${role && step >= 1 ? 'pt-2' : ''}`}>
-                    {(role === 'client' && step === 1) || (role === 'professional' && step === 1) ? (
+                    {(role !== 'professional' && step === 1) || (role === 'professional' && step === 1) ? (
                       <div className="h-2 overflow-hidden rounded-full bg-white/20">
                         <div className="h-full rounded-full bg-[#0E7C3A] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                       </div>
@@ -710,7 +708,7 @@ export default function GetStartedPage() {
                   </div>
 
                   <div className={`rounded-2xl border border-[#E8DFD5] bg-[#EFE7CF]/78 p-4 transition-all duration-300 sm:p-6 ${role === 'professional' && step === 1 ? 'max-h-[55vh] overflow-y-auto' : 'min-h-[280px]'}`}>
-                    {role === 'client' && step === 0 && (
+                    {role !== 'professional' && step === 0 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Sign in method</p>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -790,7 +788,7 @@ export default function GetStartedPage() {
                       </div>
                     )}
 
-                    {role === 'client' && step === 1 && (
+                    {role !== 'professional' && step === 1 && (
                       <div className="space-y-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">About you</p>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -798,6 +796,7 @@ export default function GetStartedPage() {
                             <span>First name {clientForm.firstName ? checkIcon : null}</span>
                             <input
                               type="text"
+                              autoComplete="off"
                               value={clientForm.firstName}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, firstName: e.target.value }))}
                               className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
@@ -807,10 +806,34 @@ export default function GetStartedPage() {
                             <span>Surname {clientForm.surname ? checkIcon : null}</span>
                             <input
                               type="text"
+                              autoComplete="off"
                               value={clientForm.surname}
                               onChange={(e) => setClientForm((prev) => ({ ...prev, surname: e.target.value }))}
                               className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Display name {clientForm.nickname ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder="How others see you"
+                              value={clientForm.nickname}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, nickname: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Language</span>
+                            <select
+                              value={clientForm.preferredLanguage}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            >
+                              <option value="en">English</option>
+                              <option value="zh-HK">繁體中文</option>
+                              <option value="zh-CN">简体中文</option>
+                            </select>
                           </label>
                           <label className="space-y-1 text-sm sm:col-span-2">
                             <span>Mobile (optional)</span>
@@ -825,6 +848,43 @@ export default function GetStartedPage() {
                             {mobileWarning && (
                               <p className="mt-1 text-xs text-amber-600">{mobileWarning}</p>
                             )}
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {role !== 'professional' && step === 2 && (
+                      <div className="space-y-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact & agreements</p>
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold text-[#1A1A1A]">How should we reach you?</p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {(['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT'] as const).map((ch) => (
+                              <button
+                                key={ch}
+                                type="button"
+                                onClick={() => setClientForm((prev) => ({ ...prev, preferredContactMethod: ch }))}
+                                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${clientForm.preferredContactMethod === ch ? 'border-[#0E7C3A] bg-[#E8F5E9] text-[#0E7C3A]' : 'border-[#E8DFD5] bg-white/50 text-[#5B5851] hover:bg-white/70'}`}
+                              >
+                                {ch === 'EMAIL' ? 'Email' : ch === 'WHATSAPP' ? 'WhatsApp' : ch === 'SMS' ? 'SMS' : 'WeChat'}
+                              </button>
+                            ))}
+                          </div>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={clientForm.allowPartnerOffers}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))}
+                            />
+                            Send me partner offers
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={clientForm.allowPlatformUpdates}
+                              onChange={(e) => setClientForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))}
+                            />
+                            Send me platform updates
                           </label>
                         </div>
                         <div className="space-y-3 pt-2">
@@ -966,10 +1026,34 @@ export default function GetStartedPage() {
                             <span>Primary contact {professionalForm.fullName ? checkIcon : null}</span>
                             <input
                               type="text"
+                              autoComplete="off"
                               value={professionalForm.fullName}
                               onChange={(e) => setProfessionalForm((prev) => ({ ...prev, fullName: e.target.value }))}
                               className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
                             />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Display name {professionalForm.nickname ? checkIcon : null}</span>
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder="How others see you"
+                              value={professionalForm.nickname}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, nickname: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/80 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            />
+                          </label>
+                          <label className="space-y-1 text-sm">
+                            <span>Language</span>
+                            <select
+                              value={professionalForm.preferredLanguage}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, preferredLanguage: e.target.value }))}
+                              className="w-full rounded-lg border border-[#E8DFD5] bg-white/90 px-3 py-2 text-[#1A1A1A] outline-none focus:border-[#0E7C3A]"
+                            >
+                              <option value="en">English</option>
+                              <option value="zh-HK">繁體中文</option>
+                              <option value="zh-CN">简体中文</option>
+                            </select>
                           </label>
                         </div>
 
@@ -1021,18 +1105,65 @@ export default function GetStartedPage() {
                           </p>
                         )}
 
-                        {/* Terms */}
+                      </div>
+                    )}
+
+                    {role === 'professional' && step === 2 && (
+                      <div className="space-y-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Contact & agreements</p>
                         <div className="space-y-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF6B5B]">Terms</p>
+                          <p className="text-sm font-semibold text-[#1A1A1A]">How should we reach you?</p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {(['EMAIL', 'WHATSAPP', 'SMS', 'WECHAT'] as const).map((ch) => (
+                              <button
+                                key={ch}
+                                type="button"
+                                onClick={() => setProfessionalForm((prev) => ({ ...prev, preferredContactMethod: ch }))}
+                                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${professionalForm.preferredContactMethod === ch ? 'border-[#0E7C3A] bg-[#E8F5E9] text-[#0E7C3A]' : 'border-[#E8DFD5] bg-white/50 text-[#5B5851] hover:bg-white/70'}`}
+                              >
+                                {ch === 'EMAIL' ? 'Email' : ch === 'WHATSAPP' ? 'WhatsApp' : ch === 'SMS' ? 'SMS' : 'WeChat'}
+                              </button>
+                            ))}
+                          </div>
                           <label className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={professionalForm.agreeToTerms} onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))} />
-                            I agree to the Terms and Conditions
-                            <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">Read</button>
+                            <input
+                              type="checkbox"
+                              checked={professionalForm.allowPartnerOffers}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, allowPartnerOffers: e.target.checked }))}
+                            />
+                            Send me partner offers
                           </label>
                           <label className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={professionalForm.agreeToSecurity} onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))} />
+                            <input
+                              type="checkbox"
+                              checked={professionalForm.allowPlatformUpdates}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, allowPlatformUpdates: e.target.checked }))}
+                            />
+                            Send me platform updates
+                          </label>
+                        </div>
+                        <div className="space-y-3 pt-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={professionalForm.agreeToTerms}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
+                            />
+                            I agree to the Terms and Conditions
+                            <button type="button" onClick={() => setShowTermsModal(true)} className="text-orange-300 underline">
+                              Read
+                            </button>
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={professionalForm.agreeToSecurity}
+                              onChange={(e) => setProfessionalForm((prev) => ({ ...prev, agreeToSecurity: e.target.checked }))}
+                            />
                             I agree to the Security Statement
-                            <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">Read</button>
+                            <button type="button" onClick={() => setShowSecurityModal(true)} className="text-orange-300 underline">
+                              Read
+                            </button>
                           </label>
                         </div>
                       </div>
@@ -1072,7 +1203,7 @@ export default function GetStartedPage() {
                       {loading
                         ? 'Please wait...'
                         : step >= totalSteps - 1
-                        ? 'Complete signup'
+                        ? 'Create account'
                         : 'Continue'}
                     </button>
                   </div>

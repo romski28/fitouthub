@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-11-b3f44530",
+    "date": "2026-09-11T18:20:31+08:00",
+    "title": "feat(get-started): expand wizard to 6 personas with 3-step flow",
+    "summary": "feat(get-started): expand wizard to 6 personas with 3-step flow",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "b3f44530",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/web/src/app/get-started/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-11-f19847a5",
     "date": "2026-09-11T16:41:47+08:00",
     "title": "fix(join): require both email and phone for professionals/agents/managers",
