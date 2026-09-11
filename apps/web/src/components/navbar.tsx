@@ -23,7 +23,7 @@ export const Navbar: React.FC = () => {
   } = useProfessionalAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { openJoinModal, openLoginModal } = useAuthModalControl();
+  const { openLoginModal } = useAuthModalControl();
   const { count, openToday } = useTodayModal();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -298,7 +298,7 @@ export const Navbar: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={openJoinModal}
+                    onClick={() => router.push('/get-started')}
                     className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
                   >
                     {t('join')}
@@ -334,7 +334,7 @@ export const Navbar: React.FC = () => {
                   {t('login')}
                 </button>
                 <button
-                  onClick={openJoinModal}
+                  onClick={() => router.push('/get-started')}
                   className="rounded-md bg-blue-600 px-3 py-1.5 text-white font-medium text-sm hover:bg-blue-700"
                 >
                   {t('join')}

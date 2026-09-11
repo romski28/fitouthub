@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-11-083535fd",
+    "date": "2026-09-11T18:33:32+08:00",
+    "title": "fix(navbar): point Join button to /get-started wizard",
+    "summary": "fix(navbar): point Join button to /get-started wizard",
+    "areas": [
+      "web"
+    ],
+    "commit": "083535fd",
+    "files": [
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-09-11-b3f44530",
     "date": "2026-09-11T18:20:31+08:00",
     "title": "feat(get-started): expand wizard to 6 personas with 3-step flow",
