@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-11-051e32b2",
+    "date": "2026-09-11T15:03:06+08:00",
+    "title": "chore(i18n): remove unused .ts message files and dead _legacy block",
+    "summary": "chore(i18n): remove unused .ts message files and dead _legacy block",
+    "areas": [
+      "web"
+    ],
+    "commit": "051e32b2",
+    "files": [
+      "apps/web/src/i18n/request.ts"
+    ]
+  },
+  {
     "id": "2026-09-11-42862724",
     "date": "2026-09-11T11:30:11+08:00",
     "title": "fix(join): scroll errors into view, require email-or-mobile, relabel checkboxes",
