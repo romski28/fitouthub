@@ -813,6 +813,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     {modalT('resendCode')}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingVerification(null);
+                      setOtpCode('');
+                      setVerificationSuccess(false);
+                      onClose();
+                    }}
+                    disabled={loading}
+                    className="w-full rounded-md px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100"
+                  >
+                    Skip for now
+                  </button>
                 </form>
               ) : userType !== 'professional' ? (
                 <form

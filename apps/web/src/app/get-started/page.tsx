@@ -1140,6 +1140,19 @@ export default function GetStartedPage() {
                 >
                   Resend code
                 </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    setPendingOtp(null);
+                    setOtpCode('');
+                    setVerificationSuccess(false);
+                    openLoginModal();
+                  }}
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-[#5B5851] underline underline-offset-2 transition hover:text-[#1A1A1A]"
+                >
+                  Skip for now
+                </button>
               </div>
               </div>
               </>

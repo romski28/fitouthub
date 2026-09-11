@@ -697,6 +697,18 @@ export default function ProfessionalProjectsPage() {
             <UpdatesButton onSummaryChange={setUpdatesSummary} />
         </div>
 
+        {professional?.status === 'pending' && (
+          <div className="rounded-3xl border border-amber-300/60 bg-amber-50/90 px-5 py-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 text-lg" aria-hidden>⚠️</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Your account is pending verification.</p>
+                <p className="text-xs text-amber-700">Some features may be limited until your account is approved.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero (match client styling) */}
         <div className="rounded-3xl border border-white/45 bg-[#F5EEDE]/90 px-5 py-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

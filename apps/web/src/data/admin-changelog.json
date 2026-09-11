@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-11-2e45af10",
+    "date": "2026-09-11T09:44:06+08:00",
+    "title": "fix(today-modal, otp): stop modal re-popping, add OTP skip, unverified banner",
+    "summary": "fix(today-modal, otp): stop modal re-popping, add OTP skip, unverified banner",
+    "areas": [
+      "web"
+    ],
+    "commit": "2e45af10",
+    "files": [
+      "apps/web/src/app/get-started/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx",
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/context/today-modal-context.tsx"
+    ]
+  },
+  {
     "id": "2026-09-10-b5352697",
     "date": "2026-09-10T19:48:51+08:00",
     "title": "refactor(auth): unify professional token issuance to identity-based payload",

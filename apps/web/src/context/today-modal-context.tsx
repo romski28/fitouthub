@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { API_BASE_URL } from '@/config/api';
@@ -25,7 +26,7 @@ type TodayModalContextValue = {
 const TodayModalContext = createContext<TodayModalContextValue | null>(null);
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' });
 }
 
 export function TodayModalProvider({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export function TodayModalProvider({ children }: { children: React.ReactNode }) 
   const [items, setItems] = useState<DigestItem[]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const hasAutoShownRef = useRef(false);
 
   const openToday = useCallback(() => setIsOpen(true), []);
   const closeToday = useCallback(() => setIsOpen(false), []);
@@ -51,6 +53,7 @@ export function TodayModalProvider({ children }: { children: React.ReactNode }) 
     if (!role || !accessToken) {
       setItems([]);
       setCount(0);
+      hasAutoShownRef.current = false;
       return;
     }
 
@@ -67,8 +70,10 @@ export function TodayModalProvider({ children }: { children: React.ReactNode }) 
         setItems(list);
         setCount(list.length);
 
-        // Auto-show once on login/day: always if opted in, else only when there
-        // are actionable items and we haven't already shown it today.
+        // Auto-show only ONCE per login, not on every token refresh.
+        if (hasAutoShownRef.current) return;
+        hasAutoShownRef.current = true;
+
         const alwaysShow = localStorage.getItem('today_always_show') === '1';
         const seen = localStorage.getItem(SEEN_KEY);
         if (alwaysShow || (list.length > 0 && seen !== todayKey())) {
