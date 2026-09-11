@@ -367,7 +367,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
     }
 
-    if (!clientForm.email.trim() && !clientForm.mobile.trim()) {
+    const requiresBothContact = userType === 'estate_agent' || userType === 'property_manager';
+    if (requiresBothContact) {
+        if (!clientForm.email.trim() || !clientForm.mobile.trim()) {
+            setError(modalT('emailAndMobileRequired'));
+            return;
+        }
+    } else if (!clientForm.email.trim() && !clientForm.mobile.trim()) {
         setError(modalT('emailOrMobileRequired'));
         return;
     }
@@ -429,8 +435,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
     }
 
-    if (!professionalForm.email.trim() && !professionalForm.phone.trim()) {
-        setError(modalT('emailOrMobileRequired'));
+    if (!professionalForm.email.trim() || !professionalForm.phone.trim()) {
+        setError(modalT('emailAndPhoneRequired'));
         return;
     }
 

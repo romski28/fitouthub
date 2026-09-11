@@ -103,6 +103,8 @@
       "optional": "Optional",
       "termsRequired": "You must agree to the Terms and Conditions to continue",
       "emailOrMobileRequired": "Please provide an email address or mobile number.",
+      "emailAndMobileRequired": "Please provide both an email address and mobile number.",
+      "emailAndPhoneRequired": "Please provide both an email address and phone number.",
       "enterVerificationCode": "Please enter the verification code",
       "otpVerificationFailed": "OTP verification failed",
       "otpResendFailed": "Failed to resend OTP",

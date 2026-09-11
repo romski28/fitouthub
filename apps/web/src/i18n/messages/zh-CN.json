@@ -103,6 +103,8 @@
       "optional": "可選",
       "termsRequired": "您必須同意条款及细则才可继续",
       "emailOrMobileRequired": "请提供电子邮件地址或手机号码。",
+      "emailAndMobileRequired": "请提供电子邮件地址和手机号码。",
+      "emailAndPhoneRequired": "请提供电子邮件地址和电话号码。",
       "enterVerificationCode": "请輸入验证码",
       "otpVerificationFailed": "验证码核實失敗",
       "otpResendFailed": "重新发送验证码失敗",

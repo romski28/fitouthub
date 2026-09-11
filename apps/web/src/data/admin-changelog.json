@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-11-f19847a5",
+    "date": "2026-09-11T16:41:47+08:00",
+    "title": "fix(join): require both email and phone for professionals/agents/managers",
+    "summary": "fix(join): require both email and phone for professionals/agents/managers",
+    "areas": [
+      "web"
+    ],
+    "commit": "f19847a5",
+    "files": [
+      "apps/web/src/components/auth-modal.tsx",
+      "apps/web/src/i18n/messages/en.json",
+      "apps/web/src/i18n/messages/zh-CN.json",
+      "apps/web/src/i18n/messages/zh-HK.json"
+    ]
+  },
+  {
     "id": "2026-09-11-051e32b2",
     "date": "2026-09-11T15:03:06+08:00",
     "title": "chore(i18n): remove unused .ts message files and dead _legacy block",
