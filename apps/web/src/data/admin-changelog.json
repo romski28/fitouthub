@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-13-005e539e",
+    "date": "2026-09-13T17:40:07+08:00",
+    "title": "fix(admin): stop /admin/people 500 from missing Persona columns",
+    "summary": "fix(admin): stop /admin/people 500 from missing Persona columns",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "005e539e",
+    "files": [
+      "apps/api/src/admin/people.controller.ts",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-60019082",
     "date": "2026-09-13T17:21:05+08:00",
     "title": "fix(admin): surface /admin/people fetch errors",

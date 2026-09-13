@@ -17,7 +17,13 @@ export class AdminPeopleController {
   @Get()
   async findAll() {
     const personas = await this.prisma.persona.findMany({
-      include: {
+      select: {
+        id: true,
+        identityId: true,
+        type: true,
+        userId: true,
+        professionalId: true,
+        createdAt: true,
         identity: { select: { email: true } },
         user: {
           select: {
@@ -66,10 +72,6 @@ export class AdminPeopleController {
         status: p.professional?.status ?? null,
         userId: p.userId,
         professionalId: p.professionalId,
-        landlordId: p.landlordId,
-        propertyManagerId: p.propertyManagerId,
-        estateAgentId: p.estateAgentId,
-        projectDelegateId: p.projectDelegateId,
         createdAt: p.createdAt,
       };
     });

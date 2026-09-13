@@ -17,10 +17,6 @@ type Person = {
   status: string | null;
   userId: string | null;
   professionalId: string | null;
-  landlordId: string | null;
-  propertyManagerId: string | null;
-  estateAgentId: string | null;
-  projectDelegateId: string | null;
   createdAt: string;
 };
 
