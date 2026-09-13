@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-13-22e910b7",
+    "date": "2026-09-13T10:27:24+08:00",
+    "title": "feat(navbar): gate Professionals to authed users, hide Why Mimo when authed",
+    "summary": "feat(navbar): gate Professionals to authed users, hide Why Mimo when authed",
+    "areas": [
+      "web"
+    ],
+    "commit": "22e910b7",
+    "files": [
+      "apps/web/src/components/navbar.tsx",
+      "apps/web/src/components/protected-page-overlay.tsx"
+    ]
+  },
+  {
     "id": "2026-09-11-083535fd",
     "date": "2026-09-11T18:33:32+08:00",
     "title": "fix(navbar): point Join button to /get-started wizard",

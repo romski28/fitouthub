@@ -87,7 +87,8 @@ export const Navbar: React.FC = () => {
   const isPm = Boolean(user && user.role === 'project_manager');
   const showProjectsLink = hydrated && isLoggedIn && !profIsLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
-  const showPublicLinks = !showProfessionalAuthed;
+  const showProfessionalsLink = hydrated && isLoggedIn && !profIsLoggedIn;
+  const showWhyMimoLink = !showAuthed && !showProfessionalAuthed;
   const navShellClassName = [
     'sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 transition-transform duration-300',
     navVisible ? 'translate-y-0' : '-translate-y-full',
@@ -115,16 +116,18 @@ export const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden min-[820px]:flex items-center gap-6 text-sm font-medium text-slate-700">
-            {showPublicLinks ? (
+            {showProfessionalsLink ? (
               <>
                 <Link className="hover:text-slate-900" href="/professionals">
                   {t('professionals')}
                 </Link>
               </>
             ) : null}
-            <Link className="hover:text-slate-900" href="/about">
-              {t('about')}
-            </Link>
+            {showWhyMimoLink ? (
+              <Link className="hover:text-slate-900" href="/about">
+                {t('about')}
+              </Link>
+            ) : null}
             <Link className="hover:text-slate-900" href="/docs">
               {t('docs')}
             </Link>
@@ -408,7 +411,7 @@ export const Navbar: React.FC = () => {
                   SOS
                 </button>
               )}
-              {showPublicLinks ? (
+              {showProfessionalsLink ? (
                 <>
                   <Link
                     className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
@@ -419,13 +422,15 @@ export const Navbar: React.FC = () => {
                   </Link>
                 </>
               ) : null}
-              <Link
-                className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t('about')}
-              </Link>
+              {showWhyMimoLink ? (
+                <Link
+                  className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
+                  href="/about"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('about')}
+                </Link>
+              ) : null}
               <Link
                 className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
                 href="/docs"
