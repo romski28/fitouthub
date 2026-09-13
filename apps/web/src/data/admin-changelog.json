@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-13-70cfd5f0",
+    "date": "2026-09-13T23:41:53+08:00",
+    "title": "feat(admin): return to People after pro save/cancel, add save modal",
+    "summary": "feat(admin): return to People after pro save/cancel, add save modal",
+    "areas": [
+      "web"
+    ],
+    "commit": "70cfd5f0",
+    "files": [
+      "apps/web/src/app/admin/people/page.tsx",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-b322f36f",
     "date": "2026-09-13T23:04:49+08:00",
     "title": "feat(admin): add edit/delete actions and client shortcuts",

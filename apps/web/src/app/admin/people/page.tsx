@@ -275,7 +275,7 @@ export default function AdminPeoplePage() {
                       <Link
                         href={
                           p.professionalId
-                            ? `/admin/professionals?highlight=${encodeURIComponent(p.professionalId)}`
+                            ? `/admin/professionals?highlight=${encodeURIComponent(p.professionalId)}&returnTo=people`
                             : `/admin/people/${encodeURIComponent(p.personaId)}`
                         }
                         className="rounded p-1.5 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700"

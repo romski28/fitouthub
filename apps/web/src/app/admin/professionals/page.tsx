@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { Professional } from "@/lib/types";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -84,11 +84,13 @@ type BrcCheckResponse = {
 export default function AdminProfessionalsPage() {
   const { accessToken } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPro, setEditingPro] = useState<Professional | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | null>(null);
   const [filter, setFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [professionalTypeFilter, setProfessionalTypeFilter] = useState('');
@@ -144,6 +146,7 @@ export default function AdminProfessionalsPage() {
   const TRADE_OPTIONS_CACHE_KEY = 'admin.tradeOptions.master.v1';
   const highlightedProfessionalId = searchParams.get('highlight') || '';
   const highlightedCertificationId = searchParams.get('certificationId') || '';
+  const returnTo = searchParams.get('returnTo') || '';
 
   const tradesLoadedRef = useRef(false);
   const certificationCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -359,6 +362,7 @@ export default function AdminProfessionalsPage() {
 
   const handleSave = async () => {
     if (!editingPro && !isCreating) return;
+    setSaveStatus('saving');
 
     const payload = {
       profession_type: formData.professionType,
@@ -397,6 +401,7 @@ export default function AdminProfessionalsPage() {
 
         if (!createRes.ok) {
           const error = await createRes.text();
+          setSaveStatus(null);
           alert(`Create error: ${error}`);
           return;
         }
@@ -405,6 +410,7 @@ export default function AdminProfessionalsPage() {
         const newId = created?.data?.id || created?.id;
 
         if (!newId) {
+          setSaveStatus(null);
           alert('Professional created but could not determine ID. Please refresh.');
           await fetchProfessionals();
           setIsCreating(false);
@@ -431,6 +437,7 @@ export default function AdminProfessionalsPage() {
 
         if (!res.ok) {
           const error = await res.text();
+          setSaveStatus(null);
           console.error("API Error:", error);
           alert(`Error: ${error}`);
           return;
@@ -438,9 +445,16 @@ export default function AdminProfessionalsPage() {
       }
 
       await fetchProfessionals();
-      setEditingPro(null);
-      setIsCreating(false);
+      if (returnTo === 'people') {
+        setSaveStatus('saved');
+        setTimeout(() => router.push('/admin/people'), 1200);
+      } else {
+        setSaveStatus(null);
+        setEditingPro(null);
+        setIsCreating(false);
+      }
     } catch (error) {
+      setSaveStatus(null);
       console.error("Save error:", error);
       alert(`Error ${isCreating ? 'creating' : 'saving'} professional: ${error}`);
     }
@@ -1594,7 +1608,14 @@ export default function AdminProfessionalsPage() {
 
             <div className="flex gap-3 border-t border-slate-200 px-6 py-4">
               <button
-                onClick={() => { setEditingPro(null); setIsCreating(false); }}
+                onClick={() => {
+                  if (returnTo === 'people') {
+                    router.push('/admin/people');
+                  } else {
+                    setEditingPro(null);
+                    setIsCreating(false);
+                  }
+                }}
                 className="flex-1 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
               >
                 Cancel
@@ -1606,6 +1627,27 @@ export default function AdminProfessionalsPage() {
                 {isCreating ? 'Create Professional' : 'Save Changes'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {saveStatus && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-8 py-6 text-center shadow-xl">
+            {saveStatus === 'saving' ? (
+              <>
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-900">Saving…</p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  ✓
+                </div>
+                <p className="mt-3 text-sm font-semibold text-slate-900">Saved</p>
+                <p className="mt-1 text-xs text-slate-500">Returning to People…</p>
+              </>
+            )}
           </div>
         </div>
       )}
