@@ -76,6 +76,7 @@ export default function AdminPeoplePage() {
   const { accessToken } = useAuth();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
@@ -86,12 +87,16 @@ export default function AdminPeoplePage() {
   }, [accessToken]);
 
   const fetchPeople = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/admin/people`, {
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
       if (!res.ok) {
-        console.warn(`People endpoint returned ${res.status}`);
+        const body = await res.json().catch(() => null);
+        const msg = (body && (body.message || body.error)) || res.statusText;
+        setError(`HTTP ${res.status}${msg ? ` — ${msg}` : ""}`);
         setPeople([]);
         setLoading(false);
         return;
@@ -99,7 +104,7 @@ export default function AdminPeoplePage() {
       const data = await res.json();
       setPeople(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn("Failed to fetch people, API may be unavailable:", err);
+      setError((err as Error).message || "Failed to fetch people");
       setPeople([]);
     } finally {
       setLoading(false);
@@ -162,10 +167,21 @@ export default function AdminPeoplePage() {
         </select>
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
       {/* Table */}
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         {loading ? (
           <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+        ) : error ? (
+          <div className="p-8 text-center text-sm text-slate-500">
+            Could not load people.
+          </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
             No people found.
