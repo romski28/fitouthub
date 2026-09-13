@@ -240,12 +240,21 @@ export default function AdminPeoplePage() {
                     {formatDate(p.createdAt)}
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/people/${encodeURIComponent(p.personaId)}`}
-                      className="font-semibold text-slate-700 hover:underline"
-                    >
-                      View
-                    </Link>
+                    {p.professionalId ? (
+                      <Link
+                        href={`/admin/professionals?highlight=${encodeURIComponent(p.professionalId)}`}
+                        className="font-semibold text-purple-700 hover:underline"
+                      >
+                        Manage
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/admin/people/${encodeURIComponent(p.personaId)}`}
+                        className="font-semibold text-slate-700 hover:underline"
+                      >
+                        View
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}

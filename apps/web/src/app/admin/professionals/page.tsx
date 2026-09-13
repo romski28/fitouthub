@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/config/api";
 import { Professional } from "@/lib/types";
@@ -743,6 +744,13 @@ export default function AdminProfessionalsPage() {
 
   return (
     <div className="space-y-5">
+      <Link
+        href="/admin/people"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-slate-900"
+      >
+        ← Back to People
+      </Link>
+
       {/* Hero */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-13-1ec1f866",
+    "date": "2026-09-13T22:52:26+08:00",
+    "title": "fix(admin): route professionals to existing pro CRUD",
+    "summary": "fix(admin): route professionals to existing pro CRUD",
+    "areas": [
+      "web"
+    ],
+    "commit": "1ec1f866",
+    "files": [
+      "apps/web/src/app/admin/people/page.tsx",
+      "apps/web/src/app/admin/professionals/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-0a378deb",
     "date": "2026-09-13T22:40:47+08:00",
     "title": "feat(admin): add adaptive person detail view (step 2)",
