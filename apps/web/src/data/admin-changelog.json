@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-14-3f80120e",
+    "date": "2026-09-14T00:06:28+08:00",
+    "title": "feat(admin): replicate save modal in client detail",
+    "summary": "feat(admin): replicate save modal in client detail",
+    "areas": [
+      "web"
+    ],
+    "commit": "3f80120e",
+    "files": [
+      "apps/web/src/app/admin/people/[personaId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-70cfd5f0",
     "date": "2026-09-13T23:41:53+08:00",
     "title": "feat(admin): return to People after pro save/cancel, add save modal",

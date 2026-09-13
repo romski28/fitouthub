@@ -86,6 +86,7 @@ export default function AdminPersonDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | null>(null);
 
   // Editable user form state
   const [form, setForm] = useState({
@@ -134,6 +135,7 @@ export default function AdminPersonDetailPage() {
   const handleSave = async () => {
     if (!detail?.user?.id || !accessToken) return;
     setSaving(true);
+    setSaveStatus('saving');
     setSaveMessage(null);
     setError(null);
     try {
@@ -153,11 +155,15 @@ export default function AdminPersonDetailPage() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
+        setSaveStatus(null);
         setError(`HTTP ${res.status} — ${(body && body.message) || res.statusText}`);
         return;
       }
       setSaveMessage("Saved.");
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(null), 1200);
     } catch (err) {
+      setSaveStatus(null);
       setError((err as Error).message || "Save failed");
     } finally {
       setSaving(false);
@@ -376,6 +382,26 @@ export default function AdminPersonDetailPage() {
         <section className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">
           {PERSONA_LABELS[detail.type] ?? detail.type} profile fields are not yet editable here.
         </section>
+      )}
+
+      {saveStatus && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="w-full max-w-xs rounded-xl border border-slate-200 bg-white px-8 py-6 text-center shadow-xl">
+            {saveStatus === 'saving' ? (
+              <>
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-900">Saving…</p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  ✓
+                </div>
+                <p className="mt-3 text-sm font-semibold text-slate-900">Saved</p>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
