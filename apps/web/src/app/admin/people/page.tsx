@@ -47,6 +47,8 @@ const STATUS_TONES: Record<string, string> = {
   suspended: "bg-slate-200 text-slate-700 ring-slate-300",
 };
 
+const ALL_PERSONA_TYPES = Object.keys(PERSONA_LABELS).sort();
+
 function formatDate(date?: string): string {
   if (!date) return "—";
   try {
@@ -107,10 +109,7 @@ export default function AdminPeoplePage() {
     }
   };
 
-  const types = useMemo(
-    () => Array.from(new Set(people.map((p) => p.type))).sort(),
-    [people],
-  );
+  const types = ALL_PERSONA_TYPES;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

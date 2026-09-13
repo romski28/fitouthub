@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-13-49c4fce7",
+    "date": "2026-09-13T22:34:42+08:00",
+    "title": "fix(admin): show full persona list in People filter",
+    "summary": "fix(admin): show full persona list in People filter",
+    "areas": [
+      "web"
+    ],
+    "commit": "49c4fce7",
+    "files": [
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-bc78b95d",
     "date": "2026-09-13T22:24:17+08:00",
     "title": "fix(admin): tolerate orphaned personas in /admin/people",
