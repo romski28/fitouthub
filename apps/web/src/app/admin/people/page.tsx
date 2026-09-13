@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
+import { useAuth } from "@/context/auth-context";
 
 type Person = {
   personaId: string;
@@ -72,18 +73,23 @@ function personaTone(type: string): string {
 }
 
 export default function AdminPeoplePage() {
+  const { accessToken } = useAuth();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
   useEffect(() => {
+    if (!accessToken) return;
     fetchPeople();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const fetchPeople = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/people`);
+      const res = await fetch(`${API_BASE_URL}/admin/people`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
       if (!res.ok) {
         console.warn(`People endpoint returned ${res.status}`);
         setPeople([]);
