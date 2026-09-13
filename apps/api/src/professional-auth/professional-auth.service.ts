@@ -34,6 +34,9 @@ export class ProfessionalAuthService {
   ) {}
 
   async register(dto: ProfessionalRegisterDto) {
+    // Normalize email to prevent case/whitespace duplicates and typos
+    dto.email = (dto.email || '').trim().toLowerCase();
+
     // Validate inputs
     if (!dto.email || !dto.password) {
       throw new BadRequestException('Email and password are required');

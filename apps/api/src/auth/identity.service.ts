@@ -16,10 +16,11 @@ import * as bcrypt from 'bcrypt';
 export class IdentityService {
   constructor(private prisma: PrismaService) {}
 
-  /** Find an identity by email (for login flows). */
+  /** Find an identity by email (for login flows) — case-insensitive + trimmed. */
   async findByEmail(email: string) {
-    return (this.prisma as any).identity.findUnique({
-      where: { email },
+    const normalized = (email || '').trim().toLowerCase();
+    return (this.prisma as any).identity.findFirst({
+      where: { email: { equals: normalized, mode: 'insensitive' } },
     });
   }
 
@@ -43,7 +44,7 @@ export class IdentityService {
   }) {
     return (this.prisma as any).identity.create({
       data: {
-        email: data.email,
+        email: (data.email || '').trim().toLowerCase(),
         passwordHash: data.passwordHash
           ? await bcrypt.hash(data.passwordHash, 10)
           : null,
