@@ -35,7 +35,6 @@ export class AdminPeopleController {
         userId: true,
         professionalId: true,
         createdAt: true,
-        identity: { select: { email: true } },
         user: {
           select: {
             id: true,
@@ -62,20 +61,30 @@ export class AdminPeopleController {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Fetch emails separately (LEFT JOIN semantics) because the `identity`
+    // relation is required in the schema and throws on orphaned personas whose
+    // identityId no longer resolves to an Identity row.
+    const identityIds = [...new Set(personas.map((p) => p.identityId))];
+    const identities = await this.prisma.identity.findMany({
+      where: { id: { in: identityIds } },
+      select: { id: true, email: true },
+    });
+    const emailById = new Map(identities.map((i) => [i.id, i.email]));
+
     return personas.map((p) => {
       const name =
         p.professional?.fullName ||
         p.professional?.businessName ||
         [p.user?.firstName, p.user?.surname].filter(Boolean).join(' ') ||
         p.user?.nickname ||
-        p.identity?.email ||
+        emailById.get(p.identityId) ||
         'Unknown';
 
       return {
         personaId: p.id,
         identityId: p.identityId,
         type: p.type,
-        email: p.identity?.email ?? null,
+        email: emailById.get(p.identityId) ?? null,
         name,
         role: p.user?.role ?? null,
         mobile: p.user?.mobile ?? p.professional?.phone ?? null,

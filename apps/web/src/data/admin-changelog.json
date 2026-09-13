@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-13-bc78b95d",
+    "date": "2026-09-13T22:24:17+08:00",
+    "title": "fix(admin): tolerate orphaned personas in /admin/people",
+    "summary": "fix(admin): tolerate orphaned personas in /admin/people",
+    "areas": [
+      "api"
+    ],
+    "commit": "bc78b95d",
+    "files": [
+      "apps/api/src/admin/people.controller.ts"
+    ]
+  },
+  {
     "id": "2026-09-13-b34b5ab4",
     "date": "2026-09-13T22:16:05+08:00",
     "title": "fix(admin): surface underlying error from /admin/people",
