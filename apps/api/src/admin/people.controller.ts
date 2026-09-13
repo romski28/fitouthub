@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseGuards, InternalServerErrorException, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 
@@ -24,6 +24,88 @@ export class AdminPeopleController {
       this.logger.error('admin/people query failed', message);
       throw new InternalServerErrorException(message);
     }
+  }
+
+  @Get(':personaId')
+  async findOne(@Param('personaId') personaId: string) {
+    try {
+      return await this.queryPerson(personaId);
+    } catch (err) {
+      const message = (err as Error)?.message ?? String(err);
+      this.logger.error('admin/people detail failed', message);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  private async queryPerson(personaId: string) {
+    const persona = await this.prisma.persona.findUnique({
+      where: { id: personaId },
+      select: {
+        id: true,
+        identityId: true,
+        type: true,
+        userId: true,
+        professionalId: true,
+        createdAt: true,
+      },
+    });
+    if (!persona) throw new NotFoundException('Person not found');
+
+    // Fetch related records separately (tolerates orphans / missing columns)
+    const [identity, user, professional] = await Promise.all([
+      persona.identityId
+        ? this.prisma.identity.findUnique({
+            where: { id: persona.identityId },
+            select: { email: true, emailVerified: true },
+          })
+        : Promise.resolve(null),
+      persona.userId
+        ? this.prisma.user.findUnique({
+            where: { id: persona.userId },
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              surname: true,
+              nickname: true,
+              chineseName: true,
+              role: true,
+              mobile: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          })
+        : Promise.resolve(null),
+      persona.professionalId
+        ? this.prisma.professional.findUnique({
+            where: { id: persona.professionalId },
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              businessName: true,
+              professionType: true,
+              status: true,
+              phone: true,
+              rating: true,
+              primaryTrade: true,
+              tradesOffered: true,
+              createdAt: true,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return {
+      personaId: persona.id,
+      identityId: persona.identityId,
+      type: persona.type,
+      email: identity?.email ?? user?.email ?? professional?.email ?? null,
+      emailVerified: identity?.emailVerified ?? false,
+      createdAt: persona.createdAt,
+      user,
+      professional,
+    };
   }
 
   private async queryPeople() {

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-13-0a378deb",
+    "date": "2026-09-13T22:40:47+08:00",
+    "title": "feat(admin): add adaptive person detail view (step 2)",
+    "summary": "feat(admin): add adaptive person detail view (step 2)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0a378deb",
+    "files": [
+      "apps/api/src/admin/people.controller.ts",
+      "apps/web/src/app/admin/people/[personaId]/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-49c4fce7",
     "date": "2026-09-13T22:34:42+08:00",
     "title": "fix(admin): show full persona list in People filter",
