@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-13-b322f36f",
+    "date": "2026-09-13T23:04:49+08:00",
+    "title": "feat(admin): add edit/delete actions and client shortcuts",
+    "summary": "feat(admin): add edit/delete actions and client shortcuts",
+    "areas": [
+      "web"
+    ],
+    "commit": "b322f36f",
+    "files": [
+      "apps/web/src/app/admin/people/[personaId]/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-1ec1f866",
     "date": "2026-09-13T22:52:26+08:00",
     "title": "fix(admin): route professionals to existing pro CRUD",

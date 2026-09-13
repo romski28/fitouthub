@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { useAuth } from "@/context/auth-context";
+import { ConfirmModal } from "@/components/confirm-modal";
 
 type Person = {
   personaId: string;
@@ -77,6 +78,7 @@ export default function AdminPeoplePage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [deleting, setDeleting] = useState<Person | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -106,6 +108,35 @@ export default function AdminPeoplePage() {
       setPeople([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleting || !accessToken) return;
+    const endpoint = deleting.professionalId
+      ? `${API_BASE_URL}/professionals/${deleting.professionalId}`
+      : deleting.userId
+        ? `${API_BASE_URL}/users/${deleting.userId}`
+        : null;
+    if (!endpoint) {
+      setDeleting(null);
+      return;
+    }
+    try {
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(`Delete failed: ${(body && body.message) || res.statusText}`);
+        return;
+      }
+      setDeleting(null);
+      await fetchPeople();
+    } catch (err) {
+      setError((err as Error).message || "Delete failed");
+      setDeleting(null);
     }
   };
 
@@ -191,7 +222,7 @@ export default function AdminPeoplePage() {
                 <th className="px-4 py-3 font-medium">Role / Type</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium">Manage</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -240,21 +271,26 @@ export default function AdminPeoplePage() {
                     {formatDate(p.createdAt)}
                   </td>
                   <td className="px-4 py-3">
-                    {p.professionalId ? (
+                    <div className="flex gap-1">
                       <Link
-                        href={`/admin/professionals?highlight=${encodeURIComponent(p.professionalId)}`}
-                        className="font-semibold text-purple-700 hover:underline"
+                        href={
+                          p.professionalId
+                            ? `/admin/professionals?highlight=${encodeURIComponent(p.professionalId)}`
+                            : `/admin/people/${encodeURIComponent(p.personaId)}`
+                        }
+                        className="rounded p-1.5 text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700"
+                        title="Edit"
                       >
-                        Manage
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </Link>
-                    ) : (
-                      <Link
-                        href={`/admin/people/${encodeURIComponent(p.personaId)}`}
-                        className="font-semibold text-slate-700 hover:underline"
+                      <button
+                        onClick={() => setDeleting(p)}
+                        className="rounded p-1.5 text-slate-500 transition hover:bg-rose-50 hover:text-rose-700"
+                        title="Delete"
                       >
-                        View
-                      </Link>
-                    )}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -262,6 +298,14 @@ export default function AdminPeoplePage() {
           </table>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleting}
+        onCancel={() => setDeleting(null)}
+        onConfirm={handleDelete}
+        title="Delete Person"
+        message={`Are you sure you want to delete ${deleting?.name ?? "this person"}? This action cannot be undone.`}
+      />
     </div>
   );
 }

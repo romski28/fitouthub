@@ -191,6 +191,13 @@ export default function AdminPersonDetailPage() {
     detail.email ||
     "Unknown";
 
+  const isClient =
+    detail.user?.role === "client" || detail.user?.role === "homeowner";
+  const clientFilter =
+    `${detail.user?.firstName || ""} ${detail.user?.surname || ""}`.trim() ||
+    detail.user?.email ||
+    "";
+
   return (
     <div className="space-y-6">
       <div>
@@ -292,6 +299,22 @@ export default function AdminPersonDetailPage() {
               {saving ? "Saving…" : "Save user"}
             </button>
           </div>
+          {isClient && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              <Link
+                href={`/admin/messaging?view=conversations&clientId=${encodeURIComponent(detail.user!.id)}`}
+                className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700"
+              >
+                Client Chats
+              </Link>
+              <Link
+                href={`/admin/projects?client=${encodeURIComponent(clientFilter)}`}
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+              >
+                Client Projects
+              </Link>
+            </div>
+          )}
         </section>
       ) : (
         <section className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">
