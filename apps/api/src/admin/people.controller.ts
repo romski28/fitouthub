@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, InternalServerErrorException, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../prisma.service';
 
@@ -12,10 +12,21 @@ import { PrismaService } from '../prisma.service';
 @Controller('admin/people')
 @UseGuards(AuthGuard('jwt'))
 export class AdminPeopleController {
+  private readonly logger = new Logger(AdminPeopleController.name);
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
   async findAll() {
+    try {
+      return await this.queryPeople();
+    } catch (err) {
+      const message = (err as Error)?.message ?? String(err);
+      this.logger.error('admin/people query failed', message);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  private async queryPeople() {
     const personas = await this.prisma.persona.findMany({
       select: {
         id: true,

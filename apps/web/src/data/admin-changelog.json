@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-13-b34b5ab4",
+    "date": "2026-09-13T22:16:05+08:00",
+    "title": "fix(admin): surface underlying error from /admin/people",
+    "summary": "fix(admin): surface underlying error from /admin/people",
+    "areas": [
+      "api"
+    ],
+    "commit": "b34b5ab4",
+    "files": [
+      "apps/api/src/admin/people.controller.ts"
+    ]
+  },
+  {
     "id": "2026-09-13-005e539e",
     "date": "2026-09-13T17:40:07+08:00",
     "title": "fix(admin): stop /admin/people 500 from missing Persona columns",
