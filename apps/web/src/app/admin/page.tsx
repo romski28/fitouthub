@@ -745,6 +745,12 @@ export default function AdminDashboardPage() {
 
   const dataControlCards = [
     {
+      title: "People",
+      description: "Every account across all personas in one searchable list.",
+      href: "/admin/people",
+      stat: "Unified directory",
+    },
+    {
       title: "Professionals",
       description: "Approve, review, and maintain professional records.",
       href: "/admin/professionals",

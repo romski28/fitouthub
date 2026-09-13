@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-13-ed571fa1",
+    "date": "2026-09-13T12:20:10+08:00",
+    "title": "feat(admin): add unified People directory (persona-aware)",
+    "summary": "feat(admin): add unified People directory (persona-aware)",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ed571fa1",
+    "files": [
+      "apps/api/src/admin/people.controller.ts",
+      "apps/api/src/app.module.ts",
+      "apps/web/src/app/admin/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-13-22e910b7",
     "date": "2026-09-13T10:27:24+08:00",
     "title": "feat(navbar): gate Professionals to authed users, hide Why Mimo when authed",

@@ -11,6 +11,7 @@ import { NextStepConfigController } from './projects/next-step-config.controller
 import { AdminI18nController } from './admin/admin-i18n.controller';
 import { TradeDistrictMatrixController } from './admin/trade-district-matrix.controller';
 import { NextStepCacheController } from './admin/next-step-cache.controller';
+import { AdminPeopleController } from './admin/people.controller';
 import { AdminActionService } from './projects/admin-action.service';
 import { ProjectStageService } from './projects/project-stage.service';
 import { ContractService } from './projects/contract.service';
@@ -105,6 +106,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     AdminI18nController,
     TradeDistrictMatrixController,
     NextStepCacheController,
+    AdminPeopleController,
     HolidaysController,
   ],
   providers: [
