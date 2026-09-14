@@ -30,12 +30,16 @@ function todayKey(): string {
 }
 
 export function TodayModalProvider({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn: clientLoggedIn, accessToken: clientToken } = useAuth();
+  const { isLoggedIn: clientLoggedIn, accessToken: clientToken, user } = useAuth();
   const { isLoggedIn: proLoggedIn, accessToken: proToken } = useProfessionalAuth();
+
+  // Back-office roles (admin + internal staff) have no daily digest.
+  const isBackOffice =
+    !!user && ['admin', 'surveyor', 'mimo_boh', 'project_manager'].includes(user.role);
 
   const role: 'client' | 'professional' | null = proLoggedIn
     ? 'professional'
-    : clientLoggedIn
+    : clientLoggedIn && !isBackOffice
       ? 'client'
       : null;
   const accessToken = proLoggedIn ? proToken : clientToken;

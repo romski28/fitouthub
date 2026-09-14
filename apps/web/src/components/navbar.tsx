@@ -85,6 +85,9 @@ export const Navbar: React.FC = () => {
   const showProfessionalAuthed = hydrated && profIsLoggedIn && professional;
   const isAdmin = Boolean(user && user.role === 'admin');
   const isPm = Boolean(user && user.role === 'project_manager');
+  const isBackOffice = Boolean(
+    user && ['admin', 'surveyor', 'mimo_boh', 'project_manager'].includes(user.role),
+  );
   const showProjectsLink = hydrated && isLoggedIn && !profIsLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showProfessionalsLink = hydrated && isLoggedIn && !profIsLoggedIn;
@@ -142,7 +145,7 @@ export const Navbar: React.FC = () => {
               </Link>
             ) : null}
 
-            {(showProjectsLink || showProfessionalProjectsLink) && (
+            {(showProjectsLink || showProfessionalProjectsLink) && !isBackOffice && (
               <button
                 type="button"
                 onClick={openToday}
@@ -345,7 +348,7 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
-            {(showProjectsLink || showProfessionalProjectsLink) && (
+            {(showProjectsLink || showProfessionalProjectsLink) && !isBackOffice && (
               <button
                 type="button"
                 onClick={openToday}
