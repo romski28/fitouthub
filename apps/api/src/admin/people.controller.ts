@@ -71,6 +71,9 @@ export class AdminPeopleController {
               chineseName: true,
               role: true,
               mobile: true,
+              locationPrimary: true,
+              locationSecondary: true,
+              locationTertiary: true,
               createdAt: true,
               updatedAt: true,
             },
@@ -96,6 +99,36 @@ export class AdminPeopleController {
         : Promise.resolve(null),
     ]);
 
+    const [propertyLinks, projectCount, chatCount] = await Promise.all([
+      this.prisma.propertyAccountLink.findMany({
+        where: { personaId },
+        include: {
+          property: {
+            select: {
+              id: true,
+              displayAddress: true,
+              buildingName: true,
+              unitNumber: true,
+              floorLevel: true,
+              blockTower: true,
+              street: true,
+            },
+          },
+        },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+      }),
+      persona.userId
+        ? this.prisma.project.count({
+            where: { OR: [{ userId: persona.userId }, { clientId: persona.userId }] },
+          })
+        : Promise.resolve(0),
+      persona.userId
+        ? this.prisma.privateChatThread.count({ where: { userId: persona.userId } })
+        : persona.professionalId
+          ? this.prisma.privateChatThread.count({ where: { professionalId: persona.professionalId } })
+          : Promise.resolve(0),
+    ]);
+
     return {
       personaId: persona.id,
       identityId: persona.identityId,
@@ -105,6 +138,21 @@ export class AdminPeopleController {
       createdAt: persona.createdAt,
       user,
       professional,
+      properties: propertyLinks.map((link) => ({
+        propertyId: link.propertyId,
+        role: link.role,
+        isPrimary: link.isPrimary,
+        displayAddress: link.property.displayAddress ?? link.property.buildingName ?? null,
+        buildingName: link.property.buildingName,
+        unitNumber: link.property.unitNumber,
+        floorLevel: link.property.floorLevel,
+        blockTower: link.property.blockTower,
+        street: link.property.street,
+      })),
+      counts: {
+        projects: projectCount,
+        chats: chatCount,
+      },
     };
   }
 

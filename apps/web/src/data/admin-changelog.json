@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-14-f246b15b",
+    "date": "2026-09-14T09:44:11+08:00",
+    "title": "feat(admin): surface account meta, property addresses, and counts",
+    "summary": "feat(admin): surface account meta, property addresses, and counts",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f246b15b",
+    "files": [
+      "apps/api/src/admin/people.controller.ts",
+      "apps/web/src/app/admin/people/[personaId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-14-f0d6022a",
     "date": "2026-09-14T09:29:44+08:00",
     "title": "feat(admin): add Chinese name + nickname, relabel Client persona as Tenant",

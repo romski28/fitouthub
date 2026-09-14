@@ -22,6 +22,9 @@ type PersonDetail = {
     chineseName: string | null;
     role: string;
     mobile: string | null;
+    locationPrimary: string | null;
+    locationSecondary: string | null;
+    locationTertiary: string | null;
     createdAt: string;
     updatedAt: string;
   } | null;
@@ -37,6 +40,21 @@ type PersonDetail = {
     tradesOffered: string[];
     createdAt: string;
   } | null;
+  properties: Array<{
+    propertyId: string;
+    role: string | null;
+    isPrimary: boolean;
+    displayAddress: string | null;
+    buildingName: string;
+    unitNumber: string | null;
+    floorLevel: string | null;
+    blockTower: string | null;
+    street: string | null;
+  }>;
+  counts: {
+    projects: number;
+    chats: number;
+  };
 };
 
 const PERSONA_LABELS: Record<string, string> = {
@@ -365,13 +383,13 @@ export default function AdminPersonDetailPage() {
                 href={`/admin/messaging?view=conversations&clientId=${encodeURIComponent(detail.user!.id)}`}
                 className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700"
               >
-                Client Chats
+                Client Chats ({detail.counts?.chats ?? 0})
               </Link>
               <Link
                 href={`/admin/projects?client=${encodeURIComponent(clientFilter)}`}
                 className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
               >
-                Client Projects
+                Client Projects ({detail.counts?.projects ?? 0})
               </Link>
             </div>
           )}
@@ -437,6 +455,78 @@ export default function AdminPersonDetailPage() {
           {PERSONA_LABELS[detail.type] ?? detail.type} profile fields are not yet editable here.
         </section>
       )}
+
+      {/* Account details (read-only) */}
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Account details
+        </h2>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs text-slate-400">Email verified</dt>
+            <dd className="text-sm text-slate-900">
+              {detail.emailVerified ? (
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">Verified</span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">Unverified</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">Primary location</dt>
+            <dd className="text-sm text-slate-900">{detail.user?.locationPrimary || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">Secondary location</dt>
+            <dd className="text-sm text-slate-900">{detail.user?.locationSecondary || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">Tertiary location</dt>
+            <dd className="text-sm text-slate-900">{detail.user?.locationTertiary || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">Created</dt>
+            <dd className="text-sm text-slate-900">{formatDate(detail.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">Last updated</dt>
+            <dd className="text-sm text-slate-900">{formatDate(detail.user?.updatedAt)}</dd>
+          </div>
+        </dl>
+      </section>
+
+      {/* Property addresses */}
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Property addresses
+        </h2>
+        {detail.properties?.length ? (
+          <ul className="mt-4 space-y-2">
+            {detail.properties.map((prop) => (
+              <li
+                key={prop.propertyId}
+                className="flex flex-wrap items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2"
+              >
+                <span className="text-sm text-slate-900">
+                  {prop.displayAddress || prop.buildingName || "Unnamed property"}
+                </span>
+                {prop.role && (
+                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
+                    {prop.role}
+                  </span>
+                )}
+                {prop.isPrimary && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                    Primary
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-sm text-slate-500">No property addresses on file.</p>
+        )}
+      </section>
 
       {saveStatus && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
