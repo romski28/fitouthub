@@ -80,6 +80,19 @@ const ROLE_OPTIONS = [
   "owner_occupier",
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+  client: "Tenant",
+  admin: "Admin",
+  professional: "Professional",
+  surveyor: "Surveyor",
+  mimo_boh: "Mimo BoH",
+  landlord: "Landlord",
+  property_manager: "Property Manager",
+  estate_agent: "Estate Agent",
+  project_delegate: "Project Delegate",
+  owner_occupier: "Owner Occupier",
+};
+
 function formatDate(date?: string): string {
   if (!date) return "—";
   try {
@@ -306,7 +319,7 @@ export default function AdminPersonDetailPage() {
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r} value={r}>
-                    {r}
+                    {ROLE_LABELS[r] ?? r}
                   </option>
                 ))}
               </select>

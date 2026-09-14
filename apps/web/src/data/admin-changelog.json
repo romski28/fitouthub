@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-14-1b2cb140",
+    "date": "2026-09-14T10:22:59+08:00",
+    "title": "feat(admin): model prospective columns, relabel client role to Tenant",
+    "summary": "feat(admin): model prospective columns, relabel client role to Tenant",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "1b2cb140",
+    "files": [
+      "apps/api/prisma/schema.prisma",
+      "apps/web/src/app/admin/people/[personaId]/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-14-f246b15b",
     "date": "2026-09-14T09:44:11+08:00",
     "title": "feat(admin): surface account meta, property addresses, and counts",

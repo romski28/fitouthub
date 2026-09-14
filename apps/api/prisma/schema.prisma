@@ -241,6 +241,14 @@ model User {
   role                            String                   @default("client")
   createdAt                       DateTime                 @default(now())
   updatedAt                       DateTime                 @updatedAt
+  lifecycleStatus                 String                   @default("active")
+  prospectiveSource               String?
+  prospectiveCreatedAt            DateTime?
+  prospectiveConvertedAt          DateTime?
+  prospectiveLastActivityAt       DateTime?
+  prospectiveBookingCount         Int                      @default(0)
+  lastSeenIpHash                  String?
+  lastSeenUaHash                  String?
   professional                    Professional?
   landlord                        Landlord?
   propertyManager                 PropertyManager?

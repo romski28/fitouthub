@@ -63,7 +63,7 @@ const CREATE_USER_FIELDS: FieldDefinition[] = [
     type: "select",
     value: "client",
     options: [
-      { label: "Client", value: "client" },
+      { label: "Tenant", value: "client" },
       { label: "Admin", value: "admin" },
       { label: "Professional", value: "professional" },
       { label: "Surveyor", value: "surveyor" },
