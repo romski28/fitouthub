@@ -95,6 +95,7 @@ export default function AdminPersonDetailPage() {
     surname: "",
     mobile: "",
     role: "",
+    password: "",
   });
 
   const fetchDetail = useCallback(async () => {
@@ -119,6 +120,7 @@ export default function AdminPersonDetailPage() {
           surname: data.user.surname ?? "",
           mobile: data.user.mobile ?? "",
           role: data.user.role ?? "",
+          password: "",
         });
       }
     } catch (err) {
@@ -159,6 +161,24 @@ export default function AdminPersonDetailPage() {
         setError(`HTTP ${res.status} — ${(body && body.message) || res.statusText}`);
         return;
       }
+
+      // Optional password reset
+      if (form.password && form.password.length >= 6) {
+        const pwRes = await fetch(`${API_BASE_URL}/users/${detail.user.id}/password`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password: form.password }),
+        });
+        if (!pwRes.ok) {
+          setSaveStatus(null);
+          setError("Profile saved, but password update failed.");
+          return;
+        }
+      }
+
       setSaveMessage("Saved.");
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(null), 1200);
@@ -291,6 +311,16 @@ export default function AdminPersonDetailPage() {
                 type="text"
                 value={form.mobile}
                 onChange={(e) => setForm((p) => ({ ...p, mobile: e.target.value }))}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-500"
+              />
+            </label>
+            <label className="space-y-1 text-sm sm:col-span-2">
+              <span>New password (leave blank to keep)</span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                placeholder="Minimum 6 characters"
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-500"
               />
             </label>

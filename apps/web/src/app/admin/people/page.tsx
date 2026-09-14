@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_BASE_URL } from "@/config/api";
 import { useAuth } from "@/context/auth-context";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { EditModal, FieldDefinition } from "@/components/edit-modal";
 
 type Person = {
   personaId: string;
@@ -50,6 +51,33 @@ const STATUS_TONES: Record<string, string> = {
 
 const ALL_PERSONA_TYPES = Object.keys(PERSONA_LABELS).sort();
 
+const CREATE_USER_FIELDS: FieldDefinition[] = [
+  { name: "email", label: "Email", type: "email", value: "", required: true },
+  { name: "firstName", label: "First Name", type: "text", value: "", required: true },
+  { name: "surname", label: "Surname", type: "text", value: "", required: true },
+  { name: "nickname", label: "Nickname", type: "text", value: "" },
+  { name: "password", label: "Password", type: "password", value: "", required: true, placeholder: "Minimum 6 characters" },
+  {
+    name: "role",
+    label: "Role",
+    type: "select",
+    value: "client",
+    options: [
+      { label: "Client", value: "client" },
+      { label: "Admin", value: "admin" },
+      { label: "Professional", value: "professional" },
+      { label: "Surveyor", value: "surveyor" },
+      { label: "Mimo BoH", value: "mimo_boh" },
+      { label: "Project Manager", value: "project_manager" },
+      { label: "Landlord", value: "landlord" },
+      { label: "Property Manager", value: "property_manager" },
+      { label: "Estate Agent", value: "estate_agent" },
+      { label: "Project Delegate", value: "project_delegate" },
+      { label: "Owner Occupier", value: "owner_occupier" },
+    ],
+  },
+];
+
 function formatDate(date?: string): string {
   if (!date) return "—";
   try {
@@ -79,6 +107,7 @@ export default function AdminPeoplePage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [deleting, setDeleting] = useState<Person | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -140,6 +169,27 @@ export default function AdminPeoplePage() {
     }
   };
 
+  const handleCreate = async (data: Record<string, any>) => {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nickname: String(data.nickname || "").trim() || undefined,
+        email: String(data.email || "").trim(),
+        firstName: data.firstName,
+        surname: data.surname,
+        password: data.password,
+        role: data.role || "client",
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error((body && body.message) || `Create failed (${res.status})`);
+    }
+    setCreatingNew(false);
+    await fetchPeople();
+  };
+
   const types = ALL_PERSONA_TYPES;
 
   const filtered = useMemo(() => {
@@ -162,12 +212,13 @@ export default function AdminPeoplePage() {
             Every account on the platform, regardless of persona.
           </p>
         </div>
-        <Link
-          href="/admin/users"
+        <button
+          type="button"
+          onClick={() => setCreatingNew(true)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Open legacy Users
-        </Link>
+          Create User
+        </button>
       </div>
 
       {/* Filters */}
@@ -305,6 +356,14 @@ export default function AdminPeoplePage() {
         onConfirm={handleDelete}
         title="Delete Person"
         message={`Are you sure you want to delete ${deleting?.name ?? "this person"}? This action cannot be undone.`}
+      />
+
+      <EditModal
+        isOpen={creatingNew}
+        onClose={() => setCreatingNew(false)}
+        title="Create User"
+        fields={CREATE_USER_FIELDS}
+        onSave={handleCreate}
       />
     </div>
   );

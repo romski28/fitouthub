@@ -763,12 +763,6 @@ export default function AdminDashboardPage() {
       stat: "Property records",
     },
     {
-      title: "Users",
-      description: "Client and admin account management.",
-      href: "/admin/users",
-      stat: "User records",
-    },
-    {
       title: "Trades",
       description: "Trade catalogue and service mapping controls.",
       href: "/admin/trades",
