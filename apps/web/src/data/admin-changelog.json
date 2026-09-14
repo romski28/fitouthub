@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-15-0c6af84a",
+    "date": "2026-09-15T00:38:36+08:00",
+    "title": "feat(api): add BACK_OFFICE persona, retire PROJECT_DELEGATE persona",
+    "summary": "feat(api): add BACK_OFFICE persona, retire PROJECT_DELEGATE persona",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "0c6af84a",
+    "files": [
+      "MANUAL_SQL_ADD_BACK_OFFICE_PERSONA.sql",
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/auth/jwt.strategy.ts"
+    ]
+  },
+  {
     "id": "2026-09-14-e694ba0f",
     "date": "2026-09-14T10:35:32+08:00",
     "title": "chore: enforce LF line endings for Prisma schema",

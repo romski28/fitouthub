@@ -93,14 +93,23 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         select: { userId: true },
       });
       if (persona?.userId) resolvedId = persona.userId;
-    } else if (payload.role === 'project_delegate') {
+    } else if (payload.role === 'admin' || payload.role === 'surveyor' || payload.role === 'mimo_boh' || payload.role === 'project_manager') {
+      // Back-office staff -> BACK_OFFICE persona (fall back to user by identityId)
       const persona = await (this.prisma as any).persona.findFirst({
-        where: { identityId: identity.id, type: 'PROJECT_DELEGATE' },
+        where: { identityId: identity.id, type: 'BACK_OFFICE' },
         select: { userId: true },
       });
-      if (persona?.userId) resolvedId = persona.userId;
+      if (persona?.userId) {
+        resolvedId = persona.userId;
+      } else {
+        const user = await (this.prisma as any).user.findFirst({
+          where: { identityId: identity.id },
+          select: { id: true },
+        });
+        if (user?.id) resolvedId = user.id;
+      }
     } else {
-      // Client / admin / surveyor / mimo_boh: resolve User.id from Persona or directly from Identity
+      // Client / project_delegate / owner_occupier: resolve User.id from Persona or fallback
       const persona = await (this.prisma as any).persona.findFirst({
         where: { identityId: identity.id, type: 'CLIENT' },
         select: { userId: true },
@@ -108,7 +117,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       if (persona?.userId) {
         resolvedId = persona.userId;
       } else {
-        // Fallback for roles without Persona rows (admin, surveyor, mimo_boh)
         const user = await (this.prisma as any).user.findFirst({
           where: { identityId: identity.id },
           select: { id: true },
@@ -125,8 +133,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         : payload.role === 'landlord' ? 'LANDLORD'
         : payload.role === 'property_manager' ? 'PROPERTY_MANAGER'
         : payload.role === 'estate_agent' ? 'ESTATE_AGENT'
-        : payload.role === 'project_delegate' ? 'PROJECT_DELEGATE'
         : payload.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : (payload.role === 'admin' || payload.role === 'surveyor' || payload.role === 'mimo_boh' || payload.role === 'project_manager') ? 'BACK_OFFICE'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.findFirst({
         where: { identityId: identity.id, type: personaType },

@@ -141,6 +141,7 @@ export class AuthService {
         : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
         : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
         : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : (dto.role === 'admin' || dto.role === 'surveyor' || dto.role === 'mimo_boh' || dto.role === 'project_manager') ? 'BACK_OFFICE'
         : 'CLIENT';
 
       user = await (this.prisma as any).user.create({
@@ -420,8 +421,8 @@ export class AuthService {
       const personaType = dto.role === 'landlord' ? 'LANDLORD'
         : dto.role === 'property_manager' ? 'PROPERTY_MANAGER'
         : dto.role === 'estate_agent' ? 'ESTATE_AGENT'
-        : dto.role === 'project_delegate' ? 'PROJECT_DELEGATE'
         : dto.role === 'owner_occupier' ? 'OWNER_OCCUPIER'
+        : (dto.role === 'admin' || dto.role === 'surveyor' || dto.role === 'mimo_boh' || dto.role === 'project_manager') ? 'BACK_OFFICE'
         : 'CLIENT';
       const persona = await (this.prisma as any).persona.create({
         data: {
@@ -457,7 +458,7 @@ export class AuthService {
           data: { estateAgentId: ea.id },
         });
       }
-      if (personaType === 'PROJECT_DELEGATE') {
+      if (dto.role === 'project_delegate') {
         const pd = await (this.prisma as any).projectDelegate.create({
           data: { userId: user.id, assistedClientId: user.id },
         });
