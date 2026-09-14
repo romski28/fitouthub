@@ -23,7 +23,7 @@ type Person = {
 };
 
 const PERSONA_LABELS: Record<string, string> = {
-  CLIENT: "Client",
+  CLIENT: "Tenant",
   PROFESSIONAL: "Professional",
   LANDLORD: "Landlord",
   ESTATE_AGENT: "Estate Agent",

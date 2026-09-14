@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-14-f0d6022a",
+    "date": "2026-09-14T09:29:44+08:00",
+    "title": "feat(admin): add Chinese name + nickname, relabel Client persona as Tenant",
+    "summary": "feat(admin): add Chinese name + nickname, relabel Client persona as Tenant",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "f0d6022a",
+    "files": [
+      "apps/api/src/users/dto/update-user.dto.ts",
+      "apps/web/src/app/admin/people/[personaId]/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-14-69ca778a",
     "date": "2026-09-14T08:59:03+08:00",
     "title": "feat(admin): pro list email, client password reset, create user, retire legacy users",

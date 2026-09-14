@@ -40,7 +40,7 @@ type PersonDetail = {
 };
 
 const PERSONA_LABELS: Record<string, string> = {
-  CLIENT: "Client",
+  CLIENT: "Tenant",
   PROFESSIONAL: "Professional",
   LANDLORD: "Landlord",
   ESTATE_AGENT: "Estate Agent",
@@ -93,6 +93,8 @@ export default function AdminPersonDetailPage() {
     email: "",
     firstName: "",
     surname: "",
+    chineseName: "",
+    nickname: "",
     mobile: "",
     role: "",
     password: "",
@@ -118,6 +120,8 @@ export default function AdminPersonDetailPage() {
           email: data.user.email ?? "",
           firstName: data.user.firstName ?? "",
           surname: data.user.surname ?? "",
+          chineseName: data.user.chineseName ?? "",
+          nickname: data.user.nickname ?? "",
           mobile: data.user.mobile ?? "",
           role: data.user.role ?? "",
           password: "",
@@ -151,6 +155,8 @@ export default function AdminPersonDetailPage() {
           email: form.email,
           firstName: form.firstName,
           surname: form.surname,
+          chineseName: form.chineseName.trim() || null,
+          nickname: form.nickname.trim() || undefined,
           mobile: form.mobile,
           role: form.role,
         }),
@@ -302,6 +308,24 @@ export default function AdminPersonDetailPage() {
                 type="text"
                 value={form.surname}
                 onChange={(e) => setForm((p) => ({ ...p, surname: e.target.value }))}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-500"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>Nickname (display name)</span>
+              <input
+                type="text"
+                value={form.nickname}
+                onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-500"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span>Chinese name</span>
+              <input
+                type="text"
+                value={form.chineseName}
+                onChange={(e) => setForm((p) => ({ ...p, chineseName: e.target.value }))}
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-500"
               />
             </label>

@@ -2,6 +2,8 @@ export class UpdateUserDto {
   email?: string;
   firstName?: string;
   surname?: string;
+  chineseName?: string | null;
+  nickname?: string;
   mobile?: string;
   locationPrimary?: string | null;
   locationSecondary?: string | null;
