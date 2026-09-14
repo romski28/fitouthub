@@ -235,7 +235,7 @@ export class PropertiesService {
       case 'ESTATE_AGENT':
         return 'multi';
       case 'WORKER':
-      case 'PROJECT_DELEGATE':
+      case 'BACK_OFFICE':
         return 'none';
       default:
         return 'multi';

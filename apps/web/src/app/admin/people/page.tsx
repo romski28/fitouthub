@@ -29,7 +29,7 @@ const PERSONA_LABELS: Record<string, string> = {
   ESTATE_AGENT: "Estate Agent",
   PROPERTY_MANAGER: "Property Manager",
   OWNER_OCCUPIER: "Owner Occupier",
-  PROJECT_DELEGATE: "Project Delegate",
+  BACK_OFFICE: "Back Office",
 };
 
 const PERSONA_TONES: Record<string, string> = {
@@ -39,7 +39,7 @@ const PERSONA_TONES: Record<string, string> = {
   ESTATE_AGENT: "bg-violet-100 text-violet-700 ring-violet-200",
   PROPERTY_MANAGER: "bg-cyan-100 text-cyan-800 ring-cyan-200",
   OWNER_OCCUPIER: "bg-emerald-100 text-emerald-800 ring-emerald-200",
-  PROJECT_DELEGATE: "bg-rose-100 text-rose-700 ring-rose-200",
+  BACK_OFFICE: "bg-indigo-100 text-indigo-700 ring-indigo-200",
 };
 
 const STATUS_TONES: Record<string, string> = {

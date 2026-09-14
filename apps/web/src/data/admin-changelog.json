@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-15-e01a7809",
+    "date": "2026-09-15T01:17:54+08:00",
+    "title": "feat(web,api): surface BACK_OFFICE persona, retire PROJECT_DELEGATE persona labels",
+    "summary": "feat(web,api): surface BACK_OFFICE persona, retire PROJECT_DELEGATE persona labels",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e01a7809",
+    "files": [
+      "apps/api/src/properties/properties.service.ts",
+      "apps/web/src/app/admin/people/[personaId]/page.tsx",
+      "apps/web/src/app/admin/people/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-f565342a",
     "date": "2026-09-15T01:11:20+08:00",
     "title": "feat(api): resolve BACK_OFFICE persona on login",

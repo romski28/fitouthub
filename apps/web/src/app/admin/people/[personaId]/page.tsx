@@ -64,7 +64,7 @@ const PERSONA_LABELS: Record<string, string> = {
   ESTATE_AGENT: "Estate Agent",
   PROPERTY_MANAGER: "Property Manager",
   OWNER_OCCUPIER: "Owner Occupier",
-  PROJECT_DELEGATE: "Project Delegate",
+  BACK_OFFICE: "Back Office",
 };
 
 const ROLE_OPTIONS = [
