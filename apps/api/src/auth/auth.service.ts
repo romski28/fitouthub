@@ -721,6 +721,16 @@ export class AuthService {
       profileId = user.id;
       role = 'owner_occupier';
       preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
+    } else if (selectedPersona.type === 'BACK_OFFICE') {
+      const user = await (this.prisma as any).user.findFirst({
+        where: { personaId: selectedPersona.id },
+        include: { notificationPreference: { select: { preferredLanguage: true } } },
+      });
+      if (!user) throw new UnauthorizedException('Back-office profile not found.');
+      profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');
+      profileId = user.id;
+      role = user.role || 'client';
+      preferredLanguage = user.notificationPreference?.preferredLanguage ?? 'en';
     } else {
       throw new UnauthorizedException(`Unknown persona type: ${selectedPersona.type}`);
     }
@@ -738,7 +748,7 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       persona: selectedPersona,
       personas: allPersonas,
-      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'OWNER_OCCUPIER' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE') ? profile : undefined,
+      user: (selectedPersona.type === 'CLIENT' || selectedPersona.type === 'OWNER_OCCUPIER' || selectedPersona.type === 'LANDLORD' || selectedPersona.type === 'PROPERTY_MANAGER' || selectedPersona.type === 'ESTATE_AGENT' || selectedPersona.type === 'PROJECT_DELEGATE' || selectedPersona.type === 'BACK_OFFICE') ? profile : undefined,
       professional: selectedPersona.type === 'PROFESSIONAL' ? profile : undefined,
       landlord: selectedPersona.type === 'LANDLORD' ? profile : undefined,
       propertyManager: selectedPersona.type === 'PROPERTY_MANAGER' ? profile : undefined,

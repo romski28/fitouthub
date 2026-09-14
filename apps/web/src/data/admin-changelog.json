@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-f565342a",
+    "date": "2026-09-15T01:11:20+08:00",
+    "title": "feat(api): resolve BACK_OFFICE persona on login",
+    "summary": "feat(api): resolve BACK_OFFICE persona on login",
+    "areas": [
+      "api"
+    ],
+    "commit": "f565342a",
+    "files": [
+      "apps/api/src/auth/auth.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-15-9965e526",
     "date": "2026-09-15T00:42:01+08:00",
     "title": "feat(web): hide Your day digest for back-office staff",
