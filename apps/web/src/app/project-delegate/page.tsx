@@ -18,7 +18,7 @@ type DelegateProject = {
 };
 
 export default function ProjectDelegatePage() {
-  const { user, isLoggedIn, accessToken } = useAuth();
+  const { isLoggedIn, accessToken } = useAuth();
   useRoleGuard(['project_delegate']);
 
   const [projects, setProjects] = useState<DelegateProject[]>([]);
@@ -76,16 +76,6 @@ export default function ProjectDelegatePage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
-        {isLoggedIn && user && (
-          <div className="mb-6 inline-block rounded-xl border border-rose-200 bg-rose-50 px-6 py-3 text-left">
-            <p className="text-xs font-semibold uppercase tracking-wide text-rose-700 mb-1">Signed in as delegate</p>
-            <p className="text-sm font-medium text-slate-800">
-              {user.firstName} {user.surname}
-            </p>
-            <p className="text-xs text-slate-500">{user.email}</p>
-          </div>
-        )}
-
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}

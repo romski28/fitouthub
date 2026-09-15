@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-338b70cc",
+    "date": "2026-09-15T14:58:34+08:00",
+    "title": "fix(web): remove redundant signed-in panel from delegate dashboard",
+    "summary": "fix(web): remove redundant signed-in panel from delegate dashboard",
+    "areas": [
+      "web"
+    ],
+    "commit": "338b70cc",
+    "files": [
+      "apps/web/src/app/project-delegate/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-63889068",
     "date": "2026-09-15T14:52:39+08:00",
     "title": "fix(web): show Your-day modal once per day/session, not every load",
