@@ -507,6 +507,27 @@ model DelegateInvite {
   @@index([status])
 }
 
+model ProjectAccessGrant {
+  id                String    @id @default(cuid())
+  token             String?   @unique
+  projectId         String
+  delegateUserId    String?
+  email             String?
+  grantedByClientId String
+  actorType         String    @default("delegate")
+  permissions       Json?     @default("{}")
+  task              String?
+  expiresAt         DateTime?
+  consumedAt        DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([delegateUserId])
+  @@index([email])
+  @@index([task])
+}
+
 model ProfessionalAvailability {
   id                    String    @id @default(cuid())
   professionalId        String

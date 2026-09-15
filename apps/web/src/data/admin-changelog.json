@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-09-15-6a61a2ef",
+    "date": "2026-09-15T14:08:07+08:00",
+    "title": "feat(delegation): project-scoped delegate access backend (A2a)",
+    "summary": "feat(delegation): project-scoped delegate access backend (A2a)",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "6a61a2ef",
+    "files": [
+      "MANUAL_SQL_ADD_PROJECT_ACCESS_GRANT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/delegates/delegate-project-access.controller.ts",
+      "apps/api/src/delegates/delegate-project-access.service.ts",
+      "apps/api/src/delegates/delegates.module.ts"
+    ]
+  },
+  {
     "id": "2026-09-15-34a9c42f",
     "date": "2026-09-15T13:01:12+08:00",
     "title": "fix(delegation): reject professional accounts from delegate invites",
