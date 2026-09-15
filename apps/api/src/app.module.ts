@@ -53,6 +53,7 @@ import { ReminderModule } from './reminders/reminder.module';
 import { PropertiesModule } from './properties/properties.module';
 import { WorkerInvitesModule } from './worker-invites/worker-invites.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { DelegatesModule } from './delegates/delegates.module';
 import { HolidaysController } from './config/holidays.controller';
 import { PlatformFeeService } from './common/platform-fee.service';
 
@@ -87,6 +88,7 @@ import { PlatformFeeService } from './common/platform-fee.service';
     PropertiesModule,
     WorkerInvitesModule,
     ContactsModule,
+    DelegatesModule,
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',

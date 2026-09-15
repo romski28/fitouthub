@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-09-15-907b3b3e",
+    "date": "2026-09-15T12:26:24+08:00",
+    "title": "feat(delegation): client delegate invite flow (Phase A1)",
+    "summary": "feat(delegation): client delegate invite flow (Phase A1)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "907b3b3e",
+    "files": [
+      "CLIENT_DELEGATION_PLAN.md",
+      "MANUAL_SQL_ADD_DELEGATE_INVITE.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/app.module.ts",
+      "apps/api/src/delegates/delegate-invites.controller.ts",
+      "apps/api/src/delegates/delegate-invites.service.ts",
+      "apps/api/src/delegates/delegates.module.ts",
+      "apps/web/src/app/join-delegate/page.tsx",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/delegate-manager.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-0b398b26",
     "date": "2026-09-15T12:08:30+08:00",
     "title": "fix(api): prevent professional self-invite for workers",

@@ -15,6 +15,7 @@ import { API_BASE_URL } from '@/config/api';
 import { fetchWithRetry } from '@/lib/http';
 import { PasswordInput } from '@/components/password-input';
 import { AddressManager } from '@/components/address-manager';
+import { DelegateManager } from '@/components/delegate-manager';
 
 const addressModeForRole = (role?: string): 'single' | 'multi' | 'none' => {
   switch (role) {
@@ -558,6 +559,14 @@ export default function ProfilePage() {
             <p className="mt-2 text-sm text-slate-700">Your property addresses, used for site inspections and project matching.</p>
             <AddressManager accessToken={accessToken || ''} mode={addressModeForRole(user?.role)} />
           </section>
+
+          {user?.role === 'client' && (
+            <section className={paperCardClassName}>
+              <h2 className="text-xl font-bold text-slate-900">Delegates</h2>
+              <p className="mt-2 text-sm text-slate-700">Invite a family member or helper to assist with your projects.</p>
+              <DelegateManager accessToken={accessToken || ''} />
+            </section>
+          )}
 
           <section className={paperCardClassName}>
             <h2 className="mt-1 text-xl font-bold text-slate-900">Account controls</h2>

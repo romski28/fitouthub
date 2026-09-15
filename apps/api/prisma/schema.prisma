@@ -281,6 +281,8 @@ model User {
   escrowCheckoutOtpChallenges EscrowCheckoutOtpChallenge[]
   acProjects                  AcProject[]
   projectDelegates            ProjectDelegate[]            @relation("DelegateAssistsClient")
+  delegateInvitesSent         DelegateInvite[]            @relation("DelegateInviteAssistedClient")
+  delegateInvitesReceived     DelegateInvite[]            @relation("DelegateInviteDelegateUser")
 }
 
 model Tradesman {
@@ -480,6 +482,29 @@ model ProjectDelegate {
   persona            Persona?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+model DelegateInvite {
+  id               String   @id @default(cuid())
+  token            String   @unique @default(cuid())
+  email            String
+  assistedClientId String
+  relationshipType String   @default("family")
+  status           String   @default("pending") // pending | accepted | revoked | expired
+  name             String?
+  phone            String?
+  notes            String?
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  delegateUserId   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  assistedClient User   @relation("DelegateInviteAssistedClient", fields: [assistedClientId], references: [id], onDelete: Cascade)
+  delegateUser   User?  @relation("DelegateInviteDelegateUser", fields: [delegateUserId], references: [id], onDelete: SetNull)
+
+  @@index([assistedClientId])
+  @@index([status])
 }
 
 model ProfessionalAvailability {
