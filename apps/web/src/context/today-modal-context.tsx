@@ -57,7 +57,6 @@ export function TodayModalProvider({ children }: { children: React.ReactNode }) 
     if (!role || !accessToken) {
       setItems([]);
       setCount(0);
-      hasAutoShownRef.current = false;
       return;
     }
 
@@ -74,13 +73,14 @@ export function TodayModalProvider({ children }: { children: React.ReactNode }) 
         setItems(list);
         setCount(list.length);
 
-        // Auto-show only ONCE per login, not on every token refresh.
-        if (hasAutoShownRef.current) return;
+        // Auto-show once per session (ref), and only once per day (localStorage
+        // date) unless the user opted into "always show on login".
+        if (hasAutoShownRef.current || list.length === 0) return;
         hasAutoShownRef.current = true;
 
         const alwaysShow = localStorage.getItem('today_always_show') === '1';
-        const seen = localStorage.getItem(SEEN_KEY);
-        if (alwaysShow || (list.length > 0 && seen !== todayKey())) {
+        const seenToday = localStorage.getItem(SEEN_KEY) === todayKey();
+        if (alwaysShow || !seenToday) {
           setIsOpen(true);
           localStorage.setItem(SEEN_KEY, todayKey());
         }

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-63889068",
+    "date": "2026-09-15T14:52:39+08:00",
+    "title": "fix(web): show Your-day modal once per day/session, not every load",
+    "summary": "fix(web): show Your-day modal once per day/session, not every load",
+    "areas": [
+      "web"
+    ],
+    "commit": "63889068",
+    "files": [
+      "apps/web/src/context/today-modal-context.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-54c1d6d2",
     "date": "2026-09-15T14:41:50+08:00",
     "title": "fix(web): route delegate projects nav to delegate dashboard",
