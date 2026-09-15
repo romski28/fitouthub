@@ -23,6 +23,15 @@ export class WorkerInvitesService {
     const cleanEmail = (input.email || '').trim().toLowerCase();
     if (!cleanEmail) throw new BadRequestException('Email is required');
 
+    // Self-invite guard: a professional cannot invite themselves.
+    const employer = await this.prisma.professional.findUnique({
+      where: { id: professionalId },
+      select: { email: true },
+    });
+    if (employer?.email && employer.email.trim().toLowerCase() === cleanEmail) {
+      throw new BadRequestException('You cannot invite yourself');
+    }
+
     const trades = Array.isArray(input.trades)
       ? [...new Set(input.trades.map((t) => String(t).trim()).filter(Boolean))]
       : [];

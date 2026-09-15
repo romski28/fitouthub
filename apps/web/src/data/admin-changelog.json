@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-0b398b26",
+    "date": "2026-09-15T12:08:30+08:00",
+    "title": "fix(api): prevent professional self-invite for workers",
+    "summary": "fix(api): prevent professional self-invite for workers",
+    "areas": [
+      "api"
+    ],
+    "commit": "0b398b26",
+    "files": [
+      "apps/api/src/worker-invites/worker-invites.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-15-2a2b08a5",
     "date": "2026-09-15T09:12:48+08:00",
     "title": "feat(web,api): surface assisted client / employer on profiles, drop eyebrow titles",
