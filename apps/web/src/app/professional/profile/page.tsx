@@ -527,6 +527,11 @@ export default function ProfessionalProfilePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(185,78,45,0.92)]">Professional Workspace</p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">My Profile</h1>
             <p className="mt-2 text-sm text-slate-700">Manage your professional details, coverage, and trust signals in one place.</p>
+            {normalizedProfessionType === 'worker' && professional?.employer && (
+              <p className="mt-2 text-sm text-slate-900">
+                Works for: <span className="font-semibold">{professional.employer.businessName || professional.employer.fullName || professional.employer.email}</span>
+              </p>
+            )}
           </div>
           <button
             type="button"

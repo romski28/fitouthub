@@ -25,6 +25,12 @@ interface User {
   locationPrimary?: string | null;
   locationSecondary?: string | null;
   locationTertiary?: string | null;
+  assistedClient?: {
+    firstName: string | null;
+    surname: string | null;
+    nickname: string | null;
+    email: string;
+  } | null;
 }
 
 interface Persona {

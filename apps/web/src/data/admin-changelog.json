@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-09-15-2a2b08a5",
+    "date": "2026-09-15T09:12:48+08:00",
+    "title": "feat(web,api): surface assisted client / employer on profiles, drop eyebrow titles",
+    "summary": "feat(web,api): surface assisted client / employer on profiles, drop eyebrow titles",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "2a2b08a5",
+    "files": [
+      "apps/api/src/auth/auth.service.ts",
+      "apps/api/src/professional-auth/professional-auth.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/context/auth-context.tsx",
+      "apps/web/src/context/professional-auth-context.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-e01a7809",
     "date": "2026-09-15T01:17:54+08:00",
     "title": "feat(web,api): surface BACK_OFFICE persona, retire PROJECT_DELEGATE persona labels",

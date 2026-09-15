@@ -20,6 +20,12 @@ export interface Professional {
   professionType?: string;
   status?: string;
   preferredLanguage?: string;
+  employer?: {
+    id: string;
+    businessName?: string | null;
+    fullName?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 interface Persona {

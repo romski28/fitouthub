@@ -44,9 +44,18 @@ export class AuthService {
       locationPrimary?: string | null;
       locationSecondary?: string | null;
       locationTertiary?: string | null;
+      projectDelegate?: {
+        assistedClient?: {
+          firstName: string | null;
+          surname: string | null;
+          nickname: string | null;
+          email: string;
+        } | null;
+      } | null;
     },
     preferredLanguage: string,
   ) {
+    const assisted = user.projectDelegate?.assistedClient;
     return {
       id: user.id,
       nickname: user.nickname,
@@ -58,6 +67,14 @@ export class AuthService {
       locationPrimary: user.locationPrimary ?? null,
       locationSecondary: user.locationSecondary ?? null,
       locationTertiary: user.locationTertiary ?? null,
+      assistedClient: assisted
+        ? {
+            firstName: assisted.firstName ?? null,
+            surname: assisted.surname ?? null,
+            nickname: assisted.nickname ?? null,
+            email: assisted.email,
+          }
+        : null,
     };
   }
 
@@ -648,7 +665,16 @@ export class AuthService {
     if (selectedPersona.type === 'CLIENT') {
       const user = await (this.prisma as any).user.findFirst({
         where: { personaId: selectedPersona.id },
-        include: { notificationPreference: { select: { preferredLanguage: true } } },
+        include: {
+          notificationPreference: { select: { preferredLanguage: true } },
+          projectDelegate: {
+            include: {
+              assistedClient: {
+                select: { firstName: true, surname: true, nickname: true, email: true },
+              },
+            },
+          },
+        },
       });
       if (!user) throw new UnauthorizedException('Client profile not found.');
       profile = this.buildAuthUserPayload(user, user.notificationPreference?.preferredLanguage ?? 'en');

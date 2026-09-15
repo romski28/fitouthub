@@ -410,6 +410,14 @@ export class ProfessionalAuthService {
             preferredLanguage: true,
           },
         },
+        employer: {
+          select: {
+            id: true,
+            businessName: true,
+            fullName: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -473,6 +481,14 @@ export class ProfessionalAuthService {
         status: professional.status,
         preferredLanguage:
           professional.notificationPreferences?.preferredLanguage ?? 'en',
+        employer: professional.employer
+          ? {
+              id: professional.employer.id,
+              businessName: professional.employer.businessName,
+              fullName: professional.employer.fullName,
+              email: professional.employer.email,
+            }
+          : null,
       },
     };
   }

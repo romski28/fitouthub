@@ -314,7 +314,6 @@ export default function ProfilePage() {
         <div className="overflow-hidden rounded-[32px] border border-[rgba(120,53,15,0.12)] bg-[rgba(239,231,207,0.76)] px-6 py-7 shadow-[0_20px_60px_rgba(81,55,32,0.06)] backdrop-blur-sm">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ff7f50]">Client Workspace</p>
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{t('title')}</h1>
               <p className="mt-2 text-sm text-slate-700">{t('subtitle')}</p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -345,7 +344,6 @@ export default function ProfilePage() {
             <section className={paperCardClassName}>
               <div className="mb-6 flex flex-col gap-3 border-b border-[rgba(120,53,15,0.1)] pb-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Profile details</p>
                   <h2 className="mt-1 text-2xl font-bold text-slate-900">{t('accountInfo')}</h2>
                 </div>
                 <div className="min-w-[180px]">
@@ -406,7 +404,6 @@ export default function ProfilePage() {
 
             <aside className="space-y-6">
               <section className={paperCardClassName}>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Account snapshot</p>
                 <h2 className="mt-1 text-xl font-bold text-slate-900">{t('accountDetails')}</h2>
                 <div className="mt-5 space-y-4 text-sm text-slate-700">
                   <div>
@@ -415,6 +412,14 @@ export default function ProfilePage() {
                       {user.role === 'professional' ? 'Contractor' : user.role === 'reseller' ? 'Reseller' : user.role === 'surveyor' ? 'Surveyor' : user.role === 'mimo_boh' ? 'Operations' : user.role === 'admin' ? 'Admin' : 'Client'}
                     </span>
                   </div>
+                  {user.role === 'project_delegate' && user.assistedClient && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Assisting</p>
+                      <p className="mt-2 text-sm text-slate-900">
+                        {[user.assistedClient.firstName, user.assistedClient.surname].filter(Boolean).join(' ') || user.assistedClient.nickname || user.assistedClient.email}
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{t('userId')}</p>
                     <p className="mt-2 break-all font-mono text-xs text-slate-900">{user.id}</p>
@@ -431,7 +436,6 @@ export default function ProfilePage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <section className={paperCardClassName}>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Preferences</p>
               <h2 className="mt-1 text-xl font-bold text-slate-900">Notification preferences</h2>
               <div className="mt-5 space-y-5">
                 <label className="flex items-start gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-4 text-sm text-slate-700 shadow-sm">
@@ -499,7 +503,6 @@ export default function ProfilePage() {
             </section>
 
             <section className={paperCardClassName}>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Default browsing area</p>
               <h2 className="mt-1 text-xl font-bold text-slate-900">{t('defaultLocation')}</h2>
               <p className="mt-2 text-sm text-slate-700">{t('defaultLocationHint')}</p>
               <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.74)] p-4 shadow-sm">
@@ -551,14 +554,12 @@ export default function ProfilePage() {
                 ← Back to site inspection
               </button>
             )}
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Addresses</p>
             <h2 className="mt-1 text-xl font-bold text-slate-900">My addresses</h2>
             <p className="mt-2 text-sm text-slate-700">Your property addresses, used for site inspections and project matching.</p>
             <AddressManager accessToken={accessToken || ''} mode={addressModeForRole(user?.role)} />
           </section>
 
           <section className={paperCardClassName}>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Session</p>
             <h2 className="mt-1 text-xl font-bold text-slate-900">Account controls</h2>
             <p className="mt-2 text-sm text-slate-700">High-impact actions should sit here. Delete account can be wired later once the correct confirmation flow is ready.</p>
             <button
@@ -587,7 +588,6 @@ export default function ProfilePage() {
             <div className="w-full max-w-md rounded-[28px] border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.96)] p-6 shadow-[0_30px_80px_rgba(33,24,16,0.28)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#ff7f50]">Security</p>
                   <h2 className="mt-1 text-2xl font-bold text-slate-900">Change password</h2>
                   <p className="mt-2 text-sm text-slate-700">Set a new password separately from your profile details so account updates stay focused.</p>
                 </div>
