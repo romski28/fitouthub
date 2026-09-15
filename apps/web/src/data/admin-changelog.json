@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-09-15-7525b8b1",
+    "date": "2026-09-15T14:13:59+08:00",
+    "title": "feat(delegation): delegate access UI + task-state endpoint (A2b)",
+    "summary": "feat(delegation): delegate access UI + task-state endpoint (A2b)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "7525b8b1",
+    "files": [
+      "CLIENT_DELEGATION_PLAN.md",
+      "apps/api/src/delegates/delegate-project-access.controller.ts",
+      "apps/web/src/app/delegate-project-access/page.tsx",
+      "apps/web/src/app/delegate-project/[projectId]/page.tsx",
+      "apps/web/src/app/project-delegate/page.tsx",
+      "apps/web/src/components/delegate-access-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-6a61a2ef",
     "date": "2026-09-15T14:08:07+08:00",
     "title": "feat(delegation): project-scoped delegate access backend (A2a)",

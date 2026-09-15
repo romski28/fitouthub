@@ -28,6 +28,13 @@ export class DelegateProjectAccessController {
     return this.delegateProjectAccessService.list(projectId, this.userId(req));
   }
 
+  @Get('projects/:projectId/delegate-access/task-state')
+  @UseGuards(AuthGuard('jwt'))
+  async taskState(@Param('projectId') projectId: string, @Request() req: any) {
+    this.userId(req);
+    return this.delegateProjectAccessService.getSiteInspectionTaskState(projectId);
+  }
+
   @Post('projects/:projectId/delegate-access/:grantId/revoke')
   @UseGuards(AuthGuard('jwt'))
   async revoke(

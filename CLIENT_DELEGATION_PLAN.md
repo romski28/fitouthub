@@ -232,3 +232,38 @@ WHERE "userId" = '<delegate-user-id>';
 - **Landlord / Property Manager / Mimo-PM** — additive `actorType` values + permission templates (no migration needed).
 - **Estate agent** — separate read-only "records share".
 - **Financial control** — never for delegates; future for landlord/Mimo-PM only.
+
+---
+
+## 7. A1 refinements (next)
+
+### 7.1 Lifecycle clarity
+
+Two concepts need distinct lifecycles:
+
+- **Invite** (`DelegateInvite`): `pending → accepted | revoked | expired`.
+- **Delegate link** (`ProjectDelegate`): `active ↔ revoked` (currently has **no** status — "revoke" only applies to pending invites).
+
+Add a `revokedAt` column to `ProjectDelegate` (nullable) so the relationship can be revoked and reinstated, distinct from the invite.
+
+### 7.2 Reinstate + re-invite
+
+- Revoked **invite** → "Re-invite" action: reactivate to `pending` with a fresh token + 7-day TTL.
+- Revoked **delegate link** → "Reinstate" action: clear `revokedAt`.
+
+### 7.3 Re-invite-after-revoke UX
+
+**Change + inform** (toast "Invite reinstated for X"). Not silent (no feedback) and not a confirm dialog (too heavy for a reversible action).
+
+### 7.4 Re-invite decision tree (complete)
+
+| Case | Behaviour |
+|---|---|
+| Self email | reject ("cannot invite yourself") |
+| Professional email | reject ("professional account") |
+| User with role ≠ `project_delegate` | reject ("different role") |
+| Already my active delegate | inform ("already your delegate"), no duplicate |
+| Delegate of another client (`userId @unique`) | reject ("already assisting another client") |
+| Revoked invite (from me) | reinstate to `pending` + inform |
+| Not on platform | new invite |
+

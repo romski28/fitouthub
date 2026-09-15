@@ -1,0 +1,181 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
+import { API_BASE_URL } from '@/config/api';
+
+type DelegateProject = {
+  project: {
+    id: string;
+    projectName: string;
+    clientName: string;
+    region: string;
+    notes?: string | null;
+    endDate?: string | null;
+    status?: string | null;
+    currentStage?: string | null;
+    property?: {
+      displayAddress?: string | null;
+      buildingName?: string | null;
+      unitNumber?: string | null;
+      floorLevel?: string | null;
+      blockTower?: string | null;
+      street?: string | null;
+    } | null;
+  };
+  access?: { id: string; accessType?: 'ongoing' | 'magic'; task?: string | null; isOngoing?: boolean; permissions?: Record<string, boolean> | null };
+  siteInspection?: { active: boolean; phase?: 'booking' | 'check_in' | null };
+};
+
+const STAGE_LABELS: Record<string, string> = {
+  CREATED: 'Project created',
+  BIDDING_ACTIVE: 'Bidding',
+  SITE_VISIT_SCHEDULED: 'Site visit scheduled',
+  SITE_VISIT_COMPLETE: 'Site visit complete',
+  QUOTE_RECEIVED: 'Quote received',
+  BIDDING_CLOSED: 'Bidding closed',
+  CONTRACT_PHASE: 'Contract phase',
+  PRE_WORK: 'Pre-work',
+  WORK_IN_PROGRESS: 'Work in progress',
+  MILESTONE_PENDING: 'Milestone pending',
+  PAYMENT_RELEASED: 'Payment released',
+  NEAR_COMPLETION: 'Near completion',
+  FINAL_INSPECTION: 'Final inspection',
+  COMPLETE: 'Complete',
+  WARRANTY_PERIOD: 'Warranty',
+  CLOSED: 'Closed',
+  PAUSED: 'Paused',
+  DISPUTED: 'Disputed',
+};
+
+export default function DelegateProjectPage() {
+  const params = useParams<{ projectId: string }>();
+  const projectId = params?.projectId || '';
+  const router = useRouter();
+  const { accessToken } = useAuth();
+
+  const [data, setData] = useState<DelegateProject | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!projectId || !accessToken) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/client/delegate-project/${projectId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error((body && body.message) || `HTTP ${res.status}`);
+      }
+      setData((await res.json()) as DelegateProject);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, accessToken]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5EEDE]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5EEDE] px-4">
+        <div className="w-full max-w-md rounded-2xl border border-[#D4C8A0] bg-white p-6 text-center">
+          <h1 className="text-lg font-bold text-slate-900">Project unavailable</h1>
+          <p className="mt-2 text-sm text-slate-600">{error || 'No project found'}</p>
+          <button onClick={() => router.replace('/project-delegate')} className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+            Back to my projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { project, access, siteInspection } = data;
+  const stage = project.currentStage ? STAGE_LABELS[String(project.currentStage).toUpperCase()] || String(project.currentStage).replace(/_/g, ' ') : null;
+
+  return (
+    <div className="min-h-screen bg-[#F5EEDE]">
+      <header className="border-b border-[#D4C8A0] bg-white/60 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🤝</span>
+            <h1 className="text-xl font-bold text-slate-900">{project.projectName}</h1>
+          </div>
+          <Link href="/project-delegate" className="rounded-lg border border-[#D4C8A0] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white transition">
+            My projects
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-6 py-8 space-y-6">
+        <div className="rounded-3xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.84)] p-8 shadow-[0_18px_40px_rgba(81,55,32,0.05)] backdrop-blur-sm">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Client</dt>
+              <dd className="mt-1 text-sm text-slate-900">{project.clientName}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Region</dt>
+              <dd className="mt-1 text-sm text-slate-900">{project.region}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stage</dt>
+              <dd className="mt-1 text-sm text-slate-900">{stage || '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Access</dt>
+              <dd className="mt-1 text-sm text-slate-900">{access?.isOngoing ? 'Ongoing' : access?.task === 'site_inspection' ? 'Site inspection (48h)' : 'Scoped'}</dd>
+            </div>
+            {project.property && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Address</dt>
+                <dd className="mt-1 text-sm text-slate-900">
+                  {[project.property.blockTower, project.property.street, project.property.buildingName, project.property.unitNumber].filter(Boolean).join(', ') || project.property.displayAddress || '—'}
+                </dd>
+              </div>
+            )}
+            {project.notes && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</dt>
+                <dd className="mt-1 text-sm text-slate-700">{project.notes}</dd>
+              </div>
+            )}
+          </dl>
+
+          {siteInspection && (
+            <div className="mt-6 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.74)] p-5">
+              <p className="text-sm font-semibold text-slate-800">Site inspection</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {siteInspection.active
+                  ? siteInspection.phase === 'check_in'
+                    ? 'A visit is approved — ready to check in on site.'
+                    : 'A visit slot can be booked.'
+                  : 'Site inspection is not currently active.'}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-8 rounded-xl border border-dashed border-[#D4C8A0] px-5 py-4 text-sm text-slate-500">
+            On-site actions (QR check-in, progress reporting) are coming in the next update.
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
