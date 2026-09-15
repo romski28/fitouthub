@@ -27,6 +27,7 @@ import { ClientFinancialsTab } from '@/app/projects/[id]/tabs/financials-tab';
 import { MediaTab } from '@/app/projects/[id]/tabs/media-tab';
 import { ChatTab } from '@/app/projects/[id]/tabs/chat-tab';
 import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/assist-request-modal';
+import { DelegateAccessModal } from '@/components/delegate-access-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { PostProjectSurveyModal } from '@/components/post-project-survey-modal';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
@@ -315,6 +316,7 @@ export default function ClientProjectDetailPage() {
   const [sharedContact, setSharedContact] = useState<{ name: string; phone: string; email: string } | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const [delegateAccessOpen, setDelegateAccessOpen] = useState(false);
 
   // UX feedback survey — shown once per project after first milestone payment is released
   const [showUxFeedback, setShowUxFeedback] = useState(false);
@@ -2274,6 +2276,12 @@ export default function ClientProjectDetailPage() {
                 </p>
               </div>
               <div className="flex flex-shrink-0 flex-wrap items-center gap-2 self-start lg:pt-1">
+                <button
+                  onClick={() => setDelegateAccessOpen(true)}
+                  className="inline-flex h-9 items-center justify-center rounded-xl border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.9)] px-4 text-sm font-semibold text-slate-700 transition hover:bg-[rgba(255,250,240,1)]"
+                >
+                  🤝 Delegate access
+                </button>
                 {(projectStatus === 'withdrawn' || (!project.professionals?.some((pp) => pp.status === 'awarded') && projectStatus !== 'withdrawn')) && (
                   projectStatus === 'withdrawn' ? (
                     <span className="inline-flex h-9 items-center rounded-full border border-slate-300 bg-slate-100 px-3 text-xs font-semibold text-slate-700">
@@ -2817,6 +2825,13 @@ export default function ClientProjectDetailPage() {
         projectName={project?.projectName}
         context="active"
         submitPrefix="Request"
+      />
+
+      <DelegateAccessModal
+        accessToken={accessToken || ''}
+        projectId={projectId}
+        isOpen={delegateAccessOpen}
+        onClose={() => setDelegateAccessOpen(false)}
       />
 
       {showUxFeedback && (

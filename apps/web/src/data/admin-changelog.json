@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-55b338bc",
+    "date": "2026-09-15T14:24:18+08:00",
+    "title": "feat(delegation): add Delegate access trigger to client project page",
+    "summary": "feat(delegation): add Delegate access trigger to client project page",
+    "areas": [
+      "web"
+    ],
+    "commit": "55b338bc",
+    "files": [
+      "apps/web/src/app/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-7525b8b1",
     "date": "2026-09-15T14:13:59+08:00",
     "title": "feat(delegation): delegate access UI + task-state endpoint (A2b)",
