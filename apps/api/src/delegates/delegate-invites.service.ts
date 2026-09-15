@@ -32,12 +32,25 @@ export class DelegateInvitesService {
       throw new BadRequestException('You cannot invite yourself');
     }
 
-    // Role filter: if already on the platform, it must be a delegate.
-    const existing = await this.prisma.user.findUnique({
-      where: { email: cleanEmail },
-      select: { id: true, role: true },
-    });
-    if (existing && existing.role !== 'project_delegate') {
+    // Role filter: only a project_delegate User, or an email not on the platform.
+    const [existingUser, existingProfessional] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { email: cleanEmail },
+        select: { id: true, role: true },
+      }),
+      this.prisma.professional.findUnique({
+        where: { email: cleanEmail },
+        select: { id: true },
+      }),
+    ]);
+
+    if (existingProfessional) {
+      throw new BadRequestException(
+        'This email belongs to a professional account and cannot be invited as a delegate',
+      );
+    }
+
+    if (existingUser && existingUser.role !== 'project_delegate') {
       throw new BadRequestException(
         'This email is already registered on the platform with a different role',
       );

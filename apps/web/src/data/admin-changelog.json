@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-15-34a9c42f",
+    "date": "2026-09-15T13:01:12+08:00",
+    "title": "fix(delegation): reject professional accounts from delegate invites",
+    "summary": "fix(delegation): reject professional accounts from delegate invites",
+    "areas": [
+      "api"
+    ],
+    "commit": "34a9c42f",
+    "files": [
+      "apps/api/src/delegates/delegate-invites.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-15-907b3b3e",
     "date": "2026-09-15T12:26:24+08:00",
     "title": "feat(delegation): client delegate invite flow (Phase A1)",
