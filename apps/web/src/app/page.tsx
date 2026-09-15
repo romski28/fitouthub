@@ -67,6 +67,10 @@ export default function Home() {
       router.replace('/professional-projects');
       return;
     }
+    if (user && user.role === 'project_delegate') {
+      router.replace('/project-delegate');
+      return;
+    }
   }, [user, profIsLoggedIn, router]);
 
 

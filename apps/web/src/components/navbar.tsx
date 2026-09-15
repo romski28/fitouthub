@@ -88,6 +88,7 @@ export const Navbar: React.FC = () => {
   const isBackOffice = Boolean(
     user && ['admin', 'surveyor', 'mimo_boh', 'project_manager'].includes(user.role),
   );
+  const isDelegate = Boolean(user && user.role === 'project_delegate');
   const showProjectsLink = hydrated && isLoggedIn && !profIsLoggedIn;
   const showProfessionalProjectsLink = hydrated && profIsLoggedIn;
   const showProfessionalsLink = hydrated && isLoggedIn && !profIsLoggedIn;
@@ -135,7 +136,7 @@ export const Navbar: React.FC = () => {
               {t('docs')}
             </Link>
             {showProjectsLink ? (
-              <Link className="hover:text-slate-900" href="/projects">
+              <Link className="hover:text-slate-900" href={isDelegate ? '/project-delegate' : '/projects'}>
                 {t('projects')}
               </Link>
             ) : null}
@@ -444,7 +445,7 @@ export const Navbar: React.FC = () => {
               {showProjectsLink ? (
                 <Link
                   className="px-3 py-2 rounded hover:bg-slate-100 hover:text-slate-900"
-                  href="/projects"
+                  href={isDelegate ? '/project-delegate' : '/projects'}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t('projects')}

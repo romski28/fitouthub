@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-15-54c1d6d2",
+    "date": "2026-09-15T14:41:50+08:00",
+    "title": "fix(web): route delegate projects nav to delegate dashboard",
+    "summary": "fix(web): route delegate projects nav to delegate dashboard",
+    "areas": [
+      "web"
+    ],
+    "commit": "54c1d6d2",
+    "files": [
+      "apps/web/src/app/page.tsx",
+      "apps/web/src/components/navbar.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-55b338bc",
     "date": "2026-09-15T14:24:18+08:00",
     "title": "feat(delegation): add Delegate access trigger to client project page",
