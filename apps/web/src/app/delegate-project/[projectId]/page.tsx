@@ -59,6 +59,9 @@ export default function DelegateProjectPage() {
   const [data, setData] = useState<DelegateProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState<'check_in' | 'update' | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!projectId || !accessToken) return;
@@ -83,6 +86,33 @@ export default function DelegateProjectPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const submitAction = async (action: 'check_in' | 'update') => {
+    if (action === 'update' && !note.trim()) {
+      setToastMsg('Add a short note first.');
+      return;
+    }
+    setBusy(action);
+    setToastMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/client/delegate-project/${projectId}/action`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, note }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error((body && body.message) || `HTTP ${res.status}`);
+      }
+      setNote('');
+      setToastMsg(action === 'check_in' ? 'Checked in on site.' : 'Progress reported to the client.');
+      setTimeout(() => setToastMsg(null), 2500);
+    } catch (e: any) {
+      setToastMsg(e.message || 'Something went wrong');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -171,8 +201,34 @@ export default function DelegateProjectPage() {
             </div>
           )}
 
-          <div className="mt-8 rounded-xl border border-dashed border-[#D4C8A0] px-5 py-4 text-sm text-slate-500">
-            On-site actions (QR check-in, progress reporting) are coming in the next update.
+          <div className="mt-8 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.74)] p-5">
+            <p className="text-sm font-semibold text-slate-800">Report progress</p>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Share a progress update or note for the client…"
+              rows={3}
+              className="mt-2 w-full rounded-xl border border-[rgba(120,53,15,0.14)] bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#b94e2d]"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => submitAction('update')}
+                className="rounded-lg bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a84426] disabled:opacity-50"
+              >
+                {busy === 'update' ? 'Posting…' : 'Report progress'}
+              </button>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => submitAction('check_in')}
+                className="rounded-lg border border-[rgba(120,53,15,0.18)] bg-[rgba(255,250,240,0.9)] px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-[rgba(255,250,240,1)] disabled:opacity-50"
+              >
+                {busy === 'check_in' ? 'Checking in…' : 'Check in on site'}
+              </button>
+            </div>
+            {toastMsg && <p className="mt-2 text-xs font-semibold text-slate-600">{toastMsg}</p>}
           </div>
         </div>
       </main>

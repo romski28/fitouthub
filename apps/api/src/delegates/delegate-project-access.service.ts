@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma.service';
+import { ChatService } from '../chat/chat.service';
 
 const MAGIC_TTL_MS = 48 * 60 * 60 * 1000;
 
@@ -19,7 +20,10 @@ const DELEGATE_PERMISSIONS = {
 
 @Injectable()
 export class DelegateProjectAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatService: ChatService,
+  ) {}
 
   private webBaseUrl(): string {
     return (
@@ -343,5 +347,39 @@ export class DelegateProjectAccessService {
           isDelegateAccess: true,
         };
       });
+  }
+
+  /**
+   * Record a scoped on-site delegate action. The grant is re-verified and the
+   * action is persisted as an attributed message on the project chat thread so
+   * the client sees it. Mirrors ProjectWorkerAccessService.recordWorkerAction.
+   */
+  async recordDelegateAction(
+    projectId: string,
+    delegateUserId: string,
+    action: 'check_in' | 'update',
+    note?: string,
+  ) {
+    const { delegate } = await this.assertDelegateAccess(projectId, delegateUserId);
+
+    const labels: Record<'check_in' | 'update', string> = {
+      check_in: 'checked in on site',
+      update: 'reported progress',
+    };
+
+    const cleanNote = (note || '').trim();
+    const name = [delegate.firstName, delegate.surname].filter(Boolean).join(' ') || 'Delegate';
+    const content = `🤝 ${name} ${labels[action]}${cleanNote ? `: ${cleanNote}` : '.'}`;
+
+    const thread = await this.chatService.getOrCreateProjectThread(projectId);
+    const message = await this.chatService.addProjectMessage(
+      thread.id,
+      'client',
+      delegateUserId,
+      null,
+      content,
+    );
+
+    return { success: true, action, message };
   }
 }

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-09-17-6b8d71be",
+    "date": "2026-09-17T00:02:33+08:00",
+    "title": "feat(delegation): delegate progress reporting via project chat (A3a)",
+    "summary": "feat(delegation): delegate progress reporting via project chat (A3a)",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "6b8d71be",
+    "files": [
+      "CLIENT_DELEGATION_PLAN.md",
+      "apps/api/src/delegates/delegate-project-access.controller.ts",
+      "apps/api/src/delegates/delegate-project-access.service.ts",
+      "apps/api/src/delegates/delegates.module.ts",
+      "apps/web/src/app/delegate-project/[projectId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-15-338b70cc",
     "date": "2026-09-15T14:58:34+08:00",
     "title": "fix(web): remove redundant signed-in panel from delegate dashboard",

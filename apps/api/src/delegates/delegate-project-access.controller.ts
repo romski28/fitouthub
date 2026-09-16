@@ -61,4 +61,19 @@ export class DelegateProjectAccessController {
   async delegateProject(@Param('projectId') projectId: string, @Request() req: any) {
     return this.delegateProjectAccessService.getDelegateProject(projectId, this.userId(req));
   }
+
+  @Post('client/delegate-project/:projectId/action')
+  @UseGuards(AuthGuard('jwt'))
+  async delegateAction(
+    @Param('projectId') projectId: string,
+    @Body() body: { action: 'check_in' | 'update'; note?: string },
+    @Request() req: any,
+  ) {
+    return this.delegateProjectAccessService.recordDelegateAction(
+      projectId,
+      this.userId(req),
+      body.action,
+      body.note,
+    );
+  }
 }

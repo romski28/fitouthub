@@ -227,8 +227,8 @@ WHERE "userId" = '<delegate-user-id>';
 
 ## 6. Out of scope (future phases)
 
-- **Phase A2** — `ProjectAccessGrant` (project-scoped delegation, `actorType` + `permissions`), `DelegateAccessModal`, `delegate-project/:projectId`, magic link `action='delegate_project_access'`.
-- **Phase A3** — wire `scanQr`/`chat`/`reportProgress` into site-inspection QR + project chat via a `resolveDelegateActor` analog of `resolveWorkerActor`.
+- **Phase A2** — ✅ done: `ProjectAccessGrant`, `DelegateAccessModal`, `delegate-project/:projectId`, magic link.
+- **Phase A3** — delegate actions: **A3a** (progress reporting via chat) ✅ done; **A3b** (site-inspection QR/check-in) pending.
 - **Landlord / Property Manager / Mimo-PM** — additive `actorType` values + permission templates (no migration needed).
 - **Estate agent** — separate read-only "records share".
 - **Financial control** — never for delegates; future for landlord/Mimo-PM only.
@@ -266,4 +266,25 @@ Add a `revokedAt` column to `ProjectDelegate` (nullable) so the relationship can
 | Delegate of another client (`userId @unique`) | reject ("already assisting another client") |
 | Revoked invite (from me) | reinstate to `pending` + inform |
 | Not on platform | new invite |
+
+---
+
+## 8. Phase A3 — delegate actions
+
+### A3a (done) — progress reporting
+
+- Backend: `recordDelegateAction(projectId, delegateUserId, action, note)` mirrors `ProjectWorkerAccessService.recordWorkerAction`. Re-verifies the grant via `assertDelegateAccess`, then posts an attributed message to the project chat thread (`addProjectMessage(..., 'client', delegateUserId, null, '🤝 …')`).
+- Actions: `check_in`, `update`.
+- Endpoint: `POST /client/delegate-project/:projectId/action` `{ action, note }`.
+- Frontend: `delegate-project/[projectId]` has a "Report progress" textarea + "Report progress" / "Check in on site" buttons.
+
+### A3b (pending) — site-inspection QR / check-in
+
+- Wire `scanQr` into the existing `InspectSiteModal` + `requestSiteAccess` flow (client-side mirror of the worker's `resolveWorkerActor` → `requestSiteAccess`).
+- Delegate books a slot / checks in on site via QR/OTP on behalf of the client.
+- Enforce `permissions.scanQr` (already stored on the grant).
+
+### Enforcement note
+
+`permissions` (scanQr / chat / reportProgress / viewBudget / controlFinancials) is stored on `ProjectAccessGrant` but not yet enforced. A3a effectively hard-codes `reportProgress`; A3b should gate `scanQr` on the stored flag, and later landlord/PM/Mimo-PM templates will read the same JSON.
 
