@@ -12413,6 +12413,38 @@ Please review the project details and respond with your quote or decline the inv
   // ─── On-site QR start ────────────────────────────────────────────────────
 
   /**
+   * Whether a client-side actor may confirm on-site presence / site inspection:
+   * the project owner, or a delegate with an active grant + scanQr permission.
+   */
+  private async canClientConfirmSite(projectId: string, userId: string): Promise<boolean> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { userId: true },
+    });
+    if (project?.userId === userId) return true;
+
+    const now = new Date();
+    const grant = await this.prisma.projectAccessGrant.findFirst({
+      where: {
+        projectId,
+        delegateUserId: userId,
+        revokedAt: null,
+        consumedAt: null,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } },
+          { delegateUserId: { not: null }, task: { not: null } },
+        ],
+      },
+      select: { permissions: true },
+    });
+    if (!grant) return false;
+
+    const perms = (grant.permissions as any) || {};
+    return perms.scanQr === true;
+  }
+
+  /**
    * Professional generates a short-lived signed token for the client to scan.
    * Token encodes { projectId, generatedByUserId, purpose: 'site_start' } and
    * expires in 15 minutes.
@@ -12555,8 +12587,9 @@ Please review the project details and respond with your quote or decline the inv
       throw new BadRequestException('Project not found');
     }
 
-    if (project.userId !== clientUserId) {
-      throw new BadRequestException('Only the project client can confirm on-site presence');
+    const canConfirm = await this.canClientConfirmSite(projectId, clientUserId);
+    if (!canConfirm) {
+      throw new BadRequestException('Only the project client (or an authorised delegate) can confirm on-site presence');
     }
 
     if (project.siteStartedAt) {
@@ -12624,6 +12657,11 @@ Please review the project details and respond with your quote or decline the inv
         console.log('[confirmSiteInspection:jwt-mismatch] ' + JSON.stringify({ decodedProjectId: decoded.projectId, projectId, purpose: decoded.purpose, decoded }));
         throw new BadRequestException('QR code does not match this project');
       }
+    }
+
+    const canConfirm = await this.canClientConfirmSite(projectId, clientUserId);
+    if (!canConfirm) {
+      throw new BadRequestException('Only the project client (or an authorised delegate) can confirm site inspection');
     }
 
     // Resolve the professional from the project's approved/visited site access

@@ -278,13 +278,14 @@ Add a `revokedAt` column to `ProjectDelegate` (nullable) so the relationship can
 - Endpoint: `POST /client/delegate-project/:projectId/action` `{ action, note }`.
 - Frontend: `delegate-project/[projectId]` has a "Report progress" textarea + "Report progress" / "Check in on site" buttons.
 
-### A3b (pending) — site-inspection QR / check-in
+### A3b (done) — confirm on-site presence (scanQr)
 
-- Wire `scanQr` into the existing `InspectSiteModal` + `requestSiteAccess` flow (client-side mirror of the worker's `resolveWorkerActor` → `requestSiteAccess`).
-- Delegate books a slot / checks in on site via QR/OTP on behalf of the client.
-- Enforce `permissions.scanQr` (already stored on the grant).
+- Clarified: "scan QR for site inspection" = the **client** (or delegate on their behalf) scans the professional's QR/OTP to confirm on-site presence / inspection. It is *not* the worker's "book a slot" flow.
+- Backend: added `canClientConfirmSite` to `projects.service.ts` — true for the owner or a delegate with an active grant + `permissions.scanQr`. Wired into `confirmSiteStart` and `confirmSiteInspection`.
+- Also fixed a pre-existing gap: `confirmSiteInspection` had **no** ownership check; it now enforces owner/delegate-scanQr.
+- Frontend: `delegate-project/[projectId]` has a "Confirm on site" panel (manual 6-digit OTP entry) that routes to `site-start/confirm` or `site-inspection/confirm` based on the site-inspection phase.
 
 ### Enforcement note
 
-`permissions` (scanQr / chat / reportProgress / viewBudget / controlFinancials) is stored on `ProjectAccessGrant` but not yet enforced. A3a effectively hard-codes `reportProgress`; A3b should gate `scanQr` on the stored flag, and later landlord/PM/Mimo-PM templates will read the same JSON.
+`permissions` (scanQr / chat / reportProgress / viewBudget / controlFinancials) is stored on `ProjectAccessGrant`. A3a hard-codes `reportProgress`; A3b now gates `scanQr` via `canClientConfirmSite`. `viewBudget`/`controlFinancials` remain unused until landlord/PM/Mimo-PM templates land.
 

@@ -62,6 +62,9 @@ export default function DelegateProjectPage() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<'check_in' | 'update' | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!projectId || !accessToken) return;
@@ -111,6 +114,37 @@ export default function DelegateProjectPage() {
       setToastMsg(e.message || 'Something went wrong');
     } finally {
       setBusy(null);
+    }
+  };
+
+  const confirmOnSite = async () => {
+    if (!code.trim()) {
+      setConfirmMsg('Enter the 6-digit code shown by the professional.');
+      return;
+    }
+    const isCheckIn = data?.siteInspection?.active && data.siteInspection.phase === 'check_in';
+    const endpoint = isCheckIn
+      ? `/projects/${projectId}/site-inspection/confirm`
+      : `/projects/${projectId}/site-start/confirm`;
+    setConfirming(true);
+    setConfirmMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: code.trim() }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error((body && body.message) || `HTTP ${res.status}`);
+      }
+      setCode('');
+      setConfirmMsg(isCheckIn ? 'Site inspection confirmed.' : 'Contractor confirmed on site.');
+      setTimeout(() => setConfirmMsg(null), 2500);
+    } catch (e: any) {
+      setConfirmMsg(e.message || 'Something went wrong');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -229,6 +263,31 @@ export default function DelegateProjectPage() {
               </button>
             </div>
             {toastMsg && <p className="mt-2 text-xs font-semibold text-slate-600">{toastMsg}</p>}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-[rgba(120,53,15,0.14)] bg-[rgba(255,250,240,0.74)] p-5">
+            <p className="text-sm font-semibold text-slate-800">Confirm on site</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Enter the 6-digit code shown by the professional to confirm they are on site.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="mt-2 w-full rounded-xl border border-[rgba(120,53,15,0.14)] bg-white px-3 py-2 text-center text-lg tracking-[0.3em] text-slate-800 outline-none focus:border-[#b94e2d]"
+            />
+            <button
+              type="button"
+              disabled={confirming}
+              onClick={confirmOnSite}
+              className="mt-3 w-full rounded-lg bg-[#b94e2d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a84426] disabled:opacity-50"
+            >
+              {confirming ? 'Confirming…' : 'Confirm on site'}
+            </button>
+            {confirmMsg && <p className="mt-2 text-xs font-semibold text-slate-600">{confirmMsg}</p>}
           </div>
         </div>
       </main>

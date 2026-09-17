@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-17-9b4ab4d3",
+    "date": "2026-09-17T22:03:18+08:00",
+    "title": "feat(delegation): delegate confirm-on-site (A3b) + fix site-inspection gap",
+    "summary": "feat(delegation): delegate confirm-on-site (A3b) + fix site-inspection gap",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "9b4ab4d3",
+    "files": [
+      "CLIENT_DELEGATION_PLAN.md",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/delegate-project/[projectId]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-17-71ec2191",
     "date": "2026-09-17T20:29:34+08:00",
     "title": "fix(api): gate project chat to owner/delegate/pro/back-office",
