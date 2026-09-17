@@ -95,6 +95,64 @@ export class ProjectsController {
     return { actorId, role: 'client' };
   }
 
+  /**
+   * Gate project chat access. Only the project client, a granted delegate, a
+   * linked professional/worker, or back-office staff (admin/surveyor/Mimo BoH/
+   * project manager) may read or write the project chat.
+   */
+  private async assertProjectChatAccess(projectId: string, req: any): Promise<void> {
+    const actorId = req?.user?.id || req?.user?.sub;
+    if (!actorId) throw new ForbiddenException('Authentication required');
+
+    const role = String(req?.user?.role || '').toLowerCase();
+    const isProfessional = !!req?.user?.isProfessional || role === 'professional';
+
+    if (['admin', 'surveyor', 'mimo_boh', 'project_manager'].includes(role)) {
+      return;
+    }
+
+    if (isProfessional) {
+      const linked = await this.prisma.projectProfessional.findUnique({
+        where: { projectId_professionalId: { projectId, professionalId: actorId } },
+        select: { id: true },
+      });
+      if (linked) return;
+
+      const workerGrant = await this.prisma.projectWorkerAccess.findFirst({
+        where: { projectId, workerId: actorId, revokedAt: null, consumedAt: null },
+        select: { id: true },
+      });
+      if (workerGrant) return;
+
+      throw new ForbiddenException('You do not have access to this project');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { userId: true },
+    });
+    if (project?.userId === actorId) return;
+
+    const now = new Date();
+    const delegateGrant = await this.prisma.projectAccessGrant.findFirst({
+      where: {
+        projectId,
+        delegateUserId: actorId,
+        revokedAt: null,
+        consumedAt: null,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } },
+          { delegateUserId: { not: null }, task: { not: null } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (delegateGrant) return;
+
+    throw new ForbiddenException('You do not have access to this project');
+  }
+
   @Get()
   @UseGuards(CombinedAuthGuard)
   async findAll(@Request() req: any) {
@@ -1756,6 +1814,7 @@ export class ProjectsController {
     @Query('threadScopeId') threadScopeId?: string,
     @Request() req?: any,
   ) {
+    await this.assertProjectChatAccess(projectId, req);
     const thread = await this.chatService.getOrCreateProjectThread(projectId, {
       threadScope: threadScope || null,
       threadScopeId: threadScopeId || null,
@@ -1808,7 +1867,9 @@ export class ProjectsController {
   async createProjectChat(
     @Param('projectId') projectId: string,
     @Body() body?: { threadScope?: string; threadScopeId?: string },
+    @Request() req?: any,
   ) {
+    await this.assertProjectChatAccess(projectId, req);
     return this.chatService.getOrCreateProjectThread(projectId, {
       threadScope: body?.threadScope || null,
       threadScopeId: body?.threadScopeId || null,
@@ -1832,6 +1893,8 @@ export class ProjectsController {
     },
     @Request() req: any,
   ) {
+    await this.assertProjectChatAccess(projectId, req);
+
     if (!body.content?.trim() && (!body.attachments || body.attachments.length === 0)) {
       throw new BadRequestException('Message must have content or attachments');
     }
@@ -1889,6 +1952,8 @@ export class ProjectsController {
   ) {
     const actorId = req?.user?.id || req?.user?.sub;
     if (!actorId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+    await this.assertProjectChatAccess(projectId, req);
 
     const isProfessional =
       !!req.user?.isProfessional ||

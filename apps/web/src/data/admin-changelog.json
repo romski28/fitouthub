@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-17-71ec2191",
+    "date": "2026-09-17T20:29:34+08:00",
+    "title": "fix(api): gate project chat to owner/delegate/pro/back-office",
+    "summary": "fix(api): gate project chat to owner/delegate/pro/back-office",
+    "areas": [
+      "api"
+    ],
+    "commit": "71ec2191",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-09-17-6b8d71be",
     "date": "2026-09-17T00:02:33+08:00",
     "title": "feat(delegation): delegate progress reporting via project chat (A3a)",
