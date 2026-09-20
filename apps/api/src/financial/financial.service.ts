@@ -1612,7 +1612,8 @@ export class FinancialService {
 
   /**
    * Remind the client and professional to complete the closeout (rating,
-   * comment, and completed-project photos). Best-effort; never throws.
+   * comment, and completed-project photos). Honours each party's preferred
+   * contact channel (WhatsApp/SMS or email). Best-effort; never throws.
    */
   private async sendCloseoutReminder(projectId: string, projectProfessionalId: string | null) {
     try {
@@ -1625,41 +1626,156 @@ export class FinancialService {
         ? await this.prisma.projectProfessional
             .findUnique({
               where: { id: projectProfessionalId },
-              select: { professional: { select: { id: true, phone: true } } },
+              select: {
+                professional: {
+                  select: { id: true, phone: true, email: true, fullName: true, businessName: true },
+                },
+              },
             })
             .then((pp) => pp?.professional ?? null)
         : null;
       const clientUser = clientId
         ? await this.prisma.user
-            .findUnique({ where: { id: clientId }, select: { id: true, mobile: true } })
+            .findUnique({
+              where: { id: clientId },
+              select: { id: true, mobile: true, email: true, firstName: true, surname: true },
+            })
             .catch(() => null)
         : null;
 
       const projectName = project?.projectName || 'Project';
+      const webBaseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
 
-      if (professional?.id && professional.phone) {
-        await this.notificationService
-          .send({
-            professionalId: professional.id,
-            phoneNumber: professional.phone,
-            eventType: 'closeout_reminder',
-            message: `Your project "${projectName}" is complete — please leave a rating, comment, and final photos to close it out.`,
+      if (professional?.id) {
+        const preference = await this.prisma.notificationPreference
+          .findUnique({
+            where: { professionalId: professional.id },
+            select: {
+              primaryChannel: true,
+              fallbackChannel: true,
+              enableEmail: true,
+              enableSMS: true,
+              enableWhatsApp: true,
+              enableWeChat: true,
+            },
           })
-          .catch(() => undefined);
+          .catch(() => null);
+
+        await this.deliverCloseoutReminder({
+          kind: 'professional',
+          recipientId: professional.id,
+          phone: professional.phone || null,
+          email: professional.email || null,
+          name: professional.fullName || professional.businessName || undefined,
+          preference: preference as any,
+          projectName,
+          projectUrl: `${webBaseUrl}/professional-projects/${projectProfessionalId}`,
+          message: `Your project "${projectName}" is complete — please leave a rating, comment, and final photos to close it out.`,
+        });
       }
 
-      if (clientUser?.id && clientUser.mobile) {
-        await this.notificationService
-          .send({
-            userId: clientUser.id,
-            phoneNumber: clientUser.mobile,
-            eventType: 'closeout_reminder',
-            message: `Your project "${projectName}" is complete — please rate your professional and add final photos to close it out.`,
+      if (clientUser?.id) {
+        const preference = await this.prisma.notificationPreference
+          .findUnique({
+            where: { userId: clientUser.id },
+            select: {
+              primaryChannel: true,
+              fallbackChannel: true,
+              enableEmail: true,
+              enableSMS: true,
+              enableWhatsApp: true,
+              enableWeChat: true,
+            },
           })
-          .catch(() => undefined);
+          .catch(() => null);
+
+        await this.deliverCloseoutReminder({
+          kind: 'user',
+          recipientId: clientUser.id,
+          phone: clientUser.mobile || null,
+          email: clientUser.email || null,
+          name: [clientUser.firstName, clientUser.surname].filter(Boolean).join(' ') || undefined,
+          preference: preference as any,
+          projectName,
+          projectUrl: `${webBaseUrl}/projects/${projectId}?tab=financials`,
+          message: `Your project "${projectName}" is complete — please rate your professional and add final photos to close it out.`,
+        });
       }
     } catch (error) {
       console.warn('[FinancialService] sendCloseoutReminder failed:', (error as Error)?.message);
+    }
+  }
+
+  /**
+   * Deliver a single closeout reminder to a user or professional, routing by
+   * their preferred channel (WhatsApp/SMS via Twilio, or email via Resend).
+   */
+  private async deliverCloseoutReminder(input: {
+    kind: 'user' | 'professional';
+    recipientId: string;
+    phone: string | null;
+    email: string | null;
+    name?: string;
+    preference: {
+      primaryChannel?: string | null;
+      fallbackChannel?: string | null;
+      enableEmail?: boolean;
+      enableSMS?: boolean;
+      enableWhatsApp?: boolean;
+      enableWeChat?: boolean;
+    } | null;
+    projectName: string;
+    projectUrl: string;
+    message: string;
+  }): Promise<void> {
+    const { kind, recipientId, phone, email, name, preference, projectName, projectUrl, message } = input;
+
+    const primary = String(preference?.primaryChannel || NotificationChannel.WHATSAPP).toUpperCase();
+    const fallback = String(preference?.fallbackChannel || NotificationChannel.SMS).toUpperCase();
+    const enableEmail = preference?.enableEmail ?? true;
+
+    const channelEnabled = (c: string) => {
+      if (c === 'WHATSAPP') return preference?.enableWhatsApp ?? true;
+      if (c === 'SMS') return preference?.enableSMS ?? true;
+      if (c === 'WECHAT') return preference?.enableWeChat ?? false;
+      return true;
+    };
+
+    const emailParams = {
+      to: email!,
+      name,
+      projectName,
+      role: kind === 'professional' ? 'professional' as const : 'client' as const,
+      projectUrl,
+    };
+
+    const order = [primary, fallback].filter((c, i, arr) => arr.indexOf(c) === i);
+    for (const c of order) {
+      if (c === 'EMAIL') {
+        if (email && enableEmail) {
+          await this.emailService.sendCloseoutReminder(emailParams).catch(() => undefined);
+          return;
+        }
+        continue;
+      }
+      if ((c === 'WHATSAPP' || c === 'SMS') && channelEnabled(c) && phone) {
+        const channel = c === 'WHATSAPP' ? NotificationChannel.WHATSAPP : NotificationChannel.SMS;
+        await this.notificationService
+          .send({
+            ...(kind === 'professional' ? { professionalId: recipientId } : { userId: recipientId }),
+            phoneNumber: phone,
+            channel,
+            eventType: 'closeout_reminder',
+            message,
+          })
+          .catch(() => undefined);
+        return;
+      }
+    }
+
+    // Final fallback: email when available.
+    if (email && enableEmail) {
+      await this.emailService.sendCloseoutReminder(emailParams).catch(() => undefined);
     }
   }
 

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-20-3e9b30fc",
+    "date": "2026-09-20T16:56:46+08:00",
+    "title": "feat(retention): honour preferred contact channel for closeout reminders",
+    "summary": "feat(retention): honour preferred contact channel for closeout reminders",
+    "areas": [
+      "api"
+    ],
+    "commit": "3e9b30fc",
+    "files": [
+      "apps/api/src/email/email.service.ts",
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-20-d8f1ef27",
     "date": "2026-09-20T16:45:31+08:00",
     "title": "feat(retention): closeout reminders + retention review flag, add TODO backlog",

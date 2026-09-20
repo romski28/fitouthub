@@ -916,6 +916,54 @@ export class EmailService {
   }
 
   /**
+   * Send a closeout reminder — project complete, please leave a rating/comment/photos.
+   */
+  async sendCloseoutReminder(params: {
+    to: string;
+    name?: string;
+    projectName: string;
+    role: 'client' | 'professional';
+    projectUrl: string;
+  }): Promise<void> {
+    if (!this.resend) {
+      console.log('📧 [MOCK] Would send closeout reminder to:', params.to);
+      return;
+    }
+
+    const greeting = params.name ? `Hi ${params.name},` : 'Hi,';
+    const action =
+      params.role === 'client'
+        ? 'rate your professional and add your completed-project photos'
+        : 'leave a rating, a comment, and your final project photos';
+
+    try {
+      await this.resend.emails.send({
+        from: 'Mimo <noreply@mail.romski.me.uk>',
+        to: params.to,
+        subject: `Close out your project: ${params.projectName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #047857;">Project complete 🎉</h2>
+            <p>${greeting}</p>
+            <p>Your project <strong>${params.projectName}</strong> is complete. Please ${action} to fully close it out.</p>
+            <div style="margin: 24px 0; text-align: center;">
+              <a href="${params.projectUrl}" style="display: inline-block; background-color: #047857; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                Close out project
+              </a>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">This notification was sent by Mimo.</p>
+          </div>
+        `,
+      });
+
+      console.log('✅ Closeout reminder sent to:', params.to);
+    } catch (error) {
+      console.error('❌ Failed to send closeout reminder:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send escrow notification to professional when project is awarded
    */
   async sendEscrowNotification(params: {
