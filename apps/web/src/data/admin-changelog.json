@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-20-7057356a",
+    "date": "2026-09-20T17:05:39+08:00",
+    "title": "fix(retention): fall back to email when WhatsApp/SMS delivery fails",
+    "summary": "fix(retention): fall back to email when WhatsApp/SMS delivery fails",
+    "areas": [
+      "api"
+    ],
+    "commit": "7057356a",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-20-3e9b30fc",
     "date": "2026-09-20T16:56:46+08:00",
     "title": "feat(retention): honour preferred contact channel for closeout reminders",

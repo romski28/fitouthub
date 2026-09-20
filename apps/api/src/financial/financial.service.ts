@@ -1760,7 +1760,7 @@ export class FinancialService {
       }
       if ((c === 'WHATSAPP' || c === 'SMS') && channelEnabled(c) && phone) {
         const channel = c === 'WHATSAPP' ? NotificationChannel.WHATSAPP : NotificationChannel.SMS;
-        await this.notificationService
+        const resp = await this.notificationService
           .send({
             ...(kind === 'professional' ? { professionalId: recipientId } : { userId: recipientId }),
             phoneNumber: phone,
@@ -1768,7 +1768,13 @@ export class FinancialService {
             eventType: 'closeout_reminder',
             message,
           })
-          .catch(() => undefined);
+          .catch(() => null);
+
+        // If messaging failed (e.g. WhatsApp template not yet approved), fall
+        // back to email so the recipient still receives the reminder.
+        if (!resp?.success && email && enableEmail) {
+          await this.emailService.sendCloseoutReminder(emailParams).catch(() => undefined);
+        }
         return;
       }
     }
