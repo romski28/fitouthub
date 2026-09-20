@@ -5535,9 +5535,9 @@ export class ProjectsService {
       (st) => (st === 'pm' ? 'PM' : clientName),
     );
 
-    // 2) Project team chat (PM + client + pros + FoH) — only once awarded, since
-    // team chat opens when the pro is awarded (pre-award the team thread is empty).
-    const isAwarded = (project.status || '').toLowerCase() === 'awarded';
+    // 2) Project team chat (PM + client + pros + FoH) — only once a pro is
+    // awarded (the awardedProfessionalId stays set through execution).
+    const isAwarded = Boolean(project.awardedProjectProfessionalId);
     if (isAwarded) {
       buildThread(
         'project-general',

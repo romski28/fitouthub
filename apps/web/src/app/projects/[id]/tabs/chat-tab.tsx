@@ -6,9 +6,10 @@ import ProjectChat from '@/components/project-chat';
 interface ChatTabProps {
   projectId: string;
   accessToken: string;
+  isAwarded?: boolean;
 }
 
-export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken }) => {
+export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken, isAwarded = false }) => {
   const [thread, setThread] = useState<'project' | 'pm'>('project');
   return (
     <div className="space-y-4">
@@ -39,13 +40,21 @@ export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken }) => {
       </div>
 
       {thread === 'project' ? (
-        <ProjectChat
-          projectId={projectId}
-          accessToken={accessToken}
-          currentUserRole="client"
-          headerTitle="Project Team Chat"
-          headerSubtitle="Client, awarded professionals & Mimo"
-        />
+        isAwarded ? (
+          <ProjectChat
+            projectId={projectId}
+            accessToken={accessToken}
+            currentUserRole="client"
+            headerTitle="Project Team Chat"
+            headerSubtitle="Client, awarded professionals & Mimo"
+          />
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">
+            <p className="text-sm text-slate-600">
+              The project team chat is available once a professional has been awarded.
+            </p>
+          </div>
+        )
       ) : (
         <ProjectChat
           projectId={projectId}

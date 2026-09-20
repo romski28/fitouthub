@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-20-6ef92e6c",
+    "date": "2026-09-20T11:14:01+08:00",
+    "title": "feat(chat): align award gating in client UI + PM message view",
+    "summary": "feat(chat): align award gating in client UI + PM message view",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "6ef92e6c",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-09-20-6c98f5b9",
     "date": "2026-09-20T10:46:11+08:00",
     "title": "feat(chat): gate general team chat to award (Option B)",

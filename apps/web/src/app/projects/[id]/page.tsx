@@ -2514,6 +2514,7 @@ export default function ClientProjectDetailPage() {
             <ChatTab
               projectId={projectId}
               accessToken={accessToken || ''}
+              isAwarded={isAwarded}
             />
           </>
         )}
