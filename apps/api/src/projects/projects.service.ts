@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 import { PlatformFeeService } from '../common/platform-fee.service';
+import { isRetentionAndCloseoutEnabled, RETENTION_PERCENT, RETENTION_MONTHS } from '../common/retention.constants';
 import { NotificationService } from '../notifications/notification.service';
 import { PushNotificationService } from '../notifications/push-notification.service';
 import { AiService } from '../ai/ai.service';
@@ -2390,6 +2391,44 @@ export class ProjectsService {
       return existing;
     }
 
+    // Resolve the awarded professional's retention opt-in (snapshot at award).
+    const professionalRetentionOptIn = input.projectProfessionalId
+      ? await tx.projectProfessional
+          .findUnique({
+            where: { id: input.projectProfessionalId },
+            select: { professional: { select: { retentionOptIn: true } } },
+          })
+          .then((pp: any) => Boolean(pp?.professional?.retentionOptIn))
+          .catch(() => false)
+      : false;
+
+    // Class 1 (SCALE_1): apply 10%-of-gross retention when the pro opted in.
+    const applyClass1Retention =
+      isRetentionAndCloseoutEnabled() &&
+      scale === 'SCALE_1' &&
+      professionalRetentionOptIn;
+
+    const retentionEnabled =
+      scale === 'SCALE_3'
+        ? existing?.retentionEnabled ?? false
+        : applyClass1Retention;
+    const retentionPercent =
+      scale === 'SCALE_3'
+        ? Number(existing?.retentionPercent ?? 5)
+        : applyClass1Retention
+          ? RETENTION_PERCENT
+          : null;
+    const retentionAmount =
+      retentionEnabled && retentionPercent != null
+        ? new Decimal(this.roundMoney((totalAmount * retentionPercent) / 100))
+        : null;
+    const retentionReleaseAt =
+      scale === 'SCALE_3'
+        ? existing?.retentionReleaseAt || defaultRetentionReleaseAt
+        : applyClass1Retention && completionAt
+          ? this.addMonths(completionAt, RETENTION_MONTHS)
+          : null;
+
     const isSmallScale1 = scale === 'SCALE_1' && totalAmount <= 5000;
 
     const baseData = {
@@ -2399,19 +2438,10 @@ export class ProjectsService {
       totalAmount: new Decimal(totalAmount),
       depositCapPercent: scale === 'SCALE_3' ? 10 : isSmallScale1 ? 100 : 50,
       fundingBufferMilestones: scale === 'SCALE_3' ? 2 : null,
-      retentionEnabled: existing?.retentionEnabled ?? false,
-      retentionPercent:
-        scale === 'SCALE_3'
-          ? new Decimal(existing?.retentionPercent ?? 5)
-          : null,
-      retentionAmount:
-        scale === 'SCALE_3' && existing?.retentionEnabled
-          ? new Decimal(this.roundMoney((totalAmount * Number(existing?.retentionPercent ?? 5)) / 100))
-          : null,
-      retentionReleaseAt:
-        scale === 'SCALE_3'
-          ? existing?.retentionReleaseAt || defaultRetentionReleaseAt
-          : null,
+      retentionEnabled,
+      retentionPercent: retentionPercent != null ? new Decimal(retentionPercent) : null,
+      retentionAmount,
+      retentionReleaseAt,
       status: 'draft',
     };
 

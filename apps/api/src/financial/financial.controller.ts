@@ -353,6 +353,21 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/release-retention - Release warranty retention (PM or admin)
+   */
+  @Post('project/:projectId/release-retention')
+  @UseGuards(CombinedAuthGuard)
+  async releaseRetention(@Param('projectId') projectId: string, @Request() req: any) {
+    const role = req.user?.role || '';
+    const actorRole: 'pm' | 'admin' =
+      role === 'admin' ? 'admin' : role === 'project_manager' ? 'pm' : null as any;
+    if (!actorRole) {
+      throw new ForbiddenException('Only a PM or admin can release retention');
+    }
+    return this.financialService.releaseRetention(projectId, req.user.id, actorRole);
+  }
+
+  /**
    * POST /financial/project/:projectId/professional-wallet/transfer
    * Professional (or admin) transfers available wallet balance to external payout account
    */

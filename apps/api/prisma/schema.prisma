@@ -378,6 +378,9 @@ model Professional {
   suppliesOffered           String[]                       @default([])
   tradesOffered             String[]                       @default([])
   emergencyCalloutAvailable Boolean                        @default(false)
+  retentionOptIn            Boolean                        @default(false)
+  retentionOptInAt          DateTime?
+  retentionTermsVersion     String?
   languages                 String[]                       @default([]) @map("languages")
   yearsInBusiness           Int?                           @map("yearsInBusiness")
   completedProjectsCount    Int                            @default(0) @map("completedProjectsCount")
@@ -682,6 +685,8 @@ model Project {
   siteAccessVisits                SiteAccessVisit[]
   progressReports                 ProgressReport[]
   startProposals                  ProjectStartProposal[]
+  reviews                         ProjectReview[]
+  closeout                        ProjectCloseout?
   siteAccessData                  SiteAccessData?
   locationDetails                 ProjectLocationDetails?
   milestones                      ProjectMilestone[]
@@ -965,6 +970,39 @@ model MilestoneProcurementEvidence {
   @@index([projectProfessionalId])
   @@index([status])
   @@index([status, deadlineAt])
+}
+
+model ProjectReview {
+  id           String   @id @default(cuid())
+  projectId    String
+  reviewerType String // client | professional | pm
+  reviewerId   String?
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([reviewerType])
+}
+
+model ProjectCloseout {
+  id               String    @id @default(cuid())
+  projectId        String    @unique
+  status           String    @default("pending") // pending | in_review | held | closed
+  clientReviewedAt DateTime?
+  proReviewedAt    DateTime?
+  clientPhotos     String[]  @default([])
+  proPhotos        String[]  @default([])
+  pmPhotos         String[]  @default([])
+  closedAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }
 
 model ProjectStartProposal {

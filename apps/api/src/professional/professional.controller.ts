@@ -704,6 +704,7 @@ export class ProfessionalController {
       primaryTrade?: string;
       profileImages?: string[];
       emergencyCalloutAvailable?: boolean;
+      retentionOptIn?: boolean;
     },
   ) {
     const professionalId = req.user.id || req.user.sub;
@@ -742,6 +743,9 @@ export class ProfessionalController {
       tradesOffered: normalizedTradesOffered,
       primaryTrade: this.normalizeTextInput(body.primaryTrade),
       emergencyCalloutAvailable: body.emergencyCalloutAvailable,
+      retentionOptIn: body.retentionOptIn,
+      retentionOptInAt: body.retentionOptIn ? new Date() : undefined,
+      retentionTermsVersion: body.retentionOptIn ? 'v1' : undefined,
     };
     // Remove undefined to avoid overwriting
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);

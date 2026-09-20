@@ -54,6 +54,7 @@ interface ProfessionalProfile {
     preferredLanguage?: string;
   } | null;
   emergencyCalloutAvailable?: boolean;
+  retentionOptIn?: boolean;
   regionCoverage?: Array<{
     area?: {
       code?: string | null;
@@ -261,6 +262,7 @@ export default function ProfessionalProfilePage() {
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('EMAIL');
   const [emergencyCalloutAvailable, setEmergencyCalloutAvailable] = useState(false);
+  const [retentionOptIn, setRetentionOptIn] = useState(false);
   const [languages, setLanguages] = useState<string[]>([]);
   const [yearsInBusiness, setYearsInBusiness] = useState<number | ''>('');
   const [maxProjects, setMaxProjects] = useState(1);
@@ -385,6 +387,7 @@ export default function ProfessionalProfilePage() {
           setPreferredLanguage(data.notificationPreferences?.preferredLanguage ?? 'en');
           setPreferredContactMethod(data.notificationPreferences?.primaryChannel ?? 'EMAIL');
           setEmergencyCalloutAvailable(data.emergencyCalloutAvailable ?? false);
+          setRetentionOptIn(data.retentionOptIn ?? false);
           setLanguages(Array.isArray(data.languages) ? data.languages : []);
           setYearsInBusiness(typeof data.yearsInBusiness === 'number' ? data.yearsInBusiness : '');
           hydratedProfessionalIdRef.current = activeProfessionalId || data.id || null;
@@ -461,6 +464,7 @@ export default function ProfessionalProfilePage() {
           tradesOffered: showTradesOffered ? profile.tradesOffered || [] : [],
           primaryTrade: showTradesOffered ? (profile.tradesOffered?.[0] || profile.primaryTrade || undefined) : undefined,
           emergencyCalloutAvailable: showEmergencyAvailability ? emergencyCalloutAvailable : false,
+          retentionOptIn,
           languages,
           yearsInBusiness: yearsInBusiness === '' ? null : yearsInBusiness,
         }),
@@ -712,6 +716,28 @@ export default function ProfessionalProfilePage() {
                 </div>
               </div>
             )}
+            <div>
+              <label className="block text-sm font-semibold text-slate-800">Warranty retention (10% / 3 months)</label>
+              <div className="mt-1 inline-flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRetentionOptIn(true)}
+                  className={`rounded-md px-4 py-2 text-sm font-semibold text-white transition ${retentionOptIn ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-400 hover:bg-slate-500'}`}
+                >
+                  Opt in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRetentionOptIn(false)}
+                  className={`rounded-md px-4 py-2 text-sm font-semibold text-white transition ${!retentionOptIn ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-400 hover:bg-slate-500'}`}
+                >
+                  Opt out
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-slate-600">
+                If you opt in, 10% of the total quotation is held back on completion and released 3 months later (warranty/defect period). Opting out means your projects close immediately after final payment.
+              </p>
+            </div>
           </div>
 
           {/* Languages & Experience */}

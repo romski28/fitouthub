@@ -16,6 +16,7 @@ import { StripePaymentsService } from './stripe-payments.service';
 import { ActivityLogService } from '../activity-log.service';
 import { ProjectStageService } from '../projects/project-stage.service';
 import { NextStepService } from '../projects/next-step.service';
+import { isRetentionAndCloseoutEnabled, RETENTION_MONTHS } from '../common/retention.constants';
 import { createHash, randomInt } from 'crypto';
 
 export interface CreateFinancialTransactionDto {
@@ -1442,7 +1443,16 @@ export class FinancialService {
       );
     }
 
-    // 4. Execute in transaction: confirm payment_request + create confirmed release_payment
+    // Retention split (Class 1): if the plan has retention enabled, hold the
+    // retention portion back and release only the remainder to the professional.
+    const retentionAmount =
+      isRetentionAndCloseoutEnabled() && paymentPlan?.retentionEnabled
+        ? this.toAmount(paymentPlan.retentionAmount)
+        : 0;
+    const payableAmount = Math.max(netAmount - retentionAmount, 0);
+
+    // 4. Execute in transaction: confirm payment_request + create release_payment
+    //    (+ retention_hold when retention applies).
     const result = await this.prisma.$transaction(async (prisma) => {
       // Mark the payment_request as confirmed
       await prisma.financialTransaction.updateMany({
@@ -1460,14 +1470,14 @@ export class FinancialService {
         },
       });
 
-      // Create release_payment for the NET amount, directly confirmed
+      // Create release_payment for the payable amount (net minus retention), directly confirmed
       const releaseTx = await prisma.financialTransaction.create({
         data: {
           projectId: input.projectId,
           projectProfessionalId: projectProfessionalId || null,
           type: 'release_payment',
           description: `Class 1 direct release — professional payment`,
-          amount: new Decimal(netAmount.toFixed(2)),
+          amount: new Decimal(payableAmount.toFixed(2)),
           status: 'confirmed',
           requestedBy: input.clientId,
           requestedByRole: 'client',
@@ -1485,7 +1495,44 @@ export class FinancialService {
         },
       });
 
-      return { releaseTx };
+      let retentionTx: any = null;
+      if (retentionAmount > 0) {
+        retentionTx = await prisma.financialTransaction.create({
+          data: {
+            projectId: input.projectId,
+            projectProfessionalId: projectProfessionalId || null,
+            type: 'retention_hold',
+            description: `Class 1 retention hold — warranty retention`,
+            amount: new Decimal(retentionAmount.toFixed(2)),
+            status: 'confirmed',
+            requestedBy: input.clientId,
+            requestedByRole: 'client',
+            actionBy: input.clientId,
+            actionByRole: 'client',
+            actionAt: new Date(),
+            actionComplete: true,
+            notes: this.appendNote(
+              `Retention held pending warranty period`,
+              `source_payment_request:${paymentRequest.id}`,
+            ),
+          },
+        });
+
+        await prisma.escrowLedger.create({
+          data: {
+            projectId: input.projectId,
+            projectProfessionalId: projectProfessionalId || null,
+            transactionId: retentionTx.id,
+            direction: 'credit',
+            amount: new Decimal(retentionAmount.toFixed(2)),
+            currency: 'HKD',
+            description: 'Retention hold (warranty period)',
+            createdBy: input.clientId,
+          },
+        });
+      }
+
+      return { releaseTx, retentionTx };
     });
 
     // 5. Notify professional
@@ -1511,7 +1558,7 @@ export class FinancialService {
           professionalId: proProf.professional.id,
           phoneNumber: proProf.professional.phone,
           eventType: 'payment_released',
-          message: `${formatter.format(netAmount)} has been released to your drawable wallet for "${proProf.project?.projectName || 'Project'}".`,
+          message: `${formatter.format(payableAmount)} has been released to your drawable wallet for "${proProf.project?.projectName || 'Project'}".`,
         });
       }
     } catch (notificationError) {
@@ -1519,19 +1566,21 @@ export class FinancialService {
     }
 
     // 6. Transition project stage
-    // For single-milestone (Class 1) projects, payment = project complete.
-    // For multi-milestone, transition to PAYMENT_RELEASED.
+    // Retention applied → enter warranty/defect period.
+    // Otherwise: single-milestone (Class 1) = complete; multi-milestone = PAYMENT_RELEASED.
     // Double-check: if client escrow is fully drained, force COMPLETE regardless.
     try {
       const walletSummary = await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null);
       const escrowRemaining = Number(walletSummary.clientEscrowHeld || 0);
       const escrowFullyDrained = escrowRemaining <= 0;
 
-      const targetStage = (isSingleMilestone || escrowFullyDrained)
-        ? ProjectStage.COMPLETE
-        : ProjectStage.PAYMENT_RELEASED;
+      const targetStage = retentionAmount > 0
+        ? ProjectStage.warranty_period
+        : (isSingleMilestone || escrowFullyDrained)
+          ? ProjectStage.COMPLETE
+          : ProjectStage.PAYMENT_RELEASED;
 
-      console.log(`[FinancialService] releaseClass1Payment stage transition: isSingleMilestone=${isSingleMilestone}, escrowFullyDrained=${escrowFullyDrained}, targetStage=${targetStage}`);
+      console.log(`[FinancialService] releaseClass1Payment stage transition: isSingleMilestone=${isSingleMilestone}, escrowFullyDrained=${escrowFullyDrained}, retentionAmount=${retentionAmount}, targetStage=${targetStage}`);
 
       await this.projectStageService.transitionStage(input.projectId, targetStage);
       await this.nextStepService.invalidateNextStepCache(input.projectId);
@@ -1546,9 +1595,99 @@ export class FinancialService {
       requestedAmount,
       materialsAlreadyPaid,
       netAmount,
+      payableAmount,
+      retentionAmount,
+      retentionApplied: retentionAmount > 0,
       releaseTransactionId: result.releaseTx.id,
+      retentionTransactionId: result.retentionTx?.id ?? null,
       walletSummary,
     };
+  }
+
+  /**
+   * Release the held warranty retention back to the professional.
+   * Called by a PM/admin once the warranty/defect period has elapsed.
+   */
+  async releaseRetention(
+    projectId: string,
+    actorId: string,
+    actorRole: 'pm' | 'admin' = 'admin',
+  ) {
+    const hold = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId,
+        type: 'retention_hold',
+        status: 'confirmed',
+        actionComplete: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!hold) {
+      throw new BadRequestException('No retention hold found for this project');
+    }
+
+    // Idempotency: if already released, return the existing release.
+    const existingRelease = await this.prisma.financialTransaction.findFirst({
+      where: {
+        projectId,
+        type: 'retention_release',
+        notes: { contains: `source_retention_hold:${hold.id}` },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existingRelease) {
+      return { success: true, alreadyReleased: true, releaseTransactionId: existingRelease.id };
+    }
+
+    const amount = this.toAmount(hold.amount);
+
+    const releaseTx = await this.prisma.$transaction(async (prisma) => {
+      const created = await prisma.financialTransaction.create({
+        data: {
+          projectId,
+          projectProfessionalId: hold.projectProfessionalId || null,
+          type: 'retention_release',
+          description: 'Warranty retention released to professional',
+          amount: new Decimal(amount.toFixed(2)),
+          status: 'confirmed',
+          requestedBy: actorId,
+          requestedByRole: actorRole,
+          actionBy: actorId,
+          actionByRole: actorRole,
+          actionAt: new Date(),
+          actionComplete: true,
+          notes: this.appendNote(
+            `Retention released after warranty period`,
+            `source_retention_hold:${hold.id}`,
+          ),
+        },
+      });
+
+      await prisma.escrowLedger.create({
+        data: {
+          projectId,
+          projectProfessionalId: hold.projectProfessionalId || null,
+          transactionId: created.id,
+          direction: 'debit',
+          amount: new Decimal(amount.toFixed(2)),
+          currency: 'HKD',
+          description: 'Retention release (warranty period ended)',
+          createdBy: actorId,
+        },
+      });
+
+      return created;
+    });
+
+    try {
+      await this.projectStageService.transitionStage(projectId, ProjectStage.CLOSED);
+      await this.nextStepService.invalidateNextStepCache(projectId);
+    } catch (stageError: any) {
+      console.error('[FinancialService] Failed to transition project to CLOSED:', stageError?.message || stageError);
+    }
+
+    return { success: true, releaseTransactionId: releaseTx.id, amount };
   }
 
   /**

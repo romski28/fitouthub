@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-09-20-5ef416f4",
+    "date": "2026-09-20T12:24:17+08:00",
+    "title": "feat(retention): optional 10%/3-month warranty retention + closeout scaffolding",
+    "summary": "feat(retention): optional 10%/3-month warranty retention + closeout scaffolding",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "5ef416f4",
+    "files": [
+      "MANUAL_SQL_ADD_RETENTION_AND_CLOSEOUT.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/common/retention.constants.ts",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/professional/professional.controller.ts",
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/professional/profile/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-20-6909ac62",
     "date": "2026-09-20T11:48:45+08:00",
     "title": "fix(api): route pre-award PM messages to the private PM-client channel",
