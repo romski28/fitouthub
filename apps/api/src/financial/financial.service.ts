@@ -1588,6 +1588,12 @@ export class FinancialService {
       console.error('[FinancialService] Failed to transition project stage:', stageError?.message || stageError);
     }
 
+    // 7. Closeout reminder — both retention and non-retention paths proceed
+    //    straight into rating/comment/photos once work is complete.
+    if (isSingleMilestone) {
+      await this.sendCloseoutReminder(input.projectId, projectProfessionalId || null).catch(() => undefined);
+    }
+
     const walletSummary = await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null);
 
     return {
@@ -1602,6 +1608,59 @@ export class FinancialService {
       retentionTransactionId: result.retentionTx?.id ?? null,
       walletSummary,
     };
+  }
+
+  /**
+   * Remind the client and professional to complete the closeout (rating,
+   * comment, and completed-project photos). Best-effort; never throws.
+   */
+  private async sendCloseoutReminder(projectId: string, projectProfessionalId: string | null) {
+    try {
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { id: true, projectName: true, userId: true, clientId: true },
+      });
+      const clientId = project?.userId || project?.clientId || null;
+      const professional = projectProfessionalId
+        ? await this.prisma.projectProfessional
+            .findUnique({
+              where: { id: projectProfessionalId },
+              select: { professional: { select: { id: true, phone: true } } },
+            })
+            .then((pp) => pp?.professional ?? null)
+        : null;
+      const clientUser = clientId
+        ? await this.prisma.user
+            .findUnique({ where: { id: clientId }, select: { id: true, mobile: true } })
+            .catch(() => null)
+        : null;
+
+      const projectName = project?.projectName || 'Project';
+
+      if (professional?.id && professional.phone) {
+        await this.notificationService
+          .send({
+            professionalId: professional.id,
+            phoneNumber: professional.phone,
+            eventType: 'closeout_reminder',
+            message: `Your project "${projectName}" is complete — please leave a rating, comment, and final photos to close it out.`,
+          })
+          .catch(() => undefined);
+      }
+
+      if (clientUser?.id && clientUser.mobile) {
+        await this.notificationService
+          .send({
+            userId: clientUser.id,
+            phoneNumber: clientUser.mobile,
+            eventType: 'closeout_reminder',
+            message: `Your project "${projectName}" is complete — please rate your professional and add final photos to close it out.`,
+          })
+          .catch(() => undefined);
+      }
+    } catch (error) {
+      console.warn('[FinancialService] sendCloseoutReminder failed:', (error as Error)?.message);
+    }
   }
 
   /**
@@ -1687,7 +1746,32 @@ export class FinancialService {
       console.error('[FinancialService] Failed to transition project to CLOSED:', stageError?.message || stageError);
     }
 
-    return { success: true, releaseTransactionId: releaseTx.id, amount };
+    // Flag if the project was closed by releasing retention without the
+    // client/pro reviews being complete — surface for follow-up, but don't block.
+    const reviews = await this.prisma.projectReview.findMany({
+      where: { projectId },
+      select: { reviewerType: true },
+    });
+    const clientReviewed = reviews.some((r) => r.reviewerType === 'client');
+    const proReviewed = reviews.some((r) => r.reviewerType === 'professional');
+    const reviewsPending = !clientReviewed || !proReviewed;
+    if (reviewsPending) {
+      console.warn(
+        `[FinancialService] Retention released but closeout reviews pending for project ${projectId}`,
+      );
+      await this.createFinancialAuditLog({
+        transactionId: releaseTx.id,
+        action: 'retention_released_reviews_pending',
+        actorId,
+        actorRole,
+        details: 'Retention released but client/pro closeout reviews are incomplete',
+        status: 'warning',
+        metadata: { projectId, clientReviewed, proReviewed },
+      });
+      await this.sendCloseoutReminder(projectId, hold.projectProfessionalId || null).catch(() => undefined);
+    }
+
+    return { success: true, releaseTransactionId: releaseTx.id, amount, reviewsPending };
   }
 
   /**
