@@ -368,6 +368,45 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/closeout-review - Submit closeout review (+ photos)
+   */
+  @Post('project/:projectId/closeout-review')
+  @UseGuards(CombinedAuthGuard)
+  async submitCloseoutReview(
+    @Param('projectId') projectId: string,
+    @Body()
+    body: {
+      rating?: number;
+      comment?: string;
+      photos?: string[];
+    },
+    @Request() req: any,
+  ) {
+    const actorRole = req.user?.isProfessional
+      ? 'professional'
+      : req.user?.role === 'project_manager'
+        ? 'pm'
+        : 'client';
+    return this.financialService.submitCloseoutReview({
+      projectId,
+      actorId: req.user?.id || req.user?.sub,
+      actorRole,
+      rating: body.rating,
+      comment: body.comment,
+      photos: body.photos,
+    });
+  }
+
+  /**
+   * GET /financial/project/:projectId/closeout - Get closeout state + reviews
+   */
+  @Get('project/:projectId/closeout')
+  @UseGuards(CombinedAuthGuard)
+  async getProjectCloseout(@Param('projectId') projectId: string) {
+    return this.financialService.getProjectCloseout(projectId);
+  }
+
+  /**
    * POST /financial/project/:projectId/professional-wallet/transfer
    * Professional (or admin) transfers available wallet balance to external payout account
    */

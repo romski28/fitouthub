@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-20-73d1054b",
+    "date": "2026-09-20T14:21:35+08:00",
+    "title": "feat(retention): platform-fee settlement + closeout review backend",
+    "summary": "feat(retention): platform-fee settlement + closeout review backend",
+    "areas": [
+      "api"
+    ],
+    "commit": "73d1054b",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-20-5ef416f4",
     "date": "2026-09-20T12:24:17+08:00",
     "title": "feat(retention): optional 10%/3-month warranty retention + closeout scaffolding",

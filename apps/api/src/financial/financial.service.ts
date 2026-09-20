@@ -1691,6 +1691,288 @@ export class FinancialService {
   }
 
   /**
+   * Settle the platform fee (10% of gross) to the Mimo account at project close.
+   * Idempotent — records a single platform_fee_settlement transaction + ledger debit.
+   */
+  async settlePlatformFee(projectId: string, actorId?: string) {
+    const awardedPP = await this.prisma.projectProfessional.findFirst({
+      where: { projectId, status: 'accepted' },
+      select: { id: true, professionalId: true, quotePlatformFeeAmount: true },
+      orderBy: { quotedAt: 'desc' },
+    });
+
+    const feeAmount = this.toAmount(awardedPP?.quotePlatformFeeAmount);
+    if (!awardedPP || feeAmount <= 0) {
+      return { success: true, skipped: true, reason: 'no_platform_fee' };
+    }
+
+    const existing = await this.prisma.financialTransaction.findFirst({
+      where: { projectId, type: 'platform_fee_settlement', status: 'confirmed' },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) {
+      return { success: true, alreadySettled: true, transactionId: existing.id };
+    }
+
+    const tx = await this.prisma.$transaction(async (prisma) => {
+      const created = await prisma.financialTransaction.create({
+        data: {
+          projectId,
+          projectProfessionalId: awardedPP.id,
+          type: 'platform_fee_settlement',
+          description: 'Platform fee settled to Mimo account',
+          amount: new Decimal(feeAmount.toFixed(2)),
+          status: 'confirmed',
+          requestedBy: actorId || 'system',
+          requestedByRole: 'platform',
+          actionBy: actorId || 'system',
+          actionByRole: 'platform',
+          actionAt: new Date(),
+          actionComplete: true,
+          notes: 'Platform fee transferred to Mimo bank account at project close',
+        },
+      });
+
+      await prisma.escrowLedger.create({
+        data: {
+          projectId,
+          projectProfessionalId: awardedPP.id,
+          transactionId: created.id,
+          direction: 'debit',
+          amount: new Decimal(feeAmount.toFixed(2)),
+          currency: 'HKD',
+          description: 'Platform fee settled to Mimo',
+          createdBy: actorId || 'system',
+        },
+      });
+
+      return created;
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: tx.id,
+      action: 'platform_fee_settled',
+      actorId: actorId || undefined,
+      actorRole: 'system',
+      details: 'Platform fee settled to Mimo account',
+      metadata: { amount: feeAmount.toFixed(2), projectId },
+    });
+
+    return { success: true, transactionId: tx.id, feeAmount };
+  }
+
+  /** Read the closeout state + reviews for a project. */
+  async getProjectCloseout(projectId: string) {
+    const [closeout, reviews] = await Promise.all([
+      this.prisma.projectCloseout.findUnique({ where: { projectId } }),
+      this.prisma.projectReview.findMany({
+        where: { projectId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    const clientReviewed = reviews.some((r) => r.reviewerType === 'client');
+    const proReviewed = reviews.some((r) => r.reviewerType === 'professional');
+
+    return {
+      projectId,
+      status: closeout?.status ?? 'pending',
+      clientReviewed,
+      proReviewed,
+      clientReviewedAt: closeout?.clientReviewedAt ?? null,
+      proReviewedAt: closeout?.proReviewedAt ?? null,
+      clientPhotos: closeout?.clientPhotos ?? [],
+      proPhotos: closeout?.proPhotos ?? [],
+      pmPhotos: closeout?.pmPhotos ?? [],
+      closedAt: closeout?.closedAt ?? null,
+      reviews,
+      canClose: clientReviewed && proReviewed,
+    };
+  }
+
+  /**
+   * Capture a closeout review (+ photos) from the client or professional.
+   * When both the client and the professional have reviewed, the project is
+   * finalized: platform fee settled, rating/completion recomputed, stage CLOSED.
+   */
+  async submitCloseoutReview(input: {
+    projectId: string;
+    actorId: string;
+    actorRole: 'client' | 'professional' | 'pm';
+    rating?: number;
+    comment?: string;
+    photos?: string[];
+  }) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: input.projectId },
+      select: {
+        id: true,
+        userId: true,
+        clientId: true,
+        awardedProjectProfessionalId: true,
+        currentStage: true,
+      },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const awardedPP = project.awardedProjectProfessionalId
+      ? await this.prisma.projectProfessional.findUnique({
+          where: { id: project.awardedProjectProfessionalId },
+          select: { id: true, professionalId: true },
+        })
+      : null;
+
+    let reviewerType: 'client' | 'professional' | 'pm';
+    if (input.actorRole === 'client') {
+      if (project.userId !== input.actorId && project.clientId !== input.actorId) {
+        throw new ForbiddenException('Only the project client can submit a client review');
+      }
+      reviewerType = 'client';
+    } else if (input.actorRole === 'professional') {
+      if (!awardedPP || awardedPP.professionalId !== input.actorId) {
+        throw new ForbiddenException('Only the awarded professional can submit a professional review');
+      }
+      reviewerType = 'professional';
+    } else {
+      reviewerType = 'pm';
+    }
+
+    const photos = (input.photos || []).map((s) => String(s || '').trim()).filter(Boolean);
+
+    const existingReview = await this.prisma.projectReview.findFirst({
+      where: { projectId: input.projectId, reviewerType },
+    });
+
+    const normalizedRating =
+      input.rating != null ? Math.max(1, Math.min(5, Math.round(Number(input.rating)))) : null;
+
+    let review;
+    if (existingReview) {
+      review = await this.prisma.projectReview.update({
+        where: { id: existingReview.id },
+        data: {
+          rating: normalizedRating ?? existingReview.rating,
+          comment: input.comment ?? existingReview.comment,
+        },
+      });
+    } else {
+      if (normalizedRating == null) {
+        throw new BadRequestException('Rating is required');
+      }
+      review = await this.prisma.projectReview.create({
+        data: {
+          projectId: input.projectId,
+          reviewerType,
+          reviewerId: input.actorId,
+          rating: normalizedRating,
+          comment: input.comment || null,
+        },
+      });
+    }
+
+    // Upsert closeout record with the reviewer's photos + timestamp.
+    const existingCloseout = await this.prisma.projectCloseout.findUnique({
+      where: { projectId: input.projectId },
+    });
+
+    if (!existingCloseout) {
+      await this.prisma.projectCloseout.create({
+        data: {
+          projectId: input.projectId,
+          status: 'in_review',
+          ...(reviewerType === 'client'
+            ? { clientPhotos: photos, clientReviewedAt: new Date() }
+            : reviewerType === 'professional'
+              ? { proPhotos: photos, proReviewedAt: new Date() }
+              : { pmPhotos: photos }),
+        },
+      });
+    } else {
+      await this.prisma.projectCloseout.update({
+        where: { projectId: input.projectId },
+        data: {
+          status: 'in_review',
+          ...(reviewerType === 'client'
+            ? { clientPhotos: photos, clientReviewedAt: new Date() }
+            : reviewerType === 'professional'
+              ? { proPhotos: photos, proReviewedAt: new Date() }
+              : { pmPhotos: photos }),
+        },
+      });
+    }
+
+    const [clientReview, proReview] = await Promise.all([
+      this.prisma.projectReview.findFirst({ where: { projectId: input.projectId, reviewerType: 'client' } }),
+      this.prisma.projectReview.findFirst({ where: { projectId: input.projectId, reviewerType: 'professional' } }),
+    ]);
+
+    let closed = false;
+    if (clientReview && proReview) {
+      await this.finalizeCloseout(input.projectId, awardedPP, clientReview, proReview);
+      closed = true;
+    }
+
+    return { success: true, review, closed };
+  }
+
+  private async finalizeCloseout(
+    projectId: string,
+    awardedPP: { id: string; professionalId: string } | null,
+    _clientReview: any,
+    _proReview: any,
+  ) {
+    await this.settlePlatformFee(projectId).catch((e) =>
+      console.warn('[FinancialService] settlePlatformFee failed during closeout:', e?.message || e),
+    );
+
+    await this.prisma.projectCloseout.update({
+      where: { projectId },
+      data: { status: 'closed', closedAt: new Date() },
+    });
+
+    if (awardedPP?.professionalId) {
+      await this.recomputeProfessionalRatingAndCompletion(awardedPP.professionalId);
+    }
+
+    try {
+      await this.projectStageService.transitionStage(projectId, ProjectStage.CLOSED);
+      await this.nextStepService.invalidateNextStepCache(projectId);
+    } catch (stageError: any) {
+      console.error('[FinancialService] Failed to transition project to CLOSED:', stageError?.message || stageError);
+    }
+  }
+
+  private async recomputeProfessionalRatingAndCompletion(professionalId: string) {
+    const projectProfessionalIds = await this.prisma.projectProfessional.findMany({
+      where: { professionalId },
+      select: { projectId: true },
+    });
+    const projectIds = projectProfessionalIds.map((pp) => pp.projectId);
+
+    const clientRatings = await this.prisma.projectReview.findMany({
+      where: { projectId: { in: projectIds }, reviewerType: 'client' },
+      select: { rating: true },
+    });
+
+    const average =
+      clientRatings.length > 0
+        ? clientRatings.reduce((sum, r) => sum + r.rating, 0) / clientRatings.length
+        : 0;
+
+    const completedCount = await this.prisma.projectCloseout.count({
+      where: { projectId: { in: projectIds }, status: 'closed' },
+    });
+
+    await this.prisma.professional.update({
+      where: { id: professionalId },
+      data: {
+        rating: Math.round(average * 10) / 10,
+        completedProjectsCount: completedCount,
+      },
+    });
+  }
+
+  /**
    * Reject advance payment request
    */
   async rejectAdvancePayment(transactionId: string, approvedBy: string, reason: string, approverRole: 'client' | 'admin' = 'client') {
