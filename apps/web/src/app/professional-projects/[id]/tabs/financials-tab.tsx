@@ -4,6 +4,7 @@ import React from 'react';
 import ProjectFinancialsCard from '@/components/project-financials-card';
 import { PaymentRequestModal } from '@/components/next-steps/payment-request-modal';
 import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
+import { CloseProjectPanel } from '@/components/close-project-panel';
 
 interface FinancialsTabProps {
   tab?: string;
@@ -12,6 +13,7 @@ interface FinancialsTabProps {
   accessToken?: string | null;
   projectId?: string;
   projectProfessionalId?: string;
+  projectCurrentStage?: string;
   onNavigateTab?: (tab: string) => void;
 }
 
@@ -22,6 +24,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
   accessToken,
   projectId,
   projectProfessionalId,
+  projectCurrentStage,
   onNavigateTab,
 }) => {
   const [showPaymentRequestModal, setShowPaymentRequestModal] = React.useState(false);
@@ -48,6 +51,9 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   const projectCost = awardedAmount || 0;
 
+  const normalizedStage = String(projectCurrentStage || '').toUpperCase();
+  const inClosePhase = normalizedStage === 'COMPLETE' || normalizedStage === 'WARRANTY_PERIOD';
+
   return (
     <div className="space-y-4">
       <ProjectFinancialsCard
@@ -61,6 +67,10 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
         onViewQuote={() => setShowViewQuoteModal(true)}
         onRequestAdditionalWorks={() => setShowPaymentRequestModal(true)}
       />
+
+      {inClosePhase && (
+        <CloseProjectPanel projectId={projectId} accessToken={accessToken} role="professional" />
+      )}
 
       <PaymentRequestModal
         isOpen={showPaymentRequestModal}

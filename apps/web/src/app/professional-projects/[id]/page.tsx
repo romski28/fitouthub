@@ -1720,6 +1720,7 @@ export default function ProjectDetailPage() {
               accessToken={accessToken || null}
               projectId={project.project.id}
               projectProfessionalId={projectProfessionalId}
+              projectCurrentStage={project.project.currentStage}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
 

@@ -2399,6 +2399,7 @@ export default function ClientProjectDetailPage() {
               accessToken={accessToken || null}
               projectCost={projectCostValue}
               originalBudget={project.approvedBudget || project.budget || undefined}
+              projectStage={project.currentStage}
               onNavigateTab={(tab) => setActiveTab(tab)}
               openMaterialsWalletOnLoad={openMaterialsWalletOnLoad}
               onMaterialsWalletAutoOpenHandled={handleMaterialsWalletAutoOpenHandled}

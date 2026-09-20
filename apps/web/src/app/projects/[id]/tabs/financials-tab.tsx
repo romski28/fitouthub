@@ -2,12 +2,14 @@
 
 import React from 'react';
 import ProjectFinancialsCard from '@/components/project-financials-card';
+import { CloseProjectPanel } from '@/components/close-project-panel';
 
 interface ClientFinancialsTabProps {
   projectId: string;
   accessToken: string | null;
   projectCost: number;
   originalBudget?: string;
+  projectStage?: string;
   onOpenChatTab?: () => void;
   onNavigateTab?: (tab: string) => void;
   openMaterialsWalletOnLoad?: boolean;
@@ -19,6 +21,7 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
   accessToken,
   projectCost,
   originalBudget,
+  projectStage,
   onOpenChatTab,
   onNavigateTab,
   openMaterialsWalletOnLoad,
@@ -31,6 +34,9 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
       </div>
     );
   }
+
+  const normalizedStage = String(projectStage || '').toUpperCase();
+  const inClosePhase = normalizedStage === 'COMPLETE' || normalizedStage === 'WARRANTY_PERIOD';
 
   return (
     <div className="space-y-4">
@@ -45,6 +51,9 @@ export const ClientFinancialsTab: React.FC<ClientFinancialsTabProps> = ({
         openMaterialsWalletOnLoad={openMaterialsWalletOnLoad}
         onMaterialsWalletAutoOpenHandled={onMaterialsWalletAutoOpenHandled}
       />
+      {inClosePhase && (
+        <CloseProjectPanel projectId={projectId} accessToken={accessToken} role="client" />
+      )}
     </div>
   );
 };

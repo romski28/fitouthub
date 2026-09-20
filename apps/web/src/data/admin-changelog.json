@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-20-a8a3c9b7",
+    "date": "2026-09-20T16:31:09+08:00",
+    "title": "feat(retention): close-procedure panel for client and professional",
+    "summary": "feat(retention): close-procedure panel for client and professional",
+    "areas": [
+      "web"
+    ],
+    "commit": "a8a3c9b7",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/financials-tab.tsx",
+      "apps/web/src/components/close-project-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-09-20-73d1054b",
     "date": "2026-09-20T14:21:35+08:00",
     "title": "feat(retention): platform-fee settlement + closeout review backend",
