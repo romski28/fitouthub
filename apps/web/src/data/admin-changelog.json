@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-20-6909ac62",
+    "date": "2026-09-20T11:48:45+08:00",
+    "title": "fix(api): route pre-award PM messages to the private PM-client channel",
+    "summary": "fix(api): route pre-award PM messages to the private PM-client channel",
+    "areas": [
+      "api"
+    ],
+    "commit": "6909ac62",
+    "files": [
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-20-cc9fa65b",
     "date": "2026-09-20T11:27:41+08:00",
     "title": "feat(web): surface assigned PM name in client PM chat header",

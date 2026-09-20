@@ -4568,7 +4568,7 @@ export class ProjectsService {
           projectName: true,
           userId: true,
           pmId: true,
-          user: { select: { firstName: true, surname: true, mobile: true } },
+          user: { select: { firstName: true, surname: true, nickname: true, mobile: true } },
         },
       });
       if (!project?.userId) return;
@@ -4585,16 +4585,19 @@ export class ProjectsService {
         (pmUser ? `${pmUser.firstName || ''} ${pmUser.surname || ''}`.trim() : '') ||
         pmUser?.nickname ||
         'your Mimo PM';
-      const clientFirstName = project.user?.firstName || 'there';
+      const clientFirstName = project.user?.firstName?.trim() || project.user?.nickname?.trim() || 'there';
 
       const chatMessage =
         kind === 'claimed'
           ? `👋 Hi ${clientFirstName}, ${pmName} is now your Mimo Project Manager.\n\nThey'll review your brief and release your project for quotation shortly. You'll be notified once tendering begins.`
           : `🚀 Good news, ${clientFirstName} — your project "${project.projectName}" has been released for tender.\n\nProfessionals can now submit their quotes.`;
 
-      // Project chat (always).
+      // Private PM<->client channel (pre-award; visible to the client immediately).
       const thread = await this.chatService.getOrCreateProjectThread(projectId);
-      await this.chatService.addProjectMessage(thread.id, 'pm', project.pmId ?? null, null, chatMessage);
+      await this.chatService.addProjectMessage(thread.id, 'pm', project.pmId ?? null, null, chatMessage, [], {
+        threadScope: 'pm-private',
+        threadScopeId: 'pm-private',
+      });
 
       // Push (fire-and-forget).
       void this.pushService
@@ -4648,7 +4651,10 @@ export class ProjectsService {
       throw new ForbiddenException('Only the assigned PM can message this client');
     }
     const thread = await this.chatService.getOrCreateProjectThread(projectId);
-    const message = await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content.trim());
+    const message = await this.chatService.addProjectMessage(thread.id, 'pm', pmUserId, null, content.trim(), [], {
+      threadScope: 'pm-private',
+      threadScopeId: 'pm-private',
+    });
     return { success: true, message };
   }
 
