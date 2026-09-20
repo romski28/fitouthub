@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-20-8393d1b0",
+    "date": "2026-09-20T16:33:40+08:00",
+    "title": "feat(retention): PM retention-release action on warranty-period projects",
+    "summary": "feat(retention): PM retention-release action on warranty-period projects",
+    "areas": [
+      "web"
+    ],
+    "commit": "8393d1b0",
+    "files": [
+      "apps/web/src/app/pm/projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-20-a8a3c9b7",
     "date": "2026-09-20T16:31:09+08:00",
     "title": "feat(retention): close-procedure panel for client and professional",

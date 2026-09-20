@@ -81,6 +81,7 @@ export default function PmProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
+  const [releasingRetention, setReleasingRetention] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [arrangingCall, setArrangingCall] = useState(false);
@@ -230,6 +231,27 @@ export default function PmProjectDetailPage() {
       setError(err instanceof Error ? err.message : "Failed to release project");
     } finally {
       setReleasing(false);
+    }
+  };
+
+  const handleReleaseRetention = async () => {
+    if (!accessToken || !projectId) return;
+    setReleasingRetention(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/release-retention`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to release retention");
+      }
+      toast.success("Retention released and project closed");
+      await fetchProject();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to release retention");
+    } finally {
+      setReleasingRetention(false);
     }
   };
 
@@ -717,6 +739,22 @@ export default function PmProjectDetailPage() {
                 className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
               >
                 {releasing ? "Releasing…" : "Release for quotation"}
+              </button>
+            </div>
+          )}
+
+          {project.currentStage === "warranty_period" && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-sm text-emerald-900">
+                This project is in its warranty period. The 10% retention is held pending release.
+              </p>
+              <button
+                type="button"
+                disabled={releasingRetention}
+                onClick={handleReleaseRetention}
+                className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {releasingRetention ? "Releasing…" : "Release retention & close project"}
               </button>
             </div>
           )}
