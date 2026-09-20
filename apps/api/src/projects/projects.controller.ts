@@ -96,19 +96,34 @@ export class ProjectsController {
   }
 
   /**
-   * Gate project chat access. Only the project client, a granted delegate, a
-   * linked professional/worker, or back-office staff (admin/surveyor/Mimo BoH/
-   * project manager) may read or write the project chat.
+   * Gate project chat access. Only the project client, a granted delegate, or a
+   * linked professional/worker may read or write the project chat. Platform
+   * staff (admin/surveyor/Mimo BoH) have platform-wide access. The general
+   * team chat (no scope) opens only once a professional is awarded; scoped
+   * threads (pm-private/claim) stay open earlier.
    */
-  private async assertProjectChatAccess(projectId: string, req: any): Promise<void> {
+  private async assertProjectChatAccess(projectId: string, req: any, threadScope?: string | null): Promise<void> {
     const actorId = req?.user?.id || req?.user?.sub;
     if (!actorId) throw new ForbiddenException('Authentication required');
 
     const role = String(req?.user?.role || '').toLowerCase();
     const isProfessional = !!req?.user?.isProfessional || role === 'professional';
 
-    if (['admin', 'surveyor', 'mimo_boh', 'project_manager'].includes(role)) {
+    if (['admin', 'surveyor', 'mimo_boh'].includes(role)) {
       return;
+    }
+
+    // The general team chat (no scope) opens only once a professional is awarded.
+    // Scoped threads (pm-private, claim) are pre-award conversations that stay open.
+    const scope = String(threadScope || '').trim().toLowerCase();
+    if (!scope) {
+      const awarded = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { awardedProjectProfessionalId: true },
+      });
+      if (!awarded?.awardedProjectProfessionalId) {
+        throw new ForbiddenException('Project chat opens once a professional is awarded');
+      }
     }
 
     if (isProfessional) {
@@ -1814,7 +1829,7 @@ export class ProjectsController {
     @Query('threadScopeId') threadScopeId?: string,
     @Request() req?: any,
   ) {
-    await this.assertProjectChatAccess(projectId, req);
+    await this.assertProjectChatAccess(projectId, req, threadScope);
     const thread = await this.chatService.getOrCreateProjectThread(projectId, {
       threadScope: threadScope || null,
       threadScopeId: threadScopeId || null,
@@ -1869,7 +1884,7 @@ export class ProjectsController {
     @Body() body?: { threadScope?: string; threadScopeId?: string },
     @Request() req?: any,
   ) {
-    await this.assertProjectChatAccess(projectId, req);
+    await this.assertProjectChatAccess(projectId, req, body?.threadScope);
     return this.chatService.getOrCreateProjectThread(projectId, {
       threadScope: body?.threadScope || null,
       threadScopeId: body?.threadScopeId || null,
@@ -1893,7 +1908,7 @@ export class ProjectsController {
     },
     @Request() req: any,
   ) {
-    await this.assertProjectChatAccess(projectId, req);
+    await this.assertProjectChatAccess(projectId, req, body.threadScope);
 
     if (!body.content?.trim() && (!body.attachments || body.attachments.length === 0)) {
       throw new BadRequestException('Message must have content or attachments');

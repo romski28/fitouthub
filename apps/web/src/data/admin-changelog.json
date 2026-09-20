@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-20-6c98f5b9",
+    "date": "2026-09-20T10:46:11+08:00",
+    "title": "feat(chat): gate general team chat to award (Option B)",
+    "summary": "feat(chat): gate general team chat to award (Option B)",
+    "areas": [
+      "api"
+    ],
+    "commit": "6c98f5b9",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts"
+    ]
+  },
+  {
     "id": "2026-09-17-9b4ab4d3",
     "date": "2026-09-17T22:03:18+08:00",
     "title": "feat(delegation): delegate confirm-on-site (A3b) + fix site-inspection gap",
