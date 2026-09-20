@@ -68,6 +68,7 @@ interface ProjectDetail {
   id: string;
   projectName: string;
   region: string;
+  pmName?: string | null;
   siteInspectionAvailableOn?: string;
   status?: string;
   budget?: string;
@@ -2515,6 +2516,7 @@ export default function ClientProjectDetailPage() {
               projectId={projectId}
               accessToken={accessToken || ''}
               isAwarded={isAwarded}
+              pmName={project?.pmName || ''}
             />
           </>
         )}

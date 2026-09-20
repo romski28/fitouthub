@@ -4265,10 +4265,22 @@ export class ProjectsService {
       if (!project) return null;
       const mimoProjectExtras = await this.listProjectExtras(project.id);
       const walletTransferTimeline = await this.getWalletTransferTimeline(project.id);
+      const pmUser = project.pmId
+        ? await this.prisma.user
+            .findUnique({
+              where: { id: project.pmId },
+              select: { firstName: true, surname: true, nickname: true },
+            })
+            .catch(() => null)
+        : null;
+      const pmName = pmUser
+        ? [pmUser.firstName, pmUser.surname].filter(Boolean).join(' ').trim() || pmUser.nickname || null
+        : null;
       return {
         ...project,
         mimoProjectExtras,
         ...walletTransferTimeline,
+        pmName,
         professionals: this.dedupeProfessionals((project as any).professionals),
         photos: this.resolveProjectPhotos((project as any).photos),
       } as any;

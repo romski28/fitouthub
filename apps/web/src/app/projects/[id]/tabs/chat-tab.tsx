@@ -7,9 +7,10 @@ interface ChatTabProps {
   projectId: string;
   accessToken: string;
   isAwarded?: boolean;
+  pmName?: string | null;
 }
 
-export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken, isAwarded = false }) => {
+export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken, isAwarded = false, pmName }) => {
   const [thread, setThread] = useState<'project' | 'pm'>('project');
   return (
     <div className="space-y-4">
@@ -62,7 +63,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({ projectId, accessToken, isAwar
           currentUserRole="client"
           threadScope="pm-private"
           threadScopeId="pm-private"
-          headerTitle="Your Project Manager"
+          headerTitle={pmName ? `Your PM, ${pmName}` : 'Your Project Manager'}
           headerSubtitle="Private messages with your Mimo PM"
         />
       )}

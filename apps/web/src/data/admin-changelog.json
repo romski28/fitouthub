@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-20-cc9fa65b",
+    "date": "2026-09-20T11:27:41+08:00",
+    "title": "feat(web): surface assigned PM name in client PM chat header",
+    "summary": "feat(web): surface assigned PM name in client PM chat header",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "cc9fa65b",
+    "files": [
+      "apps/api/src/projects/projects.service.ts",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/tabs/chat-tab.tsx"
+    ]
+  },
+  {
     "id": "2026-09-20-6ef92e6c",
     "date": "2026-09-20T11:14:01+08:00",
     "title": "feat(chat): align award gating in client UI + PM message view",
