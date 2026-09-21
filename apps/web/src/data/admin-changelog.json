@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-21-dae5c58e",
+    "date": "2026-09-21T14:34:54+08:00",
+    "title": "fix(profile): resolve mobile input clearing + move contact checkboxes",
+    "summary": "fix(profile): resolve mobile input clearing + move contact checkboxes",
+    "areas": [
+      "web",
+      "infra"
+    ],
+    "commit": "dae5c58e",
+    "files": [
+      "apps/web/src/app/profile/page.tsx",
+      "package.json",
+      "pnpm-lock.yaml"
+    ]
+  },
+  {
     "id": "2026-09-21-e75a1326",
     "date": "2026-09-21T13:56:13+08:00",
     "title": "fix(profile): phone input clearing + WhatsApp/WeChat contact flags",

@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
-    "react-phone-number-input": "^3.4.17"
+    "react-phone-number-input": "^3.4.18"
   }
 }

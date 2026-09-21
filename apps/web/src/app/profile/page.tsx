@@ -185,7 +185,7 @@ export default function ProfilePage() {
     };
 
     loadPreferences();
-  }, [user, accessToken, logout]);
+  }, [user?.id, accessToken]);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -405,6 +405,31 @@ export default function ProfilePage() {
                     value={mobile}
                     onChange={setMobile}
                   />
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-semibold text-slate-800">I can be contacted on</p>
+                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
+                      <input
+                        type="checkbox"
+                        id="contactableWhatsApp"
+                        checked={whatsappContactable}
+                        onChange={(e) => setWhatsappContactable(e.target.checked)}
+                        disabled={preferencesLoading}
+                        className="rounded border-[rgba(120,53,15,0.24)]"
+                      />
+                      <span>WhatsApp</span>
+                    </label>
+                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
+                      <input
+                        type="checkbox"
+                        id="contactableWeChat"
+                        checked={wechatContactable}
+                        onChange={(e) => setWechatContactable(e.target.checked)}
+                        disabled={preferencesLoading}
+                        className="rounded border-[rgba(120,53,15,0.24)]"
+                      />
+                      <span>WeChat</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </section>
@@ -505,34 +530,6 @@ export default function ProfilePage() {
                     <option value="SMS">SMS</option>
                     <option value="WECHAT">WeChat</option>
                   </select>
-                </div>
-
-                <div>
-                  <p className={sectionLabelClassName}>I can be contacted on</p>
-                  <div className="mt-2 space-y-2">
-                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
-                      <input
-                        type="checkbox"
-                        id="contactableWhatsApp"
-                        checked={whatsappContactable}
-                        onChange={(e) => setWhatsappContactable(e.target.checked)}
-                        disabled={preferencesLoading}
-                        className="rounded border-[rgba(120,53,15,0.24)]"
-                      />
-                      <span>WhatsApp</span>
-                    </label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
-                      <input
-                        type="checkbox"
-                        id="contactableWeChat"
-                        checked={wechatContactable}
-                        onChange={(e) => setWechatContactable(e.target.checked)}
-                        disabled={preferencesLoading}
-                        className="rounded border-[rgba(120,53,15,0.24)]"
-                      />
-                      <span>WeChat</span>
-                    </label>
-                  </div>
                 </div>
               </div>
             </section>
