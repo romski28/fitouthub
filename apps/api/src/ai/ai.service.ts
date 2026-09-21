@@ -3755,6 +3755,7 @@ ORIGINAL_THREAD_OBJECTIVE:\n${summarizedOriginPrompt || 'unknown'}\n${input.conv
               windowExpiresAt: new Date(activeThread.createdAt.getTime() + this.aiThreadWindowMs).toISOString(),
             }
           : null,
+        askedQuestions,
         orchestrator: {
           enabled: orchestratorEnabled,
           envelopeVersion: envelope.schemaVersion,
@@ -4017,7 +4018,12 @@ Return ONLY valid JSON (no markdown):
     const isUserSayingNo = /^no$/i.test(prompt.trim());
     const confidenceHigh = typeof (parsedObject as Record<string, unknown> | null)?.overallConfidence === 'number'
       && (parsedObject as Record<string, unknown>).overallConfidence as number >= 0.85;
-    if (finalNextQuestions.length === 0 && !isUserSayingNo && !confidenceHigh) {
+    // The hardcoded "seed" question is a first-turn-only safety net: it should
+    // only fire when the AI asked nothing at all on the very first turn. On
+    // later turns (when a question was already asked) we must not re-inject it.
+    const askedQuestions = Array.isArray(baseResponse.askedQuestions) ? baseResponse.askedQuestions : [];
+    const isFirstTurn = askedQuestions.length === 0;
+    if (finalNextQuestions.length === 0 && !isUserSayingNo && !confidenceHigh && isFirstTurn) {
       const trade = finalTrades[0]?.toLowerCase() || '';
       if (trade.includes('air condition') || trade.includes('ac') || trade.includes('hvac')) {
         finalNextQuestions = ['Is it a new AC installation, a repair, or routine service?'];
@@ -4051,6 +4057,15 @@ Return ONLY valid JSON (no markdown):
       : typeof (parsedObject as Record<string, unknown> | null)?.questionSource === 'string'
         ? (parsedObject as Record<string, unknown>).questionSource as string
         : 'ai';
+
+    // Persist the seed question to the intake so the next turn's
+    // collectThreadAskedQuestions sees it as already asked (prevents the seed
+    // from re-firing on the second/third turn).
+    if (seedApplied && baseResponse.intakeId) {
+      await this.prisma.aiIntake
+        .update({ where: { id: baseResponse.intakeId }, data: { nextQuestions: finalNextQuestions } })
+        .catch(() => undefined);
+    }
 
     const responseParsedOutput: Record<string, unknown> = {
       ...sanitizedParsed,

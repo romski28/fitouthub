@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-21-bc3086ce",
+    "date": "2026-09-21T20:24:37+08:00",
+    "title": "fix(ai): gate emergency seed question to the first turn only",
+    "summary": "fix(ai): gate emergency seed question to the first turn only",
+    "areas": [
+      "api"
+    ],
+    "commit": "bc3086ce",
+    "files": [
+      "apps/api/src/ai/ai.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-21-dae5c58e",
     "date": "2026-09-21T14:34:54+08:00",
     "title": "fix(profile): resolve mobile input clearing + move contact checkboxes",
