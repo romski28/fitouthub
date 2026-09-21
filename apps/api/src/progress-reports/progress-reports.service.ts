@@ -357,7 +357,13 @@ export class ProgressReportsService {
     if (report.milestoneId && decision === 'approved') {
       await this.prisma.projectMilestone.update({
         where: { id: report.milestoneId },
-        data: { signOffStatus: 'approved', signOffApprovedAt: now },
+        data: {
+          signOffStatus: 'approved',
+          signOffApprovedAt: now,
+          status: 'completed',
+          percentComplete: 100,
+          actualEndDate: now,
+        },
       });
     } else if (report.milestoneId && decision === 'rejected') {
       await this.prisma.projectMilestone.update({

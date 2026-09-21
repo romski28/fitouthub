@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-21-766af20d",
+    "date": "2026-09-21T22:06:08+08:00",
+    "title": "fix(milestones): mark milestone completed on client sign-off approval",
+    "summary": "fix(milestones): mark milestone completed on client sign-off approval",
+    "areas": [
+      "api"
+    ],
+    "commit": "766af20d",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-21-bc3086ce",
     "date": "2026-09-21T20:24:37+08:00",
     "title": "fix(ai): gate emergency seed question to the first turn only",
