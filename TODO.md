@@ -44,6 +44,27 @@ procedure. Kept here so they aren't lost.
   reach `CLOSED` via `releaseRetention` even without reviews (we flag + remind,
   but don't block). Decide whether to require both reviews before final close.
 
+## Delete-project admin scope (2026-09-21)
+
+The permanent ("hard") delete admin function (`DELETE /projects/:id/permanent`,
+`ProjectsService` hard-delete path) needs a review now that the project has
+more tables/fields:
+
+- **New tables.** `ProjectReview` and `ProjectCloseout` are cascade-deleted via
+  their FK (`onDelete: Cascade`), so they should be removed by the project
+  delete — but they are **not** enumerated in the function's `residualCounts`
+  safety net nor in the purge-audit `impactCounts`. Add explicit
+  `projectReviews` / `projectCloseout` checks so a cascade misconfiguration
+  doesn't silently leak rows.
+- **Closeout photos.** `ProjectCloseout.clientPhotos/proPhotos/pmPhotos` are
+  storage keys but are **not** included in the `fileCandidates` list, so their
+  uploaded files would be orphaned in R2 after a purge. Add them to
+  `fileCandidates` so `deleteProjectFiles` cleans them up.
+- **Retention fields.** `ProjectPaymentPlan.retentionAmount/retentionReleaseAt`
+  and the new `FinancialTransaction` types (`retention_hold`, `retention_release`,
+  `platform_fee_settlement`) should already be covered by the existing
+  `financialTransactions` / `paymentPlans` handling — verify no gaps.
+
 ## Retention policy notes (carried over)
 
 - Retention constants: `RETENTION_PERCENT = 10`, `RETENTION_MONTHS = 3`

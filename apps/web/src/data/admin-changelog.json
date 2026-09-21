@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-21-1682c09c",
+    "date": "2026-09-21T13:37:37+08:00",
+    "title": "docs: add delete-project admin scope review to TODO",
+    "summary": "docs: add delete-project admin scope review to TODO",
+    "areas": [
+      "infra"
+    ],
+    "commit": "1682c09c",
+    "files": [
+      "TODO.md"
+    ]
+  },
+  {
     "id": "2026-09-20-7057356a",
     "date": "2026-09-20T17:05:39+08:00",
     "title": "fix(retention): fall back to email when WhatsApp/SMS delivery fails",
