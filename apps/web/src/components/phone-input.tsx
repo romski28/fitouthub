@@ -25,7 +25,7 @@ export default function PhoneInput({ value, onChange, onBlur, required, disabled
       international
       defaultCountry="HK"
       countryCallingCodeEditable={false}
-      value={value}
+      value={value || undefined}
       onChange={(val) => onChange(val || '')}
       required={required}
       disabled={disabled}

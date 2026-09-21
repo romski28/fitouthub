@@ -77,6 +77,8 @@ export class UsersController {
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
       preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
+      enableWhatsApp?: boolean;
+      enableWeChat?: boolean;
     },
   ) {
     return this.usersService.updateNotificationPreferences(req.user.id, body);
@@ -91,6 +93,8 @@ export class UsersController {
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
       preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
+      enableWhatsApp?: boolean;
+      enableWeChat?: boolean;
     },
   ) {
     return this.usersService.updateNotificationPreferences(id, body);

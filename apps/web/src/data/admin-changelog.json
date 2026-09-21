@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-21-e75a1326",
+    "date": "2026-09-21T13:56:13+08:00",
+    "title": "fix(profile): phone input clearing + WhatsApp/WeChat contact flags",
+    "summary": "fix(profile): phone input clearing + WhatsApp/WeChat contact flags",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e75a1326",
+    "files": [
+      "apps/api/src/users/users.controller.ts",
+      "apps/api/src/users/users.service.ts",
+      "apps/web/src/app/profile/page.tsx",
+      "apps/web/src/components/phone-input.tsx"
+    ]
+  },
+  {
     "id": "2026-09-21-1682c09c",
     "date": "2026-09-21T13:37:37+08:00",
     "title": "docs: add delete-project admin scope review to TODO",

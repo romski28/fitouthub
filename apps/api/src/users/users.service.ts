@@ -61,6 +61,8 @@ export class UsersService {
             allowPartnerOffers: true,
             allowPlatformUpdates: true,
             preferredLanguage: true,
+            enableWhatsApp: true,
+            enableWeChat: true,
           },
         },
       },
@@ -131,6 +133,8 @@ export class UsersService {
       allowPlatformUpdates?: boolean;
       preferredLanguage?: string;
       preferredContactMethod?: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT' | 'APP_NOTIFICATIONS';
+      enableWhatsApp?: boolean;
+      enableWeChat?: boolean;
     },
   ) {
     const preferredContactMethod = preferences.preferredContactMethod?.toUpperCase() as
@@ -161,6 +165,8 @@ export class UsersService {
           allowPartnerOffers: preferences.allowPartnerOffers ?? false,
           allowPlatformUpdates: preferences.allowPlatformUpdates ?? true,
           preferredLanguage: preferences.preferredLanguage ?? 'en',
+          enableWhatsApp: preferences.enableWhatsApp ?? true,
+          enableWeChat: preferences.enableWeChat ?? false,
         },
       });
     } else {
@@ -179,6 +185,12 @@ export class UsersService {
           ...(preferredContactMethod !== undefined && {
             primaryChannel: preferredContactMethod,
           }),
+          ...(preferences.enableWhatsApp !== undefined && {
+            enableWhatsApp: preferences.enableWhatsApp,
+          }),
+          ...(preferences.enableWeChat !== undefined && {
+            enableWeChat: preferences.enableWeChat,
+          }),
         },
       });
     }
@@ -189,6 +201,8 @@ export class UsersService {
       allowPartnerOffers: notificationPreference.allowPartnerOffers,
       allowPlatformUpdates: notificationPreference.allowPlatformUpdates,
       preferredLanguage: notificationPreference.preferredLanguage,
+      enableWhatsApp: notificationPreference.enableWhatsApp,
+      enableWeChat: notificationPreference.enableWeChat,
     };
   }
 }

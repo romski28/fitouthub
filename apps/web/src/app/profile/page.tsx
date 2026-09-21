@@ -90,6 +90,8 @@ export default function ProfilePage() {
   const [allowPlatformUpdates, setAllowPlatformUpdates] = useState(true);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [preferredContactMethod, setPreferredContactMethod] = useState<'EMAIL' | 'WHATSAPP' | 'SMS' | 'WECHAT'>('WHATSAPP');
+  const [whatsappContactable, setWhatsappContactable] = useState(true);
+  const [wechatContactable, setWechatContactable] = useState(false);
   const [preferencesLoading, setPreferencesLoading] = useState(true);
 
   // Load user data into form
@@ -171,6 +173,8 @@ export default function ProfilePage() {
           setAllowPlatformUpdates(data.notificationPreference.allowPlatformUpdates ?? true);
           setPreferredLanguage(data.notificationPreference.preferredLanguage ?? 'en');
           setPreferredContactMethod(data.notificationPreference.primaryChannel ?? 'WHATSAPP');
+          setWhatsappContactable(data.notificationPreference.enableWhatsApp ?? true);
+          setWechatContactable(data.notificationPreference.enableWeChat ?? false);
         }
       } catch (err) {
         console.error('Error loading preferences:', err);
@@ -238,6 +242,8 @@ export default function ProfilePage() {
           allowPlatformUpdates,
           preferredLanguage,
           preferredContactMethod,
+          enableWhatsApp: whatsappContactable,
+          enableWeChat: wechatContactable,
         }),
       });
 
@@ -499,6 +505,34 @@ export default function ProfilePage() {
                     <option value="SMS">SMS</option>
                     <option value="WECHAT">WeChat</option>
                   </select>
+                </div>
+
+                <div>
+                  <p className={sectionLabelClassName}>I can be contacted on</p>
+                  <div className="mt-2 space-y-2">
+                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
+                      <input
+                        type="checkbox"
+                        id="contactableWhatsApp"
+                        checked={whatsappContactable}
+                        onChange={(e) => setWhatsappContactable(e.target.checked)}
+                        disabled={preferencesLoading}
+                        className="rounded border-[rgba(120,53,15,0.24)]"
+                      />
+                      <span>WhatsApp</span>
+                    </label>
+                    <label className="flex items-center gap-3 rounded-2xl border border-[rgba(120,53,15,0.08)] bg-[rgba(255,250,240,0.82)] px-4 py-3 text-sm text-slate-700 shadow-sm">
+                      <input
+                        type="checkbox"
+                        id="contactableWeChat"
+                        checked={wechatContactable}
+                        onChange={(e) => setWechatContactable(e.target.checked)}
+                        disabled={preferencesLoading}
+                        className="rounded border-[rgba(120,53,15,0.24)]"
+                      />
+                      <span>WeChat</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </section>
