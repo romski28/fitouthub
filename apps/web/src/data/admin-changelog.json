@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-22-6f8a13e0",
+    "date": "2026-09-22T01:11:17+08:00",
+    "title": "fix(milestones): clear 'Approve milestone' next-step on client approval",
+    "summary": "fix(milestones): clear 'Approve milestone' next-step on client approval",
+    "areas": [
+      "api"
+    ],
+    "commit": "6f8a13e0",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-21-766af20d",
     "date": "2026-09-21T22:06:08+08:00",
     "title": "fix(milestones): mark milestone completed on client sign-off approval",

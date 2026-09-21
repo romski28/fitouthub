@@ -372,6 +372,23 @@ export class ProgressReportsService {
       });
     }
 
+    // Record the "Approve milestone" next-step action as completed so the
+    // flag clears even if the stage transition below is skipped or fails.
+    if (decision === 'approved') {
+      await this.nextStepService
+        .recordNextStepAction(
+          report.projectId,
+          requesterId,
+          'APPROVE_MILESTONE',
+          'COMPLETED',
+          { milestoneId: report.milestoneId ?? null, progressReportId: report.id },
+          'CLIENT',
+        )
+        .catch((actionErr) => {
+          console.warn('[ProgressReportsService] Failed to record APPROVE_MILESTONE completion:', (actionErr as Error)?.message);
+        });
+    }
+
     // Transition project stage: MILESTONE_PENDING → WORK_IN_PROGRESS
     // Non-fatal — sign-off decision is already persisted regardless of stage transition outcome.
     try {
