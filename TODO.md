@@ -29,7 +29,16 @@ procedure. Kept here so they aren't lost.
 
 - **Retention for Class 2/3.** Retention is currently Class 1 (`SCALE_1`) only.
   `SCALE_3` has a separate legacy 5% path that should be reconciled/unified
-  with the new 10% opt-in model.
+  with the new 10% opt-in model. Note: Class 2/3 projects may have **compulsory**
+  retention factors (TBC), but are **certainly not excluded** from the retention
+  policy — they must be brought under it, not skipped.
+
+- **Multi-milestone (Class 2/3) → defects lifecycle.** The per-milestone loop
+  (`WORK_IN_PROGRESS ↔ MILESTONE_PENDING` via `createReport`/`approveSignOff`)
+  is wired, but there is **no "last milestone" detection** and **no transition
+  into** `NEAR_COMPLETION`/`FINAL_INSPECTION` (stages are seeded but unreachable).
+  Need: detect "all milestones completed", then route
+  `NEAR_COMPLETION → FINAL_INSPECTION → COMPLETE → (warranty_period if retention)`.
 
 - **Dedicated PM payout queue.** Rather than reusing the wallet-transfer →
   admin-confirm flow, consider a PM-facing payout/release queue.

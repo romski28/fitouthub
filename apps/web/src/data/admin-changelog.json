@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-22-51019b5d",
+    "date": "2026-09-22T10:04:37+08:00",
+    "title": "feat(api): single-milestone sign-off transitions project to COMPLETE",
+    "summary": "feat(api): single-milestone sign-off transitions project to COMPLETE",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "51019b5d",
+    "files": [
+      "COMPLETION_TWO_AXIS_PLAN.md",
+      "TODO.md",
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-1dc95e9e",
     "date": "2026-09-22T09:42:05+08:00",
     "title": "feat(fiscal): add Project.fiscalStatus for two-axis completion",

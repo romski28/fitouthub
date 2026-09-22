@@ -389,11 +389,22 @@ export class ProgressReportsService {
         });
     }
 
-    // Transition project stage: MILESTONE_PENDING → WORK_IN_PROGRESS
-    // Non-fatal — sign-off decision is already persisted regardless of stage transition outcome.
+    // Transition project stage after approval.
+    // Single-milestone (Class 1): final milestone approved = physical work complete → COMPLETE.
+    // Multi-milestone: return to active work for the next milestone.
     try {
       if (project.currentStage === ProjectStage.MILESTONE_PENDING) {
-        await this.projectStageService.transitionStage(report.projectId, ProjectStage.WORK_IN_PROGRESS);
+        const paymentPlan = await (this.prisma as any).projectPaymentPlan
+          .findUnique({
+            where: { projectId: report.projectId },
+            select: { milestones: { select: { id: true } } },
+          })
+          .catch(() => null);
+        const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
+        const targetStage = isSingleMilestone
+          ? ProjectStage.COMPLETE
+          : ProjectStage.WORK_IN_PROGRESS;
+        await this.projectStageService.transitionStage(report.projectId, targetStage);
         await this.nextStepService.invalidateNextStepCache(report.projectId);
       }
     } catch (stageErr: any) {
