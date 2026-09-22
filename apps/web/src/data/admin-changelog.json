@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-22-d23ce4e4",
+    "date": "2026-09-22T15:17:10+08:00",
+    "title": "fix(financial): clear 'Approve milestone' next-step on payment release",
+    "summary": "fix(financial): clear 'Approve milestone' next-step on payment release",
+    "areas": [
+      "api"
+    ],
+    "commit": "d23ce4e4",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-beb02421",
     "date": "2026-09-22T14:10:27+08:00",
     "title": "feat(web): show Mimo platform-fee segment in financials cashflow",

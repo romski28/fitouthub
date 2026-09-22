@@ -1633,6 +1633,32 @@ export class FinancialService {
       console.warn('[FinancialService] Failed to notify professional/PM of payment release:', notificationError);
     }
 
+    // 5b. Record the client's "Approve milestone" / "Review progress" next-steps
+    //     as completed so they clear from the next-step list. Belt-and-braces:
+    //     the stage transition below also moves the project out of
+    //     MILESTONE_PENDING, but recording here (stamped with the current stage)
+    //     covers any delayed/failed transition.
+    try {
+      await this.nextStepService.recordNextStepAction(
+        input.projectId,
+        input.clientId,
+        'APPROVE_MILESTONE',
+        'COMPLETED',
+        { paymentRequestId: paymentRequest.id },
+        'CLIENT',
+      );
+      await this.nextStepService.recordNextStepAction(
+        input.projectId,
+        input.clientId,
+        'REVIEW_PROGRESS',
+        'COMPLETED',
+        { paymentRequestId: paymentRequest.id },
+        'CLIENT',
+      );
+    } catch (actionErr: any) {
+      console.warn('[FinancialService] Failed to record next-step completion:', actionErr?.message || actionErr);
+    }
+
     // 6. Fiscal status + stage transition (physical vs fiscal axes — see
     //    COMPLETION_TWO_AXIS_PLAN.md).
     // Retention held → warranty period + fiscalStatus = retention_held.
