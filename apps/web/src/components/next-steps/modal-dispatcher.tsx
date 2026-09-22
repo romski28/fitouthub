@@ -352,7 +352,7 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   // Other payment-related actions
   if (['APPROVE_MILESTONE'].includes(actionKey)) {
-    return 'payment';
+    return 'review-payment-request';
   }
 
   // Professional: submit/revise/view quote

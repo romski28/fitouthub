@@ -368,6 +368,20 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/pm-transfer - PM executes the final
+   * transfer from the professional's transfer-ready wallet to "paid out".
+   * PM only (assigned PM verified in service).
+   */
+  @Post('project/:projectId/pm-transfer')
+  @UseGuards(CombinedAuthGuard)
+  async pmTransferToProfessional(@Param('projectId') projectId: string, @Request() req: any) {
+    if (req.user?.role !== 'project_manager') {
+      throw new ForbiddenException('Only a PM can execute the final transfer');
+    }
+    return this.financialService.pmPayoutProfessional(projectId, req.user.id);
+  }
+
+  /**
    * POST /financial/project/:projectId/closeout-review - Submit closeout review (+ photos)
    */
   @Post('project/:projectId/closeout-review')

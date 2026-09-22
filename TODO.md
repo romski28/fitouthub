@@ -2,6 +2,34 @@
 
 General backlog of deferred items. Latest first.
 
+## Milestone approval next-step not advancing (2026-09-22)
+
+Smoke-tested: client "Approve milestone" next-step doesn't advance; pro side
+stays on "Awaiting milestone approval". Root causes identified (see report):
+
+- **`APPROVE_MILESTONE` routes to `GeneralActionModal` (`modalType: 'payment'`)**
+  whose "Approve" button is `navigate_tab` — it navigates, never approves.
+  The real sign-off approval is a *separate* flow in the progress-report modal
+  (`REVIEW_PROGRESS` → `SignOffCard` "Approve" → `/progress-reports/:id/sign-off`).
+  Two entry points for one action = the modal confusion the user flagged.
+- **`approveSignOff` only completes `APPROVE_MILESTONE`, not `REVIEW_PROGRESS`.**
+  Both are `isPrimary` client steps in `MILESTONE_PENDING`; the synthetic
+  `REVIEW_PROGRESS` step lingers after approval.
+- **COMPLETED record stamped with wrong stage.** `recordNextStepAction` runs
+  *before* the stage transition, so the COMPLETED row is written with
+  `projectStage = MILESTONE_PENDING`, then the project moves to
+  `COMPLETE`/`WORK_IN_PROGRESS`; `getNextSteps` filters `completedActions` by the
+  new stage and never matches it.
+- **Silent stage-transition failures.** `createReport` → `MILESTONE_PENDING` and
+  `approveSignOff` → next-stage transitions are wrapped in swallowing try/catch.
+
+Fix plan (deferred): (1) unify `APPROVE_MILESTONE` to open the progress-report /
+sign-off modal directly (or make the generic modal's "Approve" call the sign-off
+endpoint + `completeNextStep`); (2) record BOTH `APPROVE_MILESTONE` and
+`REVIEW_PROGRESS` as COMPLETED, stamped against the correct (post-transition)
+stage; (3) ensure client re-fetch/invalidation after approval; (4) surface stage
+transition errors instead of swallowing them.
+
 ## Retention & closeout — "for later" (2026-09-20)
 
 These were explicitly deferred while building the 10%/3-month retention + close

@@ -1561,8 +1561,29 @@ export class FinancialService {
           message: `${formatter.format(payableAmount)} has been released to your drawable wallet for "${proProf.project?.projectName || 'Project'}".`,
         });
       }
+
+      // Notify the assigned PM that funds are now in the professional's
+      // transfer-ready wallet, so they can make the final transfer to the pro.
+      const projectForPm = await this.prisma.project.findUnique({
+        where: { id: input.projectId },
+        select: { pmId: true, projectName: true },
+      });
+      if (projectForPm?.pmId) {
+        const pm = await this.prisma.user.findUnique({
+          where: { id: projectForPm.pmId },
+          select: { id: true, mobile: true },
+        });
+        if (pm?.mobile) {
+          await this.notificationService.send({
+            userId: pm.id,
+            phoneNumber: pm.mobile,
+            eventType: 'payment_ready_for_transfer',
+            message: `${formatter.format(payableAmount)} is ready in the professional's transfer-ready wallet for "${projectForPm.projectName || 'Project'}". Make the final transfer to the professional.`,
+          });
+        }
+      }
     } catch (notificationError) {
-      console.warn('[FinancialService] Failed to notify professional of payment release:', notificationError);
+      console.warn('[FinancialService] Failed to notify professional/PM of payment release:', notificationError);
     }
 
     // 6. Fiscal status + stage transition (physical vs fiscal axes — see
@@ -3178,6 +3199,67 @@ export class FinancialService {
     });
 
     return updated;
+  }
+
+  /**
+   * PM executes the final transfer: moves the professional's transfer-ready
+   * (drawable) balance directly to "paid out" — bypassing the pro's own
+   * wallet-transfer request step. Virtual only (ledger); the real Stripe payout
+   * is assumed to run alongside this in future.
+   */
+  async pmPayoutProfessional(projectId: string, pmId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { pmId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.pmId && project.pmId !== pmId) {
+      throw new ForbiddenException('Only the assigned PM can execute the final transfer');
+    }
+
+    const awardedPP = await this.prisma.projectProfessional.findFirst({
+      where: { projectId, status: 'accepted' },
+      select: { id: true, professionalId: true },
+      orderBy: { quotedAt: 'desc' },
+    });
+    if (!awardedPP) {
+      throw new BadRequestException('No awarded professional for this project');
+    }
+
+    const walletSummary = await this.getProjectWalletSummary(projectId, awardedPP.id);
+    const available = Number(walletSummary.professionalAvailable || 0);
+    if (available <= 0) {
+      throw new BadRequestException('No transfer-ready funds available for this project');
+    }
+
+    const tx = await this.prisma.financialTransaction.create({
+      data: {
+        projectId,
+        projectProfessionalId: awardedPP.id,
+        type: 'professional_wallet_transfer',
+        description: 'Final transfer to professional (PM action)',
+        amount: new Decimal(available.toFixed(2)),
+        status: 'confirmed',
+        requestedBy: pmId,
+        requestedByRole: 'pm',
+        actionBy: pmId,
+        actionByRole: 'pm',
+        actionAt: new Date(),
+        actionComplete: true,
+        notes: 'PM final transfer — funds paid out to professional',
+      },
+    });
+
+    await this.createFinancialAuditLog({
+      transactionId: tx.id,
+      action: 'pm_transfer_to_professional',
+      actorId: pmId,
+      actorRole: 'pm',
+      details: 'PM executed final transfer to professional (paid out)',
+      metadata: { amount: available.toFixed(2), projectId },
+    });
+
+    return { success: true, transactionId: tx.id, amount: available };
   }
 
   async authorizeMilestoneFohCap(input: {

@@ -82,6 +82,9 @@ export default function PmProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
   const [releasingRetention, setReleasingRetention] = useState(false);
+  const [transferReady, setTransferReady] = useState<number | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [payoutLoading, setPayoutLoading] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [arrangingCall, setArrangingCall] = useState(false);
@@ -170,6 +173,49 @@ export default function PmProjectDetailPage() {
   useEffect(() => {
     void fetchThreads();
   }, [fetchThreads]);
+
+  const fetchWallet = useCallback(async () => {
+    if (!accessToken || !projectId) return;
+    setWalletLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/wallet-summary`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTransferReady(Number(data?.professionalAvailable || 0));
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setWalletLoading(false);
+    }
+  }, [accessToken, projectId]);
+
+  useEffect(() => {
+    void fetchWallet();
+  }, [fetchWallet]);
+
+  const handlePmTransfer = async () => {
+    if (!accessToken || !projectId) return;
+    setPayoutLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/financial/project/${projectId}/pm-transfer`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to transfer to professional");
+      }
+      toast.success("Funds transferred to the professional");
+      await fetchWallet();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to transfer to professional");
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
 
   const activeThread = pmThreads.find((t) => threadKey(t) === activeThreadKey) ?? null;
 
@@ -755,6 +801,30 @@ export default function PmProjectDetailPage() {
                 className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
               >
                 {releasingRetention ? "Releasing…" : "Release retention & close project"}
+              </button>
+            </div>
+          )}
+
+          {!walletLoading && transferReady !== null && transferReady > 0 && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-sm text-emerald-900">
+                Funds ready for transfer to the professional:
+                <span className="font-semibold">
+                  {" "}
+                  {new Intl.NumberFormat("en-HK", {
+                    style: "currency",
+                    currency: "HKD",
+                    minimumFractionDigits: 0,
+                  }).format(transferReady)}
+                </span>
+              </p>
+              <button
+                type="button"
+                disabled={payoutLoading}
+                onClick={handlePmTransfer}
+                className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {payoutLoading ? "Transferring…" : "Make transfer to pro"}
               </button>
             </div>
           )}

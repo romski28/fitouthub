@@ -262,13 +262,22 @@ export function ReviewPaymentRequestModal({
               <p className="mt-3 text-base leading-relaxed text-slate-700">
                 {formatHKD(netPayable)} has been moved to the professional's drawable wallet.
               </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-6 min-w-[140px] rounded-lg bg-emerald-600 px-6 py-2.5 text-base font-semibold text-white transition hover:bg-emerald-700"
-              >
-                Done
-              </button>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleViewDetails}
+                  className="min-w-[140px] rounded-lg bg-emerald-600 px-6 py-2.5 text-base font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  View financials
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="min-w-[110px] rounded-lg border border-[#D4C8A0] bg-white px-4 py-2.5 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         ) : !pendingPaymentRequest ? (
