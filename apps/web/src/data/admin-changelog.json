@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-22-0f123fdc",
+    "date": "2026-09-22T16:01:36+08:00",
+    "title": "feat(progress): make chat the single source for milestone sign-off narrative",
+    "summary": "feat(progress): make chat the single source for milestone sign-off narrative",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "0f123fdc",
+    "files": [
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-22-a3ad2aba",
     "date": "2026-09-22T15:42:47+08:00",
     "title": "feat(milestones): unify sign-off approval and payment release into one step",

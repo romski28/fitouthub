@@ -59,12 +59,6 @@ export class ProgressReportsService {
     if (signOffRequested && !milestoneId) {
       throw new BadRequestException('milestoneId is required when requesting sign-off');
     }
-    if (signOffRequested && !narrativeSummary?.trim()) {
-      throw new BadRequestException('Milestone summary is required when requesting sign-off');
-    }
-    if (!signOffRequested && photoEntries.length === 0) {
-      throw new BadRequestException('At least one photo is required');
-    }
 
     // Verify project exists and resolve projectProfessionalId
     const project = await this.prisma.project.findUnique({

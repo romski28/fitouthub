@@ -362,7 +362,6 @@ function ComposeForm({
   paymentPlan,
   onSubmitSuccess,
 }: ComposeFormProps) {
-  const [narrativeSummary, setNarrativeSummary] = React.useState('');
   const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
   const [submitting, setSubmitting] = React.useState<'signoff' | null>(null);
 
@@ -388,10 +387,6 @@ function ComposeForm({
       toast.error('Select a milestone to submit for sign-off');
       return;
     }
-    if (!narrativeSummary.trim()) {
-      toast.error('Milestone summary is required for sign-off');
-      return;
-    }
     if (selectedMilestone.status === 'completed') {
       toast.error('This milestone is already completed and cannot be submitted again');
       return;
@@ -408,7 +403,6 @@ function ComposeForm({
           paymentMilestoneId: linkedPaymentMilestone?.id,
           paymentMilestoneStatus: linkedPaymentMilestone?.status,
           photoEntries: [],
-          narrativeSummary: narrativeSummary.trim() || undefined,
           signOffRequested: true,
         }),
       });
@@ -424,10 +418,15 @@ function ComposeForm({
     }
   };
 
-  const canSubmit = Boolean(selectedMilestoneId) && Boolean(narrativeSummary.trim()) && !submitting;
+  const canSubmit = Boolean(selectedMilestoneId) && !submitting;
 
   return (
     <div className="flex flex-col gap-5">
+
+      <div className="rounded-md border border-emerald-500/30 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+        Write your sign-off notes and attach proof photos in the chat above, then
+        select the milestone and request sign-off.
+      </div>
 
       {/* Milestone */}
       <div>
@@ -497,22 +496,6 @@ function ComposeForm({
         <div className="rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-xs text-slate-500">
           No payment milestone linked to this work milestone.
         </div>
-      )}
-
-      {/* Milestone summary */}
-      {selectedMilestoneId && (
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          Milestone summary <span className="font-normal normal-case text-rose-500">(required)</span>
-        </label>
-        <textarea
-          value={narrativeSummary}
-          onChange={(e) => setNarrativeSummary(e.target.value)}
-          rows={3}
-          placeholder="Describe this milestone completion for client review…"
-          className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none"
-        />
-      </div>
       )}
 
       {/* Actions */}
