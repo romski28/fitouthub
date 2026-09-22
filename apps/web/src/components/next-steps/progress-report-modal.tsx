@@ -353,6 +353,8 @@ interface ComposeFormProps {
   milestones: WorkMilestone[];
   paymentPlan: PaymentPlan | null;
   onSubmitSuccess: (signOffRequested: boolean, milestoneTitle?: string) => void;
+  selectedMilestoneId: string;
+  onMilestoneChange: (id: string) => void;
 }
 
 function ComposeForm({
@@ -361,8 +363,9 @@ function ComposeForm({
   milestones,
   paymentPlan,
   onSubmitSuccess,
+  selectedMilestoneId,
+  onMilestoneChange,
 }: ComposeFormProps) {
-  const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
   const [submitting, setSubmitting] = React.useState<'signoff' | null>(null);
 
   const linkedPaymentMilestone = React.useMemo<PaymentMilestone | null>(() => {
@@ -435,7 +438,7 @@ function ComposeForm({
         </label>
         <select
           value={selectedMilestoneId}
-          onChange={(e) => setSelectedMilestoneId(e.target.value)}
+          onChange={(e) => onMilestoneChange(e.target.value)}
           className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
         >
           <option value="">— No milestone selected —</option>
@@ -555,6 +558,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [mode, setMode] = React.useState<'thread' | 'compose'>(
     isClient || isReviewMode ? 'thread' : 'compose',
   );
+  const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
   const [pageLoading, setPageLoading] = React.useState(false);
   const [reports, setReports] = React.useState<ProgressReport[]>([]);
   const [milestones, setMilestones] = React.useState<WorkMilestone[]>([]);
@@ -780,6 +784,10 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const showMainModal = shouldRender && !workflowModalOpen;
   const milestoneMap = new Map(milestones.map((m) => [m.id, m]));
   const hasReports = reports.length > 0;
+  // Scope the progress chat to the selected milestone (compose) or the single
+  // milestone (single-milestone projects); fall back to 'general' otherwise.
+  const effectiveThreadScopeId =
+    selectedMilestoneId || (milestones.length === 1 ? milestones[0].id : 'general');
   const frontTitle =
     state.modalContent?.title ||
     (mode === 'thread' ? PROGRESS_MODAL_COPY_ROOT.threadTitle : PROGRESS_MODAL_COPY_ROOT.composeTitle);
@@ -894,7 +902,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           accessToken={effectiveAccessToken}
                           currentUserRole={isProfessional ? 'professional' : 'client'}
                           threadScope="progress"
-                          threadScopeId="general"
+                          threadScopeId={effectiveThreadScopeId}
                           refreshToken={composeChatRefreshKey}
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
@@ -913,6 +921,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       milestones={milestones}
                       paymentPlan={paymentPlan}
                       onSubmitSuccess={handleSubmitSuccess}
+                      selectedMilestoneId={selectedMilestoneId}
+                      onMilestoneChange={setSelectedMilestoneId}
                     />
                     </div>
                   </div>
@@ -968,7 +978,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                           accessToken={effectiveAccessToken}
                           currentUserRole={isProfessional ? 'professional' : 'client'}
                           threadScope="progress"
-                          threadScopeId="general"
+                          threadScopeId={effectiveThreadScopeId}
                           sendButtonLabel="Send"
                           messagePlaceholder="Comment or ask a question about this update…"
                           fillHeight

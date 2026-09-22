@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-22-4f5b9b61",
+    "date": "2026-09-22T19:13:44+08:00",
+    "title": "feat(progress): scope progress chat to the milestone",
+    "summary": "feat(progress): scope progress chat to the milestone",
+    "areas": [
+      "web"
+    ],
+    "commit": "4f5b9b61",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-22-0f123fdc",
     "date": "2026-09-22T16:01:36+08:00",
     "title": "feat(progress): make chat the single source for milestone sign-off narrative",
