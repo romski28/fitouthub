@@ -1399,6 +1399,7 @@ export class FinancialService {
           select: {
             id: true,
             professionalId: true,
+            quotePlatformFeeAmount: true,
           },
         },
       },
@@ -1449,7 +1450,15 @@ export class FinancialService {
       isRetentionAndCloseoutEnabled() && paymentPlan?.retentionEnabled
         ? this.toAmount(paymentPlan.retentionAmount)
         : 0;
-    const payableAmount = Math.max(netAmount - retentionAmount, 0);
+
+    // Platform fee split (Class 1 single-milestone): the 10% platform fee is
+    // deducted from the professional's release and settled to Mimo. Multi-
+    // milestone fee proration is handled separately / at close.
+    const platformFeeAmount = isSingleMilestone
+      ? this.toAmount(paymentRequest.projectProfessional?.quotePlatformFeeAmount ?? 0)
+      : 0;
+
+    const payableAmount = Math.max(netAmount - retentionAmount - platformFeeAmount, 0);
 
     // 4. Execute in transaction: confirm payment_request + create release_payment
     //    (+ retention_hold when retention applies).
@@ -1532,7 +1541,45 @@ export class FinancialService {
         });
       }
 
-      return { releaseTx, retentionTx };
+      // Platform fee → Mimo (virtual). Deducted from the pro's release above.
+      let feeTx: any = null;
+      if (platformFeeAmount > 0) {
+        feeTx = await prisma.financialTransaction.create({
+          data: {
+            projectId: input.projectId,
+            projectProfessionalId: projectProfessionalId || null,
+            type: 'platform_fee_settlement',
+            description: 'Platform fee settled to Mimo account',
+            amount: new Decimal(platformFeeAmount.toFixed(2)),
+            status: 'confirmed',
+            requestedBy: input.clientId,
+            requestedByRole: 'client',
+            actionBy: input.clientId,
+            actionByRole: 'client',
+            actionAt: new Date(),
+            actionComplete: true,
+            notes: this.appendNote(
+              `Platform fee settled to Mimo`,
+              `source_payment_request:${paymentRequest.id}`,
+            ),
+          },
+        });
+
+        await prisma.escrowLedger.create({
+          data: {
+            projectId: input.projectId,
+            projectProfessionalId: projectProfessionalId || null,
+            transactionId: feeTx.id,
+            direction: 'debit',
+            amount: new Decimal(platformFeeAmount.toFixed(2)),
+            currency: 'HKD',
+            description: 'Platform fee settled to Mimo',
+            createdBy: input.clientId,
+          },
+        });
+      }
+
+      return { releaseTx, retentionTx, feeTx };
     });
 
     // 5. Notify professional
@@ -1643,9 +1690,11 @@ export class FinancialService {
       netAmount,
       payableAmount,
       retentionAmount,
+      platformFeeAmount,
       retentionApplied: retentionAmount > 0,
       releaseTransactionId: result.releaseTx.id,
       retentionTransactionId: result.retentionTx?.id ?? null,
+      platformFeeTransactionId: result.feeTx?.id ?? null,
       walletSummary,
     };
   }
@@ -4288,6 +4337,7 @@ export class FinancialService {
     let capReturnedTotal = 0;
     let professionalInPayoutProcessing = 0;
     let professionalPaidOut = 0;
+    let platformFeeSettled = 0;
 
     for (const tx of transactions as Array<{ type: string; status: string; amount: unknown; notes?: string | null }>) {
       const amount = this.toAmount(tx.amount);
@@ -4328,6 +4378,10 @@ export class FinancialService {
         }
       }
 
+      if (tx.type === 'platform_fee_settlement' && status === 'confirmed') {
+        platformFeeSettled += amount;
+      }
+
       if (
         tx.type === 'release_payment' ||
         tx.type === 'professional_wallet_transfer' ||
@@ -4359,7 +4413,7 @@ export class FinancialService {
       0,
     );
     const clientEscrowHeld = Math.max(
-      clientFundedTotal - releasedToProfessionalWallet - procurementApprovedToTransferReady,
+      clientFundedTotal - releasedToProfessionalWallet - procurementApprovedToTransferReady - platformFeeSettled,
       0,
     );
     const clientEscrowUnallocated = Math.max(
@@ -4426,6 +4480,7 @@ export class FinancialService {
       professionalInPayoutProcessing,
       professionalAvailable,
       professionalPaidOut,
+      platformFeeSettled,
       remainingToFund,
       milestoneBreakdown,
     };

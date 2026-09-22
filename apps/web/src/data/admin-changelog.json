@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-22-47809afa",
+    "date": "2026-09-22T14:08:40+08:00",
+    "title": "feat(financial): split 10% platform fee to Mimo at release",
+    "summary": "feat(financial): split 10% platform fee to Mimo at release",
+    "areas": [
+      "api"
+    ],
+    "commit": "47809afa",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-b1962108",
     "date": "2026-09-22T13:50:39+08:00",
     "title": "fix(api): normalize awarded-professional lookups to status 'awarded'",
