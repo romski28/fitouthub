@@ -145,6 +145,7 @@ interface WalletSummary {
   professionalInPayoutProcessing: number;
   professionalAvailable: number;
   professionalPaidOut: number;
+  platformFeeSettled: number;
   remainingToFund: number;
   milestoneBreakdown: WalletMilestoneBreakdown[];
 }
@@ -1583,6 +1584,7 @@ export default function ProjectFinancialsCard({
         professionalInPayoutProcessing: Number(walletSummary.professionalInPayoutProcessing || 0),
         professionalAvailable: Number(walletSummary.professionalAvailable || 0),
         professionalPaidOut: Number(walletSummary.professionalPaidOut || 0),
+        platformFeeSettled: Number(walletSummary.platformFeeSettled || 0),
         remainingToFund: Number(walletSummary.remainingToFund || 0),
       };
     }
@@ -1595,6 +1597,7 @@ export default function ProjectFinancialsCard({
       professionalInPayoutProcessing: 0,
       professionalAvailable: 0,
       professionalPaidOut: fallbackPaidOut,
+      platformFeeSettled: 0,
       remainingToFund: Math.max(fallbackContractValue - fallbackEscrowHeld - fallbackPaidOut, 0),
     };
   }, [walletSummary, approvedBudget, projectCost, projectEscrowHeld, escrowConfirmed, paymentsReleasedTotal]);
@@ -1627,6 +1630,12 @@ export default function ProjectFinancialsCard({
         label: 'Paid Out',
         amount: cashflow.professionalPaidOut,
         className: 'bg-emerald-600',
+      },
+      {
+        key: 'mimo-fee',
+        label: 'Mimo (Platform Fee)',
+        amount: cashflow.platformFeeSettled,
+        className: 'bg-violet-400',
       },
       {
         key: 'remaining',
