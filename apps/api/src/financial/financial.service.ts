@@ -4513,6 +4513,27 @@ export class FinancialService {
   }
 
   /**
+   * Aggregate Mimo (platform) wallet balance across all projects — the sum of
+   * confirmed platform_fee_settlement transactions. Virtual only.
+   */
+  async getMimoWalletBalance() {
+    const agg = await this.prisma.financialTransaction.aggregate({
+      where: { type: 'platform_fee_settlement', status: 'confirmed' },
+      _sum: { amount: true },
+    });
+
+    const settlementCount = await this.prisma.financialTransaction.count({
+      where: { type: 'platform_fee_settlement', status: 'confirmed' },
+    });
+
+    return {
+      currency: 'HKD',
+      totalPlatformFeeSettled: this.toAmount(agg?._sum?.amount || 0),
+      settlementCount,
+    };
+  }
+
+  /**
    * Called by ProgressReportsService when a professional submits a milestone sign-off
    * with a linked paymentMilestoneId.
    *

@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-22-49158b83",
+    "date": "2026-09-22T19:28:09+08:00",
+    "title": "feat(financial): aggregate Mimo platform-fee wallet balance endpoint",
+    "summary": "feat(financial): aggregate Mimo platform-fee wallet balance endpoint",
+    "areas": [
+      "api"
+    ],
+    "commit": "49158b83",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-4f5b9b61",
     "date": "2026-09-22T19:13:44+08:00",
     "title": "feat(progress): scope progress chat to the milestone",

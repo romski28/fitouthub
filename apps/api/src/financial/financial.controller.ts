@@ -122,6 +122,19 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/mimo-wallet - Aggregate Mimo (platform) wallet balance across
+   * all projects. Admin only.
+   */
+  @Get('mimo-wallet')
+  @UseGuards(AuthGuard('jwt'))
+  async getMimoWalletBalance(@Request() req: any) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Only admins can view the Mimo wallet');
+    }
+    return this.financialService.getMimoWalletBalance();
+  }
+
+  /**
    * GET /financial/project/:projectId/sla-policy - Get project SLA policy
    */
   @Get('project/:projectId/sla-policy')
