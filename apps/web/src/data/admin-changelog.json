@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-22-1dc95e9e",
+    "date": "2026-09-22T09:42:05+08:00",
+    "title": "feat(fiscal): add Project.fiscalStatus for two-axis completion",
+    "summary": "feat(fiscal): add Project.fiscalStatus for two-axis completion",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "1dc95e9e",
+    "files": [
+      "MANUAL_SQL_ADD_FISCAL_STATUS.sql",
+      "apps/api/prisma/schema.prisma"
+    ]
+  },
+  {
     "id": "2026-09-22-6f8a13e0",
     "date": "2026-09-22T01:11:17+08:00",
     "title": "fix(milestones): clear 'Approve milestone' next-step on client approval",

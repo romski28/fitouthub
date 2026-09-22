@@ -634,6 +634,7 @@ model Project {
   escrowRequired                  Decimal?                       @db.Decimal(12, 2)
   escrowHeld                      Decimal                        @default(0) @db.Decimal(12, 2)
   escrowHeldUpdatedAt             DateTime?
+  fiscalStatus                    String                         @default("pending") // pending | funded | payment_released | retention_held | settled
   projectScale                    ProjectScale?
   escrowFundingPolicy             EscrowFundingPolicy?
   paymentPlanLockedAt             DateTime?
