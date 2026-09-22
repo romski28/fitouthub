@@ -213,8 +213,8 @@ INSERT INTO "NextStepConfig"
    "isPrimary","isElective","requiresAction","displayOrder","createdAt","updatedAt")
 VALUES
   (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT',
-   'APPROVE_MILESTONE', 'Approve milestone',
-   'Approve or request correction for milestone.',
+   'APPROVE_MILESTONE', 'Review milestone sign-off',
+   'Review the professional''s milestone sign-off request and approve (releases payment) or request changes.',
    true, false, true, 1, NOW(), NOW()),
 
   (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT',

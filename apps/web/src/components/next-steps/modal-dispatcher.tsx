@@ -350,9 +350,9 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
     return 'wallet-transfer';
   }
 
-  // Other payment-related actions
+  // Milestone sign-off decision (approve → sign-off + payment release; reject → changes)
   if (['APPROVE_MILESTONE'].includes(actionKey)) {
-    return 'review-payment-request';
+    return 'progress-report';
   }
 
   // Professional: submit/revise/view quote

@@ -50,7 +50,7 @@ VALUES
   (gen_random_uuid()::text, 'WORK_IN_PROGRESS', 'PROFESSIONAL', 'SUBMIT_PROGRESS_UPDATE', 'Submit progress update', 'Post work updates and evidence.', true, false, true, NULL, 1, NOW(), NOW()),
 
   -- MILESTONE_PENDING stage
-  (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT', 'APPROVE_MILESTONE', 'Approve milestone', 'Approve or request correction for milestone.', true, false, true, NULL, 1, NOW(), NOW()),
+  (gen_random_uuid()::text, 'MILESTONE_PENDING', 'CLIENT', 'APPROVE_MILESTONE', 'Review milestone sign-off', 'Review the professional''s milestone sign-off request and approve (releases payment) or request changes.', true, false, true, NULL, 1, NOW(), NOW()),
   (gen_random_uuid()::text, 'MILESTONE_PENDING', 'PROFESSIONAL', 'AWAIT_MILESTONE_APPROVAL', 'Awaiting approval', 'Await client review.', true, false, false, NULL, 1, NOW(), NOW()),
 
   -- PAYMENT_RELEASED stage

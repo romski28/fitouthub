@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026-09-22-a3ad2aba",
+    "date": "2026-09-22T15:42:47+08:00",
+    "title": "feat(milestones): unify sign-off approval and payment release into one step",
+    "summary": "feat(milestones): unify sign-off approval and payment release into one step",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "a3ad2aba",
+    "files": [
+      "MANUAL_SQL_RENAME_APPROVE_MILESTONE.sql",
+      "apps/api/prisma/SEED_NEXT_STEP_CONFIG.sql",
+      "apps/api/prisma/seed-next-steps.sql",
+      "apps/api/src/progress-reports/progress-reports.service.ts",
+      "apps/api/src/scripts/seed-next-steps.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx"
+    ]
+  },
+  {
     "id": "2026-09-22-d23ce4e4",
     "date": "2026-09-22T15:17:10+08:00",
     "title": "fix(financial): clear 'Approve milestone' next-step on payment release",

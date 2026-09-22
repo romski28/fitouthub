@@ -69,7 +69,7 @@ const nextStepSeeds: NextStepSeed[] = [
   { projectStage: ProjectStage.WORK_IN_PROGRESS, role: 'CLIENT', actionKey: 'REVIEW_PROGRESS', actionLabel: 'Review progress', description: 'Check updates and milestone readiness.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.WORK_IN_PROGRESS, role: 'PROFESSIONAL', actionKey: 'SUBMIT_PROGRESS_UPDATE', actionLabel: 'Submit progress update', description: 'Post work updates and evidence.', isPrimary: true, displayOrder: 1 },
 
-  { projectStage: ProjectStage.MILESTONE_PENDING, role: 'CLIENT', actionKey: 'APPROVE_MILESTONE', actionLabel: 'Approve milestone', description: 'Approve or request correction for milestone.', isPrimary: true, displayOrder: 1 },
+  { projectStage: ProjectStage.MILESTONE_PENDING, role: 'CLIENT', actionKey: 'APPROVE_MILESTONE', actionLabel: 'Review milestone sign-off', description: 'Review the professional\'s milestone sign-off request and approve (releases payment) or request changes.', isPrimary: true, displayOrder: 1 },
   { projectStage: ProjectStage.MILESTONE_PENDING, role: 'PROFESSIONAL', actionKey: 'AWAIT_MILESTONE_APPROVAL', actionLabel: 'Wait for milestone approval', description: 'Await client review.', isPrimary: true, displayOrder: 1 },
 
   { projectStage: ProjectStage.PAYMENT_RELEASED, role: 'CLIENT', actionKey: 'CONFIRM_NEXT_PHASE', actionLabel: 'Confirm next phase', description: 'Proceed with upcoming milestone or completion.', isPrimary: true, displayOrder: 1 },

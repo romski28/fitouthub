@@ -411,6 +411,31 @@ export class ProgressReportsService {
       console.error('[ProgressReportsService] Stage transition from MILESTONE_PENDING failed (non-fatal):', stageErr?.message || stageErr);
     }
 
+    // Unified flow: approving a single-milestone sign-off also releases the
+    // payment (funds → pro transfer-ready wallet, fee → Mimo, notify PM for the
+    // final transfer). Best-effort — the sign-off is already persisted
+    // regardless of this outcome. Multi-milestone per-milestone release is a
+    // separate concern and is intentionally not triggered here.
+    if (decision === 'approved') {
+      try {
+        const paymentPlan = await (this.prisma as any).projectPaymentPlan
+          .findUnique({
+            where: { projectId: report.projectId },
+            select: { milestones: { select: { id: true } } },
+          })
+          .catch(() => null);
+        const isSingleMilestone = (paymentPlan?.milestones?.length ?? 0) <= 1;
+        if (isSingleMilestone) {
+          await this.financialService.releaseClass1Payment({
+            projectId: report.projectId,
+            clientId: requesterId,
+          });
+        }
+      } catch (releaseErr: any) {
+        console.warn('[ProgressReportsService] Payment release after sign-off failed (non-fatal):', releaseErr?.message || releaseErr);
+      }
+    }
+
     // Post a system message in the progress thread
     const thread = await this.chatService.getOrCreateProjectThread(report.projectId);
     const threadId = (thread as any).id || (thread as any).threadId;
