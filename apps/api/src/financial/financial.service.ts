@@ -1948,11 +1948,17 @@ export class FinancialService {
    * Idempotent — records a single platform_fee_settlement transaction + ledger debit.
    */
   async settlePlatformFee(projectId: string, actorId?: string) {
-    const awardedPP = await this.prisma.projectProfessional.findFirst({
-      where: { projectId, status: 'accepted' },
-      select: { id: true, professionalId: true, quotePlatformFeeAmount: true },
-      orderBy: { quotedAt: 'desc' },
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { awardedProjectProfessionalId: true },
     });
+
+    const awardedPP = project?.awardedProjectProfessionalId
+      ? await this.prisma.projectProfessional.findUnique({
+          where: { id: project.awardedProjectProfessionalId },
+          select: { id: true, professionalId: true, quotePlatformFeeAmount: true },
+        })
+      : null;
 
     const feeAmount = this.toAmount(awardedPP?.quotePlatformFeeAmount);
     if (!awardedPP || feeAmount <= 0) {
@@ -3210,18 +3216,19 @@ export class FinancialService {
   async pmPayoutProfessional(projectId: string, pmId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { pmId: true },
+      select: { pmId: true, awardedProjectProfessionalId: true },
     });
     if (!project) throw new NotFoundException('Project not found');
     if (project.pmId && project.pmId !== pmId) {
       throw new ForbiddenException('Only the assigned PM can execute the final transfer');
     }
 
-    const awardedPP = await this.prisma.projectProfessional.findFirst({
-      where: { projectId, status: 'accepted' },
-      select: { id: true, professionalId: true },
-      orderBy: { quotedAt: 'desc' },
-    });
+    const awardedPP = project.awardedProjectProfessionalId
+      ? await this.prisma.projectProfessional.findUnique({
+          where: { id: project.awardedProjectProfessionalId },
+          select: { id: true, professionalId: true },
+        })
+      : null;
     if (!awardedPP) {
       throw new BadRequestException('No awarded professional for this project');
     }
