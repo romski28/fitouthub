@@ -3233,7 +3233,10 @@ export class FinancialService {
       throw new BadRequestException('No awarded professional for this project');
     }
 
-    const walletSummary = await this.getProjectWalletSummary(projectId, awardedPP.id);
+    // Compute the project-wide transfer-ready balance (all of which belongs to
+    // the awarded professional). Project-wide avoids missing funds released
+    // before projectProfessionalId was reliably stamped on transactions.
+    const walletSummary = await this.getProjectWalletSummary(projectId);
     const available = Number(walletSummary.professionalAvailable || 0);
     if (available <= 0) {
       throw new BadRequestException('No transfer-ready funds available for this project');
@@ -4453,7 +4456,7 @@ export class FinancialService {
           include: {
             project: {
               include: {
-                professionals: { where: { status: 'accepted' }, take: 1 },
+                awardedProjectProfessional: { select: { id: true } },
                 user: { select: { id: true, mobile: true, firstName: true } },
               },
             },
@@ -4477,7 +4480,7 @@ export class FinancialService {
 
     const project = milestone.paymentPlan?.project;
     const projectId = project?.id;
-    const projectProfessional = project?.professionals?.[0];
+    const projectProfessional = project?.awardedProjectProfessional;
     const projectProfessionalId = projectProfessional?.id ?? null;
     const client = project?.user;
     const clientId = project?.userId || project?.clientId || null;
