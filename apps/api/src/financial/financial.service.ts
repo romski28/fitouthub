@@ -1565,27 +1565,46 @@ export class FinancialService {
       console.warn('[FinancialService] Failed to notify professional of payment release:', notificationError);
     }
 
-    // 6. Transition project stage
-    // Retention applied → enter warranty/defect period.
-    // Otherwise: single-milestone (Class 1) = complete; multi-milestone = PAYMENT_RELEASED.
-    // Double-check: if client escrow is fully drained, force COMPLETE regardless.
+    // 6. Fiscal status + stage transition (physical vs fiscal axes — see
+    //    COMPLETION_TWO_AXIS_PLAN.md).
+    // Retention held → warranty period + fiscalStatus = retention_held.
+    // Non-retention single-milestone (or escrow fully drained) → settle fee +
+    //   fiscalStatus = settled + CLOSED.
+    // Non-retention multi-milestone → payment released (fiscalStatus =
+    //   payment_released) + PAYMENT_RELEASED (more milestones remain).
     try {
       const walletSummary = await this.getProjectWalletSummary(input.projectId, projectProfessionalId || null);
       const escrowRemaining = Number(walletSummary.clientEscrowHeld || 0);
       const escrowFullyDrained = escrowRemaining <= 0;
 
-      const targetStage = retentionAmount > 0
-        ? ProjectStage.warranty_period
-        : (isSingleMilestone || escrowFullyDrained)
-          ? ProjectStage.COMPLETE
-          : ProjectStage.PAYMENT_RELEASED;
+      const retentionApplied = retentionAmount > 0;
+      let targetStage: ProjectStage;
+      let fiscalStatus: string;
 
-      console.log(`[FinancialService] releaseClass1Payment stage transition: isSingleMilestone=${isSingleMilestone}, escrowFullyDrained=${escrowFullyDrained}, retentionAmount=${retentionAmount}, targetStage=${targetStage}`);
+      if (retentionApplied) {
+        targetStage = ProjectStage.warranty_period;
+        fiscalStatus = 'retention_held';
+      } else if (isSingleMilestone || escrowFullyDrained) {
+        await this.settlePlatformFee(input.projectId, input.clientId).catch((e) =>
+          console.warn('[FinancialService] settlePlatformFee failed during Class 1 release:', e?.message || e),
+        );
+        targetStage = ProjectStage.CLOSED;
+        fiscalStatus = 'settled';
+      } else {
+        targetStage = ProjectStage.PAYMENT_RELEASED;
+        fiscalStatus = 'payment_released';
+      }
 
+      console.log(`[FinancialService] releaseClass1Payment stage transition: isSingleMilestone=${isSingleMilestone}, escrowFullyDrained=${escrowFullyDrained}, retentionApplied=${retentionApplied}, targetStage=${targetStage}, fiscalStatus=${fiscalStatus}`);
+
+      await this.prisma.project.update({
+        where: { id: input.projectId },
+        data: { fiscalStatus },
+      });
       await this.projectStageService.transitionStage(input.projectId, targetStage);
       await this.nextStepService.invalidateNextStepCache(input.projectId);
     } catch (stageError: any) {
-      console.error('[FinancialService] Failed to transition project stage:', stageError?.message || stageError);
+      console.error('[FinancialService] Failed to transition project stage / fiscal status:', stageError?.message || stageError);
     }
 
     // 7. Closeout reminder — both retention and non-retention paths proceed
@@ -1862,6 +1881,13 @@ export class FinancialService {
     });
 
     try {
+      await this.settlePlatformFee(projectId, actorId).catch((e) =>
+        console.warn('[FinancialService] settlePlatformFee failed during retention release:', e?.message || e),
+      );
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: { fiscalStatus: 'settled' },
+      });
       await this.projectStageService.transitionStage(projectId, ProjectStage.CLOSED);
       await this.nextStepService.invalidateNextStepCache(projectId);
     } catch (stageError: any) {
@@ -2127,9 +2153,9 @@ export class FinancialService {
     _clientReview: any,
     _proReview: any,
   ) {
-    await this.settlePlatformFee(projectId).catch((e) =>
-      console.warn('[FinancialService] settlePlatformFee failed during closeout:', e?.message || e),
-    );
+    // Reviews are a parallel, non-blocking obligation. Fiscal settlement
+    // (platform fee + CLOSED) now lives in the fiscal path
+    // (releaseClass1Payment / releaseRetention) — see COMPLETION_TWO_AXIS_PLAN.md.
 
     await this.prisma.projectCloseout.update({
       where: { projectId },
@@ -2138,13 +2164,6 @@ export class FinancialService {
 
     if (awardedPP?.professionalId) {
       await this.recomputeProfessionalRatingAndCompletion(awardedPP.professionalId);
-    }
-
-    try {
-      await this.projectStageService.transitionStage(projectId, ProjectStage.CLOSED);
-      await this.nextStepService.invalidateNextStepCache(projectId);
-    } catch (stageError: any) {
-      console.error('[FinancialService] Failed to transition project to CLOSED:', stageError?.message || stageError);
     }
   }
 

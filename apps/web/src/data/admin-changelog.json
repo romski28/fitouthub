@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-22-f46bf7c1",
+    "date": "2026-09-22T10:14:25+08:00",
+    "title": "feat(api): fiscal axis for Class 1 release and retention",
+    "summary": "feat(api): fiscal axis for Class 1 release and retention",
+    "areas": [
+      "api"
+    ],
+    "commit": "f46bf7c1",
+    "files": [
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-51019b5d",
     "date": "2026-09-22T10:04:37+08:00",
     "title": "feat(api): single-milestone sign-off transitions project to COMPLETE",
