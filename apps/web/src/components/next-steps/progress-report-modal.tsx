@@ -219,6 +219,12 @@ function SignOffCard({ report, milestone, isClient, onDecision, decidingId }: Si
         <InlinePhotoGrid photos={report.photoEntries} />
       )}
 
+      {!report.narrativeSummary && !(Array.isArray(report.photoEntries) && report.photoEntries.length > 0) && (
+        <p className="text-xs text-slate-500 italic">
+          Sign-off notes and proof photos are in the milestone chat below.
+        </p>
+      )}
+
       {isClient && isPending && (
         <div className="space-y-2">
           {!showRejectInput ? (

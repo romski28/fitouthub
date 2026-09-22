@@ -213,6 +213,7 @@ export default function AdminDashboardPage() {
   const [replyDraft, setReplyDraft] = useState("");
   const [replyBusy, setReplyBusy] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
+  const [mimoWallet, setMimoWallet] = useState<{ totalPlatformFeeSettled: number } | null>(null);
 
   const fetchFeed = useCallback(async () => {
     if (!accessToken || activeTab !== "dashboard") return;
@@ -278,6 +279,23 @@ export default function AdminDashboardPage() {
     };
 
     fetchOpsSummary();
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const fetchMimoWallet = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/financial/mimo-wallet`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        setMimoWallet(await response.json());
+      } catch {
+        // no-op for non-blocking summary card
+      }
+    };
+    fetchMimoWallet();
   }, [accessToken]);
 
   useEffect(() => {
@@ -856,13 +874,14 @@ export default function AdminDashboardPage() {
       {activeTab === "dashboard" && (
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-4 shadow-sm">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-7">
               <SummaryMetric label="Open Work" value={opsSummary?.support.totalOpen ?? 0} tone="slate" />
               <SummaryMetric label="Unread Msgs" value={(opsSummary?.inbox.privateUnreadMessages ?? 0) + (opsSummary?.assist.unreadClientMessages ?? 0)} tone="emerald" />
               <SummaryMetric label="Assist Open" value={opsSummary?.assist.open ?? 0} tone="blue" />
               <SummaryMetric label="My Queue" value={(opsSummary?.support.myClaimed ?? 0) + (opsSummary?.support.myInProgress ?? 0)} tone="amber" />
               <SummaryMetric label="Safety" value={opsSummary?.safety.highOrCritical ?? 0} tone="rose" />
               <SummaryMetric label="Admin Acts" value={opsSummary?.adminActions.pending ?? 0} tone="purple" />
+              <SummaryMetric label="Mimo Wallet" value={mimoWallet ? new Intl.NumberFormat('en-HK', { style: 'currency', currency: 'HKD', maximumFractionDigits: 0 }).format(mimoWallet.totalPlatformFeeSettled) : '—'} tone="emerald" />
             </div>
             <p className="mt-2 text-[10px] text-center italic text-slate-300">Compact operational summary</p>
           </div>
