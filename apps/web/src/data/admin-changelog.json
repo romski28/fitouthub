@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-09-22-1c041ed8",
+    "date": "2026-09-22T10:34:27+08:00",
+    "title": "feat(financial): PM can confirm pro wallet payout; closeout copy clarity",
+    "summary": "feat(financial): PM can confirm pro wallet payout; closeout copy clarity",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "1c041ed8",
+    "files": [
+      "TODO.md",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/components/close-project-panel.tsx"
+    ]
+  },
+  {
     "id": "2026-09-22-f46bf7c1",
     "date": "2026-09-22T10:14:25+08:00",
     "title": "feat(api): fiscal axis for Class 1 release and retention",

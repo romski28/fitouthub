@@ -458,11 +458,16 @@ export class FinancialController {
     @Param('transactionId') transactionId: string,
     @Request() req: any,
   ) {
-    if (req.user?.role !== 'admin') {
-      throw new ForbiddenException('Only admins can confirm wallet transfers');
+    const role = req.user?.role || '';
+    if (role !== 'admin' && role !== 'project_manager') {
+      throw new ForbiddenException('Only admins or the assigned PM can confirm wallet transfers');
     }
 
-    return this.financialService.confirmProfessionalWalletTransfer(transactionId, req.user.id);
+    return this.financialService.confirmProfessionalWalletTransfer(
+      transactionId,
+      req.user.id,
+      role === 'admin' ? 'admin' : 'pm',
+    );
   }
 
   @Post('project/:projectId/milestones/:milestoneId/authorize-foh-cap')

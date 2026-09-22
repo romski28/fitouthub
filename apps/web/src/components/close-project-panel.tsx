@@ -161,7 +161,7 @@ export const CloseProjectPanel: React.FC<CloseProjectPanelProps> = ({ projectId,
           <p className="mt-1 text-sm text-slate-600">
             {closed
               ? 'Reviews and completed-project photos are in. Thank you!'
-              : 'Leave a review and add final photos to complete the closeout.'}
+              : 'Leave a rating to complete the closeout — photos are recommended.'}
           </p>
         </div>
         <span
@@ -180,7 +180,7 @@ export const CloseProjectPanel: React.FC<CloseProjectPanelProps> = ({ projectId,
       {!myReviewed && !closed && (
         <div className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-800">Your rating</label>
+            <label className="block text-sm font-semibold text-slate-800">Your rating <span className="font-normal text-slate-500">(required)</span></label>
             <div className="mt-2 flex gap-1">
               {STARS.map((value) => (
                 <button
@@ -197,7 +197,7 @@ export const CloseProjectPanel: React.FC<CloseProjectPanelProps> = ({ projectId,
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-800">Comment</label>
+            <label className="block text-sm font-semibold text-slate-800">Comment <span className="font-normal text-slate-500">(optional)</span></label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -208,7 +208,7 @@ export const CloseProjectPanel: React.FC<CloseProjectPanelProps> = ({ projectId,
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-800">Completed project photos</label>
+            <label className="block text-sm font-semibold text-slate-800">Completed project photos <span className="font-normal text-slate-500">(recommended)</span></label>
             <div className="mt-2 flex flex-wrap gap-3">
               {previews.map((url, index) => (
                 <div key={url} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200">

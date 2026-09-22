@@ -9,8 +9,15 @@ procedure. Kept here so they aren't lost.
 
 - **Automate the PM "release from Stripe" step.** Today the PM releases via a
   manual action; the drawable wallet is ledger-only and the real payout runs
-  through the existing `professional-wallet/transfer` → admin-confirm flow.
-  Later: wire a real Stripe payout/transfer behind the same release entry point.
+  through the existing `professional-wallet/transfer` → confirm flow (the
+  confirm step now accepts the assigned PM as well as admin). Later: wire a
+  real Stripe payout/transfer behind the same release entry point.
+
+- **"Special circumstances" PM authorization.** The normal Class 1 release is
+  client-authoritative (no PM). On the unhappy path (dispute, failed payout,
+  unusual amount, etc.) we need a PM-authorized override that bypasses the
+  client step — carrying a required reason field, an audit-log entry, and a
+  flag so it can't be mistaken for a normal release. Not yet wired.
 
 - **Pro payout method review.** Most pros won't have a Stripe account — they'll
   want bank deposit or another electronic method. Review payout options later

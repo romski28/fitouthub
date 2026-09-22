@@ -3118,7 +3118,11 @@ export class FinancialService {
     };
   }
 
-  async confirmProfessionalWalletTransfer(transactionId: string, adminId: string) {
+  async confirmProfessionalWalletTransfer(
+    transactionId: string,
+    actorId: string,
+    actorRole: 'admin' | 'pm' = 'admin',
+  ) {
     const tx = await this.prisma.financialTransaction.findUnique({
       where: { id: transactionId },
     });
@@ -3138,12 +3142,23 @@ export class FinancialService {
       throw new BadRequestException('Wallet transfer is no longer pending');
     }
 
+    // PM confirmation must be the assigned PM for this project.
+    if (actorRole === 'pm') {
+      const project = await this.prisma.project.findUnique({
+        where: { id: tx.projectId },
+        select: { pmId: true },
+      });
+      if (project?.pmId !== actorId) {
+        throw new ForbiddenException('Only the assigned PM can confirm this wallet transfer');
+      }
+    }
+
     const updated = await this.prisma.financialTransaction.update({
       where: { id: transactionId },
       data: {
         status: 'confirmed',
-        actionBy: adminId,
-        actionByRole: 'admin',
+        actionBy: actorId,
+        actionByRole: actorRole,
         actionAt: new Date(),
         actionComplete: true,
       },
@@ -3152,8 +3167,8 @@ export class FinancialService {
     await this.createFinancialAuditLog({
       transactionId,
       action: 'professional_wallet_transfer_confirmed',
-      actorId: adminId,
-      actorRole: 'admin',
+      actorId,
+      actorRole,
       details: 'Professional wallet transfer confirmed as paid out',
       metadata: {
         amount: tx.amount?.toString?.() || String(tx.amount),
