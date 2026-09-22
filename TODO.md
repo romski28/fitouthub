@@ -2,6 +2,26 @@
 
 General backlog of deferred items. Latest first.
 
+## Wallet consolidation + payout state (2026-09-22)
+
+Decided (see report). Consolidate the pro-side wallets to a single-axis flow:
+
+```
+Client Wallet (escrow, incl. "allocated" money still held)
+   →  Professional Wallet (single: professionalAvailable)
+   →  Paid Out (professionalPaidOut)
+```
+
+- **Drop the "payout-pending" state now.** The PM's "Make transfer to pro"
+  action is single-step → instant `Paid Out` (already implemented via
+  `pmPayoutProfessional`). Remove `professionalInPayoutProcessing` from the
+  wallet summary/UI; it's always 0 for new transfers.
+- **Retire `transferProfessionalWalletBalance` / `confirmProfessionalWalletTransfer`**
+  once the pro-request path is fully replaced by `pmPayoutProfessional`.
+- **Reintroduce a pending state only for real Stripe payouts (later).** It must
+  be Stripe-driven (transfer initiated → pending → webhook → paid out), never a
+  second manual confirm.
+
 ## Milestone approval next-step not advancing (2026-09-22)
 
 Smoke-tested: client "Approve milestone" next-step doesn't advance; pro side
