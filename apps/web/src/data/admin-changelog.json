@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-22-b1962108",
+    "date": "2026-09-22T13:50:39+08:00",
+    "title": "fix(api): normalize awarded-professional lookups to status 'awarded'",
+    "summary": "fix(api): normalize awarded-professional lookups to status 'awarded'",
+    "areas": [
+      "api"
+    ],
+    "commit": "b1962108",
+    "files": [
+      "apps/api/src/common/platform-fee.service.ts",
+      "apps/api/src/progress-reports/progress-reports.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-22-064c4ee7",
     "date": "2026-09-22T13:29:56+08:00",
     "title": "fix(financial): stamp projectProfessionalId on milestone payment_request",

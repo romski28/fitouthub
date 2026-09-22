@@ -69,7 +69,7 @@ export class ProgressReportsService {
     // Verify project exists and resolve projectProfessionalId
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      include: { professionals: { where: { status: 'accepted' }, take: 1 } },
+      include: { professionals: { where: { status: 'awarded' }, take: 1 } },
     });
     if (!project) throw new BadRequestException('Project not found');
 
@@ -258,7 +258,7 @@ export class ProgressReportsService {
     // Both parties on the project can view reports
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      include: { professionals: { where: { status: 'accepted' } } },
+      include: { professionals: { where: { status: 'awarded' } } },
     });
     if (!project) throw new BadRequestException('Project not found');
 
@@ -289,7 +289,7 @@ export class ProgressReportsService {
 
     const project = await this.prisma.project.findUnique({
       where: { id: report.projectId },
-      include: { professionals: { where: { status: 'accepted' } } },
+      include: { professionals: { where: { status: 'awarded' } } },
     });
     if (!project) throw new NotFoundException('Project not found');
 
@@ -319,7 +319,7 @@ export class ProgressReportsService {
 
     const project = await this.prisma.project.findUnique({
       where: { id: report.projectId },
-      include: { professionals: { where: { status: 'accepted' } } },
+      include: { professionals: { where: { status: 'awarded' } } },
     });
     if (!project) throw new NotFoundException('Project not found');
 

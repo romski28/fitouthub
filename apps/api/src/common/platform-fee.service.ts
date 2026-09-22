@@ -112,7 +112,7 @@ export class PlatformFeeService {
     const awardedCount = await this.prisma.projectProfessional.count({
       where: {
         professionalId,
-        status: 'accepted', // awarded/accepted projects
+        status: 'awarded', // awarded projects
         quotedAt: { lte: asOf },
       },
     });
