@@ -5790,6 +5790,8 @@ export class ProjectsService {
         awardedProjectProfessionalId: true,
         tenderOpenedAt: true,
         tenderClosedAt: true,
+        tenderClosesAt: true,
+        releasedForQuotationAt: true,
         userId: true,
         clientId: true,
       },

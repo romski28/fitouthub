@@ -1346,13 +1346,21 @@ export class ProfessionalController {
               endDate: true,
               currentStage: true,
               tenderClosesAt: true,
+              releasedForQuotationAt: true,
             },
           },
         },
         orderBy: { createdAt: 'desc' },
       });
 
-      const mapped = projectProfessionals.map((pp: any) => {
+      // Held invitations: don't surface 'pending' invitations for projects the
+      // PM hasn't released for quotation yet (matches the submitQuote/accept gate).
+      const visible = projectProfessionals.filter((pp: any) => {
+        if (String(pp.status || '').toLowerCase() !== 'pending') return true;
+        return Boolean(pp.project?.releasedForQuotationAt);
+      });
+
+      const mapped = visible.map((pp: any) => {
         const isRestricted = !this.canAccessFullProject(pp.status);
         if (!isRestricted) {
           return { ...pp, accessRestricted: false };
@@ -2303,6 +2311,12 @@ export class ProfessionalController {
 
       if (!projectProfessional) {
         throw new BadRequestException('Project not found');
+      }
+
+      // The PM release is the quotation gate — the pro can't accept an
+      // invitation (and thus move toward quoting) until the project is released.
+      if (!projectProfessional.project?.releasedForQuotationAt) {
+        throw new BadRequestException('This project has not been released for quotation yet');
       }
 
       const updated = await (this.prisma as any).$transaction(async (tx: any) => {
