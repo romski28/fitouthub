@@ -2572,8 +2572,18 @@ export class ProjectsService {
     const risk: 'none' | 'moderate' | 'high' =
       overdueCount === 0 ? 'none' : overdueCount <= 2 ? 'moderate' : 'high';
 
+    // Include the platform fee so the pro-side UI can show their net (base)
+    // amount rather than the gross that includes Mimo's 10% fee.
+    const awardedPP = await this.prisma.projectProfessional.findFirst({
+      where: { projectId, status: 'awarded' },
+      select: { quotePlatformFeeAmount: true },
+    });
+
     return {
       ...plan,
+      platformFeeAmount: awardedPP?.quotePlatformFeeAmount
+        ? Number(awardedPP.quotePlatformFeeAmount)
+        : 0,
       timelineRisk: { overdueCount, risk },
     };
   }

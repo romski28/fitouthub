@@ -36,6 +36,8 @@ type PaymentMilestone = {
 };
 
 type PaymentPlan = {
+  totalAmount?: number | string;
+  platformFeeAmount?: number;
   milestones?: PaymentMilestone[];
 };
 
@@ -379,6 +381,16 @@ function ComposeForm({
     return paymentPlan.milestones.find((pm) => pm.projectMilestoneId === selectedMilestoneId) ?? null;
   }, [selectedMilestoneId, paymentPlan?.milestones]);
 
+  // Pro's net amount = gross minus the prorated platform fee (Mimo's 10%).
+  const proNetAmount = React.useMemo<number | null>(() => {
+    if (!linkedPaymentMilestone) return null;
+    const gross = Number(linkedPaymentMilestone.amount || 0);
+    const total = Number(paymentPlan?.totalAmount || 0);
+    const fee = Number(paymentPlan?.platformFeeAmount || 0);
+    if (total <= 0 || fee <= 0) return gross;
+    return Math.max(gross - (fee * gross) / total, 0);
+  }, [linkedPaymentMilestone, paymentPlan]);
+
   // Map projectMilestoneId → payment milestone for status checks
   const paymentMilestoneByProjectId = React.useMemo<Map<string, PaymentMilestone>>(() => {
     const map = new Map<string, PaymentMilestone>();
@@ -484,8 +496,11 @@ function ComposeForm({
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">Payment milestone linked</p>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <span className="text-slate-900">
-              <span className="text-slate-500">Amount: </span>
-              <strong>{formatHKD(linkedPaymentMilestone.amount)}</strong>
+              <span className="text-slate-500">Net to you: </span>
+              <strong>{proNetAmount != null ? formatHKD(proNetAmount) : '—'}</strong>
+              {(Number(paymentPlan?.platformFeeAmount || 0) > 0) && (
+                <span className="ml-1 text-xs text-slate-500">(net of platform fee)</span>
+              )}
             </span>
             {linkedPaymentMilestone.plannedDueAt && (
               <span className="text-slate-900">
