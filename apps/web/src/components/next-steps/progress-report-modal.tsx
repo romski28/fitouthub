@@ -680,16 +680,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
     }
   }, [shouldRender, isClient, isReviewMode]);
 
-  const refreshReports = React.useCallback(() => {
-    if (!state.projectId || !effectiveAccessToken) return;
-    fetch(`${API_BASE_URL}/progress-reports/project/${state.projectId}`, {
-      headers: { Authorization: `Bearer ${effectiveAccessToken}` },
-    })
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setReports(data); })
-      .catch(() => {});
-  }, [state.projectId, effectiveAccessToken]);
-
   const handleSubmitSuccess = React.useCallback(
     (signOffRequested: boolean) => {
       state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
@@ -719,16 +709,16 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
           const data = await res.json().catch(() => ({}));
           throw new Error((data as { message?: string }).message || 'Request failed');
         }
-        toast.success(decision === 'approved' ? 'Milestone approved ✓' : 'Sign-off rejected');
+        toast.success(decision === 'approved' ? 'Milestone approved' : 'Sign-off rejected');
         state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
-        refreshReports();
+        requestClose();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to submit decision');
       } finally {
         setDecidingId(null);
       }
     },
-    [effectiveAccessToken, state, refreshReports],
+    [effectiveAccessToken, state, requestClose],
   );
 
   if (!shouldRender) return null;

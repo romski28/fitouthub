@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-24-26ae1f46",
+    "date": "2026-09-24T06:59:13+08:00",
+    "title": "feat(progress): close client sign-off modal on decision",
+    "summary": "feat(progress): close client sign-off modal on decision",
+    "areas": [
+      "web"
+    ],
+    "commit": "26ae1f46",
+    "files": [
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-35056439",
     "date": "2026-09-24T00:04:23+08:00",
     "title": "feat(progress): close modal after submit, add milestone name to awaiting step",
