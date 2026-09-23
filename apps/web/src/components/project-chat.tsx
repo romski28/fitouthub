@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE_URL } from '@/config/api';
 import { useConversation, type ConversationMessage as ChatMessage } from '@/hooks/use-conversation';
@@ -35,24 +35,40 @@ interface ProjectChatProps {
   headerSubtitle?: string;
   /** Whether to show the active presence chip in the header. */
   showPresenceIndicator?: boolean;
+  /** Hide the built-in send button so an external (parent) action controls sending. */
+  hideSendButton?: boolean;
+  /** Report whether the composer currently has text or images to send. */
+  onComposerChange?: (hasContent: boolean) => void;
 }
 
-export default function ProjectChat({
-  projectId,
-  accessToken,
-  currentUserRole,
-  threadScope,
-  threadScopeId,
-  sendButtonLabel = 'Send',
-  messagePlaceholder = 'Type a message to the project team...',
-  className = '',
-  onMessageSent,
-  fillHeight = false,
-  refreshToken = 0,
-  headerTitle = 'Project Team Chat',
-  headerSubtitle = 'Client, awarded professionals & Mimo',
-  showPresenceIndicator = true,
-}: ProjectChatProps) {
+export interface ProjectChatHandle {
+  /** Submit the current composer (text + pending images) to the chat. */
+  submit: () => Promise<void>;
+  /** Whether the composer currently has text or images to send. */
+  hasContent: () => boolean;
+}
+
+const ProjectChat = forwardRef<ProjectChatHandle, ProjectChatProps>(function ProjectChat(
+  {
+    projectId,
+    accessToken,
+    currentUserRole,
+    threadScope,
+    threadScopeId,
+    sendButtonLabel = 'Send',
+    messagePlaceholder = 'Type a message to the project team...',
+    className = '',
+    onMessageSent,
+    fillHeight = false,
+    refreshToken = 0,
+    headerTitle = 'Project Team Chat',
+    headerSubtitle = 'Client, awarded professionals & Mimo',
+    showPresenceIndicator = true,
+    hideSendButton = false,
+    onComposerChange,
+  },
+  ref,
+) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [uploaderClearKey, setUploaderClearKey] = useState(0);
@@ -112,8 +128,7 @@ export default function ProjectChat({
     previousMessageCountRef.current = messages.length;
   }, [messages, initialAnchorMessageId, firstUnreadMessageId]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendNow = async () => {
     if ((!newMessage.trim() && pendingFiles.length === 0) || sending || uploadingAttachments) return;
 
     try {
@@ -154,6 +169,24 @@ export default function ProjectChat({
       setUploadingAttachments(false);
     }
   };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendNow();
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      submit: sendNow,
+      hasContent: () => Boolean(newMessage.trim() || pendingFiles.length > 0),
+    }),
+    [newMessage, pendingFiles, sending, uploadingAttachments],
+  );
+
+  useEffect(() => {
+    onComposerChange?.(Boolean(newMessage.trim() || pendingFiles.length > 0));
+  }, [newMessage, pendingFiles, onComposerChange]);
 
   const getSenderLabel = (msg: ChatMessage): string => {
     if (msg.senderName) return msg.senderName;
@@ -299,7 +332,10 @@ export default function ProjectChat({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="border-t border-[rgba(120,53,15,0.14)] p-4">
+      <form
+        onSubmit={hideSendButton ? (e) => e.preventDefault() : handleSend}
+        className="border-t border-[rgba(120,53,15,0.14)] p-4"
+      >
         {sendError && (
           <div className="mb-2 rounded border border-[rgba(215,107,78,0.35)] bg-[rgba(255,240,232,0.92)] px-2 py-1 text-xs text-[rgba(176,74,46,0.95)]">
             {sendError}
@@ -327,17 +363,19 @@ export default function ProjectChat({
             disabled={sending || loading || uploadingAttachments}
             className="min-w-0 flex-1 rounded-lg border border-[rgba(120,53,15,0.2)] bg-white px-3 py-2 text-sm text-slate-800 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[rgba(215,107,78,0.5)] disabled:bg-[rgba(245,238,219,0.8)]"
           />
-          <button
-            type="submit"
-            disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading || uploadingAttachments}
-            className="w-full shrink-0 rounded-lg bg-[rgba(215,107,78,0.95)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:bg-[rgba(120,53,15,0.35)] sm:w-auto"
-          >
-            {uploadingAttachments
-              ? 'Uploading images...'
-              : sending
-              ? (pendingFiles.length > 0 ? 'Uploading & Sending...' : 'Sending...')
-              : sendButtonLabel}
-          </button>
+          {!hideSendButton && (
+            <button
+              type="submit"
+              disabled={(!newMessage.trim() && pendingFiles.length === 0) || sending || loading || uploadingAttachments}
+              className="w-full shrink-0 rounded-lg bg-[rgba(215,107,78,0.95)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[rgba(176,74,46,0.98)] disabled:cursor-not-allowed disabled:bg-[rgba(120,53,15,0.35)] sm:w-auto"
+            >
+              {uploadingAttachments
+                ? 'Uploading images...'
+                : sending
+                ? (pendingFiles.length > 0 ? 'Uploading & Sending...' : 'Sending...')
+                : sendButtonLabel}
+            </button>
+          )}
         </div>
       </form>
 
@@ -380,4 +418,6 @@ export default function ProjectChat({
         : null}
     </div>
   );
-}
+});
+
+export default ProjectChat;

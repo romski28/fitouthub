@@ -8,7 +8,7 @@ import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuth } from '@/context/auth-context';
 import { WorkflowCompletionModal, type WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
-import ProjectChat from '@/components/project-chat';
+import ProjectChat, { type ProjectChatHandle } from '@/components/project-chat';
 import { MimoSpinner } from '@/components/mimo-spinner';
 
 // ---------------------------------------------------------------------------
@@ -363,6 +363,8 @@ interface ComposeFormProps {
   onSubmitSuccess: (signOffRequested: boolean, milestoneTitle?: string) => void;
   selectedMilestoneId: string;
   onMilestoneChange: (id: string) => void;
+  onSendChat: () => Promise<void>;
+  chatHasContent: boolean;
 }
 
 function ComposeForm({
@@ -373,8 +375,22 @@ function ComposeForm({
   onSubmitSuccess,
   selectedMilestoneId,
   onMilestoneChange,
+  onSendChat,
+  chatHasContent,
 }: ComposeFormProps) {
   const [submitting, setSubmitting] = React.useState<'signoff' | null>(null);
+
+  // Next incomplete milestone (milestones complete in sequence order).
+  const nextMilestone = React.useMemo<WorkMilestone | null>(() => {
+    return (
+      milestones.find((m) => {
+        const so = (m as any).signOffStatus;
+        return m.status !== 'completed' && so !== 'pending' && so !== 'approved';
+      }) ?? null
+    );
+  }, [milestones]);
+
+  const milestoneChecked = Boolean(nextMilestone && selectedMilestoneId === nextMilestone.id);
 
   const linkedPaymentMilestone = React.useMemo<PaymentMilestone | null>(() => {
     if (!selectedMilestoneId || !paymentPlan?.milestones) return null;
@@ -391,28 +407,8 @@ function ComposeForm({
     return Math.max(gross - (fee * gross) / total, 0);
   }, [linkedPaymentMilestone, paymentPlan]);
 
-  // Map projectMilestoneId → payment milestone for status checks
-  const paymentMilestoneByProjectId = React.useMemo<Map<string, PaymentMilestone>>(() => {
-    const map = new Map<string, PaymentMilestone>();
-    if (paymentPlan?.milestones) {
-      for (const pm of paymentPlan.milestones) {
-        if (pm.projectMilestoneId) map.set(pm.projectMilestoneId, pm);
-      }
-    }
-    return map;
-  }, [paymentPlan?.milestones]);
-
-  const handleSubmit = async () => {
-    const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
-    if (!selectedMilestoneId || !selectedMilestone) {
-      toast.error('Select a milestone to submit for sign-off');
-      return;
-    }
-    if (selectedMilestone.status === 'completed') {
-      toast.error('This milestone is already completed and cannot be submitted again');
-      return;
-    }
-
+  const submitSignOff = async () => {
+    if (!nextMilestone) return;
     setSubmitting('signoff');
     try {
       const res = await fetch(`${API_BASE_URL}/progress-reports`, {
@@ -420,7 +416,7 @@ function ComposeForm({
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          milestoneId: selectedMilestoneId,
+          milestoneId: nextMilestone.id,
           paymentMilestoneId: linkedPaymentMilestone?.id,
           paymentMilestoneStatus: linkedPaymentMilestone?.status,
           photoEntries: [],
@@ -431,7 +427,7 @@ function ComposeForm({
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { message?: string }).message || 'Failed to submit progress report');
       }
-      onSubmitSuccess(true, selectedMilestone.title);
+      onSubmitSuccess(true, nextMilestone.title);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit progress report');
     } finally {
@@ -439,61 +435,43 @@ function ComposeForm({
     }
   };
 
-  const canSubmit = Boolean(selectedMilestoneId) && !submitting;
+  const handlePrimaryAction = async () => {
+    if (chatHasContent) await onSendChat();
+    if (milestoneChecked) await submitSignOff();
+  };
+
+  const canSubmit = Boolean(milestoneChecked || chatHasContent);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
 
-      <div className="rounded-md border border-emerald-500/30 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-        Write your sign-off notes and attach proof photos in the chat above, then
-        select the milestone and request sign-off.
-      </div>
+      <p className="text-[11px] text-slate-500">
+        To make a claim for completion of a milestone, select from the list below in
+        addition to the text and images entered above. Completed milestones are marked
+        and disabled so they cannot be submitted again.
+      </p>
 
-      {/* Milestone */}
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          Select Milestone For Approval
-        </label>
-        <select
-          value={selectedMilestoneId}
-          onChange={(e) => onMilestoneChange(e.target.value)}
-          className="w-full rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
-        >
-          <option value="">— No milestone selected —</option>
-          {milestones.map((m) => {
-            const isCompleted = m.status === 'completed';
-            const signOffPending = (m as any).signOffStatus === 'pending';
-            const signOffApproved = (m as any).signOffStatus === 'approved';
-            const signOffRejected = (m as any).signOffStatus === 'rejected';
-            const linkedPm = paymentMilestoneByProjectId.get(m.id);
-            const pmPaidOrRequested = linkedPm && ['paid', 'release_requested'].includes(linkedPm.status);
-            const pmDisputed = linkedPm?.status === 'disputed';
+      {nextMilestone ? (
+        <div>
+          <label className="flex items-start gap-2 text-sm text-slate-800 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={milestoneChecked}
+              onChange={(e) => onMilestoneChange(e.target.checked ? nextMilestone.id : '')}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span>
+              We have completed <strong>{nextMilestone.sequence}. {nextMilestone.title}</strong> and request sign-off.
+            </span>
+          </label>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">All milestones are complete.</p>
+      )}
 
-            const disabled = isCompleted || signOffPending || signOffApproved || pmPaidOrRequested || pmDisputed;
-
-            let suffix = '';
-            if (isCompleted) suffix = ' ✓ completed';
-            else if (signOffApproved) suffix = ' ✓ approved';
-            else if (signOffPending) suffix = ' ⏳ awaiting approval';
-            else if (pmPaidOrRequested) suffix = ' 💰 payment in progress';
-            else if (pmDisputed) suffix = ' ⚠️ in dispute';
-            else if (signOffRejected) suffix = ' ↩️ rejected — resubmit';
-
-            return (
-              <option key={m.id} value={m.id} disabled={disabled}>
-                {m.sequence}. {m.title}{suffix}
-              </option>
-            );
-          })}
-        </select>
-        <p className="mt-1.5 text-[11px] text-slate-500">
-          Completed milestones are marked and disabled so they cannot be submitted again.
-        </p>
-      </div>
-
-      {selectedMilestoneId && linkedPaymentMilestone && (
+      {milestoneChecked && linkedPaymentMilestone && (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">Payment milestone linked</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">Milestone details</p>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <span className="text-slate-900">
               <span className="text-slate-500">Net to you: </span>
@@ -508,36 +486,19 @@ function ComposeForm({
                 <strong>{formatDate(linkedPaymentMilestone.plannedDueAt)}</strong>
               </span>
             )}
-            <span className="text-slate-900 capitalize">
-              <span className="text-slate-500">Status: </span>
-              <strong>{linkedPaymentMilestone.status.replace(/_/g, ' ')}</strong>
-            </span>
           </div>
         </div>
       )}
 
-      {selectedMilestoneId && !linkedPaymentMilestone && (
-        <div className="rounded-md border border-[#D4C8A0] bg-white px-3 py-2 text-xs text-slate-500">
-          No payment milestone linked to this work milestone.
-        </div>
-      )}
-
-      {/* Actions */}
       <div className="border-t border-[#D4C8A0] pt-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={() => void handleSubmit()}
-            disabled={!canSubmit}
-            title={!selectedMilestoneId ? 'Select a milestone to request sign-off' : undefined}
-            className="rounded-md bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition"
-          >
-            {submitting === 'signoff' ? 'Requesting…' : 'Milestone Sign-off'}
-          </button>
-        </div>
-        {!selectedMilestoneId && (
-          <p className="mt-2 text-right text-[10px] text-slate-500">Select a milestone to enable sign-off request</p>
-        )}
+        <button
+          type="button"
+          onClick={() => void handlePrimaryAction()}
+          disabled={!canSubmit || submitting === 'signoff'}
+          className="w-full rounded-md bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition"
+        >
+          {submitting === 'signoff' ? 'Requesting…' : milestoneChecked ? 'Request sign off' : 'Post project update'}
+        </button>
       </div>
     </div>
   );
@@ -580,6 +541,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
     isClient || isReviewMode ? 'thread' : 'compose',
   );
   const [selectedMilestoneId, setSelectedMilestoneId] = React.useState<string>('');
+  const chatRef = React.useRef<ProjectChatHandle | null>(null);
+  const [chatHasContent, setChatHasContent] = React.useState(false);
   const [pageLoading, setPageLoading] = React.useState(false);
   const [reports, setReports] = React.useState<ProgressReport[]>([]);
   const [milestones, setMilestones] = React.useState<WorkMilestone[]>([]);
@@ -917,20 +880,22 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                   <div className="next-step-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
                     <div className="next-step-content-grow flex min-h-0 flex-col gap-4 pb-8">
                     {state.projectId && effectiveAccessToken && (
-                      <div className="h-[70dvh] max-h-[70dvh] min-h-[20rem] rounded-lg border border-[#D4C8A0] bg-white overflow-hidden">
+                      <div className="h-[38dvh] max-h-[38dvh] min-h-[16rem] rounded-lg border border-[#D4C8A0] bg-white overflow-hidden">
                         <ProjectChat
+                          ref={chatRef}
                           projectId={state.projectId}
                           accessToken={effectiveAccessToken}
                           currentUserRole={isProfessional ? 'professional' : 'client'}
                           threadScope="progress"
                           threadScopeId={effectiveThreadScopeId}
                           refreshToken={composeChatRefreshKey}
-                          sendButtonLabel="Send"
-                          messagePlaceholder="Comment or ask a question about this update…"
+                          messagePlaceholder="Write your sign-off notes and attach proof photos…"
                           fillHeight={true}
                           headerTitle="Project Team Chat - Project Updates"
                           headerSubtitle=""
                           showPresenceIndicator={false}
+                          hideSendButton
+                          onComposerChange={setChatHasContent}
                           className="border-0 rounded-none bg-transparent shadow-none"
                         />
                       </div>
@@ -944,6 +909,8 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
                       onSubmitSuccess={handleSubmitSuccess}
                       selectedMilestoneId={selectedMilestoneId}
                       onMilestoneChange={setSelectedMilestoneId}
+                      onSendChat={() => chatRef.current?.submit() ?? Promise.resolve()}
+                      chatHasContent={chatHasContent}
                     />
                     </div>
                   </div>
