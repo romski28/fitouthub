@@ -161,6 +161,29 @@ export default function ProfessionalProjectsPage() {
     }
   }, [professional?.professionType, router]);
 
+  // Honor an optional ?tab= query param so deep links (e.g. the project details
+  // "back to my projects" link) land on the intended list instead of the feed.
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab === 'feed' || tab === 'projects' || tab === 'closed') {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  // Fetch the professional's total lifetime earnings for the header stat chip.
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken) return;
+    fetch(`${API_BASE_URL}/financial/professional/earnings`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Failed to load earnings'))))
+      .then((data: { totalEarnings?: number | string }) => {
+        const value = Number(data?.totalEarnings ?? 0);
+        setTotalEarnings(Number.isFinite(value) ? value : 0);
+      })
+      .catch(() => setTotalEarnings(0));
+  }, [isLoggedIn, accessToken]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextStepMap, setNextStepMap] = useState<Record<string, NextStepAction[]>>(() => {
@@ -186,6 +209,7 @@ export default function ProfessionalProjectsPage() {
   const [hidingIds, setHidingIds] = useState<Set<string>>(new Set());
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'projects' | 'closed'>('feed');
+  const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
   const [mobileTabOpen, setMobileTabOpen] = useState(false);
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
@@ -721,6 +745,12 @@ export default function ProfessionalProjectsPage() {
                   <p className="text-xs text-slate-400 animate-pulse">
                     Syncing next steps...
                   </p>
+                )}
+                {totalEarnings !== null && (
+                  <span className="rounded-lg border border-emerald-300/60 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                    Total earned:{' '}
+                    {new Intl.NumberFormat('en-HK', { style: 'currency', currency: 'HKD', maximumFractionDigits: 0 }).format(totalEarnings)}
+                  </span>
                 )}
                 <button
                   type="button"

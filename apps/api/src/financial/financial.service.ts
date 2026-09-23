@@ -4534,6 +4534,31 @@ export class FinancialService {
   }
 
   /**
+   * Aggregate a professional's total net earnings — the sum of confirmed
+   * professional_wallet_transfer transactions across all their projects.
+   */
+  async getProfessionalEarnings(professionalId: string) {
+    const where = {
+      type: 'professional_wallet_transfer',
+      status: 'confirmed',
+      projectProfessional: { professionalId },
+    };
+
+    const agg = await this.prisma.financialTransaction.aggregate({
+      where,
+      _sum: { amount: true },
+    });
+
+    const payoutCount = await this.prisma.financialTransaction.count({ where });
+
+    return {
+      currency: 'HKD',
+      totalEarnings: this.toAmount(agg?._sum?.amount || 0),
+      payoutCount,
+    };
+  }
+
+  /**
    * Called by ProgressReportsService when a professional submits a milestone sign-off
    * with a linked paymentMilestoneId.
    *

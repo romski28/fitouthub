@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-09-24-e2737dec",
+    "date": "2026-09-24T07:16:33+08:00",
+    "title": "feat(pro): total earnings stat + back link to my projects",
+    "summary": "feat(pro): total earnings stat + back link to my projects",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "e2737dec",
+    "files": [
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/professional-projects/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-26ae1f46",
     "date": "2026-09-24T06:59:13+08:00",
     "title": "feat(progress): close client sign-off modal on decision",

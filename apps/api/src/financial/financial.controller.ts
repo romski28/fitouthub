@@ -135,6 +135,19 @@ export class FinancialController {
   }
 
   /**
+   * GET /financial/professional/earnings - Aggregate the authenticated
+   * professional's total net earnings (confirmed wallet transfers).
+   */
+  @Get('professional/earnings')
+  @UseGuards(CombinedAuthGuard)
+  async getProfessionalEarnings(@Request() req: any) {
+    if (!req.user?.isProfessional) {
+      throw new ForbiddenException('Only professionals can view their earnings');
+    }
+    return this.financialService.getProfessionalEarnings(req.user.id);
+  }
+
+  /**
    * GET /financial/project/:projectId/sla-policy - Get project SLA policy
    */
   @Get('project/:projectId/sla-policy')
