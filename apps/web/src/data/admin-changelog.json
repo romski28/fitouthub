@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-24-35056439",
+    "date": "2026-09-24T00:04:23+08:00",
+    "title": "feat(progress): close modal after submit, add milestone name to awaiting step",
+    "summary": "feat(progress): close modal after submit, add milestone name to awaiting step",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "35056439",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/progress-report-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-23-2c29e704",
     "date": "2026-09-23T23:37:57+08:00",
     "title": "feat(progress): unify sign-off into single checkbox + dual-persona action",

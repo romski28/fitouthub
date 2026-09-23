@@ -6,7 +6,6 @@ import { API_BASE_URL } from '@/config/api';
 import { useNextStepModal } from '@/context/next-step-modal-context';
 import { useProfessionalAuth } from '@/context/professional-auth-context';
 import { useAuth } from '@/context/auth-context';
-import { WorkflowCompletionModal, type WorkflowNextStep } from '@/components/workflow-completion-modal';
 import { resolveMediaAssetUrl } from '@/lib/media-assets';
 import ProjectChat, { type ProjectChatHandle } from '@/components/project-chat';
 import { MimoSpinner } from '@/components/mimo-spinner';
@@ -548,15 +547,11 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   const [milestones, setMilestones] = React.useState<WorkMilestone[]>([]);
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan | null>(null);
   const [decidingId, setDecidingId] = React.useState<string | null>(null);
-  const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
-  const [workflowNextStep, setWorkflowNextStep] = React.useState<WorkflowNextStep | null>(null);
-  const [showShareCelebration, setShowShareCelebration] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [composeChatRefreshKey, setComposeChatRefreshKey] = React.useState(0);
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isAnimatingIn, setIsAnimatingIn] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
-  const celebrationTimerRef = React.useRef<number | null>(null);
   const closeTimerRef = React.useRef<number | null>(null);
   const threadBottomRef = React.useRef<HTMLDivElement>(null);
   const initialLoadKeyRef = React.useRef<string | null>(null);
@@ -673,16 +668,9 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   // Reset on close
   React.useEffect(() => {
     if (!shouldRender) {
-      if (celebrationTimerRef.current) {
-        window.clearTimeout(celebrationTimerRef.current);
-        celebrationTimerRef.current = null;
-      }
       setReports([]);
       setMilestones([]);
       setPaymentPlan(null);
-      setWorkflowModalOpen(false);
-      setWorkflowNextStep(null);
-      setShowShareCelebration(false);
       setShowDetails(false);
       setComposeChatRefreshKey(0);
       initialLoadKeyRef.current = null;
@@ -703,39 +691,18 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   }, [state.projectId, effectiveAccessToken]);
 
   const handleSubmitSuccess = React.useCallback(
-    (signOffRequested: boolean, milestoneTitle?: string) => {
+    (signOffRequested: boolean) => {
       state.onCompleted?.({ projectId: state.projectId, actionKey: state.actionKey });
-      setComposeChatRefreshKey((k) => k + 1);
-      setMode('thread');
 
-      // Keep user in modal context to see the scoped thread update immediately.
       if (signOffRequested) {
         toast.success('Milestone sign-off requested — client has been notified');
       } else {
         toast.success('Progress update shared');
       }
 
-      // Preserve next-step metadata for future usage, but do not auto-interrupt compose flow.
-      setWorkflowNextStep(
-        signOffRequested
-          ? {
-              actionLabel: 'Wait for client sign-off',
-              description: `Your sign-off request for "${milestoneTitle ?? 'the milestone'}" has been sent to the client for approval.`,
-              requiresAction: false,
-              waitingFor: 'client',
-              tab: 'schedule',
-            }
-          : {
-              actionLabel: 'Continue working',
-              description: 'Your progress update has been shared.',
-              requiresAction: false,
-              tab: 'schedule',
-            },
-      );
-
-      refreshReports();
+      requestClose();
     },
-    [state, refreshReports],
+    [state, requestClose],
   );
 
   const handleSignOffDecision = React.useCallback(
@@ -765,7 +732,7 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
   );
 
   if (!shouldRender) return null;
-  const showMainModal = shouldRender && !workflowModalOpen;
+  const showMainModal = shouldRender;
   const milestoneMap = new Map(milestones.map((m) => [m.id, m]));
   const hasReports = reports.length > 0;
   // Scope the progress chat to the selected milestone (compose) or the single
@@ -783,24 +750,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
 
   return (
     <>
-      {showShareCelebration && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 backdrop-blur-[1px]">
-          <div className="relative h-48 w-48">
-            <div className="absolute inset-0 rounded-full border-4 border-cyan-300/70 animate-ping" />
-            <div className="absolute inset-6 rounded-full border-2 border-emerald-300/70 animate-pulse" />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl text-yellow-200">✦</div>
-            <div className="absolute left-1/2 top-1 -translate-x-1/2 text-sm text-cyan-200 animate-pulse">✧</div>
-            <div className="absolute right-3 top-8 text-sm text-emerald-200 animate-pulse">✦</div>
-            <div className="absolute right-1 top-1/2 -translate-y-1/2 text-sm text-cyan-100 animate-pulse">✧</div>
-            <div className="absolute bottom-3 right-8 text-sm text-emerald-200 animate-pulse">✦</div>
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-sm text-cyan-200 animate-pulse">✧</div>
-            <div className="absolute bottom-3 left-8 text-sm text-emerald-200 animate-pulse">✦</div>
-            <div className="absolute left-1 top-1/2 -translate-y-1/2 text-sm text-cyan-100 animate-pulse">✧</div>
-            <div className="absolute left-3 top-8 text-sm text-emerald-200 animate-pulse">✦</div>
-          </div>
-        </div>
-      )}
-
       {showMainModal && (
         <div
           className={`fixed inset-0 z-50 flex items-center justify-center p-2 backdrop-blur-sm transition-opacity duration-200 sm:p-4 ${
@@ -1016,14 +965,6 @@ export function ProgressReportModal({ isOpen, isLoading: _isLoading = false, onC
         </div>
       )}
 
-      {workflowNextStep && (
-        <WorkflowCompletionModal
-          isOpen={workflowModalOpen}
-          completedLabel={workflowNextStep.waitingFor === 'client' ? 'Sign-off request sent!' : 'Progress shared!'}
-          nextStep={workflowNextStep}
-          onClose={() => { setWorkflowModalOpen(false); onClose(); }}
-        />
-      )}
     </>
   );
 }

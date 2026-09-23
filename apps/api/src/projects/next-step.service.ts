@@ -1210,6 +1210,30 @@ export class NextStepService {
       .filter((s) => s.isElective)
       .map(toApiAction);
 
+    // Inject the in-flight milestone into the professional's "awaiting approval"
+    // step so the generic modal carries the milestone name for context.
+    if (role === 'PROFESSIONAL' && effectiveStage === ProjectStage.MILESTONE_PENDING) {
+      const pendingMilestone = await this.prisma.projectMilestone
+        .findFirst({
+          where: { projectId, signOffStatus: 'pending' },
+          orderBy: { signOffRequestedAt: 'desc' },
+          select: { sequence: true, title: true },
+        })
+        .catch(() => null);
+
+      if (pendingMilestone) {
+        const milestoneLabel = `${pendingMilestone.sequence}. ${pendingMilestone.title}`;
+        for (const list of [primary, elective]) {
+          const awaitStep = list.find((s) => s.actionKey === 'AWAIT_MILESTONE_APPROVAL');
+          if (awaitStep?.modalContent) {
+            awaitStep.modalContent.title = 'Awaiting milestone approval';
+            awaitStep.modalContent.body = `You've submitted evidence for milestone ${milestoneLabel}. The client is reviewing your work and documentation.`;
+            awaitStep.modalContent.detailsBody = 'Stay available to answer questions or provide additional documentation if requested.';
+          }
+        }
+      }
+    }
+
     // Diagnostic: log action keys when multiple primary quote-related actions appear
     const quoteKeys = primary.filter(a => a.actionLabel?.toLowerCase().includes('quote') || a.actionLabel?.toLowerCase().includes('review'));
     if (quoteKeys.length > 1) {
