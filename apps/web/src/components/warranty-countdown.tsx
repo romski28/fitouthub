@@ -20,8 +20,10 @@ export function WarrantyCountdown({
   stage?: string | null;
   stageStartedAt?: string | null;
 }) {
-  const isWarranty = String(stage || '').toLowerCase() === 'warranty_period';
-  if (!isWarranty || !stageStartedAt) return null;
+  const normalized = String(stage || '').toLowerCase();
+  const isDefectsWindow =
+    normalized === 'complete' || normalized === 'warranty_period';
+  if (!isDefectsWindow || !stageStartedAt) return null;
 
   const start = new Date(stageStartedAt);
   if (Number.isNaN(start.getTime())) return null;

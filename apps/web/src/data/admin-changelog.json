@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-24-80e6e34a",
+    "date": "2026-09-24T08:56:30+08:00",
+    "title": "fix(reviews): show defects countdown at COMPLETE, invalidate next-step cache",
+    "summary": "fix(reviews): show defects countdown at COMPLETE, invalidate next-step cache",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "80e6e34a",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/warranty-countdown.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-865c7b24",
     "date": "2026-09-24T08:36:59+08:00",
     "title": "fix(api): allow professional to fetch their project via GET /projects/:id",
