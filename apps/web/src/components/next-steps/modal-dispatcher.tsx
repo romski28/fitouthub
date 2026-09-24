@@ -27,6 +27,7 @@ import { BookMimoSurveyModal } from './book-mimo-survey-modal';
 import { ReviewPaymentRequestModal } from './review-payment-request-modal';
 import { UxFeedbackModal } from '@/components/ux-feedback-modal';
 import { ProFeedbackModal } from './pro-feedback-modal';
+import { WarrantyInfoModal } from './warranty-info-modal';
 import { parseDetailsTarget } from '@/hooks/use-next-step-modal-trigger';
 
 interface ModalDispatcherProps {
@@ -338,6 +339,15 @@ export function ModalDispatcher({
     );
   }
 
+  if (modalType === 'warranty-info') {
+    return (
+      <WarrantyInfoModal
+        isOpen={state.isOpen}
+        onClose={closeModal}
+      />
+    );
+  }
+
   return null;
 }
 
@@ -345,7 +355,7 @@ export function ModalDispatcher({
  * Determines which modal template to use based on actionKey
  * Helps route to specialized modals (PaymentModal, QuoteModal, etc.) in future
  */
-function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' | 'review-payment-request' | 'ux-survey' | 'rate-client' {
+function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transfer' | 'deposit-escrow' | 'quote' | 'review-quotes' | 'contract' | 'start-date' | 'agree-milestone-schedule' | 'materials-claim' | 'review-materials-claim' | 'respond-materials-claim' | 'start-on-site' | 'progress-report' | 'book-mimo-survey' | 'client-site-access' | 'inspect-site' | 'decline-project' | 'site-inspection-expired' | 'review-payment-request' | 'ux-survey' | 'rate-client' | 'warranty-info' {
   // On-site QR start — both professional (START_PROJECT) and client (START_PROJECT_ON_SITE)
   if (['START_PROJECT', 'START_PROJECT_ON_SITE'].includes(actionKey)) {
     return 'start-on-site';
@@ -433,6 +443,10 @@ function getModalType(actionKey: string): 'general' | 'payment' | 'wallet-transf
 
   if (actionKey === 'RATE_CLIENT') {
     return 'rate-client';
+  }
+
+  if (actionKey === 'PROVIDE_WARRANTY_DETAILS') {
+    return 'warranty-info';
   }
 
   // Default to general modal

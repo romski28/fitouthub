@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-09-24-ab64c377",
+    "date": "2026-09-24T09:19:19+08:00",
+    "title": "feat(warranty): relabel warranty steps to 'In warranty until <date>' + single OK modal",
+    "summary": "feat(warranty): relabel warranty steps to 'In warranty until <date>' + single OK modal",
+    "areas": [
+      "api",
+      "web"
+    ],
+    "commit": "ab64c377",
+    "files": [
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/warranty-info-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-80e6e34a",
     "date": "2026-09-24T08:56:30+08:00",
     "title": "fix(reviews): show defects countdown at COMPLETE, invalidate next-step cache",

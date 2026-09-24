@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ProjectStage } from '@prisma/client';
+import { RETENTION_MONTHS } from '../common/retention.constants';
 
 // ── In-memory cache for NextStepConfig (changes only on manual SQL deployment) ──
 interface CachedConfig {
@@ -21,6 +22,18 @@ function getCachedConfig(cacheKey: string): any[] | null {
 
 function setCachedConfig(cacheKey: string, steps: any[]): void {
   configCache.set(cacheKey, { steps, timestamp: Date.now() });
+}
+
+/** Format a warranty/defect end date (start + retention months) for labels. */
+function warrantyEndLabel(start: Date): string {
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + RETENTION_MONTHS);
+  return end.toLocaleDateString('en-HK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Hong_Kong',
+  });
 }
 
 export interface NextStepAction {
@@ -320,7 +333,7 @@ export class NextStepService {
     // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
     // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
     // the cache via invalidateNextStepCache(), so they also trigger a recompute.
-    const CACHE_VERSION = 8; // bump to invalidate all caches
+    const CACHE_VERSION = 9; // bump to invalidate all caches
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
     const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;
@@ -1247,6 +1260,34 @@ export class NextStepService {
             awaitStep.modalContent.title = 'Awaiting milestone approval';
             awaitStep.modalContent.body = `You've submitted evidence for milestone ${milestoneLabel}. The client is reviewing your work and documentation.`;
             awaitStep.modalContent.detailsBody = 'Stay available to answer questions or provide additional documentation if requested.';
+          }
+        }
+      }
+    }
+
+    // Relabel warranty-period steps to "In warranty until <date>" (both client's
+    // ENTER_WARRANTY_PERIOD and the pro's PROVIDE_WARRANTY_DETAILS), so the
+    // defects period end date surfaces in the project lists.
+    if (effectiveStage === ProjectStage.COMPLETE) {
+      const warrantyStart = project.stageStartedAt ? new Date(project.stageStartedAt) : null;
+      const endLabel =
+        warrantyStart && !Number.isNaN(warrantyStart.getTime())
+          ? warrantyEndLabel(warrantyStart)
+          : null;
+
+      if (endLabel) {
+        for (const list of [primary, elective]) {
+          for (const step of list) {
+            if (
+              step.actionKey === 'PROVIDE_WARRANTY_DETAILS' ||
+              step.actionKey === 'ENTER_WARRANTY_PERIOD'
+            ) {
+              step.actionLabel = `In warranty until ${endLabel}`;
+            }
+            if (step.actionKey === 'PROVIDE_WARRANTY_DETAILS' && step.modalContent) {
+              step.modalContent.title = 'Warranty period';
+              step.modalContent.body = `Your project is covered under warranty until ${endLabel}. You can report any defects during this period.`;
+            }
           }
         }
       }
