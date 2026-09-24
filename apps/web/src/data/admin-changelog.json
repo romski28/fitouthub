@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-24-a24df59a",
+    "date": "2026-09-24T21:40:02+08:00",
+    "title": "fix(financial): mark milestone released on Class 1 payment",
+    "summary": "fix(financial): mark milestone released on Class 1 payment",
+    "areas": [
+      "infra",
+      "api"
+    ],
+    "commit": "a24df59a",
+    "files": [
+      "MANUAL_SQL_BACKFILL_RELEASED_MILESTONES.sql",
+      "apps/api/src/financial/financial.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-24-0cb60ca1",
     "date": "2026-09-24T21:20:57+08:00",
     "title": "fix(pro): stop 'Project started' modal re-firing on revisit",

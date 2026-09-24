@@ -1579,6 +1579,16 @@ export class FinancialService {
         });
       }
 
+      // Mark the linked payment milestone as released so the client digest no
+      // longer lists it as an outstanding "payment release to approve".
+      const milestoneMeta = this.parseMilestoneMetadata(paymentRequest.notes);
+      if (milestoneMeta?.paymentMilestoneId) {
+        await prisma.paymentMilestone.update({
+          where: { id: milestoneMeta.paymentMilestoneId },
+          data: { status: 'released', releasedAt: new Date() },
+        });
+      }
+
       return { releaseTx, retentionTx, feeTx };
     });
 
