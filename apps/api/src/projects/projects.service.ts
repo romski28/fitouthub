@@ -4432,6 +4432,25 @@ export class ProjectsService {
     });
   }
 
+  /**
+   * Fetch a full project for an authenticated professional, provided they have
+   * a projectProfessional assignment on it. Returns null (=> 403) if not.
+   */
+  async findOneForProfessional(id: string, professionalId: string) {
+    try {
+      const assignment = await this.prisma.projectProfessional.findFirst({
+        where: { projectId: id, professionalId },
+        select: { id: true },
+      });
+      if (!assignment) return null;
+
+      return this.findOne(id);
+    } catch (error: any) {
+      console.error('[ProjectsService.findOneForProfessional] Error:', error?.message);
+      return null;
+    }
+  }
+
   async getProjectProfessionals(projectId: string) {
     const pros = await this.prisma.projectProfessional.findMany({
       where: { projectId },

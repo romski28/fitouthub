@@ -572,6 +572,15 @@ export class ProjectsController {
         return project;
       }
 
+      if (role === 'professional') {
+        const project = await this.projectsService.findOneForProfessional(id, userId);
+        console.log('[ProjectsController.findOne] Found project for professional:', !!project);
+        if (!project) {
+          throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+        }
+        return project;
+      }
+
       if (role === 'surveyor' || role === 'mimo_boh') {
         const project = await this.projectsService.findSurveyProjectContext(id);
         console.log('[ProjectsController.findOne] Found project for survey ops:', !!project);

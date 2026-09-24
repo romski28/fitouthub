@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-24-865c7b24",
+    "date": "2026-09-24T08:36:59+08:00",
+    "title": "fix(api): allow professional to fetch their project via GET /projects/:id",
+    "summary": "fix(api): allow professional to fetch their project via GET /projects/:id",
+    "areas": [
+      "api"
+    ],
+    "commit": "865c7b24",
+    "files": [
+      "apps/api/src/projects/projects.controller.ts",
+      "apps/api/src/projects/projects.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-24-8400f36b",
     "date": "2026-09-24T08:07:15+08:00",
     "title": "feat(reviews): client rates each contractor, pro rates client, defects countdown",
