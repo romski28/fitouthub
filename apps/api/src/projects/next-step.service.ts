@@ -333,7 +333,7 @@ export class NextStepService {
     // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
     // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
     // the cache via invalidateNextStepCache(), so they also trigger a recompute.
-    const CACHE_VERSION = 9; // bump to invalidate all caches
+    const CACHE_VERSION = 10; // bump to invalidate all caches
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
     const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;
@@ -436,7 +436,10 @@ export class NextStepService {
       displayOrder: Number(step.displayOrder || 0),
     });
 
-    let availableConfigSteps = nextSteps;
+    // Copy the cached config array — synthetic steps below are pushed onto
+    // availableConfigSteps and must not mutate the shared cached array (which
+    // would duplicate synthetic steps on subsequent cache hits).
+    let availableConfigSteps = [...nextSteps];
 
     // Legacy action key still exists in some seeded configs, but client-side site
     // access is now driven by explicit professional proposals/requests.

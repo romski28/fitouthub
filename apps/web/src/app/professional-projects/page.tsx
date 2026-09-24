@@ -210,6 +210,14 @@ export default function ProfessionalProjectsPage() {
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummary | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'projects' | 'closed'>('feed');
   const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
+
+  // Persist the active tab so the project details "back" link returns to the
+  // same list the user entered from.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pro_list_active_tab', activeTab);
+    }
+  }, [activeTab]);
   const [mobileTabOpen, setMobileTabOpen] = useState(false);
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
