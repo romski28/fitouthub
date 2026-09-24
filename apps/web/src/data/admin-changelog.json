@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-24-0cb60ca1",
+    "date": "2026-09-24T21:20:57+08:00",
+    "title": "fix(pro): stop 'Project started' modal re-firing on revisit",
+    "summary": "fix(pro): stop 'Project started' modal re-firing on revisit",
+    "areas": [
+      "web"
+    ],
+    "commit": "0cb60ca1",
+    "files": [
+      "apps/web/src/app/professional-projects/[id]/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-3c5ee2ac",
     "date": "2026-09-24T18:41:26+08:00",
     "title": "fix(next-steps): dedupe synthetic steps, back link returns to originating tab",

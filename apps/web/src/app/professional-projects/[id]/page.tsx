@@ -480,8 +480,11 @@ export default function ProjectDetailPage() {
       const prevSiteStarted = lastSiteStartedAtRef.current;
       lastSiteStartedAtRef.current = data?.project?.siteStartedAt ?? null;
       setProject(data);
-      // Detect site start — client just scanned the pro's QR code
+      // Detect site start — client just scanned the pro's QR code. Only fire on a
+      // transition observed *during this session* (i.e. after the initial load),
+      // so revisiting an already-started project doesn't re-trigger the modal.
       if (
+        hasLoadedProjectRef.current &&
         !prevSiteStarted &&
         data?.project?.siteStartedAt &&
         !siteStartedCelebratedRef.current
