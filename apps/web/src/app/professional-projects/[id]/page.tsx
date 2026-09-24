@@ -22,6 +22,7 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import { ProjectAccessModal } from '@/components/project-access-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { WorkflowCompletionModal } from '@/components/workflow-completion-modal';
+import { WarrantyCountdown } from '@/components/warranty-countdown';
 import { QuoteActionModal } from '@/components/next-steps/quote-action-modal';
 import {
   buildQuoteBreakdownPayload,
@@ -59,6 +60,7 @@ interface ProjectDetail {
     region: string;
     projectScale?: string;
     currentStage?: string;
+    stageStartedAt?: string;
     isEmergency?: boolean;
     budget?: string;
     notes?: string;
@@ -1664,6 +1666,11 @@ export default function ProjectDetailPage() {
               projectSentimentKey={project!.project.id}
               projectSentimentScope="professional"
               visualVariant="workspace"
+            />
+
+            <WarrantyCountdown
+              stage={project?.project?.currentStage}
+              stageStartedAt={project?.project?.stageStartedAt}
             />
 
           </div>

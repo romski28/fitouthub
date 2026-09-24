@@ -2173,8 +2173,17 @@ export class FinancialService {
 
     const photos = (input.photos || []).map((s) => String(s || '').trim()).filter(Boolean);
 
+    // A client review targets the awarded professional; pro/pm reviews target the
+    // client and carry no reviewedProfessionalId.
+    const reviewedProfessionalId =
+      reviewerType === 'client' ? awardedPP?.professionalId ?? null : null;
+
     const existingReview = await this.prisma.projectReview.findFirst({
-      where: { projectId: input.projectId, reviewerType },
+      where: {
+        projectId: input.projectId,
+        reviewerType,
+        reviewedProfessionalId: reviewedProfessionalId ?? null,
+      },
     });
 
     const normalizedRating =
@@ -2198,6 +2207,7 @@ export class FinancialService {
           projectId: input.projectId,
           reviewerType,
           reviewerId: input.actorId,
+          reviewedProfessionalId,
           rating: normalizedRating,
           comment: input.comment || null,
         },
@@ -2270,14 +2280,10 @@ export class FinancialService {
   }
 
   private async recomputeProfessionalRatingAndCompletion(professionalId: string) {
-    const projectProfessionalIds = await this.prisma.projectProfessional.findMany({
-      where: { professionalId },
-      select: { projectId: true },
-    });
-    const projectIds = projectProfessionalIds.map((pp) => pp.projectId);
-
+    // Aggregate rating is the mean of all client ratings that targeted this
+    // professional (via reviewedProfessionalId) across the projects they worked on.
     const clientRatings = await this.prisma.projectReview.findMany({
-      where: { projectId: { in: projectIds }, reviewerType: 'client' },
+      where: { reviewerType: 'client', reviewedProfessionalId: professionalId },
       select: { rating: true },
     });
 
@@ -2285,6 +2291,12 @@ export class FinancialService {
       clientRatings.length > 0
         ? clientRatings.reduce((sum, r) => sum + r.rating, 0) / clientRatings.length
         : 0;
+
+    const projectProfessionalIds = await this.prisma.projectProfessional.findMany({
+      where: { professionalId },
+      select: { projectId: true },
+    });
+    const projectIds = projectProfessionalIds.map((pp) => pp.projectId);
 
     const completedCount = await this.prisma.projectCloseout.count({
       where: { projectId: { in: projectIds }, status: 'closed' },
@@ -2297,6 +2309,80 @@ export class FinancialService {
         completedProjectsCount: completedCount,
       },
     });
+  }
+
+  /**
+   * Client rates each professional (contractor) who worked on a project.
+   * Each rating is stored as a client review targeting a specific professional
+   * (reviewedProfessionalId), then that professional's aggregate rating is
+   * recomputed. Supports single- and multi-professional projects.
+   */
+  async rateProfessionals(input: {
+    projectId: string;
+    actorId: string;
+    ratings: Array<{ professionalId: string; rating: number }>;
+  }) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: input.projectId },
+      select: { id: true, userId: true, clientId: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    if (project.userId !== input.actorId && project.clientId !== input.actorId) {
+      throw new ForbiddenException('Only the project client can rate professionals');
+    }
+
+    const ratings = (input.ratings || [])
+      .map((r) => ({
+        professionalId: String(r?.professionalId || '').trim(),
+        rating: Math.max(1, Math.min(5, Math.round(Number(r?.rating)))),
+      }))
+      .filter((r) => r.professionalId && Number.isFinite(r.rating));
+
+    if (ratings.length === 0) {
+      throw new BadRequestException('At least one professional rating is required');
+    }
+
+    const reviewedProfessionalIds: string[] = [];
+
+    for (const item of ratings) {
+      const existing = await this.prisma.projectReview.findFirst({
+        where: {
+          projectId: input.projectId,
+          reviewerType: 'client',
+          reviewedProfessionalId: item.professionalId,
+        },
+      });
+
+      if (existing) {
+        await this.prisma.projectReview.update({
+          where: { id: existing.id },
+          data: { rating: item.rating },
+        });
+      } else {
+        await this.prisma.projectReview.create({
+          data: {
+            projectId: input.projectId,
+            reviewerType: 'client',
+            reviewerId: input.actorId,
+            reviewedProfessionalId: item.professionalId,
+            rating: item.rating,
+            comment: null,
+          },
+        });
+      }
+
+      reviewedProfessionalIds.push(item.professionalId);
+    }
+
+    // Recompute aggregate rating for every rated professional.
+    for (const professionalId of new Set(reviewedProfessionalIds)) {
+      await this.recomputeProfessionalRatingAndCompletion(professionalId).catch((e) =>
+        console.warn('[FinancialService] recompute rating failed:', e?.message || e),
+      );
+    }
+
+    return { success: true, ratedCount: ratings.length };
   }
 
   /**

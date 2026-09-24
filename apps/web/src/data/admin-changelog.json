@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-09-24-8400f36b",
+    "date": "2026-09-24T08:07:15+08:00",
+    "title": "feat(reviews): client rates each contractor, pro rates client, defects countdown",
+    "summary": "feat(reviews): client rates each contractor, pro rates client, defects countdown",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "8400f36b",
+    "files": [
+      "MANUAL_SQL_ADD_REVIEW_TARGET.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/financial/financial.controller.ts",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/professional-projects/[id]/page.tsx",
+      "apps/web/src/app/projects/[id]/page.tsx",
+      "apps/web/src/components/next-steps/modal-dispatcher.tsx",
+      "apps/web/src/components/next-steps/pro-feedback-modal.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx",
+      "apps/web/src/components/warranty-countdown.tsx"
+    ]
+  },
+  {
     "id": "2026-09-24-e2737dec",
     "date": "2026-09-24T07:16:33+08:00",
     "title": "feat(pro): total earnings stat + back link to my projects",

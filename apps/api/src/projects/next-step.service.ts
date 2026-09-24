@@ -1157,6 +1157,24 @@ export class NextStepService {
       } as any);
     }
 
+    // Synthetic pro feedback step — shown alongside "Provide warranty details" for
+    // completed projects so the professional can rate the client.
+    if (role === 'PROFESSIONAL' && effectiveStage === ProjectStage.COMPLETE) {
+      availableConfigSteps.push({
+        ...createSyntheticPrimaryStep(
+          'RATE_CLIENT',
+          'Leave feedback',
+          true,
+          role,
+          effectiveStage,
+          'Rate your experience working with this client.',
+        ),
+        isPrimary: false,
+        isElective: true,
+        displayOrder: 2,
+      } as any);
+    }
+
     if (role === 'CLIENT' && effectiveStage === ProjectStage.MILESTONE_PENDING) {
       const hasApproveMilestone = availableConfigSteps.some(
         (step) => step.actionKey === 'APPROVE_MILESTONE',

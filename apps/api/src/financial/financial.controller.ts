@@ -447,6 +447,27 @@ export class FinancialController {
   }
 
   /**
+   * POST /financial/project/:projectId/rate-professionals - Client rates each
+   * professional (contractor) on a project; feeds each pro's aggregate rating.
+   */
+  @Post('project/:projectId/rate-professionals')
+  @UseGuards(CombinedAuthGuard)
+  async rateProfessionals(
+    @Param('projectId') projectId: string,
+    @Body() body: { ratings: Array<{ professionalId: string; rating: number }> },
+    @Request() req: any,
+  ) {
+    if (req.user?.isProfessional) {
+      throw new ForbiddenException('Only the client can rate professionals');
+    }
+    return this.financialService.rateProfessionals({
+      projectId,
+      actorId: req.user?.id || req.user?.sub,
+      ratings: body?.ratings || [],
+    });
+  }
+
+  /**
    * POST /financial/project/:projectId/professional-wallet/transfer
    * Professional (or admin) transfers available wallet balance to external payout account
    */

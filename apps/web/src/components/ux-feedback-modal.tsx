@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
 
 type Question = {
@@ -22,15 +22,59 @@ interface Props {
   onClose: () => void;
 }
 
+type ProjectProfessional = {
+  id: string;
+  status: string;
+  professionalId: string;
+  professional?: { id: string; fullName?: string; businessName?: string };
+};
+
+const NON_PARTICIPATING = ['declined', 'rejected', 'withdrawn'];
+
 export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [texts, setTexts] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [pros, setPros] = useState<ProjectProfessional[]>([]);
+  const [proRatings, setProRatings] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!projectId) return;
+    fetch(`${API_BASE_URL}/projects/${projectId}/professionals`, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: ProjectProfessional[]) => {
+        setPros(
+          (Array.isArray(data) ? data : []).filter(
+            (p) => p.professional && !NON_PARTICIPATING.includes(String(p.status || '').toLowerCase()),
+          ),
+        );
+      })
+      .catch(() => setPros([]));
+  }, [projectId, accessToken]);
+
+  const proName = (p: ProjectProfessional) =>
+    p.professional?.businessName || p.professional?.fullName || 'your contractor';
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      const proRatingEntries = Object.entries(proRatings).filter(([, v]) => v > 0);
+      if (proRatingEntries.length > 0) {
+        await fetch(`${API_BASE_URL}/financial/project/${projectId}/rate-professionals`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({
+            ratings: proRatingEntries.map(([professionalId, rating]) => ({ professionalId, rating })),
+          }),
+        }).catch(() => undefined);
+      }
+
       const answers: Record<string, unknown> = {};
       for (const q of QUESTIONS) {
         if (q.type === 'rating') answers[q.key] = ratings[q.key] ?? null;
@@ -75,6 +119,33 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
             Help us improve MIMO. This takes 30 seconds and helps us make the experience better for everyone.
           </p>
         </div>
+
+        {pros.length > 0 && (
+          <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+            <p className="text-sm font-semibold text-emerald-800">Rate your contractor{pros.length > 1 ? 's' : ''}</p>
+            {pros.map((p) => (
+              <div key={p.id} className="space-y-2">
+                <p className="text-sm font-medium text-slate-800">How would you rate {proName(p)}?</p>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setProRatings((prev) => ({ ...prev, [p.professional!.id]: n }))}
+                      className={`h-9 w-9 rounded-lg border text-sm font-semibold transition ${
+                        (proRatings[p.professional!.id] || 0) === n
+                          ? 'border-emerald-600 bg-emerald-600 text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-5">
           {QUESTIONS.map((q) => (

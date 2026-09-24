@@ -974,18 +974,20 @@ model MilestoneProcurementEvidence {
 }
 
 model ProjectReview {
-  id           String   @id @default(cuid())
-  projectId    String
-  reviewerType String // client | professional | pm
-  reviewerId   String?
-  rating       Int
-  comment      String?
-  createdAt    DateTime @default(now())
+  id                     String   @id @default(cuid())
+  projectId              String
+  reviewerType           String // client | professional | pm
+  reviewerId             String?
+  reviewedProfessionalId String? // which professional the client is rating (multi-pro)
+  rating                 Int
+  comment                String?
+  createdAt              DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([reviewerType])
+  @@index([reviewedProfessionalId])
 }
 
 model ProjectCloseout {

@@ -30,6 +30,7 @@ import { AssistRequestModal, type AssistRequestModalSubmit } from '@/components/
 import { DelegateAccessModal } from '@/components/delegate-access-modal';
 import { PageLoadingState } from '@/components/page-loading-state';
 import { PostProjectSurveyModal } from '@/components/post-project-survey-modal';
+import { WarrantyCountdown } from '@/components/warranty-countdown';
 import type { StoredQuoteBreakdown } from '@/lib/quote-breakdown';
 import toast from 'react-hot-toast';
 
@@ -80,6 +81,7 @@ interface ProjectDetail {
   locationDetailsRequiredAt?: string;
   locationDetailsProvidedAt?: string;
   currentStage?: string;
+  stageStartedAt?: string;
   releasedForQuotationAt?: string;
   tenderClosesAt?: string;
   professionals?: ProjectProfessional[];
@@ -2275,6 +2277,9 @@ export default function ClientProjectDetailPage() {
                 <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-coral-700 text-[rgba(215,107,78,0.96)]">
                   {project.region}
                 </p>
+                <div className="mt-2">
+                  <WarrantyCountdown stage={project.currentStage} stageStartedAt={project.stageStartedAt} />
+                </div>
               </div>
               <div className="flex flex-shrink-0 flex-wrap items-center gap-2 self-start lg:pt-1">
                 <button
