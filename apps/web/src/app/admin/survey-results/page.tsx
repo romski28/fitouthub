@@ -47,15 +47,14 @@ export default function AdminSurveyResultsPage() {
   const [items, setItems] = useState<SurveyEntry[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [versionFilter, setVersionFilter] = useState<string>("all");
+  const [surveyTypeFilter, setSurveyTypeFilter] = useState<string>("all");
   const [respondentFilter, setRespondentFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const tabs = [
     { key: "all", label: "All surveys" },
-    { key: "feedback-v1", label: "Feedback" },
-    { key: "2.0", label: "Post-project" },
-    { key: "1.0", label: "v1.0" },
+    { key: "feedback", label: "Feedback" },
+    { key: "nps", label: "Post-project" },
   ];
 
   const respondentTabs = [
@@ -68,9 +67,8 @@ export default function AdminSurveyResultsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (versionFilter !== "all") params.set("surveyVersion", versionFilter);
       if (respondentFilter !== "all") params.set("respondentType", respondentFilter);
-      params.set("limit", "100");
+      params.set("limit", "200");
       const url = `${API_BASE_URL.replace(/\/$/, "")}/ux-feedback/admin?${params.toString()}`;
       const res = await fetch(url);
       if (res.ok) {
@@ -92,7 +90,7 @@ export default function AdminSurveyResultsPage() {
   useEffect(() => {
     fetchResults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versionFilter, respondentFilter]);
+  }, [respondentFilter]);
 
   const stats = useMemo(() => {
     const v2 = items.filter((i) => i.surveyVersion === "2.0" || (!i.surveyVersion && i.answers?.return_likelihood != null));
@@ -110,11 +108,32 @@ export default function AdminSurveyResultsPage() {
   }, [items]);
 
   const header = useMemo(() => {
-    const label = tabs.find((t) => t.key === versionFilter)?.label || "All";
+    const label = tabs.find((t) => t.key === surveyTypeFilter)?.label || "All";
     return `${label} Responses (${total})`;
-  }, [versionFilter, total]);
+  }, [surveyTypeFilter, total]);
 
-  const isFeedback = versionFilter === "feedback-v1";
+  // Classify by answer shape — the version field is unreliable (some rows have
+  // null or a stale version), whereas the answer keys are definitive.
+  const surveyTypeOf = (a: Record<string, any>): "feedback" | "nps" => {
+    const hasFeedback =
+      a.projectGoodTags != null ||
+      a.projectBadTags != null ||
+      a.platformGoodTags != null ||
+      a.platformBadTags != null ||
+      a.mimo_understanding != null ||
+      a.pro_selection != null;
+    return hasFeedback ? "feedback" : "nps";
+  };
+
+  const filteredItems = useMemo(
+    () =>
+      surveyTypeFilter === "all"
+        ? items
+        : items.filter((i) => surveyTypeOf(i.answers || {}) === surveyTypeFilter),
+    [items, surveyTypeFilter],
+  );
+
+  const isFeedback = surveyTypeFilter === "feedback";
   const colSpan = isFeedback ? 9 : 8;
   const tagList = (v: any): string =>
     Array.isArray(v) && v.length > 0 ? v.join(", ") : "—";
@@ -163,11 +182,11 @@ export default function AdminSurveyResultsPage() {
             <button
               key={tab.key}
               className={`rounded-md px-3 py-2 text-sm font-medium border ${
-                versionFilter === tab.key
+                surveyTypeFilter === tab.key
                   ? "bg-slate-900 text-white border-slate-900"
                   : "bg-white text-slate-700 border-slate-200"
               }`}
-              onClick={() => setVersionFilter(tab.key)}
+              onClick={() => setSurveyTypeFilter(tab.key)}
             >
               {tab.label}
             </button>
@@ -223,14 +242,14 @@ export default function AdminSurveyResultsPage() {
               <tr>
                 <td colSpan={colSpan} className="px-4 py-10 text-center text-slate-500">Loading…</td>
               </tr>
-            ) : items.length === 0 ? (
+            ) : filteredItems.length === 0 ? (
               <tr>
                 <td colSpan={colSpan} className="px-4 py-10 text-center text-slate-500">
                   No survey responses yet.
                 </td>
               </tr>
             ) : (
-              items.map((it) => {
+              filteredItems.map((it) => {
                 const a = it.answers || {};
                 const isExpanded = expandedId === it.id;
                 const ver = it.surveyVersion || (a.return_likelihood != null ? "2.0" : "1.0");

@@ -2,6 +2,23 @@
 
 General backlog of deferred items. Latest first.
 
+## Survey management tool (Day 2) (2026-09-25)
+
+Back-office survey administration so BoH staff can run the feedback programme
+without code changes:
+
+- **View survey content** — list all surveys (feedback, post-project/NPS, etc.)
+  and inspect their questions/options/tags.
+- **Run schedule** — configure when a survey is shown (e.g. post-milestone,
+  post-project, or a quarterly cadence) and the sampling/eligibility rate.
+- **Edit surveys** — change questions, tag options, labels, and copy in place.
+- **Create new surveys** — author a new survey from scratch (name, sections,
+  questions, tag sets, scheduling).
+
+This formalises what is currently hardcoded (`PostProjectSurveyModal`,
+`UxFeedbackModal` questions/tags, `NEXT_PUBLIC_UX_FEEDBACK_RATE`) into a
+data-driven survey model.
+
 ## Wallet consolidation + payout state (2026-09-22)
 
 Decided (see report). Consolidate the pro-side wallets to a single-axis flow:

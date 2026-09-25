@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-25-4470cf6a",
+    "date": "2026-09-25T13:28:50+08:00",
+    "title": "fix(admin): classify surveys by answer shape, add survey tool backlog",
+    "summary": "fix(admin): classify surveys by answer shape, add survey tool backlog",
+    "areas": [
+      "infra",
+      "web"
+    ],
+    "commit": "4470cf6a",
+    "files": [
+      "TODO.md",
+      "apps/web/src/app/admin/survey-results/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-25-e0370a7d",
     "date": "2026-09-25T13:13:05+08:00",
     "title": "feat(admin): per-survey columns in survey results",
