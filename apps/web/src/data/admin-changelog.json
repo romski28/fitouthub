@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-25-e0370a7d",
+    "date": "2026-09-25T13:13:05+08:00",
+    "title": "feat(admin): per-survey columns in survey results",
+    "summary": "feat(admin): per-survey columns in survey results",
+    "areas": [
+      "web"
+    ],
+    "commit": "e0370a7d",
+    "files": [
+      "apps/web/src/app/admin/survey-results/page.tsx"
+    ]
+  },
+  {
     "id": "2026-09-25-04404198",
     "date": "2026-09-25T13:07:36+08:00",
     "title": "chore(sql): backfill survey_version for existing ux_feedback rows",

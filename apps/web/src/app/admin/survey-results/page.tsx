@@ -114,6 +114,17 @@ export default function AdminSurveyResultsPage() {
     return `${label} Responses (${total})`;
   }, [versionFilter, total]);
 
+  const isFeedback = versionFilter === "feedback-v1";
+  const colSpan = isFeedback ? 9 : 8;
+  const tagList = (v: any): string =>
+    Array.isArray(v) && v.length > 0 ? v.join(", ") : "—";
+  const platformRating = (a: Record<string, any>): string => {
+    const parts = [a.mimo_understanding, a.pro_selection]
+      .filter((x) => x != null)
+      .map((x) => `${x}/5`);
+    return parts.length > 0 ? parts.join(" · ") : "—";
+  };
+
   return (
     <div className="space-y-6">
       {/* Hero banner */}
@@ -186,22 +197,35 @@ export default function AdminSurveyResultsPage() {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Date</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Project</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ver</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Respondent</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Feeling</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Return NPS</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Rec. NPS</th>
+              {isFeedback ? (
+                <>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Respondent</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Project 👍</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Project 👎</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Platform 👍</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Platform 👎</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Platform ratings</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ver</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Respondent</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Feeling</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Return NPS</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Rec. NPS</th>
+                </>
+              )}
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">Loading…</td>
+                <td colSpan={colSpan} className="px-4 py-10 text-center text-slate-500">Loading…</td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={colSpan} className="px-4 py-10 text-center text-slate-500">
                   No survey responses yet.
                 </td>
               </tr>
@@ -224,35 +248,54 @@ export default function AdminSurveyResultsPage() {
                           {it.projectId.slice(0, 8)}…
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${
-                          ver === "2.0" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
-                        }`}>
-                          v{ver}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {it.respondentType === "professional" ? (
-                          <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700">Pro</span>
-                        ) : it.respondentType === "client" ? (
-                          <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-sky-100 text-sky-700">Client</span>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">
-                        {a.feeling ? (
-                          <span className="italic">"{a.feeling}"</span>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className={`px-4 py-3 text-sm text-center font-semibold ${npsColor(a.return_likelihood)}`}>
-                        {npsLabel(a.return_likelihood)}
-                      </td>
-                      <td className={`px-4 py-3 text-sm text-center font-semibold ${npsColor(a.recommend_likelihood)}`}>
-                        {npsLabel(a.recommend_likelihood)}
-                      </td>
+                      {isFeedback ? (
+                        <>
+                          <td className="px-4 py-3 text-sm">
+                            {it.respondentType === "professional" ? (
+                              <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700">Pro</span>
+                            ) : (
+                              <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-sky-100 text-sky-700">Client</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{tagList(a.projectGoodTags)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{tagList(a.projectBadTags)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{tagList(a.platformGoodTags)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{tagList(a.platformBadTags)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">{platformRating(a)}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${
+                              ver === "2.0" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                            }`}>
+                              v{ver}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {it.respondentType === "professional" ? (
+                              <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700">Pro</span>
+                            ) : it.respondentType === "client" ? (
+                              <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-sky-100 text-sky-700">Client</span>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-700">
+                            {a.feeling ? (
+                              <span className="italic">"{a.feeling}"</span>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className={`px-4 py-3 text-sm text-center font-semibold ${npsColor(a.return_likelihood)}`}>
+                            {npsLabel(a.return_likelihood)}
+                          </td>
+                          <td className={`px-4 py-3 text-sm text-center font-semibold ${npsColor(a.recommend_likelihood)}`}>
+                            {npsLabel(a.recommend_likelihood)}
+                          </td>
+                        </>
+                      )}
                       <td className="px-4 py-3 text-sm text-right">
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : it.id)}
@@ -264,7 +307,7 @@ export default function AdminSurveyResultsPage() {
                     </tr>
                     {isExpanded && (
                       <tr key={`${it.id}-detail`}>
-                        <td colSpan={8} className="px-6 py-4 bg-slate-50">
+                        <td colSpan={colSpan} className="px-6 py-4 bg-slate-50">
                           <div className="grid gap-3 sm:grid-cols-2 text-sm">
                             {/* First Impressions */}
                             <div className="space-y-2">
