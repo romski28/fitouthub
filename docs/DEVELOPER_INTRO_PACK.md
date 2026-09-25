@@ -54,6 +54,7 @@ Also working:
 - **Notifications** — email, WhatsApp/SMS (via Twilio), push subscriptions, announcement ticker.
 - **Admin** — several panels (professionals, projects, users, trades, messaging, financials, questionnaires) — but see §9: it's a patchwork.
 - **Questionnaires / survey** — questionnaire builder, survey workspace with markup.
+- **Ratings & UX feedback** — client↔professional ratings (`ProjectReview`), a unified post-project NPS survey + feedback survey stored in `ux_feedback` (discriminated by a `survey_type` column), tag-chip feedback forms, and an admin survey-results panel.
 - **RLS** — row-level security policies exist for public tables (phased rollout).
 - **PWA** — installable on desktop/Android; iOS is **broken** (see §9).
 
@@ -68,7 +69,8 @@ Also working:
 | **Admin command centre** | Spec written for one unified ops console; current admin area is a mix of old and new panels. |
 | **Professional availability** | Calendar page shows only milestones; site-visit auto-blocking and HK public holidays are planned, not built. |
 | **Mobile app** | Expo scaffold only (~44 files): tabs, themed components, API client. Not yet feature-complete. |
-| **Retention (10% / 3-month warranty)** | Designed and deliberately deferred; behind a not-yet-enabled feature flag. |
+| **Retention (10% / 3-month warranty)** | Built and enabled (flag default on): 10% hold, 3-month defects period, close procedure + `ProjectCloseout`, manual PM "Release retention". Automated 3-month release still deferred. |
+| **Survey management tool** | Back-office survey authoring/scheduling (BoH edit/create surveys) — Day 2 backlog; today the surveys are hardcoded modals, not data-driven. |
 
 ### Known warts & open issues (read this twice)
 
@@ -125,7 +127,7 @@ renovation-platform/
 └── *.sql               # Manual DB migrations (dozens)
 ```
 
-**Rough scale:** ~272 web source files, ~180 API source files, ~44 mobile files, **89 Prisma models** (~2,000 lines of schema).
+**Rough scale:** ~272 web source files, ~180 API source files, ~44 mobile files, **~106 Prisma models** (~2,600 lines of schema).
 
 ---
 
@@ -201,6 +203,12 @@ Messages can be plain text or **structured events** prefixed `[[event]]` (e.g. q
 - Modals use a flip-card pattern (`perspective:1600px`, `rotateY(180deg)`)
 
 Not all screens conform yet — expect to normalize.
+
+### 5.7 Ratings & UX feedback
+- **`ux_feedback`** holds both the post-project NPS survey and the feedback survey as a JSON `answers` blob. They are discriminated by a constrained `survey_type` column (`'nps'` | `'feedback'`), **not** by the legacy free-text `survey_version` (kept only as metadata). Never use `survey_version` to route — it was unreliable (nulls/stale values).
+- **`ProjectReview`** stores the numeric client↔professional ratings (`reviewerType`, `rating`, `comment`), aggregated into `User.rating`/`reviewCount` (client) and the professional's rating.
+- **Feedback-completion flags** `Project.clientFeedbackSubmitted` / `proFeedbackSubmitted` gate the `UX_SURVEY` / `RATE_CLIENT` next-steps.
+- Admin UI: `/admin/survey-results` (per-survey columns; Feedback vs Post-project tabs).
 
 ---
 

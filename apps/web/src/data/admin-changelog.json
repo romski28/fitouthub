@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-25-134284e2",
+    "date": "2026-09-25T13:49:33+08:00",
+    "title": "docs: refresh runbook + dev intro for feedback/ratings/retention",
+    "summary": "docs: refresh runbook + dev intro for feedback/ratings/retention",
+    "areas": [
+      "infra"
+    ],
+    "commit": "134284e2",
+    "files": [
+      "docs/DEVELOPER_INTRO_PACK.md",
+      "docs/RUNBOOK.md"
+    ]
+  },
+  {
     "id": "2026-09-25-1c8139c9",
     "date": "2026-09-25T13:43:09+08:00",
     "title": "feat(feedback): add constrained survey_type discriminator",

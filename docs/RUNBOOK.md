@@ -1,6 +1,6 @@
 # Mimo Platform — Operations Runbook
 
-**Prepared:** August 2026
+**Prepared:** August 2026 · **Last reviewed:** September 2026
 **Audience:** the developer (and CTO) running day-to-day operations
 **Companion docs:** `DEVELOPER_INTRO_PACK.md` (orientation), `NEW_DEV_FIRST_TWO_WEEKS.md` (first tasks), `DEPLOYMENT.md` (original deploy guide)
 
@@ -239,6 +239,7 @@ node check_support_request.js
 - [ ] Supabase project health (no failed jobs, backup succeeded).
 - [ ] No unexpected errors in Render logs.
 - [ ] AI cost/usage glance (DeepSeek/Qwen) if billing is visible.
+- [ ] Feedback volume glance — admin → Survey Results (`/admin/survey-results`); watch for responses misrouted between Feedback vs Post-project.
 
 **Monthly (30 min):**
 - [ ] Review the migration ledger for anything applied but not recorded.
