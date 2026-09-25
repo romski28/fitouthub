@@ -2266,6 +2266,10 @@ export class FinancialService {
       closed = true;
     }
 
+    // Refresh next-steps so the "Leave feedback" step clears once this party
+    // has submitted their review.
+    await this.nextStepService.invalidateNextStepCache(input.projectId);
+
     return { success: true, review, closed };
   }
 

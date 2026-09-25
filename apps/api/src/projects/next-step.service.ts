@@ -333,7 +333,7 @@ export class NextStepService {
     // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
     // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
     // the cache via invalidateNextStepCache(), so they also trigger a recompute.
-    const CACHE_VERSION = 10; // bump to invalidate all caches
+    const CACHE_VERSION = 11; // bump to invalidate all caches
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
     const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;
@@ -1174,21 +1174,31 @@ export class NextStepService {
     }
 
     // Synthetic pro feedback step — shown alongside "Provide warranty details" for
-    // completed projects so the professional can rate the client.
+    // completed projects so the professional can rate the client. Hidden once the
+    // professional has already submitted a review for this project.
     if (role === 'PROFESSIONAL' && effectiveStage === ProjectStage.COMPLETE) {
-      availableConfigSteps.push({
-        ...createSyntheticPrimaryStep(
-          'RATE_CLIENT',
-          'Leave feedback',
-          true,
-          role,
-          effectiveStage,
-          'Rate your experience working with this client.',
-        ),
-        isPrimary: false,
-        isElective: true,
-        displayOrder: 2,
-      } as any);
+      const alreadyReviewed = await this.prisma.projectReview
+        .findFirst({
+          where: { projectId, reviewerType: 'professional' },
+          select: { id: true },
+        })
+        .catch(() => null);
+
+      if (!alreadyReviewed) {
+        availableConfigSteps.push({
+          ...createSyntheticPrimaryStep(
+            'RATE_CLIENT',
+            'Leave feedback',
+            true,
+            role,
+            effectiveStage,
+            'Rate your experience working with this client.',
+          ),
+          isPrimary: false,
+          isElective: true,
+          displayOrder: 2,
+        } as any);
+      }
     }
 
     if (role === 'CLIENT' && effectiveStage === ProjectStage.MILESTONE_PENDING) {

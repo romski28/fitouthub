@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-25-a52a2515",
+    "date": "2026-09-25T08:13:04+08:00",
+    "title": "fix(feedback): hide pro 'Leave feedback' once reviewed",
+    "summary": "fix(feedback): hide pro 'Leave feedback' once reviewed",
+    "areas": [
+      "api"
+    ],
+    "commit": "a52a2515",
+    "files": [
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts"
+    ]
+  },
+  {
     "id": "2026-09-24-a24df59a",
     "date": "2026-09-24T21:40:02+08:00",
     "title": "fix(financial): mark milestone released on Class 1 payment",
