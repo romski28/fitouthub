@@ -9,7 +9,7 @@ export class UxFeedbackController {
   @Post()
   @UseGuards(CombinedAuthGuard)
   async submit(
-    @Body() body: { projectId: string; answers: Record<string, unknown>; surveyVersion?: string },
+    @Body() body: { projectId: string; answers: Record<string, unknown>; surveyVersion?: string; surveyType?: string },
     @Req() req: any,
   ) {
     const isProfessional = Boolean(req?.user?.isProfessional);
@@ -22,6 +22,7 @@ export class UxFeedbackController {
       respondentId,
       answers: body.answers,
       surveyVersion: body.surveyVersion,
+      surveyType: body.surveyType,
     });
   }
 
@@ -45,7 +46,7 @@ export class UxFeedbackController {
 
   @Get('admin')
   async listAll(
-    @Query('surveyVersion') surveyVersion?: string,
+    @Query('surveyType') surveyType?: string,
     @Query('respondentType') respondentType?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
@@ -53,7 +54,7 @@ export class UxFeedbackController {
     const parsedLimit = limit ? parseInt(limit, 10) : undefined;
     const parsedOffset = offset ? parseInt(offset, 10) : undefined;
     return this.service.listAll({
-      surveyVersion,
+      surveyType,
       respondentType,
       limit: parsedLimit,
       offset: parsedOffset,

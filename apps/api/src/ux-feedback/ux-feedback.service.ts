@@ -12,6 +12,7 @@ export class UxFeedbackService {
     respondentId?: string;
     answers: Record<string, unknown>;
     surveyVersion?: string;
+    surveyType?: string;
   }) {
     return (this.prisma as any).uxFeedback.create({
       data: {
@@ -20,6 +21,7 @@ export class UxFeedbackService {
         respondentType: input.respondentType ?? null,
         respondentId: input.respondentId ?? null,
         surveyVersion: input.surveyVersion ?? null,
+        surveyType: input.surveyType ?? null,
         answers: input.answers,
       },
     });
@@ -48,14 +50,14 @@ export class UxFeedbackService {
   }
 
   async listAll(params: {
-    surveyVersion?: string;
+    surveyType?: string;
     respondentType?: string;
     limit?: number;
     offset?: number;
   }) {
-    const { surveyVersion, respondentType, limit = 50, offset = 0 } = params || {};
+    const { surveyType, respondentType, limit = 50, offset = 0 } = params || {};
     const where: any = {};
-    if (surveyVersion) where.surveyVersion = surveyVersion;
+    if (surveyType) where.surveyType = surveyType;
     if (respondentType) where.respondentType = respondentType;
 
     const [items, total] = await Promise.all([

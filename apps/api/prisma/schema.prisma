@@ -2408,6 +2408,7 @@ model UxFeedback {
   respondentType String?  @map("respondent_type") // client | professional
   respondentId   String?  @map("respondent_id") // userId (client) or professionalId (pro)
   surveyVersion  String?  @map("survey_version")
+  surveyType     String?  @map("survey_type") // 'nps' | 'feedback'
   answers        Json     @map("answers")
   submittedAt    DateTime @default(now()) @map("submitted_at")
 

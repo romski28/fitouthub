@@ -80,6 +80,7 @@ export function ProFeedbackModal({ projectId, onClose }: Props) {
         body: JSON.stringify({
           projectId,
           surveyVersion: 'feedback-v1',
+          surveyType: 'feedback',
           answers: {
             projectGoodTags,
             projectBadTags,

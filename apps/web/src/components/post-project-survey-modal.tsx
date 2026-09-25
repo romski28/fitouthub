@@ -212,6 +212,7 @@ export function PostProjectSurveyModal({ projectId, accessToken, onClose }: Prop
           projectId,
           answers,
           surveyVersion: '2.0',
+          surveyType: 'nps',
         }),
       });
       setSubmitted(true);

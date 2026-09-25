@@ -147,6 +147,7 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
         body: JSON.stringify({
           projectId,
           surveyVersion: 'feedback-v1',
+          surveyType: 'feedback',
           answers: {
             mimo_understanding: mimoUnderstanding || null,
             pro_selection: proSelection || null,

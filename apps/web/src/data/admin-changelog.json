@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-09-25-1c8139c9",
+    "date": "2026-09-25T13:43:09+08:00",
+    "title": "feat(feedback): add constrained survey_type discriminator",
+    "summary": "feat(feedback): add constrained survey_type discriminator",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "1c8139c9",
+    "files": [
+      "MANUAL_SQL_ADD_SURVEY_TYPE.sql",
+      "TODO.md",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/ux-feedback/ux-feedback.controller.ts",
+      "apps/api/src/ux-feedback/ux-feedback.service.ts",
+      "apps/web/src/app/admin/survey-results/page.tsx",
+      "apps/web/src/components/next-steps/pro-feedback-modal.tsx",
+      "apps/web/src/components/post-project-survey-modal.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx"
+    ]
+  },
+  {
     "id": "2026-09-25-4470cf6a",
     "date": "2026-09-25T13:28:50+08:00",
     "title": "fix(admin): classify surveys by answer shape, add survey tool backlog",

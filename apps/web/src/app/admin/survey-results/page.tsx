@@ -11,6 +11,7 @@ interface SurveyEntry {
   respondentType?: string | null;
   respondentId?: string | null;
   surveyVersion?: string | null;
+  surveyType?: string | null;
   answers: Record<string, any>;
   submittedAt: string;
 }
@@ -41,6 +42,21 @@ function npsColor(n: number | null | undefined): string {
 function npsLabel(n: number | null | undefined): string {
   if (n == null) return "—";
   return String(n);
+}
+
+// Classify by the authoritative surveyType; fall back to answer shape only for
+// any rows not yet backfilled (survey_type column was just added).
+function surveyTypeOf(it: Pick<SurveyEntry, "surveyType" | "answers">): "feedback" | "nps" {
+  if (it.surveyType === "feedback" || it.surveyType === "nps") return it.surveyType;
+  const a = it.answers || {};
+  const hasFeedback =
+    a.projectGoodTags != null ||
+    a.projectBadTags != null ||
+    a.platformGoodTags != null ||
+    a.platformBadTags != null ||
+    a.mimo_understanding != null ||
+    a.pro_selection != null;
+  return hasFeedback ? "feedback" : "nps";
 }
 
 export default function AdminSurveyResultsPage() {
@@ -93,18 +109,18 @@ export default function AdminSurveyResultsPage() {
   }, [respondentFilter]);
 
   const stats = useMemo(() => {
-    const v2 = items.filter((i) => i.surveyVersion === "2.0" || (!i.surveyVersion && i.answers?.return_likelihood != null));
-    const withReturn = v2.filter((i) => i.answers?.return_likelihood != null);
+    const nps = items.filter((i) => surveyTypeOf(i) === "nps");
+    const withReturn = nps.filter((i) => i.answers?.return_likelihood != null);
     const avgReturn =
       withReturn.length > 0
         ? (withReturn.reduce((s, i) => s + Number(i.answers.return_likelihood), 0) / withReturn.length).toFixed(1)
         : "—";
-    const withRecommend = v2.filter((i) => i.answers?.recommend_likelihood != null);
+    const withRecommend = nps.filter((i) => i.answers?.recommend_likelihood != null);
     const avgRecommend =
       withRecommend.length > 0
         ? (withRecommend.reduce((s, i) => s + Number(i.answers.recommend_likelihood), 0) / withRecommend.length).toFixed(1)
         : "—";
-    return { avgReturn, avgRecommend, v2Count: v2.length };
+    return { avgReturn, avgRecommend, v2Count: nps.length };
   }, [items]);
 
   const header = useMemo(() => {
@@ -112,24 +128,11 @@ export default function AdminSurveyResultsPage() {
     return `${label} Responses (${total})`;
   }, [surveyTypeFilter, total]);
 
-  // Classify by answer shape — the version field is unreliable (some rows have
-  // null or a stale version), whereas the answer keys are definitive.
-  const surveyTypeOf = (a: Record<string, any>): "feedback" | "nps" => {
-    const hasFeedback =
-      a.projectGoodTags != null ||
-      a.projectBadTags != null ||
-      a.platformGoodTags != null ||
-      a.platformBadTags != null ||
-      a.mimo_understanding != null ||
-      a.pro_selection != null;
-    return hasFeedback ? "feedback" : "nps";
-  };
-
   const filteredItems = useMemo(
     () =>
       surveyTypeFilter === "all"
         ? items
-        : items.filter((i) => surveyTypeOf(i.answers || {}) === surveyTypeFilter),
+        : items.filter((i) => surveyTypeOf(i) === surveyTypeFilter),
     [items, surveyTypeFilter],
   );
 
@@ -159,7 +162,7 @@ export default function AdminSurveyResultsPage() {
       {stats.v2Count > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">v2 Responses</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Post-project Responses</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{stats.v2Count}</p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -14,6 +14,11 @@ without code changes:
 - **Edit surveys** — change questions, tag options, labels, and copy in place.
 - **Create new surveys** — author a new survey from scratch (name, sections,
   questions, tag sets, scheduling).
+- **Split into separate tables (analytics).** Today both the post-project NPS
+  and the feedback survey share `ux_feedback` with a JSON `answers` blob plus a
+  `survey_type` discriminator. For analytics, refactor to dedicated tables with
+  typed per-question columns so responses aggregate cheaply without JSON
+  unnesting — do this as part of the data-driven model, not before launch.
 
 This formalises what is currently hardcoded (`PostProjectSurveyModal`,
 `UxFeedbackModal` questions/tags, `NEXT_PUBLIC_UX_FEEDBACK_RATE`) into a
