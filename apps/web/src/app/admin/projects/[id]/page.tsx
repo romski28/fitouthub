@@ -9,6 +9,7 @@ import ProjectInfoCard from "@/components/project-info-card";
 import { useAuth } from "@/context/auth-context";
 import { UpdatesModal } from "@/components/updates-modal";
 import ProjectFinancialsCard from "@/components/project-financials-card";
+import { ProjectFeedbackPanel } from "@/components/admin/project-feedback-panel";
 import { useFundsSecured } from "@/hooks/use-funds-secured";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { ProjectAiPanel } from "@/components/project-ai-panel";
@@ -425,6 +426,9 @@ export default function AdminProjectDetailPage({ params }: { params: { id: strin
           role="admin"
         />
       )}
+
+      {/* Feedback */}
+      {accessToken && <ProjectFeedbackPanel projectId={project.id} accessToken={accessToken} />}
 
       {/* Admin View-As toggle */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5 flex items-center justify-between">

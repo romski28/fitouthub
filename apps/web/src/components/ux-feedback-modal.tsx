@@ -2,19 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/config/api';
-
-type Question = {
-  key: string;
-  label: string;
-  type: 'rating' | 'text';
-};
-
-const QUESTIONS: Question[] = [
-  { key: 'mimo_understanding', label: 'How well did MIMO understand your project needs?', type: 'rating' },
-  { key: 'pro_selection', label: 'Was selecting professionals easy and clear?', type: 'rating' },
-  { key: 'confusing', label: 'Did anything feel confusing or difficult?', type: 'text' },
-  { key: 'improvement', label: 'What one thing would make this experience better?', type: 'text' },
-];
+import { FeedbackChipGroup } from '@/components/feedback-chip-group';
+import {
+  PROJECT_GOOD_TAGS,
+  PROJECT_BAD_TAGS,
+  PLATFORM_GOOD_TAGS,
+  PLATFORM_BAD_TAGS,
+} from '@/lib/feedback-tags';
 
 interface Props {
   projectId: string;
@@ -32,12 +26,22 @@ type ProjectProfessional = {
 const NON_PARTICIPATING = ['declined', 'rejected', 'withdrawn'];
 
 export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
-  const [ratings, setRatings] = useState<Record<string, number>>({});
-  const [texts, setTexts] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [pros, setPros] = useState<ProjectProfessional[]>([]);
   const [proRatings, setProRatings] = useState<Record<string, number>>({});
+  const [mimoUnderstanding, setMimoUnderstanding] = useState(0);
+  const [proSelection, setProSelection] = useState(0);
+  const [projectGoodTags, setProjectGoodTags] = useState<string[]>([]);
+  const [projectBadTags, setProjectBadTags] = useState<string[]>([]);
+  const [projectGoodText, setProjectGoodText] = useState('');
+  const [projectBadText, setProjectBadText] = useState('');
+  const [platformGoodTags, setPlatformGoodTags] = useState<string[]>([]);
+  const [platformBadTags, setPlatformBadTags] = useState<string[]>([]);
+  const [platformGoodText, setPlatformGoodText] = useState('');
+  const [platformBadText, setPlatformBadText] = useState('');
+  const [platformDue, setPlatformDue] = useState(true);
+  const [platformOpen, setPlatformOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -55,8 +59,47 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
       .catch(() => setPros([]));
   }, [projectId, accessToken]);
 
+  useEffect(() => {
+    if (!accessToken) return;
+    fetch(`${API_BASE_URL}/ux-feedback/platform-due`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => (r.ok ? r.json() : { due: true }))
+      .then((d: { due?: boolean }) => setPlatformDue(d.due !== false))
+      .catch(() => setPlatformDue(true));
+  }, [accessToken]);
+
   const proName = (p: ProjectProfessional) =>
     p.professional?.businessName || p.professional?.fullName || 'your contractor';
+
+  const toggle = (list: string[], setList: (v: string[]) => void, id: string) => {
+    setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+  };
+
+  const platformAnswered =
+    platformGoodTags.length > 0 ||
+    platformBadTags.length > 0 ||
+    Boolean(platformGoodText.trim()) ||
+    Boolean(platformBadText.trim());
+
+  const renderStars = (value: number, onChange: (n: number) => void, size = 'h-9 w-9') => (
+    <div className="flex gap-2">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`${size} rounded-lg border text-sm font-semibold transition ${
+            value === n
+              ? 'border-emerald-600 bg-emerald-600 text-white'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400'
+          }`}
+        >
+          {n}
+        </button>
+      ))}
+    </div>
+  );
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -75,24 +118,32 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
         }).catch(() => undefined);
       }
 
-      const answers: Record<string, unknown> = {};
-      for (const q of QUESTIONS) {
-        if (q.type === 'rating') answers[q.key] = ratings[q.key] ?? null;
-        else answers[q.key] = texts[q.key]?.trim() || null;
-      }
-
       await fetch(`${API_BASE_URL}/ux-feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify({ projectId, answers }),
+        body: JSON.stringify({
+          projectId,
+          answers: {
+            mimo_understanding: mimoUnderstanding || null,
+            pro_selection: proSelection || null,
+            projectGoodTags,
+            projectBadTags,
+            projectGoodText,
+            projectBadText,
+            platformGoodTags,
+            platformBadTags,
+            platformGoodText,
+            platformBadText,
+            platformRated: platformAnswered,
+          },
+        }),
       });
       setSubmitted(true);
       setTimeout(onClose, 1500);
     } catch {
-      // Silently fail — don't block the user
       onClose();
     }
   };
@@ -120,66 +171,92 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
           </p>
         </div>
 
+        {/* Section A — rate contractor(s) */}
         {pros.length > 0 && (
           <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-            <p className="text-sm font-semibold text-emerald-800">Rate your contractor{pros.length > 1 ? 's' : ''}</p>
+            <p className="text-sm font-semibold text-emerald-800">
+              Rate your contractor{pros.length > 1 ? 's' : ''}
+            </p>
             {pros.map((p) => (
               <div key={p.id} className="space-y-2">
                 <p className="text-sm font-medium text-slate-800">How would you rate {proName(p)}?</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setProRatings((prev) => ({ ...prev, [p.professional!.id]: n }))}
-                      className={`h-9 w-9 rounded-lg border text-sm font-semibold transition ${
-                        (proRatings[p.professional!.id] || 0) === n
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400'
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
+                {renderStars(proRatings[p.professional!.id] || 0, (n) =>
+                  setProRatings((prev) => ({ ...prev, [p.professional!.id]: n })),
+                )}
               </div>
             ))}
           </div>
         )}
 
-        <div className="space-y-5">
-          {QUESTIONS.map((q) => (
-            <div key={q.key} className="space-y-2">
-              <p className="text-sm font-medium text-slate-800">{q.label}</p>
-              {q.type === 'rating' ? (
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setRatings((prev) => ({ ...prev, [q.key]: n }))}
-                      className={`h-9 w-9 rounded-lg border text-sm font-semibold transition ${
-                        ratings[q.key] === n
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400'
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <textarea
-                  value={texts[q.key] || ''}
-                  onChange={(e) => setTexts((prev) => ({ ...prev, [q.key]: e.target.value }))}
-                  rows={2}
-                  placeholder="Optional — share your thoughts..."
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm resize-none"
-                />
-              )}
-            </div>
-          ))}
+        {/* Platform ratings */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-slate-800">How well did MIMO understand your project needs?</p>
+            {renderStars(mimoUnderstanding, setMimoUnderstanding)}
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-slate-800">Was selecting professionals easy and clear?</p>
+            {renderStars(proSelection, setProSelection)}
+          </div>
         </div>
+
+        {/* Section B — the project */}
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-slate-800">The project</p>
+          <FeedbackChipGroup
+            label="What went well?"
+            tags={PROJECT_GOOD_TAGS}
+            selected={projectGoodTags}
+            text={projectGoodText}
+            onToggleTag={(id) => toggle(projectGoodTags, setProjectGoodTags, id)}
+            onTextChange={setProjectGoodText}
+          />
+          <FeedbackChipGroup
+            label="What could have gone better?"
+            tags={PROJECT_BAD_TAGS}
+            selected={projectBadTags}
+            text={projectBadText}
+            onToggleTag={(id) => toggle(projectBadTags, setProjectBadTags, id)}
+            onTextChange={setProjectBadText}
+          />
+        </div>
+
+        {/* Section C — platform (optional, quarterly) */}
+        {platformDue && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <button
+              type="button"
+              onClick={() => setPlatformOpen((v) => !v)}
+              className="flex w-full items-center justify-between text-sm font-semibold text-slate-800"
+            >
+              <span>
+                About Mimo{' '}
+                <span className="text-xs font-normal text-slate-400">(optional)</span>
+              </span>
+              <span>{platformOpen ? '▾' : '▸'}</span>
+            </button>
+            {platformOpen && (
+              <div className="space-y-4">
+                <FeedbackChipGroup
+                  label="What do you like about Mimo?"
+                  tags={PLATFORM_GOOD_TAGS}
+                  selected={platformGoodTags}
+                  text={platformGoodText}
+                  onToggleTag={(id) => toggle(platformGoodTags, setPlatformGoodTags, id)}
+                  onTextChange={setPlatformGoodText}
+                />
+                <FeedbackChipGroup
+                  label="What would make Mimo better?"
+                  tags={PLATFORM_BAD_TAGS}
+                  selected={platformBadTags}
+                  text={platformBadText}
+                  onToggleTag={(id) => toggle(platformBadTags, setPlatformBadTags, id)}
+                  onTextChange={setPlatformBadText}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button
@@ -203,4 +280,3 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
   );
 }
 
-export { QUESTIONS };

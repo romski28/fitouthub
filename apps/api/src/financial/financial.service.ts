@@ -2266,6 +2266,16 @@ export class FinancialService {
       closed = true;
     }
 
+    // Recompute the client's aggregate rating when a professional reviews.
+    if (reviewerType === 'professional') {
+      const clientUserId = project.userId || project.clientId;
+      if (clientUserId) {
+        await this.recomputeClientRating(clientUserId).catch((e) =>
+          console.warn('[FinancialService] recompute client rating failed:', e?.message || e),
+        );
+      }
+    }
+
     // Refresh next-steps so the "Leave feedback" step clears once this party
     // has submitted their review.
     await this.nextStepService.invalidateNextStepCache(input.projectId);
@@ -2321,6 +2331,37 @@ export class FinancialService {
       data: {
         rating: Math.round(average * 10) / 10,
         completedProjectsCount: completedCount,
+      },
+    });
+  }
+
+  /**
+   * Recompute a client's aggregate rating — the mean of professional reviews
+   * left on their projects. Stored on the User (client) record.
+   */
+  private async recomputeClientRating(clientUserId: string) {
+    const projectIds = (
+      await this.prisma.project.findMany({
+        where: { OR: [{ userId: clientUserId }, { clientId: clientUserId }] },
+        select: { id: true },
+      })
+    ).map((p) => p.id);
+
+    const proRatings = await this.prisma.projectReview.findMany({
+      where: { projectId: { in: projectIds }, reviewerType: 'professional' },
+      select: { rating: true },
+    });
+
+    const average =
+      proRatings.length > 0
+        ? proRatings.reduce((sum, r) => sum + r.rating, 0) / proRatings.length
+        : 0;
+
+    await this.prisma.user.update({
+      where: { id: clientUserId },
+      data: {
+        rating: Math.round(average * 10) / 10,
+        reviewCount: proRatings.length,
       },
     });
   }

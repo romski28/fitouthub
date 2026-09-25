@@ -8,6 +8,8 @@ interface SurveyEntry {
   id: string;
   projectId: string;
   userId?: string | null;
+  respondentType?: string | null;
+  respondentId?: string | null;
   surveyVersion?: string | null;
   answers: Record<string, any>;
   submittedAt: string;
@@ -46,6 +48,7 @@ export default function AdminSurveyResultsPage() {
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [versionFilter, setVersionFilter] = useState<string>("all");
+  const [respondentFilter, setRespondentFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const tabs = [
@@ -54,11 +57,18 @@ export default function AdminSurveyResultsPage() {
     { key: "1.0", label: "v1.0" },
   ];
 
+  const respondentTabs = [
+    { key: "all", label: "All" },
+    { key: "client", label: "Client" },
+    { key: "professional", label: "Professional" },
+  ];
+
   const fetchResults = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (versionFilter !== "all") params.set("surveyVersion", versionFilter);
+      if (respondentFilter !== "all") params.set("respondentType", respondentFilter);
       params.set("limit", "100");
       const url = `${API_BASE_URL.replace(/\/$/, "")}/ux-feedback/admin?${params.toString()}`;
       const res = await fetch(url);
@@ -81,7 +91,7 @@ export default function AdminSurveyResultsPage() {
   useEffect(() => {
     fetchResults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versionFilter]);
+  }, [versionFilter, respondentFilter]);
 
   const stats = useMemo(() => {
     const v2 = items.filter((i) => i.surveyVersion === "2.0" || (!i.surveyVersion && i.answers?.return_likelihood != null));
@@ -135,8 +145,8 @@ export default function AdminSurveyResultsPage() {
       )}
 
       {/* Filter tabs */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -151,7 +161,21 @@ export default function AdminSurveyResultsPage() {
             </button>
           ))}
         </div>
-        <div className="text-sm text-slate-600">{header}</div>
+        <div className="flex flex-wrap gap-2">
+          {respondentTabs.map((tab) => (
+            <button
+              key={tab.key}
+              className={`rounded-md px-3 py-2 text-sm font-medium border ${
+                respondentFilter === tab.key
+                  ? "bg-emerald-700 text-white border-emerald-700"
+                  : "bg-white text-slate-700 border-slate-200"
+              }`}
+              onClick={() => setRespondentFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
@@ -162,6 +186,7 @@ export default function AdminSurveyResultsPage() {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Date</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Project</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ver</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Respondent</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Feeling</th>
               <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Return NPS</th>
               <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">Rec. NPS</th>
@@ -171,11 +196,11 @@ export default function AdminSurveyResultsPage() {
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">Loading…</td>
+                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">Loading…</td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                   No survey responses yet.
                 </td>
               </tr>
@@ -205,6 +230,15 @@ export default function AdminSurveyResultsPage() {
                           v{ver}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-sm">
+                        {it.respondentType === "professional" ? (
+                          <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700">Pro</span>
+                        ) : it.respondentType === "client" ? (
+                          <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-sky-100 text-sky-700">Client</span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-700">
                         {a.feeling ? (
                           <span className="italic">"{a.feeling}"</span>
@@ -229,7 +263,7 @@ export default function AdminSurveyResultsPage() {
                     </tr>
                     {isExpanded && (
                       <tr key={`${it.id}-detail`}>
-                        <td colSpan={7} className="px-6 py-4 bg-slate-50">
+                        <td colSpan={8} className="px-6 py-4 bg-slate-50">
                           <div className="grid gap-3 sm:grid-cols-2 text-sm">
                             {/* First Impressions */}
                             <div className="space-y-2">
@@ -291,6 +325,29 @@ export default function AdminSurveyResultsPage() {
                               {a.escrow_reason && <p><span className="text-slate-400">Escrow reason:</span> <span className="text-slate-800">{a.escrow_reason}</span></p>}
                               {a.escrow_concern && <p><span className="text-slate-400">Escrow concern:</span> <span className="text-slate-800">{a.escrow_concern}</span></p>}
                             </div>
+
+                            {/* Project & Platform feedback (new tag-based) */}
+                            {(Array.isArray(a.projectGoodTags) || Array.isArray(a.projectBadTags) || a.projectGoodText || a.projectBadText || a.platformGoodText || a.platformBadText) && (
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project &amp; Platform</p>
+                                {Array.isArray(a.projectGoodTags) && a.projectGoodTags.length > 0 && (
+                                  <p><span className="text-slate-400">Project 👍:</span> <span className="text-slate-800">{(a.projectGoodTags as string[]).join(", ")}</span></p>
+                                )}
+                                {Array.isArray(a.projectBadTags) && a.projectBadTags.length > 0 && (
+                                  <p><span className="text-slate-400">Project 👎:</span> <span className="text-slate-800">{(a.projectBadTags as string[]).join(", ")}</span></p>
+                                )}
+                                {a.projectGoodText && <p><span className="text-slate-400">Project good:</span> <span className="text-slate-800">{a.projectGoodText}</span></p>}
+                                {a.projectBadText && <p><span className="text-slate-400">Project bad:</span> <span className="text-slate-800">{a.projectBadText}</span></p>}
+                                {Array.isArray(a.platformGoodTags) && a.platformGoodTags.length > 0 && (
+                                  <p><span className="text-slate-400">Platform 👍:</span> <span className="text-slate-800">{(a.platformGoodTags as string[]).join(", ")}</span></p>
+                                )}
+                                {Array.isArray(a.platformBadTags) && a.platformBadTags.length > 0 && (
+                                  <p><span className="text-slate-400">Platform 👎:</span> <span className="text-slate-800">{(a.platformBadTags as string[]).join(", ")}</span></p>
+                                )}
+                                {a.platformGoodText && <p><span className="text-slate-400">Platform good:</span> <span className="text-slate-800">{a.platformGoodText}</span></p>}
+                                {a.platformBadText && <p><span className="text-slate-400">Platform bad:</span> <span className="text-slate-800">{a.platformBadText}</span></p>}
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

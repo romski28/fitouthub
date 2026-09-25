@@ -247,6 +247,8 @@ model User {
   prospectiveConvertedAt          DateTime?
   prospectiveLastActivityAt       DateTime?
   prospectiveBookingCount         Int                      @default(0)
+  rating                          Float                    @default(0)
+  reviewCount                     Int                      @default(0)
   lastSeenIpHash                  String?
   lastSeenUaHash                  String?
   professional                    Professional?
@@ -2398,15 +2400,18 @@ model AiConversationLog {
 // ============================================================
 
 model UxFeedback {
-  id            String   @id @default(cuid())
-  projectId     String   @map("project_id")
-  userId        String?  @map("user_id")
-  surveyVersion String?  @map("survey_version")
-  answers       Json     @map("answers")
-  submittedAt   DateTime @default(now()) @map("submitted_at")
+  id             String   @id @default(cuid())
+  projectId      String   @map("project_id")
+  userId         String?  @map("user_id")
+  respondentType String?  @map("respondent_type") // client | professional
+  respondentId   String?  @map("respondent_id") // userId (client) or professionalId (pro)
+  surveyVersion  String?  @map("survey_version")
+  answers        Json     @map("answers")
+  submittedAt    DateTime @default(now()) @map("submitted_at")
 
   @@index([projectId])
   @@index([userId])
+  @@index([respondentType, respondentId])
   @@map("ux_feedback")
 }
 

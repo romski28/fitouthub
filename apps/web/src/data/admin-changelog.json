@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-09-25-a8be38e5",
+    "date": "2026-09-25T09:06:15+08:00",
+    "title": "feat(feedback): unify pro+client survey, client aggregate rating, tag-based forms",
+    "summary": "feat(feedback): unify pro+client survey, client aggregate rating, tag-based forms",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "a8be38e5",
+    "files": [
+      "MANUAL_SQL_ADD_FEEDBACK_UNIFICATION.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/ux-feedback/ux-feedback.controller.ts",
+      "apps/api/src/ux-feedback/ux-feedback.service.ts",
+      "apps/web/src/app/admin/projects/[id]/page.tsx",
+      "apps/web/src/app/admin/survey-results/page.tsx",
+      "apps/web/src/components/admin/project-feedback-panel.tsx",
+      "apps/web/src/components/feedback-chip-group.tsx",
+      "apps/web/src/components/next-steps/pro-feedback-modal.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx",
+      "apps/web/src/lib/feedback-tags.ts"
+    ]
+  },
+  {
     "id": "2026-09-25-a52a2515",
     "date": "2026-09-25T08:13:04+08:00",
     "title": "fix(feedback): hide pro 'Leave feedback' once reviewed",
