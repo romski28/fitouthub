@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-25-04404198",
+    "date": "2026-09-25T13:07:36+08:00",
+    "title": "chore(sql): backfill survey_version for existing ux_feedback rows",
+    "summary": "chore(sql): backfill survey_version for existing ux_feedback rows",
+    "areas": [
+      "infra"
+    ],
+    "commit": "04404198",
+    "files": [
+      "MANUAL_SQL_BACKFILL_SURVEY_VERSIONS.sql"
+    ]
+  },
+  {
     "id": "2026-09-25-d5863bf6",
     "date": "2026-09-25T12:58:54+08:00",
     "title": "fix(feedback): emoji parity, clear feedback next-steps via project flags, survey selector",
