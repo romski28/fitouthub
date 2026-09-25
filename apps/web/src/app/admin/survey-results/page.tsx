@@ -52,8 +52,9 @@ export default function AdminSurveyResultsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const tabs = [
-    { key: "all", label: "All" },
-    { key: "2.0", label: "v2.0" },
+    { key: "all", label: "All surveys" },
+    { key: "feedback-v1", label: "Feedback" },
+    { key: "2.0", label: "Post-project" },
     { key: "1.0", label: "v1.0" },
   ];
 
@@ -325,6 +326,15 @@ export default function AdminSurveyResultsPage() {
                               {a.escrow_reason && <p><span className="text-slate-400">Escrow reason:</span> <span className="text-slate-800">{a.escrow_reason}</span></p>}
                               {a.escrow_concern && <p><span className="text-slate-400">Escrow concern:</span> <span className="text-slate-800">{a.escrow_concern}</span></p>}
                             </div>
+
+                            {/* Platform ratings (feedback-v1) */}
+                            {(a.mimo_understanding != null || a.pro_selection != null) && (
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Platform ratings</p>
+                                {a.mimo_understanding != null && <p><span className="text-slate-400">MIMO understanding:</span> <span className="text-slate-800">{a.mimo_understanding}/5</span></p>}
+                                {a.pro_selection != null && <p><span className="text-slate-400">Pro selection:</span> <span className="text-slate-800">{a.pro_selection}/5</span></p>}
+                              </div>
+                            )}
 
                             {/* Project & Platform feedback (new tag-based) */}
                             {(Array.isArray(a.projectGoodTags) || Array.isArray(a.projectBadTags) || a.projectGoodText || a.projectBadText || a.platformGoodText || a.platformBadText) && (

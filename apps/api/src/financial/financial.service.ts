@@ -2266,7 +2266,8 @@ export class FinancialService {
       closed = true;
     }
 
-    // Recompute the client's aggregate rating when a professional reviews.
+    // Recompute the client's aggregate rating when a professional reviews, and
+    // mark the pro as having left feedback so the "Leave feedback" step clears.
     if (reviewerType === 'professional') {
       const clientUserId = project.userId || project.clientId;
       if (clientUserId) {
@@ -2274,6 +2275,10 @@ export class FinancialService {
           console.warn('[FinancialService] recompute client rating failed:', e?.message || e),
         );
       }
+      await this.prisma.project.update({
+        where: { id: input.projectId },
+        data: { proFeedbackSubmitted: true },
+      });
     }
 
     // Refresh next-steps so the "Leave feedback" step clears once this party
@@ -2436,6 +2441,13 @@ export class FinancialService {
         console.warn('[FinancialService] recompute rating failed:', e?.message || e),
       );
     }
+
+    // Mark the client as having left feedback so the "Share your feedback" step clears.
+    await this.prisma.project.update({
+      where: { id: input.projectId },
+      data: { clientFeedbackSubmitted: true },
+    });
+    await this.nextStepService.invalidateNextStepCache(input.projectId);
 
     return { success: true, ratedCount: ratings.length };
   }

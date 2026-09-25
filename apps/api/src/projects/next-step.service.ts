@@ -265,6 +265,8 @@ export class NextStepService {
           nextStepCache: true,
           updatedAt: true,
           stageStartedAt: true,
+          clientFeedbackSubmitted: true,
+          proFeedbackSubmitted: true,
           _count: {
             select: {
               professionals: true,
@@ -333,7 +335,7 @@ export class NextStepService {
     // Use stageStartedAt as the invalidation gate — only stage transitions bump it.
     // Non-stage mutations (contract signing, schedule confirm, etc.) explicitly null
     // the cache via invalidateNextStepCache(), so they also trigger a recompute.
-    const CACHE_VERSION = 11; // bump to invalidate all caches
+    const CACHE_VERSION = 12; // bump to invalidate all caches
     const cache = project.nextStepCache as Record<string, any> | null;
     const cacheKey = `${userId}:${role}:${effectiveStage}`;
     const invalidationThreshold = project.stageStartedAt ?? project.updatedAt;
@@ -1156,8 +1158,13 @@ export class NextStepService {
     }
     // ────────────────────────────────────────────────────────────────────────────────────────────
 
-    // Synthetic UX survey step — shown alongside "In warranty period" for completed projects
-    if (role === 'CLIENT' && effectiveStage === ProjectStage.COMPLETE) {
+    // Synthetic UX survey step — shown alongside "In warranty period" for completed
+    // projects. Hidden once the client has submitted feedback for this project.
+    if (
+      role === 'CLIENT' &&
+      effectiveStage === ProjectStage.COMPLETE &&
+      !project.clientFeedbackSubmitted
+    ) {
       availableConfigSteps.push({
         ...createSyntheticPrimaryStep(
           'UX_SURVEY',
@@ -1175,30 +1182,25 @@ export class NextStepService {
 
     // Synthetic pro feedback step — shown alongside "Provide warranty details" for
     // completed projects so the professional can rate the client. Hidden once the
-    // professional has already submitted a review for this project.
-    if (role === 'PROFESSIONAL' && effectiveStage === ProjectStage.COMPLETE) {
-      const alreadyReviewed = await this.prisma.projectReview
-        .findFirst({
-          where: { projectId, reviewerType: 'professional' },
-          select: { id: true },
-        })
-        .catch(() => null);
-
-      if (!alreadyReviewed) {
-        availableConfigSteps.push({
-          ...createSyntheticPrimaryStep(
-            'RATE_CLIENT',
-            'Leave feedback',
-            true,
-            role,
-            effectiveStage,
-            'Rate your experience working with this client.',
-          ),
-          isPrimary: false,
-          isElective: true,
-          displayOrder: 2,
-        } as any);
-      }
+    // professional has submitted feedback for this project.
+    if (
+      role === 'PROFESSIONAL' &&
+      effectiveStage === ProjectStage.COMPLETE &&
+      !project.proFeedbackSubmitted
+    ) {
+      availableConfigSteps.push({
+        ...createSyntheticPrimaryStep(
+          'RATE_CLIENT',
+          'Leave feedback',
+          true,
+          role,
+          effectiveStage,
+          'Rate your experience working with this client.',
+        ),
+        isPrimary: false,
+        isElective: true,
+        displayOrder: 2,
+      } as any);
     }
 
     if (role === 'CLIENT' && effectiveStage === ProjectStage.MILESTONE_PENDING) {

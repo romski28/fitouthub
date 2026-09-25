@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-09-25-d5863bf6",
+    "date": "2026-09-25T12:58:54+08:00",
+    "title": "fix(feedback): emoji parity, clear feedback next-steps via project flags, survey selector",
+    "summary": "fix(feedback): emoji parity, clear feedback next-steps via project flags, survey selector",
+    "areas": [
+      "infra",
+      "api",
+      "web"
+    ],
+    "commit": "d5863bf6",
+    "files": [
+      "MANUAL_SQL_ADD_FEEDBACK_UNIFICATION.sql",
+      "apps/api/prisma/schema.prisma",
+      "apps/api/src/financial/financial.service.ts",
+      "apps/api/src/projects/next-step.service.ts",
+      "apps/web/src/app/admin/survey-results/page.tsx",
+      "apps/web/src/components/next-steps/pro-feedback-modal.tsx",
+      "apps/web/src/components/ux-feedback-modal.tsx",
+      "apps/web/src/lib/feedback-tags.ts"
+    ]
+  },
+  {
     "id": "2026-09-25-a8be38e5",
     "date": "2026-09-25T09:06:15+08:00",
     "title": "feat(feedback): unify pro+client survey, client aggregate rating, tag-based forms",

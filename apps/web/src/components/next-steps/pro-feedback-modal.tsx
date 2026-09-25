@@ -9,9 +9,8 @@ import {
   PROJECT_BAD_TAGS,
   PLATFORM_GOOD_TAGS,
   PLATFORM_BAD_TAGS,
+  EMOJI_SCALE,
 } from '@/lib/feedback-tags';
-
-const EMOJI = ['', '😞', '😐', '🙂', '😃', '🤩'];
 
 interface Props {
   projectId: string;
@@ -80,6 +79,7 @@ export function ProFeedbackModal({ projectId, onClose }: Props) {
         },
         body: JSON.stringify({
           projectId,
+          surveyVersion: 'feedback-v1',
           answers: {
             projectGoodTags,
             projectBadTags,
@@ -137,7 +137,7 @@ export function ProFeedbackModal({ projectId, onClose }: Props) {
                     : 'border-slate-300 bg-white hover:border-emerald-400'
                 }`}
               >
-                {EMOJI[n]}
+                {EMOJI_SCALE[n - 1]}
               </button>
             ))}
           </div>

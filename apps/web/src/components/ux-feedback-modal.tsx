@@ -8,6 +8,7 @@ import {
   PROJECT_BAD_TAGS,
   PLATFORM_GOOD_TAGS,
   PLATFORM_BAD_TAGS,
+  EMOJI_SCALE,
 } from '@/lib/feedback-tags';
 
 interface Props {
@@ -101,6 +102,25 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
     </div>
   );
 
+  const renderEmoji = (value: number, onChange: (n: number) => void) => (
+    <div className="flex gap-2">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`h-10 w-10 rounded-lg border text-lg transition ${
+            value === n
+              ? 'border-emerald-600 bg-emerald-600 text-white'
+              : 'border-slate-300 bg-white hover:border-emerald-400'
+          }`}
+        >
+          {EMOJI_SCALE[n - 1]}
+        </button>
+      ))}
+    </div>
+  );
+
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
@@ -126,6 +146,7 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
         },
         body: JSON.stringify({
           projectId,
+          surveyVersion: 'feedback-v1',
           answers: {
             mimo_understanding: mimoUnderstanding || null,
             pro_selection: proSelection || null,
@@ -180,7 +201,7 @@ export function UxFeedbackModal({ projectId, accessToken, onClose }: Props) {
             {pros.map((p) => (
               <div key={p.id} className="space-y-2">
                 <p className="text-sm font-medium text-slate-800">How would you rate {proName(p)}?</p>
-                {renderStars(proRatings[p.professional!.id] || 0, (n) =>
+                {renderEmoji(proRatings[p.professional!.id] || 0, (n) =>
                   setProRatings((prev) => ({ ...prev, [p.professional!.id]: n })),
                 )}
               </div>

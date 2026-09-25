@@ -4,6 +4,9 @@ export interface FeedbackTag {
   emoji: string;
 }
 
+// Emoji mood scale for 1–5 party ratings (index 0 = 1 star).
+export const EMOJI_SCALE = ['😞', '😐', '🙂', '😃', '🤩'];
+
 export const PROJECT_GOOD_TAGS: FeedbackTag[] = [
   { id: 'communication', label: 'Great communication', emoji: '🗣️' },
   { id: 'schedule', label: 'On schedule', emoji: '⏱️' },
